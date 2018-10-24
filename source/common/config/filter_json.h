@@ -8,6 +8,7 @@
 #include "envoy/config/filter/http/router/v2/router.pb.h"
 #include "envoy/config/filter/http/squash/v2/squash.pb.h"
 #include "envoy/config/filter/http/transcoder/v2/transcoder.pb.h"
+#include "envoy/config/filter/http/wasm/v2/wasm.pb.h"
 #include "envoy/config/filter/network/client_ssl_auth/v2/client_ssl_auth.pb.h"
 #include "envoy/config/filter/network/http_connection_manager/v2/http_connection_manager.pb.h"
 #include "envoy/config/filter/network/mongo_proxy/v2/mongo_proxy.pb.h"
@@ -132,6 +133,15 @@ public:
    */
   static void translateLuaFilter(const Json::Object& json_config,
                                  envoy::config::filter::http::lua::v2::Lua& proto_config);
+
+  /**
+   * Translate a v1 JSON Wasm filter object to v2 envoy::config::filter::http::wasm::v2::Wasm.
+   * @param json_config source v1 JSON HTTP Wasm Filter object.
+   * @param proto_config destination v2
+   * envoy::config::filter::http::wasm::v2::Wasm.
+   */
+  static void translateWasmFilter(const Json::Object& json_config,
+                                  envoy::config::filter::http::wasm::v2::Wasm& proto_config);
 
   /**
    * Translate a v1 JSON TCP proxy filter object to a v2

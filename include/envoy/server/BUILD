@@ -217,3 +217,20 @@ envoy_cc_library(
         "//source/common/singleton:const_singleton",
     ],
 )
+
+envoy_cc_library(
+    name = "wasm_interface",
+    hdrs = ["wasm.h"],
+    deps = [
+        "//source/common/protobuf",
+    ],
+)
+
+envoy_cc_library(
+    name = "wasm_config_interface",
+    hdrs = ["wasm_config.h"],
+    deps = [
+        ":wasm_interface",
+        "//include/envoy/event:dispatcher_interface",
+    ],
+)

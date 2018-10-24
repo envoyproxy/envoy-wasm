@@ -46,6 +46,7 @@ envoy_cc_library(
         "@envoy_api//envoy/api/v2:lds_cc",
         "@envoy_api//envoy/config/bootstrap/v2:bootstrap_cc",
         "@envoy_api//envoy/config/trace/v2:trace_cc",
+        "@envoy_api//envoy/config/wasm/v2:wasm_cc",
     ],
 )
 
@@ -272,6 +273,14 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "wasm_config_lib",
+    hdrs = ["wasm_config_impl.h"],
+    deps = [
+        "//include/envoy/server:wasm_config_interface",
+    ],
+)
+
+envoy_cc_library(
     name = "server_lib",
     srcs = ["server.cc"],
     hdrs = ["server.h"],
@@ -283,6 +292,7 @@ envoy_cc_library(
         ":init_manager_lib",
         ":listener_manager_lib",
         ":test_hooks_lib",
+        ":wasm_config_lib",
         ":worker_lib",
         "//include/envoy/event:dispatcher_interface",
         "//include/envoy/event:signal_interface",
@@ -292,6 +302,8 @@ envoy_cc_library(
         "//include/envoy/server:instance_interface",
         "//include/envoy/server:listener_manager_interface",
         "//include/envoy/server:options_interface",
+        "//include/envoy/server:wasm_config_interface",
+        "//include/envoy/server:wasm_interface",
         "//include/envoy/stats:stats_macros",
         "//include/envoy/tracing:http_tracer_interface",
         "//include/envoy/upstream:cluster_manager_interface",

@@ -12,6 +12,7 @@
 #include "envoy/server/drain_manager.h"
 #include "envoy/server/guarddog.h"
 #include "envoy/server/instance.h"
+#include "envoy/server/wasm.h"
 #include "envoy/ssl/context_manager.h"
 #include "envoy/stats/stats_macros.h"
 #include "envoy/tracing/http_tracer.h"
@@ -234,6 +235,7 @@ private:
   Upstream::ProdClusterInfoFactory info_factory_;
   Upstream::HdsDelegatePtr hds_delegate_;
   std::unique_ptr<OverloadManagerImpl> overload_manager_;
+  std::vector<std::unique_ptr<Wasm>> wasm_;
   std::unique_ptr<RunHelper> run_helper_;
 };
 

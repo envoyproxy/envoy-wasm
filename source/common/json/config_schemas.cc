@@ -986,6 +986,24 @@ const std::string Json::Schema::SQUASH_HTTP_FILTER_SCHEMA(R"EOF(
   }
   )EOF");
 
+const std::string Json::Schema::WASM_HTTP_FILTER_SCHEMA(R"EOF(
+  {
+    "$schema": "http://json-schema.org/schema#",
+    "type" : "object",
+    "properties" : {
+      "wasm_vm" : {"type" : "string"}
+    },
+    "properties" : {
+      "wasm_file" : {"type" : "string"}
+    },
+    "properties" : {
+      "wasm_configuration" : {"type" : "string"}
+    },
+    "required" : ["wasm_file"],
+    "additionalProperties" : false
+  }
+  )EOF");
+
 const std::string Json::Schema::FAULT_HTTP_FILTER_SCHEMA(R"EOF(
   {
     "$schema": "http://json-schema.org/schema#",

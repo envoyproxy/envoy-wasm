@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+// [#protodoc-title: Metrics service]
+
+package envoy.config.wasm.v2;
+
+import "validate/validate.proto";
+
+// Wasm is configured as a built-in *envoy.wasm_service* :ref:`WasmConig
+// <envoy_api_msg_config.wasm.v2.WasmConfig>`. This opaque configuration will be used to create
+// a Wasm Service.
+message WasmConfig {
+  // The Wasm VM.
+  string wasm_vm = 1;
+  // The Wasm code that Envoy will execute.
+  string wasm_file = 2;
+  // The Wasm configuration string used on initialization.
+  string wasm_configuration = 3;
+  // Allow the wasm_file to include pre-compiled code.
+  bool allow_precompiled = 4;
+}

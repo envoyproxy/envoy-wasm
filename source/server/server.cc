@@ -15,6 +15,7 @@
 #include "envoy/event/timer.h"
 #include "envoy/network/dns.h"
 #include "envoy/server/options.h"
+#include "envoy/server/wasm_config.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "common/api/api_impl.h"
@@ -38,6 +39,7 @@
 #include "server/connection_handler_impl.h"
 #include "server/guarddog_impl.h"
 #include "server/test_hooks.h"
+#include "server/wasm_config_impl.h"
 
 namespace Envoy {
 namespace Server {
@@ -223,6 +225,8 @@ void InstanceImpl::initialize(Options& options,
   ENVOY_LOG(info, "  transport_sockets.upstream: {}",
             Registry::FactoryRegistry<
                 Configuration::UpstreamTransportSocketConfigFactory>::allFactoryNames());
+  ENVOY_LOG(info, "  wasm: {}",
+            Registry::FactoryRegistry<Configuration::WasmFactory>::allFactoryNames());
 
   // Handle configuration that needs to take place prior to the main configuration load.
   InstanceUtil::loadBootstrapConfig(bootstrap_, options);
@@ -341,6 +345,24 @@ void InstanceImpl::initialize(Options& options,
   // GuardDog (deadlock detection) object and thread setup before workers are
   // started and before our own run() loop runs.
   guard_dog_.reset(new Server::GuardDogImpl(stats_store_, *config_, time_system_));
+
+  // Optional Wasm service.
+  if (bootstrap_.wasm_service_size() > 0) {
+    auto factory = Registry::FactoryRegistry<Configuration::WasmFactory>::getFactory("envoy.wasm");
+    if (factory) {
+      Configuration::WasmFactoryContextImpl wasm_factory_context(*dispatcher_);
+      for (auto& config : bootstrap_.wasm_service()) {
+        auto wasm = factory->createWasm(config, wasm_factory_context);
+        if (wasm) {
+          wasm_.emplace_back(std::move(wasm));
+        } else {
+          ENVOY_LOG(warn, "Unable to iniitalize wasm: {}", config.DebugString());
+        }
+      }
+    } else {
+      ENVOY_LOG(warn, "No wasm factory available, so no wasm service started.");
+    }
+  }
 }
 
 void InstanceImpl::startWorkers() {
