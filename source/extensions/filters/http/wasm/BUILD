@@ -14,6 +14,7 @@ envoy_cc_library(
     name = "wasm_filter_lib",
     srcs = ["wasm_filter.cc"],
     hdrs = ["wasm_filter.h"],
+    tags = ["manual"],
     deps = [
         "//include/envoy/http:codes_interface",
         "//include/envoy/http:filter_interface",
@@ -30,6 +31,7 @@ envoy_cc_library(
     name = "config",
     srcs = ["config.cc"],
     hdrs = ["config.h"],
+    tags = ["manual"],
     deps = [
         ":wasm_filter_lib",
         "//include/envoy/registry",
