@@ -6,13 +6,15 @@ option go_package = "v2";
 import "validate/validate.proto";
 
 // [#protodoc-title: Wasm]
-// Lua :ref:`configuration overview <config_http_filters_wasm>`.
+// Wasm :ref:`configuration overview <config_http_filters_wasm>`.
 
 message Wasm {
   // The Wasm VM.
-  string wasm_vm = 1;
+  string vm = 1;
   // The Wasm code that Envoy will execute.
-  string wasm_file = 2;
+  string file = 2;
   // The Wasm configuration string used on initialization.
-  string wasm_configuration = 3;
+  string configuration = 3;
+  // Allow precompiled object code in the WASM file.
+  bool allow_precompiled = 4;
 }

@@ -23,7 +23,7 @@ envoy_extension_cc_test(
         "//source/common/event:dispatcher_lib",
         "//source/common/stats:isolated_store_lib",
         "//source/common/stats:stats_lib",
-        "//source/extensions/common/wasm:wasm_lib",
+        "//source/extensions/wasm:config",
         "//test/test_common:environment_lib",
         "//test/test_common:test_time_lib",
     ],

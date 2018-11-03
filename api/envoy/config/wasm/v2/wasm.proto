@@ -11,11 +11,13 @@ import "validate/validate.proto";
 // a Wasm Service.
 message WasmConfig {
   // The Wasm VM.
-  string wasm_vm = 1;
+  string vm = 1;
   // The Wasm code that Envoy will execute.
-  string wasm_file = 2;
+  string file = 2;
   // The Wasm configuration string used on initialization.
-  string wasm_configuration = 3;
+  string configuration = 3;
   // Allow the wasm_file to include pre-compiled code.
   bool allow_precompiled = 4;
+  // If not zero, setup a periodic timer to call tick() in the Wasm VM.
+  int64 tick_timeout_milliseconds = 5;
 }

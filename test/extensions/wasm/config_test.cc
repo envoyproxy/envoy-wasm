@@ -21,8 +21,8 @@ TEST(WasmFactoryTest, CreateWasm) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   EXPECT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.set_wasm_vm("envoy.wasm_vm.wavm");
-  config.set_wasm_file(
+  config.set_vm("envoy.wasm.vm.wavm");
+  config.set_file(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/envoy_wasm_test.wasm"));
   Event::MockDispatcher dispatcher;
   Server::Configuration::WasmFactoryContextImpl context(dispatcher);

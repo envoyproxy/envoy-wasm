@@ -14,7 +14,7 @@ namespace Wasm {
 class WasmVmValues {
 public:
   // WAVM (https://github.com/WAVM/WAVM) Wasm VM.
-  const std::string Wavm = "envoy.wasm_vm.wavm";
+  const std::string Wavm = "envoy.wasm.vm.wavm";
 };
 
 typedef ConstSingleton<WasmVmValues> WasmVmNames;

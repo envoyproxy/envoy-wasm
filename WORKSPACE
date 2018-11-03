@@ -12,3 +12,9 @@ api_dependencies()
 load("@io_bazel_rules_go//go:def.bzl", "go_rules_dependencies", "go_register_toolchains")
 go_rules_dependencies()
 go_register_toolchains(go_version = GO_VERSION)
+
+new_local_repository(
+   name = "wavm",
+   path = "/usr",
+   build_file = "WAVM.BUILD"  
+)

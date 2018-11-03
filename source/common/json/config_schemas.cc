@@ -999,6 +999,9 @@ const std::string Json::Schema::WASM_HTTP_FILTER_SCHEMA(R"EOF(
     "properties" : {
       "wasm_configuration" : {"type" : "string"}
     },
+    "properties" : {
+      "allow_precompiled" : {"type" : "boolean"}
+    },
     "required" : ["wasm_file"],
     "additionalProperties" : false
   }

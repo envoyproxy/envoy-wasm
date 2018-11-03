@@ -33,6 +33,8 @@ envoy_cc_library(
         "//source/common/common:assert_lib",
         "//source/common/common:c_smart_ptr_lib",
         "//source/common/protobuf",
+        "//source/extensions/common/wasm:wasm_hdr",
+        "//source/extensions/common/wasm:well_known_names",
         "@envoy_api//envoy/config/wasm/v2:wasm_cc",
     ],
 )
