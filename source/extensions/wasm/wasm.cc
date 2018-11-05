@@ -11,11 +11,21 @@
 namespace Envoy {
 namespace Extensions {
 namespace Wasm {
+
+Context::Context(Wasm* wasm) : Common::Wasm::Context(wasm->wasm_vm()), wasm_(wasm) {}
+
+void Context::scriptLog(spdlog::level::level_enum level, absl::string_view message) {
+  Common::Wasm::Context::scriptLog(level, message);
+}
+
+void Context::setTickPeriodMilliseconds(uint32_t tick_period_milliseconds) {
+  wasm_->setTickPeriodMilliseconds(tick_period_milliseconds);
+}
   
 Wasm::Wasm(absl::string_view vm) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
-  registerCallback(wasm_vm_.get(), "scriptLog", &Context::scriptLogHandler);
-  registerCallback(wasm_vm_.get(), "setTickPeriodMilliseconds", &Context::setTickPeriodMillisecondsHandler);
+  registerCallback(wasm_vm_.get(), "scriptLog", &Context::scriptLog);
+  registerCallback(wasm_vm_.get(), "setTickPeriodMilliseconds", &Context::setTickPeriodMilliseconds);
 }
 
 bool Wasm::initialize(absl::string_view file, bool allow_precompiled) {

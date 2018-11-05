@@ -15,6 +15,21 @@ namespace Envoy {
 namespace Extensions {
 namespace Wasm {
 
+class Wasm;
+
+class Context : public Common::Wasm::Context {
+  public:
+    explicit Context(Wasm* wasm);
+    ~Context() override {}
+
+    // Common::Wasm::Context WASM callbacks.
+    void scriptLog(spdlog::level::level_enum level, absl::string_view message) override;
+    // Local WASM callbacks.
+    virtual void setTickPeriodMilliseconds(uint32_t tick_period_milliseconds);
+
+  private:
+    Wasm* wasm_ = nullptr;
+};
 
 class Wasm : public Server::Wasm {
   public:
@@ -25,68 +40,20 @@ class Wasm : public Server::Wasm {
     void configure(absl::string_view configuration) override;
     void start(Event::Dispatcher& dispatcher, std::chrono::milliseconds tick_period) override;
 
-    void setWasmCallbacks(Server::Wasm::WasmCallbacks& callbacks) override {
-      context_->setWasmCallbacks(callbacks);
-    }
-
     Common::Wasm::Context *callingContext() { return context_.get(); }
     Common::Wasm::WasmVm *wasm_vm() { return wasm_vm_.get(); }
-
-    // For testing only.
-    void tickHandler();
-
-  private:
-    class WasmCallbacks : public Server::Wasm::WasmCallbacks, public Common::Wasm::WasmVmCallbacks {
-      public:
-        WasmCallbacks() = default;
-        ~WasmCallbacks() override {}
-
-        virtual void setTickPeriodMilliseconds(uint32_t period) PURE;
-        virtual void scriptLog(spdlog::level::level_enum level, absl::string_view ssage) PURE;
-    };
-
-    class Context : public Common::Wasm::Context, public WasmCallbacks {
-      public:
-        Context(Wasm* wasm) : Common::Wasm::Context(wasm->wasm_vm()), wasm_(wasm) {}
-        ~Context() override {}
-
-        // Server::Wasm::WasmCallbacks implementations.
-        void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
-
-          if (wasm_callbacks_) {
-            wasm_callbacks_->scriptLog(level, message);
-            return;
-          }
-          Common::Wasm::Context::scriptLog(level, message);
-        }
-        void setTickPeriodMilliseconds(uint32_t tick_period_milliseconds) override {
-          if (wasm_callbacks_) {
-            wasm_callbacks_->setTickPeriodMilliseconds(tick_period_milliseconds);
-            return;
-          }
-          wasm_->setTickPeriodMilliseconds(tick_period_milliseconds);
-        }
-
-        // Server::Wasm::WasmCallbacks testing hooks.
-        void setWasmCallbacks(Server::Wasm::WasmCallbacks& callbacks) {
-          wasm_callbacks_ = &callbacks;
-        }
-        void scriptLogHandler(spdlog::level::level_enum level, absl::string_view message) {
-          wasm_callbacks_->scriptLog(level, message);
-        }
-        void setTickPeriodMillisecondsHandler(uint32_t tick_period_milliseconds) {
-          wasm_callbacks_->setTickPeriodMilliseconds(tick_period_milliseconds);
-        }
-
-      private:
-        Wasm* wasm_ = nullptr;
-        Server::Wasm::WasmCallbacks* wasm_callbacks_ = nullptr;;
-    };
 
     void setTickPeriodMilliseconds(uint32_t tick_period_milliseconds) {
       tick_period_ = std::chrono::milliseconds(tick_period_milliseconds);
     }
 
+    // For testing only.
+    void tickHandler();
+    void setContext(Context *context) {
+      context_.reset(context);
+    }
+
+  private:
     std::unique_ptr<Common::Wasm::WasmVm> wasm_vm_;
     std::unique_ptr<Context> context_;
     std::function<void(Common::Wasm::Context*, uint32_t configuration_ptr, uint32_t configuration_size)> configure_;

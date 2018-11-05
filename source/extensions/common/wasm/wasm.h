@@ -21,23 +21,16 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-// Basic callbacks supportable by all WASM VMs.  To prevent callbacks, override in Context subclass.
-class WasmVmCallbacks {
-  public:
-    virtual ~WasmVmCallbacks() {}     
-    virtual void scriptLog(spdlog::level::level_enum level, absl::string_view message) PURE;
-};
-
 class WasmVm;
 // A context which will be the target of callbacks for a particular session
 // e.g. a handler of a stream.
-class Context : public WasmVmCallbacks, public Logger::Loggable<Logger::Id::wasm> {
+class Context : public Logger::Loggable<Logger::Id::wasm> {
   public:
     Context(WasmVm *vm) : wasm_vm(vm) {}
     virtual ~Context() {}
 
-    // WasmVmCalblacks.
-    void scriptLog(spdlog::level::level_enum level, absl::string_view message) override;
+    // WASM Callback implementations.
+    virtual void scriptLog(spdlog::level::level_enum level, absl::string_view message);
 
     // Handlers, called from the VM.
     void wasmLogHandler(uint32_t level, uint32_t address, uint32_t size);
