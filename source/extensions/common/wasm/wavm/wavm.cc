@@ -198,7 +198,9 @@ class Wavm : public WasmVm {
     void GetFunctions();
     void RegisterCallbacks();
 
-    uint32_t next_id_ = 1;   // 0 is reserved for the default_context_.      
+#if 0
+    uint32_t next_id_ = 1;   // 0 is reserved for the default_context_.
+#endif
     std::unordered_map<uint32_t, Context*> context_map_;
 
     bool hasInstantiatedModule_ = false;
@@ -307,6 +309,7 @@ void Wavm::registerCallback(absl::string_view functionName, void (Context::*func
 #endif
 
 DEFINE_INTRINSIC_FUNCTION(env, "_wasmLog", void, _wasmLog, U32 logLevel, U32 logMessage, U32 messageSize) {
+  UNREFERENCED_PARAMETER(contextRuntimeData);
   current_context_->wasmLogHandler(logLevel, logMessage, messageSize);
 }
 
