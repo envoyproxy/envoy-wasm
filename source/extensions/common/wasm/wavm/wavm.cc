@@ -334,16 +334,10 @@ std::unique_ptr<WasmVm> createWavm() {
 
 } // namespace Wavm
 
-<<<<<<< HEAD
-DEFINE_INTRINSIC_FUNCTION(env, "_wasmLog", void, _wasmLog, U32 logLevel, U32 logMessage, U32 messageSize) {
-  UNREFERENCED_PARAMETER(contextRuntimeData);
-  current_context_->wasmLogHandler(logLevel, logMessage, messageSize);
-=======
 template<typename R, typename... Args>
 IR::FunctionType inferEnvoyFunctionType(R (*)(void*, Args...)) {
   return IR::FunctionType(IR::inferResultType<R>(),
       IR::TypeTuple({IR::inferValueType<Args>()...}));
->>>>>>> 388144251... Callbacks working.
 }
 
 using namespace Wavm;
