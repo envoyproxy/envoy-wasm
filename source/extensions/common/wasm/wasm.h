@@ -29,15 +29,18 @@ class Context : public Logger::Loggable<Logger::Id::wasm> {
     Context(WasmVm *vm) : wasm_vm(vm) {}
     virtual ~Context() {}
 
-    // WASM Callback implementations.
+    // Callbacks.
     virtual void scriptLog(spdlog::level::level_enum level, absl::string_view message);
 
-    // Handlers, called from the VM.
-    void wasmLogHandler(uint32_t level, uint32_t address, uint32_t size);
+    // Handlers.
+    static void wasmLogHandler(void* context, uint32_t level, uint32_t address, uint32_t size);
 
     uint32_t id = 0;
     WasmVm* const wasm_vm;
 };
+
+extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
+#define WASM_CONTEXT(_c, _C) (static_cast<_C*>((void)_c,Envoy::Extensions::Common::Wasm::current_context_))
 
 class WasmVm : public Logger::Loggable<Logger::Id::wasm> { 
   public:
@@ -65,20 +68,7 @@ class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
       m[s.size()] = 0;
       return pointer;
     }
-
 };
-
-// Register a function which can be called from WAVM code (e.g. declared extern "C").
-// All callbacks must be registered before calling 'initialize'.  // Callbacks will be called
-// on member funcions on the current Context (i.e. object of type C),  F must be C::(*)(...);
-template<typename F> void registerCallback(WasmVm *vm, absl::string_view functionName, F function);
-
-// Get a function exported by WASM code (e.g. with a declaration of extern "C").
-// F should be of the form std::function<R(Args...>).
-// Returned by pointer or nullptr if not found.
-template<typename F> void getFunction(WasmVm *vm, absl::string_view functionName, F* function);
-// Same as above but F should be std::function<R(Context*, Args...>).
-template<typename F> void getFunctionWithContext(WasmVm *vm, absl::string_view functionName, F* function);
 
 // Create a new WASM VM of the give type (e.g. "envoy.wasm.vm.wavm").
 std::unique_ptr<WasmVm> createWasmVm(absl::string_view vm);
@@ -93,26 +83,19 @@ class WasmVmException : public EnvoyException {
     using EnvoyException::EnvoyException;
 };
 
-
 // Template implementations.
 
 // Forward declarations for VM implemenations.
-template<typename F> void registerCallbackWavm(WasmVm *vm, absl::string_view functionName, F function);
-template<typename F> void getFunctionWavm(WasmVm *vm, absl::string_view functionName, F* function);
+template<typename R, typename ...Args> void registerCallbackWavm(WasmVm *vm, absl::string_view functionName, R (*)(Args...));
+template<typename R, typename ...Args> void getFunctionWavm(WasmVm *vm, absl::string_view functionName, std::function<R(Context*, Args...)>*);
 
-template<typename F> void registerCallback(WasmVm *vm, absl::string_view functionName, F function) {
-  (void)vm;
-  (void)functionName;
-  (void)function;
-#if 0
+template<typename R, typename ...Args>
+void registerCallback(WasmVm *vm, absl::string_view functionName, R (*f)(Args...)) {
   if (vm->vm() == WasmVmNames::get().Wavm) {
-    registerCallbackWavm(vm, functionName, [](Context* context, ARGS...) {
-        static_cast<C>(context)->function(ARGS...);
-        });
+    registerCallbackWavm(vm, functionName, f);
   } else {
     throw WasmVmException("unsupoorted wasm vm");
   }
-#endif
 }
 
 template<typename F> void getFunction(WasmVm *vm, absl::string_view functionName, F* function) {

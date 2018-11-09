@@ -18,14 +18,18 @@ void Context::scriptLog(spdlog::level::level_enum level, absl::string_view messa
   Common::Wasm::Context::scriptLog(level, message);
 }
 
-void Context::setTickPeriodMilliseconds(uint32_t tick_period_milliseconds) {
-  wasm_->setTickPeriodMilliseconds(tick_period_milliseconds);
+void Context::setTickPeriod(std::chrono::milliseconds tick_period) {
+  wasm_->setTickPeriod(tick_period);
+}
+
+void Context::setTickPeriodMillisecondsHandler(void *context, uint32_t tick_period_milliseconds) {
+  WASM_CONTEXT(context, Context)->setTickPeriod(std::chrono::milliseconds(tick_period_milliseconds));
 }
   
 Wasm::Wasm(absl::string_view vm) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
-  registerCallback(wasm_vm_.get(), "scriptLog", &Context::scriptLog);
-  registerCallback(wasm_vm_.get(), "setTickPeriodMilliseconds", &Context::setTickPeriodMilliseconds);
+  registerCallback(wasm_vm_.get(), "_wasmLog", &Common::Wasm::Context::wasmLogHandler);
+  registerCallback(wasm_vm_.get(), "_setTickPeriodMilliseconds", &Context::setTickPeriodMillisecondsHandler);
 }
 
 bool Wasm::initialize(absl::string_view file, bool allow_precompiled) {

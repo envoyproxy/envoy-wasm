@@ -21,6 +21,8 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
+thread_local Envoy::Extensions::Common::Wasm::Context* current_context_ = nullptr;
+
 std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
   if (wasm_vm == WasmVmNames::get().Wavm) {
     return Wavm::createWavm();

@@ -22,10 +22,13 @@ class Context : public Common::Wasm::Context {
     explicit Context(Wasm* wasm);
     ~Context() override {}
 
-    // Common::Wasm::Context WASM callbacks.
+    // Common::Wasm::Context callbacks.
     void scriptLog(spdlog::level::level_enum level, absl::string_view message) override;
-    // Local WASM callbacks.
-    virtual void setTickPeriodMilliseconds(uint32_t tick_period_milliseconds);
+    // Callbacks.
+    virtual void setTickPeriod(std::chrono::milliseconds tick_period);
+
+    // Handlers.
+    static void setTickPeriodMillisecondsHandler(void*context, uint32_t tick_period_milliseconds);
 
   private:
     Wasm* wasm_ = nullptr;
@@ -43,8 +46,8 @@ class Wasm : public Server::Wasm {
     Common::Wasm::Context *callingContext() { return context_.get(); }
     Common::Wasm::WasmVm *wasm_vm() { return wasm_vm_.get(); }
 
-    void setTickPeriodMilliseconds(uint32_t tick_period_milliseconds) {
-      tick_period_ = std::chrono::milliseconds(tick_period_milliseconds);
+    void setTickPeriod(std::chrono::milliseconds tick_period) {
+      tick_period_ = tick_period;
     }
 
     // For testing only.
