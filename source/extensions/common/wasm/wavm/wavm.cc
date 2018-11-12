@@ -344,7 +344,7 @@ using namespace Wavm;
 
 template<typename R, typename ...Args>
 void registerCallbackWavm(WasmVm* vm, absl::string_view functionName, R (*f)(Args...)) {
-  Wavm::Wavm *wavm = static_cast<Wavm::Wavm*>(vm);
+  Wasm::Wavm::Wavm *wavm = static_cast<Wasm::Wavm::Wavm*>(vm);
   wavm->envoy_functions_.emplace_back(
       new Intrinsics::Function(wavm->envoy_module_, functionName.data(),
         reinterpret_cast<void*>(f), inferEnvoyFunctionType(f),
@@ -359,7 +359,7 @@ template void registerCallbackWavm<void, void*, U32, U32, U32, U32, U32>(WasmVm*
 
 template<typename R, typename ...Args>
 void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function, uint32_t) {
-  Wavm::Wavm *wavm = static_cast<Wavm::Wavm*>(vm);
+  Wasm::Wavm::Wavm *wavm = static_cast<Wasm::Wavm::Wavm*>(vm);
   auto f = asFunctionNullable(getInstanceExport(wavm->moduleInstance(), std::string(functionName)));
   if (!f)
     f = asFunctionNullable(getInstanceExport(wavm->envoyModuleInstance(), std::string(functionName)));
@@ -374,7 +374,7 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::func
 
 template<typename R, typename ...Args>
 void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function, bool) {
-  Wavm::Wavm *wavm = static_cast<Wavm::Wavm*>(vm);
+  Wasm::Wavm::Wavm *wavm = static_cast<Wasm::Wavm::Wavm*>(vm);
   auto f = asFunctionNullable(getInstanceExport(wavm->moduleInstance(), std::string(functionName)));
   if (!f)
     f = asFunctionNullable(getInstanceExport(wavm->envoyModuleInstance(), std::string(functionName)));
