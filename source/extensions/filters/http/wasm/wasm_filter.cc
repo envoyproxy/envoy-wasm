@@ -12,6 +12,8 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
+#if 0
+
 StreamHandleWrapper::StreamHandleWrapper(Session& session, Http::HeaderMap& headers,
                                          bool end_stream, Filter& filter,
                                          FilterCallbacks& callbacks)
@@ -633,6 +635,7 @@ void Filter::EncoderCallbacks::respond(Http::HeaderMapPtr&&, Buffer::Instance*, 
   luaL_error(state, "respond not currently supported in the response path");
 #endif
 }
+#endif
 
 } // namespace Wasm
 } // namespace HttpFilters
