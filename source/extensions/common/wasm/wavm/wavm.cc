@@ -185,7 +185,7 @@ bool loadModule(absl::string_view filename, IR::Module& outModule) {
   } else {
     // Load it as a text irModule.
     std::vector<WAST::Error> parseErrors;
-    if(!WAST::parseModule(bytes.c_str(), bytes.size(), outModule, parseErrors)) {
+    if (!WAST::parseModule(bytes.c_str(), bytes.size() + 1, outModule, parseErrors)) {
       return false;
     }
     return true;
