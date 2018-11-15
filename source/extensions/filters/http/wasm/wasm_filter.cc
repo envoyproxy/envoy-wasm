@@ -12,6 +12,207 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
+void Context::addHeader(HeaderType type, absl::string_view key,
+		        absl::string_view value) {
+  (void) type;
+  (void) key;
+  (void) value;
+}
+absl::string_view Context::getHeader(HeaderType type, absl::string_view key) {
+  (void) type;
+  (void) key;
+  return "";
+}
+Context::Pairs Context::getHeaderPairs(HeaderType type) {
+  (void) type;
+  return {};
+}
+void Context::removeHeader(HeaderType type, absl::string_view key) {
+  (void) type;
+  (void) key;
+}
+void Context::replaceHeader(HeaderType type, absl::string_view key,
+                            absl::string_view value) {
+  (void) type;
+  (void) key;
+  (void) value;
+}
+
+// Decoder
+void Context::continueDecoding() {}
+
+// Encoder
+void Context::continueEncoding() {}
+
+// StreamInfo
+absl::string_view Context::getSteamInfoProtocol() { return ""; }
+absl::string_view Context::getStreamInfoMetadata(absl::string_view filter,
+                                                 absl::string_view key) {
+   (void) filter;
+   (void) key;
+   return "";
+}
+void Context::setStreamInfoMetadata(absl::string_view filter, absl::string_view key,
+                                     absl::string_view value) {
+  (void) filter;
+  (void) key;
+  (void) value;
+}
+Context::Pairs Context::getStreamInfoPairs(absl::string_view filter) {
+  (void) filter;
+  return {};
+}
+
+// Body Buffer
+void Context::setBodyMode(BodyMode body_mode) {
+  (void) body_mode;
+}
+int Context::bodyBufferLength() {
+  return 0;
+}
+absl::string_view Context::getBodyBufferBytes(int start, int length) {
+  (void) start;
+  (void) length;
+  return "";
+}
+
+// HTTP
+void Context::httpCall(absl::string_view cluster, const Pairs& request_headers,
+                       absl::string_view request_body, int timeout_milliseconds) {
+  (void) cluster;
+  (void) request_headers;
+  (void) request_body;
+  (void) timeout_milliseconds;
+}
+void Context::httpRespond(const Pairs& response_headers,
+                          absl::string_view body) {
+  (void) response_headers;
+  (void) body;
+}
+
+// Metadata: the values are serialized ProtobufWkt::Struct
+absl::string_view Context::getMetadata(absl::string_view key) {
+  (void) key;
+  return "";
+}
+absl::string_view Context::setMetadata(absl::string_view key,
+                                       absl::string_view serialized_proto_struct) {
+  (void) key;
+  (void) serialized_proto_struct;
+  return "";
+}
+Context::Pairs Context::getMetadataPairs() {
+  return {};
+}
+
+// Connection
+bool Context::isSsl() { return false; }
+
+//
+// Calls into the WASM code.
+//
+void Context::onStart() {}
+void Context::onBody() {}
+void Context::onTrailers() {}
+void Context::onHttpCallResponse(const Pairs& response_headers,
+                                 absl::string_view response_body) {
+  (void) response_headers;
+  (void) response_body;
+}
+void Context::raiseWasmError(absl::string_view message) {
+  (void) message;
+}
+
+Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
+  wasm_vm_ = Common::Wasm::createWasmVm(vm);
+  if (wasm_vm_) {
+    registerCallback(wasm_vm_.get(), "_wasmLog", &Common::Wasm::Context::wasmLogHandler);
+  }
+}
+
+bool Wasm::initialize(absl::string_view file, bool allow_precompiled) {
+  if (!wasm_vm_) return false;
+  auto ok = wasm_vm_->initialize(file, allow_precompiled);
+  if (!ok) return false;
+  getFunction(wasm_vm_.get(), "_configure", &configure_);
+  general_context_ = createContext();
+  return true;
+}
+
+void Wasm::configure(absl::string_view configuration) {
+  if (configure_) {
+    auto address = wasm_vm_->copyString(configuration);
+    configure_(general_context_.get(), address, configuration.size());
+  }
+}
+
+void Wasm::start() {
+  wasm_vm_->start(general_context_.get());
+}
+
+FilterConfig::FilterConfig(absl::string_view vm, absl::string_view file, absl::string_view configuration,                bool allow_precompiled, ThreadLocal::SlotAllocator& tls, Upstream::ClusterManager& cluster_manager)
+    : cluster_manager_(cluster_manager), wasm_(new Wasm(vm, tls)) {
+  if (wasm_) {
+    if (!wasm_->initialize(file, allow_precompiled)) {
+       ENVOY_LOG(error, "unable to initialize WASM vm");
+       return;
+    }
+    if (!configuration.empty())
+      wasm_->configure(configuration);
+     wasm_->start();
+  }
+}
+
+void Filter::onDestroy() {
+  destroyed_ = true;
+  if (request_handler_) {
+    request_handler_->onReset();
+  }
+  if (response_handler_) {
+    response_handler_->onReset();
+  }
+}
+
+Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool end_stream) {
+  (void) headers;
+  (void) end_stream;
+  return Http::FilterHeadersStatus::Continue;
+}
+Http::FilterDataStatus Filter::decodeData(Buffer::Instance& data, bool end_stream) {
+  (void) data;
+  (void) end_stream;
+  return Http::FilterDataStatus::StopIterationNoBuffer;
+}
+Http::FilterTrailersStatus Filter::decodeTrailers(Http::HeaderMap& trailers) {
+  (void) trailers;
+  return Http::FilterTrailersStatus::Continue;
+}
+void Filter::setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks& callbacks) {
+  (void) callbacks;
+}
+
+Http::FilterHeadersStatus Filter::encode100ContinueHeaders(Http::HeaderMap&) {
+  return Http::FilterHeadersStatus::Continue;
+}
+Http::FilterHeadersStatus Filter::encodeHeaders(Http::HeaderMap& headers, bool end_stream) {
+  (void) headers;
+  (void) end_stream;
+  return Http::FilterHeadersStatus::Continue;
+}
+Http::FilterDataStatus Filter::encodeData(Buffer::Instance& data, bool end_stream) {
+  (void) data;
+  (void) end_stream;
+  return Http::FilterDataStatus::StopIterationNoBuffer;
+}
+Http::FilterTrailersStatus Filter::encodeTrailers(Http::HeaderMap& trailers) {
+  (void) trailers;
+  return Http::FilterTrailersStatus::Continue;
+}
+void Filter::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks& callbacks) {
+  (void) callbacks;
+}
+
+
 #if 0
 
 StreamHandleWrapper::StreamHandleWrapper(Session& session, Http::HeaderMap& headers,
@@ -512,18 +713,6 @@ FilterConfig::FilterConfig(const std::string& wasm_code, ThreadLocal::SlotAlloca
 #endif
 }
 
-void Filter::onDestroy() {
-#if 0
-  destroyed_ = true;
-  if (request_stream_wrapper_.get()) {
-    request_stream_wrapper_.get()->onReset();
-  }
-  if (response_stream_wrapper_.get()) {
-    response_stream_wrapper_.get()->onReset();
-  }
-#endif
-}
-
 Http::FilterHeadersStatus Filter::doHeaders(StreamHandleRef&, SessionPtr&, FilterCallbacks&, int,
                                             Http::HeaderMap&, bool) {
 #if 0
@@ -619,22 +808,6 @@ void Filter::scriptLog(spdlog::level::level_enum level, const char* message) {
   }
 }
 
-void Filter::DecoderCallbacks::respond(Http::HeaderMapPtr&&, Buffer::Instance*, wasm_State*) {
-#if 0
-  callbacks_->encodeHeaders(std::move(headers), body == nullptr);
-  if (body && !parent_.destroyed_) {
-    callbacks_->encodeData(*body, true);
-  }
-#endif
-}
-
-void Filter::EncoderCallbacks::respond(Http::HeaderMapPtr&&, Buffer::Instance*, wasm_State*) {
-#if 0
-  // TODO(mattklein123): Support response in response path if nothing has been continued
-  // yet.
-  luaL_error(state, "respond not currently supported in the response path");
-#endif
-}
 #endif
 
 } // namespace Wasm

@@ -42,7 +42,7 @@ public:
   ~WasmHttpFilterTest() { filter_->onDestroy(); }
 
   void setup(const std::string& wasm_file) {
-    config_.reset(new FilterConfig(wasm_file, tls_, cluster_manager_));
+    config_.reset(new FilterConfig("envoy.wasm.vm.wavm", wasm_file, "", true, tls_, cluster_manager_));
     setupFilter();
   }
 

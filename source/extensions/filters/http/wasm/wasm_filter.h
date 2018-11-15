@@ -106,6 +106,7 @@ private:
   uint32_t next_context_id_ = 0;
   std::unique_ptr<Envoy::Extensions::Common::Wasm::WasmVm> wasm_vm_;
   std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t configuration_ptr, uint32_t configuration_size)> configure_;
+  std::unique_ptr<Context> general_context_;  // Context unrelated to nay specific filter or stream.
 };
 
 inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callbacks) {
@@ -158,8 +159,9 @@ private:
 
 class FilterConfig : Logger::Loggable<Logger::Id::wasm> {
 public:
-  FilterConfig(const std::string& wasm_file, ThreadLocal::SlotAllocator& tls,
-               Upstream::ClusterManager& cluster_manager);
+  FilterConfig(absl::string_view vm, absl::string_view file, absl::string_view configuration,
+               bool allow_percompiled, ThreadLocal::SlotAllocator& tls,
+	       Upstream::ClusterManager& cluster_manager);
 
   Upstream::ClusterManager& cluster_manager() { return cluster_manager_; }
 
