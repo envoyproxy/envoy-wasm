@@ -25,7 +25,7 @@ envoy_extension_cc_test(
         "//source/common/stats:stats_lib",
         "//source/extensions/wasm:config",
         "//test/test_common:environment_lib",
-        "//test/test_common:test_time_lib",
+        "//test/test_common:simulated_time_system_lib",
     ],
 )
 

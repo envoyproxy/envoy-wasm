@@ -6,7 +6,7 @@
 #include "extensions/wasm/wasm.h"
 
 #include "test/test_common/environment.h"
-#include "test/test_common/test_time.h"
+#include "test/test_common/simulated_time_system.h"
 #include "test/test_common/utility.h"
 
 #include "absl/types/optional.h"
@@ -28,8 +28,8 @@ public:
 };
 
 TEST(WasmTest, Logging) {
-  DangerousDeprecatedTestTime test_time;
-  Event::DispatcherImpl dispatcher(test_time.timeSystem());
+  Event::SimulatedTimeSystem time_system;
+  Event::DispatcherImpl dispatcher(time_system);
   auto wasm = std::make_unique<Wasm>("envoy.wasm.vm.wavm");
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(
