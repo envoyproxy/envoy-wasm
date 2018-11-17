@@ -61,26 +61,24 @@ public:
 };
 
 // Bad code in initial config.
-TEST(WasmHttpFilterConfigTest, BadCode) {
-  NiceMock<ThreadLocal::MockInstance> tls;
-  NiceMock<Upstream::MockClusterManager> cluster_manager;
+TEST_F(WasmHttpFilterTest, BadCode) {
 #if 0
-  EXPECT_THROW_WITH_MESSAGE(FilterConfig("bad_code.wasm", tls, cluster_manager),
-                            Common::Wasm::WasmException,
-                            "script load error: [string \"...\"]:3: '=' expected near '<eof>'");
+  EXPECT_THROW_WITH_MESSAGE(FilterConfig("envoy.wasm.vm.wavm", "bad_code.wasm", "", true, tls_, cluster_manager_),
+                            Common::Wasm::WasmException, "unable to initialize WASM vm");
 #endif
 }
 
 // Script touching headers only, request that is headers only.
-TEST_F(WasmHttpFilterTest, ScriptHeadersOnlyRequestHeadersOnly) {
+TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   InSequence s;
   setup("header_only.wasm");
-
-#if 0
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::trace, StrEq("/")));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, StrEq("onCreate 1")));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, StrEq("onStart 1")));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, StrEq("onDestroy 1")));
+
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::trace, StrEq("header path /")));
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
-#endif
 }
 
 } // namespace Wasm

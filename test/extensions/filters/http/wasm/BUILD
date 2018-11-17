@@ -16,7 +16,9 @@ envoy_extension_cc_test(
     srcs = ["wasm_filter_test.cc"],
     data = [
         ":bad_code.wasm",
+        ":headers_only.wasm",
     ],
+    tags = ["manual"],
     extension_name = "envoy.filters.http.wasm",
     deps = [
         "//source/common/stream_info:stream_info_lib",
@@ -44,6 +46,7 @@ envoy_extension_cc_test(
 envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
+    tags = ["manual"],
     extension_name = "envoy.filters.http.wasm",
     deps = [
         "//source/extensions/filters/http/wasm:config",

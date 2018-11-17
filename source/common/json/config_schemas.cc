@@ -991,18 +991,12 @@ const std::string Json::Schema::WASM_HTTP_FILTER_SCHEMA(R"EOF(
     "$schema": "http://json-schema.org/schema#",
     "type" : "object",
     "properties" : {
-      "wasm_vm" : {"type" : "string"}
-    },
-    "properties" : {
-      "wasm_file" : {"type" : "string"}
-    },
-    "properties" : {
-      "wasm_configuration" : {"type" : "string"}
-    },
-    "properties" : {
+      "vm" : {"type" : "string"},
+      "file" : {"type" : "string"},
+      "configuration" : {"type" : "string"},
       "allow_precompiled" : {"type" : "boolean"}
     },
-    "required" : ["wasm_file"],
+    "required" : ["file"],
     "additionalProperties" : false
   }
   )EOF");

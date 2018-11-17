@@ -18,24 +18,51 @@ void Context::addHeader(HeaderType type, absl::string_view key,
   (void) key;
   (void) value;
 }
-absl::string_view Context::getHeader(HeaderType type, absl::string_view key) {
-  (void) type;
-  (void) key;
-  return "";
+
+absl::string_view Context::getHeader(HeaderType type, absl::string_view key_view) {
+  const Http::LowerCaseString lower_key(std::move(std::string(key_view)));
+  Http::HeaderEntry* entry;
+  if (type == HeaderType::Header)
+    entry = stream_->headers_.get(lower_key);
+  else
+    entry = stream_->trailers_->get(lower_key);
+  if (!entry) return "";
+  return entry->value().getStringView();
 }
+void Context::getHeaderHandler(void *raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context, Context);
+  auto result = context->getHeader(static_cast<HeaderType>(type), context->wasm_vm->getMemory(key_ptr, key_size));
+  context->wasm_vm->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
+}
+
 Context::Pairs Context::getHeaderPairs(HeaderType type) {
   (void) type;
   return {};
 }
+
 void Context::removeHeader(HeaderType type, absl::string_view key) {
   (void) type;
   (void) key;
 }
-void Context::replaceHeader(HeaderType type, absl::string_view key,
-                            absl::string_view value) {
-  (void) type;
-  (void) key;
-  (void) value;
+
+void Context::replaceHeader(HeaderType type, absl::string_view key, absl::string_view value) {
+  const Http::LowerCaseString lower_key(std::move(std::string(key)));
+  Http::HeaderEntry* entry;
+  if (type == HeaderType::Header)
+    entry = stream_->headers_.get(lower_key);
+  else
+    entry = stream_->trailers_->get(lower_key);
+  if (entry != nullptr)
+    entry->value(value.data(), value.size());
+  else if (type == HeaderType::Header)
+    stream_->headers_.addCopy(lower_key, std::string(value));
+  else
+    stream_->trailers_->addCopy(lower_key, std::string(value));
+}
+void Context::replaceHeaderHandler(void *raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr, uint32_t value_size) {
+  auto context = WASM_CONTEXT(raw_context, Context);
+  context->replaceHeader(static_cast<HeaderType>(type), context->wasm_vm->getMemory(key_ptr, key_size),
+                         context->wasm_vm->getMemory(value_ptr, value_size));
 }
 
 // Decoder
@@ -111,7 +138,8 @@ bool Context::isSsl() { return false; }
 //
 // Calls into the WASM code.
 //
-void Context::onStart() {}
+void Context::onCreate() { wasm_->onCreate()(this, id); }
+void Context::onStart() { wasm_->onStart()(this, id); }
 void Context::onBody() {}
 void Context::onTrailers() {}
 void Context::onHttpCallResponse(const Pairs& response_headers,
@@ -122,11 +150,13 @@ void Context::onHttpCallResponse(const Pairs& response_headers,
 void Context::raiseWasmError(absl::string_view message) {
   (void) message;
 }
+void Context::onDestroy() { wasm_->onDestroy()(this, id); }
 
 Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   if (wasm_vm_) {
     registerCallback(wasm_vm_.get(), "_wasmLog", &Common::Wasm::Context::wasmLogHandler);
+    registerCallback(wasm_vm_.get(), "_replaceHeaderHandler", &Context::replaceHeaderHandler);
   }
 }
 
@@ -135,7 +165,11 @@ bool Wasm::initialize(absl::string_view file, bool allow_precompiled) {
   auto ok = wasm_vm_->initialize(file, allow_precompiled);
   if (!ok) return false;
   getFunction(wasm_vm_.get(), "_configure", &configure_);
-  general_context_ = createContext();
+  getFunction(wasm_vm_.get(), "_onCreate", &onCreate_);
+  getFunction(wasm_vm_.get(), "_onStart", &onStart_);
+  getFunction(wasm_vm_.get(), "_onDestroy", &onDestroy_);
+  if (!onCreate_ || !onStart_ || !onDestroy_) return false;
+  general_context_ = createContext(nullptr);
   return true;
 }
 
@@ -155,7 +189,7 @@ FilterConfig::FilterConfig(absl::string_view vm, absl::string_view file, absl::s
   if (wasm_) {
     if (!wasm_->initialize(file, allow_precompiled)) {
        ENVOY_LOG(error, "unable to initialize WASM vm");
-       return;
+       throw Common::Wasm::WasmException("unable to initialize WASM vm");
     }
     if (!configuration.empty())
       wasm_->configure(configuration);
@@ -212,18 +246,10 @@ void Filter::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks
   (void) callbacks;
 }
 
+StreamHandler::StreamHandler(Http::HeaderMap& headers, bool end_stream, Filter& filter)
+    : headers_(headers), end_stream_(end_stream), filter_(filter) {}
 
 #if 0
-
-StreamHandleWrapper::StreamHandleWrapper(Session& session, Http::HeaderMap& headers,
-                                         bool end_stream, Filter& filter,
-                                         FilterCallbacks& callbacks)
-    : session_(session), headers_(headers), end_stream_(end_stream), filter_(filter),
-      callbacks_(callbacks), yield_callback_([this]() {
-        if (state_ == State::Running) {
-          throw WasmException("script performed an unexpected yield");
-        }
-      }) {}
 
 Http::FilterHeadersStatus StreamHandleWrapper::start(int) {
 #if 0

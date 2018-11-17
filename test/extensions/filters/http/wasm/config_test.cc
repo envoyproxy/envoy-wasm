@@ -17,7 +17,10 @@ namespace Wasm {
 TEST(WasmFilterConfigTest, WasmFilterInJson) {
   std::string json_string = R"EOF(
   {
-    "wasm_file" : "test.wasm"
+    "vm" : "envoy.wasm.vm.wavm",
+    "file" : "test.wasm",
+    "configuration" : "",
+    "allow_precompiled" : true
   }
   )EOF";
 

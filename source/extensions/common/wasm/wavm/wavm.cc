@@ -221,6 +221,7 @@ class Wavm : public WasmVm {
     void start(Context *context) override;
     void* allocMemory(uint32_t size, uint32_t *pointer) override;
     absl::string_view getMemory(uint32_t pointer, uint32_t size) override;
+    bool setMemory(uint32_t pointer, uint32_t size, void *data) override;
 
     Memory* memory() { return memory_; }
     Runtime::Context* context() { return context_; }
@@ -326,6 +327,16 @@ void *Wavm::allocMemory(uint32_t size, uint32_t *address) {
 absl::string_view Wavm::getMemory(uint32_t pointer, uint32_t size) {
    return {reinterpret_cast<char*>(memoryArrayPtr<U8>(memory(), pointer, static_cast<U64>(size))),
      static_cast<size_t>(size) };
+}
+
+bool Wavm::setMemory(uint32_t pointer, uint32_t size, void *data) {
+  auto p = reinterpret_cast<char*>(memoryArrayPtr<U8>(memory(), pointer, static_cast<U64>(size)));
+  if (p) {
+     memcpy(p, data, size);
+     return true;
+  } else {
+    return false;
+  }
 }
 
 std::unique_ptr<WasmVm> createWavm() {

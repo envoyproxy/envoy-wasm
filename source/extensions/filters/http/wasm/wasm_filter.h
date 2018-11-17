@@ -12,16 +12,18 @@ namespace HttpFilters {
 namespace Wasm {
 
 class Wasm;
-
+class StreamHandler;
 
 // A session within the WASM VM.
 class Context : public Envoy::Extensions::Common::Wasm::Context {
 public:
   using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
 
-  Context(Envoy::Extensions::Common::Wasm::WasmVm* vm, Wasm* wasm) :
-	  Envoy::Extensions::Common::Wasm::Context(vm), wasm_(wasm) {}
-  ~Context() override {}
+  Context(Envoy::Extensions::Common::Wasm::WasmVm* vm, Wasm* wasm, StreamHandler* stream) :
+	  Envoy::Extensions::Common::Wasm::Context(vm), wasm_(wasm), stream_(stream) {
+    onCreate();
+  }
+  ~Context() override { onDestroy(); }
 
   //
   // Calls from the WASM code.
@@ -75,15 +77,22 @@ public:
   //
   // Calls into the WASM code.
   //
+  virtual void onCreate();
   virtual void onStart();
   virtual void onBody();
   virtual void onTrailers();
   virtual void onHttpCallResponse(const Pairs& response_headers,
                                   absl::string_view response_body);
   virtual void raiseWasmError(absl::string_view message);
+  virtual void onDestroy();
 
+  // Handlers.
+  static void getHeaderHandler(void *raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr_ptr, uint32_t value_size_ptr);
+  static void replaceHeaderHandler(void *raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr, uint32_t value_size);
+ 
 private:
   Wasm *wasm_;
+  StreamHandler *stream_;
 };
 
 // Thread-local Wasm VM.
@@ -96,10 +105,20 @@ public:
   void configure(absl::string_view configuration);
   void start();
 
-  std::unique_ptr<Context> createContext() {
-    auto context = std::make_unique<Context>(wasm_vm_.get(), this);
+  std::unique_ptr<Context> createContext(StreamHandler *handler) {
+    auto context = std::make_unique<Context>(wasm_vm_.get(), this, handler);
     context->id = next_context_id_++;
     return context;
+  }
+
+  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onCreate() {
+     return onCreate_;
+  }
+  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onStart() {
+     return onStart_;
+  }
+  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onDestroy() {
+     return onDestroy_;
   }
 
 private:
@@ -107,6 +126,9 @@ private:
   std::unique_ptr<Envoy::Extensions::Common::Wasm::WasmVm> wasm_vm_;
   std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t configuration_ptr, uint32_t configuration_size)> configure_;
   std::unique_ptr<Context> general_context_;  // Context unrelated to nay specific filter or stream.
+  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onCreate_;
+  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onStart_;
+  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onDestroy_;
 };
 
 inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callbacks) {
@@ -129,7 +151,7 @@ public:
 
   StreamHandler(Http::HeaderMap& headers, bool end_stream, Filter& filter);
 
-  Http::FilterHeadersStatus start(int function_ref);
+  Http::FilterTrailersStatus start();
   Http::FilterDataStatus onData(Buffer::Instance& data, bool end_stream);
   Http::FilterTrailersStatus onTrailers(Http::HeaderMap& trailers);
 
@@ -141,9 +163,10 @@ public:
   }
 
 private:
+  friend class Context;
   // Http::AsyncClient::Callbacks
-  void onSuccess(Http::MessagePtr&&) override;
-  void onFailure(Http::AsyncClient::FailureReason) override;
+  void onSuccess(Http::MessagePtr&&) override {}
+  void onFailure(Http::AsyncClient::FailureReason) override {}
 
   std::unique_ptr<Context> context_;
   Http::HeaderMap& headers_;

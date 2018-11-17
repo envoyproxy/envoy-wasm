@@ -57,6 +57,8 @@ class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
     virtual void* allocMemory(uint32_t size, uint32_t *pointer) PURE;
     // Convert a block of memory in the VM to a string_view.
     virtual absl::string_view getMemory(uint32_t pointer, uint32_t size) PURE;
+    // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
+    virtual bool setMemory(uint32_t pointer, uint32_t size, void *data) PURE;
 
     // Convenience functions.
 
@@ -67,6 +69,21 @@ class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
       if (s.size() > 0) memcpy(m, s.data(), s.size());
       m[s.size()] = 0;
       return pointer;
+    }
+
+    // Copy the data in 's' into the VM along with the pointer-size pair.  Returns true on success.
+    bool copyToPointerSize(absl::string_view s, int32_t ptr_ptr, int32_t size_ptr) {
+      uint32_t pointer = 0;
+      uint32_t size = s.size();
+      void *p = nullptr;
+      if (size > 0) {
+        p = allocMemory(size, &pointer);
+        if (!p) return false;
+        memcpy(p, s.data(), size);
+      }
+      if (!setMemory(ptr_ptr, sizeof(int32_t), &pointer)) return false;
+      if (!setMemory(size_ptr, sizeof(int32_t), &size)) return false;
+      return true;
     }
 };
 
