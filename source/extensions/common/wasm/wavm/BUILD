@@ -13,7 +13,6 @@ envoy_cc_library(
     srcs = ["wavm.cc"],
     hdrs = ["wavm.h"],
     copts = [
-        "-I/usr/local/include",
         '-DEMSCRIPTEN_API=""',
         '-DPLATFORM_API=""',
         '-DRUNTIME_API=""',
