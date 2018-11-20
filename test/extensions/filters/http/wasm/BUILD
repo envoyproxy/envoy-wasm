@@ -18,7 +18,6 @@ envoy_extension_cc_test(
         ":bad_code.wasm",
         ":headers_only.wasm",
     ],
-    tags = ["manual"],
     extension_name = "envoy.filters.http.wasm",
     deps = [
         "//source/common/stream_info:stream_info_lib",
@@ -28,6 +27,7 @@ envoy_extension_cc_test(
         "//test/mocks/ssl:ssl_mocks",
         "//test/mocks/thread_local:thread_local_mocks",
         "//test/mocks/upstream:upstream_mocks",
+        "//test/test_common:environment_lib",
         "//test/test_common:utility_lib",
     ],
 )
@@ -46,10 +46,13 @@ envoy_extension_cc_test(
 envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
-    tags = ["manual"],
+    data = [
+        ":headers_only.wasm",
+    ],
     extension_name = "envoy.filters.http.wasm",
     deps = [
         "//source/extensions/filters/http/wasm:config",
         "//test/mocks/server:server_mocks",
+        "//test/test_common:environment_lib",
     ],
 )

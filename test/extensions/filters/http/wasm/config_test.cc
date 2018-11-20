@@ -3,6 +3,7 @@
 #include "extensions/filters/http/wasm/config.h"
 
 #include "test/mocks/server/mocks.h"
+#include "test/test_common/environment.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -15,14 +16,14 @@ namespace HttpFilters {
 namespace Wasm {
 
 TEST(WasmFilterConfigTest, WasmFilterInJson) {
-  std::string json_string = R"EOF(
+  const std::string json_string = TestEnvironment::substitute(R"EOF(
   {
     "vm" : "envoy.wasm.vm.wavm",
-    "file" : "test.wasm",
+    "file" : "{{ test_rundir }}/test/extensions/filters/http/wasm/headers_only.wasm",
     "configuration" : "",
     "allow_precompiled" : true
   }
-  )EOF";
+  )EOF");
 
   Json::ObjectSharedPtr json_config = Json::Factory::loadFromString(json_string);
   NiceMock<Server::Configuration::MockFactoryContext> context;
