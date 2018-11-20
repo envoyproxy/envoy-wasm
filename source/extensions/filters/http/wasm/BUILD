@@ -37,5 +37,6 @@ envoy_cc_library(
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/filters/http:well_known_names",
         "//source/extensions/filters/http/common:factory_base_lib",
+        "@envoy_api//envoy/config/filter/http/wasm/v2:wasm_cc",
     ],
 )

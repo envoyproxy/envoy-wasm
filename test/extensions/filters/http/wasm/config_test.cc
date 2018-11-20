@@ -16,7 +16,7 @@ namespace HttpFilters {
 namespace Wasm {
 
 TEST(WasmFilterConfigTest, WasmFilterInJson) {
-  const std::string json_string = TestEnvironment::substitute(R"EOF(
+  const std::string json = TestEnvironment::substitute(R"EOF(
   {
     "vm" : "envoy.wasm.vm.wavm",
     "file" : "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm",
@@ -25,10 +25,11 @@ TEST(WasmFilterConfigTest, WasmFilterInJson) {
   }
   )EOF");
 
-  Json::ObjectSharedPtr json_config = Json::Factory::loadFromString(json_string);
+  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  MessageUtil::loadFromJson(json, proto_config);
   NiceMock<Server::Configuration::MockFactoryContext> context;
   WasmFilterConfig factory;
-  Http::FilterFactoryCb cb = factory.createFilterFactory(*json_config, "stats", context);
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context);
   Http::MockFilterChainFactoryCallbacks filter_callback;
   EXPECT_CALL(filter_callback, addStreamFilter(_));
   cb(filter_callback);

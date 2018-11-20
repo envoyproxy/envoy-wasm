@@ -44,7 +44,6 @@ public:
   static const std::string ROUTER_HTTP_FILTER_SCHEMA;
   static const std::string LUA_HTTP_FILTER_SCHEMA;
   static const std::string SQUASH_HTTP_FILTER_SCHEMA;
-  static const std::string WASM_HTTP_FILTER_SCHEMA;
 
   // Cluster Schemas
   static const std::string CLUSTER_MANAGER_SCHEMA;

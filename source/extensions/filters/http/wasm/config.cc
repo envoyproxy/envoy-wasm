@@ -3,8 +3,6 @@
 #include "envoy/config/filter/http/wasm/v2/wasm.pb.validate.h"
 #include "envoy/registry/registry.h"
 
-#include "common/config/filter_json.h"
-
 #include "extensions/common/wasm/wasm.h"
 #include "extensions/filters/http/wasm/wasm_filter.h"
 
@@ -22,15 +20,6 @@ Http::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
   return [filter_config](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     callbacks.addStreamFilter(std::make_shared<Filter>(filter_config));
   };
-}
-
-Http::FilterFactoryCb
-WasmFilterConfig::createFilterFactory(const Json::Object& json_config,
-                                      const std::string& stat_prefix,
-                                      Server::Configuration::FactoryContext& context) {
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  Config::FilterJson::translateWasmFilter(json_config, proto_config);
-  return createFilterFactoryFromProtoTyped(proto_config, stat_prefix, context);
 }
 
 /**

@@ -379,17 +379,6 @@ void FilterJson::translateLuaFilter(const Json::Object& json_config,
   JSON_UTIL_SET_STRING(json_config, proto_config, inline_code);
 }
 
-void FilterJson::translateWasmFilter(const Json::Object& json_config,
-                                     envoy::config::filter::http::wasm::v2::Wasm& proto_config) {
-  json_config.validateSchema(Json::Schema::WASM_HTTP_FILTER_SCHEMA);
-  JSON_UTIL_SET_STRING(json_config, proto_config, vm);
-  JSON_UTIL_SET_STRING(json_config, proto_config, file);
-  JSON_UTIL_SET_STRING(json_config, proto_config, configuration);
-  if (json_config.hasObject("allow_precompiled"))
-    proto_config.set_allow_precompiled(
-        json_config.getBoolean("allow_precompiled", false));
-}
-
 void FilterJson::translateTcpProxy(
     const Json::Object& json_config,
     envoy::config::filter::network::tcp_proxy::v2::TcpProxy& proto_config) {

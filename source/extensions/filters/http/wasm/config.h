@@ -17,10 +17,6 @@ class WasmFilterConfig : public Common::FactoryBase<envoy::config::filter::http:
 public:
   WasmFilterConfig() : FactoryBase(HttpFilterNames::get().Wasm) {}
 
-  Http::FilterFactoryCb
-  createFilterFactory(const Json::Object& json_config, const std::string& stats_prefix,
-                      Server::Configuration::FactoryContext& context) override;
-
 private:
   Http::FilterFactoryCb
   createFilterFactoryFromProtoTyped(const envoy::config::filter::http::wasm::v2::Wasm& proto_config,
