@@ -48,7 +48,8 @@ class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
     virtual absl::string_view vm() PURE;
 
     // Load the WASM code from a file.  Return true on success.
-    virtual bool initialize(absl::string_view file, bool allow_precompiled) PURE;
+    virtual bool initialize(const std::string& code, absl::string_view name,
+                            bool allow_precompiled) PURE;
 
     // Call the 'start' function or main() if there is no start funcition.
     virtual void start(Context*) PURE;

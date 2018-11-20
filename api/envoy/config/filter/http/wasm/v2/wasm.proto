@@ -3,6 +3,8 @@ syntax = "proto3";
 package envoy.config.filter.http.wasm.v2;
 option go_package = "v2";
 
+import "envoy/api/v2/core/base.proto";
+
 import "validate/validate.proto";
 
 // [#protodoc-title: Wasm]
@@ -12,7 +14,7 @@ message Wasm {
   // The Wasm VM.
   string vm = 1;
   // The Wasm code that Envoy will execute.
-  string file = 2;
+  envoy.api.v2.core.DataSource code = 2;
   // The Wasm configuration string used on initialization.
   string configuration = 3;
   // Allow precompiled object code in the WASM file.

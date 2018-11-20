@@ -4,6 +4,8 @@ syntax = "proto3";
 
 package envoy.config.wasm.v2;
 
+import "envoy/api/v2/core/base.proto";
+
 import "validate/validate.proto";
 
 // Wasm is configured as a built-in *envoy.wasm_service* :ref:`WasmConig
@@ -13,7 +15,7 @@ message WasmConfig {
   // The Wasm VM.
   string vm = 1;
   // The Wasm code that Envoy will execute.
-  string file = 2;
+  envoy.api.v2.core.DataSource code = 2;
   // The Wasm configuration string used on initialization.
   string configuration = 3;
   // Allow the wasm_file to include pre-compiled code.

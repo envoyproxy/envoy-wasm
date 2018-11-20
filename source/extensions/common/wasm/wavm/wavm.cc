@@ -75,15 +75,6 @@ struct SaveRestoreContext {
   return static_cast<_type>(_x[0]._member); \
 } while (0)
 
-std::string readFile(absl::string_view filename) {
-  const std::string fn(filename);
-  std::ifstream file(fn);
-  if (file.fail()) return "";
-  std::stringstream file_string_stream;
-  file_string_stream << file.rdbuf();
-  return file_string_stream.str();
-}
-
 class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
   public:
     RootResolver(Compartment* compartment) : compartment_(compartment) {}
@@ -174,18 +165,15 @@ class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
     HashMap<std::string, ModuleInstance*> moduleNameToInstanceMap_;
 };
 
-bool loadModule(absl::string_view filename, IR::Module& outModule) {
-  auto bytes = readFile(filename);
-  if (bytes.empty()) return false;
-
-  // If the file starts with the WASM binary magic number, load it as a binary irModule.
+bool loadModule(const std::string& code, IR::Module& outModule) {
+  // If the code starts with the WASM binary magic number, load it as a binary irModule.
   static const uint8_t wasmMagicNumber[4] = {0x00, 0x61, 0x73, 0x6d};
-  if(bytes.size() >= 4 && !memcmp(bytes.c_str(), wasmMagicNumber, 4)) {
-    return WASM::loadBinaryModule(bytes.c_str(), bytes.size(), outModule);
+  if (code.size() >= 4 && !memcmp(code.data(), wasmMagicNumber, 4)) {
+    return WASM::loadBinaryModule(code.data(), code.size(), outModule);
   } else {
     // Load it as a text irModule.
     std::vector<WAST::Error> parseErrors;
-    if (!WAST::parseModule(bytes.c_str(), bytes.size() + 1, outModule, parseErrors)) {
+    if (!WAST::parseModule(code.c_str(), code.size() + 1, outModule, parseErrors)) {
       return false;
     }
     return true;
@@ -217,7 +205,8 @@ class Wavm : public WasmVm {
 
     // WasmVm
     absl::string_view vm() override { return Wasm::WasmVmNames::get().Wavm; }
-    bool initialize(absl::string_view file, bool allow_precompiled) override;
+    bool initialize(const std::string& code, absl::string_view name,
+                    bool allow_precompiled) override;
     void start(Context *context) override;
     void* allocMemory(uint32_t size, uint32_t *pointer) override;
     absl::string_view getMemory(uint32_t pointer, uint32_t size) override;
@@ -265,12 +254,12 @@ Wavm::~Wavm() {
   ASSERT(tryCollectCompartment(std::move(compartment_)));
 }
 
-bool Wavm::initialize(absl::string_view wasm_file, bool allow_precompiled) {
+bool Wavm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
   ASSERT(!hasInstantiatedModule_);
   hasInstantiatedModule_ = true;
   compartment_ = Runtime::createCompartment();
   context_ = Runtime::createContext(compartment_);
-  if (!loadModule(wasm_file, irModule_)) {
+  if (!loadModule(code, irModule_)) {
     return false;
   }
   Runtime::ModuleRef module = nullptr;
@@ -300,7 +289,8 @@ bool Wavm::initialize(absl::string_view wasm_file, bool allow_precompiled) {
   }
   rootResolver.moduleNameToInstanceMap().set("envoy", envoyModuleInstance_);
   LinkResult linkResult = linkModule(irModule_, rootResolver);
-  moduleInstance_ = instantiateModule(compartment_, module, std::move(linkResult.resolvedImports), std::string(wasm_file));
+  moduleInstance_ = instantiateModule(compartment_, module, std::move(linkResult.resolvedImports),
+                                      std::string(name));
   memory_ = getDefaultMemory(moduleInstance_);
   return true;
 }

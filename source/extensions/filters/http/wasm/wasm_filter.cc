@@ -160,9 +160,9 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
   }
 }
 
-bool Wasm::initialize(absl::string_view file, bool allow_precompiled) {
+bool Wasm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
   if (!wasm_vm_) return false;
-  auto ok = wasm_vm_->initialize(file, allow_precompiled);
+  auto ok = wasm_vm_->initialize(code, name, allow_precompiled);
   if (!ok) return false;
   getFunction(wasm_vm_.get(), "_configure", &configure_);
   getFunction(wasm_vm_.get(), "_onCreate", &onCreate_);
@@ -188,10 +188,13 @@ void Wasm::start() {
   wasm_vm_->start(general_context_.get());
 }
 
-FilterConfig::FilterConfig(absl::string_view vm, absl::string_view file, absl::string_view configuration,                bool allow_precompiled, ThreadLocal::SlotAllocator& tls, Upstream::ClusterManager& cluster_manager)
+FilterConfig::FilterConfig(absl::string_view vm, const std::string& code, absl::string_view name,
+                           bool allow_precompiled, absl::string_view configuration,
+                           ThreadLocal::SlotAllocator& tls,
+                           Upstream::ClusterManager& cluster_manager)
     : cluster_manager_(cluster_manager), wasm_(new Wasm(vm, tls)) {
   if (wasm_) {
-    if (!wasm_->initialize(file, allow_precompiled)) {
+    if (!wasm_->initialize(code, name, allow_precompiled)) {
        ENVOY_LOG(error, "unable to initialize WASM vm");
        throw Common::Wasm::WasmException("unable to initialize WASM vm");
     }

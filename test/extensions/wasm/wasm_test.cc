@@ -32,14 +32,15 @@ TEST(WasmTest, Logging) {
   Event::DispatcherImpl dispatcher(test_time.timeSystem());
   auto wasm = std::make_unique<Wasm>("envoy.wasm.vm.wavm");
   EXPECT_NE(wasm, nullptr);
-  auto wasm_fn =
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm");
+  const auto code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
+  EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq("test debug logging")));
   EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("test info logging")));
   EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq("warn configure-test")));
   EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("test tick logging")));
-  EXPECT_TRUE(wasm->initialize(wasm_fn, true));
+  EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   // NB: Must be done after initialize has created the context.
   wasm->setContext(context.release());
   wasm->configure("configure-test");

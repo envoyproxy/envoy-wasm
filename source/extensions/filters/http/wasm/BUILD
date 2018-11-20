@@ -33,6 +33,8 @@ envoy_cc_library(
     deps = [
         ":wasm_filter_lib",
         "//include/envoy/registry",
+        "//source/common/common:empty_string",
+        "//source/common/config:datasource_lib",
         "//source/common/config:filter_json_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/filters/http:well_known_names",

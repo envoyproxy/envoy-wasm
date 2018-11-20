@@ -46,8 +46,9 @@ public:
     }
   }
 
-  void setup(const std::string& wasm_file) {
-    config_.reset(new FilterConfig("envoy.wasm.vm.wavm", wasm_file, "", true, tls_, cluster_manager_));
+  void setup(const std::string& code) {
+    config_.reset(
+        new FilterConfig("envoy.wasm.vm.wavm", code, "<test>", true, "", tls_, cluster_manager_));
     setupFilter();
   }
 
@@ -67,17 +68,15 @@ public:
 
 // Bad code in initial config.
 TEST_F(WasmHttpFilterTest, BadCode) {
-  EXPECT_THROW_WITH_MESSAGE(
-      setup(TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/bad_code.wasm")),
-      Common::Wasm::WasmException, "unable to initialize WASM vm");
+  EXPECT_THROW_WITH_MESSAGE(setup("bad code"), Common::Wasm::WasmException,
+                            "unable to initialize WASM vm");
 }
 
 // Script touching headers only, request that is headers only.
 TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   InSequence s;
-  setup(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm"));
+  setup(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   // TODO(PiotrSikora): re-enable once fixed.
 #if 0

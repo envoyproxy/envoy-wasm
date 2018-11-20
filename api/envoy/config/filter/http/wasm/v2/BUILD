@@ -5,4 +5,7 @@ licenses(["notice"])  # Apache 2
 api_proto_library_internal(
     name = "wasm",
     srcs = ["wasm.proto"],
+    deps = [
+        "//envoy/api/v2/core:base",
+    ],
 )

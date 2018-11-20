@@ -22,7 +22,7 @@ TEST(WasmFactoryTest, CreateWasmFromWASM) {
   EXPECT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.set_vm("envoy.wasm.vm.wavm");
-  config.set_file(
+  config.mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
   Event::MockDispatcher dispatcher;
   Server::Configuration::WasmFactoryContextImpl context(dispatcher);
@@ -36,7 +36,7 @@ TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
   EXPECT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.set_vm("envoy.wasm.vm.wavm");
-  config.set_file(
+  config.mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
   config.set_allow_precompiled(true);
   Event::MockDispatcher dispatcher;
@@ -51,7 +51,7 @@ TEST(WasmFactoryTest, CreateWasmFromWAT) {
   EXPECT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.set_vm("envoy.wasm.vm.wavm");
-  config.set_file(
+  config.mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wat"));
   Event::MockDispatcher dispatcher;
   Server::Configuration::WasmFactoryContextImpl context(dispatcher);

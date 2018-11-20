@@ -101,7 +101,7 @@ public:
   Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&);
   ~Wasm() {}
 
-  bool initialize(absl::string_view file, bool allow_precomiled);
+  bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
   void configure(absl::string_view configuration);
   void start();
 
@@ -182,9 +182,9 @@ private:
 
 class FilterConfig : Logger::Loggable<Logger::Id::wasm> {
 public:
-  FilterConfig(absl::string_view vm, absl::string_view file, absl::string_view configuration,
-               bool allow_percompiled, ThreadLocal::SlotAllocator& tls,
-	       Upstream::ClusterManager& cluster_manager);
+  FilterConfig(absl::string_view vm, const std::string& code, absl::string_view name,
+               bool allow_precompiled, absl::string_view configuration,
+               ThreadLocal::SlotAllocator& tls, Upstream::ClusterManager& cluster_manager);
 
   Upstream::ClusterManager& cluster_manager() { return cluster_manager_; }
 

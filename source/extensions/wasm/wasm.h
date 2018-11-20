@@ -39,7 +39,8 @@ class Wasm : public Server::Wasm {
     explicit Wasm(absl::string_view vm);
     ~Wasm() override {}
 
-    bool initialize(absl::string_view file, bool allow_precomiled) override;
+    bool initialize(const std::string& code, absl::string_view name,
+                    bool allow_precomiled) override;
     void configure(absl::string_view configuration) override;
     void start(Event::Dispatcher& dispatcher, std::chrono::milliseconds tick_period) override;
 

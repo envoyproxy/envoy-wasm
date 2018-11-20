@@ -32,8 +32,8 @@ Wasm::Wasm(absl::string_view vm) {
   registerCallback(wasm_vm_.get(), "_setTickPeriodMilliseconds", &Context::setTickPeriodMillisecondsHandler);
 }
 
-bool Wasm::initialize(absl::string_view file, bool allow_precompiled) {
-  auto ok = wasm_vm_->initialize(file, allow_precompiled);
+bool Wasm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
+  auto ok = wasm_vm_->initialize(code, name, allow_precompiled);
   getFunction(wasm_vm_.get(), "_configure", &configure_);
   getFunction(wasm_vm_.get(), "_tick", &tick_);
   context_.reset(new Context(this));
