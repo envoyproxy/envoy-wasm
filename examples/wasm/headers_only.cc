@@ -41,7 +41,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void onStart(int32_t context_id) {
   context_map[context_id]->onStart();
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void onDestory(int32_t context_id) {
+extern "C" EMSCRIPTEN_KEEPALIVE void onDestroy(int32_t context_id) {
   context_map[context_id]->onDestroy();
   context_map[context_id].reset(nullptr);
 }

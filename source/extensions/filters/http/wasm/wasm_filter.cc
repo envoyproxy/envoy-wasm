@@ -168,6 +168,10 @@ bool Wasm::initialize(absl::string_view file, bool allow_precompiled) {
   getFunction(wasm_vm_.get(), "_onCreate", &onCreate_);
   getFunction(wasm_vm_.get(), "_onStart", &onStart_);
   getFunction(wasm_vm_.get(), "_onDestroy", &onDestroy_);
+  if (!onDestroy_) {
+    // TODO(PiotrSikora): remove this workaround once WASM code is fixed.
+    getFunction(wasm_vm_.get(), "_onDestory", &onDestroy_);
+  }
   if (!onCreate_ || !onStart_ || !onDestroy_) return false;
   general_context_ = createContext(nullptr);
   return true;
