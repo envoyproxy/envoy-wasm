@@ -11,5 +11,6 @@ filegroup(
     name = "modules",
     srcs = glob([
         "*.wasm",
+        "*.wat",
     ]),
 )
