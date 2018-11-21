@@ -30,6 +30,21 @@ TEST(WasmFactoryTest, CreateWasmFromWASM) {
   EXPECT_NE(wasm, nullptr);
 }
 
+TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
+  auto factory =
+      Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
+  EXPECT_NE(factory, nullptr);
+  envoy::config::wasm::v2::WasmConfig config;
+  config.set_vm("envoy.wasm.vm.wavm");
+  config.set_file(
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
+  config.set_allow_precompiled(true);
+  Event::MockDispatcher dispatcher;
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  auto wasm = factory->createWasm(config, context);
+  EXPECT_NE(wasm, nullptr);
+}
+
 TEST(WasmFactoryTest, CreateWasmFromWAT) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
