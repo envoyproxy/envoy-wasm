@@ -15,8 +15,7 @@ envoy_extension_cc_test(
     name = "wasm_filter_test",
     srcs = ["wasm_filter_test.cc"],
     data = [
-        ":bad_code.wasm",
-        ":headers_only.wasm",
+        "//test/extensions/filters/http/wasm/test_data:modules",
     ],
     extension_name = "envoy.filters.http.wasm",
     deps = [
@@ -47,7 +46,7 @@ envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
     data = [
-        ":headers_only.wasm",
+        "//test/extensions/filters/http/wasm/test_data:modules",
     ],
     extension_name = "envoy.filters.http.wasm",
     deps = [

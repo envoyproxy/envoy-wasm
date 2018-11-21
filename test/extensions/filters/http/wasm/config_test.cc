@@ -19,7 +19,7 @@ TEST(WasmFilterConfigTest, WasmFilterInJson) {
   const std::string json_string = TestEnvironment::substitute(R"EOF(
   {
     "vm" : "envoy.wasm.vm.wavm",
-    "file" : "{{ test_rundir }}/test/extensions/filters/http/wasm/headers_only.wasm",
+    "file" : "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm",
     "configuration" : "",
     "allow_precompiled" : true
   }

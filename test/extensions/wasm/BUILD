@@ -15,7 +15,7 @@ envoy_extension_cc_test(
     name = "wasm_test",
     srcs = ["wasm_test.cc"],
     data = [
-        ":envoy_wasm_test.wasm",
+        "//test/extensions/wasm/test_data:modules",
     ],
     extension_name = "envoy.wasm",
     external_deps = ["abseil_optional"],
@@ -33,7 +33,7 @@ envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
     data = [
-        ":envoy_wasm_test.wasm",
+        "//test/extensions/wasm/test_data:modules",
     ],
     extension_name = "envoy.wasm",
     deps = [

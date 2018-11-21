@@ -33,7 +33,7 @@ TEST(WasmTest, Logging) {
   auto wasm = std::make_unique<Wasm>("envoy.wasm.vm.wavm");
   EXPECT_NE(wasm, nullptr);
   auto wasm_fn =
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/envoy_wasm_test.wasm");
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm");
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq("test debug logging")));
   EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("test info logging")));

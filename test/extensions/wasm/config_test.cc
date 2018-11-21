@@ -23,7 +23,7 @@ TEST(WasmFactoryTest, CreateWasm) {
   envoy::config::wasm::v2::WasmConfig config;
   config.set_vm("envoy.wasm.vm.wavm");
   config.set_file(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/envoy_wasm_test.wasm"));
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
   Event::MockDispatcher dispatcher;
   Server::Configuration::WasmFactoryContextImpl context(dispatcher);
   auto wasm = factory->createWasm(config, context);

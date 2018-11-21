@@ -69,7 +69,7 @@ public:
 TEST_F(WasmHttpFilterTest, BadCode) {
   EXPECT_THROW_WITH_MESSAGE(
       setup(TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/filters/http/wasm/bad_code.wasm")),
+          "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/bad_code.wasm")),
       Common::Wasm::WasmException, "unable to initialize WASM vm");
 }
 
@@ -77,7 +77,7 @@ TEST_F(WasmHttpFilterTest, BadCode) {
 TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   InSequence s;
   setup(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/filters/http/wasm/headers_only.wasm"));
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm"));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   // TODO(PiotrSikora): re-enable once fixed.
 #if 0
