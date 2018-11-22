@@ -35,9 +35,7 @@
   (export "_tick" (func $_tick))
   (export "dynCall_v" (func $dynCall_v))
   (export "establishStackSpace" (func $establishStackSpace))
-  (export "getTempRet0" (func $getTempRet0))
   (export "runPostSets" (func $runPostSets))
-  (export "setTempRet0" (func $setTempRet0))
   (export "setThrew" (func $setThrew))
   (export "stackAlloc" (func $stackAlloc))
   (export "stackRestore" (func $stackRestore))
@@ -47,7 +45,6 @@
   (global $18  (mut i32) (get_global $15))
   (global $19  (mut i32) (i32.const 0))
   (global $20  (mut i32) (i32.const 0))
-  (global $21  (mut i32) (i32.const 0))
   (elem $10 (get_global $12)
     $b0)
   (data $11 (i32.const 1024)
@@ -103,17 +100,6 @@
       get_local $1
       set_global $20
     end ;; $if
-    )
-  
-  (func $setTempRet0 (type $1)
-    (param $0 i32)
-    get_local $0
-    set_global $21
-    )
-  
-  (func $getTempRet0 (type $2)
-    (result i32)
-    get_global $21
     )
   
   (func $_configure (type $7)
@@ -616,31 +602,37 @@
     (local $2 i32)
     (local $3 i32)
     block $block
-      get_local $0
-      tee_local $2
-      i32.const 3
-      i32.and
-      if $if
-        get_local $2
-        tee_local $1
-        set_local $0
-        loop $loop
-          get_local $1
-          i32.load8_s
-          i32.eqz
-          br_if $block
-          get_local $1
-          i32.const 1
-          i32.add
+      block $block_0
+        get_local $0
+        tee_local $2
+        i32.const 3
+        i32.and
+        i32.eqz
+        br_if $block_0
+        block $block_1
+          get_local $2
           tee_local $1
-          tee_local $0
-          i32.const 3
-          i32.and
-          br_if $loop
-        end ;; $loop
-        get_local $1
-        set_local $0
-      end ;; $if
+          set_local $0
+          loop $loop
+            get_local $1
+            i32.load8_s
+            i32.eqz
+            br_if $block_1
+            get_local $1
+            i32.const 1
+            i32.add
+            tee_local $1
+            tee_local $0
+            i32.const 3
+            i32.and
+            br_if $loop
+          end ;; $loop
+          get_local $1
+          set_local $0
+          br $block_0
+        end ;; $block_1
+        br $block
+      end ;; $block_0
       loop $loop_0
         get_local $0
         i32.const 4
@@ -658,16 +650,16 @@
         i32.add
         i32.and
         i32.eqz
-        if $if_0
+        if $if
           get_local $1
           set_local $0
           br $loop_0
-        end ;; $if_0
+        end ;; $if
       end ;; $loop_0
       get_local $3
       i32.const 255
       i32.and
-      if $if_1
+      if $if_0
         loop $loop_1
           get_local $0
           i32.const 1
@@ -676,7 +668,7 @@
           i32.load8_s
           br_if $loop_1
         end ;; $loop_1
-      end ;; $if_1
+      end ;; $if_0
     end ;; $block
     get_local $0
     get_local $2
@@ -711,290 +703,752 @@
     block $block
       block $block_0
         get_global $17
-        set_local $1
+        set_local $14
         get_global $17
         i32.const 16
         i32.add
         set_global $17
-        get_local $1
-        set_local $14
-        block $block_1 (result i32)
+        get_local $0
+        i32.const 245
+        i32.lt_u
+        if $if (result i32)
           get_local $0
-          i32.const 245
+          i32.const 11
+          i32.add
+          i32.const -8
+          i32.and
+          set_local $1
+          i32.const 1076
+          i32.load
+          tee_local $7
+          get_local $0
+          i32.const 11
           i32.lt_u
-          if $if (result i32)
-            get_local $0
-            i32.const 11
-            i32.add
-            i32.const -8
+          if $if_0 (result i32)
+            i32.const 16
+            tee_local $1
+          else
+            get_local $1
+          end ;; $if_0
+          i32.const 3
+          i32.shr_u
+          tee_local $0
+          i32.shr_u
+          tee_local $3
+          i32.const 3
+          i32.and
+          if $if_1
+            get_local $3
+            i32.const 1
             i32.and
-            set_local $1
-            i32.const 1076
-            i32.load
-            tee_local $7
+            i32.const 1
+            i32.xor
             get_local $0
-            i32.const 11
-            i32.lt_u
-            if $if_0 (result i32)
-              i32.const 16
-              tee_local $1
-            else
-              get_local $1
-            end ;; $if_0
+            i32.add
+            tee_local $1
             i32.const 3
-            i32.shr_u
+            i32.shl
+            i32.const 1116
+            i32.add
+            tee_local $2
+            i32.const 8
+            i32.add
+            tee_local $4
+            i32.load
             tee_local $0
-            i32.shr_u
+            i32.const 8
+            i32.add
+            tee_local $6
+            i32.load
+            tee_local $3
+            get_local $2
+            i32.eq
+            if $if_2
+              i32.const 1076
+              get_local $7
+              i32.const 1
+              get_local $1
+              i32.shl
+              i32.const -1
+              i32.xor
+              i32.and
+              i32.store
+            else
+              i32.const 1092
+              i32.load
+              get_local $3
+              i32.gt_u
+              if $if_3
+                call $_abort
+              end ;; $if_3
+              get_local $3
+              i32.const 12
+              i32.add
+              tee_local $5
+              i32.load
+              get_local $0
+              i32.eq
+              if $if_4
+                get_local $5
+                get_local $2
+                i32.store
+                get_local $4
+                get_local $3
+                i32.store
+              else
+                call $_abort
+              end ;; $if_4
+            end ;; $if_2
+            get_local $0
+            get_local $1
+            i32.const 3
+            i32.shl
             tee_local $3
             i32.const 3
-            i32.and
-            if $if_1
+            i32.or
+            i32.store offset=4
+            get_local $0
+            get_local $3
+            i32.add
+            i32.const 4
+            i32.add
+            tee_local $0
+            get_local $0
+            i32.load
+            i32.const 1
+            i32.or
+            i32.store
+            get_local $14
+            set_global $17
+            get_local $6
+            return
+          end ;; $if_1
+          get_local $1
+          i32.const 1084
+          i32.load
+          tee_local $15
+          i32.gt_u
+          if $if_5 (result i32)
+            get_local $3
+            if $if_6
               get_local $3
+              get_local $0
+              i32.shl
+              i32.const 2
+              get_local $0
+              i32.shl
+              tee_local $0
+              i32.const 0
+              get_local $0
+              i32.sub
+              i32.or
+              i32.and
+              tee_local $0
+              i32.const 0
+              get_local $0
+              i32.sub
+              i32.and
+              i32.const -1
+              i32.add
+              tee_local $3
+              i32.const 12
+              i32.shr_u
+              i32.const 16
+              i32.and
+              set_local $0
+              get_local $3
+              get_local $0
+              i32.shr_u
+              tee_local $3
+              i32.const 5
+              i32.shr_u
+              i32.const 8
+              i32.and
+              tee_local $4
+              get_local $0
+              i32.or
+              get_local $3
+              get_local $4
+              i32.shr_u
+              tee_local $0
+              i32.const 2
+              i32.shr_u
+              i32.const 4
+              i32.and
+              tee_local $3
+              i32.or
+              get_local $0
+              get_local $3
+              i32.shr_u
+              tee_local $0
+              i32.const 1
+              i32.shr_u
+              i32.const 2
+              i32.and
+              tee_local $3
+              i32.or
+              get_local $0
+              get_local $3
+              i32.shr_u
+              tee_local $0
+              i32.const 1
+              i32.shr_u
               i32.const 1
               i32.and
-              i32.const 1
-              i32.xor
+              tee_local $3
+              i32.or
               get_local $0
+              get_local $3
+              i32.shr_u
               i32.add
-              tee_local $1
+              tee_local $4
               i32.const 3
               i32.shl
               i32.const 1116
               i32.add
-              tee_local $2
+              tee_local $5
               i32.const 8
               i32.add
-              tee_local $4
+              tee_local $9
               i32.load
               tee_local $0
               i32.const 8
               i32.add
-              tee_local $6
+              tee_local $10
               i32.load
               tee_local $3
-              get_local $2
+              get_local $5
               i32.eq
-              if $if_2
+              if $if_7
                 i32.const 1076
                 get_local $7
                 i32.const 1
-                get_local $1
+                get_local $4
                 i32.shl
                 i32.const -1
                 i32.xor
                 i32.and
+                tee_local $2
                 i32.store
               else
                 i32.const 1092
                 i32.load
                 get_local $3
                 i32.gt_u
-                if $if_3
+                if $if_8
                   call $_abort
-                end ;; $if_3
+                end ;; $if_8
                 get_local $3
                 i32.const 12
                 i32.add
-                tee_local $5
+                tee_local $11
                 i32.load
                 get_local $0
                 i32.eq
-                if $if_4
+                if $if_9
+                  get_local $11
                   get_local $5
-                  get_local $2
                   i32.store
-                  get_local $4
+                  get_local $9
                   get_local $3
                   i32.store
+                  get_local $7
+                  set_local $2
                 else
                   call $_abort
-                end ;; $if_4
-              end ;; $if_2
+                end ;; $if_9
+              end ;; $if_7
               get_local $0
               get_local $1
               i32.const 3
+              i32.or
+              i32.store offset=4
+              get_local $0
+              get_local $1
+              i32.add
+              tee_local $7
+              get_local $4
+              i32.const 3
               i32.shl
               tee_local $3
-              i32.const 3
+              get_local $1
+              i32.sub
+              tee_local $5
+              i32.const 1
               i32.or
               i32.store offset=4
               get_local $0
               get_local $3
               i32.add
-              i32.const 4
-              i32.add
-              tee_local $0
-              get_local $0
-              i32.load
-              i32.const 1
-              i32.or
+              get_local $5
               i32.store
-              get_local $14
-              set_global $17
-              get_local $6
-              return
-            end ;; $if_1
-            get_local $1
-            i32.const 1084
-            i32.load
-            tee_local $15
-            i32.gt_u
-            if $if_5 (result i32)
-              get_local $3
-              if $if_6
-                get_local $3
-                get_local $0
-                i32.shl
-                i32.const 2
-                get_local $0
-                i32.shl
-                tee_local $0
-                i32.const 0
-                get_local $0
-                i32.sub
-                i32.or
-                i32.and
-                tee_local $0
-                i32.const 0
-                get_local $0
-                i32.sub
-                i32.and
-                i32.const -1
-                i32.add
-                tee_local $3
-                i32.const 12
-                i32.shr_u
-                i32.const 16
-                i32.and
-                set_local $0
-                get_local $3
-                get_local $0
+              get_local $15
+              if $if_10
+                i32.const 1096
+                i32.load
+                set_local $4
+                get_local $15
+                i32.const 3
                 i32.shr_u
                 tee_local $3
-                i32.const 5
-                i32.shr_u
-                i32.const 8
-                i32.and
-                tee_local $4
-                get_local $0
-                i32.or
-                get_local $3
-                get_local $4
-                i32.shr_u
-                tee_local $0
-                i32.const 2
-                i32.shr_u
-                i32.const 4
-                i32.and
-                tee_local $3
-                i32.or
-                get_local $0
-                get_local $3
-                i32.shr_u
-                tee_local $0
-                i32.const 1
-                i32.shr_u
-                i32.const 2
-                i32.and
-                tee_local $3
-                i32.or
-                get_local $0
-                get_local $3
-                i32.shr_u
-                tee_local $0
-                i32.const 1
-                i32.shr_u
-                i32.const 1
-                i32.and
-                tee_local $3
-                i32.or
-                get_local $0
-                get_local $3
-                i32.shr_u
-                i32.add
-                tee_local $4
                 i32.const 3
                 i32.shl
                 i32.const 1116
                 i32.add
-                tee_local $5
-                i32.const 8
+                set_local $0
+                get_local $2
+                i32.const 1
+                get_local $3
+                i32.shl
+                tee_local $3
+                i32.and
+                if $if_11
+                  i32.const 1092
+                  i32.load
+                  get_local $0
+                  i32.const 8
+                  i32.add
+                  tee_local $3
+                  i32.load
+                  tee_local $1
+                  i32.gt_u
+                  if $if_12
+                    call $_abort
+                  else
+                    get_local $1
+                    set_local $6
+                    get_local $3
+                    set_local $13
+                  end ;; $if_12
+                else
+                  i32.const 1076
+                  get_local $2
+                  get_local $3
+                  i32.or
+                  i32.store
+                  get_local $0
+                  set_local $6
+                  get_local $0
+                  i32.const 8
+                  i32.add
+                  set_local $13
+                end ;; $if_11
+                get_local $13
+                get_local $4
+                i32.store
+                get_local $6
+                get_local $4
+                i32.store offset=12
+                get_local $4
+                get_local $6
+                i32.store offset=8
+                get_local $4
+                get_local $0
+                i32.store offset=12
+              end ;; $if_10
+              i32.const 1084
+              get_local $5
+              i32.store
+              i32.const 1096
+              get_local $7
+              i32.store
+              get_local $14
+              set_global $17
+              get_local $10
+              return
+            end ;; $if_6
+            i32.const 1080
+            i32.load
+            tee_local $13
+            if $if_13 (result i32)
+              get_local $13
+              i32.const 0
+              get_local $13
+              i32.sub
+              i32.and
+              i32.const -1
+              i32.add
+              tee_local $3
+              i32.const 12
+              i32.shr_u
+              i32.const 16
+              i32.and
+              set_local $0
+              get_local $3
+              get_local $0
+              i32.shr_u
+              tee_local $3
+              i32.const 5
+              i32.shr_u
+              i32.const 8
+              i32.and
+              tee_local $2
+              get_local $0
+              i32.or
+              get_local $3
+              get_local $2
+              i32.shr_u
+              tee_local $0
+              i32.const 2
+              i32.shr_u
+              i32.const 4
+              i32.and
+              tee_local $3
+              i32.or
+              get_local $0
+              get_local $3
+              i32.shr_u
+              tee_local $0
+              i32.const 1
+              i32.shr_u
+              i32.const 2
+              i32.and
+              tee_local $3
+              i32.or
+              get_local $0
+              get_local $3
+              i32.shr_u
+              tee_local $0
+              i32.const 1
+              i32.shr_u
+              i32.const 1
+              i32.and
+              tee_local $3
+              i32.or
+              get_local $0
+              get_local $3
+              i32.shr_u
+              i32.add
+              i32.const 2
+              i32.shl
+              i32.const 1380
+              i32.add
+              i32.load
+              tee_local $2
+              set_local $0
+              get_local $2
+              i32.load offset=4
+              i32.const -8
+              i32.and
+              get_local $1
+              i32.sub
+              set_local $6
+              loop $loop
+                block $block_1
+                  get_local $0
+                  i32.load offset=16
+                  tee_local $3
+                  if $if_14
+                    get_local $3
+                    set_local $0
+                  else
+                    get_local $0
+                    i32.load offset=20
+                    tee_local $0
+                    i32.eqz
+                    br_if $block_1
+                  end ;; $if_14
+                  get_local $0
+                  i32.load offset=4
+                  i32.const -8
+                  i32.and
+                  get_local $1
+                  i32.sub
+                  tee_local $3
+                  get_local $6
+                  i32.lt_u
+                  tee_local $9
+                  i32.eqz
+                  if $if_15
+                    get_local $6
+                    set_local $3
+                  end ;; $if_15
+                  get_local $9
+                  if $if_16
+                    get_local $0
+                    set_local $2
+                  end ;; $if_16
+                  get_local $3
+                  set_local $6
+                  br $loop
+                end ;; $block_1
+              end ;; $loop
+              i32.const 1092
+              i32.load
+              tee_local $12
+              get_local $2
+              i32.gt_u
+              if $if_17
+                call $_abort
+              end ;; $if_17
+              get_local $2
+              get_local $1
+              i32.add
+              tee_local $8
+              get_local $2
+              i32.le_u
+              if $if_18
+                call $_abort
+              end ;; $if_18
+              get_local $2
+              i32.load offset=24
+              set_local $11
+              get_local $2
+              i32.load offset=12
+              tee_local $0
+              get_local $2
+              i32.eq
+              if $if_19
+                block $block_2
+                  get_local $2
+                  i32.const 20
+                  i32.add
+                  tee_local $3
+                  i32.load
+                  tee_local $0
+                  i32.eqz
+                  if $if_20
+                    get_local $2
+                    i32.const 16
+                    i32.add
+                    tee_local $3
+                    i32.load
+                    tee_local $0
+                    i32.eqz
+                    br_if $block_2
+                  end ;; $if_20
+                  loop $loop_0
+                    block $block_3
+                      get_local $0
+                      i32.const 20
+                      i32.add
+                      tee_local $9
+                      i32.load
+                      tee_local $10
+                      i32.eqz
+                      if $if_21
+                        get_local $0
+                        i32.const 16
+                        i32.add
+                        tee_local $9
+                        i32.load
+                        tee_local $10
+                        i32.eqz
+                        br_if $block_3
+                      end ;; $if_21
+                      get_local $9
+                      set_local $3
+                      get_local $10
+                      set_local $0
+                      br $loop_0
+                    end ;; $block_3
+                  end ;; $loop_0
+                  get_local $12
+                  get_local $3
+                  i32.gt_u
+                  if $if_22
+                    call $_abort
+                  else
+                    get_local $3
+                    i32.const 0
+                    i32.store
+                    get_local $0
+                    set_local $4
+                  end ;; $if_22
+                end ;; $block_2
+              else
+                get_local $12
+                get_local $2
+                i32.load offset=8
+                tee_local $3
+                i32.gt_u
+                if $if_23
+                  call $_abort
+                end ;; $if_23
+                get_local $3
+                i32.const 12
                 i32.add
                 tee_local $9
                 i32.load
-                tee_local $0
+                get_local $2
+                i32.ne
+                if $if_24
+                  call $_abort
+                end ;; $if_24
+                get_local $0
                 i32.const 8
                 i32.add
                 tee_local $10
                 i32.load
-                tee_local $3
-                get_local $5
+                get_local $2
                 i32.eq
-                if $if_7
-                  i32.const 1076
-                  get_local $7
-                  i32.const 1
-                  get_local $4
-                  i32.shl
-                  i32.const -1
-                  i32.xor
-                  i32.and
-                  tee_local $2
+                if $if_25
+                  get_local $9
+                  get_local $0
                   i32.store
+                  get_local $10
+                  get_local $3
+                  i32.store
+                  get_local $0
+                  set_local $4
                 else
+                  call $_abort
+                end ;; $if_25
+              end ;; $if_19
+              get_local $11
+              if $if_26
+                block $block_4
+                  get_local $2
+                  get_local $2
+                  i32.load offset=28
+                  tee_local $0
+                  i32.const 2
+                  i32.shl
+                  i32.const 1380
+                  i32.add
+                  tee_local $3
+                  i32.load
+                  i32.eq
+                  if $if_27
+                    get_local $3
+                    get_local $4
+                    i32.store
+                    get_local $4
+                    i32.eqz
+                    if $if_28
+                      i32.const 1080
+                      get_local $13
+                      i32.const 1
+                      get_local $0
+                      i32.shl
+                      i32.const -1
+                      i32.xor
+                      i32.and
+                      i32.store
+                      br $block_4
+                    end ;; $if_28
+                  else
+                    i32.const 1092
+                    i32.load
+                    get_local $11
+                    i32.gt_u
+                    if $if_29
+                      call $_abort
+                    else
+                      get_local $11
+                      i32.const 20
+                      i32.add
+                      set_local $0
+                      get_local $11
+                      i32.const 16
+                      i32.add
+                      tee_local $3
+                      i32.load
+                      get_local $2
+                      i32.eq
+                      if $if_30 (result i32)
+                        get_local $3
+                      else
+                        get_local $0
+                      end ;; $if_30
+                      get_local $4
+                      i32.store
+                      get_local $4
+                      i32.eqz
+                      br_if $block_4
+                    end ;; $if_29
+                  end ;; $if_27
                   i32.const 1092
                   i32.load
-                  get_local $3
+                  tee_local $3
+                  get_local $4
                   i32.gt_u
-                  if $if_8
+                  if $if_31
                     call $_abort
-                  end ;; $if_8
-                  get_local $3
-                  i32.const 12
-                  i32.add
-                  tee_local $11
-                  i32.load
-                  get_local $0
-                  i32.eq
-                  if $if_9
-                    get_local $11
-                    get_local $5
-                    i32.store
-                    get_local $9
+                  end ;; $if_31
+                  get_local $4
+                  get_local $11
+                  i32.store offset=24
+                  get_local $2
+                  i32.load offset=16
+                  tee_local $0
+                  if $if_32
                     get_local $3
-                    i32.store
-                    get_local $7
-                    set_local $2
-                  else
-                    call $_abort
-                  end ;; $if_9
-                end ;; $if_7
+                    get_local $0
+                    i32.gt_u
+                    if $if_33
+                      call $_abort
+                    else
+                      get_local $4
+                      get_local $0
+                      i32.store offset=16
+                      get_local $0
+                      get_local $4
+                      i32.store offset=24
+                    end ;; $if_33
+                  end ;; $if_32
+                  get_local $2
+                  i32.load offset=20
+                  tee_local $0
+                  if $if_34
+                    i32.const 1092
+                    i32.load
+                    get_local $0
+                    i32.gt_u
+                    if $if_35
+                      call $_abort
+                    else
+                      get_local $4
+                      get_local $0
+                      i32.store offset=20
+                      get_local $0
+                      get_local $4
+                      i32.store offset=24
+                    end ;; $if_35
+                  end ;; $if_34
+                end ;; $block_4
+              end ;; $if_26
+              get_local $6
+              i32.const 16
+              i32.lt_u
+              if $if_36
+                get_local $2
+                get_local $6
+                get_local $1
+                i32.add
+                tee_local $0
+                i32.const 3
+                i32.or
+                i32.store offset=4
+                get_local $2
                 get_local $0
+                i32.add
+                i32.const 4
+                i32.add
+                tee_local $0
+                get_local $0
+                i32.load
+                i32.const 1
+                i32.or
+                i32.store
+              else
+                get_local $2
                 get_local $1
                 i32.const 3
                 i32.or
                 i32.store offset=4
-                get_local $0
-                get_local $1
-                i32.add
-                tee_local $7
-                get_local $4
-                i32.const 3
-                i32.shl
-                tee_local $3
-                get_local $1
-                i32.sub
-                tee_local $5
+                get_local $8
+                get_local $6
                 i32.const 1
                 i32.or
                 i32.store offset=4
-                get_local $0
-                get_local $3
+                get_local $8
+                get_local $6
                 i32.add
-                get_local $5
+                get_local $6
                 i32.store
                 get_local $15
-                if $if_10
+                if $if_37
                   i32.const 1096
                   i32.load
                   set_local $4
@@ -1007,13 +1461,13 @@
                   i32.const 1116
                   i32.add
                   set_local $0
-                  get_local $2
                   i32.const 1
                   get_local $3
                   i32.shl
                   tee_local $3
+                  get_local $7
                   i32.and
-                  if $if_11
+                  if $if_38
                     i32.const 1092
                     i32.load
                     get_local $0
@@ -1023,531 +1477,67 @@
                     i32.load
                     tee_local $1
                     i32.gt_u
-                    if $if_12
+                    if $if_39
                       call $_abort
                     else
                       get_local $1
-                      set_local $6
+                      set_local $5
                       get_local $3
-                      set_local $13
-                    end ;; $if_12
+                      set_local $16
+                    end ;; $if_39
                   else
                     i32.const 1076
-                    get_local $2
                     get_local $3
+                    get_local $7
                     i32.or
                     i32.store
                     get_local $0
-                    set_local $6
+                    set_local $5
                     get_local $0
                     i32.const 8
                     i32.add
-                    set_local $13
-                  end ;; $if_11
-                  get_local $13
+                    set_local $16
+                  end ;; $if_38
+                  get_local $16
                   get_local $4
                   i32.store
-                  get_local $6
+                  get_local $5
                   get_local $4
                   i32.store offset=12
                   get_local $4
-                  get_local $6
+                  get_local $5
                   i32.store offset=8
                   get_local $4
                   get_local $0
                   i32.store offset=12
-                end ;; $if_10
+                end ;; $if_37
                 i32.const 1084
-                get_local $5
+                get_local $6
                 i32.store
                 i32.const 1096
-                get_local $7
+                get_local $8
                 i32.store
-                get_local $14
-                set_global $17
-                get_local $10
-                return
-              end ;; $if_6
-              i32.const 1080
-              i32.load
-              tee_local $13
-              if $if_13 (result i32)
-                get_local $13
-                i32.const 0
-                get_local $13
-                i32.sub
-                i32.and
-                i32.const -1
-                i32.add
-                tee_local $3
-                i32.const 12
-                i32.shr_u
-                i32.const 16
-                i32.and
-                set_local $0
-                get_local $3
-                get_local $0
-                i32.shr_u
-                tee_local $3
-                i32.const 5
-                i32.shr_u
-                i32.const 8
-                i32.and
-                tee_local $2
-                get_local $0
-                i32.or
-                get_local $3
-                get_local $2
-                i32.shr_u
-                tee_local $0
-                i32.const 2
-                i32.shr_u
-                i32.const 4
-                i32.and
-                tee_local $3
-                i32.or
-                get_local $0
-                get_local $3
-                i32.shr_u
-                tee_local $0
-                i32.const 1
-                i32.shr_u
-                i32.const 2
-                i32.and
-                tee_local $3
-                i32.or
-                get_local $0
-                get_local $3
-                i32.shr_u
-                tee_local $0
-                i32.const 1
-                i32.shr_u
-                i32.const 1
-                i32.and
-                tee_local $3
-                i32.or
-                get_local $0
-                get_local $3
-                i32.shr_u
-                i32.add
-                i32.const 2
-                i32.shl
-                i32.const 1380
-                i32.add
-                i32.load
-                tee_local $2
-                set_local $0
-                get_local $2
-                i32.load offset=4
-                i32.const -8
-                i32.and
-                get_local $1
-                i32.sub
-                set_local $6
-                loop $loop
-                  block $block_2
-                    get_local $0
-                    i32.load offset=16
-                    tee_local $3
-                    if $if_14
-                      get_local $3
-                      set_local $0
-                    else
-                      get_local $0
-                      i32.load offset=20
-                      tee_local $0
-                      i32.eqz
-                      br_if $block_2
-                    end ;; $if_14
-                    get_local $0
-                    i32.load offset=4
-                    i32.const -8
-                    i32.and
-                    get_local $1
-                    i32.sub
-                    tee_local $3
-                    get_local $6
-                    i32.lt_u
-                    tee_local $9
-                    i32.eqz
-                    if $if_15
-                      get_local $6
-                      set_local $3
-                    end ;; $if_15
-                    get_local $9
-                    if $if_16
-                      get_local $0
-                      set_local $2
-                    end ;; $if_16
-                    get_local $3
-                    set_local $6
-                    br $loop
-                  end ;; $block_2
-                end ;; $loop
-                i32.const 1092
-                i32.load
-                tee_local $12
-                get_local $2
-                i32.gt_u
-                if $if_17
-                  call $_abort
-                end ;; $if_17
-                get_local $2
-                get_local $1
-                i32.add
-                tee_local $8
-                get_local $2
-                i32.le_u
-                if $if_18
-                  call $_abort
-                end ;; $if_18
-                get_local $2
-                i32.load offset=24
-                set_local $11
-                block $block_3
-                  get_local $2
-                  i32.load offset=12
-                  tee_local $0
-                  get_local $2
-                  i32.eq
-                  if $if_19
-                    get_local $2
-                    i32.const 20
-                    i32.add
-                    tee_local $3
-                    i32.load
-                    tee_local $0
-                    i32.eqz
-                    if $if_20
-                      get_local $2
-                      i32.const 16
-                      i32.add
-                      tee_local $3
-                      i32.load
-                      tee_local $0
-                      i32.eqz
-                      br_if $block_3
-                    end ;; $if_20
-                    loop $loop_0
-                      block $block_4
-                        get_local $0
-                        i32.const 20
-                        i32.add
-                        tee_local $9
-                        i32.load
-                        tee_local $10
-                        i32.eqz
-                        if $if_21
-                          get_local $0
-                          i32.const 16
-                          i32.add
-                          tee_local $9
-                          i32.load
-                          tee_local $10
-                          i32.eqz
-                          br_if $block_4
-                        end ;; $if_21
-                        get_local $9
-                        set_local $3
-                        get_local $10
-                        set_local $0
-                        br $loop_0
-                      end ;; $block_4
-                    end ;; $loop_0
-                    get_local $12
-                    get_local $3
-                    i32.gt_u
-                    if $if_22
-                      call $_abort
-                    else
-                      get_local $3
-                      i32.const 0
-                      i32.store
-                      get_local $0
-                      set_local $4
-                    end ;; $if_22
-                  else
-                    get_local $12
-                    get_local $2
-                    i32.load offset=8
-                    tee_local $3
-                    i32.gt_u
-                    if $if_23
-                      call $_abort
-                    end ;; $if_23
-                    get_local $3
-                    i32.const 12
-                    i32.add
-                    tee_local $9
-                    i32.load
-                    get_local $2
-                    i32.ne
-                    if $if_24
-                      call $_abort
-                    end ;; $if_24
-                    get_local $0
-                    i32.const 8
-                    i32.add
-                    tee_local $10
-                    i32.load
-                    get_local $2
-                    i32.eq
-                    if $if_25
-                      get_local $9
-                      get_local $0
-                      i32.store
-                      get_local $10
-                      get_local $3
-                      i32.store
-                      get_local $0
-                      set_local $4
-                    else
-                      call $_abort
-                    end ;; $if_25
-                  end ;; $if_19
-                end ;; $block_3
-                block $block_5
-                  get_local $11
-                  if $if_26
-                    get_local $2
-                    get_local $2
-                    i32.load offset=28
-                    tee_local $0
-                    i32.const 2
-                    i32.shl
-                    i32.const 1380
-                    i32.add
-                    tee_local $3
-                    i32.load
-                    i32.eq
-                    if $if_27
-                      get_local $3
-                      get_local $4
-                      i32.store
-                      get_local $4
-                      i32.eqz
-                      if $if_28
-                        i32.const 1080
-                        get_local $13
-                        i32.const 1
-                        get_local $0
-                        i32.shl
-                        i32.const -1
-                        i32.xor
-                        i32.and
-                        i32.store
-                        br $block_5
-                      end ;; $if_28
-                    else
-                      i32.const 1092
-                      i32.load
-                      get_local $11
-                      i32.gt_u
-                      if $if_29
-                        call $_abort
-                      else
-                        get_local $11
-                        i32.const 20
-                        i32.add
-                        set_local $0
-                        get_local $11
-                        i32.const 16
-                        i32.add
-                        tee_local $3
-                        i32.load
-                        get_local $2
-                        i32.eq
-                        if $if_30 (result i32)
-                          get_local $3
-                        else
-                          get_local $0
-                        end ;; $if_30
-                        get_local $4
-                        i32.store
-                        get_local $4
-                        i32.eqz
-                        br_if $block_5
-                      end ;; $if_29
-                    end ;; $if_27
-                    i32.const 1092
-                    i32.load
-                    tee_local $3
-                    get_local $4
-                    i32.gt_u
-                    if $if_31
-                      call $_abort
-                    end ;; $if_31
-                    get_local $4
-                    get_local $11
-                    i32.store offset=24
-                    get_local $2
-                    i32.load offset=16
-                    tee_local $0
-                    if $if_32
-                      get_local $3
-                      get_local $0
-                      i32.gt_u
-                      if $if_33
-                        call $_abort
-                      else
-                        get_local $4
-                        get_local $0
-                        i32.store offset=16
-                        get_local $0
-                        get_local $4
-                        i32.store offset=24
-                      end ;; $if_33
-                    end ;; $if_32
-                    get_local $2
-                    i32.load offset=20
-                    tee_local $0
-                    if $if_34
-                      i32.const 1092
-                      i32.load
-                      get_local $0
-                      i32.gt_u
-                      if $if_35
-                        call $_abort
-                      else
-                        get_local $4
-                        get_local $0
-                        i32.store offset=20
-                        get_local $0
-                        get_local $4
-                        i32.store offset=24
-                      end ;; $if_35
-                    end ;; $if_34
-                  end ;; $if_26
-                end ;; $block_5
-                get_local $6
-                i32.const 16
-                i32.lt_u
-                if $if_36
-                  get_local $2
-                  get_local $6
-                  get_local $1
-                  i32.add
-                  tee_local $0
-                  i32.const 3
-                  i32.or
-                  i32.store offset=4
-                  get_local $2
-                  get_local $0
-                  i32.add
-                  i32.const 4
-                  i32.add
-                  tee_local $0
-                  get_local $0
-                  i32.load
-                  i32.const 1
-                  i32.or
-                  i32.store
-                else
-                  get_local $2
-                  get_local $1
-                  i32.const 3
-                  i32.or
-                  i32.store offset=4
-                  get_local $8
-                  get_local $6
-                  i32.const 1
-                  i32.or
-                  i32.store offset=4
-                  get_local $8
-                  get_local $6
-                  i32.add
-                  get_local $6
-                  i32.store
-                  get_local $15
-                  if $if_37
-                    i32.const 1096
-                    i32.load
-                    set_local $4
-                    get_local $15
-                    i32.const 3
-                    i32.shr_u
-                    tee_local $3
-                    i32.const 3
-                    i32.shl
-                    i32.const 1116
-                    i32.add
-                    set_local $0
-                    i32.const 1
-                    get_local $3
-                    i32.shl
-                    tee_local $3
-                    get_local $7
-                    i32.and
-                    if $if_38
-                      i32.const 1092
-                      i32.load
-                      get_local $0
-                      i32.const 8
-                      i32.add
-                      tee_local $3
-                      i32.load
-                      tee_local $1
-                      i32.gt_u
-                      if $if_39
-                        call $_abort
-                      else
-                        get_local $1
-                        set_local $5
-                        get_local $3
-                        set_local $16
-                      end ;; $if_39
-                    else
-                      i32.const 1076
-                      get_local $3
-                      get_local $7
-                      i32.or
-                      i32.store
-                      get_local $0
-                      set_local $5
-                      get_local $0
-                      i32.const 8
-                      i32.add
-                      set_local $16
-                    end ;; $if_38
-                    get_local $16
-                    get_local $4
-                    i32.store
-                    get_local $5
-                    get_local $4
-                    i32.store offset=12
-                    get_local $4
-                    get_local $5
-                    i32.store offset=8
-                    get_local $4
-                    get_local $0
-                    i32.store offset=12
-                  end ;; $if_37
-                  i32.const 1084
-                  get_local $6
-                  i32.store
-                  i32.const 1096
-                  get_local $8
-                  i32.store
-                end ;; $if_36
-                get_local $14
-                set_global $17
-                get_local $2
-                i32.const 8
-                i32.add
-                return
-              else
-                get_local $1
-              end ;; $if_13
+              end ;; $if_36
+              get_local $14
+              set_global $17
+              get_local $2
+              i32.const 8
+              i32.add
+              return
             else
               get_local $1
-            end ;; $if_5
+            end ;; $if_13
           else
-            get_local $0
-            i32.const -65
-            i32.gt_u
-            if $if_40 (result i32)
-              i32.const -1
-            else
+            get_local $1
+          end ;; $if_5
+        else
+          get_local $0
+          i32.const -65
+          i32.gt_u
+          if $if_40 (result i32)
+            i32.const -1
+          else
+            block $block_5 (result i32)
               get_local $0
               i32.const 11
               i32.add
@@ -1741,7 +1731,7 @@
                       i32.and
                       tee_local $0
                       i32.eqz
-                      br_if $block_1
+                      br_if $block_5
                       drop
                       get_local $0
                       i32.const 0
@@ -1898,13 +1888,13 @@
                     get_local $5
                     i32.load offset=24
                     set_local $12
-                    block $block_8
-                      get_local $5
-                      i32.load offset=12
-                      tee_local $0
-                      get_local $5
-                      i32.eq
-                      if $if_58
+                    get_local $5
+                    i32.load offset=12
+                    tee_local $0
+                    get_local $5
+                    i32.eq
+                    if $if_58
+                      block $block_8
                         get_local $5
                         i32.const 20
                         i32.add
@@ -1960,49 +1950,49 @@
                           get_local $0
                           set_local $9
                         end ;; $if_61
-                      else
-                        get_local $17
-                        get_local $5
-                        i32.load offset=8
-                        tee_local $1
-                        i32.gt_u
-                        if $if_62
-                          call $_abort
-                        end ;; $if_62
-                        get_local $1
-                        i32.const 12
-                        i32.add
-                        tee_local $7
-                        i32.load
-                        get_local $5
-                        i32.ne
-                        if $if_63
-                          call $_abort
-                        end ;; $if_63
+                      end ;; $block_8
+                    else
+                      get_local $17
+                      get_local $5
+                      i32.load offset=8
+                      tee_local $1
+                      i32.gt_u
+                      if $if_62
+                        call $_abort
+                      end ;; $if_62
+                      get_local $1
+                      i32.const 12
+                      i32.add
+                      tee_local $7
+                      i32.load
+                      get_local $5
+                      i32.ne
+                      if $if_63
+                        call $_abort
+                      end ;; $if_63
+                      get_local $0
+                      i32.const 8
+                      i32.add
+                      tee_local $10
+                      i32.load
+                      get_local $5
+                      i32.eq
+                      if $if_64
+                        get_local $7
                         get_local $0
-                        i32.const 8
-                        i32.add
-                        tee_local $10
-                        i32.load
-                        get_local $5
-                        i32.eq
-                        if $if_64
-                          get_local $7
-                          get_local $0
-                          i32.store
-                          get_local $10
-                          get_local $1
-                          i32.store
-                          get_local $0
-                          set_local $9
-                        else
-                          call $_abort
-                        end ;; $if_64
-                      end ;; $if_58
-                    end ;; $block_8
-                    block $block_10
-                      get_local $12
-                      if $if_65
+                        i32.store
+                        get_local $10
+                        get_local $1
+                        i32.store
+                        get_local $0
+                        set_local $9
+                      else
+                        call $_abort
+                      end ;; $if_64
+                    end ;; $if_58
+                    get_local $12
+                    if $if_65
+                      block $block_10
                         get_local $5
                         get_local $5
                         i32.load offset=28
@@ -2121,36 +2111,36 @@
                           get_local $6
                           set_local $3
                         end ;; $if_74
-                      else
-                        get_local $6
-                        set_local $3
-                      end ;; $if_65
-                    end ;; $block_10
-                    block $block_11
+                      end ;; $block_10
+                    else
+                      get_local $6
+                      set_local $3
+                    end ;; $if_65
+                    get_local $2
+                    i32.const 16
+                    i32.lt_u
+                    if $if_76
+                      get_local $5
                       get_local $2
-                      i32.const 16
-                      i32.lt_u
-                      if $if_76
-                        get_local $5
-                        get_local $2
-                        get_local $4
-                        i32.add
-                        tee_local $0
-                        i32.const 3
-                        i32.or
-                        i32.store offset=4
-                        get_local $5
-                        get_local $0
-                        i32.add
-                        i32.const 4
-                        i32.add
-                        tee_local $0
-                        get_local $0
-                        i32.load
-                        i32.const 1
-                        i32.or
-                        i32.store
-                      else
+                      get_local $4
+                      i32.add
+                      tee_local $0
+                      i32.const 3
+                      i32.or
+                      i32.store offset=4
+                      get_local $5
+                      get_local $0
+                      i32.add
+                      i32.const 4
+                      i32.add
+                      tee_local $0
+                      get_local $0
+                      i32.load
+                      i32.const 1
+                      i32.or
+                      i32.store
+                    else
+                      block $block_11
                         get_local $5
                         get_local $4
                         i32.const 3
@@ -2344,19 +2334,19 @@
                           i32.store offset=8
                           br $block_11
                         end ;; $if_82
-                        block $block_12
+                        get_local $0
+                        i32.load
+                        tee_local $0
+                        i32.load offset=4
+                        i32.const -8
+                        i32.and
+                        get_local $2
+                        i32.eq
+                        if $if_83
                           get_local $0
-                          i32.load
-                          tee_local $0
-                          i32.load offset=4
-                          i32.const -8
-                          i32.and
-                          get_local $2
-                          i32.eq
-                          if $if_83
-                            get_local $0
-                            set_local $11
-                          else
+                          set_local $11
+                        else
+                          block $block_12
                             i32.const 25
                             get_local $1
                             i32.const 1
@@ -2431,8 +2421,8 @@
                               i32.store offset=8
                               br $block_11
                             end ;; $if_87
-                          end ;; $if_83
-                        end ;; $block_12
+                          end ;; $block_12
+                        end ;; $if_83
                         i32.const 1092
                         i32.load
                         tee_local $3
@@ -2466,8 +2456,8 @@
                         else
                           call $_abort
                         end ;; $if_88
-                      end ;; $if_76
-                    end ;; $block_11
+                      end ;; $block_11
+                    end ;; $if_76
                     get_local $14
                     set_global $17
                     get_local $5
@@ -2483,9 +2473,9 @@
               else
                 get_local $4
               end ;; $if_41
-            end ;; $if_40
-          end ;; $if
-        end ;; $block_1
+            end ;; $block_5
+          end ;; $if_40
+        end ;; $if
         set_local $3
         i32.const 1084
         i32.load
@@ -2940,11 +2930,11 @@
             get_local $2
             i32.store
           end ;; $if_109
-          block $block_19
-            i32.const 1100
-            i32.load
-            tee_local $6
-            if $if_110
+          i32.const 1100
+          i32.load
+          tee_local $6
+          if $if_110
+            block $block_19
               i32.const 1524
               set_local $2
               block $block_20
@@ -3146,27 +3136,27 @@
                   i32.const 3
                   i32.or
                   i32.store offset=4
-                  block $block_24
-                    get_local $6
-                    get_local $1
-                    i32.eq
-                    if $if_118
-                      i32.const 1088
-                      i32.const 1088
-                      i32.load
-                      get_local $4
-                      i32.add
-                      tee_local $0
-                      i32.store
-                      i32.const 1100
-                      get_local $7
-                      i32.store
-                      get_local $7
-                      get_local $0
-                      i32.const 1
-                      i32.or
-                      i32.store offset=4
-                    else
+                  get_local $6
+                  get_local $1
+                  i32.eq
+                  if $if_118
+                    i32.const 1088
+                    i32.const 1088
+                    i32.load
+                    get_local $4
+                    i32.add
+                    tee_local $0
+                    i32.store
+                    i32.const 1100
+                    get_local $7
+                    i32.store
+                    get_local $7
+                    get_local $0
+                    i32.const 1
+                    i32.or
+                    i32.store offset=4
+                  else
+                    block $block_24
                       i32.const 1096
                       i32.load
                       get_local $1
@@ -3218,18 +3208,18 @@
                             get_local $1
                             i32.load offset=12
                             set_local $3
-                            block $block_26
-                              get_local $1
-                              i32.load offset=8
-                              tee_local $6
-                              get_local $5
-                              i32.const 3
-                              i32.shl
-                              i32.const 1116
-                              i32.add
-                              tee_local $0
-                              i32.ne
-                              if $if_122
+                            get_local $1
+                            i32.load offset=8
+                            tee_local $6
+                            get_local $5
+                            i32.const 3
+                            i32.shl
+                            i32.const 1116
+                            i32.add
+                            tee_local $0
+                            i32.ne
+                            if $if_122
+                              block $block_26
                                 get_local $2
                                 get_local $6
                                 i32.gt_u
@@ -3242,8 +3232,8 @@
                                 i32.eq
                                 br_if $block_26
                                 call $_abort
-                              end ;; $if_122
-                            end ;; $block_26
+                              end ;; $block_26
+                            end ;; $if_122
                             get_local $3
                             get_local $6
                             i32.eq
@@ -3260,16 +3250,16 @@
                               i32.store
                               br $block_25
                             end ;; $if_124
-                            block $block_27
+                            get_local $3
+                            get_local $0
+                            i32.eq
+                            if $if_125
                               get_local $3
-                              get_local $0
-                              i32.eq
-                              if $if_125
-                                get_local $3
-                                i32.const 8
-                                i32.add
-                                set_local $20
-                              else
+                              i32.const 8
+                              i32.add
+                              set_local $20
+                            else
+                              block $block_27
                                 get_local $2
                                 get_local $3
                                 i32.gt_u
@@ -3289,8 +3279,8 @@
                                   br $block_27
                                 end ;; $if_127
                                 call $_abort
-                              end ;; $if_125
-                            end ;; $block_27
+                              end ;; $block_27
+                            end ;; $if_125
                             get_local $6
                             get_local $3
                             i32.store offset=12
@@ -3301,13 +3291,13 @@
                             get_local $1
                             i32.load offset=24
                             set_local $9
-                            block $block_28
-                              get_local $1
-                              i32.load offset=12
-                              tee_local $0
-                              get_local $1
-                              i32.eq
-                              if $if_128
+                            get_local $1
+                            i32.load offset=12
+                            tee_local $0
+                            get_local $1
+                            i32.eq
+                            if $if_128
+                              block $block_28
                                 get_local $1
                                 i32.const 16
                                 i32.add
@@ -3365,62 +3355,62 @@
                                   get_local $0
                                   set_local $10
                                 end ;; $if_131
-                              else
-                                get_local $2
-                                get_local $1
-                                i32.load offset=8
-                                tee_local $3
-                                i32.gt_u
-                                if $if_132
-                                  call $_abort
-                                end ;; $if_132
-                                get_local $3
-                                i32.const 12
-                                i32.add
-                                tee_local $2
-                                i32.load
-                                get_local $1
-                                i32.ne
-                                if $if_133
-                                  call $_abort
-                                end ;; $if_133
-                                get_local $0
-                                i32.const 8
-                                i32.add
-                                tee_local $6
-                                i32.load
-                                get_local $1
-                                i32.eq
-                                if $if_134
-                                  get_local $2
-                                  get_local $0
-                                  i32.store
-                                  get_local $6
-                                  get_local $3
-                                  i32.store
-                                  get_local $0
-                                  set_local $10
-                                else
-                                  call $_abort
-                                end ;; $if_134
-                              end ;; $if_128
-                            end ;; $block_28
-                            get_local $9
-                            i32.eqz
-                            br_if $block_25
-                            block $block_30
+                              end ;; $block_28
+                            else
+                              get_local $2
                               get_local $1
-                              i32.load offset=28
-                              tee_local $0
-                              i32.const 2
-                              i32.shl
-                              i32.const 1380
-                              i32.add
+                              i32.load offset=8
                               tee_local $3
+                              i32.gt_u
+                              if $if_132
+                                call $_abort
+                              end ;; $if_132
+                              get_local $3
+                              i32.const 12
+                              i32.add
+                              tee_local $2
+                              i32.load
+                              get_local $1
+                              i32.ne
+                              if $if_133
+                                call $_abort
+                              end ;; $if_133
+                              get_local $0
+                              i32.const 8
+                              i32.add
+                              tee_local $6
                               i32.load
                               get_local $1
                               i32.eq
-                              if $if_135
+                              if $if_134
+                                get_local $2
+                                get_local $0
+                                i32.store
+                                get_local $6
+                                get_local $3
+                                i32.store
+                                get_local $0
+                                set_local $10
+                              else
+                                call $_abort
+                              end ;; $if_134
+                            end ;; $if_128
+                            get_local $9
+                            i32.eqz
+                            br_if $block_25
+                            get_local $1
+                            i32.load offset=28
+                            tee_local $0
+                            i32.const 2
+                            i32.shl
+                            i32.const 1380
+                            i32.add
+                            tee_local $3
+                            i32.load
+                            get_local $1
+                            i32.eq
+                            if $if_135
+                              block $block_30
                                 get_local $3
                                 get_local $10
                                 i32.store
@@ -3437,38 +3427,38 @@
                                 i32.and
                                 i32.store
                                 br $block_25
+                              end ;; $block_30
+                            else
+                              i32.const 1092
+                              i32.load
+                              get_local $9
+                              i32.gt_u
+                              if $if_136
+                                call $_abort
                               else
-                                i32.const 1092
-                                i32.load
                                 get_local $9
-                                i32.gt_u
-                                if $if_136
-                                  call $_abort
+                                i32.const 20
+                                i32.add
+                                set_local $0
+                                get_local $9
+                                i32.const 16
+                                i32.add
+                                tee_local $3
+                                i32.load
+                                get_local $1
+                                i32.eq
+                                if $if_137 (result i32)
+                                  get_local $3
                                 else
-                                  get_local $9
-                                  i32.const 20
-                                  i32.add
-                                  set_local $0
-                                  get_local $9
-                                  i32.const 16
-                                  i32.add
-                                  tee_local $3
-                                  i32.load
-                                  get_local $1
-                                  i32.eq
-                                  if $if_137 (result i32)
-                                    get_local $3
-                                  else
-                                    get_local $0
-                                  end ;; $if_137
-                                  get_local $10
-                                  i32.store
-                                  get_local $10
-                                  i32.eqz
-                                  br_if $block_25
-                                end ;; $if_136
-                              end ;; $if_135
-                            end ;; $block_30
+                                  get_local $0
+                                end ;; $if_137
+                                get_local $10
+                                i32.store
+                                get_local $10
+                                i32.eqz
+                                br_if $block_25
+                              end ;; $if_136
+                            end ;; $if_135
                             i32.const 1092
                             i32.load
                             tee_local $3
@@ -3566,16 +3556,16 @@
                         i32.const 1116
                         i32.add
                         set_local $0
-                        block $block_31
-                          i32.const 1076
-                          i32.load
-                          tee_local $1
-                          i32.const 1
-                          get_local $3
-                          i32.shl
-                          tee_local $3
-                          i32.and
-                          if $if_143
+                        i32.const 1076
+                        i32.load
+                        tee_local $1
+                        i32.const 1
+                        get_local $3
+                        i32.shl
+                        tee_local $3
+                        i32.and
+                        if $if_143
+                          block $block_31
                             i32.const 1092
                             i32.load
                             get_local $0
@@ -3593,20 +3583,20 @@
                               br $block_31
                             end ;; $if_144
                             call $_abort
-                          else
-                            i32.const 1076
-                            get_local $1
-                            get_local $3
-                            i32.or
-                            i32.store
-                            get_local $0
-                            set_local $17
-                            get_local $0
-                            i32.const 8
-                            i32.add
-                            set_local $21
-                          end ;; $if_143
-                        end ;; $block_31
+                          end ;; $block_31
+                        else
+                          i32.const 1076
+                          get_local $1
+                          get_local $3
+                          i32.or
+                          i32.store
+                          get_local $0
+                          set_local $17
+                          get_local $0
+                          i32.const 8
+                          i32.add
+                          set_local $21
+                        end ;; $if_143
                         get_local $21
                         get_local $7
                         i32.store
@@ -3621,18 +3611,17 @@
                         i32.store offset=12
                         br $block_24
                       end ;; $if_142
-                      block $block_32 (result i32)
+                      get_local $2
+                      i32.const 8
+                      i32.shr_u
+                      tee_local $0
+                      if $if_145 (result i32)
                         get_local $2
-                        i32.const 8
-                        i32.shr_u
-                        tee_local $0
-                        if $if_145 (result i32)
+                        i32.const 16777215
+                        i32.gt_u
+                        if $if_146 (result i32)
                           i32.const 31
-                          get_local $2
-                          i32.const 16777215
-                          i32.gt_u
-                          br_if $block_32
-                          drop
+                        else
                           get_local $2
                           i32.const 14
                           get_local $0
@@ -3684,10 +3673,10 @@
                           i32.const 1
                           i32.shl
                           i32.or
-                        else
-                          i32.const 0
-                        end ;; $if_145
-                      end ;; $block_32
+                        end ;; $if_146
+                      else
+                        i32.const 0
+                      end ;; $if_145
                       tee_local $3
                       i32.const 2
                       i32.shl
@@ -3715,7 +3704,7 @@
                       tee_local $4
                       i32.and
                       i32.eqz
-                      if $if_146
+                      if $if_147
                         i32.const 1080
                         get_local $1
                         get_local $4
@@ -3734,20 +3723,20 @@
                         get_local $7
                         i32.store offset=8
                         br $block_24
-                      end ;; $if_146
-                      block $block_33
+                      end ;; $if_147
+                      get_local $0
+                      i32.load
+                      tee_local $0
+                      i32.load offset=4
+                      i32.const -8
+                      i32.and
+                      get_local $2
+                      i32.eq
+                      if $if_148
                         get_local $0
-                        i32.load
-                        tee_local $0
-                        i32.load offset=4
-                        i32.const -8
-                        i32.and
-                        get_local $2
-                        i32.eq
-                        if $if_147
-                          get_local $0
-                          set_local $8
-                        else
+                        set_local $8
+                      else
+                        block $block_32
                           i32.const 25
                           get_local $3
                           i32.const 1
@@ -3758,11 +3747,11 @@
                           get_local $3
                           i32.const 31
                           i32.eq
-                          if $if_148 (result i32)
+                          if $if_149 (result i32)
                             i32.const 0
                           else
                             get_local $1
-                          end ;; $if_148
+                          end ;; $if_149
                           i32.shl
                           set_local $1
                           loop $loop_9
@@ -3778,7 +3767,7 @@
                             tee_local $4
                             i32.load
                             tee_local $3
-                            if $if_149
+                            if $if_150
                               get_local $1
                               i32.const 1
                               i32.shl
@@ -3789,23 +3778,23 @@
                               i32.and
                               get_local $2
                               i32.eq
-                              if $if_150
+                              if $if_151
                                 get_local $3
                                 set_local $8
-                                br $block_33
+                                br $block_32
                               else
                                 get_local $3
                                 set_local $0
                                 br $loop_9
-                              end ;; $if_150
+                              end ;; $if_151
                               unreachable
-                            end ;; $if_149
+                            end ;; $if_150
                           end ;; $loop_9
                           i32.const 1092
                           i32.load
                           get_local $4
                           i32.gt_u
-                          if $if_151
+                          if $if_152
                             call $_abort
                           else
                             get_local $4
@@ -3821,9 +3810,9 @@
                             get_local $7
                             i32.store offset=8
                             br $block_24
-                          end ;; $if_151
-                        end ;; $if_147
-                      end ;; $block_33
+                          end ;; $if_152
+                        end ;; $block_32
+                      end ;; $if_148
                       i32.const 1092
                       i32.load
                       tee_local $3
@@ -3838,7 +3827,7 @@
                       get_local $8
                       i32.le_u
                       i32.and
-                      if $if_152
+                      if $if_153
                         get_local $0
                         get_local $7
                         i32.store offset=12
@@ -3856,9 +3845,9 @@
                         i32.store offset=24
                       else
                         call $_abort
-                      end ;; $if_152
-                    end ;; $if_118
-                  end ;; $block_24
+                      end ;; $if_153
+                    end ;; $block_24
+                  end ;; $if_118
                   get_local $14
                   set_global $17
                   get_local $11
@@ -3870,13 +3859,13 @@
               i32.const 1524
               set_local $2
               loop $loop_10
-                block $block_34
+                block $block_33
                   get_local $2
                   i32.load
                   tee_local $4
                   get_local $6
                   i32.le_u
-                  if $if_153
+                  if $if_154
                     get_local $4
                     get_local $2
                     i32.load offset=4
@@ -3884,13 +3873,13 @@
                     tee_local $9
                     get_local $6
                     i32.gt_u
-                    br_if $block_34
-                  end ;; $if_153
+                    br_if $block_33
+                  end ;; $if_154
                   get_local $2
                   i32.load offset=8
                   set_local $2
                   br $loop_10
-                end ;; $block_34
+                end ;; $block_33
               end ;; $loop_10
               i32.const 0
               get_local $9
@@ -3908,11 +3897,11 @@
               get_local $4
               i32.const 7
               i32.and
-              if $if_154 (result i32)
+              if $if_155 (result i32)
                 get_local $5
               else
                 i32.const 0
-              end ;; $if_154
+              end ;; $if_155
               i32.add
               tee_local $2
               get_local $6
@@ -3920,12 +3909,12 @@
               i32.add
               tee_local $11
               i32.lt_u
-              if $if_155 (result i32)
+              if $if_156 (result i32)
                 get_local $6
                 tee_local $2
               else
                 get_local $2
-              end ;; $if_155
+              end ;; $if_156
               i32.const 8
               i32.add
               set_local $7
@@ -3951,12 +3940,12 @@
               get_local $8
               i32.const 7
               i32.and
-              if $if_156 (result i32)
+              if $if_157 (result i32)
                 get_local $5
               else
                 i32.const 0
                 tee_local $5
-              end ;; $if_156
+              end ;; $if_157
               i32.add
               tee_local $8
               i32.store
@@ -4020,16 +4009,16 @@
                 i32.add
                 get_local $9
                 i32.lt_u
-                if $if_157
+                if $if_158
                   get_local $1
                   set_local $0
                   br $loop_11
-                end ;; $if_157
+                end ;; $if_158
               end ;; $loop_11
               get_local $2
               get_local $6
               i32.ne
-              if $if_158
+              if $if_159
                 get_local $5
                 get_local $5
                 i32.load
@@ -4054,7 +4043,7 @@
                 get_local $4
                 i32.const 256
                 i32.lt_u
-                if $if_159
+                if $if_160
                   get_local $1
                   i32.const 3
                   i32.shl
@@ -4069,7 +4058,7 @@
                   i32.shl
                   tee_local $1
                   i32.and
-                  if $if_160
+                  if $if_161
                     i32.const 1092
                     i32.load
                     get_local $0
@@ -4079,14 +4068,14 @@
                     i32.load
                     tee_local $2
                     i32.gt_u
-                    if $if_161
+                    if $if_162
                       call $_abort
                     else
                       get_local $2
                       set_local $18
                       get_local $1
                       set_local $22
-                    end ;; $if_161
+                    end ;; $if_162
                   else
                     i32.const 1076
                     get_local $2
@@ -4099,7 +4088,7 @@
                     i32.const 8
                     i32.add
                     set_local $22
-                  end ;; $if_160
+                  end ;; $if_161
                   get_local $22
                   get_local $6
                   i32.store
@@ -4113,16 +4102,16 @@
                   get_local $0
                   i32.store offset=12
                   br $block_19
-                end ;; $if_159
+                end ;; $if_160
                 get_local $4
                 i32.const 8
                 i32.shr_u
                 tee_local $0
-                if $if_162 (result i32)
+                if $if_163 (result i32)
                   get_local $4
                   i32.const 16777215
                   i32.gt_u
-                  if $if_163 (result i32)
+                  if $if_164 (result i32)
                     i32.const 31
                   else
                     get_local $4
@@ -4176,10 +4165,10 @@
                     i32.const 1
                     i32.shl
                     i32.or
-                  end ;; $if_163
+                  end ;; $if_164
                 else
                   i32.const 0
-                end ;; $if_162
+                end ;; $if_163
                 tee_local $1
                 i32.const 2
                 i32.shl
@@ -4204,7 +4193,7 @@
                 tee_local $5
                 i32.and
                 i32.eqz
-                if $if_164
+                if $if_165
                   i32.const 1080
                   get_local $2
                   get_local $5
@@ -4223,20 +4212,20 @@
                   get_local $6
                   i32.store offset=8
                   br $block_19
-                end ;; $if_164
-                block $block_35
+                end ;; $if_165
+                get_local $0
+                i32.load
+                tee_local $0
+                i32.load offset=4
+                i32.const -8
+                i32.and
+                get_local $4
+                i32.eq
+                if $if_166
                   get_local $0
-                  i32.load
-                  tee_local $0
-                  i32.load offset=4
-                  i32.const -8
-                  i32.and
-                  get_local $4
-                  i32.eq
-                  if $if_165
-                    get_local $0
-                    set_local $12
-                  else
+                  set_local $12
+                else
+                  block $block_34
                     i32.const 25
                     get_local $1
                     i32.const 1
@@ -4247,11 +4236,11 @@
                     get_local $1
                     i32.const 31
                     i32.eq
-                    if $if_166 (result i32)
+                    if $if_167 (result i32)
                       i32.const 0
                     else
                       get_local $2
-                    end ;; $if_166
+                    end ;; $if_167
                     i32.shl
                     set_local $2
                     loop $loop_12
@@ -4267,7 +4256,7 @@
                       tee_local $5
                       i32.load
                       tee_local $1
-                      if $if_167
+                      if $if_168
                         get_local $2
                         i32.const 1
                         i32.shl
@@ -4278,23 +4267,23 @@
                         i32.and
                         get_local $4
                         i32.eq
-                        if $if_168
+                        if $if_169
                           get_local $1
                           set_local $12
-                          br $block_35
+                          br $block_34
                         else
                           get_local $1
                           set_local $0
                           br $loop_12
-                        end ;; $if_168
+                        end ;; $if_169
                         unreachable
-                      end ;; $if_167
+                      end ;; $if_168
                     end ;; $loop_12
                     i32.const 1092
                     i32.load
                     get_local $5
                     i32.gt_u
-                    if $if_169
+                    if $if_170
                       call $_abort
                     else
                       get_local $5
@@ -4310,9 +4299,9 @@
                       get_local $6
                       i32.store offset=8
                       br $block_19
-                    end ;; $if_169
-                  end ;; $if_165
-                end ;; $block_35
+                    end ;; $if_170
+                  end ;; $block_34
+                end ;; $if_166
                 i32.const 1092
                 i32.load
                 tee_local $1
@@ -4327,7 +4316,7 @@
                 get_local $12
                 i32.le_u
                 i32.and
-                if $if_170
+                if $if_171
                   get_local $0
                   get_local $6
                   i32.store offset=12
@@ -4345,285 +4334,285 @@
                   i32.store offset=24
                 else
                   call $_abort
-                end ;; $if_170
-              end ;; $if_158
-            else
+                end ;; $if_171
+              end ;; $if_159
+            end ;; $block_19
+          else
+            i32.const 1092
+            i32.load
+            tee_local $2
+            i32.eqz
+            get_local $0
+            get_local $2
+            i32.lt_u
+            i32.or
+            if $if_172
               i32.const 1092
-              i32.load
-              tee_local $2
-              i32.eqz
-              get_local $0
-              get_local $2
-              i32.lt_u
-              i32.or
-              if $if_171
-                i32.const 1092
-                get_local $0
-                i32.store
-              end ;; $if_171
-              i32.const 1524
               get_local $0
               i32.store
-              i32.const 1528
+            end ;; $if_172
+            i32.const 1524
+            get_local $0
+            i32.store
+            i32.const 1528
+            get_local $1
+            i32.store
+            i32.const 1536
+            i32.const 0
+            i32.store
+            i32.const 1112
+            i32.const 1548
+            i32.load
+            i32.store
+            i32.const 1108
+            i32.const -1
+            i32.store
+            i32.const 1128
+            i32.const 1116
+            i32.store
+            i32.const 1124
+            i32.const 1116
+            i32.store
+            i32.const 1136
+            i32.const 1124
+            i32.store
+            i32.const 1132
+            i32.const 1124
+            i32.store
+            i32.const 1144
+            i32.const 1132
+            i32.store
+            i32.const 1140
+            i32.const 1132
+            i32.store
+            i32.const 1152
+            i32.const 1140
+            i32.store
+            i32.const 1148
+            i32.const 1140
+            i32.store
+            i32.const 1160
+            i32.const 1148
+            i32.store
+            i32.const 1156
+            i32.const 1148
+            i32.store
+            i32.const 1168
+            i32.const 1156
+            i32.store
+            i32.const 1164
+            i32.const 1156
+            i32.store
+            i32.const 1176
+            i32.const 1164
+            i32.store
+            i32.const 1172
+            i32.const 1164
+            i32.store
+            i32.const 1184
+            i32.const 1172
+            i32.store
+            i32.const 1180
+            i32.const 1172
+            i32.store
+            i32.const 1192
+            i32.const 1180
+            i32.store
+            i32.const 1188
+            i32.const 1180
+            i32.store
+            i32.const 1200
+            i32.const 1188
+            i32.store
+            i32.const 1196
+            i32.const 1188
+            i32.store
+            i32.const 1208
+            i32.const 1196
+            i32.store
+            i32.const 1204
+            i32.const 1196
+            i32.store
+            i32.const 1216
+            i32.const 1204
+            i32.store
+            i32.const 1212
+            i32.const 1204
+            i32.store
+            i32.const 1224
+            i32.const 1212
+            i32.store
+            i32.const 1220
+            i32.const 1212
+            i32.store
+            i32.const 1232
+            i32.const 1220
+            i32.store
+            i32.const 1228
+            i32.const 1220
+            i32.store
+            i32.const 1240
+            i32.const 1228
+            i32.store
+            i32.const 1236
+            i32.const 1228
+            i32.store
+            i32.const 1248
+            i32.const 1236
+            i32.store
+            i32.const 1244
+            i32.const 1236
+            i32.store
+            i32.const 1256
+            i32.const 1244
+            i32.store
+            i32.const 1252
+            i32.const 1244
+            i32.store
+            i32.const 1264
+            i32.const 1252
+            i32.store
+            i32.const 1260
+            i32.const 1252
+            i32.store
+            i32.const 1272
+            i32.const 1260
+            i32.store
+            i32.const 1268
+            i32.const 1260
+            i32.store
+            i32.const 1280
+            i32.const 1268
+            i32.store
+            i32.const 1276
+            i32.const 1268
+            i32.store
+            i32.const 1288
+            i32.const 1276
+            i32.store
+            i32.const 1284
+            i32.const 1276
+            i32.store
+            i32.const 1296
+            i32.const 1284
+            i32.store
+            i32.const 1292
+            i32.const 1284
+            i32.store
+            i32.const 1304
+            i32.const 1292
+            i32.store
+            i32.const 1300
+            i32.const 1292
+            i32.store
+            i32.const 1312
+            i32.const 1300
+            i32.store
+            i32.const 1308
+            i32.const 1300
+            i32.store
+            i32.const 1320
+            i32.const 1308
+            i32.store
+            i32.const 1316
+            i32.const 1308
+            i32.store
+            i32.const 1328
+            i32.const 1316
+            i32.store
+            i32.const 1324
+            i32.const 1316
+            i32.store
+            i32.const 1336
+            i32.const 1324
+            i32.store
+            i32.const 1332
+            i32.const 1324
+            i32.store
+            i32.const 1344
+            i32.const 1332
+            i32.store
+            i32.const 1340
+            i32.const 1332
+            i32.store
+            i32.const 1352
+            i32.const 1340
+            i32.store
+            i32.const 1348
+            i32.const 1340
+            i32.store
+            i32.const 1360
+            i32.const 1348
+            i32.store
+            i32.const 1356
+            i32.const 1348
+            i32.store
+            i32.const 1368
+            i32.const 1356
+            i32.store
+            i32.const 1364
+            i32.const 1356
+            i32.store
+            i32.const 1376
+            i32.const 1364
+            i32.store
+            i32.const 1372
+            i32.const 1364
+            i32.store
+            get_local $1
+            i32.const -40
+            i32.add
+            set_local $2
+            i32.const 0
+            get_local $0
+            i32.const 8
+            i32.add
+            tee_local $4
+            i32.sub
+            i32.const 7
+            i32.and
+            set_local $1
+            i32.const 1100
+            get_local $0
+            get_local $4
+            i32.const 7
+            i32.and
+            if $if_173 (result i32)
               get_local $1
-              i32.store
-              i32.const 1536
+            else
               i32.const 0
-              i32.store
-              i32.const 1112
-              i32.const 1548
-              i32.load
-              i32.store
-              i32.const 1108
-              i32.const -1
-              i32.store
-              i32.const 1128
-              i32.const 1116
-              i32.store
-              i32.const 1124
-              i32.const 1116
-              i32.store
-              i32.const 1136
-              i32.const 1124
-              i32.store
-              i32.const 1132
-              i32.const 1124
-              i32.store
-              i32.const 1144
-              i32.const 1132
-              i32.store
-              i32.const 1140
-              i32.const 1132
-              i32.store
-              i32.const 1152
-              i32.const 1140
-              i32.store
-              i32.const 1148
-              i32.const 1140
-              i32.store
-              i32.const 1160
-              i32.const 1148
-              i32.store
-              i32.const 1156
-              i32.const 1148
-              i32.store
-              i32.const 1168
-              i32.const 1156
-              i32.store
-              i32.const 1164
-              i32.const 1156
-              i32.store
-              i32.const 1176
-              i32.const 1164
-              i32.store
-              i32.const 1172
-              i32.const 1164
-              i32.store
-              i32.const 1184
-              i32.const 1172
-              i32.store
-              i32.const 1180
-              i32.const 1172
-              i32.store
-              i32.const 1192
-              i32.const 1180
-              i32.store
-              i32.const 1188
-              i32.const 1180
-              i32.store
-              i32.const 1200
-              i32.const 1188
-              i32.store
-              i32.const 1196
-              i32.const 1188
-              i32.store
-              i32.const 1208
-              i32.const 1196
-              i32.store
-              i32.const 1204
-              i32.const 1196
-              i32.store
-              i32.const 1216
-              i32.const 1204
-              i32.store
-              i32.const 1212
-              i32.const 1204
-              i32.store
-              i32.const 1224
-              i32.const 1212
-              i32.store
-              i32.const 1220
-              i32.const 1212
-              i32.store
-              i32.const 1232
-              i32.const 1220
-              i32.store
-              i32.const 1228
-              i32.const 1220
-              i32.store
-              i32.const 1240
-              i32.const 1228
-              i32.store
-              i32.const 1236
-              i32.const 1228
-              i32.store
-              i32.const 1248
-              i32.const 1236
-              i32.store
-              i32.const 1244
-              i32.const 1236
-              i32.store
-              i32.const 1256
-              i32.const 1244
-              i32.store
-              i32.const 1252
-              i32.const 1244
-              i32.store
-              i32.const 1264
-              i32.const 1252
-              i32.store
-              i32.const 1260
-              i32.const 1252
-              i32.store
-              i32.const 1272
-              i32.const 1260
-              i32.store
-              i32.const 1268
-              i32.const 1260
-              i32.store
-              i32.const 1280
-              i32.const 1268
-              i32.store
-              i32.const 1276
-              i32.const 1268
-              i32.store
-              i32.const 1288
-              i32.const 1276
-              i32.store
-              i32.const 1284
-              i32.const 1276
-              i32.store
-              i32.const 1296
-              i32.const 1284
-              i32.store
-              i32.const 1292
-              i32.const 1284
-              i32.store
-              i32.const 1304
-              i32.const 1292
-              i32.store
-              i32.const 1300
-              i32.const 1292
-              i32.store
-              i32.const 1312
-              i32.const 1300
-              i32.store
-              i32.const 1308
-              i32.const 1300
-              i32.store
-              i32.const 1320
-              i32.const 1308
-              i32.store
-              i32.const 1316
-              i32.const 1308
-              i32.store
-              i32.const 1328
-              i32.const 1316
-              i32.store
-              i32.const 1324
-              i32.const 1316
-              i32.store
-              i32.const 1336
-              i32.const 1324
-              i32.store
-              i32.const 1332
-              i32.const 1324
-              i32.store
-              i32.const 1344
-              i32.const 1332
-              i32.store
-              i32.const 1340
-              i32.const 1332
-              i32.store
-              i32.const 1352
-              i32.const 1340
-              i32.store
-              i32.const 1348
-              i32.const 1340
-              i32.store
-              i32.const 1360
-              i32.const 1348
-              i32.store
-              i32.const 1356
-              i32.const 1348
-              i32.store
-              i32.const 1368
-              i32.const 1356
-              i32.store
-              i32.const 1364
-              i32.const 1356
-              i32.store
-              i32.const 1376
-              i32.const 1364
-              i32.store
-              i32.const 1372
-              i32.const 1364
-              i32.store
-              get_local $1
-              i32.const -40
-              i32.add
-              set_local $2
-              i32.const 0
-              get_local $0
-              i32.const 8
-              i32.add
-              tee_local $4
-              i32.sub
-              i32.const 7
-              i32.and
-              set_local $1
-              i32.const 1100
-              get_local $0
-              get_local $4
-              i32.const 7
-              i32.and
-              if $if_172 (result i32)
-                get_local $1
-              else
-                i32.const 0
-                tee_local $1
-              end ;; $if_172
-              i32.add
-              tee_local $4
-              i32.store
-              i32.const 1088
-              get_local $2
-              get_local $1
-              i32.sub
               tee_local $1
-              i32.store
-              get_local $4
-              get_local $1
-              i32.const 1
-              i32.or
-              i32.store offset=4
-              get_local $0
-              get_local $2
-              i32.add
-              i32.const 40
-              i32.store offset=4
-              i32.const 1104
-              i32.const 1564
-              i32.load
-              i32.store
-            end ;; $if_110
-          end ;; $block_19
+            end ;; $if_173
+            i32.add
+            tee_local $4
+            i32.store
+            i32.const 1088
+            get_local $2
+            get_local $1
+            i32.sub
+            tee_local $1
+            i32.store
+            get_local $4
+            get_local $1
+            i32.const 1
+            i32.or
+            i32.store offset=4
+            get_local $0
+            get_local $2
+            i32.add
+            i32.const 40
+            i32.store offset=4
+            i32.const 1104
+            i32.const 1564
+            i32.load
+            i32.store
+          end ;; $if_110
           i32.const 1088
           i32.load
           tee_local $0
           get_local $3
           i32.gt_u
-          if $if_173
+          if $if_174
             i32.const 1088
             get_local $0
             get_local $3
@@ -4631,7 +4620,7 @@
             tee_local $1
             i32.store
             br $block_0
-          end ;; $if_173
+          end ;; $if_174
         end ;; $block_13
         call $___errno_location
         i32.const 12
@@ -4722,17 +4711,17 @@
     tee_local $2
     i32.add
     set_local $7
-    block $block
-      get_local $0
-      i32.const 1
-      i32.and
-      if $if_2
-        get_local $2
-        set_local $1
-        get_local $4
-        tee_local $3
-        set_local $5
-      else
+    get_local $0
+    i32.const 1
+    i32.and
+    if $if_2
+      get_local $2
+      set_local $1
+      get_local $4
+      tee_local $3
+      set_local $5
+    else
+      block $block
         get_local $4
         i32.load
         set_local $9
@@ -4899,13 +4888,13 @@
         get_local $0
         i32.load offset=24
         set_local $13
-        block $block_0
-          get_local $0
-          i32.load offset=12
-          tee_local $2
-          get_local $0
-          i32.eq
-          if $if_15
+        get_local $0
+        i32.load offset=12
+        tee_local $2
+        get_local $0
+        i32.eq
+        if $if_15
+          block $block_0
             get_local $0
             i32.const 16
             i32.add
@@ -4963,46 +4952,46 @@
               get_local $2
               set_local $8
             end ;; $if_18
-          else
-            get_local $12
-            get_local $0
-            i32.load offset=8
-            tee_local $6
-            i32.gt_u
-            if $if_19
-              call $_abort
-            end ;; $if_19
-            get_local $6
-            i32.const 12
-            i32.add
-            tee_local $9
-            i32.load
-            get_local $0
-            i32.ne
-            if $if_20
-              call $_abort
-            end ;; $if_20
+          end ;; $block_0
+        else
+          get_local $12
+          get_local $0
+          i32.load offset=8
+          tee_local $6
+          i32.gt_u
+          if $if_19
+            call $_abort
+          end ;; $if_19
+          get_local $6
+          i32.const 12
+          i32.add
+          tee_local $9
+          i32.load
+          get_local $0
+          i32.ne
+          if $if_20
+            call $_abort
+          end ;; $if_20
+          get_local $2
+          i32.const 8
+          i32.add
+          tee_local $11
+          i32.load
+          get_local $0
+          i32.eq
+          if $if_21
+            get_local $9
             get_local $2
-            i32.const 8
-            i32.add
-            tee_local $11
-            i32.load
-            get_local $0
-            i32.eq
-            if $if_21
-              get_local $9
-              get_local $2
-              i32.store
-              get_local $11
-              get_local $6
-              i32.store
-              get_local $2
-              set_local $8
-            else
-              call $_abort
-            end ;; $if_21
-          end ;; $if_15
-        end ;; $block_0
+            i32.store
+            get_local $11
+            get_local $6
+            i32.store
+            get_local $2
+            set_local $8
+          else
+            call $_abort
+          end ;; $if_21
+        end ;; $if_15
         get_local $13
         if $if_22
           get_local $0
@@ -5147,8 +5136,8 @@
           tee_local $3
           set_local $5
         end ;; $if_22
-      end ;; $if_2
-    end ;; $block
+      end ;; $block
+    end ;; $if_2
     get_local $5
     get_local $7
     i32.ge_u
@@ -5350,13 +5339,13 @@
           get_local $7
           i32.load offset=24
           set_local $8
-          block $block_3
-            get_local $7
-            i32.load offset=12
-            tee_local $0
-            get_local $7
-            i32.eq
-            if $if_47
+          get_local $7
+          i32.load offset=12
+          tee_local $0
+          get_local $7
+          i32.eq
+          if $if_47
+            block $block_3
               get_local $7
               i32.const 16
               i32.add
@@ -5415,47 +5404,47 @@
                 get_local $0
                 set_local $10
               end ;; $if_50
-            else
-              i32.const 1092
-              i32.load
-              get_local $7
-              i32.load offset=8
-              tee_local $1
-              i32.gt_u
-              if $if_51
-                call $_abort
-              end ;; $if_51
-              get_local $1
-              i32.const 12
-              i32.add
-              tee_local $2
-              i32.load
-              get_local $7
-              i32.ne
-              if $if_52
-                call $_abort
-              end ;; $if_52
+            end ;; $block_3
+          else
+            i32.const 1092
+            i32.load
+            get_local $7
+            i32.load offset=8
+            tee_local $1
+            i32.gt_u
+            if $if_51
+              call $_abort
+            end ;; $if_51
+            get_local $1
+            i32.const 12
+            i32.add
+            tee_local $2
+            i32.load
+            get_local $7
+            i32.ne
+            if $if_52
+              call $_abort
+            end ;; $if_52
+            get_local $0
+            i32.const 8
+            i32.add
+            tee_local $6
+            i32.load
+            get_local $7
+            i32.eq
+            if $if_53
+              get_local $2
               get_local $0
-              i32.const 8
-              i32.add
-              tee_local $6
-              i32.load
-              get_local $7
-              i32.eq
-              if $if_53
-                get_local $2
-                get_local $0
-                i32.store
-                get_local $6
-                get_local $1
-                i32.store
-                get_local $0
-                set_local $10
-              else
-                call $_abort
-              end ;; $if_53
-            end ;; $if_47
-          end ;; $block_3
+              i32.store
+              get_local $6
+              get_local $1
+              i32.store
+              get_local $0
+              set_local $10
+            else
+              call $_abort
+            end ;; $if_53
+          end ;; $if_47
           get_local $8
           if $if_54
             get_local $7
@@ -5744,29 +5733,29 @@
     get_local $3
     i32.const 0
     i32.store offset=16
-    block $block_5
-      i32.const 1080
-      i32.load
-      tee_local $4
-      i32.const 1
-      get_local $1
-      i32.shl
-      tee_local $2
-      i32.and
-      if $if_70
-        block $block_6
+    i32.const 1080
+    i32.load
+    tee_local $4
+    i32.const 1
+    get_local $1
+    i32.shl
+    tee_local $2
+    i32.and
+    if $if_70
+      block $block_5
+        get_local $0
+        i32.load
+        tee_local $0
+        i32.load offset=4
+        i32.const -8
+        i32.and
+        get_local $5
+        i32.eq
+        if $if_71
           get_local $0
-          i32.load
-          tee_local $0
-          i32.load offset=4
-          i32.const -8
-          i32.and
-          get_local $5
-          i32.eq
-          if $if_71
-            get_local $0
-            set_local $14
-          else
+          set_local $14
+        else
+          block $block_6
             i32.const 25
             get_local $1
             i32.const 1
@@ -5841,8 +5830,8 @@
               i32.store offset=8
               br $block_5
             end ;; $if_75
-          end ;; $if_71
-        end ;; $block_6
+          end ;; $block_6
+        end ;; $if_71
         i32.const 1092
         i32.load
         tee_local $1
@@ -5876,26 +5865,26 @@
         else
           call $_abort
         end ;; $if_76
-      else
-        i32.const 1080
-        get_local $4
-        get_local $2
-        i32.or
-        i32.store
-        get_local $0
-        get_local $3
-        i32.store
-        get_local $3
-        get_local $0
-        i32.store offset=24
-        get_local $3
-        get_local $3
-        i32.store offset=12
-        get_local $3
-        get_local $3
-        i32.store offset=8
-      end ;; $if_70
-    end ;; $block_5
+      end ;; $block_5
+    else
+      i32.const 1080
+      get_local $4
+      get_local $2
+      i32.or
+      i32.store
+      get_local $0
+      get_local $3
+      i32.store
+      get_local $3
+      get_local $0
+      i32.store offset=24
+      get_local $3
+      get_local $3
+      i32.store offset=12
+      get_local $3
+      get_local $3
+      i32.store offset=8
+    end ;; $if_70
     i32.const 1108
     i32.const 1108
     i32.load
