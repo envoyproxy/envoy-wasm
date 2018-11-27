@@ -1,5 +1,5 @@
 mergeInto(LibraryManager.library, {
-    wasmLog: function () {},
+    envoy_log: function () {},
     getHeaderHandler: function () {},
     replaceHeaderHandler: function () {},
 });

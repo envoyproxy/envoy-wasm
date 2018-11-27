@@ -16,7 +16,7 @@
   (import "env" "___setErrNo" (func $___setErrNo (param i32)))
   (import "env" "_abort" (func $_abort))
   (import "env" "_emscripten_memcpy_big" (func $_emscripten_memcpy_big (param i32 i32 i32) (result i32)))
-  (import "env" "_wasmLog" (func $_wasmLog (param i32 i32 i32)))
+  (import "env" "_envoy_log" (func $_envoy_log (param i32 i32 i32)))
   (import "env" "table" (table $10 1 1 anyfunc))
   (import "env" "memory" (memory $11 256 256))
   (import "env" "__table_base" (global $12 i32))
@@ -237,7 +237,7 @@
     else
       get_local $0
     end ;; $if_3
-    call $_wasmLog
+    call $_envoy_log
     get_local $6
     i32.load8_s
     i32.const 0
@@ -357,7 +357,7 @@
     else
       get_local $3
     end ;; $if_0
-    call $_wasmLog
+    call $_envoy_log
     get_local $5
     i32.load8_s
     i32.const 0
@@ -471,7 +471,7 @@
     else
       get_local $3
     end ;; $if_0
-    call $_wasmLog
+    call $_envoy_log
     get_local $5
     i32.load8_s
     i32.const 0
@@ -562,7 +562,7 @@
     else
       get_local $3
     end ;; $if_4
-    call $_wasmLog
+    call $_envoy_log
     get_local $5
     i32.load8_s
     i32.const 0

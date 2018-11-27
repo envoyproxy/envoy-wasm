@@ -69,7 +69,7 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWAT) {
       "(module\n"
       "  (type $0 (func (param i32 i32 i32)))\n"
       "  (type $1 (func))\n"
-      "  (import \"env\" \"_wasmLog\" (func $_wasmLog (param i32 i32 i32)))\n"
+      "  (import \"envoy\" \"log\" (func $envoy_log (param i32 i32 i32)))\n"
       "  (import \"env\" \"memory\" (memory $2 17 1000))\n"
       "  (export \"main\" (func $main))\n"
       "  (data $2 (i32.const 1048576) \"Hello, world!\")\n"
@@ -78,7 +78,65 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWAT) {
       "   i32.const 1\n"
       "   i32.const 1048576\n"
       "   i32.const 13\n"
-      "   call $_wasmLog\n"
+      "   call $envoy_log\n"
+      "   )\n"
+      " )");
+
+  Event::MockDispatcher dispatcher;
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  auto wasm = factory->createWasm(config, context);
+  EXPECT_NE(wasm, nullptr);
+}
+
+TEST(WasmFactoryTest, CreateWasmFromInlineWATWithAlias) {
+  auto factory =
+      Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
+  ASSERT_NE(factory, nullptr);
+  envoy::config::wasm::v2::WasmConfig config;
+  config.set_vm("envoy.wasm.vm.wavm");
+  config.mutable_code()->set_inline_string(
+      "(module\n"
+      "  (type $0 (func (param i32 i32 i32)))\n"
+      "  (type $1 (func))\n"
+      "  (import \"env\" \"envoy_log\" (func $envoy_log (param i32 i32 i32)))\n"
+      "  (import \"env\" \"memory\" (memory $2 17 1000))\n"
+      "  (export \"main\" (func $main))\n"
+      "  (data $2 (i32.const 1048576) \"Hello, world!\")\n"
+      ""
+      " (func $main (type $1)\n"
+      "   i32.const 1\n"
+      "   i32.const 1048576\n"
+      "   i32.const 13\n"
+      "   call $envoy_log\n"
+      "   )\n"
+      " )");
+
+  Event::MockDispatcher dispatcher;
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  auto wasm = factory->createWasm(config, context);
+  EXPECT_NE(wasm, nullptr);
+}
+
+TEST(WasmFactoryTest, CreateWasmFromInlineWATWithUnderscoreAlias) {
+  auto factory =
+      Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
+  ASSERT_NE(factory, nullptr);
+  envoy::config::wasm::v2::WasmConfig config;
+  config.set_vm("envoy.wasm.vm.wavm");
+  config.mutable_code()->set_inline_string(
+      "(module\n"
+      "  (type $0 (func (param i32 i32 i32)))\n"
+      "  (type $1 (func))\n"
+      "  (import \"env\" \"_envoy_log\" (func $envoy_log (param i32 i32 i32)))\n"
+      "  (import \"env\" \"memory\" (memory $2 17 1000))\n"
+      "  (export \"main\" (func $main))\n"
+      "  (data $2 (i32.const 1048576) \"Hello, world!\")\n"
+      ""
+      " (func $main (type $1)\n"
+      "   i32.const 1\n"
+      "   i32.const 1048576\n"
+      "   i32.const 13\n"
+      "   call $envoy_log\n"
       "   )\n"
       " )");
 

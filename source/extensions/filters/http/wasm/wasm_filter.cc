@@ -155,7 +155,7 @@ void Context::onDestroy() { wasm_->onDestroy()(this, id); }
 Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   if (wasm_vm_) {
-    registerCallback(wasm_vm_.get(), "_wasmLog", &Common::Wasm::Context::wasmLogHandler);
+    registerCallback(wasm_vm_.get(), "log", &Common::Wasm::Context::wasmLogHandler);
     registerCallback(wasm_vm_.get(), "_replaceHeaderHandler", &Context::replaceHeaderHandler);
   }
 }

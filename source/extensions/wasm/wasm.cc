@@ -28,7 +28,7 @@ void Context::setTickPeriodMillisecondsHandler(void *context, uint32_t tick_peri
   
 Wasm::Wasm(absl::string_view vm) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
-  registerCallback(wasm_vm_.get(), "_wasmLog", &Common::Wasm::Context::wasmLogHandler);
+  registerCallback(wasm_vm_.get(), "log", &Common::Wasm::Context::wasmLogHandler);
   registerCallback(wasm_vm_.get(), "_setTickPeriodMilliseconds", &Context::setTickPeriodMillisecondsHandler);
 }
 

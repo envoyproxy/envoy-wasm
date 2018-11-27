@@ -41,7 +41,7 @@
   (import "env" "___unlock" (func $___unlock (param i32)))
   (import "env" "_abort" (func $_abort))
   (import "env" "_emscripten_memcpy_big" (func $_emscripten_memcpy_big (param i32 i32 i32) (result i32)))
-  (import "env" "_wasmLog" (func $_wasmLog (param i32 i32 i32)))
+  (import "env" "_envoy_log" (func $_envoy_log (param i32 i32 i32)))
   (import "env" "table" (table $20 161 161 anyfunc))
   (import "env" "memory" (memory $21 256 256))
   (import "env" "__table_base" (global $22 i32))
@@ -648,7 +648,7 @@
       i32.const 1
       get_local $44
       get_local $69
-      call $_wasmLog
+      call $_envoy_log
       get_local $73
       set_global $27
       return
@@ -681,7 +681,7 @@
       i32.const 1
       get_local $44
       get_local $69
-      call $_wasmLog
+      call $_envoy_log
       get_local $73
       set_global $27
       return
@@ -1108,7 +1108,7 @@
       i32.const 2
       get_local $44
       get_local $69
-      call $_wasmLog
+      call $_envoy_log
       get_local $73
       set_global $27
       return
@@ -1141,7 +1141,7 @@
       i32.const 2
       get_local $44
       get_local $69
-      call $_wasmLog
+      call $_envoy_log
       get_local $73
       set_global $27
       return
@@ -1568,7 +1568,7 @@
       i32.const 3
       get_local $44
       get_local $69
-      call $_wasmLog
+      call $_envoy_log
       get_local $73
       set_global $27
       return
@@ -1601,7 +1601,7 @@
       i32.const 3
       get_local $44
       get_local $69
-      call $_wasmLog
+      call $_envoy_log
       get_local $73
       set_global $27
       return

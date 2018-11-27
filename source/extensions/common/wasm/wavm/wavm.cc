@@ -39,6 +39,7 @@
 #include "WAVM/Emscripten/Emscripten.h"
 #include "WAVM/WASM/WASM.h"
 #include "WAVM/WASTParse/WASTParse.h"
+#include "absl/strings/match.h"
 
 using namespace WAVM;
 using namespace WAVM::IR;
@@ -85,16 +86,23 @@ class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
 
     bool resolve(const std::string& moduleName, const std::string& exportName, ExternType type,
         Object*& outObject) override {
+      // Link from "env.envoy_<function>" and "env._envoy_<function>" (for Emscripten)
+      // to "envoy.<function>" to support languages without support for import namespaces.
+      if (moduleName == "env" &&
+          (absl::StartsWith(exportName, "envoy_") || absl::StartsWith(exportName, "_envoy_"))) {
+        return resolveInternal("envoy",
+                               exportName.substr(exportName.find("envoy_") + sizeof("envoy_") - 1),
+                               type, outObject);
+      } else {
+        return resolveInternal(moduleName, exportName, type, outObject);
+      }
+    }
+
+    bool resolveInternal(const std::string& moduleName, const std::string& exportName,
+                         ExternType type, Object*& outObject) {
       auto namedInstance = moduleNameToInstanceMap_.get(moduleName);
       if(namedInstance) {
         outObject = getInstanceExport(*namedInstance, exportName);
-        // If we were looking in 'env' and missed look in 'envoy'.
-        if (!outObject && moduleName == "env") {
-          auto envoyInstance = moduleNameToInstanceMap_.get("envoy");
-          if (namedInstance) {
-            outObject = getInstanceExport(*envoyInstance, exportName);
-          }
-        }
         if (outObject) {
           if (isA(outObject, type)) {
             return true;
