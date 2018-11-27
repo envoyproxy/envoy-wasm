@@ -1,7 +1,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "envoy_wasm_filter_intrinsics.h"
+#include "envoy_wasm_intrinsics.h"
 
 class Context {
 public:
@@ -20,11 +20,7 @@ static std::unordered_map<int32_t, std::unique_ptr<Context>> context_map;
 
 void Context::onCreate() { logDebug(std::string("onCreate " + std::to_string(id_))); }
 
-void Context::onStart() {
-  logInfo(std::string("onStart " + std::to_string(id_)));
-  auto result = getHeader(id_, "path");
-  logTrace(std::string("header path " result->view());
-}
+void Context::onStart() { logInfo(std::string("onStart " + std::to_string(id_))); }
 
 void Context::onDestroy() { logWarn(std::string("onDestroy " + std::to_string(id_))); }
 
