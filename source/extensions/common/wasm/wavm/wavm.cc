@@ -77,7 +77,8 @@ struct SaveRestoreContext {
 
 class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
   public:
-    RootResolver(Compartment* compartment) : compartment_(compartment) {}
+    RootResolver(Compartment*) {}
+
     virtual ~RootResolver() {
       moduleNameToInstanceMap_.clear();  
     }
@@ -98,62 +99,17 @@ class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
           if (isA(outObject, type)) {
             return true;
           } else {
-            ENVOY_LOG(warn, "Resolved import {}.{} to a {}, but was expecting {}",
-                moduleName, exportName, asString(getObjectType(outObject)), asString(type));
-            return false;
+            throw WasmException(fmt::format(
+                "Failed to load WASM module due to a type mismatch in an import: {}.{} {}, "
+                "but was expecting type: {}",
+                moduleName, exportName, asString(getObjectType(outObject)), asString(type)));
           }
         }
       }
 
-      ENVOY_LOG(error, "Generated stub for missing import {}.{} : {}",
-          moduleName, exportName, asString(type));
-      outObject = getStubObject(exportName, type);
-      return true;
-    }
-
-    Object* getStubObject(const std::string& exportName, ExternType type) const {
-      switch (type.kind) {
-        case IR::ExternKind::function:
-          {
-            // Generate a function body that just uses the unreachable op to fault if called.
-            Serialization::ArrayOutputStream codeStream;
-            OperatorEncoderStream encoder(codeStream);
-            encoder.unreachable();
-            encoder.end();
-
-            // Generate a module for the stub function.
-            IR::Module stubIRModule;
-            DisassemblyNames stubModuleNames;
-            stubIRModule.types.push_back(asFunctionType(type));
-            stubIRModule.functions.defs.push_back({{0}, {}, std::move(codeStream.getBytes()), {}});
-            stubIRModule.exports.push_back({"importStub", IR::ExternKind::function, 0});
-            stubModuleNames.functions.push_back({"importStub: " + exportName, {}, {}});
-            IR::setDisassemblyNames(stubIRModule, stubModuleNames);
-            IR::validatePreCodeSections(stubIRModule);
-            DeferredCodeValidationState deferredCodeValidationState;
-            IR::validatePostCodeSections(stubIRModule, deferredCodeValidationState);
-
-            // Instantiate the module and return the stub function instance.
-            auto stubModule = compileModule(stubIRModule);
-            auto stubModuleInstance = instantiateModule(compartment_, stubModule, {}, "importStub");
-            return getInstanceExport(stubModuleInstance, "importStub");
-          }
-        case IR::ExternKind::memory:
-          return asObject(
-              Runtime::createMemory(compartment_, asMemoryType(type), std::string(exportName)));
-        case IR::ExternKind::table:
-          return asObject(
-              Runtime::createTable(compartment_, asTableType(type), std::string(exportName)));
-        case IR::ExternKind::global:
-          return asObject(Runtime::createGlobal(
-                compartment_,
-                asGlobalType(type),
-                IR::Value(asGlobalType(type).valueType, IR::UntaggedValue())));
-        case IR::ExternKind::exceptionType:
-          return asObject(
-              Runtime::createExceptionType(compartment_, asExceptionType(type), "importStub"));
-        default: Errors::unreachable();
-      };
+      throw WasmException(
+          fmt::format("Failed to load WASM module due to a missing import: {}.{} {}", moduleName,
+                      exportName, asString(type)));
     }
 
     HashMap<std::string, ModuleInstance*> & moduleNameToInstanceMap() {
@@ -161,7 +117,6 @@ class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
     }
 
   private:
-    Compartment* const compartment_;
     HashMap<std::string, ModuleInstance*> moduleNameToInstanceMap_;
 };
 

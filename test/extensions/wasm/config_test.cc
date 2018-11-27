@@ -19,7 +19,7 @@ namespace Wasm {
 TEST(WasmFactoryTest, CreateWasmFromWASM) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
-  EXPECT_NE(factory, nullptr);
+  ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.set_vm("envoy.wasm.vm.wavm");
   config.mutable_code()->set_filename(
@@ -33,7 +33,7 @@ TEST(WasmFactoryTest, CreateWasmFromWASM) {
 TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
-  EXPECT_NE(factory, nullptr);
+  ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.set_vm("envoy.wasm.vm.wavm");
   config.mutable_code()->set_filename(
@@ -48,7 +48,7 @@ TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
 TEST(WasmFactoryTest, CreateWasmFromWAT) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
-  EXPECT_NE(factory, nullptr);
+  ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.set_vm("envoy.wasm.vm.wavm");
   config.mutable_code()->set_filename(
@@ -57,6 +57,65 @@ TEST(WasmFactoryTest, CreateWasmFromWAT) {
   Server::Configuration::WasmFactoryContextImpl context(dispatcher);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
+}
+
+TEST(WasmFactoryTest, CreateWasmFromInlineWAT) {
+  auto factory =
+      Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
+  ASSERT_NE(factory, nullptr);
+  envoy::config::wasm::v2::WasmConfig config;
+  config.set_vm("envoy.wasm.vm.wavm");
+  config.mutable_code()->set_inline_string(
+      "(module\n"
+      "  (type $0 (func (param i32 i32 i32)))\n"
+      "  (type $1 (func))\n"
+      "  (import \"env\" \"_wasmLog\" (func $_wasmLog (param i32 i32 i32)))\n"
+      "  (import \"env\" \"memory\" (memory $2 17 1000))\n"
+      "  (export \"main\" (func $main))\n"
+      "  (data $2 (i32.const 1048576) \"Hello, world!\")\n"
+      ""
+      " (func $main (type $1)\n"
+      "   i32.const 1\n"
+      "   i32.const 1048576\n"
+      "   i32.const 13\n"
+      "   call $_wasmLog\n"
+      "   )\n"
+      " )");
+
+  Event::MockDispatcher dispatcher;
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  auto wasm = factory->createWasm(config, context);
+  EXPECT_NE(wasm, nullptr);
+}
+
+TEST(WasmFactoryTest, MissingImport) {
+  auto factory =
+      Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
+  ASSERT_NE(factory, nullptr);
+  envoy::config::wasm::v2::WasmConfig config;
+  config.set_vm("envoy.wasm.vm.wavm");
+  config.mutable_code()->set_inline_string(
+      "(module\n"
+      "  (type $0 (func (param i32 i32 i32)))\n"
+      "  (type $1 (func))\n"
+      "  (import \"env\" \"missing\" (func $missing (param i32 i32 i32)))\n"
+      "  (import \"env\" \"memory\" (memory $2 17 1000))\n"
+      "  (export \"main\" (func $main))\n"
+      "  (data $2 (i32.const 1048576) \"Hello, world!\")\n"
+      ""
+      " (func $main (type $1)\n"
+      "   i32.const 1\n"
+      "   i32.const 1048576\n"
+      "   i32.const 13\n"
+      "   call $missing\n"
+      "   )\n"
+      " )");
+
+  Event::MockDispatcher dispatcher;
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  EXPECT_THROW_WITH_MESSAGE(
+      factory->createWasm(config, context), Extensions::Common::Wasm::WasmException,
+      "Failed to load WASM module due to a missing import: env.missing func (i32, i32, i32)->()");
 }
 
 } // namespace Wasm
