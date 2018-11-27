@@ -236,16 +236,23 @@ bool Wavm::initialize(const std::string& code, absl::string_view name, bool allo
   } else {
     module = Runtime::loadPrecompiledModule(irModule_, precompiledObjectSection->data);
   }
-  envoyModuleInstance_ = Intrinsics::instantiateModule(compartment_, envoy_module_, "envoy");
   RootResolver rootResolver(compartment_);
-  // todo make this optional
-  if (true) {
+  envoyModuleInstance_ = Intrinsics::instantiateModule(compartment_, envoy_module_, "envoy");
+  rootResolver.moduleNameToInstanceMap().set("envoy", envoyModuleInstance_);
+  // Auto-detect if WASM module needs Emscripten.
+  bool needs_emscripten = false;
+  for (const auto& func : irModule_.functions.imports) {
+    if (func.exportName == "_emscripten_memcpy_big" && func.moduleName == "env") {
+      needs_emscripten = true;
+      break;
+    }
+  }
+  if (needs_emscripten) {
     emscriptenInstance_ = Emscripten::instantiate(compartment_, irModule_);
     rootResolver.moduleNameToInstanceMap().set("env", emscriptenInstance_->env);
     rootResolver.moduleNameToInstanceMap().set("asm2wasm", emscriptenInstance_->asm2wasm);
     rootResolver.moduleNameToInstanceMap().set("global", emscriptenInstance_->global);
   }
-  rootResolver.moduleNameToInstanceMap().set("envoy", envoyModuleInstance_);
   LinkResult linkResult = linkModule(irModule_, rootResolver);
   moduleInstance_ = instantiateModule(compartment_, module, std::move(linkResult.resolvedImports),
                                       std::string(name));
