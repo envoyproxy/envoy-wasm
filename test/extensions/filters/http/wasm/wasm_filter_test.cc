@@ -1,7 +1,9 @@
+#include <stdio.h>
 #include "common/buffer/buffer_impl.h"
 #include "common/http/message_impl.h"
 #include "common/stream_info/stream_info_impl.h"
 
+#include "extensions/common/wasm/wasm.h"
 #include "extensions/filters/http/wasm/wasm_filter.h"
 
 #include "test/mocks/http/mocks.h"
@@ -17,6 +19,7 @@
 
 using testing::_;
 using testing::AtLeast;
+using testing::Eq;
 using testing::InSequence;
 using testing::Invoke;
 using testing::Return;
@@ -29,11 +32,12 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-class TestFilter : public Filter {
+class TestContext : public  Context {
 public:
-  using Filter::Filter;
-
-  MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, const char* message));
+  TestContext(Wasm *wasm) : Context(wasm, nullptr) {}
+  ~TestContext() override {}
+  MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
+  MOCK_METHOD2(getHeader, absl::string_view(HeaderType type, absl::string_view key_view));
 };
 
 class WasmHttpFilterTest : public testing::Test {
@@ -46,18 +50,18 @@ public:
     }
   }
 
-  void setup(const std::string& code) {
+  void setupConfig(const std::string& code) {
     config_.reset(
         new FilterConfig("envoy.wasm.vm.wavm", code, "<test>", true, "", tls_, cluster_manager_));
     setupFilter();
   }
 
-  void setupFilter() { filter_.reset(new TestFilter(config_)); }
+  void setupFilter() { filter_.reset(new Filter(config_)); }
 
   NiceMock<ThreadLocal::MockInstance> tls_;
   Upstream::MockClusterManager cluster_manager_;
   std::shared_ptr<FilterConfig> config_;
-  std::unique_ptr<TestFilter> filter_;
+  std::unique_ptr<Filter> filter_;
   Http::MockStreamDecoderFilterCallbacks decoder_callbacks_;
   Http::MockStreamEncoderFilterCallbacks encoder_callbacks_;
   envoy::api::v2::core::Metadata metadata_;
@@ -68,25 +72,30 @@ public:
 
 // Bad code in initial config.
 TEST_F(WasmHttpFilterTest, BadCode) {
-  EXPECT_THROW_WITH_MESSAGE(setup("bad code"), Common::Wasm::WasmException,
+  EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException,
                             "unable to initialize WASM vm");
 }
 
 // Script touching headers only, request that is headers only.
 TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   InSequence s;
-  setup(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
-  Http::TestHeaderMapImpl request_headers{{":path", "/"}};
-  // TODO(PiotrSikora): re-enable once fixed.
+  auto context = std::make_unique<TestContext>(config_->wasm());
+  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, Eq(absl::string_view("main"))));
+  config_->wasm()->setGeneralContext(std::move(context));
+  config_->wasm()->start();
+  setupFilter();
 #if 0
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, StrEq("onCreate 1")));
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, StrEq("onStart 1")));
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, StrEq("onDestroy 1")));
-
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::trace, StrEq("header path /")));
-#endif
+  Http::TestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_CALL(*context, scriptLog(spdlog::level::info, StrEq("onStart 0")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, StrEq("onCreate 0")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::warn, StrEq("onDestroy 0")));
+  EXPECT_CALL(*context, getHeader(HeaderType::Header, StrEq("path"))).
+    WillOnce(Return("/"));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, StrEq("header path /")));
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+#endif
 }
 
 } // namespace Wasm

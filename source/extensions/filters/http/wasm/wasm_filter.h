@@ -19,11 +19,8 @@ class Context : public Envoy::Extensions::Common::Wasm::Context {
 public:
   using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
 
-  Context(Envoy::Extensions::Common::Wasm::WasmVm* vm, Wasm* wasm, StreamHandler* stream) :
-	  Envoy::Extensions::Common::Wasm::Context(vm), wasm_(wasm), stream_(stream) {
-    onCreate();
-  }
-  ~Context() override { onDestroy(); }
+  Context(Wasm* wasm, StreamHandler* stream);
+  ~Context() override;
 
   //
   // Calls from the WASM code.
@@ -105,10 +102,8 @@ public:
   void configure(absl::string_view configuration);
   void start();
 
-  std::unique_ptr<Context> createContext(StreamHandler *handler) {
-    auto context = std::make_unique<Context>(wasm_vm_.get(), this, handler);
+  void allocContextId(Context *context) {
     context->id = next_context_id_++;
-    return context;
   }
 
   std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onCreate() {
@@ -119,6 +114,14 @@ public:
   }
   std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onDestroy() {
      return onDestroy_;
+  }
+
+  Envoy::Extensions::Common::Wasm::WasmVm* wasm_vm() { return wasm_vm_.get(); }
+  Context* general_context() { return general_context_.get(); }
+
+  // For testing.
+  void setGeneralContext(std::unique_ptr<Context> context) {
+    general_context_ = std::move(context);
   }
 
 private:
@@ -188,6 +191,8 @@ public:
 
   Upstream::ClusterManager& cluster_manager() { return cluster_manager_; }
 
+  Wasm* wasm() { return wasm_.get(); }
+
 private:
   Upstream::ClusterManager& cluster_manager_;
   std::unique_ptr<Wasm> wasm_;
@@ -216,6 +221,13 @@ public:
   Http::FilterDataStatus encodeData(Buffer::Instance& data, bool end_stream) override;
   Http::FilterTrailersStatus encodeTrailers(Http::HeaderMap& trailers) override;
   void setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks& callbacks) override;
+
+  // Override for testing.
+  virtual std::unique_ptr<Context> createContext(StreamHandler* handler) {
+    auto context = std::make_unique<Context>(config_->wasm(), handler);
+    config_->wasm()->allocContextId(context.get());
+    return context;
+  } 
 
 private:
   FilterConfigConstSharedPtr config_;

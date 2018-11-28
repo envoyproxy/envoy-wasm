@@ -71,7 +71,9 @@
   (export "dynCall_viiiii" (func $dynCall_viiiii))
   (export "dynCall_viiiiii" (func $dynCall_viiiiii))
   (export "establishStackSpace" (func $establishStackSpace))
+  (export "getTempRet0" (func $getTempRet0))
   (export "runPostSets" (func $runPostSets))
+  (export "setTempRet0" (func $setTempRet0))
   (export "setThrew" (func $setThrew))
   (export "stackAlloc" (func $stackAlloc))
   (export "stackRestore" (func $stackRestore))
@@ -81,6 +83,7 @@
   (global $28  (mut i32) (get_global $25))
   (global $29  (mut i32) (i32.const 0))
   (global $30  (mut i32) (i32.const 0))
+  (global $31  (mut i32) (i32.const 0))
   (elem $20 (get_global $22)
     $b0 $___stdio_close $b0 $b0 $b0 $b0 $b0 $b0
     $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0
@@ -147,25 +150,25 @@
     "\c1\00\00\00\c5\00\00\00\c7\00\00\00\d3\00\00\00\01\00\00\00\0b\00\00\00\0d\00\00\00\11\00\00\00\13\00\00\00\17\00\00\00\1d\00\00\00\1f\00\00\00%\00\00\00)\00\00\00+\00\00\00/\00\00\00"
     "5\00\00\00;\00\00\00=\00\00\00C\00\00\00G\00\00\00I\00\00\00O\00\00\00S\00\00\00Y\00\00\00a\00\00\00e\00\00\00g\00\00\00k\00\00\00m\00\00\00q\00\00\00y\00\00\00"
     "\7f\00\00\00\83\00\00\00\89\00\00\00\8b\00\00\00\8f\00\00\00\95\00\00\00\97\00\00\00\9d\00\00\00\a3\00\00\00\a7\00\00\00\a9\00\00\00\ad\00\00\00\b3\00\00\00\b5\00\00\00\bb\00\00\00\bf\00\00\00"
-    "\c1\00\00\00\c5\00\00\00\c7\00\00\00\d1\00\00\00\\\11\00\00g\12\00\00\84\11\00\00\c7\12\00\00\e8\0e\00\00\00\00\00\00\84\11\00\00t\12\00\00\f8\0e\00\00\00\00\00\00\\\11\00\00\95\12\00\00"
-    "\84\11\00\00\a2\12\00\00\d8\0e\00\00\00\00\00\00\84\11\00\00\e9\12\00\00\d0\0e\00\00\00\00\00\00\84\11\00\00\f9\12\00\00\10\0f\00\00\00\00\00\00\84\11\00\00.\13\00\00\e8\0e\00\00\00\00\00\00"
-    "\84\11\00\00\n\13\00\000\0f\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\80?\05\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
-    "\00\00\00\00\00\00\00\00\02\00\00\00\03\00\00\00X\13\00\00\00\04\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\n\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00"
+    "\c1\00\00\00\c5\00\00\00\c7\00\00\00\d1\00\00\00\\\11\00\00l\12\00\00\84\11\00\00\cc\12\00\00\e8\0e\00\00\00\00\00\00\84\11\00\00y\12\00\00\f8\0e\00\00\00\00\00\00\\\11\00\00\9a\12\00\00"
+    "\84\11\00\00\a7\12\00\00\d8\0e\00\00\00\00\00\00\84\11\00\00\ee\12\00\00\d0\0e\00\00\00\00\00\00\84\11\00\00\fe\12\00\00\10\0f\00\00\00\00\00\00\84\11\00\003\13\00\00\e8\0e\00\00\00\00\00\00"
+    "\84\11\00\00\0f\13\00\000\0f\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\80?\05\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
+    "\00\00\00\00\00\00\00\00\02\00\00\00\03\00\00\00h\13\00\00\00\04\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\n\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00d\0f\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
+    "\00\00\00\00\00\00\00\00\04\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\ff\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
-    "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\8c\17\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
-    "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\04\00\00\00"
-    "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\ff\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
+    "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
+    "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\98\17\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\d8\0e\00\00\05\00\00\00\06\00\00\00\07\00\00\00\08\00\00\00\09\00\00\00\n\00\00\00\0b\00\00\00\0c\00\00\00\00\00\00\00"
     "\00\0f\00\00\05\00\00\00\0d\00\00\00\07\00\00\00\08\00\00\00\09\00\00\00\0e\00\00\00\0f\00\00\00\10\00\00\00\00\00\00\00\10\0f\00\00\11\00\00\00\12\00\00\00\13\00\00\00\00\00\00\00 \0f\00\00"
-    "\11\00\00\00\14\00\00\00\13\00\00\00onCreate \00onStart \00onDestroy \00allocator<T>::allocate"
-    "(size_t n) 'n' exceeds maximum supported size\00-+   0X0x\00(null)\00-"
-    "0X+0X 0X-0x+0x 0x\00inf\00INF\00nan\00NAN\00.\00%d\00St9exception\00N10__cxxabiv"
-    "116__shim_type_infoE\00St9type_info\00N10__cxxabiv120__si_class_type"
-    "_infoE\00N10__cxxabiv117__class_type_infoE\00St11logic_error\00St12len"
-    "gth_error\00N10__cxxabiv119__pointer_type_infoE\00N10__cxxabiv117__p"
-    "base_type_infoE")
+    "\11\00\00\00\14\00\00\00\13\00\00\00onCreate \00onStart \00onDestroy \00main\00allocator<T>::all"
+    "ocate(size_t n) 'n' exceeds maximum supported size\00-+   0X0x\00(nu"
+    "ll)\00-0X+0X 0X-0x+0x 0x\00inf\00INF\00nan\00NAN\00.\00%d\00St9exception\00N10__cx"
+    "xabiv116__shim_type_infoE\00St9type_info\00N10__cxxabiv120__si_class"
+    "_type_infoE\00N10__cxxabiv117__class_type_infoE\00St11logic_error\00St"
+    "12length_error\00N10__cxxabiv119__pointer_type_infoE\00N10__cxxabiv1"
+    "17__pbase_type_infoE")
   
   (func $stackAlloc (type $5)
     (param $0 i32)
@@ -229,1384 +232,16 @@
     end ;; $if
     )
   
-  (func $__ZN7Context8onCreateEv (type $6)
+  (func $setTempRet0 (type $6)
     (param $0 i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    (local $7 i32)
-    (local $8 i32)
-    (local $9 i32)
-    (local $10 i32)
-    (local $11 i32)
-    (local $12 i32)
-    (local $13 i32)
-    (local $14 i32)
-    (local $15 i32)
-    (local $16 i32)
-    (local $17 i32)
-    (local $18 i32)
-    (local $19 i32)
-    (local $20 i32)
-    (local $21 i32)
-    (local $22 i32)
-    (local $23 i32)
-    (local $24 i32)
-    (local $25 i32)
-    (local $26 i32)
-    (local $27 i32)
-    (local $28 i32)
-    (local $29 i32)
-    (local $30 i32)
-    (local $31 i32)
-    (local $32 i32)
-    (local $33 i32)
-    (local $34 i32)
-    (local $35 i32)
-    (local $36 i32)
-    get_global $27
-    set_local $36
-    get_global $27
-    i32.const 80
-    i32.add
-    set_global $27
-    get_global $27
-    get_global $28
-    i32.ge_s
-    if $if
-      i32.const 80
-      call $abortStackOverflow
-    end ;; $if
-    get_local $36
-    i32.const 12
-    i32.add
-    set_local $5
-    get_local $36
-    set_local $6
     get_local $0
-    set_local $4
-    get_local $4
-    set_local $7
-    get_local $7
-    i32.load
-    set_local $8
-    get_local $6
-    get_local $8
-    call $__ZNSt3__29to_stringEi
-    i32.const 4556
-    set_local $2
-    get_local $6
-    set_local $3
-    get_local $3
-    set_local $9
-    get_local $2
-    set_local $10
-    get_local $9
-    i32.const 0
-    get_local $10
-    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc
-    set_local $11
-    get_local $11
-    set_local $34
-    get_local $34
-    set_local $13
-    get_local $5
-    set_local $32
-    get_local $13
-    set_local $33
-    get_local $32
-    set_local $14
-    get_local $33
-    set_local $15
-    get_local $15
-    set_local $31
-    get_local $31
-    set_local $16
-    get_local $14
-    get_local $16
-    i64.load align=4
-    i64.store align=4
-    get_local $14
-    i32.const 8
-    i32.add
-    get_local $16
-    i32.const 8
-    i32.add
-    i32.load
-    i32.store
-    get_local $33
-    set_local $17
-    get_local $17
-    set_local $23
-    get_local $23
-    set_local $18
-    get_local $18
-    set_local $12
-    get_local $12
-    set_local $19
-    get_local $19
-    set_local $1
-    get_local $1
-    set_local $20
-    get_local $20
-    set_local $29
-    i32.const 0
-    set_local $30
-    loop $loop
-      block $block
-        get_local $30
-        set_local $21
-        get_local $21
-        i32.const 3
-        i32.lt_u
-        set_local $22
-        get_local $22
-        i32.eqz
-        if $if_0
-          br $block
-        end ;; $if_0
-        get_local $29
-        set_local $24
-        get_local $30
-        set_local $25
-        get_local $24
-        get_local $25
-        i32.const 2
-        i32.shl
-        i32.add
-        set_local $26
-        get_local $26
-        i32.const 0
-        i32.store
-        get_local $30
-        set_local $27
-        get_local $27
-        i32.const 1
-        i32.add
-        set_local $28
-        get_local $28
-        set_local $30
-        br $loop
-      end ;; $block
-    end ;; $loop
-    get_local $5
-    call $__Z8logDebugRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
-    get_local $5
-    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
-    get_local $6
-    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
-    get_local $36
-    set_global $27
+    set_global $31
+    )
+  
+  (func $getTempRet0 (type $7)
+    (result i32)
+    get_global $31
     return
-    )
-  
-  (func $__Z8logDebugRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE (type $6)
-    (param $0 i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    (local $7 i32)
-    (local $8 i32)
-    (local $9 i32)
-    (local $10 i32)
-    (local $11 i32)
-    (local $12 i32)
-    (local $13 i32)
-    (local $14 i32)
-    (local $15 i32)
-    (local $16 i32)
-    (local $17 i32)
-    (local $18 i32)
-    (local $19 i32)
-    (local $20 i32)
-    (local $21 i32)
-    (local $22 i32)
-    (local $23 i32)
-    (local $24 i32)
-    (local $25 i32)
-    (local $26 i32)
-    (local $27 i32)
-    (local $28 i32)
-    (local $29 i32)
-    (local $30 i32)
-    (local $31 i32)
-    (local $32 i32)
-    (local $33 i32)
-    (local $34 i32)
-    (local $35 i32)
-    (local $36 i32)
-    (local $37 i32)
-    (local $38 i32)
-    (local $39 i32)
-    (local $40 i32)
-    (local $41 i32)
-    (local $42 i32)
-    (local $43 i32)
-    (local $44 i32)
-    (local $45 i32)
-    (local $46 i32)
-    (local $47 i32)
-    (local $48 i32)
-    (local $49 i32)
-    (local $50 i32)
-    (local $51 i32)
-    (local $52 i32)
-    (local $53 i32)
-    (local $54 i32)
-    (local $55 i32)
-    (local $56 i32)
-    (local $57 i32)
-    (local $58 i32)
-    (local $59 i32)
-    (local $60 i32)
-    (local $61 i32)
-    (local $62 i32)
-    (local $63 i32)
-    (local $64 i32)
-    (local $65 i32)
-    (local $66 i32)
-    (local $67 i32)
-    (local $68 i32)
-    (local $69 i32)
-    (local $70 i32)
-    (local $71 i32)
-    (local $72 i32)
-    (local $73 i32)
-    get_global $27
-    set_local $73
-    get_global $27
-    i32.const 112
-    i32.add
-    set_global $27
-    get_global $27
-    get_global $28
-    i32.ge_s
-    if $if
-      i32.const 112
-      call $abortStackOverflow
-    end ;; $if
-    get_local $0
-    set_local $19
-    get_local $19
-    set_local $20
-    get_local $20
-    set_local $18
-    get_local $18
-    set_local $21
-    get_local $21
-    set_local $17
-    get_local $17
-    set_local $22
-    get_local $22
-    set_local $16
-    get_local $16
-    set_local $24
-    get_local $24
-    set_local $15
-    get_local $15
-    set_local $25
-    get_local $25
-    set_local $14
-    get_local $14
-    set_local $26
-    get_local $26
-    set_local $13
-    get_local $13
-    set_local $27
-    get_local $27
-    i32.const 11
-    i32.add
-    set_local $28
-    get_local $28
-    i32.load8_s
-    set_local $29
-    get_local $29
-    i32.const 255
-    i32.and
-    set_local $30
-    get_local $30
-    i32.const 128
-    i32.and
-    set_local $31
-    get_local $31
-    i32.const 0
-    i32.ne
-    set_local $32
-    get_local $32
-    if $if_0
-      get_local $24
-      set_local $6
-      get_local $6
-      set_local $33
-      get_local $33
-      set_local $5
-      get_local $5
-      set_local $35
-      get_local $35
-      set_local $4
-      get_local $4
-      set_local $36
-      get_local $36
-      i32.load
-      set_local $37
-      get_local $37
-      set_local $43
-    else
-      get_local $24
-      set_local $11
-      get_local $11
-      set_local $38
-      get_local $38
-      set_local $10
-      get_local $10
-      set_local $39
-      get_local $39
-      set_local $9
-      get_local $9
-      set_local $40
-      get_local $40
-      set_local $8
-      get_local $8
-      set_local $41
-      get_local $41
-      set_local $7
-      get_local $7
-      set_local $42
-      get_local $42
-      set_local $43
-    end ;; $if_0
-    get_local $43
-    set_local $3
-    get_local $3
-    set_local $44
-    get_local $19
-    set_local $46
-    get_local $46
-    set_local $2
-    get_local $2
-    set_local $47
-    get_local $47
-    set_local $71
-    get_local $71
-    set_local $48
-    get_local $48
-    set_local $70
-    get_local $70
-    set_local $49
-    get_local $49
-    set_local $67
-    get_local $67
-    set_local $50
-    get_local $50
-    i32.const 11
-    i32.add
-    set_local $51
-    get_local $51
-    i32.load8_s
-    set_local $52
-    get_local $52
-    i32.const 255
-    i32.and
-    set_local $53
-    get_local $53
-    i32.const 128
-    i32.and
-    set_local $54
-    get_local $54
-    i32.const 0
-    i32.ne
-    set_local $55
-    get_local $55
-    if $if_1
-      get_local $47
-      set_local $23
-      get_local $23
-      set_local $57
-      get_local $57
-      set_local $12
-      get_local $12
-      set_local $58
-      get_local $58
-      set_local $1
-      get_local $1
-      set_local $59
-      get_local $59
-      i32.const 4
-      i32.add
-      set_local $60
-      get_local $60
-      i32.load
-      set_local $61
-      get_local $61
-      set_local $69
-      i32.const 1
-      get_local $44
-      get_local $69
-      call $_envoy_log
-      get_local $73
-      set_global $27
-      return
-    else
-      get_local $47
-      set_local $56
-      get_local $56
-      set_local $62
-      get_local $62
-      set_local $45
-      get_local $45
-      set_local $63
-      get_local $63
-      set_local $34
-      get_local $34
-      set_local $64
-      get_local $64
-      i32.const 11
-      i32.add
-      set_local $65
-      get_local $65
-      i32.load8_s
-      set_local $66
-      get_local $66
-      i32.const 255
-      i32.and
-      set_local $68
-      get_local $68
-      set_local $69
-      i32.const 1
-      get_local $44
-      get_local $69
-      call $_envoy_log
-      get_local $73
-      set_global $27
-      return
-    end ;; $if_1
-    unreachable
-    )
-  
-  (func $__ZN7Context7onStartEv (type $6)
-    (param $0 i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    (local $7 i32)
-    (local $8 i32)
-    (local $9 i32)
-    (local $10 i32)
-    (local $11 i32)
-    (local $12 i32)
-    (local $13 i32)
-    (local $14 i32)
-    (local $15 i32)
-    (local $16 i32)
-    (local $17 i32)
-    (local $18 i32)
-    (local $19 i32)
-    (local $20 i32)
-    (local $21 i32)
-    (local $22 i32)
-    (local $23 i32)
-    (local $24 i32)
-    (local $25 i32)
-    (local $26 i32)
-    (local $27 i32)
-    (local $28 i32)
-    (local $29 i32)
-    (local $30 i32)
-    (local $31 i32)
-    (local $32 i32)
-    (local $33 i32)
-    (local $34 i32)
-    (local $35 i32)
-    (local $36 i32)
-    get_global $27
-    set_local $36
-    get_global $27
-    i32.const 80
-    i32.add
-    set_global $27
-    get_global $27
-    get_global $28
-    i32.ge_s
-    if $if
-      i32.const 80
-      call $abortStackOverflow
-    end ;; $if
-    get_local $36
-    i32.const 12
-    i32.add
-    set_local $5
-    get_local $36
-    set_local $6
-    get_local $0
-    set_local $4
-    get_local $4
-    set_local $7
-    get_local $7
-    i32.load
-    set_local $8
-    get_local $6
-    get_local $8
-    call $__ZNSt3__29to_stringEi
-    i32.const 4566
-    set_local $2
-    get_local $6
-    set_local $3
-    get_local $3
-    set_local $9
-    get_local $2
-    set_local $10
-    get_local $9
-    i32.const 0
-    get_local $10
-    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc
-    set_local $11
-    get_local $11
-    set_local $34
-    get_local $34
-    set_local $13
-    get_local $5
-    set_local $32
-    get_local $13
-    set_local $33
-    get_local $32
-    set_local $14
-    get_local $33
-    set_local $15
-    get_local $15
-    set_local $31
-    get_local $31
-    set_local $16
-    get_local $14
-    get_local $16
-    i64.load align=4
-    i64.store align=4
-    get_local $14
-    i32.const 8
-    i32.add
-    get_local $16
-    i32.const 8
-    i32.add
-    i32.load
-    i32.store
-    get_local $33
-    set_local $17
-    get_local $17
-    set_local $23
-    get_local $23
-    set_local $18
-    get_local $18
-    set_local $12
-    get_local $12
-    set_local $19
-    get_local $19
-    set_local $1
-    get_local $1
-    set_local $20
-    get_local $20
-    set_local $29
-    i32.const 0
-    set_local $30
-    loop $loop
-      block $block
-        get_local $30
-        set_local $21
-        get_local $21
-        i32.const 3
-        i32.lt_u
-        set_local $22
-        get_local $22
-        i32.eqz
-        if $if_0
-          br $block
-        end ;; $if_0
-        get_local $29
-        set_local $24
-        get_local $30
-        set_local $25
-        get_local $24
-        get_local $25
-        i32.const 2
-        i32.shl
-        i32.add
-        set_local $26
-        get_local $26
-        i32.const 0
-        i32.store
-        get_local $30
-        set_local $27
-        get_local $27
-        i32.const 1
-        i32.add
-        set_local $28
-        get_local $28
-        set_local $30
-        br $loop
-      end ;; $block
-    end ;; $loop
-    get_local $5
-    call $__Z7logInfoRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
-    get_local $5
-    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
-    get_local $6
-    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
-    get_local $36
-    set_global $27
-    return
-    )
-  
-  (func $__Z7logInfoRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE (type $6)
-    (param $0 i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    (local $7 i32)
-    (local $8 i32)
-    (local $9 i32)
-    (local $10 i32)
-    (local $11 i32)
-    (local $12 i32)
-    (local $13 i32)
-    (local $14 i32)
-    (local $15 i32)
-    (local $16 i32)
-    (local $17 i32)
-    (local $18 i32)
-    (local $19 i32)
-    (local $20 i32)
-    (local $21 i32)
-    (local $22 i32)
-    (local $23 i32)
-    (local $24 i32)
-    (local $25 i32)
-    (local $26 i32)
-    (local $27 i32)
-    (local $28 i32)
-    (local $29 i32)
-    (local $30 i32)
-    (local $31 i32)
-    (local $32 i32)
-    (local $33 i32)
-    (local $34 i32)
-    (local $35 i32)
-    (local $36 i32)
-    (local $37 i32)
-    (local $38 i32)
-    (local $39 i32)
-    (local $40 i32)
-    (local $41 i32)
-    (local $42 i32)
-    (local $43 i32)
-    (local $44 i32)
-    (local $45 i32)
-    (local $46 i32)
-    (local $47 i32)
-    (local $48 i32)
-    (local $49 i32)
-    (local $50 i32)
-    (local $51 i32)
-    (local $52 i32)
-    (local $53 i32)
-    (local $54 i32)
-    (local $55 i32)
-    (local $56 i32)
-    (local $57 i32)
-    (local $58 i32)
-    (local $59 i32)
-    (local $60 i32)
-    (local $61 i32)
-    (local $62 i32)
-    (local $63 i32)
-    (local $64 i32)
-    (local $65 i32)
-    (local $66 i32)
-    (local $67 i32)
-    (local $68 i32)
-    (local $69 i32)
-    (local $70 i32)
-    (local $71 i32)
-    (local $72 i32)
-    (local $73 i32)
-    get_global $27
-    set_local $73
-    get_global $27
-    i32.const 112
-    i32.add
-    set_global $27
-    get_global $27
-    get_global $28
-    i32.ge_s
-    if $if
-      i32.const 112
-      call $abortStackOverflow
-    end ;; $if
-    get_local $0
-    set_local $19
-    get_local $19
-    set_local $20
-    get_local $20
-    set_local $18
-    get_local $18
-    set_local $21
-    get_local $21
-    set_local $17
-    get_local $17
-    set_local $22
-    get_local $22
-    set_local $16
-    get_local $16
-    set_local $24
-    get_local $24
-    set_local $15
-    get_local $15
-    set_local $25
-    get_local $25
-    set_local $14
-    get_local $14
-    set_local $26
-    get_local $26
-    set_local $13
-    get_local $13
-    set_local $27
-    get_local $27
-    i32.const 11
-    i32.add
-    set_local $28
-    get_local $28
-    i32.load8_s
-    set_local $29
-    get_local $29
-    i32.const 255
-    i32.and
-    set_local $30
-    get_local $30
-    i32.const 128
-    i32.and
-    set_local $31
-    get_local $31
-    i32.const 0
-    i32.ne
-    set_local $32
-    get_local $32
-    if $if_0
-      get_local $24
-      set_local $6
-      get_local $6
-      set_local $33
-      get_local $33
-      set_local $5
-      get_local $5
-      set_local $35
-      get_local $35
-      set_local $4
-      get_local $4
-      set_local $36
-      get_local $36
-      i32.load
-      set_local $37
-      get_local $37
-      set_local $43
-    else
-      get_local $24
-      set_local $11
-      get_local $11
-      set_local $38
-      get_local $38
-      set_local $10
-      get_local $10
-      set_local $39
-      get_local $39
-      set_local $9
-      get_local $9
-      set_local $40
-      get_local $40
-      set_local $8
-      get_local $8
-      set_local $41
-      get_local $41
-      set_local $7
-      get_local $7
-      set_local $42
-      get_local $42
-      set_local $43
-    end ;; $if_0
-    get_local $43
-    set_local $3
-    get_local $3
-    set_local $44
-    get_local $19
-    set_local $46
-    get_local $46
-    set_local $2
-    get_local $2
-    set_local $47
-    get_local $47
-    set_local $71
-    get_local $71
-    set_local $48
-    get_local $48
-    set_local $70
-    get_local $70
-    set_local $49
-    get_local $49
-    set_local $67
-    get_local $67
-    set_local $50
-    get_local $50
-    i32.const 11
-    i32.add
-    set_local $51
-    get_local $51
-    i32.load8_s
-    set_local $52
-    get_local $52
-    i32.const 255
-    i32.and
-    set_local $53
-    get_local $53
-    i32.const 128
-    i32.and
-    set_local $54
-    get_local $54
-    i32.const 0
-    i32.ne
-    set_local $55
-    get_local $55
-    if $if_1
-      get_local $47
-      set_local $23
-      get_local $23
-      set_local $57
-      get_local $57
-      set_local $12
-      get_local $12
-      set_local $58
-      get_local $58
-      set_local $1
-      get_local $1
-      set_local $59
-      get_local $59
-      i32.const 4
-      i32.add
-      set_local $60
-      get_local $60
-      i32.load
-      set_local $61
-      get_local $61
-      set_local $69
-      i32.const 2
-      get_local $44
-      get_local $69
-      call $_envoy_log
-      get_local $73
-      set_global $27
-      return
-    else
-      get_local $47
-      set_local $56
-      get_local $56
-      set_local $62
-      get_local $62
-      set_local $45
-      get_local $45
-      set_local $63
-      get_local $63
-      set_local $34
-      get_local $34
-      set_local $64
-      get_local $64
-      i32.const 11
-      i32.add
-      set_local $65
-      get_local $65
-      i32.load8_s
-      set_local $66
-      get_local $66
-      i32.const 255
-      i32.and
-      set_local $68
-      get_local $68
-      set_local $69
-      i32.const 2
-      get_local $44
-      get_local $69
-      call $_envoy_log
-      get_local $73
-      set_global $27
-      return
-    end ;; $if_1
-    unreachable
-    )
-  
-  (func $__ZN7Context9onDestroyEv (type $6)
-    (param $0 i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    (local $7 i32)
-    (local $8 i32)
-    (local $9 i32)
-    (local $10 i32)
-    (local $11 i32)
-    (local $12 i32)
-    (local $13 i32)
-    (local $14 i32)
-    (local $15 i32)
-    (local $16 i32)
-    (local $17 i32)
-    (local $18 i32)
-    (local $19 i32)
-    (local $20 i32)
-    (local $21 i32)
-    (local $22 i32)
-    (local $23 i32)
-    (local $24 i32)
-    (local $25 i32)
-    (local $26 i32)
-    (local $27 i32)
-    (local $28 i32)
-    (local $29 i32)
-    (local $30 i32)
-    (local $31 i32)
-    (local $32 i32)
-    (local $33 i32)
-    (local $34 i32)
-    (local $35 i32)
-    (local $36 i32)
-    get_global $27
-    set_local $36
-    get_global $27
-    i32.const 80
-    i32.add
-    set_global $27
-    get_global $27
-    get_global $28
-    i32.ge_s
-    if $if
-      i32.const 80
-      call $abortStackOverflow
-    end ;; $if
-    get_local $36
-    i32.const 12
-    i32.add
-    set_local $5
-    get_local $36
-    set_local $6
-    get_local $0
-    set_local $4
-    get_local $4
-    set_local $7
-    get_local $7
-    i32.load
-    set_local $8
-    get_local $6
-    get_local $8
-    call $__ZNSt3__29to_stringEi
-    i32.const 4575
-    set_local $2
-    get_local $6
-    set_local $3
-    get_local $3
-    set_local $9
-    get_local $2
-    set_local $10
-    get_local $9
-    i32.const 0
-    get_local $10
-    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc
-    set_local $11
-    get_local $11
-    set_local $34
-    get_local $34
-    set_local $13
-    get_local $5
-    set_local $32
-    get_local $13
-    set_local $33
-    get_local $32
-    set_local $14
-    get_local $33
-    set_local $15
-    get_local $15
-    set_local $31
-    get_local $31
-    set_local $16
-    get_local $14
-    get_local $16
-    i64.load align=4
-    i64.store align=4
-    get_local $14
-    i32.const 8
-    i32.add
-    get_local $16
-    i32.const 8
-    i32.add
-    i32.load
-    i32.store
-    get_local $33
-    set_local $17
-    get_local $17
-    set_local $23
-    get_local $23
-    set_local $18
-    get_local $18
-    set_local $12
-    get_local $12
-    set_local $19
-    get_local $19
-    set_local $1
-    get_local $1
-    set_local $20
-    get_local $20
-    set_local $29
-    i32.const 0
-    set_local $30
-    loop $loop
-      block $block
-        get_local $30
-        set_local $21
-        get_local $21
-        i32.const 3
-        i32.lt_u
-        set_local $22
-        get_local $22
-        i32.eqz
-        if $if_0
-          br $block
-        end ;; $if_0
-        get_local $29
-        set_local $24
-        get_local $30
-        set_local $25
-        get_local $24
-        get_local $25
-        i32.const 2
-        i32.shl
-        i32.add
-        set_local $26
-        get_local $26
-        i32.const 0
-        i32.store
-        get_local $30
-        set_local $27
-        get_local $27
-        i32.const 1
-        i32.add
-        set_local $28
-        get_local $28
-        set_local $30
-        br $loop
-      end ;; $block
-    end ;; $loop
-    get_local $5
-    call $__Z7logWarnRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
-    get_local $5
-    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
-    get_local $6
-    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
-    get_local $36
-    set_global $27
-    return
-    )
-  
-  (func $__Z7logWarnRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE (type $6)
-    (param $0 i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    (local $7 i32)
-    (local $8 i32)
-    (local $9 i32)
-    (local $10 i32)
-    (local $11 i32)
-    (local $12 i32)
-    (local $13 i32)
-    (local $14 i32)
-    (local $15 i32)
-    (local $16 i32)
-    (local $17 i32)
-    (local $18 i32)
-    (local $19 i32)
-    (local $20 i32)
-    (local $21 i32)
-    (local $22 i32)
-    (local $23 i32)
-    (local $24 i32)
-    (local $25 i32)
-    (local $26 i32)
-    (local $27 i32)
-    (local $28 i32)
-    (local $29 i32)
-    (local $30 i32)
-    (local $31 i32)
-    (local $32 i32)
-    (local $33 i32)
-    (local $34 i32)
-    (local $35 i32)
-    (local $36 i32)
-    (local $37 i32)
-    (local $38 i32)
-    (local $39 i32)
-    (local $40 i32)
-    (local $41 i32)
-    (local $42 i32)
-    (local $43 i32)
-    (local $44 i32)
-    (local $45 i32)
-    (local $46 i32)
-    (local $47 i32)
-    (local $48 i32)
-    (local $49 i32)
-    (local $50 i32)
-    (local $51 i32)
-    (local $52 i32)
-    (local $53 i32)
-    (local $54 i32)
-    (local $55 i32)
-    (local $56 i32)
-    (local $57 i32)
-    (local $58 i32)
-    (local $59 i32)
-    (local $60 i32)
-    (local $61 i32)
-    (local $62 i32)
-    (local $63 i32)
-    (local $64 i32)
-    (local $65 i32)
-    (local $66 i32)
-    (local $67 i32)
-    (local $68 i32)
-    (local $69 i32)
-    (local $70 i32)
-    (local $71 i32)
-    (local $72 i32)
-    (local $73 i32)
-    get_global $27
-    set_local $73
-    get_global $27
-    i32.const 112
-    i32.add
-    set_global $27
-    get_global $27
-    get_global $28
-    i32.ge_s
-    if $if
-      i32.const 112
-      call $abortStackOverflow
-    end ;; $if
-    get_local $0
-    set_local $19
-    get_local $19
-    set_local $20
-    get_local $20
-    set_local $18
-    get_local $18
-    set_local $21
-    get_local $21
-    set_local $17
-    get_local $17
-    set_local $22
-    get_local $22
-    set_local $16
-    get_local $16
-    set_local $24
-    get_local $24
-    set_local $15
-    get_local $15
-    set_local $25
-    get_local $25
-    set_local $14
-    get_local $14
-    set_local $26
-    get_local $26
-    set_local $13
-    get_local $13
-    set_local $27
-    get_local $27
-    i32.const 11
-    i32.add
-    set_local $28
-    get_local $28
-    i32.load8_s
-    set_local $29
-    get_local $29
-    i32.const 255
-    i32.and
-    set_local $30
-    get_local $30
-    i32.const 128
-    i32.and
-    set_local $31
-    get_local $31
-    i32.const 0
-    i32.ne
-    set_local $32
-    get_local $32
-    if $if_0
-      get_local $24
-      set_local $6
-      get_local $6
-      set_local $33
-      get_local $33
-      set_local $5
-      get_local $5
-      set_local $35
-      get_local $35
-      set_local $4
-      get_local $4
-      set_local $36
-      get_local $36
-      i32.load
-      set_local $37
-      get_local $37
-      set_local $43
-    else
-      get_local $24
-      set_local $11
-      get_local $11
-      set_local $38
-      get_local $38
-      set_local $10
-      get_local $10
-      set_local $39
-      get_local $39
-      set_local $9
-      get_local $9
-      set_local $40
-      get_local $40
-      set_local $8
-      get_local $8
-      set_local $41
-      get_local $41
-      set_local $7
-      get_local $7
-      set_local $42
-      get_local $42
-      set_local $43
-    end ;; $if_0
-    get_local $43
-    set_local $3
-    get_local $3
-    set_local $44
-    get_local $19
-    set_local $46
-    get_local $46
-    set_local $2
-    get_local $2
-    set_local $47
-    get_local $47
-    set_local $71
-    get_local $71
-    set_local $48
-    get_local $48
-    set_local $70
-    get_local $70
-    set_local $49
-    get_local $49
-    set_local $67
-    get_local $67
-    set_local $50
-    get_local $50
-    i32.const 11
-    i32.add
-    set_local $51
-    get_local $51
-    i32.load8_s
-    set_local $52
-    get_local $52
-    i32.const 255
-    i32.and
-    set_local $53
-    get_local $53
-    i32.const 128
-    i32.and
-    set_local $54
-    get_local $54
-    i32.const 0
-    i32.ne
-    set_local $55
-    get_local $55
-    if $if_1
-      get_local $47
-      set_local $23
-      get_local $23
-      set_local $57
-      get_local $57
-      set_local $12
-      get_local $12
-      set_local $58
-      get_local $58
-      set_local $1
-      get_local $1
-      set_local $59
-      get_local $59
-      i32.const 4
-      i32.add
-      set_local $60
-      get_local $60
-      i32.load
-      set_local $61
-      get_local $61
-      set_local $69
-      i32.const 3
-      get_local $44
-      get_local $69
-      call $_envoy_log
-      get_local $73
-      set_global $27
-      return
-    else
-      get_local $47
-      set_local $56
-      get_local $56
-      set_local $62
-      get_local $62
-      set_local $45
-      get_local $45
-      set_local $63
-      get_local $63
-      set_local $34
-      get_local $34
-      set_local $64
-      get_local $64
-      i32.const 11
-      i32.add
-      set_local $65
-      get_local $65
-      i32.load8_s
-      set_local $66
-      get_local $66
-      i32.const 255
-      i32.and
-      set_local $68
-      get_local $68
-      set_local $69
-      i32.const 3
-      get_local $44
-      get_local $69
-      call $_envoy_log
-      get_local $73
-      set_global $27
-      return
-    end ;; $if_1
-    unreachable
     )
   
   (func $_onCreate (type $6)
@@ -2535,7 +1170,7 @@
     set_local $74
     get_local $126
     set_local $75
-    i32.const 6564
+    i32.const 6580
     set_local $76
     get_local $122
     set_local $77
@@ -4332,6 +2967,491 @@
     return
     )
   
+  (func $__ZN7Context8onCreateEv (type $6)
+    (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    (local $36 i32)
+    (local $37 i32)
+    (local $38 i32)
+    (local $39 i32)
+    (local $40 i32)
+    (local $41 i32)
+    (local $42 i32)
+    (local $43 i32)
+    (local $44 i32)
+    (local $45 i32)
+    (local $46 i32)
+    (local $47 i32)
+    (local $48 i32)
+    (local $49 i32)
+    (local $50 i32)
+    (local $51 i32)
+    (local $52 i32)
+    (local $53 i32)
+    (local $54 i32)
+    (local $55 i32)
+    (local $56 i32)
+    (local $57 i32)
+    (local $58 i32)
+    (local $59 i32)
+    (local $60 i32)
+    (local $61 i32)
+    (local $62 i32)
+    (local $63 i32)
+    (local $64 i32)
+    (local $65 i32)
+    (local $66 i32)
+    (local $67 i32)
+    (local $68 i32)
+    (local $69 i32)
+    (local $70 i32)
+    (local $71 i32)
+    (local $72 i32)
+    (local $73 i32)
+    (local $74 i32)
+    (local $75 i32)
+    (local $76 i32)
+    (local $77 i32)
+    (local $78 i32)
+    (local $79 i32)
+    (local $80 i32)
+    (local $81 i32)
+    (local $82 i32)
+    (local $83 i32)
+    (local $84 i32)
+    (local $85 i32)
+    (local $86 i32)
+    (local $87 i32)
+    (local $88 i32)
+    (local $89 i32)
+    (local $90 i32)
+    (local $91 i32)
+    (local $92 i32)
+    (local $93 i32)
+    (local $94 i32)
+    (local $95 i32)
+    (local $96 i32)
+    (local $97 i32)
+    (local $98 i32)
+    (local $99 i32)
+    (local $100 i32)
+    (local $101 i32)
+    (local $102 i32)
+    (local $103 i32)
+    (local $104 i32)
+    (local $105 i32)
+    (local $106 i32)
+    (local $107 i32)
+    (local $108 i32)
+    (local $109 i32)
+    (local $110 i32)
+    (local $111 i32)
+    (local $112 i32)
+    (local $113 i32)
+    (local $114 i32)
+    (local $115 i32)
+    (local $116 i32)
+    (local $117 i32)
+    (local $118 i32)
+    (local $119 i32)
+    (local $120 i32)
+    (local $121 i32)
+    get_global $27
+    set_local $121
+    get_global $27
+    i32.const 224
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 224
+      call $abortStackOverflow
+    end ;; $if
+    get_local $121
+    i32.const 24
+    i32.add
+    set_local $60
+    get_local $121
+    i32.const 12
+    i32.add
+    set_local $61
+    get_local $121
+    set_local $62
+    get_local $0
+    set_local $59
+    get_local $59
+    set_local $63
+    get_local $61
+    set_local $57
+    i32.const 4556
+    set_local $58
+    get_local $57
+    set_local $64
+    get_local $64
+    set_local $56
+    get_local $56
+    set_local $66
+    get_local $66
+    set_local $55
+    get_local $55
+    set_local $67
+    get_local $67
+    i64.const 0
+    i64.store align=4
+    get_local $67
+    i32.const 8
+    i32.add
+    i32.const 0
+    i32.store
+    get_local $66
+    set_local $53
+    get_local $53
+    set_local $68
+    get_local $68
+    set_local $52
+    get_local $58
+    set_local $69
+    get_local $58
+    set_local $70
+    get_local $70
+    call $__ZNSt3__211char_traitsIcE6lengthEPKc
+    set_local $71
+    get_local $64
+    get_local $69
+    get_local $71
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6__initEPKcm
+    get_local $63
+    i32.load
+    set_local $72
+    get_local $62
+    get_local $72
+    call $__ZNSt3__29to_stringEi
+    get_local $61
+    set_local $50
+    get_local $62
+    set_local $51
+    get_local $50
+    set_local $73
+    get_local $51
+    set_local $74
+    get_local $73
+    set_local $48
+    get_local $74
+    set_local $49
+    get_local $48
+    set_local $75
+    get_local $49
+    set_local $77
+    get_local $77
+    set_local $47
+    get_local $47
+    set_local $78
+    get_local $78
+    set_local $46
+    get_local $46
+    set_local $79
+    get_local $79
+    set_local $45
+    get_local $45
+    set_local $80
+    get_local $80
+    set_local $44
+    get_local $44
+    set_local $81
+    get_local $81
+    set_local $42
+    get_local $42
+    set_local $82
+    get_local $82
+    i32.const 11
+    i32.add
+    set_local $83
+    get_local $83
+    i32.load8_s
+    set_local $84
+    get_local $84
+    i32.const 255
+    i32.and
+    set_local $85
+    get_local $85
+    i32.const 128
+    i32.and
+    set_local $86
+    get_local $86
+    i32.const 0
+    i32.ne
+    set_local $88
+    get_local $88
+    if $if_0
+      get_local $79
+      set_local $36
+      get_local $36
+      set_local $89
+      get_local $89
+      set_local $35
+      get_local $35
+      set_local $90
+      get_local $90
+      set_local $34
+      get_local $34
+      set_local $91
+      get_local $91
+      i32.load
+      set_local $92
+      get_local $92
+      set_local $99
+    else
+      get_local $79
+      set_local $41
+      get_local $41
+      set_local $93
+      get_local $93
+      set_local $40
+      get_local $40
+      set_local $94
+      get_local $94
+      set_local $39
+      get_local $39
+      set_local $95
+      get_local $95
+      set_local $38
+      get_local $38
+      set_local $96
+      get_local $96
+      set_local $37
+      get_local $37
+      set_local $97
+      get_local $97
+      set_local $99
+    end ;; $if_0
+    get_local $99
+    set_local $33
+    get_local $33
+    set_local $100
+    get_local $49
+    set_local $101
+    get_local $101
+    set_local $31
+    get_local $31
+    set_local $102
+    get_local $102
+    set_local $30
+    get_local $30
+    set_local $103
+    get_local $103
+    set_local $29
+    get_local $29
+    set_local $104
+    get_local $104
+    set_local $28
+    get_local $28
+    set_local $105
+    get_local $105
+    i32.const 11
+    i32.add
+    set_local $106
+    get_local $106
+    i32.load8_s
+    set_local $107
+    get_local $107
+    i32.const 255
+    i32.and
+    set_local $108
+    get_local $108
+    i32.const 128
+    i32.and
+    set_local $110
+    get_local $110
+    i32.const 0
+    i32.ne
+    set_local $111
+    get_local $111
+    if $if_1
+      get_local $102
+      set_local $24
+      get_local $24
+      set_local $112
+      get_local $112
+      set_local $13
+      get_local $13
+      set_local $113
+      get_local $113
+      set_local $2
+      get_local $2
+      set_local $114
+      get_local $114
+      i32.const 4
+      i32.add
+      set_local $115
+      get_local $115
+      i32.load
+      set_local $116
+      get_local $116
+      set_local $6
+    else
+      get_local $102
+      set_local $27
+      get_local $27
+      set_local $117
+      get_local $117
+      set_local $26
+      get_local $26
+      set_local $118
+      get_local $118
+      set_local $25
+      get_local $25
+      set_local $119
+      get_local $119
+      i32.const 11
+      i32.add
+      set_local $3
+      get_local $3
+      i32.load8_s
+      set_local $4
+      get_local $4
+      i32.const 255
+      i32.and
+      set_local $5
+      get_local $5
+      set_local $6
+    end ;; $if_1
+    get_local $75
+    get_local $100
+    get_local $6
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
+    set_local $7
+    get_local $7
+    set_local $109
+    get_local $109
+    set_local $8
+    get_local $60
+    set_local $87
+    get_local $8
+    set_local $98
+    get_local $87
+    set_local $9
+    get_local $98
+    set_local $10
+    get_local $10
+    set_local $76
+    get_local $76
+    set_local $11
+    get_local $9
+    get_local $11
+    i64.load align=4
+    i64.store align=4
+    get_local $9
+    i32.const 8
+    i32.add
+    get_local $11
+    i32.const 8
+    i32.add
+    i32.load
+    i32.store
+    get_local $98
+    set_local $12
+    get_local $12
+    set_local $43
+    get_local $43
+    set_local $14
+    get_local $14
+    set_local $32
+    get_local $32
+    set_local $15
+    get_local $15
+    set_local $1
+    get_local $1
+    set_local $16
+    get_local $16
+    set_local $54
+    i32.const 0
+    set_local $65
+    loop $loop
+      block $block
+        get_local $65
+        set_local $17
+        get_local $17
+        i32.const 3
+        i32.lt_u
+        set_local $18
+        get_local $18
+        i32.eqz
+        if $if_2
+          br $block
+        end ;; $if_2
+        get_local $54
+        set_local $19
+        get_local $65
+        set_local $20
+        get_local $19
+        get_local $20
+        i32.const 2
+        i32.shl
+        i32.add
+        set_local $21
+        get_local $21
+        i32.const 0
+        i32.store
+        get_local $65
+        set_local $22
+        get_local $22
+        i32.const 1
+        i32.add
+        set_local $23
+        get_local $23
+        set_local $65
+        br $loop
+      end ;; $block
+    end ;; $loop
+    get_local $60
+    call $__Z8logDebugRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+    get_local $60
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    get_local $62
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    get_local $61
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    get_local $121
+    set_global $27
+    return
+    )
+  
   (func $_onStart (type $6)
     (param $0 i32)
     (local $1 i32)
@@ -4389,7 +3509,7 @@
     return
     )
   
-  (func $_onDestroy (type $6)
+  (func $__ZN7Context7onStartEv (type $6)
     (param $0 i32)
     (local $1 i32)
     (local $2 i32)
@@ -4428,125 +3548,1269 @@
     (local $35 i32)
     (local $36 i32)
     (local $37 i32)
+    (local $38 i32)
+    (local $39 i32)
+    (local $40 i32)
+    (local $41 i32)
+    (local $42 i32)
+    (local $43 i32)
+    (local $44 i32)
+    (local $45 i32)
+    (local $46 i32)
+    (local $47 i32)
+    (local $48 i32)
+    (local $49 i32)
+    (local $50 i32)
+    (local $51 i32)
+    (local $52 i32)
+    (local $53 i32)
+    (local $54 i32)
+    (local $55 i32)
+    (local $56 i32)
+    (local $57 i32)
+    (local $58 i32)
+    (local $59 i32)
+    (local $60 i32)
+    (local $61 i32)
+    (local $62 i32)
+    (local $63 i32)
+    (local $64 i32)
+    (local $65 i32)
+    (local $66 i32)
+    (local $67 i32)
+    (local $68 i32)
+    (local $69 i32)
+    (local $70 i32)
+    (local $71 i32)
+    (local $72 i32)
+    (local $73 i32)
+    (local $74 i32)
+    (local $75 i32)
+    (local $76 i32)
+    (local $77 i32)
+    (local $78 i32)
+    (local $79 i32)
+    (local $80 i32)
+    (local $81 i32)
+    (local $82 i32)
+    (local $83 i32)
+    (local $84 i32)
+    (local $85 i32)
+    (local $86 i32)
+    (local $87 i32)
+    (local $88 i32)
+    (local $89 i32)
+    (local $90 i32)
+    (local $91 i32)
+    (local $92 i32)
+    (local $93 i32)
+    (local $94 i32)
+    (local $95 i32)
+    (local $96 i32)
+    (local $97 i32)
+    (local $98 i32)
+    (local $99 i32)
+    (local $100 i32)
+    (local $101 i32)
+    (local $102 i32)
+    (local $103 i32)
+    (local $104 i32)
+    (local $105 i32)
+    (local $106 i32)
+    (local $107 i32)
+    (local $108 i32)
+    (local $109 i32)
+    (local $110 i32)
+    (local $111 i32)
+    (local $112 i32)
+    (local $113 i32)
+    (local $114 i32)
+    (local $115 i32)
+    (local $116 i32)
+    (local $117 i32)
+    (local $118 i32)
+    (local $119 i32)
+    (local $120 i32)
+    (local $121 i32)
     get_global $27
-    set_local $37
+    set_local $121
     get_global $27
-    i32.const 64
+    i32.const 224
     i32.add
     set_global $27
     get_global $27
     get_global $28
     i32.ge_s
     if $if
-      i32.const 64
+      i32.const 224
       call $abortStackOverflow
     end ;; $if
-    get_local $37
+    get_local $121
+    i32.const 24
+    i32.add
+    set_local $60
+    get_local $121
+    i32.const 12
+    i32.add
+    set_local $61
+    get_local $121
+    set_local $62
+    get_local $0
+    set_local $59
+    get_local $59
+    set_local $63
+    get_local $61
+    set_local $57
+    i32.const 4566
+    set_local $58
+    get_local $57
+    set_local $64
+    get_local $64
+    set_local $56
+    get_local $56
+    set_local $66
+    get_local $66
+    set_local $55
+    get_local $55
+    set_local $67
+    get_local $67
+    i64.const 0
+    i64.store align=4
+    get_local $67
+    i32.const 8
+    i32.add
+    i32.const 0
+    i32.store
+    get_local $66
+    set_local $53
+    get_local $53
+    set_local $68
+    get_local $68
+    set_local $52
+    get_local $58
+    set_local $69
+    get_local $58
+    set_local $70
+    get_local $70
+    call $__ZNSt3__211char_traitsIcE6lengthEPKc
+    set_local $71
+    get_local $64
+    get_local $69
+    get_local $71
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6__initEPKcm
+    get_local $63
+    i32.load
+    set_local $72
+    get_local $62
+    get_local $72
+    call $__ZNSt3__29to_stringEi
+    get_local $61
+    set_local $50
+    get_local $62
+    set_local $51
+    get_local $50
+    set_local $73
+    get_local $51
+    set_local $74
+    get_local $73
+    set_local $48
+    get_local $74
+    set_local $49
+    get_local $48
+    set_local $75
+    get_local $49
+    set_local $77
+    get_local $77
+    set_local $47
+    get_local $47
+    set_local $78
+    get_local $78
+    set_local $46
+    get_local $46
+    set_local $79
+    get_local $79
+    set_local $45
+    get_local $45
+    set_local $80
+    get_local $80
+    set_local $44
+    get_local $44
+    set_local $81
+    get_local $81
+    set_local $42
+    get_local $42
+    set_local $82
+    get_local $82
+    i32.const 11
+    i32.add
+    set_local $83
+    get_local $83
+    i32.load8_s
+    set_local $84
+    get_local $84
+    i32.const 255
+    i32.and
+    set_local $85
+    get_local $85
+    i32.const 128
+    i32.and
+    set_local $86
+    get_local $86
+    i32.const 0
+    i32.ne
+    set_local $88
+    get_local $88
+    if $if_0
+      get_local $79
+      set_local $36
+      get_local $36
+      set_local $89
+      get_local $89
+      set_local $35
+      get_local $35
+      set_local $90
+      get_local $90
+      set_local $34
+      get_local $34
+      set_local $91
+      get_local $91
+      i32.load
+      set_local $92
+      get_local $92
+      set_local $99
+    else
+      get_local $79
+      set_local $41
+      get_local $41
+      set_local $93
+      get_local $93
+      set_local $40
+      get_local $40
+      set_local $94
+      get_local $94
+      set_local $39
+      get_local $39
+      set_local $95
+      get_local $95
+      set_local $38
+      get_local $38
+      set_local $96
+      get_local $96
+      set_local $37
+      get_local $37
+      set_local $97
+      get_local $97
+      set_local $99
+    end ;; $if_0
+    get_local $99
+    set_local $33
+    get_local $33
+    set_local $100
+    get_local $49
+    set_local $101
+    get_local $101
+    set_local $31
+    get_local $31
+    set_local $102
+    get_local $102
+    set_local $30
+    get_local $30
+    set_local $103
+    get_local $103
+    set_local $29
+    get_local $29
+    set_local $104
+    get_local $104
+    set_local $28
+    get_local $28
+    set_local $105
+    get_local $105
+    i32.const 11
+    i32.add
+    set_local $106
+    get_local $106
+    i32.load8_s
+    set_local $107
+    get_local $107
+    i32.const 255
+    i32.and
+    set_local $108
+    get_local $108
+    i32.const 128
+    i32.and
+    set_local $110
+    get_local $110
+    i32.const 0
+    i32.ne
+    set_local $111
+    get_local $111
+    if $if_1
+      get_local $102
+      set_local $24
+      get_local $24
+      set_local $112
+      get_local $112
+      set_local $13
+      get_local $13
+      set_local $113
+      get_local $113
+      set_local $2
+      get_local $2
+      set_local $114
+      get_local $114
+      i32.const 4
+      i32.add
+      set_local $115
+      get_local $115
+      i32.load
+      set_local $116
+      get_local $116
+      set_local $6
+    else
+      get_local $102
+      set_local $27
+      get_local $27
+      set_local $117
+      get_local $117
+      set_local $26
+      get_local $26
+      set_local $118
+      get_local $118
+      set_local $25
+      get_local $25
+      set_local $119
+      get_local $119
+      i32.const 11
+      i32.add
+      set_local $3
+      get_local $3
+      i32.load8_s
+      set_local $4
+      get_local $4
+      i32.const 255
+      i32.and
+      set_local $5
+      get_local $5
+      set_local $6
+    end ;; $if_1
+    get_local $75
+    get_local $100
+    get_local $6
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
     set_local $7
     get_local $7
+    set_local $109
+    get_local $109
+    set_local $8
+    get_local $60
+    set_local $87
+    get_local $8
+    set_local $98
+    get_local $87
+    set_local $9
+    get_local $98
+    set_local $10
+    get_local $10
+    set_local $76
+    get_local $76
+    set_local $11
+    get_local $9
+    get_local $11
+    i64.load align=4
+    i64.store align=4
+    get_local $9
+    i32.const 8
+    i32.add
+    get_local $11
+    i32.const 8
+    i32.add
+    i32.load
+    i32.store
+    get_local $98
+    set_local $12
+    get_local $12
+    set_local $43
+    get_local $43
+    set_local $14
+    get_local $14
+    set_local $32
+    get_local $32
+    set_local $15
+    get_local $15
+    set_local $1
+    get_local $1
+    set_local $16
+    get_local $16
+    set_local $54
+    i32.const 0
+    set_local $65
+    loop $loop
+      block $block
+        get_local $65
+        set_local $17
+        get_local $17
+        i32.const 3
+        i32.lt_u
+        set_local $18
+        get_local $18
+        i32.eqz
+        if $if_2
+          br $block
+        end ;; $if_2
+        get_local $54
+        set_local $19
+        get_local $65
+        set_local $20
+        get_local $19
+        get_local $20
+        i32.const 2
+        i32.shl
+        i32.add
+        set_local $21
+        get_local $21
+        i32.const 0
+        i32.store
+        get_local $65
+        set_local $22
+        get_local $22
+        i32.const 1
+        i32.add
+        set_local $23
+        get_local $23
+        set_local $65
+        br $loop
+      end ;; $block
+    end ;; $loop
+    get_local $60
+    call $__Z7logInfoRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+    get_local $60
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    get_local $62
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    get_local $61
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    get_local $121
+    set_global $27
+    return
+    )
+  
+  (func $_onDestroy (type $6)
+    (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    get_global $27
+    set_local $15
+    get_global $27
+    i32.const 32
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 32
+      call $abortStackOverflow
+    end ;; $if
+    get_local $15
+    set_local $10
+    get_local $10
     get_local $0
     i32.store
     i32.const 3920
-    get_local $7
-    call $__ZNSt3__213unordered_mapIiNS_10unique_ptrI7ContextNS_14default_deleteIS2_EEEENS_4hashIiEENS_8equal_toIiEENS_9allocatorINS_4pairIKiS5_EEEEEixERSC_
-    set_local $8
-    get_local $8
-    set_local $6
-    get_local $6
-    set_local $9
-    get_local $9
-    set_local $5
-    get_local $5
-    set_local $10
     get_local $10
-    set_local $4
-    get_local $4
+    call $__ZNSt3__213unordered_mapIiNS_10unique_ptrI7ContextNS_14default_deleteIS2_EEEENS_4hashIiEENS_8equal_toIiEENS_9allocatorINS_4pairIKiS5_EEEEEixERSC_
     set_local $11
     get_local $11
-    i32.load
+    set_local $9
+    get_local $9
+    set_local $12
+    get_local $12
+    set_local $8
+    get_local $8
     set_local $13
     get_local $13
+    set_local $7
+    get_local $7
+    set_local $2
+    get_local $2
+    i32.load
+    set_local $3
+    get_local $3
     call $__ZN7Context9onDestroyEv
     i32.const 3920
-    get_local $7
-    call $__ZNSt3__213unordered_mapIiNS_10unique_ptrI7ContextNS_14default_deleteIS2_EEEENS_4hashIiEENS_8equal_toIiEENS_9allocatorINS_4pairIKiS5_EEEEEixERSC_
-    set_local $14
-    get_local $14
-    set_local $35
-    i32.const 0
-    set_local $2
-    get_local $35
-    set_local $15
+    set_local $1
+    get_local $10
+    set_local $6
+    get_local $1
+    set_local $4
+    get_local $6
+    set_local $5
+    get_local $4
+    get_local $5
+    call $__ZNSt3__212__hash_tableINS_17__hash_value_typeIiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEEENS_22__unordered_map_hasherIiS7_NS_4hashIiEELb1EEENS_21__unordered_map_equalIiS7_NS_8equal_toIiEELb1EEENS_9allocatorIS7_EEE14__erase_uniqueIiEEmRKT_
+    drop
     get_local $15
+    set_global $27
+    return
+    )
+  
+  (func $__ZN7Context9onDestroyEv (type $6)
+    (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    (local $36 i32)
+    get_global $27
+    set_local $36
+    get_global $27
+    i32.const 80
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 80
+      call $abortStackOverflow
+    end ;; $if
+    get_local $36
+    i32.const 12
+    i32.add
+    set_local $5
+    get_local $36
+    set_local $6
+    get_local $0
+    set_local $4
+    get_local $4
+    set_local $7
+    get_local $7
+    i32.load
+    set_local $8
+    get_local $6
+    get_local $8
+    call $__ZNSt3__29to_stringEi
+    i32.const 4575
+    set_local $2
+    get_local $6
+    set_local $3
+    get_local $3
+    set_local $9
+    get_local $2
+    set_local $10
+    get_local $9
+    i32.const 0
+    get_local $10
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc
+    set_local $11
+    get_local $11
     set_local $34
     get_local $34
-    set_local $16
-    get_local $16
+    set_local $13
+    get_local $5
+    set_local $32
+    get_local $13
     set_local $33
+    get_local $32
+    set_local $14
+    get_local $33
+    set_local $15
+    get_local $15
+    set_local $31
+    get_local $31
+    set_local $16
+    get_local $14
+    get_local $16
+    i64.load align=4
+    i64.store align=4
+    get_local $14
+    i32.const 8
+    i32.add
+    get_local $16
+    i32.const 8
+    i32.add
+    i32.load
+    i32.store
     get_local $33
     set_local $17
     get_local $17
-    i32.load
-    set_local $18
-    get_local $18
-    set_local $3
-    get_local $2
-    set_local $19
-    get_local $15
-    set_local $30
-    get_local $30
-    set_local $20
-    get_local $20
     set_local $23
     get_local $23
-    set_local $21
-    get_local $21
-    get_local $19
-    i32.store
-    get_local $3
-    set_local $22
-    get_local $22
-    i32.const 0
-    i32.ne
-    set_local $24
-    get_local $24
-    i32.eqz
-    if $if_0
-      get_local $37
-      set_global $27
-      return
-    end ;; $if_0
-    get_local $15
+    set_local $18
+    get_local $18
     set_local $12
     get_local $12
-    set_local $25
-    get_local $25
+    set_local $19
+    get_local $19
     set_local $1
     get_local $1
+    set_local $20
+    get_local $20
+    set_local $29
+    i32.const 0
+    set_local $30
+    loop $loop
+      block $block
+        get_local $30
+        set_local $21
+        get_local $21
+        i32.const 3
+        i32.lt_u
+        set_local $22
+        get_local $22
+        i32.eqz
+        if $if_0
+          br $block
+        end ;; $if_0
+        get_local $29
+        set_local $24
+        get_local $30
+        set_local $25
+        get_local $24
+        get_local $25
+        i32.const 2
+        i32.shl
+        i32.add
+        set_local $26
+        get_local $26
+        i32.const 0
+        i32.store
+        get_local $30
+        set_local $27
+        get_local $27
+        i32.const 1
+        i32.add
+        set_local $28
+        get_local $28
+        set_local $30
+        br $loop
+      end ;; $block
+    end ;; $loop
+    get_local $5
+    call $__Z7logInfoRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+    get_local $5
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    get_local $6
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    get_local $36
+    set_global $27
+    return
+    )
+  
+  (func $__Z8logDebugRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE (type $6)
+    (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    (local $36 i32)
+    (local $37 i32)
+    (local $38 i32)
+    (local $39 i32)
+    (local $40 i32)
+    (local $41 i32)
+    (local $42 i32)
+    (local $43 i32)
+    (local $44 i32)
+    (local $45 i32)
+    (local $46 i32)
+    (local $47 i32)
+    (local $48 i32)
+    (local $49 i32)
+    (local $50 i32)
+    (local $51 i32)
+    (local $52 i32)
+    (local $53 i32)
+    (local $54 i32)
+    (local $55 i32)
+    (local $56 i32)
+    (local $57 i32)
+    (local $58 i32)
+    (local $59 i32)
+    (local $60 i32)
+    (local $61 i32)
+    (local $62 i32)
+    (local $63 i32)
+    (local $64 i32)
+    (local $65 i32)
+    (local $66 i32)
+    (local $67 i32)
+    (local $68 i32)
+    (local $69 i32)
+    (local $70 i32)
+    (local $71 i32)
+    (local $72 i32)
+    (local $73 i32)
+    get_global $27
+    set_local $73
+    get_global $27
+    i32.const 112
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 112
+      call $abortStackOverflow
+    end ;; $if
+    get_local $0
+    set_local $19
+    get_local $19
+    set_local $20
+    get_local $20
+    set_local $18
+    get_local $18
+    set_local $21
+    get_local $21
+    set_local $17
+    get_local $17
+    set_local $22
+    get_local $22
+    set_local $16
+    get_local $16
+    set_local $24
+    get_local $24
+    set_local $15
+    get_local $15
+    set_local $25
+    get_local $25
+    set_local $14
+    get_local $14
     set_local $26
-    get_local $3
-    set_local $27
     get_local $26
-    set_local $31
+    set_local $13
+    get_local $13
+    set_local $27
     get_local $27
-    set_local $32
-    get_local $32
+    i32.const 11
+    i32.add
     set_local $28
     get_local $28
-    i32.const 0
-    i32.eq
+    i32.load8_s
     set_local $29
     get_local $29
-    if $if_1
+    i32.const 255
+    i32.and
+    set_local $30
+    get_local $30
+    i32.const 128
+    i32.and
+    set_local $31
+    get_local $31
+    i32.const 0
+    i32.ne
+    set_local $32
+    get_local $32
+    if $if_0
+      get_local $24
+      set_local $6
+      get_local $6
+      set_local $33
+      get_local $33
+      set_local $5
+      get_local $5
+      set_local $35
+      get_local $35
+      set_local $4
+      get_local $4
+      set_local $36
+      get_local $36
+      i32.load
+      set_local $37
       get_local $37
+      set_local $43
+    else
+      get_local $24
+      set_local $11
+      get_local $11
+      set_local $38
+      get_local $38
+      set_local $10
+      get_local $10
+      set_local $39
+      get_local $39
+      set_local $9
+      get_local $9
+      set_local $40
+      get_local $40
+      set_local $8
+      get_local $8
+      set_local $41
+      get_local $41
+      set_local $7
+      get_local $7
+      set_local $42
+      get_local $42
+      set_local $43
+    end ;; $if_0
+    get_local $43
+    set_local $3
+    get_local $3
+    set_local $44
+    get_local $19
+    set_local $46
+    get_local $46
+    set_local $2
+    get_local $2
+    set_local $47
+    get_local $47
+    set_local $71
+    get_local $71
+    set_local $48
+    get_local $48
+    set_local $70
+    get_local $70
+    set_local $49
+    get_local $49
+    set_local $67
+    get_local $67
+    set_local $50
+    get_local $50
+    i32.const 11
+    i32.add
+    set_local $51
+    get_local $51
+    i32.load8_s
+    set_local $52
+    get_local $52
+    i32.const 255
+    i32.and
+    set_local $53
+    get_local $53
+    i32.const 128
+    i32.and
+    set_local $54
+    get_local $54
+    i32.const 0
+    i32.ne
+    set_local $55
+    get_local $55
+    if $if_1
+      get_local $47
+      set_local $23
+      get_local $23
+      set_local $57
+      get_local $57
+      set_local $12
+      get_local $12
+      set_local $58
+      get_local $58
+      set_local $1
+      get_local $1
+      set_local $59
+      get_local $59
+      i32.const 4
+      i32.add
+      set_local $60
+      get_local $60
+      i32.load
+      set_local $61
+      get_local $61
+      set_local $69
+      i32.const 1
+      get_local $44
+      get_local $69
+      call $_envoy_log
+      get_local $73
+      set_global $27
+      return
+    else
+      get_local $47
+      set_local $56
+      get_local $56
+      set_local $62
+      get_local $62
+      set_local $45
+      get_local $45
+      set_local $63
+      get_local $63
+      set_local $34
+      get_local $34
+      set_local $64
+      get_local $64
+      i32.const 11
+      i32.add
+      set_local $65
+      get_local $65
+      i32.load8_s
+      set_local $66
+      get_local $66
+      i32.const 255
+      i32.and
+      set_local $68
+      get_local $68
+      set_local $69
+      i32.const 1
+      get_local $44
+      get_local $69
+      call $_envoy_log
+      get_local $73
       set_global $27
       return
     end ;; $if_1
-    get_local $28
-    call $__ZdlPv
-    get_local $37
+    unreachable
+    )
+  
+  (func $__Z7logInfoRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE (type $6)
+    (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    (local $36 i32)
+    (local $37 i32)
+    (local $38 i32)
+    (local $39 i32)
+    (local $40 i32)
+    (local $41 i32)
+    (local $42 i32)
+    (local $43 i32)
+    (local $44 i32)
+    (local $45 i32)
+    (local $46 i32)
+    (local $47 i32)
+    (local $48 i32)
+    (local $49 i32)
+    (local $50 i32)
+    (local $51 i32)
+    (local $52 i32)
+    (local $53 i32)
+    (local $54 i32)
+    (local $55 i32)
+    (local $56 i32)
+    (local $57 i32)
+    (local $58 i32)
+    (local $59 i32)
+    (local $60 i32)
+    (local $61 i32)
+    (local $62 i32)
+    (local $63 i32)
+    (local $64 i32)
+    (local $65 i32)
+    (local $66 i32)
+    (local $67 i32)
+    (local $68 i32)
+    (local $69 i32)
+    (local $70 i32)
+    (local $71 i32)
+    (local $72 i32)
+    (local $73 i32)
+    get_global $27
+    set_local $73
+    get_global $27
+    i32.const 112
+    i32.add
     set_global $27
-    return
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 112
+      call $abortStackOverflow
+    end ;; $if
+    get_local $0
+    set_local $19
+    get_local $19
+    set_local $20
+    get_local $20
+    set_local $18
+    get_local $18
+    set_local $21
+    get_local $21
+    set_local $17
+    get_local $17
+    set_local $22
+    get_local $22
+    set_local $16
+    get_local $16
+    set_local $24
+    get_local $24
+    set_local $15
+    get_local $15
+    set_local $25
+    get_local $25
+    set_local $14
+    get_local $14
+    set_local $26
+    get_local $26
+    set_local $13
+    get_local $13
+    set_local $27
+    get_local $27
+    i32.const 11
+    i32.add
+    set_local $28
+    get_local $28
+    i32.load8_s
+    set_local $29
+    get_local $29
+    i32.const 255
+    i32.and
+    set_local $30
+    get_local $30
+    i32.const 128
+    i32.and
+    set_local $31
+    get_local $31
+    i32.const 0
+    i32.ne
+    set_local $32
+    get_local $32
+    if $if_0
+      get_local $24
+      set_local $6
+      get_local $6
+      set_local $33
+      get_local $33
+      set_local $5
+      get_local $5
+      set_local $35
+      get_local $35
+      set_local $4
+      get_local $4
+      set_local $36
+      get_local $36
+      i32.load
+      set_local $37
+      get_local $37
+      set_local $43
+    else
+      get_local $24
+      set_local $11
+      get_local $11
+      set_local $38
+      get_local $38
+      set_local $10
+      get_local $10
+      set_local $39
+      get_local $39
+      set_local $9
+      get_local $9
+      set_local $40
+      get_local $40
+      set_local $8
+      get_local $8
+      set_local $41
+      get_local $41
+      set_local $7
+      get_local $7
+      set_local $42
+      get_local $42
+      set_local $43
+    end ;; $if_0
+    get_local $43
+    set_local $3
+    get_local $3
+    set_local $44
+    get_local $19
+    set_local $46
+    get_local $46
+    set_local $2
+    get_local $2
+    set_local $47
+    get_local $47
+    set_local $71
+    get_local $71
+    set_local $48
+    get_local $48
+    set_local $70
+    get_local $70
+    set_local $49
+    get_local $49
+    set_local $67
+    get_local $67
+    set_local $50
+    get_local $50
+    i32.const 11
+    i32.add
+    set_local $51
+    get_local $51
+    i32.load8_s
+    set_local $52
+    get_local $52
+    i32.const 255
+    i32.and
+    set_local $53
+    get_local $53
+    i32.const 128
+    i32.and
+    set_local $54
+    get_local $54
+    i32.const 0
+    i32.ne
+    set_local $55
+    get_local $55
+    if $if_1
+      get_local $47
+      set_local $23
+      get_local $23
+      set_local $57
+      get_local $57
+      set_local $12
+      get_local $12
+      set_local $58
+      get_local $58
+      set_local $1
+      get_local $1
+      set_local $59
+      get_local $59
+      i32.const 4
+      i32.add
+      set_local $60
+      get_local $60
+      i32.load
+      set_local $61
+      get_local $61
+      set_local $69
+      i32.const 2
+      get_local $44
+      get_local $69
+      call $_envoy_log
+      get_local $73
+      set_global $27
+      return
+    else
+      get_local $47
+      set_local $56
+      get_local $56
+      set_local $62
+      get_local $62
+      set_local $45
+      get_local $45
+      set_local $63
+      get_local $63
+      set_local $34
+      get_local $34
+      set_local $64
+      get_local $64
+      i32.const 11
+      i32.add
+      set_local $65
+      get_local $65
+      i32.load8_s
+      set_local $66
+      get_local $66
+      i32.const 255
+      i32.and
+      set_local $68
+      get_local $68
+      set_local $69
+      i32.const 2
+      get_local $44
+      get_local $69
+      call $_envoy_log
+      get_local $73
+      set_global $27
+      return
+    end ;; $if_1
+    unreachable
     )
   
   (func $_main (type $7)
@@ -4554,25 +4818,370 @@
     (local $0 i32)
     (local $1 i32)
     (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
     get_global $27
-    set_local $2
+    set_local $16
     get_global $27
-    i32.const 16
+    i32.const 48
     i32.add
     set_global $27
     get_global $27
     get_global $28
     i32.ge_s
     if $if
-      i32.const 16
+      i32.const 48
       call $abortStackOverflow
     end ;; $if
+    get_local $16
+    set_local $12
     i32.const 0
-    set_local $0
+    set_local $11
+    get_local $12
+    set_local $9
+    i32.const 4586
+    set_local $10
+    get_local $9
+    set_local $13
+    get_local $13
+    set_local $8
+    get_local $8
+    set_local $14
+    get_local $14
+    set_local $7
+    get_local $7
+    set_local $2
     get_local $2
+    i64.const 0
+    i64.store align=4
+    get_local $2
+    i32.const 8
+    i32.add
+    i32.const 0
+    i32.store
+    get_local $14
+    set_local $1
+    get_local $1
+    set_local $3
+    get_local $3
+    set_local $0
+    get_local $10
+    set_local $4
+    get_local $10
+    set_local $5
+    get_local $5
+    call $__ZNSt3__211char_traitsIcE6lengthEPKc
+    set_local $6
+    get_local $13
+    get_local $4
+    get_local $6
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6__initEPKcm
+    get_local $12
+    call $__Z8logTraceRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+    get_local $12
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    get_local $16
     set_global $27
     i32.const 0
     return
+    )
+  
+  (func $__Z8logTraceRKNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE (type $6)
+    (param $0 i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    (local $36 i32)
+    (local $37 i32)
+    (local $38 i32)
+    (local $39 i32)
+    (local $40 i32)
+    (local $41 i32)
+    (local $42 i32)
+    (local $43 i32)
+    (local $44 i32)
+    (local $45 i32)
+    (local $46 i32)
+    (local $47 i32)
+    (local $48 i32)
+    (local $49 i32)
+    (local $50 i32)
+    (local $51 i32)
+    (local $52 i32)
+    (local $53 i32)
+    (local $54 i32)
+    (local $55 i32)
+    (local $56 i32)
+    (local $57 i32)
+    (local $58 i32)
+    (local $59 i32)
+    (local $60 i32)
+    (local $61 i32)
+    (local $62 i32)
+    (local $63 i32)
+    (local $64 i32)
+    (local $65 i32)
+    (local $66 i32)
+    (local $67 i32)
+    (local $68 i32)
+    (local $69 i32)
+    (local $70 i32)
+    (local $71 i32)
+    (local $72 i32)
+    (local $73 i32)
+    get_global $27
+    set_local $73
+    get_global $27
+    i32.const 112
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 112
+      call $abortStackOverflow
+    end ;; $if
+    get_local $0
+    set_local $19
+    get_local $19
+    set_local $20
+    get_local $20
+    set_local $18
+    get_local $18
+    set_local $21
+    get_local $21
+    set_local $17
+    get_local $17
+    set_local $22
+    get_local $22
+    set_local $16
+    get_local $16
+    set_local $24
+    get_local $24
+    set_local $15
+    get_local $15
+    set_local $25
+    get_local $25
+    set_local $14
+    get_local $14
+    set_local $26
+    get_local $26
+    set_local $13
+    get_local $13
+    set_local $27
+    get_local $27
+    i32.const 11
+    i32.add
+    set_local $28
+    get_local $28
+    i32.load8_s
+    set_local $29
+    get_local $29
+    i32.const 255
+    i32.and
+    set_local $30
+    get_local $30
+    i32.const 128
+    i32.and
+    set_local $31
+    get_local $31
+    i32.const 0
+    i32.ne
+    set_local $32
+    get_local $32
+    if $if_0
+      get_local $24
+      set_local $6
+      get_local $6
+      set_local $33
+      get_local $33
+      set_local $5
+      get_local $5
+      set_local $35
+      get_local $35
+      set_local $4
+      get_local $4
+      set_local $36
+      get_local $36
+      i32.load
+      set_local $37
+      get_local $37
+      set_local $43
+    else
+      get_local $24
+      set_local $11
+      get_local $11
+      set_local $38
+      get_local $38
+      set_local $10
+      get_local $10
+      set_local $39
+      get_local $39
+      set_local $9
+      get_local $9
+      set_local $40
+      get_local $40
+      set_local $8
+      get_local $8
+      set_local $41
+      get_local $41
+      set_local $7
+      get_local $7
+      set_local $42
+      get_local $42
+      set_local $43
+    end ;; $if_0
+    get_local $43
+    set_local $3
+    get_local $3
+    set_local $44
+    get_local $19
+    set_local $46
+    get_local $46
+    set_local $2
+    get_local $2
+    set_local $47
+    get_local $47
+    set_local $71
+    get_local $71
+    set_local $48
+    get_local $48
+    set_local $70
+    get_local $70
+    set_local $49
+    get_local $49
+    set_local $67
+    get_local $67
+    set_local $50
+    get_local $50
+    i32.const 11
+    i32.add
+    set_local $51
+    get_local $51
+    i32.load8_s
+    set_local $52
+    get_local $52
+    i32.const 255
+    i32.and
+    set_local $53
+    get_local $53
+    i32.const 128
+    i32.and
+    set_local $54
+    get_local $54
+    i32.const 0
+    i32.ne
+    set_local $55
+    get_local $55
+    if $if_1
+      get_local $47
+      set_local $23
+      get_local $23
+      set_local $57
+      get_local $57
+      set_local $12
+      get_local $12
+      set_local $58
+      get_local $58
+      set_local $1
+      get_local $1
+      set_local $59
+      get_local $59
+      i32.const 4
+      i32.add
+      set_local $60
+      get_local $60
+      i32.load
+      set_local $61
+      get_local $61
+      set_local $69
+      i32.const 0
+      get_local $44
+      get_local $69
+      call $_envoy_log
+      get_local $73
+      set_global $27
+      return
+    else
+      get_local $47
+      set_local $56
+      get_local $56
+      set_local $62
+      get_local $62
+      set_local $45
+      get_local $45
+      set_local $63
+      get_local $63
+      set_local $34
+      get_local $34
+      set_local $64
+      get_local $64
+      i32.const 11
+      i32.add
+      set_local $65
+      get_local $65
+      i32.load8_s
+      set_local $66
+      get_local $66
+      i32.const 255
+      i32.and
+      set_local $68
+      get_local $68
+      set_local $69
+      i32.const 0
+      get_local $44
+      get_local $69
+      call $_envoy_log
+      get_local $73
+      set_global $27
+      return
+    end ;; $if_1
+    unreachable
     )
   
   (func $__ZNSt3__24pairIKiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEED2Ev (type $6)
@@ -5159,7 +5768,7 @@
     set_local $67
     get_local $67
     if $if_0
-      i32.const 4586
+      i32.const 4591
       set_local $286
       i32.const 8
       call $___cxa_allocate_exception
@@ -6779,7 +7388,7 @@
         set_local $28
         get_local $28
         if $if_1
-          i32.const 4586
+          i32.const 4591
           set_local $254
           i32.const 8
           call $___cxa_allocate_exception
@@ -7623,6 +8232,2258 @@
     return
     )
   
+  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeIiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEEENS_22__unordered_map_hasherIiS7_NS_4hashIiEELb1EEENS_21__unordered_map_equalIiS7_NS_8equal_toIiEELb1EEENS_9allocatorIS7_EEE14__erase_uniqueIiEEmRKT_ (type $9)
+    (param $0 i32)
+    (param $1 i32)
+    (result i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    get_global $27
+    set_local $35
+    get_global $27
+    i32.const 64
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 64
+      call $abortStackOverflow
+    end ;; $if
+    get_local $35
+    i32.const 60
+    i32.add
+    set_local $2
+    get_local $35
+    i32.const 32
+    i32.add
+    set_local $32
+    get_local $35
+    i32.const 12
+    i32.add
+    set_local $6
+    get_local $35
+    i32.const 8
+    i32.add
+    set_local $7
+    get_local $35
+    i32.const 4
+    i32.add
+    set_local $8
+    get_local $35
+    set_local $9
+    get_local $0
+    set_local $4
+    get_local $1
+    set_local $5
+    get_local $4
+    set_local $10
+    get_local $5
+    set_local $11
+    get_local $10
+    get_local $11
+    call $__ZNSt3__212__hash_tableINS_17__hash_value_typeIiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEEENS_22__unordered_map_hasherIiS7_NS_4hashIiEELb1EEENS_21__unordered_map_equalIiS7_NS_8equal_toIiEELb1EEENS_9allocatorIS7_EEE4findIiEENS_15__hash_iteratorIPNS_11__hash_nodeIS7_PvEEEERKT_
+    set_local $12
+    get_local $6
+    get_local $12
+    i32.store
+    get_local $10
+    set_local $33
+    get_local $32
+    set_local $30
+    i32.const 0
+    set_local $31
+    get_local $30
+    set_local $14
+    get_local $31
+    set_local $15
+    get_local $14
+    get_local $15
+    i32.store
+    get_local $32
+    i32.load
+    set_local $16
+    get_local $7
+    get_local $16
+    i32.store
+    get_local $6
+    set_local $28
+    get_local $7
+    set_local $29
+    get_local $28
+    set_local $17
+    get_local $17
+    i32.load
+    set_local $18
+    get_local $29
+    set_local $19
+    get_local $19
+    i32.load
+    set_local $20
+    get_local $18
+    get_local $20
+    i32.eq
+    set_local $21
+    get_local $21
+    if $if_0
+      i32.const 0
+      set_local $3
+      get_local $3
+      set_local $27
+      get_local $35
+      set_global $27
+      get_local $27
+      return
+    else
+      get_local $8
+      set_local $13
+      get_local $6
+      set_local $24
+      get_local $13
+      set_local $22
+      get_local $24
+      set_local $23
+      get_local $23
+      i32.load
+      set_local $25
+      get_local $22
+      get_local $25
+      i32.store
+      get_local $2
+      get_local $8
+      i32.load
+      i32.store
+      get_local $10
+      get_local $2
+      call $__ZNSt3__212__hash_tableINS_17__hash_value_typeIiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEEENS_22__unordered_map_hasherIiS7_NS_4hashIiEELb1EEENS_21__unordered_map_equalIiS7_NS_8equal_toIiEELb1EEENS_9allocatorIS7_EEE5eraseENS_21__hash_const_iteratorIPNS_11__hash_nodeIS7_PvEEEE
+      set_local $26
+      get_local $9
+      get_local $26
+      i32.store
+      i32.const 1
+      set_local $3
+      get_local $3
+      set_local $27
+      get_local $35
+      set_global $27
+      get_local $27
+      return
+    end ;; $if_0
+    unreachable
+    )
+  
+  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeIiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEEENS_22__unordered_map_hasherIiS7_NS_4hashIiEELb1EEENS_21__unordered_map_equalIiS7_NS_8equal_toIiEELb1EEENS_9allocatorIS7_EEE4findIiEENS_15__hash_iteratorIPNS_11__hash_nodeIS7_PvEEEERKT_ (type $9)
+    (param $0 i32)
+    (param $1 i32)
+    (result i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    (local $36 i32)
+    (local $37 i32)
+    (local $38 i32)
+    (local $39 i32)
+    (local $40 i32)
+    (local $41 i32)
+    (local $42 i32)
+    (local $43 i32)
+    (local $44 i32)
+    (local $45 i32)
+    (local $46 i32)
+    (local $47 i32)
+    (local $48 i32)
+    (local $49 i32)
+    (local $50 i32)
+    (local $51 i32)
+    (local $52 i32)
+    (local $53 i32)
+    (local $54 i32)
+    (local $55 i32)
+    (local $56 i32)
+    (local $57 i32)
+    (local $58 i32)
+    (local $59 i32)
+    (local $60 i32)
+    (local $61 i32)
+    (local $62 i32)
+    (local $63 i32)
+    (local $64 i32)
+    (local $65 i32)
+    (local $66 i32)
+    (local $67 i32)
+    (local $68 i32)
+    (local $69 i32)
+    (local $70 i32)
+    (local $71 i32)
+    (local $72 i32)
+    (local $73 i32)
+    (local $74 i32)
+    (local $75 i32)
+    (local $76 i32)
+    (local $77 i32)
+    (local $78 i32)
+    (local $79 i32)
+    (local $80 i32)
+    (local $81 i32)
+    (local $82 i32)
+    (local $83 i32)
+    (local $84 i32)
+    (local $85 i32)
+    (local $86 i32)
+    (local $87 i32)
+    (local $88 i32)
+    (local $89 i32)
+    (local $90 i32)
+    (local $91 i32)
+    (local $92 i32)
+    (local $93 i32)
+    (local $94 i32)
+    (local $95 i32)
+    (local $96 i32)
+    (local $97 i32)
+    (local $98 i32)
+    (local $99 i32)
+    (local $100 i32)
+    (local $101 i32)
+    (local $102 i32)
+    (local $103 i32)
+    (local $104 i32)
+    (local $105 i32)
+    (local $106 i32)
+    (local $107 i32)
+    (local $108 i32)
+    (local $109 i32)
+    (local $110 i32)
+    (local $111 i32)
+    (local $112 i32)
+    (local $113 i32)
+    (local $114 i32)
+    (local $115 i32)
+    (local $116 i32)
+    (local $117 i32)
+    (local $118 i32)
+    (local $119 i32)
+    (local $120 i32)
+    (local $121 i32)
+    (local $122 i32)
+    (local $123 i32)
+    (local $124 i32)
+    (local $125 i32)
+    (local $126 i32)
+    (local $127 i32)
+    (local $128 i32)
+    (local $129 i32)
+    (local $130 i32)
+    (local $131 i32)
+    (local $132 i32)
+    (local $133 i32)
+    (local $134 i32)
+    (local $135 i32)
+    (local $136 i32)
+    (local $137 i32)
+    (local $138 i32)
+    (local $139 i32)
+    (local $140 i32)
+    (local $141 i32)
+    (local $142 i32)
+    (local $143 i32)
+    (local $144 i32)
+    (local $145 i32)
+    (local $146 i32)
+    (local $147 i32)
+    (local $148 i32)
+    (local $149 i32)
+    (local $150 i32)
+    (local $151 i32)
+    (local $152 i32)
+    (local $153 i32)
+    (local $154 i32)
+    (local $155 i32)
+    (local $156 i32)
+    (local $157 i32)
+    (local $158 i32)
+    (local $159 i32)
+    (local $160 i32)
+    (local $161 i32)
+    (local $162 i32)
+    (local $163 i32)
+    (local $164 i32)
+    get_global $27
+    set_local $164
+    get_global $27
+    i32.const 208
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 208
+      call $abortStackOverflow
+    end ;; $if
+    get_local $164
+    i32.const 44
+    i32.add
+    set_local $98
+    get_local $164
+    i32.const 24
+    i32.add
+    set_local $103
+    get_local $0
+    set_local $104
+    get_local $1
+    set_local $105
+    get_local $104
+    set_local $111
+    get_local $111
+    set_local $102
+    get_local $102
+    set_local $112
+    get_local $112
+    i32.const 12
+    i32.add
+    set_local $113
+    get_local $113
+    set_local $101
+    get_local $101
+    set_local $114
+    get_local $114
+    set_local $100
+    get_local $100
+    set_local $115
+    get_local $105
+    set_local $116
+    get_local $115
+    set_local $97
+    get_local $116
+    set_local $108
+    get_local $97
+    set_local $117
+    get_local $108
+    set_local $118
+    get_local $118
+    i32.load
+    set_local $120
+    get_local $117
+    set_local $75
+    get_local $120
+    set_local $86
+    get_local $86
+    set_local $121
+    get_local $121
+    set_local $106
+    get_local $111
+    set_local $24
+    get_local $24
+    set_local $122
+    get_local $122
+    set_local $13
+    get_local $13
+    set_local $123
+    get_local $123
+    set_local $2
+    get_local $2
+    set_local $124
+    get_local $124
+    i32.const 4
+    i32.add
+    set_local $125
+    get_local $125
+    set_local $152
+    get_local $152
+    set_local $126
+    get_local $126
+    set_local $141
+    get_local $141
+    set_local $127
+    get_local $127
+    set_local $130
+    get_local $130
+    set_local $128
+    get_local $128
+    set_local $119
+    get_local $119
+    set_local $129
+    get_local $129
+    i32.load
+    set_local $131
+    get_local $131
+    set_local $107
+    get_local $107
+    set_local $132
+    get_local $132
+    i32.const 0
+    i32.ne
+    set_local $133
+    block $block
+      get_local $133
+      if $if_0
+        get_local $106
+        set_local $134
+        get_local $107
+        set_local $135
+        get_local $134
+        set_local $35
+        get_local $135
+        set_local $46
+        get_local $46
+        set_local $136
+        get_local $46
+        set_local $137
+        get_local $137
+        i32.const 1
+        i32.sub
+        set_local $138
+        get_local $136
+        get_local $138
+        i32.and
+        set_local $139
+        get_local $139
+        i32.const 0
+        i32.ne
+        set_local $140
+        get_local $35
+        set_local $142
+        get_local $46
+        set_local $143
+        get_local $140
+        if $if_1
+          get_local $142
+          get_local $143
+          i32.lt_u
+          set_local $146
+          get_local $35
+          set_local $147
+          get_local $146
+          if $if_2
+            get_local $147
+            set_local $150
+          else
+            get_local $46
+            set_local $148
+            get_local $147
+            get_local $148
+            i32.rem_u
+            i32.const -1
+            i32.and
+            set_local $149
+            get_local $149
+            set_local $150
+          end ;; $if_2
+        else
+          get_local $143
+          i32.const 1
+          i32.sub
+          set_local $144
+          get_local $142
+          get_local $144
+          i32.and
+          set_local $145
+          get_local $145
+          set_local $150
+        end ;; $if_1
+        get_local $150
+        set_local $109
+        get_local $109
+        set_local $151
+        get_local $111
+        set_local $72
+        get_local $151
+        set_local $73
+        get_local $72
+        set_local $153
+        get_local $153
+        set_local $68
+        get_local $68
+        set_local $154
+        get_local $154
+        set_local $57
+        get_local $57
+        set_local $155
+        get_local $155
+        i32.load
+        set_local $156
+        get_local $73
+        set_local $157
+        get_local $156
+        get_local $157
+        i32.const 2
+        i32.shl
+        i32.add
+        set_local $158
+        get_local $158
+        i32.load
+        set_local $159
+        get_local $159
+        set_local $110
+        get_local $110
+        set_local $160
+        get_local $160
+        i32.const 0
+        i32.ne
+        set_local $161
+        get_local $161
+        if $if_3
+          get_local $110
+          set_local $162
+          get_local $162
+          i32.load
+          set_local $3
+          get_local $3
+          set_local $110
+          loop $loop
+            block $block_0
+              get_local $110
+              set_local $4
+              get_local $4
+              i32.const 0
+              i32.ne
+              set_local $5
+              get_local $5
+              i32.eqz
+              if $if_4
+                br $block
+              end ;; $if_4
+              get_local $110
+              set_local $6
+              get_local $6
+              set_local $74
+              get_local $74
+              set_local $7
+              get_local $7
+              i32.const 4
+              i32.add
+              set_local $8
+              get_local $8
+              i32.load
+              set_local $9
+              get_local $106
+              set_local $10
+              get_local $9
+              get_local $10
+              i32.eq
+              set_local $11
+              get_local $11
+              i32.eqz
+              if $if_5
+                get_local $110
+                set_local $12
+                get_local $12
+                set_local $76
+                get_local $76
+                set_local $14
+                get_local $14
+                i32.const 4
+                i32.add
+                set_local $15
+                get_local $15
+                i32.load
+                set_local $16
+                get_local $107
+                set_local $17
+                get_local $16
+                set_local $77
+                get_local $17
+                set_local $78
+                get_local $78
+                set_local $18
+                get_local $78
+                set_local $19
+                get_local $19
+                i32.const 1
+                i32.sub
+                set_local $20
+                get_local $18
+                get_local $20
+                i32.and
+                set_local $21
+                get_local $21
+                i32.const 0
+                i32.ne
+                set_local $22
+                get_local $77
+                set_local $23
+                get_local $78
+                set_local $25
+                get_local $22
+                if $if_6
+                  get_local $23
+                  get_local $25
+                  i32.lt_u
+                  set_local $28
+                  get_local $77
+                  set_local $29
+                  get_local $28
+                  if $if_7
+                    get_local $29
+                    set_local $33
+                  else
+                    get_local $78
+                    set_local $30
+                    get_local $29
+                    get_local $30
+                    i32.rem_u
+                    i32.const -1
+                    i32.and
+                    set_local $31
+                    get_local $31
+                    set_local $33
+                  end ;; $if_7
+                else
+                  get_local $25
+                  i32.const 1
+                  i32.sub
+                  set_local $26
+                  get_local $23
+                  get_local $26
+                  i32.and
+                  set_local $27
+                  get_local $27
+                  set_local $33
+                end ;; $if_6
+                get_local $109
+                set_local $32
+                get_local $33
+                get_local $32
+                i32.eq
+                set_local $34
+                get_local $34
+                i32.eqz
+                if $if_8
+                  br $block
+                end ;; $if_8
+              end ;; $if_5
+              get_local $110
+              set_local $36
+              get_local $36
+              set_local $79
+              get_local $79
+              set_local $37
+              get_local $37
+              i32.const 4
+              i32.add
+              set_local $38
+              get_local $38
+              i32.load
+              set_local $39
+              get_local $106
+              set_local $40
+              get_local $39
+              get_local $40
+              i32.eq
+              set_local $41
+              get_local $41
+              if $if_9
+                get_local $111
+                set_local $82
+                get_local $82
+                set_local $42
+                get_local $42
+                i32.const 16
+                i32.add
+                set_local $43
+                get_local $43
+                set_local $81
+                get_local $81
+                set_local $44
+                get_local $44
+                set_local $80
+                get_local $80
+                set_local $45
+                get_local $110
+                set_local $47
+                get_local $47
+                set_local $85
+                get_local $85
+                set_local $48
+                get_local $48
+                set_local $84
+                get_local $84
+                set_local $49
+                get_local $49
+                set_local $83
+                get_local $83
+                set_local $50
+                get_local $50
+                i32.const 8
+                i32.add
+                set_local $51
+                get_local $105
+                set_local $52
+                get_local $45
+                set_local $90
+                get_local $51
+                set_local $91
+                get_local $52
+                set_local $92
+                get_local $90
+                set_local $53
+                get_local $91
+                set_local $54
+                get_local $92
+                set_local $55
+                get_local $53
+                set_local $87
+                get_local $54
+                set_local $88
+                get_local $55
+                set_local $89
+                get_local $88
+                set_local $56
+                get_local $56
+                i32.load
+                set_local $58
+                get_local $89
+                set_local $59
+                get_local $59
+                i32.load
+                set_local $60
+                get_local $58
+                get_local $60
+                i32.eq
+                set_local $61
+                get_local $61
+                if $if_10
+                  br $block_0
+                end ;; $if_10
+              end ;; $if_9
+              get_local $110
+              set_local $65
+              get_local $65
+              i32.load
+              set_local $66
+              get_local $66
+              set_local $110
+              br $loop
+            end ;; $block_0
+          end ;; $loop
+          get_local $110
+          set_local $62
+          get_local $103
+          set_local $93
+          get_local $62
+          set_local $94
+          get_local $93
+          set_local $63
+          get_local $94
+          set_local $64
+          get_local $63
+          get_local $64
+          i32.store
+          get_local $103
+          i32.load
+          set_local $71
+          get_local $164
+          set_global $27
+          get_local $71
+          return
+        end ;; $if_3
+      end ;; $if_0
+    end ;; $block
+    get_local $111
+    set_local $99
+    get_local $98
+    set_local $95
+    i32.const 0
+    set_local $96
+    get_local $95
+    set_local $67
+    get_local $96
+    set_local $69
+    get_local $67
+    get_local $69
+    i32.store
+    get_local $98
+    i32.load
+    set_local $70
+    get_local $103
+    get_local $70
+    i32.store
+    get_local $103
+    i32.load
+    set_local $71
+    get_local $164
+    set_global $27
+    get_local $71
+    return
+    )
+  
+  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeIiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEEENS_22__unordered_map_hasherIiS7_NS_4hashIiEELb1EEENS_21__unordered_map_equalIiS7_NS_8equal_toIiEELb1EEENS_9allocatorIS7_EEE5eraseENS_21__hash_const_iteratorIPNS_11__hash_nodeIS7_PvEEEE (type $9)
+    (param $0 i32)
+    (param $1 i32)
+    (result i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    (local $36 i32)
+    (local $37 i32)
+    (local $38 i32)
+    (local $39 i32)
+    (local $40 i32)
+    (local $41 i32)
+    (local $42 i32)
+    (local $43 i32)
+    (local $44 i32)
+    (local $45 i32)
+    (local $46 i32)
+    (local $47 i32)
+    (local $48 i32)
+    (local $49 i32)
+    (local $50 i32)
+    (local $51 i32)
+    (local $52 i32)
+    (local $53 i32)
+    (local $54 i32)
+    (local $55 i32)
+    (local $56 i32)
+    (local $57 i32)
+    (local $58 i32)
+    (local $59 i32)
+    (local $60 i32)
+    (local $61 i32)
+    (local $62 i32)
+    (local $63 i32)
+    (local $64 i32)
+    (local $65 i32)
+    (local $66 i32)
+    (local $67 i32)
+    (local $68 i32)
+    (local $69 i32)
+    (local $70 i32)
+    (local $71 i32)
+    (local $72 i32)
+    (local $73 i32)
+    (local $74 i32)
+    (local $75 i32)
+    (local $76 i32)
+    (local $77 i32)
+    (local $78 i32)
+    (local $79 i32)
+    (local $80 i32)
+    (local $81 i32)
+    (local $82 i32)
+    (local $83 i32)
+    get_global $27
+    set_local $83
+    get_global $27
+    i32.const 160
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 160
+      call $abortStackOverflow
+    end ;; $if
+    get_local $83
+    i32.const 144
+    i32.add
+    set_local $2
+    get_local $83
+    set_local $9
+    get_local $83
+    i32.const 148
+    i32.add
+    set_local $12
+    get_local $83
+    i32.const 28
+    i32.add
+    set_local $27
+    get_local $83
+    i32.const 8
+    i32.add
+    set_local $30
+    get_local $83
+    i32.const 4
+    i32.add
+    set_local $31
+    get_local $0
+    set_local $28
+    get_local $28
+    set_local $32
+    get_local $1
+    i32.load
+    set_local $33
+    get_local $33
+    set_local $29
+    get_local $29
+    set_local $34
+    get_local $27
+    set_local $25
+    get_local $34
+    set_local $26
+    get_local $25
+    set_local $36
+    get_local $26
+    set_local $37
+    get_local $36
+    get_local $37
+    i32.store
+    get_local $27
+    set_local $13
+    get_local $13
+    set_local $38
+    get_local $38
+    i32.load
+    set_local $39
+    get_local $39
+    i32.load
+    set_local $40
+    get_local $38
+    get_local $40
+    i32.store
+    get_local $31
+    get_local $1
+    i32.load
+    i32.store
+    get_local $2
+    get_local $31
+    i32.load
+    i32.store
+    get_local $30
+    get_local $32
+    get_local $2
+    call $__ZNSt3__212__hash_tableINS_17__hash_value_typeIiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEEENS_22__unordered_map_hasherIiS7_NS_4hashIiEELb1EEENS_21__unordered_map_equalIiS7_NS_8equal_toIiEELb1EEENS_9allocatorIS7_EEE6removeENS_21__hash_const_iteratorIPNS_11__hash_nodeIS7_PvEEEE
+    get_local $30
+    set_local $23
+    get_local $23
+    set_local $41
+    get_local $41
+    set_local $20
+    i32.const 0
+    set_local $21
+    get_local $20
+    set_local $42
+    get_local $42
+    set_local $19
+    get_local $19
+    set_local $43
+    get_local $43
+    set_local $18
+    get_local $18
+    set_local $44
+    get_local $44
+    i32.load
+    set_local $45
+    get_local $45
+    set_local $22
+    get_local $21
+    set_local $47
+    get_local $42
+    set_local $57
+    get_local $57
+    set_local $48
+    get_local $48
+    set_local $46
+    get_local $46
+    set_local $49
+    get_local $49
+    get_local $47
+    i32.store
+    get_local $22
+    set_local $50
+    get_local $50
+    i32.const 0
+    i32.ne
+    set_local $51
+    get_local $51
+    i32.eqz
+    if $if_0
+      get_local $27
+      i32.load
+      set_local $80
+      get_local $83
+      set_global $27
+      get_local $80
+      return
+    end ;; $if_0
+    get_local $42
+    set_local $35
+    get_local $35
+    set_local $52
+    get_local $52
+    i32.const 4
+    i32.add
+    set_local $53
+    get_local $53
+    set_local $24
+    get_local $24
+    set_local $54
+    get_local $22
+    set_local $55
+    get_local $54
+    set_local $16
+    get_local $55
+    set_local $17
+    get_local $16
+    set_local $56
+    get_local $56
+    i32.const 4
+    i32.add
+    set_local $58
+    get_local $58
+    i32.load8_s
+    set_local $59
+    get_local $59
+    i32.const 1
+    i32.and
+    set_local $60
+    get_local $60
+    if $if_1
+      get_local $56
+      i32.load
+      set_local $61
+      get_local $17
+      set_local $62
+      get_local $62
+      i32.const 8
+      i32.add
+      set_local $63
+      get_local $63
+      set_local $15
+      get_local $15
+      set_local $64
+      get_local $64
+      set_local $14
+      get_local $14
+      set_local $65
+      get_local $61
+      set_local $10
+      get_local $65
+      set_local $11
+      get_local $10
+      set_local $66
+      get_local $11
+      set_local $67
+      get_local $9
+      get_local $12
+      i32.load8_s
+      i32.store8
+      get_local $66
+      set_local $7
+      get_local $67
+      set_local $8
+      get_local $8
+      set_local $69
+      get_local $69
+      call $__ZNSt3__24pairIKiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEED2Ev
+    end ;; $if_1
+    get_local $17
+    set_local $70
+    get_local $70
+    i32.const 0
+    i32.ne
+    set_local $71
+    get_local $71
+    i32.eqz
+    if $if_2
+      get_local $27
+      i32.load
+      set_local $80
+      get_local $83
+      set_global $27
+      get_local $80
+      return
+    end ;; $if_2
+    get_local $56
+    i32.load
+    set_local $72
+    get_local $17
+    set_local $73
+    get_local $72
+    set_local $4
+    get_local $73
+    set_local $5
+    i32.const 1
+    set_local $6
+    get_local $4
+    set_local $74
+    get_local $5
+    set_local $75
+    get_local $6
+    set_local $76
+    get_local $74
+    set_local $79
+    get_local $75
+    set_local $81
+    get_local $76
+    set_local $3
+    get_local $81
+    set_local $77
+    get_local $77
+    set_local $68
+    get_local $68
+    set_local $78
+    get_local $78
+    call $__ZdlPv
+    get_local $27
+    i32.load
+    set_local $80
+    get_local $83
+    set_global $27
+    get_local $80
+    return
+    )
+  
+  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeIiNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEEENS_22__unordered_map_hasherIiS7_NS_4hashIiEELb1EEENS_21__unordered_map_equalIiS7_NS_8equal_toIiEELb1EEENS_9allocatorIS7_EEE6removeENS_21__hash_const_iteratorIPNS_11__hash_nodeIS7_PvEEEE (type $8)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    (local $36 i32)
+    (local $37 i32)
+    (local $38 i32)
+    (local $39 i32)
+    (local $40 i32)
+    (local $41 i32)
+    (local $42 i32)
+    (local $43 i32)
+    (local $44 i32)
+    (local $45 i32)
+    (local $46 i32)
+    (local $47 i32)
+    (local $48 i32)
+    (local $49 i32)
+    (local $50 i32)
+    (local $51 i32)
+    (local $52 i32)
+    (local $53 i32)
+    (local $54 i32)
+    (local $55 i32)
+    (local $56 i32)
+    (local $57 i32)
+    (local $58 i32)
+    (local $59 i32)
+    (local $60 i32)
+    (local $61 i32)
+    (local $62 i32)
+    (local $63 i32)
+    (local $64 i32)
+    (local $65 i32)
+    (local $66 i32)
+    (local $67 i32)
+    (local $68 i32)
+    (local $69 i32)
+    (local $70 i32)
+    (local $71 i32)
+    (local $72 i32)
+    (local $73 i32)
+    (local $74 i32)
+    (local $75 i32)
+    (local $76 i32)
+    (local $77 i32)
+    (local $78 i32)
+    (local $79 i32)
+    (local $80 i32)
+    (local $81 i32)
+    (local $82 i32)
+    (local $83 i32)
+    (local $84 i32)
+    (local $85 i32)
+    (local $86 i32)
+    (local $87 i32)
+    (local $88 i32)
+    (local $89 i32)
+    (local $90 i32)
+    (local $91 i32)
+    (local $92 i32)
+    (local $93 i32)
+    (local $94 i32)
+    (local $95 i32)
+    (local $96 i32)
+    (local $97 i32)
+    (local $98 i32)
+    (local $99 i32)
+    (local $100 i32)
+    (local $101 i32)
+    (local $102 i32)
+    (local $103 i32)
+    (local $104 i32)
+    (local $105 i32)
+    (local $106 i32)
+    (local $107 i32)
+    (local $108 i32)
+    (local $109 i32)
+    (local $110 i32)
+    (local $111 i32)
+    (local $112 i32)
+    (local $113 i32)
+    (local $114 i32)
+    (local $115 i32)
+    (local $116 i32)
+    (local $117 i32)
+    (local $118 i32)
+    (local $119 i32)
+    (local $120 i32)
+    (local $121 i32)
+    (local $122 i32)
+    (local $123 i32)
+    (local $124 i32)
+    (local $125 i32)
+    (local $126 i32)
+    (local $127 i32)
+    (local $128 i32)
+    (local $129 i32)
+    (local $130 i32)
+    (local $131 i32)
+    (local $132 i32)
+    (local $133 i32)
+    (local $134 i32)
+    (local $135 i32)
+    (local $136 i32)
+    (local $137 i32)
+    (local $138 i32)
+    (local $139 i32)
+    (local $140 i32)
+    (local $141 i32)
+    (local $142 i32)
+    (local $143 i32)
+    (local $144 i32)
+    (local $145 i32)
+    (local $146 i32)
+    (local $147 i32)
+    (local $148 i32)
+    (local $149 i32)
+    (local $150 i32)
+    (local $151 i32)
+    (local $152 i32)
+    (local $153 i32)
+    (local $154 i32)
+    (local $155 i32)
+    (local $156 i32)
+    (local $157 i32)
+    (local $158 i32)
+    (local $159 i32)
+    (local $160 i32)
+    (local $161 i32)
+    (local $162 i32)
+    (local $163 i32)
+    (local $164 i32)
+    (local $165 i32)
+    (local $166 i32)
+    (local $167 i32)
+    (local $168 i32)
+    (local $169 i32)
+    (local $170 i32)
+    (local $171 i32)
+    (local $172 i32)
+    (local $173 i32)
+    (local $174 i32)
+    (local $175 i32)
+    (local $176 i32)
+    (local $177 i32)
+    (local $178 i32)
+    (local $179 i32)
+    (local $180 i32)
+    (local $181 i32)
+    (local $182 i32)
+    (local $183 i32)
+    (local $184 i32)
+    (local $185 i32)
+    (local $186 i32)
+    (local $187 i32)
+    (local $188 i32)
+    (local $189 i32)
+    (local $190 i32)
+    (local $191 i32)
+    (local $192 i32)
+    (local $193 i32)
+    (local $194 i32)
+    (local $195 i32)
+    (local $196 i32)
+    (local $197 i32)
+    (local $198 i32)
+    (local $199 i32)
+    (local $200 i32)
+    (local $201 i32)
+    (local $202 i32)
+    (local $203 i32)
+    (local $204 i32)
+    (local $205 i32)
+    (local $206 i32)
+    (local $207 i32)
+    (local $208 i32)
+    (local $209 i32)
+    (local $210 i32)
+    (local $211 i32)
+    (local $212 i32)
+    (local $213 i32)
+    (local $214 i32)
+    (local $215 i32)
+    (local $216 i32)
+    (local $217 i32)
+    (local $218 i32)
+    (local $219 i32)
+    (local $220 i32)
+    (local $221 i32)
+    (local $222 i32)
+    (local $223 i32)
+    (local $224 i32)
+    (local $225 i32)
+    (local $226 i32)
+    (local $227 i32)
+    (local $228 i32)
+    (local $229 i32)
+    (local $230 i32)
+    (local $231 i32)
+    (local $232 i32)
+    (local $233 i32)
+    (local $234 i32)
+    (local $235 i32)
+    (local $236 i32)
+    (local $237 i32)
+    (local $238 i32)
+    (local $239 i32)
+    (local $240 i32)
+    (local $241 i32)
+    (local $242 i32)
+    (local $243 i32)
+    (local $244 i32)
+    (local $245 i32)
+    (local $246 i32)
+    (local $247 i32)
+    (local $248 i32)
+    (local $249 i32)
+    (local $250 i32)
+    (local $251 i32)
+    (local $252 i32)
+    get_global $27
+    set_local $252
+    get_global $27
+    i32.const 288
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 288
+      call $abortStackOverflow
+    end ;; $if
+    get_local $252
+    i32.const 68
+    i32.add
+    set_local $203
+    get_local $252
+    set_local $221
+    get_local $1
+    set_local $214
+    get_local $214
+    set_local $222
+    get_local $2
+    i32.load
+    set_local $223
+    get_local $223
+    set_local $215
+    get_local $222
+    set_local $213
+    get_local $213
+    set_local $224
+    get_local $224
+    set_local $212
+    get_local $212
+    set_local $225
+    get_local $225
+    set_local $211
+    get_local $211
+    set_local $226
+    get_local $226
+    i32.const 4
+    i32.add
+    set_local $227
+    get_local $227
+    set_local $210
+    get_local $210
+    set_local $228
+    get_local $228
+    set_local $209
+    get_local $209
+    set_local $230
+    get_local $230
+    set_local $208
+    get_local $208
+    set_local $231
+    get_local $231
+    set_local $206
+    get_local $206
+    set_local $232
+    get_local $232
+    i32.load
+    set_local $233
+    get_local $233
+    set_local $216
+    get_local $215
+    set_local $234
+    get_local $234
+    set_local $205
+    get_local $205
+    set_local $235
+    get_local $235
+    i32.const 4
+    i32.add
+    set_local $236
+    get_local $236
+    i32.load
+    set_local $237
+    get_local $216
+    set_local $238
+    get_local $237
+    set_local $174
+    get_local $238
+    set_local $185
+    get_local $185
+    set_local $239
+    get_local $185
+    set_local $241
+    get_local $241
+    i32.const 1
+    i32.sub
+    set_local $242
+    get_local $239
+    get_local $242
+    i32.and
+    set_local $243
+    get_local $243
+    i32.const 0
+    i32.ne
+    set_local $244
+    get_local $174
+    set_local $245
+    get_local $185
+    set_local $246
+    get_local $244
+    if $if_0
+      get_local $245
+      get_local $246
+      i32.lt_u
+      set_local $249
+      get_local $174
+      set_local $250
+      get_local $249
+      if $if_1
+        get_local $250
+        set_local $6
+      else
+        get_local $185
+        set_local $4
+        get_local $250
+        get_local $4
+        i32.rem_u
+        i32.const -1
+        i32.and
+        set_local $5
+        get_local $5
+        set_local $6
+      end ;; $if_1
+    else
+      get_local $246
+      i32.const 1
+      i32.sub
+      set_local $247
+      get_local $245
+      get_local $247
+      i32.and
+      set_local $248
+      get_local $248
+      set_local $6
+    end ;; $if_0
+    get_local $6
+    set_local $217
+    get_local $217
+    set_local $7
+    get_local $222
+    set_local $218
+    get_local $7
+    set_local $229
+    get_local $218
+    set_local $8
+    get_local $8
+    set_local $207
+    get_local $207
+    set_local $9
+    get_local $9
+    set_local $196
+    get_local $196
+    set_local $10
+    get_local $10
+    i32.load
+    set_local $11
+    get_local $229
+    set_local $12
+    get_local $11
+    get_local $12
+    i32.const 2
+    i32.shl
+    i32.add
+    set_local $13
+    get_local $13
+    i32.load
+    set_local $15
+    get_local $15
+    set_local $219
+    loop $loop
+      block $block
+        get_local $219
+        set_local $16
+        get_local $16
+        i32.load
+        set_local $17
+        get_local $215
+        set_local $18
+        get_local $17
+        get_local $18
+        i32.ne
+        set_local $19
+        get_local $219
+        set_local $20
+        get_local $19
+        i32.eqz
+        if $if_2
+          br $block
+        end ;; $if_2
+        get_local $20
+        i32.load
+        set_local $21
+        get_local $21
+        set_local $219
+        br $loop
+      end ;; $block
+    end ;; $loop
+    get_local $222
+    i32.const 8
+    i32.add
+    set_local $22
+    get_local $22
+    set_local $3
+    get_local $3
+    set_local $23
+    get_local $23
+    set_local $240
+    get_local $240
+    set_local $24
+    get_local $24
+    set_local $36
+    get_local $36
+    set_local $26
+    get_local $26
+    set_local $25
+    get_local $25
+    set_local $27
+    get_local $27
+    set_local $14
+    get_local $14
+    set_local $28
+    get_local $20
+    get_local $28
+    i32.eq
+    set_local $29
+    get_local $29
+    if $if_3
+      i32.const 14
+      set_local $251
+    else
+      get_local $219
+      set_local $30
+      get_local $30
+      set_local $47
+      get_local $47
+      set_local $31
+      get_local $31
+      i32.const 4
+      i32.add
+      set_local $32
+      get_local $32
+      i32.load
+      set_local $33
+      get_local $216
+      set_local $34
+      get_local $33
+      set_local $58
+      get_local $34
+      set_local $69
+      get_local $69
+      set_local $35
+      get_local $69
+      set_local $37
+      get_local $37
+      i32.const 1
+      i32.sub
+      set_local $38
+      get_local $35
+      get_local $38
+      i32.and
+      set_local $39
+      get_local $39
+      i32.const 0
+      i32.ne
+      set_local $40
+      get_local $58
+      set_local $41
+      get_local $69
+      set_local $42
+      get_local $40
+      if $if_4
+        get_local $41
+        get_local $42
+        i32.lt_u
+        set_local $45
+        get_local $58
+        set_local $46
+        get_local $45
+        if $if_5
+          get_local $46
+          set_local $51
+        else
+          get_local $69
+          set_local $48
+          get_local $46
+          get_local $48
+          i32.rem_u
+          i32.const -1
+          i32.and
+          set_local $49
+          get_local $49
+          set_local $51
+        end ;; $if_5
+      else
+        get_local $42
+        i32.const 1
+        i32.sub
+        set_local $43
+        get_local $41
+        get_local $43
+        i32.and
+        set_local $44
+        get_local $44
+        set_local $51
+      end ;; $if_4
+      get_local $217
+      set_local $50
+      get_local $51
+      get_local $50
+      i32.ne
+      set_local $52
+      get_local $52
+      if $if_6
+        i32.const 14
+        set_local $251
+      end ;; $if_6
+    end ;; $if_3
+    block $block_0
+      get_local $251
+      i32.const 14
+      i32.eq
+      if $if_7
+        get_local $215
+        set_local $53
+        get_local $53
+        i32.load
+        set_local $54
+        get_local $54
+        i32.const 0
+        i32.eq
+        set_local $55
+        get_local $55
+        i32.eqz
+        if $if_8
+          get_local $215
+          set_local $56
+          get_local $56
+          i32.load
+          set_local $57
+          get_local $57
+          set_local $80
+          get_local $80
+          set_local $59
+          get_local $59
+          i32.const 4
+          i32.add
+          set_local $60
+          get_local $60
+          i32.load
+          set_local $61
+          get_local $216
+          set_local $62
+          get_local $61
+          set_local $91
+          get_local $62
+          set_local $102
+          get_local $102
+          set_local $63
+          get_local $102
+          set_local $64
+          get_local $64
+          i32.const 1
+          i32.sub
+          set_local $65
+          get_local $63
+          get_local $65
+          i32.and
+          set_local $66
+          get_local $66
+          i32.const 0
+          i32.ne
+          set_local $67
+          get_local $91
+          set_local $68
+          get_local $102
+          set_local $70
+          get_local $67
+          if $if_9
+            get_local $68
+            get_local $70
+            i32.lt_u
+            set_local $73
+            get_local $91
+            set_local $74
+            get_local $73
+            if $if_10
+              get_local $74
+              set_local $78
+            else
+              get_local $102
+              set_local $75
+              get_local $74
+              get_local $75
+              i32.rem_u
+              i32.const -1
+              i32.and
+              set_local $76
+              get_local $76
+              set_local $78
+            end ;; $if_10
+          else
+            get_local $70
+            i32.const 1
+            i32.sub
+            set_local $71
+            get_local $68
+            get_local $71
+            i32.and
+            set_local $72
+            get_local $72
+            set_local $78
+          end ;; $if_9
+          get_local $217
+          set_local $77
+          get_local $78
+          get_local $77
+          i32.ne
+          set_local $79
+          get_local $79
+          i32.eqz
+          if $if_11
+            br $block_0
+          end ;; $if_11
+        end ;; $if_8
+        get_local $217
+        set_local $81
+        get_local $222
+        set_local $135
+        get_local $81
+        set_local $146
+        get_local $135
+        set_local $82
+        get_local $82
+        set_local $124
+        get_local $124
+        set_local $83
+        get_local $83
+        set_local $113
+        get_local $113
+        set_local $84
+        get_local $84
+        i32.load
+        set_local $85
+        get_local $146
+        set_local $86
+        get_local $85
+        get_local $86
+        i32.const 2
+        i32.shl
+        i32.add
+        set_local $87
+        get_local $87
+        i32.const 0
+        i32.store
+      end ;; $if_7
+    end ;; $block_0
+    get_local $215
+    set_local $88
+    get_local $88
+    i32.load
+    set_local $89
+    get_local $89
+    i32.const 0
+    i32.ne
+    set_local $90
+    get_local $90
+    if $if_12
+      get_local $215
+      set_local $92
+      get_local $92
+      i32.load
+      set_local $93
+      get_local $93
+      set_local $157
+      get_local $157
+      set_local $94
+      get_local $94
+      i32.const 4
+      i32.add
+      set_local $95
+      get_local $95
+      i32.load
+      set_local $96
+      get_local $216
+      set_local $97
+      get_local $96
+      set_local $168
+      get_local $97
+      set_local $170
+      get_local $170
+      set_local $98
+      get_local $170
+      set_local $99
+      get_local $99
+      i32.const 1
+      i32.sub
+      set_local $100
+      get_local $98
+      get_local $100
+      i32.and
+      set_local $101
+      get_local $101
+      i32.const 0
+      i32.ne
+      set_local $103
+      get_local $168
+      set_local $104
+      get_local $170
+      set_local $105
+      get_local $103
+      if $if_13
+        get_local $104
+        get_local $105
+        i32.lt_u
+        set_local $108
+        get_local $168
+        set_local $109
+        get_local $108
+        if $if_14
+          get_local $109
+          set_local $112
+        else
+          get_local $170
+          set_local $110
+          get_local $109
+          get_local $110
+          i32.rem_u
+          i32.const -1
+          i32.and
+          set_local $111
+          get_local $111
+          set_local $112
+        end ;; $if_14
+      else
+        get_local $105
+        i32.const 1
+        i32.sub
+        set_local $106
+        get_local $104
+        get_local $106
+        i32.and
+        set_local $107
+        get_local $107
+        set_local $112
+      end ;; $if_13
+      get_local $112
+      set_local $220
+      get_local $220
+      set_local $114
+      get_local $217
+      set_local $115
+      get_local $114
+      get_local $115
+      i32.ne
+      set_local $116
+      get_local $116
+      if $if_15
+        get_local $219
+        set_local $117
+        get_local $220
+        set_local $118
+        get_local $222
+        set_local $173
+        get_local $118
+        set_local $175
+        get_local $173
+        set_local $119
+        get_local $119
+        set_local $172
+        get_local $172
+        set_local $120
+        get_local $120
+        set_local $171
+        get_local $171
+        set_local $121
+        get_local $121
+        i32.load
+        set_local $122
+        get_local $175
+        set_local $123
+        get_local $122
+        get_local $123
+        i32.const 2
+        i32.shl
+        i32.add
+        set_local $125
+        get_local $125
+        get_local $117
+        i32.store
+      end ;; $if_15
+    end ;; $if_12
+    get_local $215
+    set_local $126
+    get_local $126
+    i32.load
+    set_local $127
+    get_local $219
+    set_local $128
+    get_local $128
+    get_local $127
+    i32.store
+    get_local $215
+    set_local $129
+    get_local $129
+    i32.const 0
+    i32.store
+    get_local $222
+    set_local $178
+    get_local $178
+    set_local $130
+    get_local $130
+    i32.const 12
+    i32.add
+    set_local $131
+    get_local $131
+    set_local $177
+    get_local $177
+    set_local $132
+    get_local $132
+    set_local $176
+    get_local $176
+    set_local $133
+    get_local $133
+    i32.load
+    set_local $134
+    get_local $134
+    i32.const -1
+    i32.add
+    set_local $136
+    get_local $133
+    get_local $136
+    i32.store
+    get_local $215
+    set_local $137
+    get_local $137
+    set_local $181
+    get_local $181
+    set_local $138
+    get_local $138
+    set_local $180
+    get_local $180
+    set_local $139
+    get_local $139
+    set_local $179
+    get_local $179
+    set_local $140
+    get_local $222
+    set_local $184
+    get_local $184
+    set_local $141
+    get_local $141
+    i32.const 8
+    i32.add
+    set_local $142
+    get_local $142
+    set_local $183
+    get_local $183
+    set_local $143
+    get_local $143
+    set_local $182
+    get_local $182
+    set_local $144
+    get_local $221
+    set_local $186
+    get_local $144
+    set_local $187
+    i32.const 1
+    set_local $188
+    get_local $186
+    set_local $145
+    get_local $187
+    set_local $147
+    get_local $145
+    get_local $147
+    i32.store
+    get_local $145
+    i32.const 4
+    i32.add
+    set_local $148
+    get_local $188
+    set_local $149
+    get_local $149
+    i32.const 1
+    i32.and
+    set_local $150
+    get_local $150
+    i32.const 1
+    i32.and
+    set_local $151
+    get_local $148
+    get_local $151
+    i32.store8
+    get_local $0
+    set_local $202
+    get_local $203
+    get_local $140
+    i32.store
+    get_local $221
+    set_local $204
+    get_local $202
+    set_local $152
+    get_local $204
+    set_local $153
+    get_local $153
+    set_local $201
+    get_local $201
+    set_local $154
+    get_local $152
+    set_local $198
+    get_local $203
+    set_local $199
+    get_local $154
+    set_local $200
+    get_local $198
+    set_local $155
+    get_local $199
+    set_local $156
+    get_local $156
+    set_local $197
+    get_local $197
+    set_local $158
+    get_local $155
+    set_local $190
+    get_local $158
+    set_local $191
+    get_local $190
+    set_local $159
+    get_local $191
+    set_local $160
+    get_local $160
+    set_local $189
+    get_local $189
+    set_local $161
+    get_local $161
+    i32.load
+    set_local $162
+    get_local $159
+    get_local $162
+    i32.store
+    get_local $155
+    i32.const 4
+    i32.add
+    set_local $163
+    get_local $200
+    set_local $164
+    get_local $164
+    set_local $192
+    get_local $192
+    set_local $165
+    get_local $163
+    set_local $194
+    get_local $165
+    set_local $195
+    get_local $194
+    set_local $166
+    get_local $195
+    set_local $167
+    get_local $167
+    set_local $193
+    get_local $193
+    set_local $169
+    get_local $166
+    get_local $169
+    i64.load align=4
+    i64.store align=4
+    get_local $252
+    set_global $27
+    return
+    )
+  
+  (func $__ZNSt3__211char_traitsIcE6lengthEPKc (type $5)
+    (param $0 i32)
+    (result i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    get_global $27
+    set_local $5
+    get_global $27
+    i32.const 16
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 16
+      call $abortStackOverflow
+    end ;; $if
+    get_local $0
+    set_local $1
+    get_local $1
+    set_local $2
+    get_local $2
+    call $_strlen
+    set_local $3
+    get_local $5
+    set_global $27
+    get_local $3
+    return
+    )
+  
   (func $___stdio_close (type $5)
     (param $0 i32)
     (result i32)
@@ -7657,7 +10518,7 @@
     i32.load
     set_local $2
     get_local $2
-    call $_dummy_506
+    call $_dummy_252
     set_local $3
     get_local $6
     get_local $3
@@ -7672,174 +10533,6 @@
     get_local $8
     set_global $27
     get_local $5
-    return
-    )
-  
-  (func $___stdio_seek (type $0)
-    (param $0 i32)
-    (param $1 i32)
-    (param $2 i32)
-    (result i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    (local $7 i32)
-    (local $8 i32)
-    (local $9 i32)
-    (local $10 i32)
-    (local $11 i32)
-    (local $12 i32)
-    (local $13 i32)
-    (local $14 i32)
-    (local $15 i32)
-    (local $16 i32)
-    (local $17 i32)
-    (local $18 i32)
-    get_global $27
-    set_local $18
-    get_global $27
-    i32.const 32
-    i32.add
-    set_global $27
-    get_global $27
-    get_global $28
-    i32.ge_s
-    if $if
-      i32.const 32
-      call $abortStackOverflow
-    end ;; $if
-    get_local $18
-    set_local $12
-    get_local $18
-    i32.const 20
-    i32.add
-    set_local $5
-    get_local $0
-    i32.const 60
-    i32.add
-    set_local $6
-    get_local $6
-    i32.load
-    set_local $7
-    get_local $5
-    set_local $8
-    get_local $12
-    get_local $7
-    i32.store
-    get_local $12
-    i32.const 4
-    i32.add
-    set_local $13
-    get_local $13
-    i32.const 0
-    i32.store
-    get_local $12
-    i32.const 8
-    i32.add
-    set_local $14
-    get_local $14
-    get_local $1
-    i32.store
-    get_local $12
-    i32.const 12
-    i32.add
-    set_local $15
-    get_local $15
-    get_local $8
-    i32.store
-    get_local $12
-    i32.const 16
-    i32.add
-    set_local $16
-    get_local $16
-    get_local $2
-    i32.store
-    i32.const 140
-    get_local $12
-    call $___syscall140
-    set_local $9
-    get_local $9
-    call $___syscall_ret
-    set_local $10
-    get_local $10
-    i32.const 0
-    i32.lt_s
-    set_local $11
-    get_local $11
-    if $if_0
-      get_local $5
-      i32.const -1
-      i32.store
-      i32.const -1
-      set_local $4
-    else
-      get_local $5
-      i32.load
-      set_local $3
-      get_local $3
-      set_local $4
-    end ;; $if_0
-    get_local $18
-    set_global $27
-    get_local $4
-    return
-    )
-  
-  (func $___syscall_ret (type $5)
-    (param $0 i32)
-    (result i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    get_global $27
-    set_local $6
-    get_local $0
-    i32.const -4096
-    i32.gt_u
-    set_local $2
-    get_local $2
-    if $if
-      i32.const 0
-      get_local $0
-      i32.sub
-      set_local $3
-      call $___errno_location
-      set_local $4
-      get_local $4
-      get_local $3
-      i32.store
-      i32.const -1
-      set_local $1
-    else
-      get_local $0
-      set_local $1
-    end ;; $if
-    get_local $1
-    return
-    )
-  
-  (func $___errno_location (type $7)
-    (result i32)
-    (local $0 i32)
-    (local $1 i32)
-    get_global $27
-    set_local $1
-    i32.const 5984
-    return
-    )
-  
-  (func $_dummy_506 (type $5)
-    (param $0 i32)
-    (result i32)
-    (local $1 i32)
-    (local $2 i32)
-    get_global $27
-    set_local $2
-    get_local $0
     return
     )
   
@@ -8258,6 +10951,174 @@
     return
     )
   
+  (func $___stdio_seek (type $0)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
+    (result i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    get_global $27
+    set_local $18
+    get_global $27
+    i32.const 32
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 32
+      call $abortStackOverflow
+    end ;; $if
+    get_local $18
+    set_local $12
+    get_local $18
+    i32.const 20
+    i32.add
+    set_local $5
+    get_local $0
+    i32.const 60
+    i32.add
+    set_local $6
+    get_local $6
+    i32.load
+    set_local $7
+    get_local $5
+    set_local $8
+    get_local $12
+    get_local $7
+    i32.store
+    get_local $12
+    i32.const 4
+    i32.add
+    set_local $13
+    get_local $13
+    i32.const 0
+    i32.store
+    get_local $12
+    i32.const 8
+    i32.add
+    set_local $14
+    get_local $14
+    get_local $1
+    i32.store
+    get_local $12
+    i32.const 12
+    i32.add
+    set_local $15
+    get_local $15
+    get_local $8
+    i32.store
+    get_local $12
+    i32.const 16
+    i32.add
+    set_local $16
+    get_local $16
+    get_local $2
+    i32.store
+    i32.const 140
+    get_local $12
+    call $___syscall140
+    set_local $9
+    get_local $9
+    call $___syscall_ret
+    set_local $10
+    get_local $10
+    i32.const 0
+    i32.lt_s
+    set_local $11
+    get_local $11
+    if $if_0
+      get_local $5
+      i32.const -1
+      i32.store
+      i32.const -1
+      set_local $4
+    else
+      get_local $5
+      i32.load
+      set_local $3
+      get_local $3
+      set_local $4
+    end ;; $if_0
+    get_local $18
+    set_global $27
+    get_local $4
+    return
+    )
+  
+  (func $___syscall_ret (type $5)
+    (param $0 i32)
+    (result i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    get_global $27
+    set_local $6
+    get_local $0
+    i32.const -4096
+    i32.gt_u
+    set_local $2
+    get_local $2
+    if $if
+      i32.const 0
+      get_local $0
+      i32.sub
+      set_local $3
+      call $___errno_location
+      set_local $4
+      get_local $4
+      get_local $3
+      i32.store
+      i32.const -1
+      set_local $1
+    else
+      get_local $0
+      set_local $1
+    end ;; $if
+    get_local $1
+    return
+    )
+  
+  (func $___errno_location (type $7)
+    (result i32)
+    (local $0 i32)
+    (local $1 i32)
+    get_global $27
+    set_local $1
+    i32.const 6064
+    return
+    )
+  
+  (func $_dummy_252 (type $5)
+    (param $0 i32)
+    (result i32)
+    (local $1 i32)
+    (local $2 i32)
+    get_global $27
+    set_local $2
+    get_local $0
+    return
+    )
+  
   (func $___stdout_write (type $0)
     (param $0 i32)
     (param $1 i32)
@@ -8376,188 +11237,11 @@
     return
     )
   
-  (func $_strcmp (type $9)
+  (func $_memchr (type $0)
     (param $0 i32)
     (param $1 i32)
+    (param $2 i32)
     (result i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    (local $7 i32)
-    (local $8 i32)
-    (local $9 i32)
-    (local $10 i32)
-    (local $11 i32)
-    (local $12 i32)
-    (local $13 i32)
-    (local $14 i32)
-    (local $15 i32)
-    (local $16 i32)
-    (local $17 i32)
-    (local $18 i32)
-    (local $19 i32)
-    (local $20 i32)
-    (local $21 i32)
-    (local $22 i32)
-    get_global $27
-    set_local $22
-    get_local $0
-    i32.load8_s
-    set_local $11
-    get_local $1
-    i32.load8_s
-    set_local $12
-    get_local $11
-    i32.const 24
-    i32.shl
-    i32.const 24
-    i32.shr_s
-    get_local $12
-    i32.const 24
-    i32.shl
-    i32.const 24
-    i32.shr_s
-    i32.ne
-    set_local $13
-    get_local $11
-    i32.const 24
-    i32.shl
-    i32.const 24
-    i32.shr_s
-    i32.const 0
-    i32.eq
-    set_local $14
-    get_local $14
-    get_local $13
-    i32.or
-    set_local $20
-    get_local $20
-    if $if
-      get_local $12
-      set_local $4
-      get_local $11
-      set_local $5
-    else
-      get_local $1
-      set_local $2
-      get_local $0
-      set_local $3
-      loop $loop
-        block $block
-          get_local $3
-          i32.const 1
-          i32.add
-          set_local $15
-          get_local $2
-          i32.const 1
-          i32.add
-          set_local $16
-          get_local $15
-          i32.load8_s
-          set_local $17
-          get_local $16
-          i32.load8_s
-          set_local $18
-          get_local $17
-          i32.const 24
-          i32.shl
-          i32.const 24
-          i32.shr_s
-          get_local $18
-          i32.const 24
-          i32.shl
-          i32.const 24
-          i32.shr_s
-          i32.ne
-          set_local $6
-          get_local $17
-          i32.const 24
-          i32.shl
-          i32.const 24
-          i32.shr_s
-          i32.const 0
-          i32.eq
-          set_local $7
-          get_local $7
-          get_local $6
-          i32.or
-          set_local $19
-          get_local $19
-          if $if_0
-            get_local $18
-            set_local $4
-            get_local $17
-            set_local $5
-            br $block
-          else
-            get_local $16
-            set_local $2
-            get_local $15
-            set_local $3
-          end ;; $if_0
-          br $loop
-        end ;; $block
-      end ;; $loop
-    end ;; $if
-    get_local $5
-    i32.const 255
-    i32.and
-    set_local $8
-    get_local $4
-    i32.const 255
-    i32.and
-    set_local $9
-    get_local $8
-    get_local $9
-    i32.sub
-    set_local $10
-    get_local $10
-    return
-    )
-  
-  (func $_pthread_self (type $7)
-    (result i32)
-    (local $0 i32)
-    (local $1 i32)
-    get_global $27
-    set_local $1
-    i32.const 4068
-    return
-    )
-  
-  (func $_isdigit (type $5)
-    (param $0 i32)
-    (result i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    get_global $27
-    set_local $5
-    get_local $0
-    i32.const -48
-    i32.add
-    set_local $1
-    get_local $1
-    i32.const 10
-    i32.lt_u
-    set_local $2
-    get_local $2
-    i32.const 1
-    i32.and
-    set_local $3
-    get_local $3
-    return
-    )
-  
-  (func $_strlen (type $5)
-    (param $0 i32)
-    (result i32)
-    (local $1 i32)
-    (local $2 i32)
     (local $3 i32)
     (local $4 i32)
     (local $5 i32)
@@ -8588,185 +11272,411 @@
     (local $30 i32)
     (local $31 i32)
     (local $32 i32)
+    (local $33 i32)
+    (local $34 i32)
+    (local $35 i32)
+    (local $36 i32)
+    (local $37 i32)
+    (local $38 i32)
+    (local $39 i32)
+    (local $40 i32)
+    (local $41 i32)
+    (local $42 i32)
+    (local $43 i32)
+    (local $44 i32)
+    (local $45 i32)
+    (local $46 i32)
+    (local $47 i32)
+    (local $48 i32)
+    (local $49 i32)
+    (local $50 i32)
+    (local $51 i32)
+    (local $52 i32)
+    (local $53 i32)
+    (local $54 i32)
+    (local $55 i32)
+    (local $56 i32)
+    (local $57 i32)
+    (local $58 i32)
     get_global $27
-    set_local $32
+    set_local $58
+    get_local $1
+    i32.const 255
+    i32.and
+    set_local $38
     get_local $0
-    set_local $9
-    get_local $9
+    set_local $49
+    get_local $49
     i32.const 3
     i32.and
-    set_local $20
-    get_local $20
+    set_local $50
+    get_local $50
     i32.const 0
-    i32.eq
-    set_local $24
+    i32.ne
+    set_local $51
+    get_local $2
+    i32.const 0
+    i32.ne
+    set_local $52
+    get_local $52
+    get_local $51
+    i32.and
+    set_local $56
     block $block
-      get_local $24
+      get_local $56
       if $if
+        get_local $1
+        i32.const 255
+        i32.and
+        set_local $53
         get_local $0
-        set_local $3
-        i32.const 5
-        set_local $31
-      else
-        get_local $0
-        set_local $4
-        get_local $9
-        set_local $23
+        set_local $6
+        get_local $2
+        set_local $9
         loop $loop
           block $block_0
-            get_local $4
+            get_local $6
             i32.load8_s
-            set_local $25
-            get_local $25
+            set_local $54
+            get_local $54
             i32.const 24
             i32.shl
             i32.const 24
             i32.shr_s
-            i32.const 0
+            get_local $53
+            i32.const 24
+            i32.shl
+            i32.const 24
+            i32.shr_s
             i32.eq
-            set_local $26
-            get_local $26
+            set_local $18
+            get_local $18
             if $if_0
-              get_local $23
-              set_local $6
+              get_local $6
+              set_local $5
+              get_local $9
+              set_local $8
+              i32.const 6
+              set_local $57
               br $block
             end ;; $if_0
-            get_local $4
+            get_local $6
             i32.const 1
             i32.add
-            set_local $27
-            get_local $27
-            set_local $28
-            get_local $28
+            set_local $19
+            get_local $9
+            i32.const -1
+            i32.add
+            set_local $20
+            get_local $19
+            set_local $21
+            get_local $21
             i32.const 3
             i32.and
-            set_local $29
-            get_local $29
+            set_local $22
+            get_local $22
             i32.const 0
-            i32.eq
-            set_local $30
-            get_local $30
+            i32.ne
+            set_local $23
+            get_local $20
+            i32.const 0
+            i32.ne
+            set_local $24
+            get_local $24
+            get_local $23
+            i32.and
+            set_local $55
+            get_local $55
             if $if_1
-              get_local $27
-              set_local $3
-              i32.const 5
-              set_local $31
-              br $block_0
+              get_local $19
+              set_local $6
+              get_local $20
+              set_local $9
             else
-              get_local $27
+              get_local $19
               set_local $4
-              get_local $28
-              set_local $23
+              get_local $20
+              set_local $7
+              get_local $24
+              set_local $17
+              i32.const 5
+              set_local $57
+              br $block_0
             end ;; $if_1
             br $loop
           end ;; $block_0
         end ;; $loop
+      else
+        get_local $0
+        set_local $4
+        get_local $2
+        set_local $7
+        get_local $52
+        set_local $17
+        i32.const 5
+        set_local $57
       end ;; $if
     end ;; $block
-    get_local $31
+    get_local $57
     i32.const 5
     i32.eq
     if $if_2
-      get_local $3
-      set_local $1
-      loop $loop_0
-        block $block_1
-          get_local $1
-          i32.load
-          set_local $10
-          get_local $10
-          i32.const -16843009
-          i32.add
-          set_local $11
-          get_local $10
-          i32.const -2139062144
-          i32.and
-          set_local $12
-          get_local $12
-          i32.const -2139062144
-          i32.xor
-          set_local $13
-          get_local $13
-          get_local $11
-          i32.and
-          set_local $14
-          get_local $14
+      get_local $17
+      if $if_3
+        get_local $4
+        set_local $5
+        get_local $7
+        set_local $8
+        i32.const 6
+        set_local $57
+      else
+        i32.const 16
+        set_local $57
+      end ;; $if_3
+    end ;; $if_2
+    block $block_1
+      get_local $57
+      i32.const 6
+      i32.eq
+      if $if_4
+        get_local $5
+        i32.load8_s
+        set_local $25
+        get_local $1
+        i32.const 255
+        i32.and
+        set_local $26
+        get_local $25
+        i32.const 24
+        i32.shl
+        i32.const 24
+        i32.shr_s
+        get_local $26
+        i32.const 24
+        i32.shl
+        i32.const 24
+        i32.shr_s
+        i32.eq
+        set_local $27
+        get_local $27
+        if $if_5
+          get_local $8
           i32.const 0
           i32.eq
-          set_local $15
-          get_local $1
-          i32.const 4
-          i32.add
-          set_local $16
-          get_local $15
-          if $if_3
-            get_local $16
-            set_local $1
-          else
+          set_local $47
+          get_local $47
+          if $if_6
+            i32.const 16
+            set_local $57
             br $block_1
-          end ;; $if_3
-          br $loop_0
-        end ;; $block_1
-      end ;; $loop_0
-      get_local $10
-      i32.const 255
-      i32.and
-      set_local $17
-      get_local $17
-      i32.const 24
-      i32.shl
-      i32.const 24
-      i32.shr_s
-      i32.const 0
-      i32.eq
-      set_local $18
-      get_local $18
-      if $if_4
-        get_local $1
-        set_local $5
-      else
-        get_local $1
-        set_local $7
-        loop $loop_1
-          block $block_2
-            get_local $7
-            i32.const 1
-            i32.add
-            set_local $19
-            get_local $19
-            i32.load8_s
-            set_local $8
+          else
+            get_local $5
+            set_local $48
+            br $block_1
+          end ;; $if_6
+          unreachable
+        end ;; $if_5
+        get_local $38
+        i32.const 16843009
+        i32.mul
+        set_local $28
+        get_local $8
+        i32.const 3
+        i32.gt_u
+        set_local $29
+        block $block_2
+          get_local $29
+          if $if_7
+            get_local $5
+            set_local $10
             get_local $8
+            set_local $13
+            loop $loop_0
+              block $block_3
+                get_local $10
+                i32.load
+                set_local $30
+                get_local $30
+                get_local $28
+                i32.xor
+                set_local $31
+                get_local $31
+                i32.const -16843009
+                i32.add
+                set_local $32
+                get_local $31
+                i32.const -2139062144
+                i32.and
+                set_local $33
+                get_local $33
+                i32.const -2139062144
+                i32.xor
+                set_local $34
+                get_local $34
+                get_local $32
+                i32.and
+                set_local $35
+                get_local $35
+                i32.const 0
+                i32.eq
+                set_local $36
+                get_local $36
+                i32.eqz
+                if $if_8
+                  get_local $13
+                  set_local $12
+                  get_local $10
+                  set_local $16
+                  br $block_2
+                end ;; $if_8
+                get_local $10
+                i32.const 4
+                i32.add
+                set_local $37
+                get_local $13
+                i32.const -4
+                i32.add
+                set_local $39
+                get_local $39
+                i32.const 3
+                i32.gt_u
+                set_local $40
+                get_local $40
+                if $if_9
+                  get_local $37
+                  set_local $10
+                  get_local $39
+                  set_local $13
+                else
+                  get_local $37
+                  set_local $3
+                  get_local $39
+                  set_local $11
+                  i32.const 11
+                  set_local $57
+                  br $block_3
+                end ;; $if_9
+                br $loop_0
+              end ;; $block_3
+            end ;; $loop_0
+          else
+            get_local $5
+            set_local $3
+            get_local $8
+            set_local $11
+            i32.const 11
+            set_local $57
+          end ;; $if_7
+        end ;; $block_2
+        get_local $57
+        i32.const 11
+        i32.eq
+        if $if_10
+          get_local $11
+          i32.const 0
+          i32.eq
+          set_local $41
+          get_local $41
+          if $if_11
+            i32.const 16
+            set_local $57
+            br $block_1
+          else
+            get_local $11
+            set_local $12
+            get_local $3
+            set_local $16
+          end ;; $if_11
+        end ;; $if_10
+        get_local $16
+        set_local $14
+        get_local $12
+        set_local $15
+        loop $loop_1
+          block $block_4
+            get_local $14
+            i32.load8_s
+            set_local $42
+            get_local $42
             i32.const 24
             i32.shl
             i32.const 24
             i32.shr_s
+            get_local $26
+            i32.const 24
+            i32.shl
+            i32.const 24
+            i32.shr_s
+            i32.eq
+            set_local $43
+            get_local $43
+            if $if_12
+              get_local $14
+              set_local $48
+              br $block_1
+            end ;; $if_12
+            get_local $14
+            i32.const 1
+            i32.add
+            set_local $44
+            get_local $15
+            i32.const -1
+            i32.add
+            set_local $45
+            get_local $45
             i32.const 0
             i32.eq
-            set_local $21
-            get_local $21
-            if $if_5
-              get_local $19
-              set_local $5
-              br $block_2
+            set_local $46
+            get_local $46
+            if $if_13
+              i32.const 16
+              set_local $57
+              br $block_4
             else
-              get_local $19
-              set_local $7
-            end ;; $if_5
+              get_local $44
+              set_local $14
+              get_local $45
+              set_local $15
+            end ;; $if_13
             br $loop_1
-          end ;; $block_2
+          end ;; $block_4
         end ;; $loop_1
       end ;; $if_4
-      get_local $5
-      set_local $22
-      get_local $22
-      set_local $6
-    end ;; $if_2
-    get_local $6
-    get_local $9
-    i32.sub
+    end ;; $block_1
+    get_local $57
+    i32.const 16
+    i32.eq
+    if $if_14
+      i32.const 0
+      set_local $48
+    end ;; $if_14
+    get_local $48
+    return
+    )
+  
+  (func $_isdigit (type $5)
+    (param $0 i32)
+    (result i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    get_global $27
+    set_local $5
+    get_local $0
+    i32.const -48
+    i32.add
+    set_local $1
+    get_local $1
+    i32.const 10
+    i32.lt_u
     set_local $2
     get_local $2
+    i32.const 1
+    i32.and
+    set_local $3
+    get_local $3
     return
     )
   
@@ -8824,13 +11734,13 @@
     get_local $31
     set_local $24
     get_local $24
-    i32.const 4312
+    i32.const 4068
     i64.load align=4
     i64.store align=4
     get_local $24
     i32.const 8
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 8
     i32.add
     i64.load align=4
@@ -8838,7 +11748,7 @@
     get_local $24
     i32.const 16
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 16
     i32.add
     i64.load align=4
@@ -8846,7 +11756,7 @@
     get_local $24
     i32.const 24
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 24
     i32.add
     i64.load align=4
@@ -8854,7 +11764,7 @@
     get_local $24
     i32.const 32
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 32
     i32.add
     i64.load align=4
@@ -8862,7 +11772,7 @@
     get_local $24
     i32.const 40
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 40
     i32.add
     i64.load align=4
@@ -8870,7 +11780,7 @@
     get_local $24
     i32.const 48
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 48
     i32.add
     i64.load align=4
@@ -8878,7 +11788,7 @@
     get_local $24
     i32.const 56
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 56
     i32.add
     i64.load align=4
@@ -8886,7 +11796,7 @@
     get_local $24
     i32.const 64
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 64
     i32.add
     i64.load align=4
@@ -8894,7 +11804,7 @@
     get_local $24
     i32.const 72
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 72
     i32.add
     i64.load align=4
@@ -8902,7 +11812,7 @@
     get_local $24
     i32.const 80
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 80
     i32.add
     i64.load align=4
@@ -8910,7 +11820,7 @@
     get_local $24
     i32.const 88
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 88
     i32.add
     i64.load align=4
@@ -8918,7 +11828,7 @@
     get_local $24
     i32.const 96
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 96
     i32.add
     i64.load align=4
@@ -8926,7 +11836,7 @@
     get_local $24
     i32.const 104
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 104
     i32.add
     i64.load align=4
@@ -8934,7 +11844,7 @@
     get_local $24
     i32.const 112
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 112
     i32.add
     i64.load align=4
@@ -8942,7 +11852,7 @@
     get_local $24
     i32.const 120
     i32.add
-    i32.const 4312
+    i32.const 4068
     i32.const 120
     i32.add
     i32.load
@@ -10102,7 +13012,7 @@
               get_local $0
               get_local $171
               get_local $268
-              call $_out
+              call $_out_281
             end ;; $if_6
             get_local $268
             i32.const 0
@@ -10578,7 +13488,7 @@
           set_local $74
         else
           get_local $282
-          call $_getint
+          call $_getint_282
           set_local $71
           get_local $71
           i32.const 0
@@ -10638,7 +13548,7 @@
               get_local $76
               i32.store
               get_local $282
-              call $_getint
+              call $_getint_282
               set_local $111
               get_local $282
               i32.load
@@ -11006,7 +13916,7 @@
             get_local $293
             get_local $124
             get_local $2
-            call $_pop_arg
+            call $_pop_arg_284
             get_local $282
             i32.load
             set_local $64
@@ -11373,7 +14283,7 @@
                                                     set_local $7
                                                     i32.const 0
                                                     set_local $31
-                                                    i32.const 4654
+                                                    i32.const 4659
                                                     set_local $33
                                                     get_local $367
                                                     set_local $45
@@ -11408,7 +14318,7 @@
                                                   i64.store
                                                   i32.const 1
                                                   set_local $9
-                                                  i32.const 4654
+                                                  i32.const 4659
                                                   set_local $11
                                                   get_local $386
                                                   set_local $387
@@ -11434,16 +14344,16 @@
                                                   set_local $179
                                                   get_local $179
                                                   if $if_42 (result i32)
-                                                    i32.const 4654
+                                                    i32.const 4659
                                                   else
-                                                    i32.const 4656
+                                                    i32.const 4661
                                                   end ;; $if_42
                                                   set_local $5
                                                   get_local $177
                                                   if $if_43 (result i32)
                                                     get_local $5
                                                   else
-                                                    i32.const 4655
+                                                    i32.const 4660
                                                   end ;; $if_43
                                                   set_local $368
                                                   get_local $360
@@ -11479,7 +14389,7 @@
                                               set_local $378
                                               i32.const 0
                                               set_local $9
-                                              i32.const 4654
+                                              i32.const 4659
                                               set_local $11
                                               get_local $378
                                               set_local $387
@@ -11506,7 +14416,7 @@
                                             set_local $41
                                             i32.const 0
                                             set_local $42
-                                            i32.const 4654
+                                            i32.const 4659
                                             set_local $43
                                             i32.const 1
                                             set_local $55
@@ -11547,7 +14457,7 @@
                                         set_local $201
                                         get_local $201
                                         if $if_44 (result i32)
-                                          i32.const 4664
+                                          i32.const 4669
                                         else
                                           get_local $200
                                         end ;; $if_44
@@ -11598,7 +14508,7 @@
                                       get_local $38
                                       i32.const 0
                                       get_local $360
-                                      call $_pad_529
+                                      call $_pad_287
                                       i32.const 0
                                       set_local $13
                                       i32.const 91
@@ -11645,7 +14555,7 @@
                   set_local $41
                   i32.const 0
                   set_local $42
-                  i32.const 4654
+                  i32.const 4659
                   set_local $43
                   get_local $24
                   set_local $55
@@ -11695,13 +14605,13 @@
                 i32.const 4
                 i32.shr_u
                 set_local $164
-                i32.const 4654
+                i32.const 4659
                 get_local $164
                 i32.add
                 set_local $165
                 get_local $358
                 if $if_47 (result i32)
-                  i32.const 4654
+                  i32.const 4659
                 else
                   get_local $165
                 end ;; $if_47
@@ -11800,7 +14710,7 @@
                     set_local $41
                     i32.const 0
                     set_local $42
-                    i32.const 4654
+                    i32.const 4659
                     set_local $43
                     get_local $49
                     set_local $55
@@ -11910,7 +14820,7 @@
                       get_local $38
                       get_local $12
                       get_local $360
-                      call $_pad_529
+                      call $_pad_287
                       get_local $12
                       i32.const 0
                       i32.eq
@@ -11973,7 +14883,7 @@
                             get_local $0
                             get_local $325
                             get_local $227
-                            call $_out
+                            call $_out_281
                             get_local $228
                             get_local $12
                             i32.lt_u
@@ -12104,7 +15014,7 @@
                 get_local $38
                 get_local $13
                 get_local $233
-                call $_pad_529
+                call $_pad_287
                 get_local $38
                 get_local $13
                 i32.gt_s
@@ -12158,11 +15068,11 @@
             get_local $47
             get_local $240
             get_local $56
-            call $_pad_529
+            call $_pad_287
             get_local $0
             get_local $43
             get_local $42
-            call $_out
+            call $_out_281
             get_local $56
             i32.const 65536
             i32.xor
@@ -12172,17 +15082,17 @@
             get_local $47
             get_local $240
             get_local $243
-            call $_pad_529
+            call $_pad_287
             get_local $0
             i32.const 48
             get_local $362
             get_local $238
             i32.const 0
-            call $_pad_529
+            call $_pad_287
             get_local $0
             get_local $41
             get_local $238
-            call $_out
+            call $_out_281
             get_local $56
             i32.const 8192
             i32.xor
@@ -12192,7 +15102,7 @@
             get_local $47
             get_local $240
             get_local $244
-            call $_pad_529
+            call $_pad_287
             get_local $47
             set_local $17
           end ;; $if_36
@@ -12256,7 +15166,7 @@
                 get_local $250
                 get_local $248
                 get_local $2
-                call $_pop_arg
+                call $_pop_arg_284
                 get_local $44
                 i32.const 1
                 i32.add
@@ -12354,7 +15264,7 @@
     return
     )
   
-  (func $_out (type $8)
+  (func $_out_281 (type $8)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -12387,7 +15297,7 @@
     return
     )
   
-  (func $_getint (type $5)
+  (func $_getint_282 (type $5)
     (param $0 i32)
     (result i32)
     (local $1 i32)
@@ -12504,7 +15414,7 @@
     return
     )
   
-  (func $_pop_arg (type $8)
+  (func $_pop_arg_284 (type $8)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -13678,7 +16588,7 @@
     (local $6 i32)
     get_global $27
     set_local $6
-    call $___pthread_self_343
+    call $___pthread_self_567
     set_local $1
     get_local $1
     i32.const 188
@@ -13695,424 +16605,7 @@
     return
     )
   
-  (func $_memchr (type $0)
-    (param $0 i32)
-    (param $1 i32)
-    (param $2 i32)
-    (result i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    (local $6 i32)
-    (local $7 i32)
-    (local $8 i32)
-    (local $9 i32)
-    (local $10 i32)
-    (local $11 i32)
-    (local $12 i32)
-    (local $13 i32)
-    (local $14 i32)
-    (local $15 i32)
-    (local $16 i32)
-    (local $17 i32)
-    (local $18 i32)
-    (local $19 i32)
-    (local $20 i32)
-    (local $21 i32)
-    (local $22 i32)
-    (local $23 i32)
-    (local $24 i32)
-    (local $25 i32)
-    (local $26 i32)
-    (local $27 i32)
-    (local $28 i32)
-    (local $29 i32)
-    (local $30 i32)
-    (local $31 i32)
-    (local $32 i32)
-    (local $33 i32)
-    (local $34 i32)
-    (local $35 i32)
-    (local $36 i32)
-    (local $37 i32)
-    (local $38 i32)
-    (local $39 i32)
-    (local $40 i32)
-    (local $41 i32)
-    (local $42 i32)
-    (local $43 i32)
-    (local $44 i32)
-    (local $45 i32)
-    (local $46 i32)
-    (local $47 i32)
-    (local $48 i32)
-    (local $49 i32)
-    (local $50 i32)
-    (local $51 i32)
-    (local $52 i32)
-    (local $53 i32)
-    (local $54 i32)
-    (local $55 i32)
-    (local $56 i32)
-    (local $57 i32)
-    (local $58 i32)
-    get_global $27
-    set_local $58
-    get_local $1
-    i32.const 255
-    i32.and
-    set_local $38
-    get_local $0
-    set_local $49
-    get_local $49
-    i32.const 3
-    i32.and
-    set_local $50
-    get_local $50
-    i32.const 0
-    i32.ne
-    set_local $51
-    get_local $2
-    i32.const 0
-    i32.ne
-    set_local $52
-    get_local $52
-    get_local $51
-    i32.and
-    set_local $56
-    block $block
-      get_local $56
-      if $if
-        get_local $1
-        i32.const 255
-        i32.and
-        set_local $53
-        get_local $0
-        set_local $6
-        get_local $2
-        set_local $9
-        loop $loop
-          block $block_0
-            get_local $6
-            i32.load8_s
-            set_local $54
-            get_local $54
-            i32.const 24
-            i32.shl
-            i32.const 24
-            i32.shr_s
-            get_local $53
-            i32.const 24
-            i32.shl
-            i32.const 24
-            i32.shr_s
-            i32.eq
-            set_local $18
-            get_local $18
-            if $if_0
-              get_local $6
-              set_local $5
-              get_local $9
-              set_local $8
-              i32.const 6
-              set_local $57
-              br $block
-            end ;; $if_0
-            get_local $6
-            i32.const 1
-            i32.add
-            set_local $19
-            get_local $9
-            i32.const -1
-            i32.add
-            set_local $20
-            get_local $19
-            set_local $21
-            get_local $21
-            i32.const 3
-            i32.and
-            set_local $22
-            get_local $22
-            i32.const 0
-            i32.ne
-            set_local $23
-            get_local $20
-            i32.const 0
-            i32.ne
-            set_local $24
-            get_local $24
-            get_local $23
-            i32.and
-            set_local $55
-            get_local $55
-            if $if_1
-              get_local $19
-              set_local $6
-              get_local $20
-              set_local $9
-            else
-              get_local $19
-              set_local $4
-              get_local $20
-              set_local $7
-              get_local $24
-              set_local $17
-              i32.const 5
-              set_local $57
-              br $block_0
-            end ;; $if_1
-            br $loop
-          end ;; $block_0
-        end ;; $loop
-      else
-        get_local $0
-        set_local $4
-        get_local $2
-        set_local $7
-        get_local $52
-        set_local $17
-        i32.const 5
-        set_local $57
-      end ;; $if
-    end ;; $block
-    get_local $57
-    i32.const 5
-    i32.eq
-    if $if_2
-      get_local $17
-      if $if_3
-        get_local $4
-        set_local $5
-        get_local $7
-        set_local $8
-        i32.const 6
-        set_local $57
-      else
-        i32.const 16
-        set_local $57
-      end ;; $if_3
-    end ;; $if_2
-    block $block_1
-      get_local $57
-      i32.const 6
-      i32.eq
-      if $if_4
-        get_local $5
-        i32.load8_s
-        set_local $25
-        get_local $1
-        i32.const 255
-        i32.and
-        set_local $26
-        get_local $25
-        i32.const 24
-        i32.shl
-        i32.const 24
-        i32.shr_s
-        get_local $26
-        i32.const 24
-        i32.shl
-        i32.const 24
-        i32.shr_s
-        i32.eq
-        set_local $27
-        get_local $27
-        if $if_5
-          get_local $8
-          i32.const 0
-          i32.eq
-          set_local $47
-          get_local $47
-          if $if_6
-            i32.const 16
-            set_local $57
-            br $block_1
-          else
-            get_local $5
-            set_local $48
-            br $block_1
-          end ;; $if_6
-          unreachable
-        end ;; $if_5
-        get_local $38
-        i32.const 16843009
-        i32.mul
-        set_local $28
-        get_local $8
-        i32.const 3
-        i32.gt_u
-        set_local $29
-        block $block_2
-          get_local $29
-          if $if_7
-            get_local $5
-            set_local $10
-            get_local $8
-            set_local $13
-            loop $loop_0
-              block $block_3
-                get_local $10
-                i32.load
-                set_local $30
-                get_local $30
-                get_local $28
-                i32.xor
-                set_local $31
-                get_local $31
-                i32.const -16843009
-                i32.add
-                set_local $32
-                get_local $31
-                i32.const -2139062144
-                i32.and
-                set_local $33
-                get_local $33
-                i32.const -2139062144
-                i32.xor
-                set_local $34
-                get_local $34
-                get_local $32
-                i32.and
-                set_local $35
-                get_local $35
-                i32.const 0
-                i32.eq
-                set_local $36
-                get_local $36
-                i32.eqz
-                if $if_8
-                  get_local $13
-                  set_local $12
-                  get_local $10
-                  set_local $16
-                  br $block_2
-                end ;; $if_8
-                get_local $10
-                i32.const 4
-                i32.add
-                set_local $37
-                get_local $13
-                i32.const -4
-                i32.add
-                set_local $39
-                get_local $39
-                i32.const 3
-                i32.gt_u
-                set_local $40
-                get_local $40
-                if $if_9
-                  get_local $37
-                  set_local $10
-                  get_local $39
-                  set_local $13
-                else
-                  get_local $37
-                  set_local $3
-                  get_local $39
-                  set_local $11
-                  i32.const 11
-                  set_local $57
-                  br $block_3
-                end ;; $if_9
-                br $loop_0
-              end ;; $block_3
-            end ;; $loop_0
-          else
-            get_local $5
-            set_local $3
-            get_local $8
-            set_local $11
-            i32.const 11
-            set_local $57
-          end ;; $if_7
-        end ;; $block_2
-        get_local $57
-        i32.const 11
-        i32.eq
-        if $if_10
-          get_local $11
-          i32.const 0
-          i32.eq
-          set_local $41
-          get_local $41
-          if $if_11
-            i32.const 16
-            set_local $57
-            br $block_1
-          else
-            get_local $11
-            set_local $12
-            get_local $3
-            set_local $16
-          end ;; $if_11
-        end ;; $if_10
-        get_local $16
-        set_local $14
-        get_local $12
-        set_local $15
-        loop $loop_1
-          block $block_4
-            get_local $14
-            i32.load8_s
-            set_local $42
-            get_local $42
-            i32.const 24
-            i32.shl
-            i32.const 24
-            i32.shr_s
-            get_local $26
-            i32.const 24
-            i32.shl
-            i32.const 24
-            i32.shr_s
-            i32.eq
-            set_local $43
-            get_local $43
-            if $if_12
-              get_local $14
-              set_local $48
-              br $block_1
-            end ;; $if_12
-            get_local $14
-            i32.const 1
-            i32.add
-            set_local $44
-            get_local $15
-            i32.const -1
-            i32.add
-            set_local $45
-            get_local $45
-            i32.const 0
-            i32.eq
-            set_local $46
-            get_local $46
-            if $if_13
-              i32.const 16
-              set_local $57
-              br $block_4
-            else
-              get_local $44
-              set_local $14
-              get_local $45
-              set_local $15
-            end ;; $if_13
-            br $loop_1
-          end ;; $block_4
-        end ;; $loop_1
-      end ;; $if_4
-    end ;; $block_1
-    get_local $57
-    i32.const 16
-    i32.eq
-    if $if_14
-      i32.const 0
-      set_local $48
-    end ;; $if_14
-    get_local $48
-    return
-    )
-  
-  (func $_pad_529 (type $4)
+  (func $_pad_287 (type $4)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -14212,7 +16705,7 @@
             get_local $0
             get_local $15
             i32.const 256
-            call $_out
+            call $_out_281
             get_local $6
             i32.const -256
             i32.add
@@ -14244,7 +16737,7 @@
       get_local $0
       get_local $15
       get_local $5
-      call $_out
+      call $_out_281
     end ;; $if_0
     get_local $22
     set_global $27
@@ -14862,7 +17355,7 @@
     i32.add
     set_local $107
     get_local $1
-    call $___DOUBLE_BITS_530
+    call $___DOUBLE_BITS
     set_local $492
     get_local $492
     i64.const 0
@@ -14874,13 +17367,13 @@
       f64.neg
       set_local $519
       get_local $519
-      call $___DOUBLE_BITS_530
+      call $___DOUBLE_BITS
       set_local $491
       get_local $519
       set_local $507
       i32.const 1
       set_local $21
-      i32.const 4671
+      i32.const 4676
       set_local $22
       get_local $491
       set_local $490
@@ -14903,16 +17396,16 @@
       set_local $170
       get_local $170
       if $if_1 (result i32)
-        i32.const 4672
-      else
         i32.const 4677
+      else
+        i32.const 4682
       end ;; $if_1
       set_local $6
       get_local $148
       if $if_2 (result i32)
         get_local $6
       else
-        i32.const 4674
+        i32.const 4679
       end ;; $if_2
       set_local $486
       get_local $4
@@ -14957,9 +17450,9 @@
         set_local $234
         get_local $234
         if $if_4 (result i32)
-          i32.const 4690
+          i32.const 4695
         else
-          i32.const 4694
+          i32.const 4699
         end ;; $if_4
         set_local $243
         get_local $507
@@ -14972,9 +17465,9 @@
         set_local $254
         get_local $234
         if $if_5 (result i32)
-          i32.const 4698
+          i32.const 4703
         else
-          i32.const 4702
+          i32.const 4707
         end ;; $if_5
         set_local $265
         get_local $254
@@ -14997,15 +17490,15 @@
         get_local $2
         get_local $276
         get_local $287
-        call $_pad_529
+        call $_pad_287
         get_local $0
         get_local $22
         get_local $21
-        call $_out
+        call $_out_281
         get_local $0
         get_local $18
         i32.const 3
-        call $_out
+        call $_out_281
         get_local $4
         i32.const 8192
         i32.xor
@@ -15015,7 +17508,7 @@
         get_local $2
         get_local $276
         get_local $298
-        call $_pad_529
+        call $_pad_287
         get_local $276
         set_local $95
       else
@@ -15462,11 +17955,11 @@
           get_local $2
           get_local $103
           get_local $4
-          call $_pad_529
+          call $_pad_287
           get_local $0
           get_local $472
           get_local $410
-          call $_out
+          call $_out_281
           get_local $4
           i32.const 65536
           i32.xor
@@ -15476,7 +17969,7 @@
           get_local $2
           get_local $103
           get_local $104
-          call $_pad_529
+          call $_pad_287
           get_local $94
           get_local $451
           i32.sub
@@ -15484,7 +17977,7 @@
           get_local $0
           get_local $443
           get_local $105
-          call $_out
+          call $_out_281
           get_local $92
           get_local $93
           i32.sub
@@ -15502,11 +17995,11 @@
           get_local $109
           i32.const 0
           i32.const 0
-          call $_pad_529
+          call $_pad_287
           get_local $0
           get_local $435
           get_local $106
-          call $_out
+          call $_out_281
           get_local $4
           i32.const 8192
           i32.xor
@@ -15516,7 +18009,7 @@
           get_local $2
           get_local $103
           get_local $110
-          call $_pad_529
+          call $_pad_287
           get_local $103
           set_local $95
           br $block
@@ -17127,11 +19620,11 @@
         get_local $2
         get_local $330
         get_local $4
-        call $_pad_529
+        call $_pad_287
         get_local $0
         get_local $22
         get_local $21
-        call $_out
+        call $_out_281
         get_local $4
         i32.const 65536
         i32.xor
@@ -17141,7 +19634,7 @@
         get_local $2
         get_local $330
         get_local $331
-        call $_pad_529
+        call $_pad_287
         get_local $304
         if $if_86
           get_local $80
@@ -17256,7 +19749,7 @@
               get_local $0
               get_local $28
               get_local $347
-              call $_out
+              call $_out_281
               get_local $70
               i32.const 4
               i32.add
@@ -17295,9 +19788,9 @@
           i32.eqz
           if $if_93
             get_local $0
-            i32.const 4706
+            i32.const 4711
             i32.const 1
-            call $_out
+            call $_out_281
           end ;; $if_93
           get_local $348
           get_local $81
@@ -17388,7 +19881,7 @@
                 get_local $0
                 get_local $8
                 get_local $365
-                call $_out
+                call $_out_281
                 get_local $76
                 i32.const 4
                 i32.add
@@ -17436,7 +19929,7 @@
           get_local $372
           i32.const 9
           i32.const 0
-          call $_pad_529
+          call $_pad_287
         else
           get_local $80
           i32.const 4
@@ -17530,7 +20023,7 @@
                     get_local $0
                     get_local $7
                     i32.const 1
-                    call $_out
+                    call $_out_281
                     get_local $74
                     i32.const 1
                     i32.lt_s
@@ -17546,9 +20039,9 @@
                       br $block_24
                     end ;; $if_103
                     get_local $0
-                    i32.const 4706
+                    i32.const 4711
                     i32.const 1
-                    call $_out
+                    call $_out_281
                     get_local $392
                     set_local $44
                   else
@@ -17620,7 +20113,7 @@
                 get_local $0
                 get_local $44
                 get_local $397
-                call $_out
+                call $_out_281
                 get_local $74
                 get_local $395
                 i32.sub
@@ -17668,7 +20161,7 @@
           get_local $404
           i32.const 18
           i32.const 0
-          call $_pad_529
+          call $_pad_287
           get_local $107
           set_local $405
           get_local $51
@@ -17680,7 +20173,7 @@
           get_local $0
           get_local $51
           get_local $407
-          call $_out
+          call $_out_281
         end ;; $if_86
         get_local $4
         i32.const 8192
@@ -17691,7 +20184,7 @@
         get_local $2
         get_local $330
         get_local $408
-        call $_pad_529
+        call $_pad_287
         get_local $330
         set_local $95
       end ;; $if_3
@@ -17713,7 +20206,7 @@
     return
     )
   
-  (func $___DOUBLE_BITS_530 (type $16)
+  (func $___DOUBLE_BITS (type $16)
     (param $0 f64)
     (result i64)
     (local $1 i32)
@@ -18106,7 +20599,7 @@
           set_local $3
           br $block
         end ;; $if_0
-        call $___pthread_self_250
+        call $___pthread_self_43
         set_local $55
         get_local $55
         i32.const 188
@@ -18389,7 +20882,7 @@
     return
     )
   
-  (func $___pthread_self_250 (type $7)
+  (func $___pthread_self_43 (type $7)
     (result i32)
     (local $0 i32)
     (local $1 i32)
@@ -18402,7 +20895,17 @@
     return
     )
   
-  (func $___pthread_self_343 (type $7)
+  (func $_pthread_self (type $7)
+    (result i32)
+    (local $0 i32)
+    (local $1 i32)
+    get_global $27
+    set_local $1
+    i32.const 4192
+    return
+    )
+  
+  (func $___pthread_self_567 (type $7)
     (result i32)
     (local $0 i32)
     (local $1 i32)
@@ -19127,6 +21630,147 @@
     return
     )
   
+  (func $_strcmp (type $9)
+    (param $0 i32)
+    (param $1 i32)
+    (result i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    get_global $27
+    set_local $22
+    get_local $0
+    i32.load8_s
+    set_local $11
+    get_local $1
+    i32.load8_s
+    set_local $12
+    get_local $11
+    i32.const 24
+    i32.shl
+    i32.const 24
+    i32.shr_s
+    get_local $12
+    i32.const 24
+    i32.shl
+    i32.const 24
+    i32.shr_s
+    i32.ne
+    set_local $13
+    get_local $11
+    i32.const 24
+    i32.shl
+    i32.const 24
+    i32.shr_s
+    i32.const 0
+    i32.eq
+    set_local $14
+    get_local $14
+    get_local $13
+    i32.or
+    set_local $20
+    get_local $20
+    if $if
+      get_local $12
+      set_local $4
+      get_local $11
+      set_local $5
+    else
+      get_local $1
+      set_local $2
+      get_local $0
+      set_local $3
+      loop $loop
+        block $block
+          get_local $3
+          i32.const 1
+          i32.add
+          set_local $15
+          get_local $2
+          i32.const 1
+          i32.add
+          set_local $16
+          get_local $15
+          i32.load8_s
+          set_local $17
+          get_local $16
+          i32.load8_s
+          set_local $18
+          get_local $17
+          i32.const 24
+          i32.shl
+          i32.const 24
+          i32.shr_s
+          get_local $18
+          i32.const 24
+          i32.shl
+          i32.const 24
+          i32.shr_s
+          i32.ne
+          set_local $6
+          get_local $17
+          i32.const 24
+          i32.shl
+          i32.const 24
+          i32.shr_s
+          i32.const 0
+          i32.eq
+          set_local $7
+          get_local $7
+          get_local $6
+          i32.or
+          set_local $19
+          get_local $19
+          if $if_0
+            get_local $18
+            set_local $4
+            get_local $17
+            set_local $5
+            br $block
+          else
+            get_local $16
+            set_local $2
+            get_local $15
+            set_local $3
+          end ;; $if_0
+          br $loop
+        end ;; $block
+      end ;; $loop
+    end ;; $if
+    get_local $5
+    i32.const 255
+    i32.and
+    set_local $8
+    get_local $4
+    i32.const 255
+    i32.and
+    set_local $9
+    get_local $8
+    get_local $9
+    i32.sub
+    set_local $10
+    get_local $10
+    return
+    )
+  
   (func $___fwritex (type $0)
     (param $0 i32)
     (param $1 i32)
@@ -19634,6 +22278,223 @@
     return
     )
   
+  (func $_strlen (type $5)
+    (param $0 i32)
+    (result i32)
+    (local $1 i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    (local $32 i32)
+    get_global $27
+    set_local $32
+    get_local $0
+    set_local $9
+    get_local $9
+    i32.const 3
+    i32.and
+    set_local $20
+    get_local $20
+    i32.const 0
+    i32.eq
+    set_local $24
+    block $block
+      get_local $24
+      if $if
+        get_local $0
+        set_local $3
+        i32.const 5
+        set_local $31
+      else
+        get_local $0
+        set_local $4
+        get_local $9
+        set_local $23
+        loop $loop
+          block $block_0
+            get_local $4
+            i32.load8_s
+            set_local $25
+            get_local $25
+            i32.const 24
+            i32.shl
+            i32.const 24
+            i32.shr_s
+            i32.const 0
+            i32.eq
+            set_local $26
+            get_local $26
+            if $if_0
+              get_local $23
+              set_local $6
+              br $block
+            end ;; $if_0
+            get_local $4
+            i32.const 1
+            i32.add
+            set_local $27
+            get_local $27
+            set_local $28
+            get_local $28
+            i32.const 3
+            i32.and
+            set_local $29
+            get_local $29
+            i32.const 0
+            i32.eq
+            set_local $30
+            get_local $30
+            if $if_1
+              get_local $27
+              set_local $3
+              i32.const 5
+              set_local $31
+              br $block_0
+            else
+              get_local $27
+              set_local $4
+              get_local $28
+              set_local $23
+            end ;; $if_1
+            br $loop
+          end ;; $block_0
+        end ;; $loop
+      end ;; $if
+    end ;; $block
+    get_local $31
+    i32.const 5
+    i32.eq
+    if $if_2
+      get_local $3
+      set_local $1
+      loop $loop_0
+        block $block_1
+          get_local $1
+          i32.load
+          set_local $10
+          get_local $10
+          i32.const -16843009
+          i32.add
+          set_local $11
+          get_local $10
+          i32.const -2139062144
+          i32.and
+          set_local $12
+          get_local $12
+          i32.const -2139062144
+          i32.xor
+          set_local $13
+          get_local $13
+          get_local $11
+          i32.and
+          set_local $14
+          get_local $14
+          i32.const 0
+          i32.eq
+          set_local $15
+          get_local $1
+          i32.const 4
+          i32.add
+          set_local $16
+          get_local $15
+          if $if_3
+            get_local $16
+            set_local $1
+          else
+            br $block_1
+          end ;; $if_3
+          br $loop_0
+        end ;; $block_1
+      end ;; $loop_0
+      get_local $10
+      i32.const 255
+      i32.and
+      set_local $17
+      get_local $17
+      i32.const 24
+      i32.shl
+      i32.const 24
+      i32.shr_s
+      i32.const 0
+      i32.eq
+      set_local $18
+      get_local $18
+      if $if_4
+        get_local $1
+        set_local $5
+      else
+        get_local $1
+        set_local $7
+        loop $loop_1
+          block $block_2
+            get_local $7
+            i32.const 1
+            i32.add
+            set_local $19
+            get_local $19
+            i32.load8_s
+            set_local $8
+            get_local $8
+            i32.const 24
+            i32.shl
+            i32.const 24
+            i32.shr_s
+            i32.const 0
+            i32.eq
+            set_local $21
+            get_local $21
+            if $if_5
+              get_local $19
+              set_local $5
+              br $block_2
+            else
+              get_local $19
+              set_local $7
+            end ;; $if_5
+            br $loop_1
+          end ;; $block_2
+        end ;; $loop_1
+      end ;; $if_4
+      get_local $5
+      set_local $22
+      get_local $22
+      set_local $6
+    end ;; $if_2
+    get_local $6
+    get_local $9
+    i32.sub
+    set_local $2
+    get_local $2
+    return
+    )
+  
   (func $_snprintf (type $11)
     (param $0 i32)
     (param $1 i32)
@@ -19680,9 +22541,9 @@
     (local $1 i32)
     get_global $27
     set_local $1
-    i32.const 6052
+    i32.const 6068
     call $___lock
-    i32.const 6060
+    i32.const 6076
     return
     )
   
@@ -19691,7 +22552,7 @@
     (local $1 i32)
     get_global $27
     set_local $1
-    i32.const 6052
+    i32.const 6068
     call $___unlock
     return
     )
@@ -21327,7 +24188,7 @@
         i32.const 3
         i32.shr_u
         set_local $831
-        i32.const 6064
+        i32.const 6080
         i32.load
         set_local $942
         get_local $942
@@ -21361,7 +24222,7 @@
           i32.const 1
           i32.shl
           set_local $221
-          i32.const 6104
+          i32.const 6120
           get_local $221
           i32.const 2
           i32.shl
@@ -21400,11 +24261,11 @@
               get_local $310
               i32.and
               set_local $321
-              i32.const 6064
+              i32.const 6080
               get_local $321
               i32.store
             else
-              i32.const 6080
+              i32.const 6096
               i32.load
               set_local $332
               get_local $332
@@ -21480,7 +24341,7 @@
           get_local $1
           return
         end ;; $if_2
-        i32.const 6072
+        i32.const 6088
         i32.load
         set_local $465
         get_local $720
@@ -21612,7 +24473,7 @@
             i32.const 1
             i32.shl
             set_local $809
-            i32.const 6104
+            i32.const 6120
             get_local $809
             i32.const 2
             i32.shl
@@ -21651,13 +24512,13 @@
                 get_local $898
                 i32.and
                 set_local $909
-                i32.const 6064
+                i32.const 6080
                 get_local $909
                 i32.store
                 get_local $909
                 set_local $1142
               else
-                i32.const 6080
+                i32.const 6096
                 i32.load
                 set_local $920
                 get_local $920
@@ -21743,7 +24604,7 @@
             get_local $1065
             i32.eqz
             if $if_11
-              i32.const 6084
+              i32.const 6100
               i32.load
               set_local $1076
               get_local $465
@@ -21754,7 +24615,7 @@
               i32.const 1
               i32.shl
               set_local $1098
-              i32.const 6104
+              i32.const 6120
               get_local $1098
               i32.const 2
               i32.shl
@@ -21778,7 +24639,7 @@
                 get_local $1120
                 i32.or
                 set_local $96
-                i32.const 6064
+                i32.const 6080
                 get_local $96
                 i32.store
                 get_local $1109
@@ -21797,7 +24658,7 @@
                 get_local $107
                 i32.load
                 set_local $118
-                i32.const 6080
+                i32.const 6096
                 i32.load
                 set_local $129
                 get_local $129
@@ -21839,10 +24700,10 @@
               get_local $1109
               i32.store
             end ;; $if_11
-            i32.const 6072
+            i32.const 6088
             get_local $987
             i32.store
-            i32.const 6084
+            i32.const 6100
             get_local $1020
             i32.store
             get_local $854
@@ -21852,7 +24713,7 @@
             get_local $1
             return
           end ;; $if_7
-          i32.const 6068
+          i32.const 6084
           i32.load
           set_local $175
           get_local $175
@@ -21956,7 +24817,7 @@
             get_local $201
             i32.add
             set_local $202
-            i32.const 6368
+            i32.const 6384
             get_local $202
             i32.const 2
             i32.shl
@@ -22065,7 +24926,7 @@
                 br $loop
               end ;; $block_2
             end ;; $loop
-            i32.const 6080
+            i32.const 6096
             i32.load
             set_local $223
             get_local $223
@@ -22292,7 +25153,7 @@
                 get_local $258
                 i32.load
                 set_local $259
-                i32.const 6368
+                i32.const 6384
                 get_local $259
                 i32.const 2
                 i32.shl
@@ -22329,13 +25190,13 @@
                       get_local $264
                       i32.and
                       set_local $266
-                      i32.const 6068
+                      i32.const 6084
                       get_local $266
                       i32.store
                       br $block_5
                     end ;; $if_32
                   else
-                    i32.const 6080
+                    i32.const 6096
                     i32.load
                     set_local $267
                     get_local $267
@@ -22385,7 +25246,7 @@
                     end ;; $if_33
                   end ;; $if_31
                 end ;; $block_6
-                i32.const 6080
+                i32.const 6096
                 i32.load
                 set_local $274
                 get_local $274
@@ -22458,7 +25319,7 @@
                 get_local $287
                 i32.eqz
                 if $if_39
-                  i32.const 6080
+                  i32.const 6096
                   i32.load
                   set_local $289
                   get_local $289
@@ -22564,7 +25425,7 @@
               get_local $307
               i32.eqz
               if $if_42
-                i32.const 6084
+                i32.const 6100
                 i32.load
                 set_local $308
                 get_local $465
@@ -22575,7 +25436,7 @@
                 i32.const 1
                 i32.shl
                 set_local $311
-                i32.const 6104
+                i32.const 6120
                 get_local $311
                 i32.const 2
                 i32.shl
@@ -22599,7 +25460,7 @@
                   get_local $942
                   i32.or
                   set_local $316
-                  i32.const 6064
+                  i32.const 6080
                   get_local $316
                   i32.store
                   get_local $312
@@ -22618,7 +25479,7 @@
                   get_local $317
                   i32.load
                   set_local $318
-                  i32.const 6080
+                  i32.const 6096
                   i32.load
                   set_local $319
                   get_local $319
@@ -22660,10 +25521,10 @@
                 get_local $312
                 i32.store
               end ;; $if_42
-              i32.const 6072
+              i32.const 6088
               get_local $8
               i32.store
-              i32.const 6084
+              i32.const 6100
               get_local $225
               i32.store
             end ;; $if_41
@@ -22700,7 +25561,7 @@
           i32.const -8
           i32.and
           set_local $328
-          i32.const 6068
+          i32.const 6084
           i32.load
           set_local $329
           get_local $329
@@ -22830,7 +25691,7 @@
                 set_local $29
               end ;; $if_48
             end ;; $if_47
-            i32.const 6368
+            i32.const 6384
             get_local $29
             i32.const 2
             i32.shl
@@ -23151,7 +26012,7 @@
                 get_local $416
                 i32.add
                 set_local $417
-                i32.const 6368
+                i32.const 6384
                 get_local $417
                 i32.const 2
                 i32.shl
@@ -23294,7 +26155,7 @@
               get_local $328
               set_local $9
             else
-              i32.const 6072
+              i32.const 6088
               i32.load
               set_local $436
               get_local $436
@@ -23307,7 +26168,7 @@
               set_local $438
               get_local $438
               if $if_65
-                i32.const 6080
+                i32.const 6096
                 i32.load
                 set_local $439
                 get_local $439
@@ -23536,7 +26397,7 @@
                     get_local $474
                     i32.load
                     set_local $475
-                    i32.const 6368
+                    i32.const 6384
                     get_local $475
                     i32.const 2
                     i32.shl
@@ -23573,7 +26434,7 @@
                           get_local $481
                           i32.and
                           set_local $482
-                          i32.const 6068
+                          i32.const 6084
                           get_local $482
                           i32.store
                           get_local $482
@@ -23581,7 +26442,7 @@
                           br $block_13
                         end ;; $if_79
                       else
-                        i32.const 6080
+                        i32.const 6096
                         i32.load
                         set_local $483
                         get_local $483
@@ -23633,7 +26494,7 @@
                         end ;; $if_80
                       end ;; $if_78
                     end ;; $block_14
-                    i32.const 6080
+                    i32.const 6096
                     i32.load
                     set_local $491
                     get_local $491
@@ -23708,7 +26569,7 @@
                       get_local $329
                       set_local $575
                     else
-                      i32.const 6080
+                      i32.const 6096
                       i32.load
                       set_local $505
                       get_local $505
@@ -23824,13 +26685,13 @@
                       i32.const 1
                       i32.shl
                       set_local $526
-                      i32.const 6104
+                      i32.const 6120
                       get_local $526
                       i32.const 2
                       i32.shl
                       i32.add
                       set_local $527
-                      i32.const 6064
+                      i32.const 6080
                       i32.load
                       set_local $528
                       i32.const 1
@@ -23851,7 +26712,7 @@
                         get_local $529
                         i32.or
                         set_local $533
-                        i32.const 6064
+                        i32.const 6080
                         get_local $533
                         i32.store
                         get_local $527
@@ -23870,7 +26731,7 @@
                         get_local $534
                         i32.load
                         set_local $535
-                        i32.const 6080
+                        i32.const 6096
                         i32.load
                         set_local $536
                         get_local $536
@@ -24027,7 +26888,7 @@
                         set_local $31
                       end ;; $if_93
                     end ;; $if_92
-                    i32.const 6368
+                    i32.const 6384
                     get_local $31
                     i32.const 2
                     i32.shl
@@ -24072,7 +26933,7 @@
                       get_local $573
                       i32.or
                       set_local $578
-                      i32.const 6068
+                      i32.const 6084
                       get_local $578
                       i32.store
                       get_local $569
@@ -24210,7 +27071,7 @@
                             br $loop_4
                           end ;; $block_18
                         end ;; $loop_4
-                        i32.const 6080
+                        i32.const 6096
                         i32.load
                         set_local $603
                         get_local $603
@@ -24256,7 +27117,7 @@
                     get_local $608
                     i32.load
                     set_local $611
-                    i32.const 6080
+                    i32.const 6096
                     i32.load
                     set_local $612
                     get_local $612
@@ -24329,7 +27190,7 @@
         end ;; $if_45
       end ;; $if_0
     end ;; $block
-    i32.const 6072
+    i32.const 6088
     i32.load
     set_local $622
     get_local $622
@@ -24343,7 +27204,7 @@
       get_local $9
       i32.sub
       set_local $624
-      i32.const 6084
+      i32.const 6100
       i32.load
       set_local $625
       get_local $624
@@ -24356,10 +27217,10 @@
         get_local $9
         i32.add
         set_local $627
-        i32.const 6084
+        i32.const 6100
         get_local $627
         i32.store
-        i32.const 6072
+        i32.const 6088
         get_local $624
         i32.store
         get_local $624
@@ -24392,10 +27253,10 @@
         get_local $631
         i32.store
       else
-        i32.const 6072
+        i32.const 6088
         i32.const 0
         i32.store
-        i32.const 6084
+        i32.const 6100
         i32.const 0
         i32.store
         get_local $622
@@ -24439,7 +27300,7 @@
       get_local $1
       return
     end ;; $if_101
-    i32.const 6076
+    i32.const 6092
     i32.load
     set_local $641
     get_local $641
@@ -24452,17 +27313,17 @@
       get_local $9
       i32.sub
       set_local $644
-      i32.const 6076
+      i32.const 6092
       get_local $644
       i32.store
-      i32.const 6088
+      i32.const 6104
       i32.load
       set_local $645
       get_local $645
       get_local $9
       i32.add
       set_local $646
-      i32.const 6088
+      i32.const 6104
       get_local $646
       i32.store
       get_local $644
@@ -24498,7 +27359,7 @@
       get_local $1
       return
     end ;; $if_103
-    i32.const 6536
+    i32.const 6552
     i32.load
     set_local $652
     get_local $652
@@ -24507,22 +27368,22 @@
     set_local $653
     get_local $653
     if $if_104
-      i32.const 6544
+      i32.const 6560
       i32.const 4096
-      i32.store
-      i32.const 6540
-      i32.const 4096
-      i32.store
-      i32.const 6548
-      i32.const -1
-      i32.store
-      i32.const 6552
-      i32.const -1
       i32.store
       i32.const 6556
+      i32.const 4096
+      i32.store
+      i32.const 6564
+      i32.const -1
+      i32.store
+      i32.const 6568
+      i32.const -1
+      i32.store
+      i32.const 6572
       i32.const 0
       i32.store
-      i32.const 6508
+      i32.const 6524
       i32.const 0
       i32.store
       get_local $94
@@ -24535,13 +27396,13 @@
       i32.const 1431655768
       i32.xor
       set_local $657
-      i32.const 6536
+      i32.const 6552
       get_local $657
       i32.store
       i32.const 4096
       set_local $661
     else
-      i32.const 6544
+      i32.const 6560
       i32.load
       set_local $83
       get_local $83
@@ -24581,7 +27442,7 @@
       get_local $1
       return
     end ;; $if_105
-    i32.const 6504
+    i32.const 6520
     i32.load
     set_local $666
     get_local $666
@@ -24591,7 +27452,7 @@
     get_local $667
     i32.eqz
     if $if_106
-      i32.const 6496
+      i32.const 6512
       i32.load
       set_local $668
       get_local $668
@@ -24620,7 +27481,7 @@
         return
       end ;; $if_107
     end ;; $if_106
-    i32.const 6508
+    i32.const 6524
     i32.load
     set_local $672
     get_local $672
@@ -24634,7 +27495,7 @@
     block $block_19
       get_local $674
       if $if_108
-        i32.const 6088
+        i32.const 6104
         i32.load
         set_local $675
         get_local $675
@@ -24647,7 +27508,7 @@
             i32.const 173
             set_local $1188
           else
-            i32.const 6512
+            i32.const 6528
             set_local $2
             loop $loop_5
               block $block_21
@@ -24791,7 +27652,7 @@
             else
               get_local $688
               set_local $690
-              i32.const 6540
+              i32.const 6556
               i32.load
               set_local $691
               get_local $691
@@ -24833,7 +27694,7 @@
               get_local $663
               i32.add
               set_local $1185
-              i32.const 6496
+              i32.const 6512
               i32.load
               set_local $701
               get_local $1185
@@ -24854,7 +27715,7 @@
               set_local $1169
               get_local $1169
               if $if_119
-                i32.const 6504
+                i32.const 6520
                 i32.load
                 set_local $705
                 get_local $705
@@ -24966,7 +27827,7 @@
               end ;; $if_125
               unreachable
             end ;; $if_124
-            i32.const 6544
+            i32.const 6560
             i32.load
             set_local $728
             get_local $659
@@ -25031,14 +27892,14 @@
             unreachable
           end ;; $if_123
         end ;; $block_23
-        i32.const 6508
+        i32.const 6524
         i32.load
         set_local $739
         get_local $739
         i32.const 4
         i32.or
         set_local $740
-        i32.const 6508
+        i32.const 6524
         get_local $740
         i32.store
         get_local $56
@@ -25147,17 +28008,17 @@
     i32.const 190
     i32.eq
     if $if_132
-      i32.const 6496
+      i32.const 6512
       i32.load
       set_local $756
       get_local $756
       get_local $76
       i32.add
       set_local $757
-      i32.const 6496
+      i32.const 6512
       get_local $757
       i32.store
-      i32.const 6500
+      i32.const 6516
       i32.load
       set_local $758
       get_local $757
@@ -25166,11 +28027,11 @@
       set_local $759
       get_local $759
       if $if_133
-        i32.const 6500
+        i32.const 6516
         get_local $757
         i32.store
       end ;; $if_133
-      i32.const 6088
+      i32.const 6104
       i32.load
       set_local $760
       get_local $760
@@ -25180,7 +28041,7 @@
       block $block_24
         get_local $761
         if $if_134
-          i32.const 6080
+          i32.const 6096
           i32.load
           set_local $762
           get_local $762
@@ -25197,39 +28058,27 @@
           set_local $1171
           get_local $1171
           if $if_135
-            i32.const 6080
+            i32.const 6096
             get_local $77
             i32.store
           end ;; $if_135
-          i32.const 6512
+          i32.const 6528
           get_local $77
           i32.store
-          i32.const 6516
+          i32.const 6532
           get_local $76
           i32.store
-          i32.const 6524
+          i32.const 6540
           i32.const 0
           i32.store
-          i32.const 6536
+          i32.const 6552
           i32.load
           set_local $766
-          i32.const 6100
+          i32.const 6116
           get_local $766
           i32.store
-          i32.const 6096
+          i32.const 6112
           i32.const -1
-          i32.store
-          i32.const 6116
-          i32.const 6104
-          i32.store
-          i32.const 6112
-          i32.const 6104
-          i32.store
-          i32.const 6124
-          i32.const 6112
-          i32.store
-          i32.const 6120
-          i32.const 6112
           i32.store
           i32.const 6132
           i32.const 6120
@@ -25411,6 +28260,18 @@
           i32.const 6360
           i32.const 6352
           i32.store
+          i32.const 6372
+          i32.const 6360
+          i32.store
+          i32.const 6368
+          i32.const 6360
+          i32.store
+          i32.const 6380
+          i32.const 6368
+          i32.store
+          i32.const 6376
+          i32.const 6368
+          i32.store
           get_local $76
           i32.const -40
           i32.add
@@ -25452,10 +28313,10 @@
           get_local $774
           i32.sub
           set_local $777
-          i32.const 6088
+          i32.const 6104
           get_local $775
           i32.store
-          i32.const 6076
+          i32.const 6092
           get_local $777
           i32.store
           get_local $777
@@ -25480,14 +28341,14 @@
           get_local $781
           i32.const 40
           i32.store
-          i32.const 6552
+          i32.const 6568
           i32.load
           set_local $782
-          i32.const 6092
+          i32.const 6108
           get_local $782
           i32.store
         else
-          i32.const 6512
+          i32.const 6528
           set_local $16
           loop $loop_6
             block $block_25
@@ -25582,7 +28443,7 @@
                 get_local $792
                 get_local $800
                 i32.store
-                i32.const 6076
+                i32.const 6092
                 i32.load
                 set_local $801
                 get_local $801
@@ -25626,10 +28487,10 @@
                 get_local $810
                 i32.sub
                 set_local $812
-                i32.const 6088
+                i32.const 6104
                 get_local $811
                 i32.store
-                i32.const 6076
+                i32.const 6092
                 get_local $812
                 i32.store
                 get_local $812
@@ -25654,17 +28515,17 @@
                 get_local $816
                 i32.const 40
                 i32.store
-                i32.const 6552
+                i32.const 6568
                 i32.load
                 set_local $817
-                i32.const 6092
+                i32.const 6108
                 get_local $817
                 i32.store
                 br $block_24
               end ;; $if_141
             end ;; $if_140
           end ;; $if_139
-          i32.const 6080
+          i32.const 6096
           i32.load
           set_local $818
           get_local $77
@@ -25673,7 +28534,7 @@
           set_local $819
           get_local $819
           if $if_143
-            i32.const 6080
+            i32.const 6096
             get_local $77
             i32.store
             get_local $77
@@ -25686,7 +28547,7 @@
           get_local $76
           i32.add
           set_local $821
-          i32.const 6512
+          i32.const 6528
           set_local $40
           loop $loop_7
             block $block_26
@@ -25862,17 +28723,17 @@
               block $block_27
                 get_local $861
                 if $if_150
-                  i32.const 6076
+                  i32.const 6092
                   i32.load
                   set_local $862
                   get_local $862
                   get_local $858
                   i32.add
                   set_local $863
-                  i32.const 6076
+                  i32.const 6092
                   get_local $863
                   i32.store
-                  i32.const 6088
+                  i32.const 6104
                   get_local $857
                   i32.store
                   get_local $863
@@ -25887,7 +28748,7 @@
                   get_local $864
                   i32.store
                 else
-                  i32.const 6084
+                  i32.const 6100
                   i32.load
                   set_local $867
                   get_local $867
@@ -25896,17 +28757,17 @@
                   set_local $868
                   get_local $868
                   if $if_151
-                    i32.const 6072
+                    i32.const 6088
                     i32.load
                     set_local $869
                     get_local $869
                     get_local $858
                     i32.add
                     set_local $870
-                    i32.const 6072
+                    i32.const 6088
                     get_local $870
                     i32.store
-                    i32.const 6084
+                    i32.const 6100
                     get_local $857
                     i32.store
                     get_local $870
@@ -25979,7 +28840,7 @@
                         i32.const 1
                         i32.shl
                         set_local $886
-                        i32.const 6104
+                        i32.const 6120
                         get_local $886
                         i32.const 2
                         i32.shl
@@ -26033,14 +28894,14 @@
                           i32.const -1
                           i32.xor
                           set_local $897
-                          i32.const 6064
+                          i32.const 6080
                           i32.load
                           set_local $899
                           get_local $899
                           get_local $897
                           i32.and
                           set_local $900
-                          i32.const 6064
+                          i32.const 6080
                           get_local $900
                           i32.store
                           br $block_28
@@ -26301,7 +29162,7 @@
                         get_local $938
                         i32.load
                         set_local $939
-                        i32.const 6368
+                        i32.const 6384
                         get_local $939
                         i32.const 2
                         i32.shl
@@ -26337,19 +29198,19 @@
                             i32.const -1
                             i32.xor
                             set_local $946
-                            i32.const 6068
+                            i32.const 6084
                             i32.load
                             set_local $947
                             get_local $947
                             get_local $946
                             i32.and
                             set_local $948
-                            i32.const 6068
+                            i32.const 6084
                             get_local $948
                             i32.store
                             br $block_28
                           else
-                            i32.const 6080
+                            i32.const 6096
                             i32.load
                             set_local $949
                             get_local $949
@@ -26399,7 +29260,7 @@
                             end ;; $if_173
                           end ;; $if_171
                         end ;; $block_33
-                        i32.const 6080
+                        i32.const 6096
                         i32.load
                         set_local $957
                         get_local $957
@@ -26473,7 +29334,7 @@
                         if $if_179
                           br $block_28
                         end ;; $if_179
-                        i32.const 6080
+                        i32.const 6096
                         i32.load
                         set_local $970
                         get_local $970
@@ -26566,13 +29427,13 @@
                     i32.const 1
                     i32.shl
                     set_local $985
-                    i32.const 6104
+                    i32.const 6120
                     get_local $985
                     i32.const 2
                     i32.shl
                     i32.add
                     set_local $986
-                    i32.const 6064
+                    i32.const 6080
                     i32.load
                     set_local $988
                     i32.const 1
@@ -26594,7 +29455,7 @@
                         get_local $989
                         i32.or
                         set_local $992
-                        i32.const 6064
+                        i32.const 6080
                         get_local $992
                         i32.store
                         get_local $986
@@ -26613,7 +29474,7 @@
                         get_local $993
                         i32.load
                         set_local $994
-                        i32.const 6080
+                        i32.const 6096
                         i32.load
                         set_local $995
                         get_local $995
@@ -26774,7 +29635,7 @@
                       set_local $22
                     end ;; $if_184
                   end ;; $block_36
-                  i32.const 6368
+                  i32.const 6384
                   get_local $22
                   i32.const 2
                   i32.shl
@@ -26801,7 +29662,7 @@
                   get_local $1030
                   i32.const 0
                   i32.store
-                  i32.const 6068
+                  i32.const 6084
                   i32.load
                   set_local $1033
                   i32.const 1
@@ -26822,7 +29683,7 @@
                     get_local $1034
                     i32.or
                     set_local $1037
-                    i32.const 6068
+                    i32.const 6084
                     get_local $1037
                     i32.store
                     get_local $1028
@@ -26960,7 +29821,7 @@
                           br $loop_9
                         end ;; $block_38
                       end ;; $loop_9
-                      i32.const 6080
+                      i32.const 6096
                       i32.load
                       set_local $1063
                       get_local $1063
@@ -27006,7 +29867,7 @@
                   get_local $1069
                   i32.load
                   set_local $1070
-                  i32.const 6080
+                  i32.const 6096
                   i32.load
                   set_local $1071
                   get_local $1071
@@ -27072,7 +29933,7 @@
               return
             end ;; $if_147
           end ;; $if_146
-          i32.const 6512
+          i32.const 6528
           set_local $3
           loop $loop_10
             block $block_39
@@ -27219,10 +30080,10 @@
           get_local $1112
           i32.sub
           set_local $1114
-          i32.const 6088
+          i32.const 6104
           get_local $1113
           i32.store
-          i32.const 6076
+          i32.const 6092
           get_local $1114
           i32.store
           get_local $1114
@@ -27247,10 +30108,10 @@
           get_local $1118
           i32.const 40
           i32.store
-          i32.const 6552
+          i32.const 6568
           i32.load
           set_local $1119
-          i32.const 6092
+          i32.const 6108
           get_local $1119
           i32.store
           get_local $1101
@@ -27261,27 +30122,27 @@
           i32.const 27
           i32.store
           get_local $1102
-          i32.const 6512
+          i32.const 6528
           i64.load align=4
           i64.store align=4
           get_local $1102
           i32.const 8
           i32.add
-          i32.const 6512
+          i32.const 6528
           i32.const 8
           i32.add
           i64.load align=4
           i64.store align=4
-          i32.const 6512
+          i32.const 6528
           get_local $77
           i32.store
-          i32.const 6516
+          i32.const 6532
           get_local $76
           i32.store
-          i32.const 6524
+          i32.const 6540
           i32.const 0
           i32.store
-          i32.const 6520
+          i32.const 6536
           get_local $1102
           i32.store
           get_local $1103
@@ -27366,13 +30227,13 @@
               i32.const 1
               i32.shl
               set_local $1137
-              i32.const 6104
+              i32.const 6120
               get_local $1137
               i32.const 2
               i32.shl
               i32.add
               set_local $1138
-              i32.const 6064
+              i32.const 6080
               i32.load
               set_local $1139
               i32.const 1
@@ -27393,7 +30254,7 @@
                 get_local $1140
                 i32.or
                 set_local $1144
-                i32.const 6064
+                i32.const 6080
                 get_local $1144
                 i32.store
                 get_local $1138
@@ -27412,7 +30273,7 @@
                 get_local $1145
                 i32.load
                 set_local $1146
-                i32.const 6080
+                i32.const 6096
                 i32.load
                 set_local $1147
                 get_local $1147
@@ -27569,7 +30430,7 @@
                 set_local $15
               end ;; $if_204
             end ;; $if_203
-            i32.const 6368
+            i32.const 6384
             get_local $15
             i32.const 2
             i32.shl
@@ -27592,7 +30453,7 @@
             get_local $1099
             i32.const 0
             i32.store
-            i32.const 6068
+            i32.const 6084
             i32.load
             set_local $115
             i32.const 1
@@ -27613,7 +30474,7 @@
               get_local $116
               i32.or
               set_local $120
-              i32.const 6068
+              i32.const 6084
               get_local $120
               i32.store
               get_local $112
@@ -27751,7 +30612,7 @@
                     br $loop_12
                   end ;; $block_42
                 end ;; $loop_12
-                i32.const 6080
+                i32.const 6096
                 i32.load
                 set_local $145
                 get_local $145
@@ -27797,7 +30658,7 @@
             get_local $150
             i32.load
             set_local $152
-            i32.const 6080
+            i32.const 6096
             i32.load
             set_local $153
             get_local $153
@@ -27852,7 +30713,7 @@
           end ;; $if_199
         end ;; $if_134
       end ;; $block_24
-      i32.const 6076
+      i32.const 6092
       i32.load
       set_local $163
       get_local $163
@@ -27865,17 +30726,17 @@
         get_local $9
         i32.sub
         set_local $165
-        i32.const 6076
+        i32.const 6092
         get_local $165
         i32.store
-        i32.const 6088
+        i32.const 6104
         i32.load
         set_local $166
         get_local $166
         get_local $9
         i32.add
         set_local $167
-        i32.const 6088
+        i32.const 6104
         get_local $167
         i32.store
         get_local $165
@@ -28303,7 +31164,7 @@
     i32.const -8
     i32.add
     set_local $144
-    i32.const 6080
+    i32.const 6096
     i32.load
     set_local $255
     get_local $144
@@ -28383,7 +31244,7 @@
         if $if_4
           call $_abort
         end ;; $if_4
-        i32.const 6084
+        i32.const 6100
         i32.load
         set_local $133
         get_local $133
@@ -28434,7 +31295,7 @@
           i32.const -2
           i32.and
           set_local $48
-          i32.const 6072
+          i32.const 6088
           get_local $111
           i32.store
           get_local $40
@@ -28476,7 +31337,7 @@
           i32.const 1
           i32.shl
           set_local $222
-          i32.const 6104
+          i32.const 6120
           get_local $222
           i32.const 2
           i32.shl
@@ -28528,14 +31389,14 @@
             i32.const -1
             i32.xor
             set_local $289
-            i32.const 6064
+            i32.const 6080
             i32.load
             set_local $290
             get_local $290
             get_local $289
             i32.and
             set_local $291
-            i32.const 6064
+            i32.const 6080
             get_local $291
             i32.store
             get_local $100
@@ -28812,7 +31673,7 @@
           get_local $330
           i32.load
           set_local $331
-          i32.const 6368
+          i32.const 6384
           get_local $331
           i32.const 2
           i32.shl
@@ -28845,14 +31706,14 @@
                 i32.const -1
                 i32.xor
                 set_local $336
-                i32.const 6068
+                i32.const 6084
                 i32.load
                 set_local $338
                 get_local $338
                 get_local $336
                 i32.and
                 set_local $339
-                i32.const 6068
+                i32.const 6084
                 get_local $339
                 i32.store
                 get_local $100
@@ -28864,7 +31725,7 @@
                 br $block
               end ;; $if_26
             else
-              i32.const 6080
+              i32.const 6096
               i32.load
               set_local $340
               get_local $340
@@ -28920,7 +31781,7 @@
               end ;; $if_27
             end ;; $if_25
           end ;; $block_2
-          i32.const 6080
+          i32.const 6096
           i32.load
           set_local $347
           get_local $347
@@ -28999,7 +31860,7 @@
             get_local $100
             set_local $49
           else
-            i32.const 6080
+            i32.const 6096
             i32.load
             set_local $36
             get_local $36
@@ -29081,7 +31942,7 @@
     set_local $57
     get_local $57
     if $if_37
-      i32.const 6088
+      i32.const 6104
       i32.load
       set_local $58
       get_local $58
@@ -29090,17 +31951,17 @@
       set_local $59
       get_local $59
       if $if_38
-        i32.const 6076
+        i32.const 6092
         i32.load
         set_local $60
         get_local $60
         get_local $9
         i32.add
         set_local $61
-        i32.const 6076
+        i32.const 6092
         get_local $61
         i32.store
-        i32.const 6088
+        i32.const 6104
         get_local $8
         i32.store
         get_local $61
@@ -29114,7 +31975,7 @@
         get_local $63
         get_local $62
         i32.store
-        i32.const 6084
+        i32.const 6100
         i32.load
         set_local $64
         get_local $8
@@ -29126,15 +31987,15 @@
         if $if_39
           return
         end ;; $if_39
-        i32.const 6084
+        i32.const 6100
         i32.const 0
         i32.store
-        i32.const 6072
+        i32.const 6088
         i32.const 0
         i32.store
         return
       end ;; $if_38
-      i32.const 6084
+      i32.const 6100
       i32.load
       set_local $66
       get_local $66
@@ -29143,17 +32004,17 @@
       set_local $68
       get_local $68
       if $if_40
-        i32.const 6072
+        i32.const 6088
         i32.load
         set_local $69
         get_local $69
         get_local $9
         i32.add
         set_local $70
-        i32.const 6072
+        i32.const 6088
         get_local $70
         i32.store
-        i32.const 6084
+        i32.const 6100
         get_local $49
         i32.store
         get_local $70
@@ -29213,7 +32074,7 @@
           i32.const 1
           i32.shl
           set_local $83
-          i32.const 6104
+          i32.const 6120
           get_local $83
           i32.const 2
           i32.shl
@@ -29226,7 +32087,7 @@
           get_local $85
           i32.eqz
           if $if_42
-            i32.const 6080
+            i32.const 6096
             i32.load
             set_local $86
             get_local $86
@@ -29268,14 +32129,14 @@
             i32.const -1
             i32.xor
             set_local $94
-            i32.const 6064
+            i32.const 6080
             i32.load
             set_local $95
             get_local $95
             get_local $94
             i32.and
             set_local $96
-            i32.const 6064
+            i32.const 6080
             get_local $96
             i32.store
             br $block_4
@@ -29293,7 +32154,7 @@
             get_local $29
             set_local $26
           else
-            i32.const 6080
+            i32.const 6096
             i32.load
             set_local $98
             get_local $98
@@ -29448,7 +32309,7 @@
                   br $loop_0
                 end ;; $block_6
               end ;; $loop_0
-              i32.const 6080
+              i32.const 6096
               i32.load
               set_local $135
               get_local $135
@@ -29474,7 +32335,7 @@
               get_local $110
               i32.load
               set_local $112
-              i32.const 6080
+              i32.const 6096
               i32.load
               set_local $113
               get_local $113
@@ -29542,7 +32403,7 @@
             get_local $138
             i32.load
             set_local $139
-            i32.const 6368
+            i32.const 6384
             get_local $139
             i32.const 2
             i32.shl
@@ -29575,20 +32436,20 @@
                   i32.const -1
                   i32.xor
                   set_local $146
-                  i32.const 6068
+                  i32.const 6084
                   i32.load
                   set_local $147
                   get_local $147
                   get_local $146
                   i32.and
                   set_local $148
-                  i32.const 6068
+                  i32.const 6084
                   get_local $148
                   i32.store
                   br $block_4
                 end ;; $if_60
               else
-                i32.const 6080
+                i32.const 6096
                 i32.load
                 set_local $149
                 get_local $149
@@ -29638,7 +32499,7 @@
                 end ;; $if_61
               end ;; $if_59
             end ;; $block_7
-            i32.const 6080
+            i32.const 6096
             i32.load
             set_local $157
             get_local $157
@@ -29711,7 +32572,7 @@
             get_local $169
             i32.eqz
             if $if_67
-              i32.const 6080
+              i32.const 6096
               i32.load
               set_local $170
               get_local $170
@@ -29760,7 +32621,7 @@
       get_local $176
       get_local $75
       i32.store
-      i32.const 6084
+      i32.const 6100
       i32.load
       set_local $177
       get_local $8
@@ -29769,7 +32630,7 @@
       set_local $179
       get_local $179
       if $if_69
-        i32.const 6072
+        i32.const 6088
         get_local $75
         i32.store
         return
@@ -29820,13 +32681,13 @@
       i32.const 1
       i32.shl
       set_local $186
-      i32.const 6104
+      i32.const 6120
       get_local $186
       i32.const 2
       i32.shl
       i32.add
       set_local $187
-      i32.const 6064
+      i32.const 6080
       i32.load
       set_local $188
       i32.const 1
@@ -29847,7 +32708,7 @@
         get_local $190
         i32.or
         set_local $193
-        i32.const 6064
+        i32.const 6080
         get_local $193
         i32.store
         get_local $187
@@ -29866,7 +32727,7 @@
         get_local $194
         i32.load
         set_local $195
-        i32.const 6080
+        i32.const 6096
         i32.load
         set_local $196
         get_local $196
@@ -30023,7 +32884,7 @@
         set_local $6
       end ;; $if_74
     end ;; $if_73
-    i32.const 6368
+    i32.const 6384
     get_local $6
     i32.const 2
     i32.shl
@@ -30050,7 +32911,7 @@
     get_local $231
     i32.const 0
     i32.store
-    i32.const 6068
+    i32.const 6084
     i32.load
     set_local $234
     i32.const 1
@@ -30072,7 +32933,7 @@
         get_local $235
         i32.or
         set_local $238
-        i32.const 6068
+        i32.const 6084
         get_local $238
         i32.store
         get_local $229
@@ -30209,7 +33070,7 @@
                 br $loop_1
               end ;; $block_11
             end ;; $loop_1
-            i32.const 6080
+            i32.const 6096
             i32.load
             set_local $264
             get_local $264
@@ -30255,7 +33116,7 @@
         get_local $270
         i32.load
         set_local $271
-        i32.const 6080
+        i32.const 6096
         i32.load
         set_local $272
         get_local $272
@@ -30309,14 +33170,14 @@
         end ;; $if_81
       end ;; $if_75
     end ;; $block_9
-    i32.const 6096
+    i32.const 6112
     i32.load
     set_local $281
     get_local $281
     i32.const -1
     i32.add
     set_local $282
-    i32.const 6096
+    i32.const 6112
     get_local $282
     i32.store
     get_local $282
@@ -30328,7 +33189,7 @@
     if $if_82
       return
     end ;; $if_82
-    i32.const 6520
+    i32.const 6536
     set_local $2
     loop $loop_2
       block $block_12
@@ -30353,7 +33214,7 @@
         br $loop_2
       end ;; $block_12
     end ;; $loop_2
-    i32.const 6096
+    i32.const 6112
     i32.const -1
     i32.store
     return
@@ -33317,6 +36178,124 @@
     call $_abort
     )
   
+  (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6__initEPKcm (type $8)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    get_global $27
+    set_local $17
+    get_global $27
+    i32.const 16
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 16
+      call $abortStackOverflow
+    end ;; $if
+    get_local $17
+    set_local $9
+    get_local $2
+    i32.const -17
+    i32.gt_u
+    set_local $10
+    get_local $10
+    if $if_0
+      get_local $0
+      call $__ZNKSt3__221__basic_string_commonILb1EE20__throw_length_errorEv
+    end ;; $if_0
+    get_local $2
+    i32.const 11
+    i32.lt_u
+    set_local $11
+    get_local $11
+    if $if_1
+      get_local $2
+      i32.const 255
+      i32.and
+      set_local $12
+      get_local $0
+      i32.const 11
+      i32.add
+      set_local $13
+      get_local $13
+      get_local $12
+      i32.store8
+      get_local $0
+      set_local $3
+    else
+      get_local $2
+      i32.const 16
+      i32.add
+      set_local $14
+      get_local $14
+      i32.const -16
+      i32.and
+      set_local $15
+      get_local $15
+      call $__Znwm
+      set_local $4
+      get_local $0
+      get_local $4
+      i32.store
+      get_local $15
+      i32.const -2147483648
+      i32.or
+      set_local $5
+      get_local $0
+      i32.const 8
+      i32.add
+      set_local $6
+      get_local $6
+      get_local $5
+      i32.store
+      get_local $0
+      i32.const 4
+      i32.add
+      set_local $7
+      get_local $7
+      get_local $2
+      i32.store
+      get_local $4
+      set_local $3
+    end ;; $if_1
+    get_local $3
+    get_local $1
+    get_local $2
+    call $__ZNSt3__211char_traitsIcE4copyEPcPKcm
+    drop
+    get_local $3
+    get_local $2
+    i32.add
+    set_local $8
+    get_local $9
+    i32.const 0
+    i32.store8
+    get_local $8
+    get_local $9
+    call $__ZNSt3__211char_traitsIcE6assignERcRKc
+    get_local $17
+    set_global $27
+    return
+    )
+  
   (func $__ZNSt3__211char_traitsIcE4copyEPcPKcm (type $0)
     (param $0 i32)
     (param $1 i32)
@@ -33358,21 +36337,6 @@
     get_local $0
     get_local $2
     i32.store8
-    return
-    )
-  
-  (func $__ZNSt3__211char_traitsIcE6lengthEPKc (type $5)
-    (param $0 i32)
-    (result i32)
-    (local $1 i32)
-    (local $2 i32)
-    (local $3 i32)
-    get_global $27
-    set_local $3
-    get_local $0
-    call $_strlen
-    set_local $1
-    get_local $1
     return
     )
   
@@ -34339,6 +37303,214 @@
     return
     )
   
+  (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm (type $0)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
+    (result i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
+    (local $8 i32)
+    (local $9 i32)
+    (local $10 i32)
+    (local $11 i32)
+    (local $12 i32)
+    (local $13 i32)
+    (local $14 i32)
+    (local $15 i32)
+    (local $16 i32)
+    (local $17 i32)
+    (local $18 i32)
+    (local $19 i32)
+    (local $20 i32)
+    (local $21 i32)
+    (local $22 i32)
+    (local $23 i32)
+    (local $24 i32)
+    (local $25 i32)
+    (local $26 i32)
+    (local $27 i32)
+    (local $28 i32)
+    (local $29 i32)
+    (local $30 i32)
+    (local $31 i32)
+    get_global $27
+    set_local $31
+    get_global $27
+    i32.const 16
+    i32.add
+    set_global $27
+    get_global $27
+    get_global $28
+    i32.ge_s
+    if $if
+      i32.const 16
+      call $abortStackOverflow
+    end ;; $if
+    get_local $31
+    set_local $22
+    get_local $0
+    i32.const 11
+    i32.add
+    set_local $23
+    get_local $23
+    i32.load8_s
+    set_local $24
+    get_local $24
+    i32.const 24
+    i32.shl
+    i32.const 24
+    i32.shr_s
+    i32.const 0
+    i32.lt_s
+    set_local $25
+    get_local $25
+    if $if_0
+      get_local $0
+      i32.const 8
+      i32.add
+      set_local $26
+      get_local $26
+      i32.load
+      set_local $27
+      get_local $27
+      i32.const 2147483647
+      i32.and
+      set_local $28
+      get_local $28
+      i32.const -1
+      i32.add
+      set_local $29
+      get_local $0
+      i32.const 4
+      i32.add
+      set_local $3
+      get_local $3
+      i32.load
+      set_local $4
+      get_local $4
+      set_local $7
+      get_local $29
+      set_local $8
+    else
+      get_local $24
+      i32.const 255
+      i32.and
+      set_local $5
+      get_local $5
+      set_local $7
+      i32.const 10
+      set_local $8
+    end ;; $if_0
+    get_local $8
+    get_local $7
+    i32.sub
+    set_local $6
+    get_local $6
+    get_local $2
+    i32.lt_u
+    set_local $9
+    get_local $9
+    if $if_1
+      get_local $7
+      get_local $2
+      i32.add
+      set_local $20
+      get_local $20
+      get_local $8
+      i32.sub
+      set_local $21
+      get_local $0
+      get_local $8
+      get_local $21
+      get_local $7
+      get_local $7
+      i32.const 0
+      get_local $2
+      get_local $1
+      call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE21__grow_by_and_replaceEmmmmmmPKc
+    else
+      get_local $2
+      i32.const 0
+      i32.eq
+      set_local $10
+      get_local $10
+      i32.eqz
+      if $if_2
+        get_local $25
+        if $if_3
+          get_local $0
+          i32.load
+          set_local $11
+          get_local $11
+          set_local $13
+        else
+          get_local $0
+          set_local $13
+        end ;; $if_3
+        get_local $13
+        get_local $7
+        i32.add
+        set_local $12
+        get_local $12
+        get_local $1
+        get_local $2
+        call $__ZNSt3__211char_traitsIcE4copyEPcPKcm
+        drop
+        get_local $7
+        get_local $2
+        i32.add
+        set_local $14
+        get_local $23
+        i32.load8_s
+        set_local $15
+        get_local $15
+        i32.const 24
+        i32.shl
+        i32.const 24
+        i32.shr_s
+        i32.const 0
+        i32.lt_s
+        set_local $16
+        get_local $16
+        if $if_4
+          get_local $0
+          i32.const 4
+          i32.add
+          set_local $17
+          get_local $17
+          get_local $14
+          i32.store
+        else
+          get_local $14
+          i32.const 255
+          i32.and
+          set_local $18
+          get_local $23
+          get_local $18
+          i32.store8
+        end ;; $if_4
+        get_local $13
+        get_local $14
+        i32.add
+        set_local $19
+        get_local $22
+        i32.const 0
+        i32.store8
+        get_local $19
+        get_local $22
+        call $__ZNSt3__211char_traitsIcE6assignERcRKc
+      end ;; $if_2
+    end ;; $if_1
+    get_local $31
+    set_global $27
+    get_local $0
+    return
+    )
+  
   (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKcm (type $11)
     (param $0 i32)
     (param $1 i32)
@@ -34897,7 +38069,7 @@
         i32.store
         get_local $10
         get_local $9
-        i32.const 4708
+        i32.const 4713
         get_local $27
         call $_snprintf
         set_local $11
@@ -36881,7 +40053,7 @@
       i32.load
       set_local $2
       get_local $2
-      call $__ZNSt3__215__refstring_imp12_GLOBAL__N_113rep_from_dataEPKc_96
+      call $__ZNSt3__215__refstring_imp12_GLOBAL__N_113rep_from_dataEPKc_102
       set_local $3
       get_local $3
       i32.const 8
@@ -36914,7 +40086,7 @@
     return
     )
   
-  (func $__ZNSt3__215__refstring_imp12_GLOBAL__N_113rep_from_dataEPKc_96 (type $5)
+  (func $__ZNSt3__215__refstring_imp12_GLOBAL__N_113rep_from_dataEPKc_102 (type $5)
     (param $0 i32)
     (result i32)
     (local $1 i32)
@@ -36952,14 +40124,14 @@
     (local $4 i32)
     get_global $27
     set_local $4
-    i32.const 6560
+    i32.const 6576
     i32.load
     set_local $0
     get_local $0
     i32.const 0
     i32.add
     set_local $1
-    i32.const 6560
+    i32.const 6576
     get_local $1
     i32.store
     get_local $0

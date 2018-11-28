@@ -12,8 +12,13 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
+Context::Context(Wasm* wasm, StreamHandler* stream) :
+  Envoy::Extensions::Common::Wasm::Context(wasm->wasm_vm()), wasm_(wasm), stream_(stream) { }
+
+Context::~Context() {}
+
 void Context::addHeader(HeaderType type, absl::string_view key,
-		        absl::string_view value) {
+    absl::string_view value) {
   (void) type;
   (void) key;
   (void) value;
@@ -158,6 +163,7 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
     registerCallback(wasm_vm_.get(), "log", &Common::Wasm::Context::wasmLogHandler);
     registerCallback(wasm_vm_.get(), "_replaceHeaderHandler", &Context::replaceHeaderHandler);
   }
+    registerCallback(wasm_vm_.get(), "_getHeaderHandler", &Context::getHeaderHandler);
 }
 
 bool Wasm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
@@ -168,12 +174,9 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   getFunction(wasm_vm_.get(), "_onCreate", &onCreate_);
   getFunction(wasm_vm_.get(), "_onStart", &onStart_);
   getFunction(wasm_vm_.get(), "_onDestroy", &onDestroy_);
-  if (!onDestroy_) {
-    // TODO(PiotrSikora): remove this workaround once WASM code is fixed.
-    getFunction(wasm_vm_.get(), "_onDestory", &onDestroy_);
-  }
   if (!onCreate_ || !onStart_ || !onDestroy_) return false;
-  general_context_ = createContext(nullptr);
+  general_context_ = std::make_unique<Context>(this, nullptr); 
+  allocContextId(general_context_.get());
   return true;
 }
 

@@ -1,7 +1,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "envoy_wasm_intrinsics.h"
+#include "envoy_wasm_filter_intrinsics.h"
+
 
 class Context {
 public:
@@ -18,12 +19,6 @@ private:
 
 static std::unordered_map<int32_t, std::unique_ptr<Context>> context_map;
 
-void Context::onCreate() { logDebug(std::string("onCreate " + std::to_string(id_))); }
-
-void Context::onStart() { logInfo(std::string("onStart " + std::to_string(id_))); }
-
-void Context::onDestroy() { logWarn(std::string("onDestroy " + std::to_string(id_))); }
-
 extern "C" EMSCRIPTEN_KEEPALIVE void onCreate(int32_t context_id) {
   context_map[context_id].reset(new Context(context_id));
   context_map[context_id]->onCreate();
@@ -35,7 +30,27 @@ extern "C" EMSCRIPTEN_KEEPALIVE void onStart(int32_t context_id) {
 
 extern "C" EMSCRIPTEN_KEEPALIVE void onDestroy(int32_t context_id) {
   context_map[context_id]->onDestroy();
-  context_map[context_id].reset(nullptr);
+  context_map.erase(context_id);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE int main() { return 0; }
+void Context::onCreate() {
+  logDebug(std::string("onCreate ") + std::to_string(id_));
+}
+
+void Context::onStart() {
+  logInfo(std::string("onStart ") + std::to_string(id_));
+}
+
+void Context::onDestroy() {
+  logInfo(std::string("onDestroy " + std::to_string(id_)));
+}
+
+#if 0
+  auto result = getHeader(HeaderType::Header, "path");
+  logInfo(std::string("header path ") + std::string(result->view()));
+#endif
+
+extern "C" EMSCRIPTEN_KEEPALIVE int main() {
+  logTrace("main");
+  return 0;
+}

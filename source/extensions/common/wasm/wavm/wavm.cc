@@ -183,11 +183,6 @@ class Wavm : public WasmVm {
     void GetFunctions();
     void RegisterCallbacks();
 
-#if 0
-    uint32_t next_id_ = 1;   // 0 is reserved for the default_context_.
-#endif
-    std::unordered_map<uint32_t, Context*> context_map_;
-
     bool hasInstantiatedModule_ = false;
     IR::Module irModule_;
     GCPointer<ModuleInstance> moduleInstance_;
