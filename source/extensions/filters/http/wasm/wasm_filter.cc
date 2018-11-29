@@ -143,7 +143,6 @@ bool Context::isSsl() { return false; }
 //
 // Calls into the WASM code.
 //
-void Context::onCreate() { wasm_->onCreate()(this, id); }
 void Context::onStart() { wasm_->onStart()(this, id); }
 void Context::onBody() {}
 void Context::onTrailers() {}
@@ -161,9 +160,9 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   if (wasm_vm_) {
     registerCallback(wasm_vm_.get(), "log", &Common::Wasm::Context::wasmLogHandler);
-    registerCallback(wasm_vm_.get(), "_replaceHeaderHandler", &Context::replaceHeaderHandler);
+    registerCallback(wasm_vm_.get(), "replaceHeader", &Context::replaceHeaderHandler);
+    registerCallback(wasm_vm_.get(), "getHeader", &Context::getHeaderHandler);
   }
-    registerCallback(wasm_vm_.get(), "_getHeaderHandler", &Context::getHeaderHandler);
 }
 
 bool Wasm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
@@ -171,10 +170,9 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   auto ok = wasm_vm_->initialize(code, name, allow_precompiled);
   if (!ok) return false;
   getFunction(wasm_vm_.get(), "_configure", &configure_);
-  getFunction(wasm_vm_.get(), "_onCreate", &onCreate_);
   getFunction(wasm_vm_.get(), "_onStart", &onStart_);
   getFunction(wasm_vm_.get(), "_onDestroy", &onDestroy_);
-  if (!onCreate_ || !onStart_ || !onDestroy_) return false;
+  if (!onStart_ || !onDestroy_) return false;
   general_context_ = std::make_unique<Context>(this, nullptr); 
   allocContextId(general_context_.get());
   return true;
@@ -208,6 +206,7 @@ FilterConfig::FilterConfig(absl::string_view vm, const std::string& code, absl::
 }
 
 void Filter::onDestroy() {
+  if (destroyed_) return;
   destroyed_ = true;
   if (request_handler_) {
     request_handler_->onReset();
@@ -218,8 +217,8 @@ void Filter::onDestroy() {
 }
 
 Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool end_stream) {
-  (void) headers;
-  (void) end_stream;
+  request_handler_ = std::make_unique<StreamHandler>(headers, end_stream, *this);
+  request_handler_->context()->onStart();
   return Http::FilterHeadersStatus::Continue;
 }
 Http::FilterDataStatus Filter::decodeData(Buffer::Instance& data, bool end_stream) {
@@ -257,7 +256,8 @@ void Filter::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks
 }
 
 StreamHandler::StreamHandler(Http::HeaderMap& headers, bool end_stream, Filter& filter)
-    : headers_(headers), end_stream_(end_stream), filter_(filter) {}
+    : headers_(headers), end_stream_(end_stream), filter_(filter),
+    context_(filter_.createContext(this)) {}
 
 #if 0
 

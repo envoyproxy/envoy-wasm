@@ -1,5 +1,5 @@
 mergeInto(LibraryManager.library, {
     envoy_log: function () {},
-    getHeaderHandler: function () {},
-    replaceHeaderHandler: function () {},
+    envoy_getHeader: function () {},
+    envoy_replaceHeader: function () {},
 });

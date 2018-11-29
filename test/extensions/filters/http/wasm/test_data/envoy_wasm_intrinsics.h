@@ -23,7 +23,7 @@ inline void logInfo(const std::string& logMessage) {
 inline void logWarn(const std::string& logMessage) {
   envoy_log(LogLevel::warn, logMessage.c_str(), logMessage.size());
 }
-inline void logErr(const std::string& logMessage) {
+inline void logError(const std::string& logMessage) {
   envoy_log(LogLevel::error, logMessage.c_str(), logMessage.size());
 }
 inline void logCritical(const std::string& logMessage) {

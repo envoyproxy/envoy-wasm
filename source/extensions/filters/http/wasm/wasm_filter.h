@@ -14,6 +14,8 @@ namespace Wasm {
 class Wasm;
 class StreamHandler;
 
+enum class HeaderType { Header = 0, Trailer = 1 };
+
 // A session within the WASM VM.
 class Context : public Envoy::Extensions::Common::Wasm::Context {
 public:
@@ -27,7 +29,6 @@ public:
   //
 
   // Headers
-  enum class HeaderType { Header = 0, Trailer = 1 };
   virtual void addHeader(HeaderType type, absl::string_view key,
       absl::string_view value);
   virtual absl::string_view getHeader(HeaderType type, absl::string_view key);
@@ -74,7 +75,6 @@ public:
   //
   // Calls into the WASM code.
   //
-  virtual void onCreate();
   virtual void onStart();
   virtual void onBody();
   virtual void onTrailers();
@@ -92,6 +92,8 @@ private:
   StreamHandler *stream_;
 };
 
+using WasmCall = std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
+
 // Thread-local Wasm VM.
 class Wasm : public Logger::Loggable<Logger::Id::wasm> {
 public:
@@ -106,15 +108,10 @@ public:
     context->id = next_context_id_++;
   }
 
-  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onCreate() {
-     return onCreate_;
-  }
-  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onStart() {
-     return onStart_;
-  }
-  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onDestroy() {
-     return onDestroy_;
-  }
+  WasmCall onStart() { return onStart_; }
+  WasmCall onBody() { return onBody_; }
+  WasmCall onTrailers() { return onTrailers_; }
+  WasmCall onDestroy() { return onDestroy_; }
 
   Envoy::Extensions::Common::Wasm::WasmVm* wasm_vm() { return wasm_vm_.get(); }
   Context* general_context() { return general_context_.get(); }
@@ -129,9 +126,10 @@ private:
   std::unique_ptr<Envoy::Extensions::Common::Wasm::WasmVm> wasm_vm_;
   std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t configuration_ptr, uint32_t configuration_size)> configure_;
   std::unique_ptr<Context> general_context_;  // Context unrelated to nay specific filter or stream.
-  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onCreate_;
-  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onStart_;
-  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)> onDestroy_;
+  WasmCall onBody_;
+  WasmCall onTrailers_;
+  WasmCall onStart_;
+  WasmCall onDestroy_;
 };
 
 inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callbacks) {
@@ -159,11 +157,16 @@ public:
   Http::FilterTrailersStatus onTrailers(Http::HeaderMap& trailers);
 
   void onReset() {
+    if (context_) {
+      context_->onDestroy();
+    }
     if (http_request_) {
       http_request_->cancel();
       http_request_ = nullptr;
     }
   }
+
+  Context* context() { return context_.get(); }
 
 private:
   friend class Context;
@@ -171,13 +174,13 @@ private:
   void onSuccess(Http::MessagePtr&&) override {}
   void onFailure(Http::AsyncClient::FailureReason) override {}
 
-  std::unique_ptr<Context> context_;
   Http::HeaderMap& headers_;
   bool end_stream_;
   bool headers_continued_{};
   bool buffered_body_{};
   bool saw_body_{};
   Filter& filter_;
+  std::unique_ptr<Context> context_;
   Http::HeaderMap* trailers_{};
   State state_{State::Running};
   Http::AsyncClient::Request* http_request_{};
@@ -229,11 +232,11 @@ public:
     return context;
   } 
 
-private:
+protected:
   FilterConfigConstSharedPtr config_;
   std::unique_ptr<StreamHandler> request_handler_;
   std::unique_ptr<StreamHandler> response_handler_;
-  bool destroyed_{};
+  bool destroyed_ = false;
 };
 
 } // namespace Wasm
