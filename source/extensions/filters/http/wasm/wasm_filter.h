@@ -83,10 +83,6 @@ public:
   virtual void raiseWasmError(absl::string_view message);
   virtual void onDestroy();
 
-  // Handlers.
-  static void getHeaderHandler(void *raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr_ptr, uint32_t value_size_ptr);
-  static void replaceHeaderHandler(void *raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr, uint32_t value_size);
- 
 private:
   Wasm *wasm_;
   StreamHandler *stream_;
@@ -193,7 +189,6 @@ public:
                ThreadLocal::SlotAllocator& tls, Upstream::ClusterManager& cluster_manager);
 
   Upstream::ClusterManager& cluster_manager() { return cluster_manager_; }
-
   Wasm* wasm() { return wasm_.get(); }
 
 private:

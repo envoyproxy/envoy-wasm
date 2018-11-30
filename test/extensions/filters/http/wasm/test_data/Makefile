@@ -4,7 +4,7 @@
 #OPT=-O3
 OPT=
 
-headers.wasm headers.wat: headers.cc envoy_wasm_intrinsics.h envoy_wasm_intrinsics.js
+headers.wasm headers.wat: headers.cc envoy_wasm_intrinsics.h envoy_wasm_filter_intrinsics.h envoy_wasm_intrinsics.js
 	em++ -s WASM=1 --std=c++14 $(OPT) -g3 --js-library envoy_wasm_intrinsics.js headers.cc -o headers.js
 	wasm-gc headers.wasm
 	wavm-disas headers.wasm headers.wat
