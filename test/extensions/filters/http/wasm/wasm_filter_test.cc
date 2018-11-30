@@ -101,7 +101,7 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   config_->wasm()->start();
   setupFilter();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
-  filter_->setContextCallout([this](TestContext* context) {
+  filter_->setContextCallout([](TestContext* context) {
       EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onStart 1"))));
       EXPECT_CALL(*context, getHeader(HeaderType::Header, Eq(absl::string_view("path")))).WillOnce(Return("/"));
       EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
