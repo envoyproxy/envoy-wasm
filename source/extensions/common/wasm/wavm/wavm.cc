@@ -322,6 +322,7 @@ template void registerCallbackWavm<void, void*, U32, U32>(WasmVm* vm, absl::stri
 template void registerCallbackWavm<void, void*, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32, U32, U32));
 template void registerCallbackWavm<void, void*, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32, U32, U32, U32));
 template void registerCallbackWavm<void, void*, U32, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32, U32, U32, U32, U32));
+template void registerCallbackWavm<void, void*, U32, U32, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32, U32, U32, U32, U32, U32));
 
 template<typename R, typename ...Args>
 void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function, uint32_t) {
@@ -338,8 +339,10 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::func
   };
 }
 
+struct Void {};
+
 template<typename R, typename ...Args>
-void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function, bool) {
+void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function, Void) {
   Wasm::Wavm::Wavm *wavm = static_cast<Wasm::Wavm::Wavm*>(vm);
   auto f = asFunctionNullable(getInstanceExport(wavm->moduleInstance(), std::string(functionName)));
   if (!f)
@@ -353,9 +356,13 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::func
   };
 }
 
+// NB: Unfortunately 'void' is not treated like every other type in C++.  In
+// particular it is not possible to specialize a template based on 'void'.  Instead
+// we use 'Void' for template matching.  Note that the template implemenation above
+// which matchers on 'bool' does not use 'Void' in the implemenation.
 template<typename R, typename ...Args>
 void getFunctionWavm(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function) {
-  typename std::conditional<std::is_void<R>::value, bool, uint32_t>::type x{};
+  typename std::conditional<std::is_void<R>::value, Void, uint32_t>::type x{};
   getFunctionWavmReturn(vm, functionName, function, x);
 }
 
@@ -365,6 +372,15 @@ template void getFunctionWavm<void, uint32_t, uint32_t>(WasmVm*, absl::string_vi
 template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t)>*);
 template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t)>*);
 template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+
+template void getFunctionWavm<uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*)>*);
+template void getFunctionWavm<uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
 
 void Context::wasmLogHandler(void* raw_context, uint32_t level, uint32_t address, uint32_t size) {
   auto context = WASM_CONTEXT(raw_context, Context);

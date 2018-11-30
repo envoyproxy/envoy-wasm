@@ -3,4 +3,5 @@ mergeInto(LibraryManager.library, {
     envoy_getHeader: function () {},
     envoy_replaceHeader: function () {},
     envoy_removeHeader: function () {},
+    envoy_getBodyBufferBytes: function () {},
 });

@@ -11,8 +11,9 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-class Wasm;
+class Filter;
 class StreamHandler;
+class Wasm;
 
 enum class HeaderType { Header = 0, Trailer = 1 };
 
@@ -37,11 +38,8 @@ public:
   virtual void replaceHeader(HeaderType type, absl::string_view key,
       absl::string_view value);
 
-  // Decoder
-  virtual void continueDecoding();
-
-  // Encoder
-  virtual void continueEncoding();
+  // Body Buffer
+  virtual absl::string_view getBodyBufferBytes(uint32_t start, uint32_t length);
 
   // StreamInfo
   virtual absl::string_view getSteamInfoProtocol();
@@ -50,12 +48,6 @@ public:
   virtual void setStreamInfoMetadata(absl::string_view filter,
       absl::string_view key, absl::string_view value);
   virtual Pairs getStreamInfoPairs(absl::string_view filter);
-
-  // Body Buffer
-  enum class BodyMode { FullBody = 0, BodyChunks = 1 };
-  virtual void setBodyMode(BodyMode body_mode);
-  virtual int bodyBufferLength();
-  virtual absl::string_view getBodyBufferBytes(int start, int length);
 
   // HTTP
   virtual void httpCall(absl::string_view cluster, const Pairs& request_headers,
@@ -75,20 +67,21 @@ public:
   //
   // Calls into the WASM code.
   //
-  virtual void onStart();
-  virtual void onBody();
-  virtual void onTrailers();
+  virtual Http::FilterHeadersStatus onStart();
+  virtual Http::FilterDataStatus onBody(int body_buffer_length, bool end_of_stream);
+  virtual Http::FilterTrailersStatus onTrailers();
   virtual void onHttpCallResponse(const Pairs& response_headers,
                                   absl::string_view response_body);
-  virtual void raiseWasmError(absl::string_view message);
   virtual void onDestroy();
 
 private:
-  Wasm *wasm_;
-  StreamHandler *stream_;
+  Wasm * const wasm_;
+  StreamHandler * const stream_;
 };
 
-using WasmCall = std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
+using WasmCall0Void = std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
+using WasmCall0Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
+using WasmCall2Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t)>;
 
 // Thread-local Wasm VM.
 class Wasm : public Logger::Loggable<Logger::Id::wasm> {
@@ -104,10 +97,10 @@ public:
     context->id = next_context_id_++;
   }
 
-  WasmCall onStart() { return onStart_; }
-  WasmCall onBody() { return onBody_; }
-  WasmCall onTrailers() { return onTrailers_; }
-  WasmCall onDestroy() { return onDestroy_; }
+  WasmCall0Int onStart() { return onStart_; }
+  WasmCall2Int onBody() { return onBody_; }
+  WasmCall0Int onTrailers() { return onTrailers_; }
+  WasmCall0Void onDestroy() { return onDestroy_; }
 
   Envoy::Extensions::Common::Wasm::WasmVm* wasm_vm() { return wasm_vm_.get(); }
   Context* general_context() { return general_context_.get(); }
@@ -122,10 +115,10 @@ private:
   std::unique_ptr<Envoy::Extensions::Common::Wasm::WasmVm> wasm_vm_;
   std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t configuration_ptr, uint32_t configuration_size)> configure_;
   std::unique_ptr<Context> general_context_;  // Context unrelated to nay specific filter or stream.
-  WasmCall onBody_;
-  WasmCall onTrailers_;
-  WasmCall onStart_;
-  WasmCall onDestroy_;
+  WasmCall0Int onStart_;
+  WasmCall2Int onBody_;
+  WasmCall0Int onTrailers_;
+  WasmCall0Void onDestroy_;
 };
 
 inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callbacks) {
@@ -146,7 +139,7 @@ class StreamHandler : public Http::AsyncClient::Callbacks {
 public:
   enum class State { Running, WaitForBodyChunk, WaitForBody, WaitForTrailers, HttpCall, Responded };
 
-  StreamHandler(Http::HeaderMap& headers, bool end_stream, Filter& filter);
+  StreamHandler(Http::HeaderMap& headers, bool end_of_stream, Filter& filter);
 
   Http::FilterTrailersStatus start();
   Http::FilterDataStatus onData(Buffer::Instance& data, bool end_stream);
@@ -162,21 +155,19 @@ public:
     }
   }
 
-  Context* context() { return context_.get(); }
-
 private:
   friend class Context;
+  friend class Filter;
+
   // Http::AsyncClient::Callbacks
   void onSuccess(Http::MessagePtr&&) override {}
   void onFailure(Http::AsyncClient::FailureReason) override {}
 
   Http::HeaderMap& headers_;
-  bool end_stream_;
-  bool headers_continued_{};
-  bool buffered_body_{};
-  bool saw_body_{};
   Filter& filter_;
   std::unique_ptr<Context> context_;
+  Buffer::Instance* bodyBuffer_{};
+  bool end_of_stream_{};
   Http::HeaderMap* trailers_{};
   State state_{State::Running};
   Http::AsyncClient::Request* http_request_{};
@@ -231,6 +222,8 @@ protected:
   FilterConfigConstSharedPtr config_;
   std::unique_ptr<StreamHandler> request_handler_;
   std::unique_ptr<StreamHandler> response_handler_;
+  Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};
+  Envoy::Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
   bool destroyed_ = false;
 };
 

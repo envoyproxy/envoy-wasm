@@ -30,6 +30,12 @@ void removeHeaderHandler(void *raw_context, uint32_t type, uint32_t key_ptr, uin
   context->removeHeader(static_cast<HeaderType>(type), context->wasm_vm->getMemory(key_ptr, key_size));
 }
 
+void getBodyBufferBytesHandler(void *raw_context, uint32_t start, uint32_t length,  uint32_t ptr_ptr, uint32_t size_ptr) {
+  auto context = WASM_CONTEXT(raw_context, Context);
+  auto result = context->getBodyBufferBytes(start, length);
+  context->wasm_vm->copyToPointerSize(result, ptr_ptr, size_ptr);
+}
+
 }  // namespace
 
 Context::Context(Wasm* wasm, StreamHandler* stream) :
@@ -50,7 +56,7 @@ void Context::addHeader(HeaderType type, absl::string_view key,
 
 absl::string_view Context::getHeader(HeaderType type, absl::string_view key_view) {
   const Http::LowerCaseString lower_key(std::move(std::string(key_view)));
-  Http::HeaderEntry* entry;
+  Http::HeaderEntry* entry = nullptr;
   if (type == HeaderType::Header) {
     entry = stream_->headers_.get(lower_key);
   } else {
@@ -60,6 +66,7 @@ absl::string_view Context::getHeader(HeaderType type, absl::string_view key_view
   if (!entry) return "";
   return entry->value().getStringView();
 }
+
 Context::Pairs Context::getHeaderPairs(HeaderType type) {
   Pairs pairs;
   Http::HeaderMap* map = nullptr;
@@ -89,7 +96,7 @@ void Context::removeHeader(HeaderType type, absl::string_view key) {
 
 void Context::replaceHeader(HeaderType type, absl::string_view key, absl::string_view value) {
   const Http::LowerCaseString lower_key(std::move(std::string(key)));
-  Http::HeaderEntry* entry;
+  Http::HeaderEntry* entry = nullptr;
   if (type == HeaderType::Header)
     entry = stream_->headers_.get(lower_key);
   else
@@ -102,11 +109,13 @@ void Context::replaceHeader(HeaderType type, absl::string_view key, absl::string
     stream_->trailers_->addCopy(lower_key, std::string(value));
 }
 
-// Decoder
-void Context::continueDecoding() {}
+// Body Buffer
 
-// Encoder
-void Context::continueEncoding() {}
+absl::string_view Context::getBodyBufferBytes(uint32_t start, uint32_t length) {
+  if (!stream_->bodyBuffer_) return "";
+  if (stream_->bodyBuffer_->length() < static_cast<uint64_t>((start + length))) return "";
+  return absl::string_view(static_cast<char*>(stream_->bodyBuffer_->linearize(start + length)) + start, length);
+}
 
 // StreamInfo
 absl::string_view Context::getSteamInfoProtocol() { return ""; }
@@ -125,19 +134,6 @@ void Context::setStreamInfoMetadata(absl::string_view filter, absl::string_view 
 Context::Pairs Context::getStreamInfoPairs(absl::string_view filter) {
   (void) filter;
   return {};
-}
-
-// Body Buffer
-void Context::setBodyMode(BodyMode body_mode) {
-  (void) body_mode;
-}
-int Context::bodyBufferLength() {
-  return 0;
-}
-absl::string_view Context::getBodyBufferBytes(int start, int length) {
-  (void) start;
-  (void) length;
-  return "";
 }
 
 // HTTP
@@ -175,17 +171,36 @@ bool Context::isSsl() { return false; }
 //
 // Calls into the WASM code.
 //
-void Context::onStart() { wasm_->onStart()(this, id); }
-void Context::onBody() {}
-void Context::onTrailers() {}
+Http::FilterHeadersStatus Context::onStart() { 
+  if (wasm_->onStart()(this, id) == 0) {
+    return Http::FilterHeadersStatus::Continue;
+  }
+  return  Http::FilterHeadersStatus::StopIteration;
+}
+
+Http::FilterDataStatus Context::onBody(int body_buffer_length, bool end_of_stream) {
+  switch (wasm_->onBody()(this, id, static_cast<uint32_t>(body_buffer_length),
+        static_cast<uint32_t>(end_of_stream))) {
+    case 0: return Http::FilterDataStatus::Continue;
+    case 1: return Http::FilterDataStatus::StopIterationAndBuffer;
+    case 2: return Http::FilterDataStatus::StopIterationAndWatermark;
+    default: return Http::FilterDataStatus::StopIterationNoBuffer;
+  }
+}
+
+Http::FilterTrailersStatus Context::onTrailers() {
+  if (wasm_->onTrailers()(this, id) == 0) {
+    return Http::FilterTrailersStatus::Continue;
+  }
+  return  Http::FilterTrailersStatus::StopIteration;
+}
+
 void Context::onHttpCallResponse(const Pairs& response_headers,
                                  absl::string_view response_body) {
   (void) response_headers;
   (void) response_body;
 }
-void Context::raiseWasmError(absl::string_view message) {
-  (void) message;
-}
+
 void Context::onDestroy() { wasm_->onDestroy()(this, id); }
 
 Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
@@ -195,6 +210,7 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
     registerCallback(wasm_vm_.get(), "replaceHeader", &replaceHeaderHandler);
     registerCallback(wasm_vm_.get(), "getHeader", &getHeaderHandler);
     registerCallback(wasm_vm_.get(), "removeHeader", &removeHeaderHandler);
+    registerCallback(wasm_vm_.get(), "getBodyBufferBytes", &getBodyBufferBytesHandler);
   }
 }
 
@@ -204,8 +220,10 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   if (!ok) return false;
   getFunction(wasm_vm_.get(), "_configure", &configure_);
   getFunction(wasm_vm_.get(), "_onStart", &onStart_);
+  getFunction(wasm_vm_.get(), "_onBody", &onBody_);
+  getFunction(wasm_vm_.get(), "_onTrailers", &onTrailers_);
   getFunction(wasm_vm_.get(), "_onDestroy", &onDestroy_);
-  if (!onStart_ || !onDestroy_) return false;
+  if (!onStart_ || !onBody_ || !onTrailers_ || !onDestroy_) return false;
   general_context_ = std::make_unique<Context>(this, nullptr); 
   allocContextId(general_context_.get());
   return true;
@@ -251,20 +269,25 @@ void Filter::onDestroy() {
 
 Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool end_stream) {
   request_handler_ = std::make_unique<StreamHandler>(headers, end_stream, *this);
-  request_handler_->context()->onStart();
-  return Http::FilterHeadersStatus::Continue;
+  return request_handler_->context_->onStart();
 }
+
 Http::FilterDataStatus Filter::decodeData(Buffer::Instance& data, bool end_stream) {
-  (void) data;
-  (void) end_stream;
-  return Http::FilterDataStatus::StopIterationNoBuffer;
+  request_handler_->bodyBuffer_ = &data;
+  auto result = request_handler_->context_->onBody(data.length(), end_stream);
+  request_handler_->bodyBuffer_ = nullptr;
+  return result;
 }
+
 Http::FilterTrailersStatus Filter::decodeTrailers(Http::HeaderMap& trailers) {
-  (void) trailers;
-  return Http::FilterTrailersStatus::Continue;
+  request_handler_->trailers_ = &trailers;
+  auto result = request_handler_->context_->onTrailers();
+  request_handler_->trailers_ = nullptr;
+  return result;
 }
+
 void Filter::setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks& callbacks) {
-  (void) callbacks;
+  decoder_callbacks_ = &callbacks;
 }
 
 Http::FilterHeadersStatus Filter::encode100ContinueHeaders(Http::HeaderMap&) {
@@ -272,29 +295,30 @@ Http::FilterHeadersStatus Filter::encode100ContinueHeaders(Http::HeaderMap&) {
 }
 
 Http::FilterHeadersStatus Filter::encodeHeaders(Http::HeaderMap& headers, bool end_stream) {
-  (void) headers;
-  (void) end_stream;
-  return Http::FilterHeadersStatus::Continue;
+  response_handler_ = std::make_unique<StreamHandler>(headers, end_stream, *this);
+  return response_handler_->context_->onStart();
 }
 
 Http::FilterDataStatus Filter::encodeData(Buffer::Instance& data, bool end_stream) {
-  (void) data;
-  (void) end_stream;
-  return Http::FilterDataStatus::StopIterationNoBuffer;
+  response_handler_->bodyBuffer_ = &data;
+  auto result = response_handler_->context_->onBody(data.length(), end_stream);
+  response_handler_->bodyBuffer_ = nullptr;
+  return result;
 }
 
 Http::FilterTrailersStatus Filter::encodeTrailers(Http::HeaderMap& trailers) {
-  (void) trailers;
-  return Http::FilterTrailersStatus::Continue;
+  response_handler_->trailers_ = &trailers;
+  auto result = response_handler_->context_->onTrailers();
+  response_handler_->trailers_ = nullptr;
+  return result;
 }
 
 void Filter::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks& callbacks) {
-  (void) callbacks;
+  encoder_callbacks_ = &callbacks;
 }
 
-StreamHandler::StreamHandler(Http::HeaderMap& headers, bool end_stream, Filter& filter)
-    : headers_(headers), end_stream_(end_stream), filter_(filter),
-    context_(filter_.createContext(this)) {}
+StreamHandler::StreamHandler(Http::HeaderMap& headers, bool end_of_stream, Filter& filter)
+    : headers_(headers), filter_(filter), context_(filter_.createContext(this)), end_of_stream_(end_of_stream) {}
 
 } // namespace Wasm
 } // namespace HttpFilters

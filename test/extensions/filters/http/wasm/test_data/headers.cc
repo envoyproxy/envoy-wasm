@@ -9,7 +9,9 @@ public:
   Context(int32_t id) : id_(id) {}
   int32_t id() { return id_; }
 
-  void onStart();
+  FilterHeadersStatus onStart();
+  FilterDataStatus onBody(size_t body_buffer_length, bool end_of_stream);
+  FilterTrailersStatus onTrailers();
   void onDestroy();
 
 private:
@@ -18,9 +20,17 @@ private:
 
 static std::unordered_map<int32_t, std::unique_ptr<Context>> context_map;
 
-extern "C" EMSCRIPTEN_KEEPALIVE void onStart(int32_t context_id) {
+extern "C" EMSCRIPTEN_KEEPALIVE FilterHeadersStatus onStart(int32_t context_id) {
   context_map[context_id].reset(new Context(context_id));
-  context_map[context_id]->onStart();
+  return context_map[context_id]->onStart();
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE FilterTrailersStatus onTrailers(int32_t context_id) {
+  return context_map[context_id]->onTrailers();
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE FilterDataStatus onBody(int32_t context_id, uint32_t body_buffer_length, uint32_t end_of_stream) {
+  return context_map[context_id]->onBody(static_cast<size_t>(body_buffer_length), end_of_stream != 0);
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void onDestroy(int32_t context_id) {
@@ -28,11 +38,21 @@ extern "C" EMSCRIPTEN_KEEPALIVE void onDestroy(int32_t context_id) {
   context_map.erase(context_id);
 }
 
-void Context::onStart() {
+FilterHeadersStatus Context::onStart() {
   logDebug(std::string("onStart ") + std::to_string(id_));
-  auto result = getHeader(HeaderType::Header, "path");
+  auto result = getHeader(HeaderType::Header, ":path");
   logInfo(std::string("header path ") + std::string(result->view()));
+  return FilterHeadersStatus::Continue;
+}
 
+FilterDataStatus Context::onBody(size_t body_buffer_length, bool end_of_stream) {
+  auto body = getBodyBufferBytes(0, body_buffer_length);
+  logError(std::string("onBody ") + std::string(body->view()));
+  return FilterDataStatus::Continue;
+}
+
+FilterTrailersStatus Context::onTrailers() {
+  return FilterTrailersStatus::Continue;
 }
 
 void Context::onDestroy() {

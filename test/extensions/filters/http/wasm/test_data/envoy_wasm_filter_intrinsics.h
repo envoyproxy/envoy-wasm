@@ -22,7 +22,8 @@ private:
 typedef std::unique_ptr<WasmData> WasmDataPtr;
 
 enum class HeaderType : int { Header = 0, Trailer = 1 };
-enum class FilterHeaderStatus : int { Continue = 0, StopIteration = 1 };
+enum class FilterHeadersStatus : int { Continue = 0, StopIteration = 1 };
+enum class FilterTrailersStatus : int { Continue = 0, StopIteration = 1 };
 enum class FilterDataStatus : int { Continue = 0, StopIterationAndBuffer = 1,
   StopIterationAndWatermark = 2, StopIterationNoBuffer = 3 };
 
@@ -50,9 +51,19 @@ inline void removeHeader(HeaderType type, std::string_view key) {
   envoy_removeHeader(type, key.data(), key.size());
 }
 
+extern "C" void envoy_getBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr, size_t* size);
+
+inline WasmDataPtr getBodyBufferBytes(size_t start, size_t length) {
+  const char* ptr = nullptr;
+  size_t size = 0;
+  envoy_getBodyBufferBytes(start, length, &ptr, &size);
+  return std::make_unique<WasmData>(ptr, size);
+}
 
 // Calls from Envoy to WASM.
 extern "C" int main();
 
-extern "C" void onStart(int32_t context_id);
+extern "C" FilterHeadersStatus onStart(int32_t context_id);
+extern "C" FilterDataStatus onBody(int32_t context_id, uint32_t body_buffer_length, uint32_t end_of_stream);
+extern "C" FilterTrailersStatus onTrailers(int32_t context_id);
 extern "C" void onDestroy(int32_t context_id);
