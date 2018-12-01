@@ -28,6 +28,13 @@ enum class FilterDataStatus : int { Continue = 0, StopIterationAndBuffer = 1,
   StopIterationAndWatermark = 2, StopIterationNoBuffer = 3 };
 
 // Calls from WASM to Envoy.
+extern "C" void envoy_addHeader(HeaderType type, const char* key_ptr, size_t key_size,
+                                     const char* value_ptr, size_t value_size);
+
+inline void addHeader(HeaderType type, std::string_view key, std::string_view value) {
+  envoy_addHeader(type, key.data(), key.size(), value.data(), value.size());
+}
+
 extern "C" void envoy_getHeader(HeaderType type, const char* key_ptr, size_t key_size,
                                  const char** value_ptr, size_t* value_size);
 

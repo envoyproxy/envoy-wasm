@@ -5,7 +5,7 @@
 #include <string>
 
 #ifndef EMSCRIPTEN_KEEPALIVE
-#define EMSCRIPTEN_KEEPALIVE __attribute__((used)) __attribute__((visibility ("default")))
+#define EMSCRIPTEN_KEEPALIVE __attribute__((used)) __attribute__((visibility("default")))
 #endif
 
 enum class LogLevel : int { trace, debug, info, warn, error, critical };
@@ -23,7 +23,7 @@ inline void logInfo(const std::string& logMessage) {
 inline void logWarn(const std::string& logMessage) {
   envoy_log(LogLevel::warn, logMessage.c_str(), logMessage.size());
 }
-inline void logErr(const std::string& logMessage) {
+inline void logError(const std::string& logMessage) {
   envoy_log(LogLevel::error, logMessage.c_str(), logMessage.size());
 }
 inline void logCritical(const std::string& logMessage) {

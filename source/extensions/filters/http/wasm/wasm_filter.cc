@@ -13,6 +13,11 @@ namespace HttpFilters {
 namespace Wasm {
 namespace {
 
+void addHeaderHandler(void *raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr, uint32_t value_size) {
+  auto context = WASM_CONTEXT(raw_context, Context);
+  context->addHeader(static_cast<HeaderType>(type), context->wasm_vm->getMemory(key_ptr, key_size), context->wasm_vm->getMemory(value_ptr, value_size));
+}
+
 void getHeaderHandler(void *raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context, Context);
   auto result = context->getHeader(static_cast<HeaderType>(type), context->wasm_vm->getMemory(key_ptr, key_size));
@@ -43,8 +48,7 @@ Context::Context(Wasm* wasm, StreamHandler* stream) :
 
 Context::~Context() {}
 
-void Context::addHeader(HeaderType type, absl::string_view key,
-    absl::string_view value) {
+void Context::addHeader(HeaderType type, absl::string_view key, absl::string_view value) {
   const Http::LowerCaseString lower_key(std::move(std::string(key)));
   if (type == HeaderType::Header) {
     stream_->headers_.addCopy(lower_key, std::string(value));
@@ -207,6 +211,7 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   if (wasm_vm_) {
     registerCallback(wasm_vm_.get(), "log", &Common::Wasm::Context::wasmLogHandler);
+    registerCallback(wasm_vm_.get(), "addHeader", &addHeaderHandler);
     registerCallback(wasm_vm_.get(), "replaceHeader", &replaceHeaderHandler);
     registerCallback(wasm_vm_.get(), "getHeader", &getHeaderHandler);
     registerCallback(wasm_vm_.get(), "removeHeader", &removeHeaderHandler);

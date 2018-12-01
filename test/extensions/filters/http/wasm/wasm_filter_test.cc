@@ -106,6 +106,7 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
       EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 1"))));
       });
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_THAT(request_headers.get_("newheader"), StrEq("newheadervalue"));
   filter_->onDestroy();
 }
 

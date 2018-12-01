@@ -33,7 +33,6 @@ Curl output should include our headers:
 < etag: W/"220-PQ/ZOdrX2lwANTIy144XG4sc/sw"
 < date: Thu, 31 May 2018 15:29:56 GMT
 < x-envoy-upstream-service-time: 2
-< response-body-size: 544            <-- This is added to the response header by our Lua script. --<
 < server: envoy
 <
 {
@@ -44,7 +43,7 @@ Curl output should include our headers:
     "accept": "*/*",
     "x-forwarded-proto": "http",
     "x-request-id": "0adbf0d3-8dfd-452f-a80a-1d6aa2ab06e2",
-    "foo": "bar",                    <-- This is added to the request header by our Lua script. --<
+    "newheader": "newheadervalue",                    <-- This is added to the request header by our Lua script. --<
     "x-envoy-expected-rq-timeout-ms": "15000",
     "content-length": "0"
   },
