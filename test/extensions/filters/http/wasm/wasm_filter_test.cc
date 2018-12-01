@@ -121,12 +121,12 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   config_->wasm()->start();
   setupFilter();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
-  filter_->setContextCallout([this](TestContext* context) {
-      EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onStart 1"))));
-      EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
-      EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq(absl::string_view("onBody hello"))));
-      EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 1"))));
-      });
+  filter_->setContextCallout([](TestContext* context) {
+    EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onStart 1"))));
+    EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
+    EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq(absl::string_view("onBody hello"))));
+    EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 1"))));
+  });
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
