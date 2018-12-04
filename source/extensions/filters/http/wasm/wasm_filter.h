@@ -1,5 +1,7 @@
 #pragma once
 
+#include "absl/container/flat_hash_map.h"
+
 #include "envoy/http/filter.h"
 #include "envoy/upstream/cluster_manager.h"
 
@@ -29,6 +31,14 @@ public:
   // Calls from the WASM code.
   //
 
+  // FilterConfig
+  virtual absl::string_view getSharedData(absl::string_view key);
+  virtual void setSharedData(absl::string_view key, absl::string_view value);
+
+  // Filter
+  virtual int requestId();
+  virtual int responseId();
+
   // Headers
   virtual void addHeader(HeaderType type, absl::string_view key,
       absl::string_view value);
@@ -51,7 +61,7 @@ public:
 
   // HTTP
   virtual void httpCall(absl::string_view cluster, const Pairs& request_headers,
-      absl::string_view request_body, int timeout_millisconds);
+      absl::string_view request_body, int timeout_millisconds, int token);
   virtual void httpRespond(const Pairs& response_headers,
       absl::string_view body);
 
@@ -70,7 +80,7 @@ public:
   virtual Http::FilterHeadersStatus onStart();
   virtual Http::FilterDataStatus onBody(int body_buffer_length, bool end_of_stream);
   virtual Http::FilterTrailersStatus onTrailers();
-  virtual void onHttpCallResponse(const Pairs& response_headers,
+  virtual void onHttpCallResponse(int token, const Pairs& response_headers,
                                   absl::string_view response_body);
   virtual void onDestroy();
 
@@ -182,9 +192,26 @@ public:
   Upstream::ClusterManager& cluster_manager() { return cluster_manager_; }
   Wasm* wasm() { return wasm_.get(); }
 
+  std::string getSharedData(absl::string_view key) {
+    absl::ReaderMutexLock l(&mutex_);
+    auto it = shared_data_.find(std::string(key));
+    if (it != shared_data_.end()) {
+      return it->second;
+    }
+    return "";
+  }
+
+  void setSharedData(absl::string_view key, absl::string_view value) {
+    absl::WriterMutexLock l(&mutex_);
+    shared_data_.insert_or_assign(key, std::string(value));
+  }
+
 private:
   Upstream::ClusterManager& cluster_manager_;
   std::unique_ptr<Wasm> wasm_;
+
+  absl::Mutex mutex_;
+  absl::flat_hash_map<std::string, std::string> shared_data_;
 };
 
 typedef std::shared_ptr<FilterConfig> FilterConfigConstSharedPtr;
@@ -219,6 +246,8 @@ public:
   } 
 
 protected:
+  friend class Context;
+  friend class StreamHandler;
   FilterConfigConstSharedPtr config_;
   std::unique_ptr<StreamHandler> request_handler_;
   std::unique_ptr<StreamHandler> response_handler_;

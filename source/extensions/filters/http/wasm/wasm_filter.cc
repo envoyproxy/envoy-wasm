@@ -48,6 +48,26 @@ Context::Context(Wasm* wasm, StreamHandler* stream) :
 
 Context::~Context() {}
 
+absl::string_view Context::getSharedData(absl::string_view key) {
+  return stream_->filter_.config_->getSharedData(key);
+}
+
+void Context::setSharedData(absl::string_view key, absl::string_view value) {
+  stream_->filter_.config_->setSharedData(key, value);
+}
+
+int Context::requestId() {
+  auto& handler = stream_->filter_.request_handler_;
+  if (!handler) return 0;
+  return handler->context_->id;
+}
+
+int Context::responseId() {
+  auto& handler = stream_->filter_.response_handler_;
+  if (!handler) return 0;
+  return handler->context_->id;
+}
+
 void Context::addHeader(HeaderType type, absl::string_view key, absl::string_view value) {
   const Http::LowerCaseString lower_key(std::move(std::string(key)));
   if (type == HeaderType::Header) {
@@ -142,11 +162,12 @@ Context::Pairs Context::getStreamInfoPairs(absl::string_view filter) {
 
 // HTTP
 void Context::httpCall(absl::string_view cluster, const Pairs& request_headers,
-                       absl::string_view request_body, int timeout_milliseconds) {
+                       absl::string_view request_body, int timeout_milliseconds, int token) {
   (void) cluster;
   (void) request_headers;
   (void) request_body;
   (void) timeout_milliseconds;
+  (void) token;
 }
 void Context::httpRespond(const Pairs& response_headers,
                           absl::string_view body) {
@@ -199,8 +220,9 @@ Http::FilterTrailersStatus Context::onTrailers() {
   return  Http::FilterTrailersStatus::StopIteration;
 }
 
-void Context::onHttpCallResponse(const Pairs& response_headers,
+void Context::onHttpCallResponse(int token, const Pairs& response_headers,
                                  absl::string_view response_body) {
+  (void) token;
   (void) response_headers;
   (void) response_body;
 }
