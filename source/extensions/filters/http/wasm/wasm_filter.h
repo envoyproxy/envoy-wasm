@@ -189,6 +189,8 @@ public:
                bool allow_precompiled, absl::string_view configuration,
                ThreadLocal::SlotAllocator& tls, Upstream::ClusterManager& cluster_manager);
 
+  void start();
+
   Upstream::ClusterManager& cluster_manager() { return cluster_manager_; }
   Wasm* wasm() { return wasm_.get(); }
 
@@ -209,6 +211,11 @@ public:
 private:
   Upstream::ClusterManager& cluster_manager_;
   std::unique_ptr<Wasm> wasm_;
+  const std::string code_;
+  const std::string name_;
+  const bool allow_precompiled_;
+  const std::string configuration_;
+  bool started_ = false;
 
   absl::Mutex mutex_;
   absl::flat_hash_map<std::string, std::string> shared_data_;

@@ -271,15 +271,21 @@ FilterConfig::FilterConfig(absl::string_view vm, const std::string& code, absl::
                            bool allow_precompiled, absl::string_view configuration,
                            ThreadLocal::SlotAllocator& tls,
                            Upstream::ClusterManager& cluster_manager)
-    : cluster_manager_(cluster_manager), wasm_(new Wasm(vm, tls)) {
+    : cluster_manager_(cluster_manager), wasm_(new Wasm(vm, tls)),
+code_(code), name_(name), allow_precompiled_(allow_precompiled), configuration_(configuration) {
+}
+
+void FilterConfig::start() {
+  if (started_) return;
+  started_ = true;
   if (wasm_) {
-    if (!wasm_->initialize(code, name, allow_precompiled)) {
-       ENVOY_LOG(error, "unable to initialize WASM vm");
-       throw Common::Wasm::WasmException("unable to initialize WASM vm");
+    if (!wasm_->initialize(code_, name_, allow_precompiled_)) {
+      ENVOY_LOG(error, "unable to initialize WASM vm");
+      throw Common::Wasm::WasmException("unable to initialize WASM vm");
     }
-    if (!configuration.empty())
-      wasm_->configure(configuration);
-     wasm_->start();
+    if (!configuration_.empty())
+      wasm_->configure(configuration_);
+    wasm_->start();
   }
 }
 

@@ -24,10 +24,11 @@ static_resources:
                   cluster: web_service
           http_filters:
           - name: envoy.filters.http.wasm
-            vm: "envoy.wasm.vm.wavm"
-            code:
-              filename: "/etc/envoy_filter_http_wasm_example.wasm"
-            allow_precompiled: true
+            config:
+              vm: "envoy.wasm.vm.wavm"
+              code:
+                filename: "/etc/envoy_filter_http_wasm_example.wasm"
+              allow_precompiled: true
           - name: envoy.router
             config: {}
 
