@@ -20,10 +20,10 @@ cp -pR include/ "$THIRDPARTY_BUILD"/lib/llvm-6.0/include/
 
 # WAVM.
 
-COMMIT=da97d6bcf421ac5d8b40ccccc8d36d4ba01a0356 # 2018-11-15 with a bunch of Emscripten intrinsics.
-SHA256=9552e1997e04a420c7df03b54443f82cfaa0aed00ab9e2b26077f47f31d5fff4
+COMMIT=c8fd181ddd85d96e0dce4734eb9560a4f1244eaf # 2018-12-03
+SHA256=a3d38ac53a5e7740dd0997d973ff2b19418a495096496d9d63905122aae005a7
 
-curl https://github.com/PiotrSikora/WAVM/archive/"$COMMIT".tar.gz -sLo WAVM-"$COMMIT".tar.gz \
+curl https://github.com/WAVM/WAVM/archive/"$COMMIT".tar.gz -sLo WAVM-"$COMMIT".tar.gz \
   && echo "$SHA256" WAVM-"$COMMIT".tar.gz | sha256sum --check
 tar xf WAVM-"$COMMIT".tar.gz
 cd WAVM-"$COMMIT"
