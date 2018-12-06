@@ -203,7 +203,7 @@ public:
 
   void setSharedData(absl::string_view key, absl::string_view value) {
     absl::WriterMutexLock l(&mutex_);
-    shared_data_.insert_or_assign(key, std::string(value));
+    shared_data_.insert_or_assign(std::string(key), std::string(value));
   }
 
 private:
