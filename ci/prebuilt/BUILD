@@ -233,6 +233,15 @@ cc_library(
         "thirdparty_build/include",
         "thirdparty_build/include/llvm-6.0",
     ],
+    linkopts = select({
+        "@bazel_tools//tools/osx:darwin": [
+            "-lcurses",
+            "-lm",
+        ],
+        "//conditions:default": [
+            "-lm",
+        ],
+    }),
     deps = ["//external:zlib"],
 )
 
