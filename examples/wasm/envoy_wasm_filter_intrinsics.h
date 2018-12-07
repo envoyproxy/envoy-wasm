@@ -2,6 +2,8 @@
  * Intrinsic functions available to WASM filter modules.
  */
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "envoy_wasm_intrinsics.h"
 
@@ -10,7 +12,9 @@ class WasmData {
 public:
   WasmData(const char* data, size_t size) : data_(data), size_(size) {}
   ~WasmData() { ::free((void*)data_); }
+  const char* data() { return data_; }
   std::string_view view() { return {data_, size_}; }
+  std::vector<std::pair<std::string_view, std::string_view>> pairs();
 
   WasmData& operator=(const WasmData&) = delete;
   WasmData(const WasmData&) = delete;
@@ -66,6 +70,34 @@ inline WasmDataPtr getBodyBufferBytes(size_t start, size_t length) {
   envoy_getBodyBufferBytes(start, length, &ptr, &size);
   return std::make_unique<WasmData>(ptr, size);
 }
+
+extern "C" void envoy_getHeaderPairs(HeaderType type, const char** ptr, size_t* size);
+
+inline WasmDataPtr getHeaderPairs(HeaderType type) {
+  const char* ptr = nullptr;
+  size_t size = 0;
+  envoy_getHeaderPairs(type, &ptr, &size);
+  return std::make_unique<WasmData>(ptr, size);
+}
+
+inline std::vector<std::pair<std::string_view, std::string_view>> WasmData::pairs() {
+  std::vector<std::pair<std::string_view, std::string_view>> result;
+  if (!data()) return result;
+  auto p = data();
+  int n = *reinterpret_cast<const int*>(p); p += sizeof(int);
+  result.resize(n);
+  auto s = p + n * 8;
+  for (int i = 0; i < n; i++) {
+    int size = *reinterpret_cast<const int*>(p); p += sizeof(int);
+    result[i].first = std::string_view(s, size);
+    s += size + 1;
+    size = *reinterpret_cast<const int*>(p); p += sizeof(int);
+    result[i].second = std::string_view(s, size);
+    s += size + 1;
+  }
+  return result;
+}
+
 
 // Calls from Envoy to WASM.
 extern "C" int main();

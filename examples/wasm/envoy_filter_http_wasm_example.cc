@@ -40,9 +40,14 @@ extern "C" EMSCRIPTEN_KEEPALIVE void onDestroy(int32_t context_id) {
 
 FilterHeadersStatus Context::onStart() {
   logDebug(std::string("onStart ") + std::to_string(id_));
-  auto result = getHeader(HeaderType::Header, ":path");
-  logInfo(std::string("header path ") + std::string(result->view()));
+  auto result = getHeaderPairs(HeaderType::Header);
+  auto pairs = result->pairs();
+  logInfo(std::string("headers: ") + std::to_string(pairs.size()));
+  for (auto& p : pairs) {
+    logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
+  }
   addHeader(HeaderType::Header, "newheader", "newheadervalue");
+  replaceHeader(HeaderType::Header, "server", "envoy-wasm");
   return FilterHeadersStatus::Continue;
 }
 

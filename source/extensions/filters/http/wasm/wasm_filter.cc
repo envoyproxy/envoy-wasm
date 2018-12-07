@@ -41,6 +41,34 @@ void getBodyBufferBytesHandler(void *raw_context, uint32_t start, uint32_t lengt
   context->wasm_vm->copyToPointerSize(result, ptr_ptr, size_ptr);
 }
 
+void getHeaderPairsHandler(void *raw_context, uint32_t type, uint32_t ptr_ptr, uint32_t size_ptr) {
+  auto context = WASM_CONTEXT(raw_context, Context);
+  auto result = context->getHeaderPairs(static_cast<HeaderType>(type));
+  if (result.empty()) {
+    context->wasm_vm->copyToPointerSize("", ptr_ptr, size_ptr);
+    return;
+  }
+  int size = 4;  // number of headers
+  for (auto& p : result) {
+    size += 8;  // size of key, size of value
+    size += p.first.size() + 1;  // null terminated key
+    size += p.second.size() + 1;  // null terminated value
+  }
+  char *buffer = static_cast<char*>(::malloc(size));
+  char *b = buffer;
+  *reinterpret_cast<int32_t*>(b) = result.size(); b += sizeof(int32_t);
+  for (auto& p : result) {
+    *reinterpret_cast<int32_t*>(b) = p.first.size(); b += sizeof(int32_t);
+    *reinterpret_cast<int32_t*>(b) = p.second.size(); b += sizeof(int32_t);
+  }
+  for (auto& p : result) {
+    memcpy(b, p.first.data(), p.first.size()); b += p.first.size(); *b++ = 0;
+    memcpy(b, p.second.data(), p.second.size()); b += p.second.size(); *b++ = 0;
+  }
+  context->wasm_vm->copyToPointerSize(absl::string_view(buffer, size), ptr_ptr, size_ptr);
+  ::free(buffer);
+}
+
 }  // namespace
 
 Context::Context(Wasm* wasm, StreamHandler* stream) :
@@ -106,7 +134,7 @@ Context::Pairs Context::getHeaderPairs(HeaderType type) {
       (static_cast<Pairs*>(context))->push_back(std::make_pair(header.key().getStringView(), header.value().getStringView()));
       return Http::HeaderMap::Iterate::Continue;
       },
-      nullptr);
+      &pairs);
   return pairs;
 }
 
@@ -238,6 +266,7 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
     registerCallback(wasm_vm_.get(), "getHeader", &getHeaderHandler);
     registerCallback(wasm_vm_.get(), "removeHeader", &removeHeaderHandler);
     registerCallback(wasm_vm_.get(), "getBodyBufferBytes", &getBodyBufferBytesHandler);
+    registerCallback(wasm_vm_.get(), "getHeaderPairs", &getHeaderPairsHandler);
   }
 }
 
