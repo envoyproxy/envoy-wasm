@@ -31,6 +31,7 @@ class Context : public Logger::Loggable<Logger::Id::wasm> {
 
     // Callbacks.
     virtual void scriptLog(spdlog::level::level_enum level, absl::string_view message);
+    virtual uint32_t getTotalMemory();
 
     // Handlers.
     static void wasmLogHandler(void* context, uint32_t level, uint32_t address, uint32_t size);
@@ -46,6 +47,9 @@ class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
   public:
     virtual ~WasmVm() {}
     virtual absl::string_view vm() PURE;
+
+    // Make a thread-specific copy.
+    virtual std::unique_ptr<WasmVm> Clone() PURE;
 
     // Load the WASM code from a file.  Return true on success.
     virtual bool initialize(const std::string& code, absl::string_view name,

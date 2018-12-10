@@ -44,8 +44,8 @@ public:
   TestFilter(FilterConfigConstSharedPtr config) : Filter(config) {}
 
   std::unique_ptr<Context> createContext(StreamHandler* handler) override {
-    auto context = std::make_unique<TestContext>(config_->wasm(), handler);
-    config_->wasm()->allocContextId(context.get());
+    auto context = std::make_unique<TestContext>(config_->base_wasm(), handler);
+    config_->base_wasm()->allocContextId(context.get());
     if (context_callout_) context_callout_(context.get());
     return context;
   }
@@ -69,7 +69,10 @@ public:
     setupFilter();
   }
 
-  void setupFilter() { filter_.reset(new TestFilter(config_)); }
+  void setupFilter() {
+    filter_.reset(new TestFilter(config_));
+    filter_->start();
+  }
 
   NiceMock<ThreadLocal::MockInstance> tls_;
   Upstream::MockClusterManager cluster_manager_;
@@ -94,16 +97,16 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   InSequence s;
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
-  auto general_context = std::make_unique<TestContext>(config_->wasm(), nullptr);
+  auto general_context = std::make_unique<TestContext>(config_->base_wasm(), nullptr);
   EXPECT_CALL(*general_context, scriptLog(spdlog::level::trace, Eq(absl::string_view("main"))));
-  config_->wasm()->setGeneralContext(std::move(general_context));
-  config_->wasm()->start();
+  config_->base_wasm()->setGeneralContext(std::move(general_context));
+  config_->base_wasm()->start();
   setupFilter();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   filter_->setContextCallout([](TestContext* context) {
-      EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onStart 1"))));
+      EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onStart 0"))));
       EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
-      EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 1"))));
+      EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 0"))));
       });
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   EXPECT_THAT(request_headers.get_("newheader"), StrEq("newheadervalue"));
@@ -115,17 +118,17 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   InSequence s;
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
-  auto general_context = std::make_unique<TestContext>(config_->wasm(), nullptr);
+  auto general_context = std::make_unique<TestContext>(config_->base_wasm(), nullptr);
   EXPECT_CALL(*general_context, scriptLog(spdlog::level::trace, Eq(absl::string_view("main"))));
-  config_->wasm()->setGeneralContext(std::move(general_context));
-  config_->wasm()->start();
+  config_->base_wasm()->setGeneralContext(std::move(general_context));
+  config_->base_wasm()->start();
   setupFilter();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   filter_->setContextCallout([](TestContext* context) {
-    EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onStart 1"))));
+    EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onStart 0"))));
     EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
     EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq(absl::string_view("onBody hello"))));
-    EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 1"))));
+    EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 0"))));
   });
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");

@@ -69,6 +69,10 @@ void getHeaderPairsHandler(void *raw_context, uint32_t type, uint32_t ptr_ptr, u
   ::free(buffer);
 }
 
+uint32_t getTotalMemoryHandler(void *) {
+  return 0x7FFFFFFF;
+}
+
 }  // namespace
 
 Context::Context(Wasm* wasm, StreamHandler* stream) :
@@ -82,18 +86,6 @@ absl::string_view Context::getSharedData(absl::string_view key) {
 
 void Context::setSharedData(absl::string_view key, absl::string_view value) {
   stream_->filter_.config_->setSharedData(key, value);
-}
-
-int Context::requestId() {
-  auto& handler = stream_->filter_.request_handler_;
-  if (!handler) return 0;
-  return handler->context_->id;
-}
-
-int Context::responseId() {
-  auto& handler = stream_->filter_.response_handler_;
-  if (!handler) return 0;
-  return handler->context_->id;
 }
 
 void Context::addHeader(HeaderType type, absl::string_view key, absl::string_view value) {
@@ -267,21 +259,31 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
     registerCallback(wasm_vm_.get(), "removeHeader", &removeHeaderHandler);
     registerCallback(wasm_vm_.get(), "getBodyBufferBytes", &getBodyBufferBytesHandler);
     registerCallback(wasm_vm_.get(), "getHeaderPairs", &getHeaderPairsHandler);
+    registerCallback(wasm_vm_.get(), "getTotalMemory", &getTotalMemoryHandler);
   }
+}
+
+void Wasm::getFunctions() {
+  getFunction(wasm_vm_.get(), "_configure", &configure_);
+  getFunction(wasm_vm_.get(), "_onStart", &onStart_);
+  getFunction(wasm_vm_.get(), "_onBody", &onBody_);
+  getFunction(wasm_vm_.get(), "_onTrailers", &onTrailers_);
+  getFunction(wasm_vm_.get(), "_onDestroy", &onDestroy_);
+}
+
+Wasm::Wasm(const Wasm& wasm) {
+  wasm_vm_ = wasm.wasm_vm()->Clone();
+  getFunctions();
+  general_context_ = std::make_unique<Context>(this, nullptr); 
+  allocContextId(general_context_.get());
 }
 
 bool Wasm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
   if (!wasm_vm_) return false;
   auto ok = wasm_vm_->initialize(code, name, allow_precompiled);
   if (!ok) return false;
-  getFunction(wasm_vm_.get(), "_configure", &configure_);
-  getFunction(wasm_vm_.get(), "_onStart", &onStart_);
-  getFunction(wasm_vm_.get(), "_onBody", &onBody_);
-  getFunction(wasm_vm_.get(), "_onTrailers", &onTrailers_);
-  getFunction(wasm_vm_.get(), "_onDestroy", &onDestroy_);
+  getFunctions();
   if (!onStart_ || !onBody_ || !onTrailers_ || !onDestroy_) return false;
-  general_context_ = std::make_unique<Context>(this, nullptr); 
-  allocContextId(general_context_.get());
   return true;
 }
 
@@ -300,22 +302,20 @@ FilterConfig::FilterConfig(absl::string_view vm, const std::string& code, absl::
                            bool allow_precompiled, absl::string_view configuration,
                            ThreadLocal::SlotAllocator& tls,
                            Upstream::ClusterManager& cluster_manager)
-    : cluster_manager_(cluster_manager), wasm_(new Wasm(vm, tls)),
-code_(code), name_(name), allow_precompiled_(allow_precompiled), configuration_(configuration) {
-}
-
-void FilterConfig::start() {
-  if (started_) return;
-  started_ = true;
+    : cluster_manager_(cluster_manager), wasm_(new Wasm(vm, tls)), configuration_(configuration) {
   if (wasm_) {
-    if (!wasm_->initialize(code_, name_, allow_precompiled_)) {
+    if (!wasm_->initialize(code, name, allow_precompiled)) {
       ENVOY_LOG(error, "unable to initialize WASM vm");
       throw Common::Wasm::WasmException("unable to initialize WASM vm");
     }
-    if (!configuration_.empty())
-      wasm_->configure(configuration_);
-    wasm_->start();
   }
+}
+
+void Filter::start() {
+  wasm_ = std::make_unique<Wasm>(*config_->base_wasm());
+  if (!config_->configuration().empty())
+    wasm_->configure(config_->configuration());
+  wasm_->start();
 }
 
 void Filter::onDestroy() {

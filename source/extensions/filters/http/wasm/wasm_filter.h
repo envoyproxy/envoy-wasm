@@ -35,10 +35,6 @@ public:
   virtual absl::string_view getSharedData(absl::string_view key);
   virtual void setSharedData(absl::string_view key, absl::string_view value);
 
-  // Filter
-  virtual int requestId();
-  virtual int responseId();
-
   // Headers
   virtual void addHeader(HeaderType type, absl::string_view key,
       absl::string_view value);
@@ -77,14 +73,23 @@ public:
   //
   // Calls into the WASM code.
   //
-  virtual Http::FilterHeadersStatus onStart();
-  virtual Http::FilterDataStatus onBody(int body_buffer_length, bool end_of_stream);
-  virtual Http::FilterTrailersStatus onTrailers();
+  virtual Http::FilterHeadersStatus onRequestHeaders();
+  virtual Http::FilterDataStatus onRequestBody(int body_buffer_length, bool end_of_stream);
+  virtual Http::FilterTrailersStatus onRequestTrailers();
+
+  virtual Http::FilterHeadersStatus onResponseHeaders();
+  virtual Http::FilterDataStatus onResponseBody(int body_buffer_length, bool end_of_stream);
+  virtual Http::FilterTrailersStatus onResponseTrailers();
+
   virtual void onHttpCallResponse(int token, const Pairs& response_headers,
                                   absl::string_view response_body);
   virtual void onDestroy();
 
 private:
+  // Http::AsyncClient::Callbacks
+  void onSuccess(Http::MessagePtr&&) override {}
+  void onFailure(Http::AsyncClient::FailureReason) override {}
+
   Wasm * const wasm_;
   StreamHandler * const stream_;
 };
@@ -97,6 +102,7 @@ using WasmCall2Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Con
 class Wasm : public Logger::Loggable<Logger::Id::wasm> {
 public:
   Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&);
+  Wasm(const Wasm& other);
   ~Wasm() {}
 
   bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
@@ -107,13 +113,12 @@ public:
     context->id = next_context_id_++;
   }
 
-  WasmCall0Int onStart() { return onStart_; }
-  WasmCall2Int onBody() { return onBody_; }
-  WasmCall0Int onTrailers() { return onTrailers_; }
-  WasmCall0Void onDestroy() { return onDestroy_; }
-
-  Envoy::Extensions::Common::Wasm::WasmVm* wasm_vm() { return wasm_vm_.get(); }
-  Context* general_context() { return general_context_.get(); }
+  WasmCall0Int onStart() const { return onStart_; }
+  WasmCall2Int onBody() const { return onBody_; }
+  WasmCall0Int onTrailers() const { return onTrailers_; }
+  WasmCall0Void onDestroy() const { return onDestroy_; }
+  Envoy::Extensions::Common::Wasm::WasmVm* wasm_vm() const { return wasm_vm_.get(); }
+  Context* general_context() const { return general_context_.get(); }
 
   // For testing.
   void setGeneralContext(std::unique_ptr<Context> context) {
@@ -121,6 +126,8 @@ public:
   }
 
 private:
+  void getFunctions();
+
   uint32_t next_context_id_ = 0;
   std::unique_ptr<Envoy::Extensions::Common::Wasm::WasmVm> wasm_vm_;
   std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t configuration_ptr, uint32_t configuration_size)> configure_;
@@ -169,10 +176,6 @@ private:
   friend class Context;
   friend class Filter;
 
-  // Http::AsyncClient::Callbacks
-  void onSuccess(Http::MessagePtr&&) override {}
-  void onFailure(Http::AsyncClient::FailureReason) override {}
-
   Http::HeaderMap& headers_;
   Filter& filter_;
   std::unique_ptr<Context> context_;
@@ -189,10 +192,9 @@ public:
                bool allow_precompiled, absl::string_view configuration,
                ThreadLocal::SlotAllocator& tls, Upstream::ClusterManager& cluster_manager);
 
-  void start();
-
   Upstream::ClusterManager& cluster_manager() { return cluster_manager_; }
-  Wasm* wasm() { return wasm_.get(); }
+  const std::string& configuration() { return configuration_; }
+  Wasm* base_wasm() { return wasm_.get(); }
 
   std::string getSharedData(absl::string_view key) {
     absl::ReaderMutexLock l(&mutex_);
@@ -211,11 +213,7 @@ public:
 private:
   Upstream::ClusterManager& cluster_manager_;
   std::unique_ptr<Wasm> wasm_;
-  const std::string code_;
-  const std::string name_;
-  const bool allow_precompiled_;
   const std::string configuration_;
-  bool started_ = false;
 
   absl::Mutex mutex_;
   absl::flat_hash_map<std::string, std::string> shared_data_;
@@ -226,6 +224,8 @@ typedef std::shared_ptr<FilterConfig> FilterConfigConstSharedPtr;
 class Filter : public Http::StreamFilter, Logger::Loggable<Logger::Id::wasm> {
 public:
   Filter(FilterConfigConstSharedPtr config) : config_(config), request_handler_(), response_handler_() {}
+
+  void start();
 
   Upstream::ClusterManager& clusterManager() { return config_->cluster_manager(); }
 
@@ -247,8 +247,8 @@ public:
 
   // Override for testing.
   virtual std::unique_ptr<Context> createContext(StreamHandler* handler) {
-    auto context = std::make_unique<Context>(config_->wasm(), handler);
-    config_->wasm()->allocContextId(context.get());
+    auto context = std::make_unique<Context>(wasm_.get(), handler);
+    wasm_->allocContextId(context.get());
     return context;
   } 
 
@@ -256,6 +256,7 @@ protected:
   friend class Context;
   friend class StreamHandler;
   FilterConfigConstSharedPtr config_;
+  std::unique_ptr<Wasm> wasm_;
   std::unique_ptr<StreamHandler> request_handler_;
   std::unique_ptr<StreamHandler> response_handler_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};

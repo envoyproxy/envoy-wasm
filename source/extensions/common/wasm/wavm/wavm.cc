@@ -94,6 +94,15 @@ class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
                                exportName.substr(exportName.find("envoy_") + sizeof("envoy_") - 1),
                                type, outObject);
       } else {
+        if (moduleName == "env") {
+          auto envoyInstance = moduleNameToInstanceMap_.get("envoy");
+          if (envoyInstance) {
+            outObject = getInstanceExport(*envoyInstance, exportName);
+            if (outObject && isA(outObject, type)) {
+              return resolveInternal("envoy", exportName, type, outObject);
+            }
+          }
+        }
         return resolveInternal(moduleName, exportName, type, outObject);
       }
     }
@@ -166,8 +175,10 @@ class Wavm : public WasmVm {
     Wavm() = default;
     ~Wavm() override;
 
+
     // WasmVm
     absl::string_view vm() override { return Wasm::WasmVmNames::get().Wavm; }
+    std::unique_ptr<WasmVm> Clone() override;
     bool initialize(const std::string& code, absl::string_view name,
                     bool allow_precompiled) override;
     void start(Context *context) override;
@@ -193,8 +204,6 @@ class Wavm : public WasmVm {
     Intrinsics::Module envoy_module_;
     GCPointer<Runtime::ModuleInstance> envoyModuleInstance_ = nullptr;
     std::vector<std::unique_ptr<Intrinsics::Function>> envoy_functions_;
-    std::vector<std::unique_ptr<EnvoyHandlerBase>> envoy_handlers_;
-    std::vector<WAST::Error> errors_;
 };
 
 Wavm::~Wavm() {
@@ -210,6 +219,16 @@ Wavm::~Wavm() {
   envoyModuleInstance_ = nullptr;
   envoy_functions_.clear();
   ASSERT(tryCollectCompartment(std::move(compartment_)));
+}
+
+std::unique_ptr<WasmVm> Wavm::Clone() {
+  auto wavm = new Wavm();
+  wavm->compartment_ = Runtime::cloneCompartment(compartment_);
+  wavm->memory_ = Runtime::remapToClonedCompartment(memory_, wavm->compartment_);
+  wavm->context_ = Runtime::createContext(wavm->compartment_);
+  wavm->envoyModuleInstance_ = Runtime::remapToClonedCompartment(envoyModuleInstance_, wavm->compartment_);
+  wavm->moduleInstance_ = Runtime::remapToClonedCompartment(moduleInstance_, wavm->compartment_);
+  return std::unique_ptr<WasmVm>(wavm);
 }
 
 bool Wavm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
@@ -317,12 +336,21 @@ void registerCallbackWavm(WasmVm* vm, absl::string_view functionName, R (*f)(Arg
       IR::CallingConvention::intrinsic));
 }
 
+template void registerCallbackWavm<void, void*>(WasmVm* vm, absl::string_view functionName, void(*f)(void*));
 template void registerCallbackWavm<void, void*, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32));
 template void registerCallbackWavm<void, void*, U32, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32, U32));
 template void registerCallbackWavm<void, void*, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32, U32, U32));
 template void registerCallbackWavm<void, void*, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32, U32, U32, U32));
 template void registerCallbackWavm<void, void*, U32, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32, U32, U32, U32, U32));
 template void registerCallbackWavm<void, void*, U32, U32, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, void(*f)(void*, U32, U32, U32, U32, U32, U32));
+
+template void registerCallbackWavm<U32, void*>(WasmVm* vm, absl::string_view functionName, U32(*f)(void*));
+template void registerCallbackWavm<U32, void*, U32>(WasmVm* vm, absl::string_view functionName, U32(*f)(void*, U32));
+template void registerCallbackWavm<U32, void*, U32, U32>(WasmVm* vm, absl::string_view functionName, U32(*f)(void*, U32, U32));
+template void registerCallbackWavm<U32, void*, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, U32(*f)(void*, U32, U32, U32));
+template void registerCallbackWavm<U32, void*, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, U32(*f)(void*, U32, U32, U32, U32));
+template void registerCallbackWavm<U32, void*, U32, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, U32(*f)(void*, U32, U32, U32, U32, U32));
+template void registerCallbackWavm<U32, void*, U32, U32, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, U32(*f)(void*, U32, U32, U32, U32, U32, U32));
 
 template<typename R, typename ...Args>
 void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function, uint32_t) {
@@ -411,6 +439,10 @@ void Context::scriptLog(spdlog::level::level_enum level, absl::string_view messa
   case spdlog::level::off:
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
+}
+
+uint32_t Context::getTotalMemory() {
+  return 0x7FFFFFFF;
 }
 
 } // namespace Wasm
