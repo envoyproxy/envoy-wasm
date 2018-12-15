@@ -30,7 +30,6 @@ Http::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
       context.threadLocal(), context.clusterManager()});
   return [filter_config](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     auto filter = std::make_shared<Filter>(filter_config);
-    filter->start();
     callbacks.addStreamFilter(std::move(filter));
   };
 }

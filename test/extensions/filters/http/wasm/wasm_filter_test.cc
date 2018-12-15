@@ -34,7 +34,7 @@ namespace Wasm {
 
 class TestContext : public Context {
 public:
-  TestContext(Wasm *wasm, StreamHandler* handler) : Context(wasm, handler) {}
+  TestContext(Wasm *wasm, Filter *filter) : Context(wasm, filter) {}
   ~TestContext() override {}
   MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
 };
@@ -43,9 +43,9 @@ class TestFilter : public Filter {
 public:
   TestFilter(FilterConfigConstSharedPtr config) : Filter(config) {}
 
-  std::unique_ptr<Context> createContext(StreamHandler* handler) override {
-    auto context = std::make_unique<TestContext>(config_->base_wasm(), handler);
-    config_->base_wasm()->allocContextId(context.get());
+  std::unique_ptr<Context> createContext() override {
+    auto context = std::make_unique<TestContext>(wasm_, this);
+    wasm_->allocContextId(context.get());
     if (context_callout_) context_callout_(context.get());
     return context;
   }
@@ -71,7 +71,6 @@ public:
 
   void setupFilter() {
     filter_.reset(new TestFilter(config_));
-    filter_->start();
   }
 
   NiceMock<ThreadLocal::MockInstance> tls_;
@@ -94,19 +93,17 @@ TEST_F(WasmHttpFilterTest, BadCode) {
 
 // Script touching headers only, request that is headers only.
 TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
-  InSequence s;
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
   auto general_context = std::make_unique<TestContext>(config_->base_wasm(), nullptr);
-  EXPECT_CALL(*general_context, scriptLog(spdlog::level::trace, Eq(absl::string_view("main"))));
   config_->base_wasm()->setGeneralContext(std::move(general_context));
   config_->base_wasm()->start();
   setupFilter();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   filter_->setContextCallout([](TestContext* context) {
-      EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onStart 0"))));
+      EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
       EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
-      EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 0"))));
+      EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 1"))));
       });
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   EXPECT_THAT(request_headers.get_("newheader"), StrEq("newheadervalue"));
@@ -115,20 +112,18 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
 
 // Script touching headers only, request that is headers only.
 TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
-  InSequence s;
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
   auto general_context = std::make_unique<TestContext>(config_->base_wasm(), nullptr);
-  EXPECT_CALL(*general_context, scriptLog(spdlog::level::trace, Eq(absl::string_view("main"))));
   config_->base_wasm()->setGeneralContext(std::move(general_context));
   config_->base_wasm()->start();
   setupFilter();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   filter_->setContextCallout([](TestContext* context) {
-    EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onStart 0"))));
+    EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
     EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
-    EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq(absl::string_view("onBody hello"))));
-    EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 0"))));
+    EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+    EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 1"))));
   });
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");

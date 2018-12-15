@@ -8,9 +8,15 @@
 #define EMSCRIPTEN_KEEPALIVE __attribute__((used)) __attribute__((visibility("default")))
 #endif
 
+//
+// Low Level API.
+//
 enum class LogLevel : int { trace, debug, info, warn, error, critical };
 extern "C" void envoy_log(LogLevel level, const char* logMessage, size_t messageSize);
 
+//
+// High Level C++ API.
+//
 inline void logTrace(const std::string& logMessage) {
   envoy_log(LogLevel::trace, logMessage.c_str(), logMessage.size());
 }
