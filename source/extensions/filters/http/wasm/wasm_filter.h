@@ -13,39 +13,155 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-class Context;
 class Filter;
+class FilterConfig;
 class Wasm;
+
+using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
+
+using WasmCall0Void = std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
+using WasmCall0Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
+using WasmCall2Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t)>;
+using WasmCall3Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t)>;
+using WasmCall4Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t, uint32_t)>;
+using WasmCall5Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
+
+typedef std::shared_ptr<FilterConfig> FilterConfigConstSharedPtr;
+
+class FilterConfig : Logger::Loggable<Logger::Id::wasm> {
+public:
+  FilterConfig(absl::string_view vm, const std::string& code, absl::string_view name,
+               bool allow_precompiled, absl::string_view configuration,
+               ThreadLocal::SlotAllocator& tls, Upstream::ClusterManager& cluster_manager);
+
+  Upstream::ClusterManager& cluster_manager() { return cluster_manager_; }
+  void initialize(FilterConfigConstSharedPtr filter_config);
+  const std::string& configuration() { return configuration_; }
+  Wasm* base_wasm() { return wasm_.get(); }
+
+  std::string getSharedData(absl::string_view key) {
+    absl::ReaderMutexLock l(&mutex_);
+    auto it = shared_data_.find(std::string(key));
+    if (it != shared_data_.end()) {
+      return it->second;
+    }
+    return "";
+  }
+
+  void setSharedData(absl::string_view key, absl::string_view value) {
+    absl::WriterMutexLock l(&mutex_);
+    shared_data_.insert_or_assign(std::string(key), std::string(value));
+  }
+
+  Wasm* getThreadWasm() { return &tls_slot_->getTyped<Wasm>(); }
+
+private:
+  ThreadLocal::SlotPtr tls_slot_;
+  Upstream::ClusterManager& cluster_manager_;
+  std::unique_ptr<Wasm> wasm_;
+  const std::string configuration_;
+
+  absl::Mutex mutex_;
+  absl::flat_hash_map<std::string, std::string> shared_data_;
+};
+
+// Thread-local Wasm VM.
+class Wasm : public ThreadLocal::ThreadLocalObject, public Logger::Loggable<Logger::Id::wasm> {
+public:
+  Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&);
+  Wasm(const Wasm& other);
+  ~Wasm() {}
+
+  bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
+  void start();
+
+  void createGeneralContext(FilterConfigConstSharedPtr filter_config);
+  void allocContextId(Filter *context);
+
+  Envoy::Extensions::Common::Wasm::WasmVm* wasm_vm() const { return wasm_vm_.get(); }
+  Filter* general_context() const { return general_context_.get(); }
+
+  // For testing.
+  void setGeneralContext(std::unique_ptr<Filter> context) {
+    general_context_ = std::move(context);
+  }
+
+  WasmCall0Int onStart;
+  WasmCall2Int onConfigure;
+
+  WasmCall0Int onRequestHeaders;
+  WasmCall2Int onRequestBody;
+  WasmCall0Int onRequestTrailers;
+
+  WasmCall0Int onResponseHeaders;
+  WasmCall2Int onResponseBody;
+  WasmCall0Int onResponseTrailers;
+
+  WasmCall5Int onHttpCallResponse;
+
+  WasmCall0Int onLogs;
+  WasmCall0Void onDestroy;
+
+private:
+  void getFunctions();
+
+  uint32_t next_context_id_ = 0;
+  std::unique_ptr<Envoy::Extensions::Common::Wasm::WasmVm> wasm_vm_;
+  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t configuration_ptr, uint32_t configuration_size)> configure_;
+  std::unique_ptr<Filter> general_context_;  // Context unrelated to any specific stream.
+};
+
+inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callbacks) {
+  if (callbacks->route() == nullptr || callbacks->route()->routeEntry() == nullptr) {
+    return ProtobufWkt::Struct::default_instance();
+  }
+  const auto& metadata = callbacks->route()->routeEntry()->metadata();
+  const auto& filter_it = metadata.filter_metadata().find(HttpFilterNames::get().Lua);
+  if (filter_it == metadata.filter_metadata().end()) {
+    return ProtobufWkt::Struct::default_instance();
+  }
+  return filter_it->second;
+}
 
 class AsyncClientHandler : public Http::AsyncClient::Callbacks {
 public:
-  AsyncClientHandler(Context *context, uint32_t token) : context_(context), token_(token) {}
+  AsyncClientHandler(Filter *filter, uint32_t token) : filter_(filter), token_(token) {}
 
   virtual void onSuccess(Envoy::Http::MessagePtr&& /* response */) {}
   virtual void onFailure(Http::AsyncClient::FailureReason /* reason */) {}
 
-  Context* context() { return context_; }
+  Filter* context() { return filter_; }
   uint32_t token() { return token_; }
 
 private:
-  Context* const context_;
+  Filter* const filter_;
   const uint32_t token_;
 };
 
-enum class HeaderCallType : uint32_t {
-  RequestHeader = 0,
-  RequestTrailer = 1,
-  ResponseHeader = 2,
-  ResponseTrailer = 3
-};
-
-// A session within the WASM VM.
-class Context : public Envoy::Extensions::Common::Wasm::Context {
+class Filter : public Envoy::Extensions::Common::Wasm::Context, public Http::StreamFilter {
 public:
-  using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
+  explicit Filter(FilterConfigConstSharedPtr config);
+  Filter(FilterConfigConstSharedPtr config, Wasm *wasm);
 
-  Context(Wasm* wasm, Filter* filter);
-  ~Context() override;
+  Upstream::ClusterManager& clusterManager() { return config_->cluster_manager(); }
+  Wasm *wasm() { return wasm_; }
+
+  // Http::StreamFilterBase
+  // Note: This calls onDestroy() in the VM.
+  void onDestroy() override;
+
+  // Http::StreamDecoderFilter
+  Http::FilterHeadersStatus decodeHeaders(Http::HeaderMap& headers, bool end_stream) override;
+  Http::FilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) override;
+  Http::FilterTrailersStatus decodeTrailers(Http::HeaderMap& trailers) override;
+  void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks& callbacks) override;
+
+  // Http::StreamEncoderFilter
+  Http::FilterHeadersStatus encode100ContinueHeaders(Http::HeaderMap&) override;
+  Http::FilterHeadersStatus encodeHeaders(Http::HeaderMap& headers, bool end_stream) override;
+  Http::FilterDataStatus encodeData(Buffer::Instance& data, bool end_stream) override;
+  Http::FilterTrailersStatus encodeTrailers(Http::HeaderMap& trailers) override;
+  void setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks& callbacks) override;
 
   //
   // Calls from the WASM code.
@@ -115,12 +231,12 @@ public:
   // Calls into the WASM code.
   //
 
-  // General Calls on Context(0)
+  // General Calls on Filter(id == 0)
 
   virtual void onStart();
   virtual void onConfigure(absl::string_view configuration);
 
-  // Stream Calls on Stream specific context (id != 0).
+  // Stream Calls on Filter(id > 0)
 
   // Request
   virtual Http::FilterHeadersStatus onRequestHeaders();
@@ -134,14 +250,13 @@ public:
 
   virtual void onHttpCallResponse(uint32_t token, const Pairs& response_headers,
                                   absl::string_view response_body);
-  virtual void onDestroy();
 
-private:
-  friend class Filter;
+  virtual void onLogs();
 
-  Wasm* const wasm_;
-  Filter* const filter_;
-  std::unique_ptr<Context> context_;
+protected:
+  FilterConfigConstSharedPtr config_;
+  Wasm* wasm_;
+  uint32_t id_;
   Http::HeaderMap* request_headers_ = nullptr;
   Http::HeaderMap* response_headers_ = nullptr;
   Buffer::Instance* requestBodyBuffer_{};
@@ -151,147 +266,6 @@ private:
   Http::HeaderMap* request_trailers_{};
   Http::HeaderMap* response_trailers_{};
   absl::flat_hash_map<int, std::pair<AsyncClientHandler, Http::AsyncClient::Request*>> http_request_;
-};
-
-using WasmCall0Void = std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
-using WasmCall0Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
-using WasmCall2Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t)>;
-using WasmCall3Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t)>;
-using WasmCall5Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
-
-// Thread-local Wasm VM.
-class Wasm : public ThreadLocal::ThreadLocalObject, public Logger::Loggable<Logger::Id::wasm> {
-public:
-  Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&);
-  Wasm(const Wasm& other);
-  ~Wasm() {}
-
-  bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
-  void start();
-
-  void allocContextId(Context *context) {
-    context->id = next_context_id_++;
-  }
-
-  Envoy::Extensions::Common::Wasm::WasmVm* wasm_vm() const { return wasm_vm_.get(); }
-  Context* general_context() const { return general_context_.get(); }
-
-  // For testing.
-  void setGeneralContext(std::unique_ptr<Context> context) {
-    general_context_ = std::move(context);
-  }
-
-  WasmCall0Int onStart;
-  WasmCall2Int onConfigure;
-
-  WasmCall0Int onRequestHeaders;
-  WasmCall2Int onRequestBody;
-  WasmCall0Int onRequestTrailers;
-
-  WasmCall0Int onResponseHeaders;
-  WasmCall2Int onResponseBody;
-  WasmCall0Int onResponseTrailers;
-
-  WasmCall5Int onHttpCallResponse;
-
-  WasmCall0Int onLogs;
-  WasmCall0Void onDestroy;
-
-private:
-  void getFunctions();
-
-  uint32_t next_context_id_ = 0;
-  std::unique_ptr<Envoy::Extensions::Common::Wasm::WasmVm> wasm_vm_;
-  std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t configuration_ptr, uint32_t configuration_size)> configure_;
-  std::unique_ptr<Context> general_context_;  // Context unrelated to nay specific filter or stream.
-};
-
-inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callbacks) {
-  if (callbacks->route() == nullptr || callbacks->route()->routeEntry() == nullptr) {
-    return ProtobufWkt::Struct::default_instance();
-  }
-  const auto& metadata = callbacks->route()->routeEntry()->metadata();
-  const auto& filter_it = metadata.filter_metadata().find(HttpFilterNames::get().Lua);
-  if (filter_it == metadata.filter_metadata().end()) {
-    return ProtobufWkt::Struct::default_instance();
-  }
-  return filter_it->second;
-}
-
-class FilterConfig : Logger::Loggable<Logger::Id::wasm> {
-public:
-  FilterConfig(absl::string_view vm, const std::string& code, absl::string_view name,
-               bool allow_precompiled, absl::string_view configuration,
-               ThreadLocal::SlotAllocator& tls, Upstream::ClusterManager& cluster_manager);
-
-  Upstream::ClusterManager& cluster_manager() { return cluster_manager_; }
-  const std::string& configuration() { return configuration_; }
-  Wasm* base_wasm() { return wasm_.get(); }
-
-  std::string getSharedData(absl::string_view key) {
-    absl::ReaderMutexLock l(&mutex_);
-    auto it = shared_data_.find(std::string(key));
-    if (it != shared_data_.end()) {
-      return it->second;
-    }
-    return "";
-  }
-
-  void setSharedData(absl::string_view key, absl::string_view value) {
-    absl::WriterMutexLock l(&mutex_);
-    shared_data_.insert_or_assign(std::string(key), std::string(value));
-  }
-
-  Wasm* getThreadWasm() { return &tls_slot_->getTyped<Wasm>(); }
-
-private:
-  ThreadLocal::SlotPtr tls_slot_;
-  Upstream::ClusterManager& cluster_manager_;
-  std::unique_ptr<Wasm> wasm_;
-  const std::string configuration_;
-
-  absl::Mutex mutex_;
-  absl::flat_hash_map<std::string, std::string> shared_data_;
-};
-
-typedef std::shared_ptr<FilterConfig> FilterConfigConstSharedPtr;
-
-class Filter : public Http::StreamFilter, Logger::Loggable<Logger::Id::wasm> {
-public:
-  Filter(FilterConfigConstSharedPtr config);
-
-  Upstream::ClusterManager& clusterManager() { return config_->cluster_manager(); }
-
-  // Http::StreamFilterBase
-  void onDestroy() override;
-
-  // Http::StreamDecoderFilter
-  Http::FilterHeadersStatus decodeHeaders(Http::HeaderMap& headers, bool end_stream) override;
-  Http::FilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) override;
-  Http::FilterTrailersStatus decodeTrailers(Http::HeaderMap& trailers) override;
-  void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks& callbacks) override;
-
-  // Http::StreamEncoderFilter
-  Http::FilterHeadersStatus encode100ContinueHeaders(Http::HeaderMap&) override;
-  Http::FilterHeadersStatus encodeHeaders(Http::HeaderMap& headers, bool end_stream) override;
-  Http::FilterDataStatus encodeData(Buffer::Instance& data, bool end_stream) override;
-  Http::FilterTrailersStatus encodeTrailers(Http::HeaderMap& trailers) override;
-  void setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks& callbacks) override;
-
-  // Override for testing.
-  virtual std::unique_ptr<Context> createContext() {
-    auto context = std::make_unique<Context>(wasm_, this);
-    wasm_->allocContextId(context.get());
-    return context;
-  } 
-
-  Context* context() { return context_.get(); }
-
-protected:
-  friend class Context;
-  FilterConfigConstSharedPtr config_;
-  Wasm* wasm_;
-  std::unique_ptr<Context> context_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};
   Envoy::Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
   bool destroyed_ = false;

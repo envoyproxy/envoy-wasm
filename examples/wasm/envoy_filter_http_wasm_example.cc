@@ -11,6 +11,7 @@ class ExampleContext : public Context {
     void onStart() override;
     FilterHeadersStatus onRequestHeaders() override;
     FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
+    FilterHeadersStatus onResponseHeaders() override;
     void onDestroy() override;
 };
 
@@ -30,8 +31,19 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
   for (auto& p : pairs) {
     logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
   }
-  addRequestHeader("newheader", "newheadervalue");
-  replaceRequestHeader("server", "envoy-wasm");
+  return FilterHeadersStatus::Continue;
+}
+
+FilterHeadersStatus ExampleContext::onResponseHeaders() {
+  logDebug(std::string("onResponseHaders ") + std::to_string(id()));
+  auto result = getResponseHeaderPairs();
+  auto pairs = result->pairs();
+  logInfo(std::string("headers: ") + std::to_string(pairs.size()));
+  for (auto& p : pairs) {
+    logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
+  }
+  addResponseHeader("newheader", "newheadervalue");
+  replaceResponseHeader("server", "envoy-wasm");
   return FilterHeadersStatus::Continue;
 }
 

@@ -28,8 +28,10 @@ Http::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
   FilterConfigConstSharedPtr filter_config(new FilterConfig{
       proto_config.vm(), code, path, proto_config.allow_precompiled(), proto_config.configuration(),
       context.threadLocal(), context.clusterManager()});
+  filter_config->initialize(filter_config);
   return [filter_config](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     auto filter = std::make_shared<Filter>(filter_config);
+    filter->wasm()->allocContextId(filter.get());
     callbacks.addStreamFilter(std::move(filter));
   };
 }
