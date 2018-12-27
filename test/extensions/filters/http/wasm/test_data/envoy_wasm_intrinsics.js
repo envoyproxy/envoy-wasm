@@ -1,5 +1,13 @@
 mergeInto(LibraryManager.library, {
     envoy_log: function () {},
+    envoy_getRequestMetadata: function () {},
+    envoy_setRequestMetadata: function () {},
+    envoy_getRequestMetadataPairs: function () {},
+    envoy_getResponseMetadata: function () {},
+    envoy_setResponseMetadata: function () {},
+    envoy_getResponseMetadataPairs: function () {},
+    envoy_continueRequest: function () {},
+    envoy_continueResponse: function () {},
     envoy_addRequestHeader: function () {},
     envoy_getRequestHeader: function () {},
     envoy_getRequestHeaderPairs: function () {},
@@ -22,4 +30,5 @@ mergeInto(LibraryManager.library, {
     envoy_replaceResponseTrailer: function () {},
     envoy_removeResponseTrailer: function () {},
     envoy_getResponseBodyBufferBytes: function () {},
+    envoy_httpCall: function () {},
 });

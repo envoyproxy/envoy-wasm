@@ -14,10 +14,10 @@
 //
 enum class FilterHeadersStatus : int { Continue = 0, StopIteration = 1 };
 enum class FilterTrailersStatus : int { Continue = 0, StopIteration = 1 };
-enum class FilterDataStatus : int { Continue = 0, StopIterationAndBuffer = 1,
-  StopIterationAndWatermark = 2, StopIterationNoBuffer = 3 };
+enum class FilterDataStatus : int { Continue = 0, StopIterationAndBuffer = 1, StopIterationAndWatermark = 2, StopIterationNoBuffer = 3 };
 
 // Calls from Envoy to WASM.
+
 extern "C" int onStart(uint32_t context_id);  // context_id == 0, always returns 0.
 extern "C" void onConfigure(uint32_t context_id, uint32_t configuration_ptr, uint32_t configuration_size);  // context_id == 0
 
@@ -29,10 +29,35 @@ extern "C" FilterHeadersStatus onResponseHeaders(uint32_t context_id);
 extern "C" FilterDataStatus onResponseBody(uint32_t context_id, uint32_t body_buffer_length, uint32_t end_of_stream);
 extern "C" FilterTrailersStatus onResponsetTrailers(uint32_t context_id);
 
-extern "C" void onLogs(uint32_t context_id);
+extern "C" void onDone(uint32_t context_id);
 extern "C" void onDestroy(uint32_t context_id);
 
+extern "C" void onHttpCallResponse(uint32_t context_id,
+    uint32_t token, uint32_t header_pairs_ptr, uint32_t header_pairs_size,
+    uint32_t body_ptr, uint32_t body_size, uint32_t trailer_pairs_ptr,
+    uint32_t trailer_pairs_size);
+
 // Calls from WASM to Envoy
+
+// StreamInfo
+extern "C" void envoy_getRequestStreamInfoProtocol(const char** value_ptr, size_t* value_size);
+extern "C" void envoy_getResponseStreamInfoProtocol(const char** value_ptr, size_t* value_size);
+
+extern "C" void envoy_getRequestMetadata(const char* key_ptr, size_t key_size, const char** value_ptr_ptr, size_t* value_size_ptr);
+extern "C" void envoy_setRequestMetadata(const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
+extern "C" void envoy_getRequestMetadataPairs(const char** value_ptr, size_t* value_size);
+extern "C" void envoy_getResponseMetadata(const char* key_ptr, size_t key_size, const char** value_ptr_ptr, size_t* value_size_ptr);
+extern "C" void envoy_setResponseMetadata(const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
+extern "C" void envoy_getResponseMetadataPairs(const char** value_ptr, size_t* value_size);
+
+// Continue
+extern "C" void envoy_continueRequest();
+extern "C" void envoy_continueResponse();
+
+// SharedData
+extern "C" void envoy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr, size_t* value_size, uint32_t* cas);
+//  If cas != 0 and cas != the current cas for 'key' return false, otherwise set the value and return true.
+extern "C" bool envoy_setSharedData(const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size, uint32_t cas);
 
 // Headers/Trailers
 extern "C" void envoy_addRequestHeader(const char* key_ptr, size_t key_size,
@@ -75,6 +100,10 @@ extern "C" void envoy_removeResponseTrailer(const char* key_ptr, size_t key_size
 extern "C" void envoy_getRequestBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr, size_t* size);
 extern "C" void envoy_getResponseBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr, size_t* size);
 
+// HTTP
+// Returns token, used in callback onHttpCallResponse
+extern "C" uint32_t envoy_httpCall(const char* uri_ptr, size_t uri_size, void* header_pairs_ptr, size_t header_pairs_size,
+    const char* body_ptr, size_t body_size, void* trailer_pairs_ptr, size_t trailer_pairs_size, uint32_t timeout_milliseconds);
 
 //
 // High Level C++ API.
@@ -139,12 +168,84 @@ public:
   virtual FilterHeadersStatus onResponseHeaders() { return FilterHeadersStatus::Continue; }
   virtual FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) { return FilterDataStatus::Continue; }
   virtual FilterTrailersStatus onResponseTrailers() { return FilterTrailersStatus::Continue; }
-  virtual void onLogs() {}
+  virtual void onDone() {}
   virtual void onDestroy() {}
+
+  virtual void onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
+      std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs) {}
 
 private:
   uint32_t id_;
 };
+
+// StreamInfo
+inline WasmDataPtr getRequestStreamInfoProtocol() {
+  const char* ptr = nullptr;
+  size_t size = 0;
+  envoy_getRequestStreamInfoProtocol(&ptr, &size);
+  return std::make_unique<WasmData>(ptr, size);
+}
+
+inline WasmDataPtr getResponseStreamInfoProtocol() {
+  const char* ptr = nullptr;
+  size_t size = 0;
+  envoy_getResponseStreamInfoProtocol(&ptr, &size);
+  return std::make_unique<WasmData>(ptr, size);
+}
+
+inline WasmDataPtr getRequestMetadata(std::string_view key) {
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  envoy_getRequestMetadata(key.data(), key.size(), &value_ptr, &value_size);
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+inline void setRequestMetadata(std::string_view key, std::string_view value) {
+  envoy_setRequestMetadata(key.data(), key.size(), value.data(), value.size());
+}
+
+inline WasmDataPtr getRequestMetadataPairs() {
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  envoy_getRequestMetadataPairs(&value_ptr, &value_size);
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+inline WasmDataPtr getResponseMetadata(std::string_view key) {
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  envoy_getResponseMetadata(key.data(), key.size(), &value_ptr, &value_size);
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+inline void setResponseMetadata(std::string_view key, std::string_view value) {
+  envoy_setResponseMetadata(key.data(), key.size(), value.data(), value.size());
+}
+
+inline WasmDataPtr getResponseMetadataPairs() {
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  envoy_getResponseMetadataPairs(&value_ptr, &value_size);
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+// Continue
+inline void continueRequest() { envoy_continueRequest(); }
+inline void continueResponse() { envoy_continueResponse(); }
+
+// Shared
+inline WasmDataPtr getSharedData(std::string_view key, uint32_t* cas = nullptr) {
+  uint32_t dummy_cas;
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  if (!cas) cas = &dummy_cas;
+  envoy_getSharedData(key.data(), key.size(), &value_ptr, &value_size, cas);
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+inline bool setSharedData(std::string_view key, std::string_view value, uint32_t cas = 0) {
+  return envoy_setSharedData(key.data(), key.size(), value.data(), value.size(), cas);
+}
 
 // Headers/Trailers
 inline void addRequestHeader(std::string_view key, std::string_view value) {
@@ -266,3 +367,44 @@ inline WasmDataPtr getResponseBodyBufferBytes(size_t start, size_t length) {
   return std::make_unique<WasmData>(ptr, size);
 }
 
+// HTTP
+
+using HeaderStringPairs = std::vector<std::pair<std::string, std::string>>;
+
+inline void MakeHeaderStringPairsBuffer(const HeaderStringPairs& headers, void** buffer_ptr, size_t* size_ptr) {
+  if (headers.empty()) {
+    *buffer_ptr = nullptr;
+    *size_ptr = 0;
+    return;
+  }
+  int size = 4;  // number of headers
+  for (auto& p : headers) {
+    size += 8;  // size of key, size of value
+    size += p.first.size() + 1;  // null terminated key
+    size += p.second.size() + 1;  // null terminated value
+  }
+  char *buffer = static_cast<char*>(::malloc(size));
+  char *b = buffer;
+  *reinterpret_cast<int32_t*>(b) = headers.size(); b += sizeof(int32_t);
+  for (auto& p : headers) {
+    *reinterpret_cast<int32_t*>(b) = p.first.size(); b += sizeof(int32_t);
+    *reinterpret_cast<int32_t*>(b) = p.second.size(); b += sizeof(int32_t);
+  }
+  for (auto& p : headers) {
+    memcpy(b, p.first.data(), p.first.size()); b += p.first.size(); *b++ = 0;
+    memcpy(b, p.second.data(), p.second.size()); b += p.second.size(); *b++ = 0;
+  }
+  *buffer_ptr = buffer;
+  *size_ptr = size;
+}
+
+inline uint32_t httpCall(std::string_view uri, const HeaderStringPairs& request_headers, std::string_view request_body, const HeaderStringPairs& request_trailers, uint32_t timeout_milliseconds) {
+  void *headers_ptr = nullptr, *trailers_ptr = nullptr;
+  size_t headers_size = 0, trailers_size = 0;
+  MakeHeaderStringPairsBuffer(request_headers, &headers_ptr, &headers_size);
+  MakeHeaderStringPairsBuffer(request_trailers, &trailers_ptr, &trailers_size);
+  uint32_t result = envoy_httpCall(uri.data(), uri.size(), headers_ptr, headers_size, request_body.data(), request_body.size(), trailers_ptr, trailers_size, timeout_milliseconds);
+  ::free(headers_ptr);
+  ::free(trailers_ptr);
+  return result;
+}

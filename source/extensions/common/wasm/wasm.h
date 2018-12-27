@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "envoy/buffer/buffer.h"
 #include "envoy/common/exception.h"
 #include "envoy/server/wasm.h"
 #include "envoy/config/wasm/v2/wasm.pb.validate.h"
@@ -77,7 +78,7 @@ class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
     }
 
     // Copy the data in 's' into the VM along with the pointer-size pair.  Returns true on success.
-    bool copyToPointerSize(absl::string_view s, int32_t ptr_ptr, int32_t size_ptr) {
+    bool copyToPointerSize(absl::string_view s, uint32_t ptr_ptr, uint32_t size_ptr) {
       uint32_t pointer = 0;
       uint32_t size = s.size();
       void *p = nullptr;
@@ -86,8 +87,37 @@ class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
         if (!p) return false;
         memcpy(p, s.data(), size);
       }
+      if (!setMemory(ptr_ptr, sizeof(uint32_t), &pointer)) return false;
+      if (!setMemory(size_ptr, sizeof(uint32_t), &size)) return false;
+      return true;
+    }
+
+    bool copyToPointerSize(const Buffer::Instance& buffer, uint32_t start, uint32_t length, uint32_t ptr_ptr, uint32_t size_ptr) {
+      uint32_t size = buffer.length();
+      if (size < start + length) return false;
+      auto nslices = buffer.getRawSlices(nullptr, 0);
+      auto slices = std::make_unique<Buffer::RawSlice[]>(nslices + 10 /* pad for evbuffer overrun */ );
+      auto actual_slices = buffer.getRawSlices(&slices[0], nslices);
+      uint32_t pointer = 0;
+      char *p = static_cast<char*>(allocMemory(length, &pointer));
+      auto s = start;
+      auto l = length;
+      if (!p) return false;
+      for (uint64_t i = 0; i < actual_slices; i++) {
+        if (slices[i].len_ <= s) {
+          s -= slices[i].len_;
+          continue;
+        }
+        auto ll = l;
+        if (ll > s + slices[i].len_) ll =  s + slices[i].len_;
+        memcpy(p, static_cast<char*>(slices[i].mem_) + s, ll);
+        l -= ll;
+        if (l <= 0) break;
+        s = 0;
+        p += ll;
+      }
       if (!setMemory(ptr_ptr, sizeof(int32_t), &pointer)) return false;
-      if (!setMemory(size_ptr, sizeof(int32_t), &size)) return false;
+      if (!setMemory(size_ptr, sizeof(int32_t), &length)) return false;
       return true;
     }
 };

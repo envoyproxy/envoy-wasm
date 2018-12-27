@@ -21,6 +21,7 @@ envoy_cc_library(
         "//source/common/buffer:buffer_lib",
         "//source/common/common:enum_to_int",
         "//source/common/http:message_lib",
+        "//source/common/http:utility_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/filters/http:well_known_names",
     ],

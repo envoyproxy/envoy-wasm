@@ -1,6 +1,6 @@
 #pragma once
 
-#include "absl/container/flat_hash_map.h"
+#include <map>
 
 #include "envoy/http/filter.h"
 #include "envoy/upstream/cluster_manager.h"
@@ -18,13 +18,13 @@ class FilterConfig;
 class Wasm;
 
 using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
+using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::string>>;
 
 using WasmCall0Void = std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
+using WasmCall7Void = std::function<void(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
+
 using WasmCall0Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id)>;
 using WasmCall2Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t)>;
-using WasmCall3Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t)>;
-using WasmCall4Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t, uint32_t)>;
-using WasmCall5Int = std::function<uint32_t(Envoy::Extensions::Common::Wasm::Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
 
 typedef std::shared_ptr<FilterConfig> FilterConfigConstSharedPtr;
 
@@ -39,19 +39,29 @@ public:
   const std::string& configuration() { return configuration_; }
   Wasm* base_wasm() { return wasm_.get(); }
 
-  std::string getSharedData(absl::string_view key) {
+  std::pair<std::string, uint32_t> getSharedData(absl::string_view key) {
     absl::ReaderMutexLock l(&mutex_);
     auto it = shared_data_.find(std::string(key));
     if (it != shared_data_.end()) {
       return it->second;
     }
-    return "";
+    return {"", 0};
   }
 
-  void setSharedData(absl::string_view key, absl::string_view value) {
+  bool setSharedData(absl::string_view key, absl::string_view value, uint32_t cas) {
     absl::WriterMutexLock l(&mutex_);
-    shared_data_.insert_or_assign(std::string(key), std::string(value));
+    auto it = shared_data_.find(std::string(key));
+    if (it != shared_data_.end()) {
+      if (cas && cas != it->second.second) return false;
+      // NB: do not use nextCas() here as it increases the chance of a collision. 
+      it->second = std::make_pair(std::string(value), it->second.second + 1);
+    } else {
+      shared_data_[key] = std::make_pair(std::string(value), nextCas());
+    }
+    return true;
   }
+
+  uint32_t nextCas() { auto cas = cas_; cas_++; if (!cas_) cas_++; return cas; }
 
   Wasm* getThreadWasm() { return &tls_slot_->getTyped<Wasm>(); }
 
@@ -62,7 +72,8 @@ private:
   const std::string configuration_;
 
   absl::Mutex mutex_;
-  absl::flat_hash_map<std::string, std::string> shared_data_;
+  uint32_t cas_ = 1;
+  absl::flat_hash_map<std::string, std::pair<std::string, uint32_t>> shared_data_;
 };
 
 // Thread-local Wasm VM.
@@ -97,9 +108,9 @@ public:
   WasmCall2Int onResponseBody;
   WasmCall0Int onResponseTrailers;
 
-  WasmCall5Int onHttpCallResponse;
+  WasmCall7Void onHttpCallResponse;
 
-  WasmCall0Int onLogs;
+  WasmCall0Int onDone;
   WasmCall0Void onDestroy;
 
 private:
@@ -116,26 +127,21 @@ inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callb
     return ProtobufWkt::Struct::default_instance();
   }
   const auto& metadata = callbacks->route()->routeEntry()->metadata();
-  const auto& filter_it = metadata.filter_metadata().find(HttpFilterNames::get().Lua);
+  const auto filter_it = metadata.filter_metadata().find(HttpFilterNames::get().Wasm);
   if (filter_it == metadata.filter_metadata().end()) {
     return ProtobufWkt::Struct::default_instance();
   }
   return filter_it->second;
 }
 
-class AsyncClientHandler : public Http::AsyncClient::Callbacks {
-public:
-  AsyncClientHandler(Filter *filter, uint32_t token) : filter_(filter), token_(token) {}
+struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
+  // Http::AsyncClient::Callbacks
+  void onSuccess(Envoy::Http::MessagePtr&& response) override;
+  void onFailure(Http::AsyncClient::FailureReason reason) override;
 
-  virtual void onSuccess(Envoy::Http::MessagePtr&& /* response */) {}
-  virtual void onFailure(Http::AsyncClient::FailureReason /* reason */) {}
-
-  Filter* context() { return filter_; }
-  uint32_t token() { return token_; }
-
-private:
-  Filter* const filter_;
-  const uint32_t token_;
+  Filter* filter;
+  uint32_t token;
+  Http::AsyncClient::Request* request;
 };
 
 class Filter : public Envoy::Extensions::Common::Wasm::Context, public Http::StreamFilter {
@@ -167,9 +173,26 @@ public:
   // Calls from the WASM code.
   //
 
+  // FilterCallbacks
+
+  // StreamInfo
+  virtual std::string getRequestStreamInfoProtocol();
+  virtual std::string getResponseStreamInfoProtocol();
+  // Metadata: the values are serialized ProtobufWkt::Struct
+  virtual std::string getRequestMetadata(absl::string_view key);
+  virtual void setRequestMetadata(absl::string_view key, absl::string_view serialized_proto_struct);
+  virtual PairsWithStringValues getRequestMetadataPairs();
+  virtual std::string getResponseMetadata(absl::string_view key);
+  virtual void setResponseMetadata(absl::string_view key, absl::string_view serialized_proto_struct);
+  virtual PairsWithStringValues getResponseMetadataPairs();
+
+  // Continue
+  virtual void continueRequest() { if (decoder_callbacks_) decoder_callbacks_->continueDecoding(); }
+  virtual void continueResponse() { if (encoder_callbacks_) encoder_callbacks_->continueEncoding(); }
+
   // Shared Data
-  virtual absl::string_view getSharedData(absl::string_view key);
-  virtual void setSharedData(absl::string_view key, absl::string_view value);
+  virtual std::pair<std::string, uint32_t> getSharedData(absl::string_view key);
+  virtual bool setSharedData(absl::string_view key, absl::string_view value, uint32_t cas);
 
   // Request Headers
   virtual void addRequestHeader(absl::string_view key, absl::string_view value);
@@ -203,26 +226,12 @@ public:
   virtual absl::string_view getRequestBodyBufferBytes(uint32_t start, uint32_t length);
   virtual absl::string_view getResponseBodyBufferBytes(uint32_t start, uint32_t length);
 
-  // StreamInfo
-  virtual absl::string_view getSteamInfoProtocol();
-  virtual absl::string_view getStreamInfoMetadata(absl::string_view filter,
-      absl::string_view key);
-  virtual void setStreamInfoMetadata(absl::string_view filter,
-      absl::string_view key, absl::string_view value);
-  virtual Pairs getStreamInfoPairs(absl::string_view filter);
-
   // HTTP
   // Returns a token which will be used with the corresponding onHttpCallResponse.
   virtual uint32_t httpCall(absl::string_view cluster, const Pairs& request_headers,
-      absl::string_view request_body, int timeout_millisconds);
+      absl::string_view request_body, const Pairs& request_trailers, int timeout_millisconds);
   virtual void httpRespond(const Pairs& response_headers,
-      absl::string_view body);
-
-  // Metadata: the values are serialized ProtobufWkt::Struct
-  virtual absl::string_view getMetadata(absl::string_view key);
-  virtual absl::string_view setMetadata(absl::string_view key,
-      absl::string_view serialized_proto_struct);
-  virtual Pairs getMetadataPairs();
+      absl::string_view body, const Pairs& response_trailers);
 
   // Connection
   virtual bool isSsl();
@@ -249,14 +258,22 @@ public:
   virtual Http::FilterTrailersStatus onResponseTrailers();
 
   virtual void onHttpCallResponse(uint32_t token, const Pairs& response_headers,
-                                  absl::string_view response_body);
+                                  absl::string_view response_body,
+                                  const Pairs& response_trailers);
 
-  virtual void onLogs();
+  virtual void onDone();
+
 
 protected:
+  friend struct AsyncClientHandler;
+
+  void onAsyncClientSuccess(uint32_t token, Envoy::Http::MessagePtr& response);
+  void onAsyncClientFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
+
   FilterConfigConstSharedPtr config_;
   Wasm* wasm_;
   uint32_t id_;
+  uint32_t next_async_token_ = 1;
   Http::HeaderMap* request_headers_ = nullptr;
   Http::HeaderMap* response_headers_ = nullptr;
   Buffer::Instance* requestBodyBuffer_{};
@@ -265,7 +282,8 @@ protected:
   bool response_end_of_stream_{};
   Http::HeaderMap* request_trailers_{};
   Http::HeaderMap* response_trailers_{};
-  absl::flat_hash_map<int, std::pair<AsyncClientHandler, Http::AsyncClient::Request*>> http_request_;
+  // MB: must be a node-type map as we take persistent references to the entries.
+  std::map<uint32_t, AsyncClientHandler> http_request_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};
   Envoy::Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
   bool destroyed_ = false;

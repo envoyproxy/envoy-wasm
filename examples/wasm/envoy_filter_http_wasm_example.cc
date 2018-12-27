@@ -43,7 +43,7 @@ FilterHeadersStatus ExampleContext::onResponseHeaders() {
     logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
   }
   addResponseHeader("newheader", "newheadervalue");
-  replaceResponseHeader("server", "envoy-wasm");
+  replaceResponseHeader("location", "envoy-wasm");
   return FilterHeadersStatus::Continue;
 }
 

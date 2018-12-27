@@ -5,7 +5,9 @@
 #include "common/buffer/buffer_impl.h"
 #include "common/common/assert.h"
 #include "common/common/enum_to_int.h"
+#include "common/http/header_map_impl.h"
 #include "common/http/message_impl.h"
+#include "common/http/utility.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -13,35 +15,159 @@ namespace HttpFilters {
 namespace Wasm {
 namespace {
 
-void getPairs(Filter *filter, const Pairs& result, uint32_t ptr_ptr, uint32_t size_ptr) {
-  if (result.empty()) {
-    filter->wasm_vm->copyToPointerSize("", ptr_ptr, size_ptr);
-    return;
-  }
-  int size = 4;  // number of headers
+template<typename Pairs>
+size_t pairsSize(const Pairs& result) {
+  size_t size = 4;  // number of headers
   for (auto& p : result) {
     size += 8;  // size of key, size of value
     size += p.first.size() + 1;  // null terminated key
     size += p.second.size() + 1;  // null terminated value
   }
-  char *buffer = static_cast<char*>(::malloc(size));
+  return size;
+}
+
+template<typename Pairs>
+void marshalPairs(const Pairs& result, char *buffer) {
   char *b = buffer;
-  *reinterpret_cast<int32_t*>(b) = result.size(); b += sizeof(int32_t);
+  *reinterpret_cast<uint32_t*>(b) = result.size(); b += sizeof(uint32_t);
   for (auto& p : result) {
-    *reinterpret_cast<int32_t*>(b) = p.first.size(); b += sizeof(int32_t);
-    *reinterpret_cast<int32_t*>(b) = p.second.size(); b += sizeof(int32_t);
+    *reinterpret_cast<uint32_t*>(b) = p.first.size(); b += sizeof(uint32_t);
+    *reinterpret_cast<uint32_t*>(b) = p.second.size(); b += sizeof(uint32_t);
   }
   for (auto& p : result) {
     memcpy(b, p.first.data(), p.first.size()); b += p.first.size(); *b++ = 0;
     memcpy(b, p.second.data(), p.second.size()); b += p.second.size(); *b++ = 0;
   }
-  filter->wasm_vm->copyToPointerSize(absl::string_view(buffer, size), ptr_ptr, size_ptr);
-  ::free(buffer);
+}
+
+Pairs toPairs(absl::string_view buffer) {
+  Pairs result;
+  const char *b = buffer.data();
+  if (buffer.size() < sizeof(uint32_t)) return {};
+  auto size = *reinterpret_cast<const uint32_t*>(b);  b += sizeof(uint32_t);
+  if (sizeof(uint32_t) + size * 2 * sizeof(uint32_t) > buffer.size()) return {};
+  result.resize(size);
+  for (uint32_t i = 0; i < size; i++) {
+    result[i].first = absl::string_view(nullptr, *reinterpret_cast<const uint32_t*>(b)); b += sizeof(uint32_t);
+    result[i].second = absl::string_view(nullptr, *reinterpret_cast<const uint32_t*>(b)); b += sizeof(uint32_t);
+  }
+  for (auto& p : result) {
+    p.first = absl::string_view(b, p.first.size()); b += p.first.size() + 1;
+    p.second = absl::string_view(b, p.second.size()); b += p.second.size() + 1;
+  }
+  return result;
+}
+
+template<typename Pairs>
+void getPairs(Filter *filter, const Pairs& result, uint32_t ptr_ptr, uint32_t size_ptr) {
+  if (result.empty()) {
+    filter->wasm_vm->copyToPointerSize("", ptr_ptr, size_ptr);
+    return;
+  }
+  uint32_t size = pairsSize(result);
+  uint32_t ptr; 
+  char *buffer = static_cast<char*>(filter->wasm_vm->allocMemory(size, &ptr));
+  marshalPairs(result, buffer);
+  filter->wasm_vm->setMemory(ptr_ptr, sizeof(int32_t), &ptr);
+  filter->wasm_vm->setMemory(size_ptr, sizeof(int32_t), &size);
+}
+
+void exportPairs(Filter *filter, const Pairs& pairs, uint32_t *ptr_ptr, uint32_t *size_ptr) {
+  if (pairs.empty()) {
+    *ptr_ptr = 0;
+    *size_ptr = 0;
+    return;
+  }
+  uint32_t size = pairsSize(pairs);
+  char *buffer = static_cast<char*>(filter->wasm_vm->allocMemory(size, ptr_ptr));
+  marshalPairs(pairs, buffer);
+  *size_ptr = size;
+}
+
+Http::HeaderMapPtr buildHeaderMapFromPairs(const Pairs& pairs) {
+  auto map = std::make_unique<Http::HeaderMapImpl>();
+  for (auto& p : pairs) {
+    // Note: because of the lack of a string_view interface for addCopy and
+    // the lack of an interface to add an entry with an empty value and return
+    // the entry, there is no efficient way to prevent either a double copy 
+    // of the valueor a double lookup of the entry.
+    map->addCopy(Http::LowerCaseString(std::string(p.first)), std::string(p.second));
+  }
+  return map;
 }
 
 //
 // Handlers
 //
+
+// StreamInfo
+void getRequestStreamInfoProtocolHandler(void *raw_context, uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  filter->wasm_vm->copyToPointerSize(filter->getRequestStreamInfoProtocol(), value_ptr_ptr, value_size_ptr);
+}
+
+void getResponseStreamInfoProtocolHandler(void *raw_context, uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  filter->wasm_vm->copyToPointerSize(filter->getResponseStreamInfoProtocol(), value_ptr_ptr, value_size_ptr);
+}
+
+void getRequestMetadataHandler(void *raw_context, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  filter->wasm_vm->copyToPointerSize(filter->getRequestMetadata(filter->wasm_vm->getMemory(key_ptr, key_size)), value_ptr_ptr, value_size_ptr);
+}
+
+void setRequestMetadataHandler(void *raw_context, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr, uint32_t value_size) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  filter->setRequestMetadata(filter->wasm_vm->getMemory(key_ptr, key_size), filter->wasm_vm->getMemory(value_ptr, value_size));
+}
+
+void getRequestMetadataPairsHandler(void *raw_context, uint32_t ptr_ptr, uint32_t size_ptr) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  getPairs(filter, filter->getRequestMetadataPairs(), ptr_ptr, size_ptr);
+}
+
+void getResponseMetadataHandler(void *raw_context, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  filter->wasm_vm->copyToPointerSize(filter->getResponseMetadata(filter->wasm_vm->getMemory(key_ptr, key_size)), value_ptr_ptr, value_size_ptr);
+}
+
+void setResponseMetadataHandler(void *raw_context, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr, uint32_t value_size) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  filter->setResponseMetadata(filter->wasm_vm->getMemory(key_ptr, key_size), filter->wasm_vm->getMemory(value_ptr, value_size));
+}
+
+void getResponseMetadataPairsHandler(void *raw_context, uint32_t ptr_ptr, uint32_t size_ptr) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  getPairs(filter, filter->getResponseMetadataPairs(), ptr_ptr, size_ptr);
+}
+
+// Continue
+void continueRequestHandler(void *raw_context) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  filter->continueRequest();
+}
+
+void continueResponseHandler(void *raw_context) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  filter->continueResponse();
+}
+
+// SharedData
+void getSharedDataHandler(void *raw_context, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr_ptr, uint32_t value_size_ptr, uint32_t cas_ptr) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  auto key = filter->wasm_vm->getMemory(key_ptr, key_size);
+  auto p = filter->getSharedData(key);
+  filter->wasm_vm->copyToPointerSize(p.first, value_ptr_ptr, value_size_ptr);
+  filter->wasm_vm->setMemory(cas_ptr, sizeof(uint32_t), &p.second);
+}
+
+uint32_t setSharedDataHandler(void *raw_context, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr, uint32_t value_size, uint32_t cas) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  auto key = filter->wasm_vm->getMemory(key_ptr, key_size);
+  auto value = filter->wasm_vm->getMemory(value_ptr, value_size);
+  auto ok = filter->setSharedData(key, value, cas);
+  return static_cast<uint32_t>(ok);
+}
 
 // Request Headers Handlers
 void addRequestHeaderHandler(void *raw_context, uint32_t key_ptr, uint32_t key_size, uint32_t value_ptr, uint32_t value_size) {
@@ -172,6 +298,15 @@ void getResponseBodyBufferBytesHandler(void *raw_context, uint32_t start, uint32
   filter->wasm_vm->copyToPointerSize(result, ptr_ptr, size_ptr);
 }
 
+uint32_t httpCallHandler(void *raw_context, uint32_t uri_ptr, uint32_t uri_size, uint32_t header_pairs_ptr, uint32_t header_pairs_size, uint32_t body_ptr, uint32_t body_size, uint32_t trailer_pairs_ptr, uint32_t trailer_pairs_size, uint32_t timeout_milliseconds) {
+  auto filter = WASM_CONTEXT(raw_context, Filter);
+  auto uri = filter->wasm_vm->getMemory(uri_ptr, uri_size);
+  auto headers = toPairs(filter->wasm_vm->getMemory(header_pairs_ptr, header_pairs_size));
+  auto body = filter->wasm_vm->getMemory(body_ptr, body_size);
+  auto trailers = toPairs(filter->wasm_vm->getMemory(trailer_pairs_ptr, trailer_pairs_size));
+  return filter->httpCall(uri, headers, body, trailers, timeout_milliseconds);
+}
+
 uint32_t getTotalMemoryHandler(void *) {
   return 0x7FFFFFFF;
 }
@@ -179,12 +314,12 @@ uint32_t getTotalMemoryHandler(void *) {
 }  // namespace
 
 // Shared Data
-absl::string_view Filter::getSharedData(absl::string_view key) {
+std::pair<std::string, uint32_t> Filter::getSharedData(absl::string_view key) {
   return config_->getSharedData(key);
 }
 
-void Filter::setSharedData(absl::string_view key, absl::string_view value) {
-  config_->setSharedData(key, value);
+bool Filter::setSharedData(absl::string_view key, absl::string_view value, uint32_t cas) {
+  return config_->setSharedData(key, value, cas);
 }
 
 // Headers/Trailer Helper Functions
@@ -330,53 +465,118 @@ absl::string_view Filter::getResponseBodyBufferBytes(uint32_t start, uint32_t le
   return absl::string_view(static_cast<char*>(responseBodyBuffer_->linearize(start + length)) + start, length);
 }
 
-// StreamInfo
-absl::string_view Filter::getSteamInfoProtocol() { return ""; }
-absl::string_view Filter::getStreamInfoMetadata(absl::string_view filter,
-                                                 absl::string_view key) {
-   (void) filter;
-   (void) key;
-   return "";
-}
-void Filter::setStreamInfoMetadata(absl::string_view filter, absl::string_view key,
-                                     absl::string_view value) {
-  (void) filter;
-  (void) key;
-  (void) value;
-}
-Pairs Filter::getStreamInfoPairs(absl::string_view filter) {
-  (void) filter;
-  return {};
-}
-
 // HTTP
 uint32_t Filter::httpCall(absl::string_view cluster, const Pairs& request_headers,
-                       absl::string_view request_body, int timeout_milliseconds) {
-  (void) cluster;
-  (void) request_headers;
-  (void) request_body;
-  (void) timeout_milliseconds;
-  return 0;
+    absl::string_view request_body, const Pairs& request_trailers, int timeout_milliseconds) {
+  if (timeout_milliseconds < 0) return 0;
+  auto cluster_string = std::string(cluster);
+  if (clusterManager().get(cluster_string) == nullptr) return 0;
+
+  Http::MessagePtr message(new Http::RequestMessageImpl(buildHeaderMapFromPairs(request_headers)));
+
+  // Check that we were provided certain headers.
+  if (message->headers().Path() == nullptr || message->headers().Method() == nullptr ||
+      message->headers().Host() == nullptr) {
+    return 0;
+  }
+
+  if (!request_body.empty()) {
+    message->body().reset(new Buffer::OwnedImpl(request_body.data(), request_body.size()));
+    message->headers().insertContentLength().value(request_body.size());
+  }
+
+  if (request_trailers.size() > 0) {
+    message->trailers(buildHeaderMapFromPairs(request_trailers));
+  }
+
+  absl::optional<std::chrono::milliseconds> timeout;
+  if (timeout_milliseconds > 0) {
+    timeout = std::chrono::milliseconds(timeout_milliseconds);
+  }
+
+  auto token = next_async_token_++;
+  auto& handler = http_request_[token];
+  auto http_request = clusterManager().httpAsyncClientForCluster(cluster_string).send(std::move(message), handler, timeout);
+  if (!http_request) {
+    http_request_.erase(token);
+    return 0;
+  }
+  handler.filter = this;
+  handler.token = token;
+  handler.request = http_request;
+  return token;
 }
-void Filter::httpRespond(const Pairs& response_headers,
-                          absl::string_view body) {
+
+void Filter::httpRespond(const Pairs& response_headers, absl::string_view body, const Pairs& response_trailers) {
   (void) response_headers;
   (void) body;
+  (void) response_trailers;
+}
+
+// StreamInfo
+std::string Filter::getRequestStreamInfoProtocol() {
+  if (!decoder_callbacks_) return "";
+  return Http::Utility::getProtocolString(decoder_callbacks_->streamInfo().protocol().value());
+}
+
+std::string Filter::getResponseStreamInfoProtocol() {
+  if (!encoder_callbacks_) return "";
+  return Http::Utility::getProtocolString(encoder_callbacks_->streamInfo().protocol().value());
 }
 
 // Metadata: the values are serialized ProtobufWkt::Struct
-absl::string_view Filter::getMetadata(absl::string_view key) {
-  (void) key;
-  return "";
+std::string Filter::getRequestMetadata(absl::string_view key) {
+  if (!decoder_callbacks_) return "";
+  auto& proto_struct = getMetadata(decoder_callbacks_);
+  auto it = proto_struct.fields().find(std::string(key));
+  if (it ==  proto_struct.fields().end()) return "";
+  std::string result;
+  it->second.SerializeToString(&result);
+  return result;
 }
-absl::string_view Filter::setMetadata(absl::string_view key,
-                                       absl::string_view serialized_proto_struct) {
-  (void) key;
-  (void) serialized_proto_struct;
-  return "";
+
+void Filter::setRequestMetadata(absl::string_view key, absl::string_view serialized_proto_struct) {
+  if (!decoder_callbacks_) return;
+  decoder_callbacks_->streamInfo().setDynamicMetadata(HttpFilterNames::get().Wasm, MessageUtil::keyValueStruct(std::string(key), std::string(serialized_proto_struct)));
 }
-Pairs Filter::getMetadataPairs() {
-  return {};
+
+PairsWithStringValues Filter::getRequestMetadataPairs() {
+  PairsWithStringValues result;
+  if (!encoder_callbacks_) return {};
+  auto& proto_struct = getMetadata(encoder_callbacks_);
+  for (auto &p : proto_struct.fields()) {
+    std::string value;
+    p.second.SerializeToString(&value);
+    result.emplace_back(p.first, std::move(value));
+  }
+  return result;
+}
+
+std::string Filter::getResponseMetadata(absl::string_view key) {
+  if (!encoder_callbacks_) return "";
+  auto& proto_struct = getMetadata(encoder_callbacks_);
+  auto it = proto_struct.fields().find(std::string(key));
+  if (it ==  proto_struct.fields().end()) return "";
+  std::string result;
+  it->second.SerializeToString(&result);
+  return result;
+}
+
+void Filter::setResponseMetadata(absl::string_view key, absl::string_view serialized_proto_struct) {
+  if (!encoder_callbacks_) return;
+  encoder_callbacks_->streamInfo().setDynamicMetadata(HttpFilterNames::get().Wasm, MessageUtil::keyValueStruct(std::string(key), std::string(serialized_proto_struct)));
+}
+
+PairsWithStringValues Filter::getResponseMetadataPairs() {
+  PairsWithStringValues result;
+  if (!encoder_callbacks_) return {};
+  auto& proto_struct = getMetadata(encoder_callbacks_);
+  for (auto &p : proto_struct.fields()) {
+    std::string value;
+    p.second.SerializeToString(&value);
+    result.emplace_back(p.first, std::move(value));
+  }
+  return result;
 }
 
 // Connection
@@ -453,15 +653,14 @@ Http::FilterTrailersStatus Filter::onResponseTrailers() {
 }
 
 void Filter::onHttpCallResponse(uint32_t token, const Pairs& response_headers,
-                                 absl::string_view response_body) {
-  (void) token;
-  (void) response_headers;
-  (void) response_body;
-}
-
-void Filter::onLogs() {
-  if (!wasm_->onLogs) return;
-  wasm_->onLogs(this, id);
+                                 absl::string_view response_body, const Pairs& response_trailers) {
+  if (!wasm_->onHttpCallResponse) return;
+  uint32_t headers_ptr, headers_size, trailers_ptr, trailers_size;
+  exportPairs(this, response_headers, &headers_ptr, &headers_size);
+  exportPairs(this, response_trailers, &trailers_ptr, &trailers_size);
+  uint32_t body_ptr = wasm_->wasm_vm()->copyString(response_body);
+  uint32_t body_size = response_body.size();
+  wasm_->onHttpCallResponse(this, id, token, headers_ptr, headers_size, body_ptr, body_size, trailers_ptr, trailers_size);
 }
 
 Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
@@ -469,6 +668,22 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
   if (wasm_vm_) {
     registerCallback(wasm_vm_.get(), "log", &Common::Wasm::Context::wasmLogHandler);
 #define _REGISTER(_fn) registerCallback(wasm_vm_.get(), #_fn, &_fn##Handler);
+    _REGISTER(getRequestStreamInfoProtocol);
+    _REGISTER(getResponseStreamInfoProtocol);
+
+    _REGISTER(getRequestMetadata);
+    _REGISTER(setRequestMetadata);
+    _REGISTER(getRequestMetadataPairs);
+    _REGISTER(getResponseMetadata);
+    _REGISTER(setResponseMetadata);
+    _REGISTER(getResponseMetadataPairs);
+
+    _REGISTER(continueRequest);
+    _REGISTER(continueResponse);
+
+    _REGISTER(getSharedData);
+    _REGISTER(setSharedData);
+
     _REGISTER(getRequestHeader);
     _REGISTER(addRequestHeader);
     _REGISTER(replaceRequestHeader);
@@ -496,6 +711,8 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
     _REGISTER(getRequestBodyBufferBytes);
     _REGISTER(getResponseBodyBufferBytes);
 
+    _REGISTER(httpCall);
+
     _REGISTER(getTotalMemory);
 #undef _REGISTER
   }
@@ -511,7 +728,8 @@ void Wasm::getFunctions() {
   _GET(onResponseHeaders);
   _GET(onResponseBody);
   _GET(onResponseTrailers);
-  _GET(onLogs);
+  _GET(onHttpCallResponse);
+  _GET(onDone);
   _GET(onDestroy);
 #undef _GET
 }
@@ -572,10 +790,14 @@ void FilterConfig::initialize(FilterConfigConstSharedPtr this_ptr) {
 Filter::Filter(FilterConfigConstSharedPtr config) : Extensions::Common::Wasm::Context(config->getThreadWasm()->wasm_vm()), config_(config), wasm_(config->getThreadWasm()) {}
 Filter::Filter(FilterConfigConstSharedPtr config, Wasm *wasm) : Extensions::Common::Wasm::Context(wasm->wasm_vm()), config_(config), wasm_(wasm) {}
 
+void Filter::onDone() {
+  if (wasm_->onDone) wasm_->onDone(this, id);
+}
+
 void Filter::onDestroy() {
   if (destroyed_) return;
   destroyed_ = true;
-  wasm_->onDestroy(this, id);
+  if (wasm_->onDestroy) wasm_->onDestroy(this, id);
 }
 
 Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool end_stream) {
@@ -625,6 +847,26 @@ Http::FilterTrailersStatus Filter::encodeTrailers(Http::HeaderMap& trailers) {
 void Filter::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks& callbacks) {
   encoder_callbacks_ = &callbacks;
 }
+
+void Filter::onAsyncClientSuccess(uint32_t token, Envoy::Http::MessagePtr& response) {
+  auto body = absl::string_view(static_cast<char*>(response->body()->linearize(response->body()->length())), response->body()->length());
+  onHttpCallResponse(token, getHeaderPairs(&response->headers()), body, getHeaderPairs(response->trailers()));
+  http_request_.erase(token);
+}
+
+void Filter::onAsyncClientFailure(uint32_t token, Http::AsyncClient::FailureReason /* reason */) {
+  onHttpCallResponse(token, {}, "", {});
+  http_request_.erase(token);
+}
+
+void AsyncClientHandler::onSuccess(Envoy::Http::MessagePtr&& response) {
+  filter->onAsyncClientSuccess(token, response);
+}
+
+void AsyncClientHandler::onFailure(Http::AsyncClient::FailureReason reason) {
+  filter->onAsyncClientFailure(token, reason);
+}
+
 } // namespace Wasm
 } // namespace HttpFilters
 } // namespace Extensions

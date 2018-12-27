@@ -42,8 +42,16 @@ extern "C" EMSCRIPTEN_KEEPALIVE FilterTrailersStatus onResponseTrailers(uint32_t
   return getContext(context_id)->onResponseTrailers();
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void onLogs(uint32_t context_id) {
-  getContext(context_id)->onLogs();
+extern "C" EMSCRIPTEN_KEEPALIVE void onHttpCallResponse(uint32_t context_id, uint32_t token, uint32_t header_pairs_ptr,
+    uint32_t header_pairs_size, uint32_t body_ptr, uint32_t body_size, uint32_t trailer_pairs_ptr, uint32_t trailer_pairs_size) {
+  return getContext(context_id)->onHttpCallResponse(token,
+      std::make_unique<WasmData>(reinterpret_cast<char*>(header_pairs_ptr), header_pairs_size),
+      std::make_unique<WasmData>(reinterpret_cast<char*>(body_ptr), body_size),
+      std::make_unique<WasmData>(reinterpret_cast<char*>(trailer_pairs_ptr), trailer_pairs_size));
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void onDone(uint32_t context_id) {
+  getContext(context_id)->onDone();
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void onDestroy(uint32_t context_id) {
