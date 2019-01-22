@@ -1,5 +1,7 @@
 #include "extensions/filters/network/thrift_proxy/router/router_impl.h"
 
+#include <memory>
+
 #include "envoy/config/filter/network/thrift_proxy/v2alpha1/thrift_proxy.pb.h"
 #include "envoy/upstream/cluster_manager.h"
 #include "envoy/upstream/thread_local_cluster.h"
@@ -9,6 +11,8 @@
 
 #include "extensions/filters/network/thrift_proxy/app_exception_impl.h"
 #include "extensions/filters/network/well_known_names.h"
+
+#include "absl/strings/match.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -27,8 +31,8 @@ RouteEntryImplBase::RouteEntryImplBase(
     const auto filter_it = route.route().metadata_match().filter_metadata().find(
         Envoy::Config::MetadataFilters::get().ENVOY_LB);
     if (filter_it != route.route().metadata_match().filter_metadata().end()) {
-      metadata_match_criteria_.reset(
-          new Envoy::Router::MetadataMatchCriteriaImpl(filter_it->second));
+      metadata_match_criteria_ =
+          std::make_unique<Envoy::Router::MetadataMatchCriteriaImpl>(filter_it->second);
     }
   }
 
@@ -74,8 +78,8 @@ RouteEntryImplBase::WeightedClusterEntry::WeightedClusterEntry(
         metadata_match_criteria_ =
             parent.metadata_match_criteria_->mergeMatchCriteria(filter_it->second);
       } else {
-        metadata_match_criteria_.reset(
-            new Envoy::Router::MetadataMatchCriteriaImpl(filter_it->second));
+        metadata_match_criteria_ =
+            std::make_unique<Envoy::Router::MetadataMatchCriteriaImpl>(filter_it->second);
       }
     }
   }
@@ -112,7 +116,7 @@ ServiceNameRouteEntryImpl::ServiceNameRouteEntryImpl(
     throw EnvoyException("Cannot have an empty service name with inversion enabled");
   }
 
-  if (!service_name.empty() && !StringUtil::endsWith(service_name, ":")) {
+  if (!service_name.empty() && !absl::EndsWith(service_name, ":")) {
     service_name_ = service_name + ":";
   } else {
     service_name_ = service_name;
@@ -122,9 +126,9 @@ ServiceNameRouteEntryImpl::ServiceNameRouteEntryImpl(
 RouteConstSharedPtr ServiceNameRouteEntryImpl::matches(const MessageMetadata& metadata,
                                                        uint64_t random_value) const {
   if (RouteEntryImplBase::headersMatch(metadata.headers())) {
-    bool matches = service_name_.empty() ||
-                   (metadata.hasMethodName() &&
-                    StringUtil::startsWith(metadata.methodName().c_str(), service_name_));
+    bool matches =
+        service_name_.empty() ||
+        (metadata.hasMethodName() && absl::StartsWith(metadata.methodName(), service_name_));
 
     if (matches ^ invert_) {
       return clusterEntry(random_value);
@@ -244,7 +248,7 @@ FilterStatus Router::messageBegin(MessageMetadataSharedPtr metadata) {
   ASSERT(protocol != ProtocolType::Auto);
 
   Tcp::ConnectionPool::Instance* conn_pool = cluster_manager_.tcpConnPoolForCluster(
-      route_entry_->clusterName(), Upstream::ResourcePriority::Default, this);
+      route_entry_->clusterName(), Upstream::ResourcePriority::Default, this, nullptr);
   if (!conn_pool) {
     callbacks_->sendLocalReply(
         AppException(AppExceptionType::InternalError,
@@ -255,7 +259,8 @@ FilterStatus Router::messageBegin(MessageMetadataSharedPtr metadata) {
 
   ENVOY_STREAM_LOG(debug, "router decoding request", *callbacks_);
 
-  upstream_request_.reset(new UpstreamRequest(*this, *conn_pool, metadata, transport, protocol));
+  upstream_request_ =
+      std::make_unique<UpstreamRequest>(*this, *conn_pool, metadata, transport, protocol);
   return upstream_request_->start();
 }
 

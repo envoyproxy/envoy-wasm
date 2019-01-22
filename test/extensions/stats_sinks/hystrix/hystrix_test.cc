@@ -118,7 +118,7 @@ private:
 
 class HystrixSinkTest : public testing::Test {
 public:
-  HystrixSinkTest() { sink_.reset(new HystrixSink(server_, window_size_)); }
+  HystrixSinkTest() { sink_ = std::make_unique<HystrixSink>(server_, window_size_); }
 
   Buffer::OwnedImpl createClusterAndCallbacks() {
     // Set cluster.
@@ -519,7 +519,7 @@ TEST_F(HystrixSinkTest, HystrixEventStreamHandler) {
 
   Http::HeaderMapImpl response_headers;
 
-  NiceMock<Server::Configuration::MockAdminStream> admin_stream_mock;
+  NiceMock<Server::MockAdminStream> admin_stream_mock;
   NiceMock<Network::MockConnection> connection_mock;
 
   auto addr_instance_ = Envoy::Network::Utility::parseInternetAddress("2.3.4.5", 123, false);

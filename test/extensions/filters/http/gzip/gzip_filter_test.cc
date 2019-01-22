@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "common/compressor/zlib_compressor_impl.h"
 #include "common/decompressor/zlib_decompressor_impl.h"
 #include "common/protobuf/utility.h"
@@ -63,7 +65,7 @@ protected:
     envoy::config::filter::http::gzip::v2::Gzip gzip;
     MessageUtil::loadFromJson(json, gzip);
     config_.reset(new GzipFilterConfig(gzip, "test.", stats_, runtime_));
-    filter_.reset(new GzipFilter(config_));
+    filter_ = std::make_unique<GzipFilter>(config_);
   }
 
   void verifyCompressedData() {
@@ -109,6 +111,8 @@ protected:
     Http::TestHeaderMapImpl continue_headers;
     EXPECT_EQ(Http::FilterHeadersStatus::Continue,
               filter_->encode100ContinueHeaders(continue_headers));
+    Http::MetadataMap metadata_map{{"metadata", "metadata"}};
+    EXPECT_EQ(Http::FilterMetadataStatus::Continue, filter_->encodeMetadata(metadata_map));
     EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->encodeHeaders(headers, false));
     EXPECT_EQ("", headers.get_("content-encoding"));
     EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->encodeData(data_, false));

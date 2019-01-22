@@ -1,5 +1,7 @@
 #include "common/http/utility.h"
 
+#include <http_parser.h>
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -20,10 +22,48 @@
 #include "common/network/utility.h"
 #include "common/protobuf/utility.h"
 
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 
 namespace Envoy {
 namespace Http {
+
+static const char kDefaultPath[] = "/";
+
+bool Utility::Url::initialize(absl::string_view absolute_url) {
+  struct http_parser_url u;
+  const bool is_connect = false;
+  http_parser_url_init(&u);
+  const int result =
+      http_parser_parse_url(absolute_url.data(), absolute_url.length(), is_connect, &u);
+
+  if (result != 0) {
+    return false;
+  }
+  if ((u.field_set & (1 << UF_HOST)) != (1 << UF_HOST) &&
+      (u.field_set & (1 << UF_SCHEMA)) != (1 << UF_SCHEMA)) {
+    return false;
+  }
+  scheme_ = absl::string_view(absolute_url.data() + u.field_data[UF_SCHEMA].off,
+                              u.field_data[UF_SCHEMA].len);
+
+  uint16_t authority_len = u.field_data[UF_HOST].len;
+  if ((u.field_set & (1 << UF_PORT)) == (1 << UF_PORT)) {
+    authority_len = authority_len + u.field_data[UF_PORT].len + 1;
+  }
+  host_and_port_ =
+      absl::string_view(absolute_url.data() + u.field_data[UF_HOST].off, authority_len);
+
+  // RFC allows the absolute-uri to not end in /, but the absolute path form
+  // must start with
+  if ((u.field_set & (1 << UF_PATH)) == (1 << UF_PATH) && u.field_data[UF_PATH].len > 0) {
+    path_ = absl::string_view(absolute_url.data() + u.field_data[UF_PATH].off,
+                              u.field_data[UF_PATH].len);
+  } else {
+    path_ = absl::string_view(kDefaultPath, 1);
+  }
+  return true;
+}
 
 void Utility::appendXff(HeaderMap& headers, const Network::Address::Instance& remote_address) {
   if (remote_address.type() != Network::Address::Type::Ip) {
@@ -192,7 +232,6 @@ uint64_t Utility::getResponseStatus(const HeaderMap& headers) {
   if (!header || !StringUtil::atoul(headers.Status()->value().c_str(), response_code)) {
     throw CodecClientException(":status must be specified and a valid unsigned long");
   }
-
   return response_code;
 }
 
@@ -211,9 +250,9 @@ bool Utility::isH2UpgradeRequest(const HeaderMap& headers) {
 }
 
 bool Utility::isWebSocketUpgradeRequest(const HeaderMap& headers) {
-  return (isUpgrade(headers) && (0 == StringUtil::caseInsensitiveCompare(
-                                          headers.Upgrade()->value().c_str(),
-                                          Http::Headers::get().UpgradeValues.WebSocket.c_str())));
+  return (isUpgrade(headers) &&
+          absl::EqualsIgnoreCase(headers.Upgrade()->value().getStringView(),
+                                 Http::Headers::get().UpgradeValues.WebSocket));
 }
 
 Http2Settings
@@ -229,6 +268,7 @@ Utility::parseHttp2Settings(const envoy::api::v2::core::Http2ProtocolOptions& co
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, initial_connection_window_size,
                                       Http::Http2Settings::DEFAULT_INITIAL_CONNECTION_WINDOW_SIZE);
   ret.allow_connect_ = config.allow_connect();
+  ret.allow_metadata_ = config.allow_metadata();
   return ret;
 }
 
@@ -242,7 +282,8 @@ Utility::parseHttp1Settings(const envoy::api::v2::core::Http1ProtocolOptions& co
 }
 
 void Utility::sendLocalReply(bool is_grpc, StreamDecoderFilterCallbacks& callbacks,
-                             const bool& is_reset, Code response_code, const std::string& body_text,
+                             const bool& is_reset, Code response_code, absl::string_view body_text,
+                             const absl::optional<Grpc::Status::GrpcStatus> grpc_status,
                              bool is_head_request) {
   sendLocalReply(is_grpc,
                  [&](HeaderMapPtr&& headers, bool end_stream) -> void {
@@ -251,13 +292,14 @@ void Utility::sendLocalReply(bool is_grpc, StreamDecoderFilterCallbacks& callbac
                  [&](Buffer::Instance& data, bool end_stream) -> void {
                    callbacks.encodeData(data, end_stream);
                  },
-                 is_reset, response_code, body_text, is_head_request);
+                 is_reset, response_code, body_text, grpc_status, is_head_request);
 }
 
 void Utility::sendLocalReply(
     bool is_grpc, std::function<void(HeaderMapPtr&& headers, bool end_stream)> encode_headers,
     std::function<void(Buffer::Instance& data, bool end_stream)> encode_data, const bool& is_reset,
-    Code response_code, const std::string& body_text, bool is_head_request) {
+    Code response_code, absl::string_view body_text,
+    const absl::optional<Grpc::Status::GrpcStatus> grpc_status, bool is_head_request) {
   // encode_headers() may reset the stream, so the stream must not be reset before calling it.
   ASSERT(!is_reset);
   // Respond with a gRPC trailers-only response if the request is gRPC
@@ -266,7 +308,9 @@ void Utility::sendLocalReply(
         {Headers::get().Status, std::to_string(enumToInt(Code::OK))},
         {Headers::get().ContentType, Headers::get().ContentTypeValues.Grpc},
         {Headers::get().GrpcStatus,
-         std::to_string(enumToInt(Grpc::Utility::httpToGrpcStatus(enumToInt(response_code))))}}};
+         std::to_string(
+             enumToInt(grpc_status ? grpc_status.value()
+                                   : Grpc::Utility::httpToGrpcStatus(enumToInt(response_code))))}}};
     if (!body_text.empty() && !is_head_request) {
       // TODO: GrpcMessage should be percent-encoded
       response_headers->insertGrpcMessage().value(body_text);
@@ -443,6 +487,47 @@ void Utility::transformUpgradeResponseFromH2toH1(HeaderMap& headers, absl::strin
     headers.insertUpgrade().value().setCopy(upgrade.data(), upgrade.size());
     headers.insertConnection().value().setReference(Http::Headers::get().ConnectionValues.Upgrade);
     headers.insertStatus().value().setInteger(101);
+  }
+}
+
+const Router::RouteSpecificFilterConfig*
+Utility::resolveMostSpecificPerFilterConfigGeneric(const std::string& filter_name,
+                                                   const Router::RouteConstSharedPtr& route) {
+
+  const Router::RouteSpecificFilterConfig* maybe_filter_config{};
+  traversePerFilterConfigGeneric(
+      filter_name, route, [&maybe_filter_config](const Router::RouteSpecificFilterConfig& cfg) {
+        maybe_filter_config = &cfg;
+      });
+  return maybe_filter_config;
+}
+
+void Utility::traversePerFilterConfigGeneric(
+    const std::string& filter_name, const Router::RouteConstSharedPtr& route,
+    std::function<void(const Router::RouteSpecificFilterConfig&)> cb) {
+  if (!route) {
+    return;
+  }
+
+  const Router::RouteEntry* routeEntry = route->routeEntry();
+
+  if (routeEntry != nullptr) {
+    auto maybe_vhost_config = routeEntry->virtualHost().perFilterConfig(filter_name);
+    if (maybe_vhost_config != nullptr) {
+      cb(*maybe_vhost_config);
+    }
+  }
+
+  auto maybe_route_config = route->perFilterConfig(filter_name);
+  if (maybe_route_config != nullptr) {
+    cb(*maybe_route_config);
+  }
+
+  if (routeEntry != nullptr) {
+    auto maybe_weighted_cluster_config = routeEntry->perFilterConfig(filter_name);
+    if (maybe_weighted_cluster_config != nullptr) {
+      cb(*maybe_weighted_cluster_config);
+    }
   }
 }
 

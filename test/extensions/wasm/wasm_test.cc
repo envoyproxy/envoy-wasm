@@ -28,8 +28,10 @@ public:
 };
 
 TEST(WasmTest, Logging) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
   Event::SimulatedTimeSystem time_system;
-  Event::DispatcherImpl dispatcher(time_system);
+  Event::DispatcherImpl dispatcher(time_system, *api);
   auto wasm = std::make_unique<Wasm>("envoy.wasm.vm.wavm");
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(

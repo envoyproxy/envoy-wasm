@@ -54,7 +54,7 @@ TEST_P(Http2IntegrationTest, FlowControlOnAndGiantBody) {
 }
 
 TEST_P(Http2IntegrationTest, RouterHeaderOnlyRequestAndResponseNoBuffer) {
-  testRouterHeaderOnlyRequestAndResponse(true);
+  testRouterHeaderOnlyRequestAndResponse();
 }
 
 TEST_P(Http2IntegrationTest, RouterRequestAndResponseLargeHeaderNoBuffer) {
@@ -62,7 +62,7 @@ TEST_P(Http2IntegrationTest, RouterRequestAndResponseLargeHeaderNoBuffer) {
 }
 
 TEST_P(Http2IntegrationTest, ShutdownWithActiveConnPoolConnections) {
-  testRouterHeaderOnlyRequestAndResponse(false);
+  testRequestAndResponseShutdownWithActiveConnection();
 }
 
 TEST_P(Http2IntegrationTest, RouterUpstreamDisconnectBeforeRequestcomplete) {
@@ -94,6 +94,20 @@ TEST_P(Http2IntegrationTest, Retry) { testRetry(); }
 TEST_P(Http2IntegrationTest, RetryAttemptCount) { testRetryAttemptCountHeader(); }
 
 TEST_P(Http2IntegrationTest, EnvoyHandling100Continue) { testEnvoyHandling100Continue(); }
+
+TEST_P(Http2MetadataIntegrationTest, ProxyMetadataInResponse) {
+  testEnvoyProxyMetadataInResponse();
+}
+
+TEST_P(Http2MetadataIntegrationTest, ProxyMultipleMetadata) { testEnvoyProxyMultipleMetadata(); }
+
+TEST_P(Http2MetadataIntegrationTest, ProxyInvalidMetadata) { testEnvoyProxyInvalidMetadata(); }
+
+TEST_P(Http2MetadataIntegrationTest, TestResponseMetadata) { testResponseMetadata(); }
+
+TEST_P(Http2MetadataIntegrationTest, ProxyMultipleMetadataReachSizeLimit) {
+  testEnvoyMultipleMetadataReachSizeLimit();
+}
 
 TEST_P(Http2IntegrationTest, EnvoyHandlingDuplicate100Continue) {
   testEnvoyHandling100Continue(true);
@@ -131,6 +145,12 @@ TEST_P(Http2IntegrationTest, MaxHeadersInCodec) {
   response->waitForReset();
   codec_client_->close();
 }
+
+TEST_P(Http2IntegrationTest, EncodingHeaderOnlyResponse) { testHeadersOnlyFilterEncoding(); }
+
+TEST_P(Http2IntegrationTest, DecodingHeaderOnlyResponse) { testHeadersOnlyFilterDecoding(); }
+
+TEST_P(Http2IntegrationTest, DecodingHeaderOnlyInterleaved) { testHeadersOnlyFilterInterleaved(); }
 
 TEST_P(Http2IntegrationTest, DownstreamResetBeforeResponseComplete) {
   testDownstreamResetBeforeResponseComplete();
@@ -484,6 +504,10 @@ void Http2RingHashIntegrationTest::createUpstreams() {
 }
 
 INSTANTIATE_TEST_CASE_P(IpVersions, Http2RingHashIntegrationTest,
+                        testing::ValuesIn(TestEnvironment::getIpVersionsForTest()),
+                        TestUtility::ipTestParamsToString);
+
+INSTANTIATE_TEST_CASE_P(IpVersions, Http2MetadataIntegrationTest,
                         testing::ValuesIn(TestEnvironment::getIpVersionsForTest()),
                         TestUtility::ipTestParamsToString);
 

@@ -496,7 +496,10 @@ uint32_t Filter::httpCall(absl::string_view cluster, const Pairs& request_header
 
   auto token = next_async_token_++;
   auto& handler = http_request_[token];
-  auto http_request = clusterManager().httpAsyncClientForCluster(cluster_string).send(std::move(message), handler, timeout);
+  auto http_request = clusterManager()
+                          .httpAsyncClientForCluster(cluster_string)
+                          .send(std::move(message), handler,
+                                Http::AsyncClient::RequestOptions().setTimeout(timeout));
   if (!http_request) {
     http_request_.erase(token);
     return 0;
@@ -842,6 +845,11 @@ Http::FilterDataStatus Filter::encodeData(Buffer::Instance& data, bool end_strea
 Http::FilterTrailersStatus Filter::encodeTrailers(Http::HeaderMap& trailers) {
   response_trailers_ = &trailers;
   return onResponseTrailers();
+}
+
+Http::FilterMetadataStatus Filter::encodeMetadata(Http::MetadataMap&) {
+  // TODO(PiotrSikora): add onResponseMetadata();
+  return Http::FilterMetadataStatus::Continue;
 }
 
 void Filter::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks& callbacks) {

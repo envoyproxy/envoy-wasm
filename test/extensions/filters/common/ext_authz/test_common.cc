@@ -1,5 +1,7 @@
 #include "test/extensions/filters/common/ext_authz/test_common.h"
 
+#include <memory>
+
 #include "test/mocks/upstream/mocks.h"
 
 namespace Envoy {
@@ -88,9 +90,14 @@ Http::MessagePtr TestCommon::makeMessageResponse(const HeaderValueOptionVector& 
     response->headers().addCopy(Http::LowerCaseString(header.header().key()),
                                 header.header().value());
   }
-  response->body().reset(new Buffer::OwnedImpl(body));
+  response->body() = std::make_unique<Buffer::OwnedImpl>(body);
   return response;
 };
+
+bool TestCommon::CompareHeaderVector(const Http::HeaderVector& lhs, const Http::HeaderVector& rhs) {
+  return std::set<std::pair<Http::LowerCaseString, std::string>>(lhs.begin(), lhs.end()) ==
+         std::set<std::pair<Http::LowerCaseString, std::string>>(rhs.begin(), rhs.end());
+}
 
 } // namespace ExtAuthz
 } // namespace Common

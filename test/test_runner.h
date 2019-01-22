@@ -7,6 +7,7 @@
 
 #include "test/mocks/access_log/mocks.h"
 #include "test/test_common/environment.h"
+#include "test/test_common/global.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -17,6 +18,10 @@ public:
   static int RunTests(int argc, char** argv) {
     ::testing::InitGoogleMock(&argc, argv);
     Event::Libevent::Global::initialize();
+
+    // Use the recommended, but not default, "threadsafe" style for the Death Tests.
+    // See: https://github.com/google/googletest/commit/84ec2e0365d791e4ebc7ec249f09078fb5ab6caa
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
 
     // Set gtest properties
     // (https://github.com/google/googletest/blob/master/googletest/docs/AdvancedGuide.md#logging-additional-information),
@@ -41,7 +46,16 @@ public:
       file_logger = std::make_unique<Logger::FileSinkDelegate>(
           TestEnvironment::getOptions().logPath(), access_log_manager, Logger::Registry::getSink());
     }
-    return RUN_ALL_TESTS();
+    int exit_status = RUN_ALL_TESTS();
+
+    // Check that all singletons have been destroyed.
+    std::string active_singletons = Test::Globals::describeActiveSingletons();
+    if (!active_singletons.empty()) {
+      std::cerr << "\n\nFAIL: Active singletons exist:\n" << active_singletons << std::endl;
+      exit_status = EXIT_FAILURE;
+    }
+
+    return exit_status;
   }
 };
 } // namespace Envoy

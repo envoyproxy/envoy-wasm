@@ -4,6 +4,28 @@ load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library")
 def envoy_package():
     native.package(default_visibility = ["//visibility:public"])
 
+# A genrule variant that can output a directory. This is useful when doing things like
+# generating a fuzz corpus mechanically.
+def _envoy_directory_genrule_impl(ctx):
+    tree = ctx.actions.declare_directory(ctx.attr.name + ".outputs")
+    ctx.actions.run_shell(
+        inputs = ctx.files.srcs,
+        tools = ctx.files.tools,
+        outputs = [tree],
+        command = "mkdir -p " + tree.path + " && " + ctx.expand_location(ctx.attr.cmd),
+        env = {"GENRULE_OUTPUT_DIR": tree.path},
+    )
+    return [DefaultInfo(files = depset([tree]))]
+
+envoy_directory_genrule = rule(
+    implementation = _envoy_directory_genrule_impl,
+    attrs = {
+        "srcs": attr.label_list(),
+        "cmd": attr.string(),
+        "tools": attr.label_list(),
+    },
+)
+
 # Compute the final copts based on various options.
 def envoy_copts(repository, test = False):
     posix_options = [
@@ -19,6 +41,8 @@ def envoy_copts(repository, test = False):
 
     msvc_options = [
         "-WX",
+        "-Zc:__cplusplus",
+        "-std:c++14",
         "-DWIN32",
         "-DWIN32_LEAN_AND_MEAN",
         # need win8 for ntohll
@@ -44,8 +68,14 @@ def envoy_copts(repository, test = False):
                repository + "//bazel:disable_tcmalloc": ["-DABSL_MALLOC_HOOK_MMAP_DISABLE"],
                "//conditions:default": ["-DTCMALLOC"],
            }) + select({
+               repository + "//bazel:debug_tcmalloc": ["-DENVOY_MEMORY_DEBUG_ENABLED=1"],
+               "//conditions:default": [],
+           }) + select({
                repository + "//bazel:disable_signal_trace": [],
                "//conditions:default": ["-DENVOY_HANDLE_SIGNALS"],
+           }) + select({
+               repository + "//bazel:enable_log_debug_assert_in_release": ["-DENVOY_LOG_DEBUG_ASSERT_IN_RELEASE"],
+               "//conditions:default": [],
            }) + select({
                # TCLAP command line parser needs this to support int64_t/uint64_t
                "@bazel_tools//tools/osx:darwin": ["-DHAVE_LONG_LONG"],
@@ -56,14 +86,16 @@ def envoy_copts(repository, test = False):
 
 def envoy_static_link_libstdcpp_linkopts():
     return envoy_select_force_libcpp(
-        ["--stdlib=libc++"],
+        # TODO(PiotrSikora): statically link libc++ once that's possible.
+        # See: https://reviews.llvm.org/D53238
+        ["-stdlib=libc++"],
         ["-static-libstdc++", "-static-libgcc"],
     )
 
 # Compute the final linkopts based on various options.
 def envoy_linkopts():
     return select({
-               # The OSX system library transitively links common libraries (e.g., pthread).
+               # The macOS system library transitively links common libraries (e.g., pthread).
                "@bazel_tools//tools/osx:darwin": [
                    # See note here: http://luajit.org/install.html
                    "-pagezero_size 10000",
@@ -71,6 +103,8 @@ def envoy_linkopts():
                ],
                "@envoy//bazel:windows_x86_64": [
                    "-DEFAULTLIB:advapi32.lib",
+                   "-DEFAULTLIB:ws2_32.lib",
+                   "-WX",
                ],
                "//conditions:default": [
                    "-pthread",
@@ -89,7 +123,7 @@ def _envoy_stamped_linkopts():
         "@envoy//bazel:coverage_build": [],
         "@envoy//bazel:windows_x86_64": [],
 
-        # MacOS doesn't have an official equivalent to the `.note.gnu.build-id`
+        # macOS doesn't have an official equivalent to the `.note.gnu.build-id`
         # ELF section, so just stuff the raw ID into a new text section.
         "@bazel_tools//tools/osx:darwin": [
             "-sectcreate __TEXT __build_id",
@@ -120,11 +154,16 @@ def envoy_test_linkopts():
             "-pagezero_size 10000",
             "-image_base 100000000",
         ],
+        "@envoy//bazel:windows_x86_64": [
+            "-DEFAULTLIB:advapi32.lib",
+            "-DEFAULTLIB:ws2_32.lib",
+            "-WX",
+        ],
 
         # TODO(mattklein123): It's not great that we universally link against the following libs.
         # In particular, -latomic and -lrt are not needed on all platforms. Make this more granular.
         "//conditions:default": ["-pthread", "-lrt", "-ldl"],
-    }) + envoy_select_force_libcpp(["-lc++experimental"], ["-lstdc++fs", "-latomic"])
+    }) + envoy_select_force_libcpp(["-lc++fs"], ["-lstdc++fs", "-latomic"])
 
 # References to Envoy external dependencies should be wrapped with this function.
 def envoy_external_dep_path(dep):
@@ -134,6 +173,7 @@ def envoy_external_dep_path(dep):
 def tcmalloc_external_dep(repository):
     return select({
         repository + "//bazel:disable_tcmalloc": None,
+        repository + "//bazel:debug_tcmalloc": envoy_external_dep_path("tcmalloc_debug"),
         "//conditions:default": envoy_external_dep_path("tcmalloc_and_profiler"),
     })
 
@@ -143,6 +183,7 @@ def tcmalloc_external_dep(repository):
 def tcmalloc_external_deps(repository):
     return select({
         repository + "//bazel:disable_tcmalloc": [],
+        repository + "//bazel:debug_tcmalloc": [envoy_external_dep_path("tcmalloc_debug")],
         "//conditions:default": [envoy_external_dep_path("tcmalloc_and_profiler")],
     })
 
@@ -160,6 +201,45 @@ def envoy_include_prefix(path):
 # before being passed to a native bazel function.
 def envoy_basic_cc_library(name, **kargs):
     native.cc_library(name = name, **kargs)
+
+# Used to select a dependency that has different implementations on POSIX vs Windows.
+# The platform-specific implementations should be specified with envoy_cc_posix_library
+# and envoy_cc_win32_library respectively
+def envoy_cc_platform_dep(name):
+    return select({
+        "@envoy//bazel:windows_x86_64": [name + "_win32"],
+        "//conditions:default": [name + "_posix"],
+    })
+
+# Used to specify a library that only builds on POSIX
+def envoy_cc_posix_library(name, srcs = [], hdrs = [], **kargs):
+    envoy_cc_library(
+        name = name + "_posix",
+        srcs = select({
+            "@envoy//bazel:windows_x86_64": [],
+            "//conditions:default": srcs,
+        }),
+        hdrs = select({
+            "@envoy//bazel:windows_x86_64": [],
+            "//conditions:default": hdrs,
+        }),
+        **kargs
+    )
+
+# Used to specify a library that only builds on Windows
+def envoy_cc_win32_library(name, srcs = [], hdrs = [], **kargs):
+    envoy_cc_library(
+        name = name + "_win32",
+        srcs = select({
+            "@envoy//bazel:windows_x86_64": srcs,
+            "//conditions:default": [],
+        }),
+        hdrs = select({
+            "@envoy//bazel:windows_x86_64": hdrs,
+            "//conditions:default": [],
+        }),
+        **kargs
+    )
 
 # Envoy C++ library targets should be specified with this function.
 def envoy_cc_library(
@@ -194,7 +274,7 @@ def envoy_cc_library(
             envoy_external_dep_path("spdlog"),
             envoy_external_dep_path("fmtlib"),
         ],
-        include_prefix = envoy_include_prefix(PACKAGE_NAME),
+        include_prefix = envoy_include_prefix(native.package_name()),
         alwayslink = 1,
         linkstatic = 1,
         linkstamp = select({
@@ -236,12 +316,27 @@ def envoy_cc_binary(
         deps = deps,
     )
 
+load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
+
 # Envoy C++ fuzz test targes. These are not included in coverage runs.
 def envoy_cc_fuzz_test(name, corpus, deps = [], tags = [], **kwargs):
+    if not (corpus.startswith("//") or corpus.startswith(":")):
+        corpus_name = name + "_corpus"
+        corpus = native.glob([corpus + "/**"])
+        native.filegroup(
+            name = corpus_name,
+            srcs = corpus,
+        )
+    else:
+        corpus_name = corpus
+    pkg_tar(
+        name = name + "_corpus_tar",
+        srcs = [corpus_name],
+        testonly = 1,
+    )
     test_lib_name = name + "_lib"
     envoy_cc_test_library(
         name = test_lib_name,
-        data = native.glob([corpus + "/**"]),
         deps = deps + ["//test/fuzz:fuzz_runner_lib"],
         **kwargs
     )
@@ -250,8 +345,9 @@ def envoy_cc_fuzz_test(name, corpus, deps = [], tags = [], **kwargs):
         copts = envoy_copts("@envoy", test = True),
         linkopts = envoy_test_linkopts(),
         linkstatic = 1,
-        args = [PACKAGE_NAME + "/" + corpus],
-        # No fuzzing on OS X.
+        args = ["$(locations %s)" % corpus_name],
+        data = [corpus_name],
+        # No fuzzing on macOS.
         deps = select({
             "@bazel_tools//tools/osx:darwin": ["//test:dummy_main"],
             "//conditions:default": [
@@ -282,6 +378,7 @@ def envoy_cc_test(
         deps = [],
         tags = [],
         args = [],
+        shard_count = None,
         coverage = True,
         local = False):
     test_lib_tags = []
@@ -311,6 +408,7 @@ def envoy_cc_test(
         args = args + ["--gmock_default_mock_behavior=2"],
         tags = tags + ["coverage_test"],
         local = local,
+        shard_count = shard_count,
     )
 
 # Envoy C++ test related libraries (that want gtest, gmock) should be specified
@@ -372,22 +470,24 @@ def envoy_sh_test(
         name,
         srcs = [],
         data = [],
+        coverage = True,
         **kargs):
-    test_runner_cc = name + "_test_runner.cc"
-    native.genrule(
-        name = name + "_gen_test_runner",
-        srcs = srcs,
-        outs = [test_runner_cc],
-        cmd = "$(location //bazel:gen_sh_test_runner.sh) $(SRCS) >> $@",
-        tools = ["//bazel:gen_sh_test_runner.sh"],
-    )
-    envoy_cc_test_library(
-        name = name + "_lib",
-        srcs = [test_runner_cc],
-        data = srcs + data,
-        tags = ["coverage_test_lib"],
-        deps = ["//test/test_common:environment_lib"],
-    )
+    if coverage:
+        test_runner_cc = name + "_test_runner.cc"
+        native.genrule(
+            name = name + "_gen_test_runner",
+            srcs = srcs,
+            outs = [test_runner_cc],
+            cmd = "$(location //bazel:gen_sh_test_runner.sh) $(SRCS) >> $@",
+            tools = ["//bazel:gen_sh_test_runner.sh"],
+        )
+        envoy_cc_test_library(
+            name = name + "_lib",
+            srcs = [test_runner_cc],
+            data = srcs + data,
+            tags = ["coverage_test_lib"],
+            deps = ["//test/test_common:environment_lib"],
+        )
     native.sh_test(
         name = name,
         srcs = ["//bazel:sh_test_wrapper.sh"],
@@ -423,7 +523,7 @@ def envoy_proto_library(name, external_deps = [], **kwargs):
 # This is used for testing only.
 def envoy_proto_descriptor(name, out, srcs = [], external_deps = []):
     input_files = ["$(location " + src + ")" for src in srcs]
-    include_paths = [".", PACKAGE_NAME]
+    include_paths = [".", native.package_name()]
 
     if "api_httpbody_protos" in external_deps:
         srcs.append("@googleapis//:api_httpbody_protos_src")
@@ -483,5 +583,11 @@ def envoy_select_force_libcpp(if_libcpp, default = None):
         "@envoy//bazel:force_libcpp": if_libcpp,
         "@bazel_tools//tools/osx:darwin": [],
         "@envoy//bazel:windows_x86_64": [],
+        "//conditions:default": default or [],
+    })
+
+def envoy_select_boringssl(if_fips, default = None):
+    return select({
+        "@envoy//bazel:boringssl_fips": if_fips,
         "//conditions:default": default or [],
     })

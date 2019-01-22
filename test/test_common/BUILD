@@ -14,6 +14,9 @@ envoy_package()
 envoy_basic_cc_library(
     name = "printers_includes",
     hdrs = ["printers.h"],
+    deps = [
+        "//include/envoy/network:address_interface",
+    ],
 )
 
 envoy_cc_test_library(
@@ -49,6 +52,18 @@ envoy_cc_test_library(
     ],
 )
 
+envoy_cc_test_library(
+    name = "contention_lib",
+    srcs = ["contention.cc"],
+    hdrs = ["contention.h"],
+    deps = [
+        "//source/common/common:mutex_tracer_lib",
+        "//source/common/common:thread_lib",
+        "//test/test_common:test_time_lib",
+        "//test/test_common:utility_lib",
+    ],
+)
+
 envoy_cc_library(
     name = "printers_lib",
     srcs = ["printers.cc"],
@@ -78,10 +93,13 @@ envoy_cc_test_library(
         "//include/envoy/buffer:buffer_interface",
         "//include/envoy/http:codec_interface",
         "//include/envoy/network:address_interface",
+        "//source/common/api:api_lib",
+        "//source/common/common:block_memory_hash_set_lib",
         "//source/common/common:empty_string",
         "//source/common/common:thread_lib",
         "//source/common/common:utility_lib",
         "//source/common/config:bootstrap_json_lib",
+        "//source/common/filesystem:directory_lib",
         "//source/common/http:header_map_lib",
         "//source/common/json:json_loader_lib",
         "//source/common/network:address_lib",
@@ -120,6 +138,24 @@ envoy_cc_library(
 )
 
 envoy_cc_test_library(
+    name = "global_lib",
+    srcs = ["global.cc"],
+    hdrs = ["global.h"],
+    deps = [
+        "//source/common/common:assert_lib",
+        "//source/common/common:thread_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "global_test",
+    srcs = ["global_test.cc"],
+    deps = [
+        ":global_lib",
+    ],
+)
+
+envoy_cc_test_library(
     name = "test_time_lib",
     srcs = ["test_time.cc"],
     hdrs = ["test_time.h"],
@@ -134,6 +170,7 @@ envoy_cc_test_library(
     hdrs = ["test_time_system.h"],
     deps = [
         "//include/envoy/event:timer_interface",
+        "//source/common/common:thread_lib",
     ],
 )
 
@@ -150,15 +187,8 @@ envoy_cc_test_library(
 envoy_cc_test(
     name = "simulated_time_system_test",
     srcs = ["simulated_time_system_test.cc"],
-    deps = [":simulated_time_system_lib"],
-)
-
-envoy_cc_library(
-    name = "tls_utility_lib",
-    srcs = ["tls_utility.cc"],
-    hdrs = ["tls_utility.h"],
-    external_deps = ["ssl"],
     deps = [
-        "//source/common/common:assert_lib",
+        ":simulated_time_system_lib",
+        "//test/test_common:utility_lib",
     ],
 )

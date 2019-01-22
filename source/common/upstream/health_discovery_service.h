@@ -38,7 +38,6 @@ public:
  * Implementation of Upstream::Cluster for hds clusters, clusters that are used
  * by HdsDelegates
  */
-
 class HdsCluster : public Cluster, Logger::Loggable<Logger::Id::upstream> {
 public:
   static ClusterSharedPtr create();
@@ -70,9 +69,6 @@ protected:
   PrioritySetImpl priority_set_;
   HealthCheckerSharedPtr health_checker_;
   Outlier::DetectorSharedPtr outlier_detector_;
-
-  // Creates a vector containing any healthy hosts
-  static HostVectorConstSharedPtr createHealthyHostList(const HostVector& hosts);
 
 private:
   std::function<void()> initialization_complete_callback_;
@@ -119,8 +115,7 @@ class HdsDelegate
     : Grpc::TypedAsyncStreamCallbacks<envoy::service::discovery::v2::HealthCheckSpecifier>,
       Logger::Loggable<Logger::Id::upstream> {
 public:
-  HdsDelegate(const envoy::api::v2::core::Node& node, Stats::Scope& scope,
-              Grpc::AsyncClientPtr async_client, Event::Dispatcher& dispatcher,
+  HdsDelegate(Stats::Scope& scope, Grpc::AsyncClientPtr async_client, Event::Dispatcher& dispatcher,
               Runtime::Loader& runtime, Envoy::Stats::Store& stats,
               Ssl::ContextManager& ssl_context_manager, Runtime::RandomGenerator& random,
               ClusterInfoFactory& info_factory, AccessLog::AccessLogManager& access_log_manager,
@@ -163,7 +158,7 @@ private:
   ClusterManager& cm_;
   const LocalInfo::LocalInfo& local_info_;
 
-  envoy::service::discovery::v2::HealthCheckRequest health_check_request_;
+  envoy::service::discovery::v2::HealthCheckRequestOrEndpointHealthResponse health_check_request_;
   std::unique_ptr<envoy::service::discovery::v2::HealthCheckSpecifier> health_check_message_;
 
   std::vector<std::string> clusters_;

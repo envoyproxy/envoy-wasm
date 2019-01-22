@@ -54,8 +54,8 @@ public:
 
     Network::ClientConnectionPtr connection{connection_};
     EXPECT_CALL(dispatcher_, createTimer_(_));
-    client_.reset(
-        new CodecClientForTest(std::move(connection), codec_, nullptr, host_, dispatcher_));
+    client_ = std::make_unique<CodecClientForTest>(std::move(connection), codec_, nullptr, host_,
+                                                   dispatcher_);
   }
 
   ~CodecClientTest() { EXPECT_EQ(0U, client_->numActiveRequests()); }
@@ -261,8 +261,8 @@ TEST_F(CodecClientTest, WatermarkPassthrough) {
 // Test the codec getting input from a real TCP connection.
 class CodecNetworkTest : public testing::TestWithParam<Network::Address::IpVersion> {
 public:
-  CodecNetworkTest() {
-    dispatcher_.reset(new Event::DispatcherImpl(test_time_.timeSystem()));
+  CodecNetworkTest() : api_(Api::createApiForTest(stats_store_)) {
+    dispatcher_ = std::make_unique<Event::DispatcherImpl>(test_time_.timeSystem(), *api_);
     upstream_listener_ = dispatcher_->createListener(socket_, listener_callbacks_, true, false);
     Network::ClientConnectionPtr client_connection = dispatcher_->createClientConnection(
         socket_.localAddress(), source_address_, Network::Test::createRawBufferSocket(), nullptr);
@@ -270,8 +270,8 @@ public:
     client_connection_->addConnectionCallbacks(client_callbacks_);
 
     codec_ = new Http::MockClientConnection();
-    client_.reset(
-        new CodecClientForTest(std::move(client_connection), codec_, nullptr, host_, *dispatcher_));
+    client_ = std::make_unique<CodecClientForTest>(std::move(client_connection), codec_, nullptr,
+                                                   host_, *dispatcher_);
 
     EXPECT_CALL(listener_callbacks_, onAccept_(_, _))
         .WillOnce(Invoke([&](Network::ConnectionSocketPtr& socket, bool) -> void {
@@ -328,13 +328,14 @@ public:
   }
 
 protected:
+  Stats::IsolatedStoreImpl stats_store_;
+  Api::ApiPtr api_;
   DangerousDeprecatedTestTime test_time_;
   Event::DispatcherPtr dispatcher_;
   Network::ListenerPtr upstream_listener_;
   Network::MockListenerCallbacks listener_callbacks_;
   Network::MockConnectionHandler connection_handler_;
   Network::Address::InstanceConstSharedPtr source_address_;
-  Stats::IsolatedStoreImpl stats_store_;
   Network::TcpListenSocket socket_{Network::Test::getAnyAddress(GetParam()), nullptr, true};
   Http::MockClientConnection* codec_;
   std::unique_ptr<CodecClientForTest> client_;

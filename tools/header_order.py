@@ -12,6 +12,8 @@
 # enough to handle block splitting and correctly detecting the main header subject to the Envoy
 # canonical paths.
 
+from __future__ import print_function
+
 import common
 import re
 import sys
@@ -29,7 +31,7 @@ def ReorderHeaders(path):
   # Collect all the lines prior to the first #include in before_includes_lines.
   try:
     while True:
-      line = all_lines.next()
+      line = next(all_lines)
       if line.startswith('#include'):
         includes_lines.append(line)
         break
@@ -40,7 +42,7 @@ def ReorderHeaders(path):
   # Collect all the #include and whitespace lines in includes_lines.
   try:
     while True:
-      line = all_lines.next()
+      line = next(all_lines)
       if not line:
         continue
       if not line.startswith('#include'):
@@ -88,8 +90,7 @@ def ReorderHeaders(path):
   if len(misc_headers) > 0:
     blocks.append(misc_headers)
 
-  reordered_includes_lines = '\n\n'.join(
-      ['\n'.join(sorted(block)) for block in blocks])
+  reordered_includes_lines = '\n\n'.join(['\n'.join(sorted(block)) for block in blocks])
 
   if reordered_includes_lines:
     reordered_includes_lines += '\n'
@@ -112,5 +113,5 @@ if __name__ == '__main__':
     with open(path, 'w') as f:
       f.write(reorderd_source)
     sys.exit(0)
-  print 'Usage: %s [--rewrite] <source file path>' % sys.argv[0]
+  print('Usage: %s [--rewrite] <source file path>' % sys.argv[0])
   sys.exit(1)

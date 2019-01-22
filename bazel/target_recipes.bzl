@@ -6,6 +6,7 @@ TARGET_RECIPES = {
     "benchmark": "benchmark",
     "event": "libevent",
     "tcmalloc_and_profiler": "gperftools",
+    "tcmalloc_debug": "gperftools",
     "luajit": "luajit",
     "nghttp2": "nghttp2",
     "wavm_with_llvm": "wavm",

@@ -33,7 +33,6 @@ void SdsApi::initialize(std::function<void()> callback) {
   subscription_ = Envoy::Config::SubscriptionFactory::subscriptionFromConfigSource<
       envoy::api::v2::auth::Secret>(
       sds_config_, local_info_, dispatcher_, cluster_manager_, random_, stats_,
-      /* rest_legacy_constructor */ nullptr,
       "envoy.service.discovery.v2.SecretDiscoveryService.FetchSecrets",
       "envoy.service.discovery.v2.SecretDiscoveryService.StreamSecrets");
 
@@ -60,6 +59,7 @@ void SdsApi::onConfigUpdate(const ResourceVector& resources, const std::string&)
 
   const uint64_t new_hash = MessageUtil::hash(secret);
   if (new_hash != secret_hash_) {
+    validateConfig(secret);
     secret_hash_ = new_hash;
     setSecret(secret);
     update_callback_manager_.runCallbacks();

@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include "envoy/admin/v2alpha/memory.pb.h"
+#include "envoy/admin/v2alpha/server_info.pb.h"
 #include "envoy/json/json_object.h"
 #include "envoy/runtime/runtime.h"
 #include "envoy/stats/stats.h"
@@ -13,10 +14,11 @@
 #include "common/profiler/profiler.h"
 #include "common/protobuf/protobuf.h"
 #include "common/protobuf/utility.h"
-#include "common/ssl/context_config_impl.h"
 #include "common/stats/thread_local_store.h"
 
 #include "server/http/admin.h"
+
+#include "extensions/transport_sockets/tls/context_config_impl.h"
 
 #include "test/mocks/runtime/mocks.h"
 #include "test/mocks/server/mocks.h"
@@ -557,22 +559,33 @@ INSTANTIATE_TEST_CASE_P(IpVersions, AdminFilterTest,
 
 TEST_P(AdminFilterTest, HeaderOnly) {
   EXPECT_CALL(callbacks_, encodeHeaders_(_, false));
-  filter_.decodeHeaders(request_headers_, true);
+  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter_.decodeHeaders(request_headers_, true));
 }
 
 TEST_P(AdminFilterTest, Body) {
-  filter_.decodeHeaders(request_headers_, false);
+  InSequence s;
+
+  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter_.decodeHeaders(request_headers_, false));
   Buffer::OwnedImpl data("hello");
+  EXPECT_CALL(callbacks_, addDecodedData(_, false));
   EXPECT_CALL(callbacks_, encodeHeaders_(_, false));
-  filter_.decodeData(data, true);
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationNoBuffer, filter_.decodeData(data, true));
 }
 
 TEST_P(AdminFilterTest, Trailers) {
-  filter_.decodeHeaders(request_headers_, false);
+  InSequence s;
+
+  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter_.decodeHeaders(request_headers_, false));
   Buffer::OwnedImpl data("hello");
-  filter_.decodeData(data, false);
+  EXPECT_CALL(callbacks_, addDecodedData(_, false));
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationNoBuffer, filter_.decodeData(data, false));
+  EXPECT_CALL(callbacks_, decodingBuffer());
+  filter_.getRequestBody();
   EXPECT_CALL(callbacks_, encodeHeaders_(_, false));
-  filter_.decodeTrailers(request_headers_);
+  EXPECT_EQ(Http::FilterTrailersStatus::StopIteration, filter_.decodeTrailers(request_headers_));
 }
 
 class AdminInstanceTest : public testing::TestWithParam<Network::Address::IpVersion> {
@@ -621,21 +634,25 @@ public:
 INSTANTIATE_TEST_CASE_P(IpVersions, AdminInstanceTest,
                         testing::ValuesIn(TestEnvironment::getIpVersionsForTest()),
                         TestUtility::ipTestParamsToString);
-// Can only get code coverage of AdminImpl::handlerCpuProfiler stopProfiler with
-// a real profiler linked in (successful call to startProfiler). startProfiler
-// requies tcmalloc.
-#ifdef TCMALLOC
 
 TEST_P(AdminInstanceTest, AdminProfiler) {
   Buffer::OwnedImpl data;
   Http::HeaderMapImpl header_map;
+
+  // Can only get code coverage of AdminImpl::handlerCpuProfiler stopProfiler with
+  // a real profiler linked in (successful call to startProfiler).
+#ifdef PROFILER_AVAILABLE
   EXPECT_EQ(Http::Code::OK, postCallback("/cpuprofiler?enable=y", header_map, data));
   EXPECT_TRUE(Profiler::Cpu::profilerEnabled());
+#else
+  EXPECT_EQ(Http::Code::InternalServerError,
+            postCallback("/cpuprofiler?enable=y", header_map, data));
+  EXPECT_FALSE(Profiler::Cpu::profilerEnabled());
+#endif
+
   EXPECT_EQ(Http::Code::OK, postCallback("/cpuprofiler?enable=n", header_map, data));
   EXPECT_FALSE(Profiler::Cpu::profilerEnabled());
 }
-
-#endif
 
 TEST_P(AdminInstanceTest, MutatesErrorWithGet) {
   Buffer::OwnedImpl data;
@@ -836,8 +853,12 @@ TEST_P(AdminInstanceTest, Memory) {
   const std::string output_json = response.toString();
   envoy::admin::v2alpha::Memory output_proto;
   MessageUtil::loadFromJson(output_json, output_proto);
-  EXPECT_THAT(output_proto, AllOf(Property(&envoy::admin::v2alpha::Memory::allocated, Ge(0)),
-                                  Property(&envoy::admin::v2alpha::Memory::heap_size, Ge(0))));
+  EXPECT_THAT(output_proto,
+              AllOf(Property(&envoy::admin::v2alpha::Memory::allocated, Ge(0)),
+                    Property(&envoy::admin::v2alpha::Memory::heap_size, Ge(0)),
+                    Property(&envoy::admin::v2alpha::Memory::pageheap_unmapped, Ge(0)),
+                    Property(&envoy::admin::v2alpha::Memory::pageheap_free, Ge(0)),
+                    Property(&envoy::admin::v2alpha::Memory::total_thread_cache, Ge(0))));
 }
 
 TEST_P(AdminInstanceTest, ContextThatReturnsNullCertDetails) {
@@ -847,9 +868,9 @@ TEST_P(AdminInstanceTest, ContextThatReturnsNullCertDetails) {
   // Setup a context that returns null cert details.
   testing::NiceMock<Server::Configuration::MockTransportSocketFactoryContext> factory_context;
   Json::ObjectSharedPtr loader = TestEnvironment::jsonLoadFromString("{}");
-  Ssl::ClientContextConfigImpl cfg(*loader, factory_context);
+  Extensions::TransportSockets::Tls::ClientContextConfigImpl cfg(*loader, factory_context);
   Stats::IsolatedStoreImpl store;
-  Ssl::ClientContextSharedPtr client_ctx(
+  Envoy::Ssl::ClientContextSharedPtr client_ctx(
       server_.sslContextManager().createSslClientContext(store, cfg));
 
   const std::string expected_empty_json = R"EOF({
@@ -864,7 +885,7 @@ TEST_P(AdminInstanceTest, ContextThatReturnsNullCertDetails) {
 
   // Validate that cert details are null and /certs handles it correctly.
   EXPECT_EQ(nullptr, client_ctx->getCaCertInformation());
-  EXPECT_EQ(nullptr, client_ctx->getCertChainInformation());
+  EXPECT_TRUE(client_ctx->getCertChainInformation().empty());
   EXPECT_EQ(Http::Code::OK, getCallback("/certs", header_map, response));
   EXPECT_EQ(expected_empty_json, response.toString());
 }
@@ -1010,8 +1031,11 @@ TEST_P(AdminInstanceTest, ClustersJson) {
       .WillByDefault(Return(true));
   ON_CALL(*host, healthFlagGet(Upstream::Host::HealthFlag::FAILED_EDS_HEALTH))
       .WillByDefault(Return(false));
+  ON_CALL(*host, healthFlagGet(Upstream::Host::HealthFlag::DEGRADED_ACTIVE_HC))
+      .WillByDefault(Return(true));
 
   ON_CALL(host->outlier_detector_, successRate()).WillByDefault(Return(43.2));
+  ON_CALL(*host, weight()).WillByDefault(Return(5));
 
   Buffer::OwnedImpl response;
   Http::HeaderMapImpl header_map;
@@ -1067,11 +1091,13 @@ TEST_P(AdminInstanceTest, ClustersJson) {
      "health_status": {
       "eds_health_status": "HEALTHY",
       "failed_active_health_check": true,
-      "failed_outlier_check": true
+      "failed_outlier_check": true,
+      "failed_active_degraded_check": true
      },
      "success_rate": {
       "value": 43.2
-     }
+     },
+     "weight": 5
     }
    ]
   }
@@ -1093,12 +1119,67 @@ TEST_P(AdminInstanceTest, ClustersJson) {
 }
 
 TEST_P(AdminInstanceTest, GetRequest) {
+  EXPECT_CALL(server_.options_, toCommandLineOptions()).WillRepeatedly(Invoke([] {
+    Server::CommandLineOptionsPtr command_line_options =
+        std::make_unique<envoy::admin::v2alpha::CommandLineOptions>();
+    command_line_options->set_restart_epoch(2);
+    command_line_options->set_service_cluster("cluster");
+    return command_line_options;
+  }));
+  NiceMock<Init::MockManager> initManager;
+  ON_CALL(server_, initManager()).WillByDefault(ReturnRef(initManager));
+
+  {
+    Http::HeaderMapImpl response_headers;
+    std::string body;
+
+    ON_CALL(initManager, state()).WillByDefault(Return(Init::Manager::State::Initialized));
+    EXPECT_EQ(Http::Code::OK, admin_.request("/server_info", "GET", response_headers, body));
+    envoy::admin::v2alpha::ServerInfo server_info_proto;
+    EXPECT_THAT(std::string(response_headers.ContentType()->value().getStringView()),
+                HasSubstr("application/json"));
+
+    // We only test that it parses as the proto and that some fields are correct, since
+    // values such as timestamps + Envoy version are tricky to test for.
+    MessageUtil::loadFromJson(body, server_info_proto);
+    EXPECT_EQ(server_info_proto.state(), envoy::admin::v2alpha::ServerInfo::LIVE);
+    EXPECT_EQ(server_info_proto.command_line_options().restart_epoch(), 2);
+    EXPECT_EQ(server_info_proto.command_line_options().service_cluster(), "cluster");
+  }
+
+  {
+    Http::HeaderMapImpl response_headers;
+    std::string body;
+
+    ON_CALL(initManager, state()).WillByDefault(Return(Init::Manager::State::NotInitialized));
+    EXPECT_EQ(Http::Code::OK, admin_.request("/server_info", "GET", response_headers, body));
+    envoy::admin::v2alpha::ServerInfo server_info_proto;
+    EXPECT_THAT(std::string(response_headers.ContentType()->value().getStringView()),
+                HasSubstr("application/json"));
+
+    // We only test that it parses as the proto and that some fields are correct, since
+    // values such as timestamps + Envoy version are tricky to test for.
+    MessageUtil::loadFromJson(body, server_info_proto);
+    EXPECT_EQ(server_info_proto.state(), envoy::admin::v2alpha::ServerInfo::PRE_INITIALIZING);
+    EXPECT_EQ(server_info_proto.command_line_options().restart_epoch(), 2);
+    EXPECT_EQ(server_info_proto.command_line_options().service_cluster(), "cluster");
+  }
+
   Http::HeaderMapImpl response_headers;
   std::string body;
+
+  ON_CALL(initManager, state()).WillByDefault(Return(Init::Manager::State::Initializing));
   EXPECT_EQ(Http::Code::OK, admin_.request("/server_info", "GET", response_headers, body));
-  EXPECT_TRUE(absl::StartsWith(body, "envoy ")) << body;
+  envoy::admin::v2alpha::ServerInfo server_info_proto;
   EXPECT_THAT(std::string(response_headers.ContentType()->value().getStringView()),
-              HasSubstr("text/plain"));
+              HasSubstr("application/json"));
+
+  // We only test that it parses as the proto and that some fields are correct, since
+  // values such as timestamps + Envoy version are tricky to test for.
+  MessageUtil::loadFromJson(body, server_info_proto);
+  EXPECT_EQ(server_info_proto.state(), envoy::admin::v2alpha::ServerInfo::INITIALIZING);
+  EXPECT_EQ(server_info_proto.command_line_options().restart_epoch(), 2);
+  EXPECT_EQ(server_info_proto.command_line_options().service_cluster(), "cluster");
 }
 
 TEST_P(AdminInstanceTest, GetRequestJson) {
@@ -1142,6 +1223,20 @@ protected:
 TEST_F(PrometheusStatsFormatterTest, MetricName) {
   std::string raw = "vulture.eats-liver";
   std::string expected = "envoy_vulture_eats_liver";
+  auto actual = PrometheusStatsFormatter::metricName(raw);
+  EXPECT_EQ(expected, actual);
+}
+
+TEST_F(PrometheusStatsFormatterTest, SanitizeMetricName) {
+  std::string raw = "An.artist.plays-violin@019street";
+  std::string expected = "envoy_An_artist_plays_violin_019street";
+  auto actual = PrometheusStatsFormatter::metricName(raw);
+  EXPECT_EQ(expected, actual);
+}
+
+TEST_F(PrometheusStatsFormatterTest, SanitizeMetricNameDigitFirst) {
+  std::string raw = "3.artists.play-violin@019street";
+  std::string expected = "envoy_3_artists_play_violin_019street";
   auto actual = PrometheusStatsFormatter::metricName(raw);
   EXPECT_EQ(expected, actual);
 }

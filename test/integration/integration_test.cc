@@ -80,11 +80,11 @@ TEST_P(IntegrationTest, RouterRequestAndResponseLargeHeaderNoBuffer) {
 }
 
 TEST_P(IntegrationTest, RouterHeaderOnlyRequestAndResponseNoBuffer) {
-  testRouterHeaderOnlyRequestAndResponse(true);
+  testRouterHeaderOnlyRequestAndResponse();
 }
 
 TEST_P(IntegrationTest, ShutdownWithActiveConnPoolConnections) {
-  testRouterHeaderOnlyRequestAndResponse(false);
+  testRequestAndResponseShutdownWithActiveConnection();
 }
 
 TEST_P(IntegrationTest, RouterUpstreamDisconnectBeforeRequestcomplete) {
@@ -138,6 +138,20 @@ TEST_P(IntegrationTest, TwoRequestsWithForcedBackup) { testTwoRequests(true); }
 TEST_P(IntegrationTest, UpstreamDisconnectWithTwoRequests) {
   testUpstreamDisconnectWithTwoRequests();
 }
+
+TEST_P(IntegrationTest, EncodingHeaderOnlyResponse) { testHeadersOnlyFilterEncoding(); }
+
+TEST_P(IntegrationTest, DecodingHeaderOnlyResponse) { testHeadersOnlyFilterDecoding(); }
+
+TEST_P(IntegrationTest, EncodingHeaderOnlyResponseIntermediateFilters) {
+  testHeadersOnlyFilterEncodingIntermediateFilters();
+}
+
+TEST_P(IntegrationTest, DecodingHeaderOnlyResponseIntermediateFilters) {
+  testHeadersOnlyFilterDecodingIntermediateFilters();
+}
+
+TEST_P(IntegrationTest, DecodingHeaderOnlyInterleaved) { testHeadersOnlyFilterInterleaved(); }
 
 TEST_P(IntegrationTest, RetryHittingBufferLimit) { testRetryHittingBufferLimit(); }
 
@@ -194,6 +208,8 @@ TEST_P(IntegrationTest, InvalidCharacterInFirstline) { testInvalidCharacterInFir
 TEST_P(IntegrationTest, InvalidVersion) { testInvalidVersion(); }
 
 TEST_P(IntegrationTest, Http10Disabled) { testHttp10Disabled(); }
+
+TEST_P(IntegrationTest, Http10DisabledWithUpgrade) { testHttp10DisabledWithUpgrade(); }
 
 TEST_P(IntegrationTest, Http09Enabled) { testHttp09Enabled(); }
 
@@ -373,6 +389,7 @@ TEST_P(IntegrationTest, ViaAppendHeaderOnly) {
 // response path.
 TEST_P(IntegrationTest, ViaAppendWith100Continue) {
   config_helper_.addConfigModifier(setVia("foo"));
+  testEnvoyHandling100Continue(false, "foo");
 }
 
 // Test delayed close semantics for downstream HTTP/1.1 connections. When an early response is

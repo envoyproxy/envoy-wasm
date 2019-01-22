@@ -1,9 +1,13 @@
 #include "extensions/filters/http/jwt_authn/extractor.h"
 
+#include <memory>
+
 #include "common/common/utility.h"
 #include "common/http/headers.h"
 #include "common/http/utility.h"
 #include "common/singleton/const_singleton.h"
+
+#include "absl/strings/match.h"
 
 using ::envoy::config::filter::http::jwt_authn::v2alpha::JwtAuthentication;
 using ::envoy::config::filter::http::jwt_authn::v2alpha::JwtHeader;
@@ -157,7 +161,7 @@ void ExtractorImpl::addHeaderConfig(const std::string& issuer, const LowerCaseSt
   const std::string map_key = header_name.get() + value_prefix;
   auto& header_location_spec = header_locations_[map_key];
   if (!header_location_spec) {
-    header_location_spec.reset(new HeaderLocationSpec(header_name, value_prefix));
+    header_location_spec = std::make_unique<HeaderLocationSpec>(header_name, value_prefix);
   }
   header_location_spec->specified_issuers_.insert(issuer);
 }
@@ -177,7 +181,7 @@ std::vector<JwtLocationConstPtr> ExtractorImpl::extract(const Http::HeaderMap& h
     if (entry) {
       auto value_str = entry->value().getStringView();
       if (!location_spec->value_prefix_.empty()) {
-        if (!StringUtil::startsWith(value_str.data(), location_spec->value_prefix_, true)) {
+        if (!absl::StartsWith(value_str, location_spec->value_prefix_)) {
           // prefix doesn't match, skip it.
           continue;
         }
