@@ -19,8 +19,6 @@
   (type $17 (func (param f64) (result i64)))
   (type $18 (func (param f64 i32) (result f64)))
   (type $19 (func (param i32 i32 i32 i32 i32 i32 i32)))
-  (import "env" "enlargeMemory" (func $enlargeMemory (result i32)))
-  (import "env" "getTotalMemory" (func $getTotalMemory (result i32)))
   (import "env" "abortOnCannotGrowMemory" (func $abortOnCannotGrowMemory (result i32)))
   (import "env" "abortStackOverflow" (func $abortStackOverflow (param i32)))
   (import "env" "nullFunc_ii" (func $nullFunc_ii (param i32)))
@@ -41,7 +39,9 @@
   (import "env" "___syscall6" (func $___syscall6 (param i32 i32) (result i32)))
   (import "env" "___unlock" (func $___unlock (param i32)))
   (import "env" "_abort" (func $_abort))
+  (import "env" "_emscripten_get_heap_size" (func $_emscripten_get_heap_size (result i32)))
   (import "env" "_emscripten_memcpy_big" (func $_emscripten_memcpy_big (param i32 i32 i32) (result i32)))
+  (import "env" "_emscripten_resize_heap" (func $_emscripten_resize_heap (param i32) (result i32)))
   (import "env" "_envoy_addRequestHeader" (func $_envoy_addRequestHeader (param i32 i32 i32 i32)))
   (import "env" "_envoy_getRequestBodyBufferBytes" (func $_envoy_getRequestBodyBufferBytes (param i32 i32 i32 i32)))
   (import "env" "_envoy_getRequestHeader" (func $_envoy_getRequestHeader (param i32 i32 i32 i32)))
@@ -44397,6 +44397,8 @@
       get_local $1
       get_local $2
       call $_emscripten_memcpy_big
+      drop
+      get_local $0
       return
     end ;; $if
     get_local $0
@@ -45029,22 +45031,21 @@
       i32.const -1
       return
     end ;; $if
-    get_global $24
-    get_local $3
-    i32.store
-    call $getTotalMemory
+    call $_emscripten_get_heap_size
     set_local $4
     get_local $3
     get_local $4
-    i32.gt_s
+    i32.le_s
     if $if_0
-      call $enlargeMemory
+      get_global $24
+      get_local $3
+      i32.store
+    else
+      get_local $3
+      call $_emscripten_resize_heap
       i32.const 0
       i32.eq
       if $if_1
-        get_global $24
-        get_local $1
-        i32.store
         i32.const 12
         call $___setErrNo
         i32.const -1

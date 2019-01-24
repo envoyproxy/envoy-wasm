@@ -3,19 +3,19 @@
   (type $1 (func (param i32)))
   (type $2 (func (result i32)))
   (type $3 (func (param i32 i32 i32) (result i32)))
-  (type $4 (func (param i32 i32 i32)))
-  (type $5 (func (param i32) (result i32)))
+  (type $4 (func (param i32) (result i32)))
+  (type $5 (func (param i32 i32 i32)))
   (type $6 (func (param i32 i32)))
   (type $7 (func (param i32 i32) (result i32)))
   (type $8 (func (param i32 i32 i32 i32 i32 i32 i32)))
   (type $9 (func (param i32 i32 i32 i32) (result i32)))
   (import "env" "abort" (func $abort (param i32)))
-  (import "env" "enlargeMemory" (func $enlargeMemory (result i32)))
-  (import "env" "getTotalMemory" (func $getTotalMemory (result i32)))
   (import "env" "abortOnCannotGrowMemory" (func $abortOnCannotGrowMemory (result i32)))
   (import "env" "___setErrNo" (func $___setErrNo (param i32)))
   (import "env" "_abort" (func $_abort))
+  (import "env" "_emscripten_get_heap_size" (func $_emscripten_get_heap_size (result i32)))
   (import "env" "_emscripten_memcpy_big" (func $_emscripten_memcpy_big (param i32 i32 i32) (result i32)))
+  (import "env" "_emscripten_resize_heap" (func $_emscripten_resize_heap (param i32) (result i32)))
   (import "env" "_envoy_log" (func $_envoy_log (param i32 i32 i32)))
   (import "env" "table" (table $10 1 1 anyfunc))
   (import "env" "memory" (memory $11 256 256))
@@ -47,7 +47,7 @@
   (data $11 (i32.const 1024)
     "warn \00test tick\00 logging\00test debug\00test info")
   
-  (func $stackAlloc (type $5)
+  (func $stackAlloc (type $4)
     (param $0 i32)
     (result i32)
     (local $1 i32)
@@ -536,7 +536,7 @@
     i32.const 1072
     )
   
-  (func $_strlen (type $5)
+  (func $_strlen (type $4)
     (param $0 i32)
     (result i32)
     (local $1 i32)
@@ -616,7 +616,7 @@
     i32.sub
     )
   
-  (func $_malloc (type $5)
+  (func $_malloc (type $4)
     (param $0 i32)
     (result i32)
     (local $1 i32)
@@ -5766,7 +5766,7 @@
     i32.store
     )
   
-  (func $__Znwm (type $5)
+  (func $__Znwm (type $4)
     (param $0 i32)
     (result i32)
     (local $1 i32)
@@ -5830,7 +5830,7 @@
     i32.store8
     )
   
-  (func $__ZNSt3__211char_traitsIcE6lengthEPKc (type $5)
+  (func $__ZNSt3__211char_traitsIcE6lengthEPKc (type $4)
     (param $0 i32)
     (result i32)
     get_local $0
@@ -6098,7 +6098,7 @@
     get_local $0
     )
   
-  (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKc (type $5)
+  (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKc (type $4)
     (param $0 i32)
     (result i32)
     get_local $0
@@ -6256,7 +6256,7 @@
     get_local $0
     )
   
-  (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc (type $5)
+  (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc (type $4)
     (param $0 i32)
     (result i32)
     get_local $0
@@ -6294,6 +6294,8 @@
       get_local $1
       get_local $2
       call $_emscripten_memcpy_big
+      drop
+      get_local $0
       return
     end ;; $if
     get_local $0
@@ -6720,7 +6722,7 @@
     i32.sub
     )
   
-  (func $_sbrk (type $5)
+  (func $_sbrk (type $4)
     (param $0 i32)
     (result i32)
     (local $1 i32)
@@ -6728,16 +6730,16 @@
     get_local $0
     get_global $14
     i32.load
-    tee_local $1
-    i32.add
     tee_local $2
-    get_local $1
+    i32.add
+    tee_local $1
+    get_local $2
     i32.lt_s
     get_local $0
     i32.const 0
     i32.gt_s
     i32.and
-    get_local $2
+    get_local $1
     i32.const 0
     i32.lt_s
     i32.or
@@ -6749,26 +6751,25 @@
       i32.const -1
       return
     end ;; $if
-    get_global $14
-    get_local $2
-    i32.store
-    get_local $2
-    call $getTotalMemory
-    i32.gt_s
+    get_local $1
+    call $_emscripten_get_heap_size
+    i32.le_s
     if $if_0
-      call $enlargeMemory
+      get_global $14
+      get_local $1
+      i32.store
+    else
+      get_local $1
+      call $_emscripten_resize_heap
       i32.eqz
       if $if_1
-        get_global $14
-        get_local $1
-        i32.store
         i32.const 12
         call $___setErrNo
         i32.const -1
         return
       end ;; $if_1
     end ;; $if_0
-    get_local $1
+    get_local $2
     )
   
   (func $dynCall_v (type $1)
