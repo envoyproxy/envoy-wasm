@@ -311,6 +311,8 @@ uint32_t getTotalMemoryHandler(void *) {
   return 0x7FFFFFFF;
 }
 
+uint32_t _emscripten_get_heap_sizeHandler(void*) { return getTotalMemoryHandler(nullptr); }
+
 }  // namespace
 
 // Shared Data
@@ -717,6 +719,7 @@ Wasm::Wasm(absl::string_view vm, ThreadLocal::SlotAllocator&) {
     _REGISTER(httpCall);
 
     _REGISTER(getTotalMemory);
+    _REGISTER(_emscripten_get_heap_size);
 #undef _REGISTER
   }
 }
