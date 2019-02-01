@@ -30,6 +30,7 @@ echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | 
 curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
 apt-get update
 apt-get install -y bazel
+apt-get install -y aspell
 rm -rf /var/lib/apt/lists/*
 
 # Setup tcpdump for non-root.
@@ -42,4 +43,3 @@ setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
 pip3 install virtualenv
 
 ./build_container_common.sh
-

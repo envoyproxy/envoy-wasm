@@ -19,7 +19,7 @@ static const std::string INLINE_STRING = "<inline>";
 
 Server::WasmPtr WasmFactory::createWasm(const envoy::config::wasm::v2::WasmConfig& config,
                                         Server::Configuration::WasmFactoryContext& context) {
-  const auto& code = Config::DataSource::read(config.code(), true);
+  const auto& code = Config::DataSource::read(config.code(), true, context.api());
   const auto& path = Config::DataSource::getPath(config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
   if (code.empty()) {

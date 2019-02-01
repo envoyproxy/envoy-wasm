@@ -3,6 +3,8 @@
 #include "envoy/config/wasm/v2/wasm.pb.validate.h"
 #include "envoy/registry/registry.h"
 
+#include "common/stats/isolated_store_impl.h"
+
 #include "server/wasm_config_impl.h"
 
 #include "extensions/wasm/config.h"
@@ -25,7 +27,9 @@ TEST(WasmFactoryTest, CreateWasmFromWASM) {
   config.mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
   Event::MockDispatcher dispatcher;
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -40,7 +44,9 @@ TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
   config.set_allow_precompiled(true);
   Event::MockDispatcher dispatcher;
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -54,7 +60,9 @@ TEST(WasmFactoryTest, CreateWasmFromWAT) {
   config.mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wat"));
   Event::MockDispatcher dispatcher;
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -84,7 +92,9 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWAT) {
       " )");
 
   Event::MockDispatcher dispatcher;
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -114,7 +124,9 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithAlias) {
       " )");
 
   Event::MockDispatcher dispatcher;
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -144,7 +156,9 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithUnderscoreAlias) {
       " )");
 
   Event::MockDispatcher dispatcher;
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -174,7 +188,9 @@ TEST(WasmFactoryTest, MissingImport) {
       " )");
 
   Event::MockDispatcher dispatcher;
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher);
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
   EXPECT_THROW_WITH_MESSAGE(
       factory->createWasm(config, context), Extensions::Common::Wasm::WasmException,
       "Failed to load WASM module due to a missing import: env.missing func (i32, i32, i32)->()");

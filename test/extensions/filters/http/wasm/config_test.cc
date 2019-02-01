@@ -1,6 +1,7 @@
 #include "envoy/config/filter/http/wasm/v2/wasm.pb.validate.h"
 
 #include "common/common/base64.h"
+#include "common/stats/isolated_store_impl.h"
 
 #include "extensions/common/wasm/wasm.h"
 #include "extensions/filters/http/wasm/config.h"
@@ -12,13 +13,25 @@
 #include "gtest/gtest.h"
 
 using testing::_;
+using testing::ReturnRef;
 
 namespace Envoy {
 namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-TEST(WasmFilterConfigTest, JsonLoadFromFileWASM) {
+class WasmFilterConfigTest : public testing::Test {
+protected:
+  WasmFilterConfigTest() : api_(Api::createApiForTest(stats_store_)) {
+    ON_CALL(context_, api()).WillByDefault(ReturnRef(*api_));
+  }
+
+  NiceMock<Server::Configuration::MockFactoryContext> context_;
+  Stats::IsolatedStoreImpl stats_store_;
+  Api::ApiPtr api_;
+};
+
+TEST_F(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   const std::string json = TestEnvironment::substitute(R"EOF(
   {
     "vm": "envoy.wasm.vm.wavm",
@@ -31,15 +44,14 @@ TEST(WasmFilterConfigTest, JsonLoadFromFileWASM) {
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   MessageUtil::loadFromJson(json, proto_config);
-  NiceMock<Server::Configuration::MockFactoryContext> context;
   WasmFilterConfig factory;
-  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context);
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
   EXPECT_CALL(filter_callback, addStreamFilter(_));
   cb(filter_callback);
 }
 
-TEST(WasmFilterConfigTest, YamlLoadFromFileWASM) {
+TEST_F(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   const std::string yaml = TestEnvironment::substitute(R"EOF(
     vm: "envoy.wasm.vm.wavm"
     code: { filename: "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm" }
@@ -47,15 +59,14 @@ TEST(WasmFilterConfigTest, YamlLoadFromFileWASM) {
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   MessageUtil::loadFromYaml(yaml, proto_config);
-  NiceMock<Server::Configuration::MockFactoryContext> context;
   WasmFilterConfig factory;
-  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context);
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
   EXPECT_CALL(filter_callback, addStreamFilter(_));
   cb(filter_callback);
 }
 
-TEST(WasmFilterConfigTest, YamlLoadInlineWASM) {
+TEST_F(WasmFilterConfigTest, YamlLoadInlineWASM) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm"));
   EXPECT_FALSE(code.empty());
@@ -64,15 +75,14 @@ TEST(WasmFilterConfigTest, YamlLoadInlineWASM) {
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   MessageUtil::loadFromYaml(yaml, proto_config);
-  NiceMock<Server::Configuration::MockFactoryContext> context;
   WasmFilterConfig factory;
-  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context);
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
   EXPECT_CALL(filter_callback, addStreamFilter(_));
   cb(filter_callback);
 }
 
-TEST(WasmFilterConfigTest, YamlLoadInlineBadCode) {
+TEST_F(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   const std::string yaml = R"EOF(
     vm: "envoy.wasm.vm.wavm"
     code: { inline_string: "bad code" }
@@ -80,9 +90,8 @@ TEST(WasmFilterConfigTest, YamlLoadInlineBadCode) {
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   MessageUtil::loadFromYaml(yaml, proto_config);
-  NiceMock<Server::Configuration::MockFactoryContext> context;
   WasmFilterConfig factory;
-  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context),
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
                             "unable to initialize WASM vm");
 }

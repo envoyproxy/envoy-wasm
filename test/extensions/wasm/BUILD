@@ -38,6 +38,7 @@ envoy_extension_cc_test(
     extension_name = "envoy.wasm",
     deps = [
         "//include/envoy/registry",
+        "//source/common/stats:isolated_store_lib",
         "//source/extensions/wasm:config",
         "//source/server:wasm_config_lib",
         "//test/mocks/event:event_mocks",

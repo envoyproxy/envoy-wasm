@@ -19,7 +19,7 @@ static const std::string INLINE_STRING = "<inline>";
 Http::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
     const envoy::config::filter::http::wasm::v2::Wasm& proto_config, const std::string&,
     Server::Configuration::FactoryContext& context) {
-  const auto& code = Config::DataSource::read(proto_config.code(), true);
+  const auto& code = Config::DataSource::read(proto_config.code(), true, context.api());
   const auto& path = Config::DataSource::getPath(proto_config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
   if (code.empty()) {
