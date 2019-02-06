@@ -14,11 +14,6 @@ namespace Server {
 class Wasm {
 public:
   virtual ~Wasm() {}
-
-  virtual bool initialize(const std::string& code, absl::string_view name,
-                          bool allow_precompiled) PURE;
-  virtual void configure(absl::string_view configuration) PURE;
-  virtual void start(Event::Dispatcher& dispatcher, std::chrono::milliseconds tick_period) PURE;
 };
 
 typedef std::unique_ptr<Wasm> WasmPtr;

@@ -1,7 +1,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "envoy_wasm_filter_intrinsics.h"
+#include "envoy_wasm_intrinsics.h"
 
 
 class ExampleContext : public Context {

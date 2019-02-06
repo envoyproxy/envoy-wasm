@@ -12,14 +12,8 @@ envoy_package()
 
 envoy_cc_library(
     name = "config",
-    srcs = [
-        "config.cc",
-        "wasm.cc",
-    ],
-    hdrs = [
-        "config.h",
-        "wasm.h",
-    ],
+    srcs = [ "config.cc" ],
+    hdrs = [ "config.h" ],
     deps = [
         "//include/envoy/registry",
         "//include/envoy/server:wasm_config_interface",

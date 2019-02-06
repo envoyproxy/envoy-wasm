@@ -7,7 +7,6 @@
 #include "common/protobuf/utility.h"
 
 #include "extensions/common/wasm/wasm.h"
-#include "extensions/wasm/wasm.h"
 
 #include <stdio.h>
 
@@ -19,21 +18,20 @@ static const std::string INLINE_STRING = "<inline>";
 
 Server::WasmPtr WasmFactory::createWasm(const envoy::config::wasm::v2::WasmConfig& config,
                                         Server::Configuration::WasmFactoryContext& context) {
-  const auto& code = Config::DataSource::read(config.code(), true, context.api());
-  const auto& path = Config::DataSource::getPath(config.code())
-                         .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
-  if (code.empty()) {
-    throw EnvoyException(fmt::format("Failed to load WASM code from {}", path));
+  if (config.singleton()) {
+    auto wasm = Common::Wasm::createWasm(config.id(), config.vm_config(), context.api());
+    wasm->setDispatcher(context.dispatcher());
+    return Server::WasmPtr(wasm.release());
   }
-  auto vm = std::make_unique<Wasm>(config.vm());
-  if (vm) {
-    if (!vm->initialize(code, path, config.allow_precompiled()))
+  // Per-thread WASM VM.
+  auto base_wasm = Common::Wasm::createWasm(config.id(), config.vm_config(), context.api());
+  context.threadLocal().allocateSlot()->set([&config, &context, &base_wasm](Event::Dispatcher& dispatcher) {
+      // NB: no need to store the result as it is cached on each thread.
+      Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, config.vm_config(), dispatcher, config.configuration(), context.api());
       return nullptr;
-    if (!config.configuration().empty())
-      vm->configure(config.configuration());
-    vm->start(context.dispatcher(), std::chrono::milliseconds(config.tick_timeout_milliseconds()));
-  }
-  return vm;
+      });
+  // Do not return this WASM VM since this is per-thread.  Returning it would indicate that this is a singleton.
+  return nullptr;
 }
 
 /**

@@ -16,14 +16,11 @@ envoy_cc_library(
     hdrs = ["wasm_filter.h"],
     deps = [
         "//include/envoy/http:codes_interface",
-        "//include/envoy/http:filter_interface",
+        "//include/envoy/server:filter_config_interface",
         "//include/envoy/upstream:cluster_manager_interface",
-        "//source/common/buffer:buffer_lib",
-        "//source/common/common:enum_to_int",
-        "//source/common/http:message_lib",
-        "//source/common/http:utility_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/filters/http:well_known_names",
+        "@envoy_api//envoy/config/filter/http/wasm/v2:wasm_cc",
     ],
 )
 

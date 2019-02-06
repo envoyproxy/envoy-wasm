@@ -240,6 +240,7 @@ envoy_cc_library(
     name = "wasm_interface",
     hdrs = ["wasm.h"],
     deps = [
+        "//include/envoy/thread_local:thread_local_interface",
         "//source/common/protobuf",
     ],
 )

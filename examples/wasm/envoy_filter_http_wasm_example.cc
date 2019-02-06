@@ -1,7 +1,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "envoy_wasm_filter_intrinsics.h"
+#include "envoy_wasm_intrinsics.h"
 
 
 class ExampleContext : public Context {
@@ -12,7 +12,8 @@ class ExampleContext : public Context {
     FilterHeadersStatus onRequestHeaders() override;
     FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
     FilterHeadersStatus onResponseHeaders() override;
-    void onDestroy() override;
+    void onLog() override;
+    void onDone() override;
 };
 
 std::unique_ptr<Context> Context::New(uint32_t id) {
@@ -20,7 +21,7 @@ std::unique_ptr<Context> Context::New(uint32_t id) {
 }
 
 void ExampleContext::onStart() {
-  logTrace("main");
+  logTrace("onStart");
 }
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
@@ -53,7 +54,11 @@ FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool e
   return FilterDataStatus::Continue;
 }
 
-void ExampleContext::onDestroy() {
-  logWarn(std::string("onDestroy " + std::to_string(id())));
+void ExampleContext::onLog() {
+  logWarn(std::string("onLog " + std::to_string(id())));
+}
+
+void ExampleContext::onDone() {
+  logWarn(std::string("onDone " + std::to_string(id())));
 }
 

@@ -4,6 +4,7 @@
 #include "envoy/common/pure.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/server/wasm.h"
+#include "envoy/thread_local/thread_local.h"
 
 #include "common/protobuf/protobuf.h"
 
@@ -22,6 +23,11 @@ public:
   virtual Event::Dispatcher& dispatcher() PURE;
 
   /**
+   * @return ThreadLocal::SlotAllocator& the thread local storage engine for the server. This is
+   *         used to allow runtime lockless updates to configuration, etc. across multiple threads.
+   */
+  virtual ThreadLocal::SlotAllocator& threadLocal() PURE;
+  /**
    * @return Api::Api& a reference to the api object.
    */
   virtual Api::Api& api() PURE;
@@ -35,22 +41,19 @@ class WasmFactory {
 public:
   virtual ~WasmFactory() {}
 
+  virtual std::string name() PURE;
+
   /**
    * Create a particular wasm VM.
    * @param config const ProtoBuf::Message& supplies the config for the resource monitor
    *        implementation.
    * @param context WasmFactoryContext& supplies the resource monitor's context.
-   * @return WasmPtr the resource monitor instance. Should not be nullptr.
+   * @return WasmPtr a singleton Wasm servive. May be be nullptr if per silo.
    * @throw EnvoyException if the implementation is unable to produce an instance with
    *        the provided parameters.
    */
   virtual WasmPtr createWasm(const envoy::config::wasm::v2::WasmConfig& config,
                              WasmFactoryContext& context) PURE;
-
-  /**
-   * @return std::string the identifying name for a particular wasm VM produced by the factory.
-   */
-  virtual std::string name() PURE;
 };
 
 } // namespace Configuration

@@ -315,6 +315,24 @@ void InstanceImpl::initialize(Options& options,
       dispatcher(), localInfo(), secretManager(), api(), http_context_, accessLogManager(),
       singletonManager());
 
+  // Optional Wasm services.  These must be initialied afer threading but before the main configuration
+  // which many reference wasm vms.
+  if (bootstrap_.wasm_service_size() > 0) {
+    auto factory = Registry::FactoryRegistry<Configuration::WasmFactory>::getFactory("envoy.wasm");
+    if (factory) {
+      Configuration::WasmFactoryContextImpl wasm_factory_context(*dispatcher_, thread_local_, api());
+      for (auto& config : bootstrap_.wasm_service()) {
+        auto wasm = factory->createWasm(config, wasm_factory_context);
+        if (wasm) {
+          // If not nullptr, this is a singleton WASM service.
+          wasm_.emplace_back(std::move(wasm));
+        }
+      }
+    } else {
+      ENVOY_LOG(warn, "No wasm factory available, so no wasm service started.");
+    }
+  }
+
   // Now the configuration gets parsed. The configuration may start setting
   // thread local data per above. See MainImpl::initialize() for why ConfigImpl
   // is constructed as part of the InstanceImpl and then populated once
@@ -353,24 +371,6 @@ void InstanceImpl::initialize(Options& options,
   // GuardDog (deadlock detection) object and thread setup before workers are
   // started and before our own run() loop runs.
   guard_dog_ = std::make_unique<Server::GuardDogImpl>(stats_store_, config_, time_system_, api());
-
-  // Optional Wasm service.
-  if (bootstrap_.wasm_service_size() > 0) {
-    auto factory = Registry::FactoryRegistry<Configuration::WasmFactory>::getFactory("envoy.wasm");
-    if (factory) {
-      Configuration::WasmFactoryContextImpl wasm_factory_context(*dispatcher_, api());
-      for (auto& config : bootstrap_.wasm_service()) {
-        auto wasm = factory->createWasm(config, wasm_factory_context);
-        if (wasm) {
-          wasm_.emplace_back(std::move(wasm));
-        } else {
-          ENVOY_LOG(warn, "Unable to iniitalize wasm: {}", config.DebugString());
-        }
-      }
-    } else {
-      ENVOY_LOG(warn, "No wasm factory available, so no wasm service started.");
-    }
-  }
 }
 
 void InstanceImpl::startWorkers() {

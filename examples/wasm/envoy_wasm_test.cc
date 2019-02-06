@@ -2,18 +2,23 @@
 
 #include "envoy_wasm_intrinsics.h"
 
-extern "C" EMSCRIPTEN_KEEPALIVE int configure(char* configuration, int size) {
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(char* configuration, int size) {
   logWarn(std::string("warn " + std::string(configuration, size)));
-  return 0;
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE int tick() {
-  logErr(std::string("test tick") + " logging");
-  return 0;
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick() {
+  logErr(std::string("test tick") + " logging onTick");
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE int main() {
-  logDebug(std::string("test debug") + " logging");
-  logInfo(std::string("test info") + " logging");
-  return 0;
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart() {
+  logDebug(std::string("test debug") + " logging onStart");
+  logInfo(std::string("test info") + " logging onStart");
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog() {
+  logDebug(std::string("test debug") + " logging onLog");
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onDone() {
+  logDebug(std::string("test debug") + " logging onDone");
 }

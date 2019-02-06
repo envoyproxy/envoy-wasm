@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "common/buffer/buffer_impl.h"
 #include "common/http/message_impl.h"
+#include "common/stats/isolated_store_impl.h"
 #include "common/stream_info/stream_info_impl.h"
 
 #include "extensions/common/wasm/wasm.h"
@@ -9,6 +10,7 @@
 #include "test/mocks/http/mocks.h"
 #include "test/mocks/network/mocks.h"
 #include "test/mocks/ssl/mocks.h"
+#include "test/mocks/stream_info/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
@@ -32,15 +34,11 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-class TestFilter : public Filter {
+class TestFilter : public Envoy::Extensions::Common::Wasm::Context {
 public:
-  TestFilter(FilterConfigConstSharedPtr config, Wasm *wasm) : Filter(config, wasm) {}
+  TestFilter(Wasm *wasm) : Envoy::Extensions::Common::Wasm::Context(wasm) {}
 
   MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
-#if 0
-  MOCK_METHOD5(httpCall, uint32_t httpCall(absl::string_view cluster, const Pairs& request_headers,
-        absl::string_view request_body, const Pairs& request_trailers, int timeout_millisconds));
-#endif
 };
 
 class WasmHttpFilterTest : public testing::Test {
@@ -49,19 +47,24 @@ public:
   ~WasmHttpFilterTest() {}
 
   void setupConfig(const std::string& code) {
-    config_.reset(
-        new FilterConfig("envoy.wasm.vm.wavm", code, "<test>", true, "", tls_, cluster_manager_));
-    setupFilter();
+    envoy::config::filter::http::wasm::v2::Wasm proto_config;
+    proto_config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+    proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(code);
+    Stats::IsolatedStoreImpl stats_store;
+    Api::ApiPtr api = Api::createApiForTest(stats_store);
+    wasm_ = Extensions::Common::Wasm::createWasm(proto_config.id(), proto_config.vm_config(), *api);
+    wasm_->setClusterManager(cluster_manager_);
   }
 
   void setupFilter() {
-    filter_.reset(new TestFilter(config_, config_->base_wasm()));
-    config_->base_wasm()->allocContextId(filter_.get());
+    wasm_->setGeneralContext(std::make_unique<TestFilter>(wasm_.get()));;
+    filter_ = std::make_unique<TestFilter>(wasm_.get());
   }
 
   NiceMock<ThreadLocal::MockInstance> tls_;
+  NiceMock<Event::MockDispatcher> dispatcher_;
   Upstream::MockClusterManager cluster_manager_;
-  FilterConfigConstSharedPtr config_;
+  std::unique_ptr<Wasm> wasm_;
   std::unique_ptr<TestFilter> filter_;
   Http::MockStreamDecoderFilterCallbacks decoder_callbacks_;
   Http::MockStreamEncoderFilterCallbacks encoder_callbacks_;
@@ -73,21 +76,18 @@ public:
 
 // Bad code in initial config.
 TEST_F(WasmHttpFilterTest, BadCode) {
-  EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException,
-                            "unable to initialize WASM vm");
+  EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException, "Failed to initialize WASM code from <inline>");
 }
 
 // Script touching headers only, request that is headers only.
 TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
-  config_->initialize(config_);
   setupFilter();
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 1"))));
-  filter_->wasm()->start();
-  filter_->onStart();
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDone 1"))));
+  wasm_->start();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   EXPECT_THAT(request_headers.get_("newheader"), StrEq("newheadervalue"));
@@ -99,14 +99,12 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
 TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
-  config_->initialize(config_);
   setupFilter();
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDestroy 1"))));
-  filter_->wasm()->start();
-  filter_->onStart();
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDone 1"))));
+  wasm_->start();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
@@ -114,11 +112,31 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   filter_->onDestroy();
 }
 
+// Script testing AccessLog::Instance::log.
+TEST_F(WasmHttpFilterTest, AccessLog) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
+  setupFilter();
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onLog 1 /"))));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDone 1"))));
+  wasm_->start();
+  Http::TestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  Buffer::OwnedImpl data("hello");
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
+  StreamInfo::MockStreamInfo stream_info;
+  filter_->log(&request_headers, nullptr, nullptr, stream_info);
+  filter_->onDestroy();
+}
+
 TEST_F(WasmHttpFilterTest, AsyncCall) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/async_call.wasm")));
-  config_->initialize(config_);
   setupFilter();
+  wasm_->start();
 
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);
@@ -158,7 +176,10 @@ TEST_F(WasmHttpFilterTest, AsyncCall) {
 
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, StrEq(":status -> 200")));
 
-  callbacks->onSuccess(std::move(response_message));
+  EXPECT_NE(callbacks, nullptr);
+  if (callbacks) {
+    callbacks->onSuccess(std::move(response_message));
+  }
 }
 
 } // namespace Wasm

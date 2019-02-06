@@ -43,20 +43,20 @@
 
 using namespace WAVM;
 using namespace WAVM::IR;
-using namespace WAVM::Runtime;
 
 DECLARE_INTRINSIC_MODULE(env);
-
-thread_local Envoy::Extensions::Common::Wasm::Context* current_context_ = nullptr;
 
 namespace Envoy {
 namespace Extensions {
 namespace Common {
 namespace Wasm {
+
+extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
+
 namespace Wavm {
 namespace {
 
-using Context = Wasm::Context;  // Shadowing WAVM::Runtime::Context.
+using Context = Common::Wasm::Context;  // Shadowing WAVM::Runtime::Context.
 
 const Logger::Id wasmId = Logger::Id::wasm;
 
@@ -76,22 +76,22 @@ struct SaveRestoreContext {
   return static_cast<_type>(_x[0]._member); \
 } while (0)
 
-class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
+class RootResolver : public WAVM::Runtime::Resolver, public Logger::Loggable<wasmId> {
   public:
-    RootResolver(Compartment*) {}
+    RootResolver(WAVM::Runtime::Compartment*) {}
 
     virtual ~RootResolver() {
       moduleNameToInstanceMap_.clear();  
     }
 
     bool resolve(const std::string& moduleName, const std::string& exportName, ExternType type,
-        Object*& outObject) override {
-      // Link from "env.envoy_<function>" and "env._envoy_<function>" (for Emscripten)
+        WAVM::Runtime::Object*& outObject) override {
+      // Link from "env.proxy_<function>" and "env._proxy_<function>" (for Emscripten)
       // to "envoy.<function>" to support languages without support for import namespaces.
       if (moduleName == "env" &&
-          (absl::StartsWith(exportName, "envoy_") || absl::StartsWith(exportName, "_envoy_"))) {
+          (absl::StartsWith(exportName, "proxy_") || absl::StartsWith(exportName, "_proxy_"))) {
         return resolveInternal("envoy",
-                               exportName.substr(exportName.find("envoy_") + sizeof("envoy_") - 1),
+                               exportName.substr(exportName.find("proxy_") + sizeof("proxy_") - 1),
                                type, outObject);
       } else {
         if (moduleName == "env") {
@@ -108,7 +108,7 @@ class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
     }
 
     bool resolveInternal(const std::string& moduleName, const std::string& exportName,
-                         ExternType type, Object*& outObject) {
+                         ExternType type, WAVM::Runtime::Object*& outObject) {
       auto namedInstance = moduleNameToInstanceMap_.get(moduleName);
       if(namedInstance) {
         outObject = getInstanceExport(*namedInstance, exportName);
@@ -129,12 +129,12 @@ class RootResolver : public Resolver, public Logger::Loggable<wasmId> {
                       exportName, asString(type)));
     }
 
-    HashMap<std::string, ModuleInstance*> & moduleNameToInstanceMap() {
+    HashMap<std::string, WAVM::Runtime::ModuleInstance*> & moduleNameToInstanceMap() {
       return moduleNameToInstanceMap_;
     }
 
   private:
-    HashMap<std::string, ModuleInstance*> moduleNameToInstanceMap_;
+    HashMap<std::string, WAVM::Runtime::ModuleInstance*> moduleNameToInstanceMap_;
 };
 
 bool loadModule(const std::string& code, IR::Module& outModule) {
@@ -177,8 +177,9 @@ class Wavm : public WasmVm {
 
 
     // WasmVm
-    absl::string_view vm() override { return Wasm::WasmVmNames::get().Wavm; }
-    std::unique_ptr<WasmVm> Clone() override;
+    absl::string_view vm() override { return WasmVmNames::get().Wavm; }
+    bool clonable() override { return true; };
+    std::unique_ptr<WasmVm> clone() override;
     bool initialize(const std::string& code, absl::string_view name,
                     bool allow_precompiled) override;
     void start(Context *context) override;
@@ -186,23 +187,23 @@ class Wavm : public WasmVm {
     absl::string_view getMemory(uint32_t pointer, uint32_t size) override;
     bool setMemory(uint32_t pointer, uint32_t size, void *data) override;
 
-    Memory* memory() { return memory_; }
-    Runtime::Context* context() { return context_; }
-    ModuleInstance* moduleInstance() { return moduleInstance_; }
-    ModuleInstance* envoyModuleInstance() { return moduleInstance_; }
+    WAVM::Runtime::Memory* memory() { return memory_; }
+    WAVM::Runtime::Context* context() { return context_; }
+    WAVM::Runtime::ModuleInstance* moduleInstance() { return moduleInstance_; }
+    WAVM::Runtime::ModuleInstance* envoyModuleInstance() { return moduleInstance_; }
 
     void GetFunctions();
     void RegisterCallbacks();
 
     bool hasInstantiatedModule_ = false;
     IR::Module irModule_;
-    GCPointer<ModuleInstance> moduleInstance_;
-    Memory* memory_;
+    WAVM::Runtime::GCPointer<WAVM::Runtime::ModuleInstance> moduleInstance_;
+    WAVM::Runtime::Memory* memory_;
     Emscripten::Instance* emscriptenInstance_ = nullptr;
-    GCPointer<Compartment> compartment_;
-    GCPointer<Runtime::Context> context_;
+    WAVM::Runtime::GCPointer<WAVM::Runtime::Compartment> compartment_;
+    WAVM::Runtime::GCPointer<WAVM::Runtime::Context> context_;
     Intrinsics::Module envoy_module_;
-    GCPointer<Runtime::ModuleInstance> envoyModuleInstance_ = nullptr;
+    WAVM::Runtime::GCPointer<WAVM::Runtime::ModuleInstance> envoyModuleInstance_ = nullptr;
     std::vector<std::unique_ptr<Intrinsics::Function>> envoy_functions_;
 };
 
@@ -218,28 +219,30 @@ Wavm::~Wavm() {
   context_ = nullptr;
   envoyModuleInstance_ = nullptr;
   envoy_functions_.clear();
-  ASSERT(tryCollectCompartment(std::move(compartment_)));
+  if (compartment_) {
+    ASSERT(tryCollectCompartment(std::move(compartment_)));
+  }
 }
 
-std::unique_ptr<WasmVm> Wavm::Clone() {
+std::unique_ptr<WasmVm> Wavm::clone() {
   auto wavm = new Wavm();
-  wavm->compartment_ = Runtime::cloneCompartment(compartment_);
-  wavm->memory_ = Runtime::remapToClonedCompartment(memory_, wavm->compartment_);
-  wavm->context_ = Runtime::createContext(wavm->compartment_);
-  wavm->envoyModuleInstance_ = Runtime::remapToClonedCompartment(envoyModuleInstance_, wavm->compartment_);
-  wavm->moduleInstance_ = Runtime::remapToClonedCompartment(moduleInstance_, wavm->compartment_);
+  wavm->compartment_ = WAVM::Runtime::cloneCompartment(compartment_);
+  wavm->memory_ = WAVM::Runtime::remapToClonedCompartment(memory_, wavm->compartment_);
+  wavm->context_ = WAVM::Runtime::createContext(wavm->compartment_);
+  wavm->envoyModuleInstance_ = WAVM::Runtime::remapToClonedCompartment(envoyModuleInstance_, wavm->compartment_);
+  wavm->moduleInstance_ = WAVM::Runtime::remapToClonedCompartment(moduleInstance_, wavm->compartment_);
   return std::unique_ptr<WasmVm>(wavm);
 }
 
 bool Wavm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
   ASSERT(!hasInstantiatedModule_);
   hasInstantiatedModule_ = true;
-  compartment_ = Runtime::createCompartment();
-  context_ = Runtime::createContext(compartment_);
+  compartment_ = WAVM::Runtime::createCompartment();
+  context_ = WAVM::Runtime::createContext(compartment_);
   if (!loadModule(code, irModule_)) {
     return false;
   }
-  Runtime::ModuleRef module = nullptr;
+  WAVM::Runtime::ModuleRef module = nullptr;
   // todo check percompiled section is permitted
   const UserSection* precompiledObjectSection = nullptr;
   if (allow_precompiled) {
@@ -251,9 +254,9 @@ bool Wavm::initialize(const std::string& code, absl::string_view name, bool allo
     }
   }
   if(!precompiledObjectSection) {
-    module = Runtime::compileModule(irModule_);
+    module = WAVM::Runtime::compileModule(irModule_);
   } else {
-    module = Runtime::loadPrecompiledModule(irModule_, precompiledObjectSection->data);
+    module = WAVM::Runtime::loadPrecompiledModule(irModule_, precompiledObjectSection->data);
   }
   RootResolver rootResolver(compartment_);
   envoyModuleInstance_ = Intrinsics::instantiateModule(compartment_, envoy_module_, "envoy");
@@ -272,7 +275,7 @@ bool Wavm::initialize(const std::string& code, absl::string_view name, bool allo
     rootResolver.moduleNameToInstanceMap().set("asm2wasm", emscriptenInstance_->asm2wasm);
     rootResolver.moduleNameToInstanceMap().set("global", emscriptenInstance_->global);
   }
-  LinkResult linkResult = linkModule(irModule_, rootResolver);
+  WAVM::Runtime::LinkResult linkResult = linkModule(irModule_, rootResolver);
   moduleInstance_ = instantiateModule(compartment_, module, std::move(linkResult.resolvedImports),
                                       std::string(name));
   memory_ = getDefaultMemory(moduleInstance_);
@@ -295,16 +298,16 @@ void *Wavm::allocMemory(uint32_t size, uint32_t *address) {
   auto &v = values[0];
   ASSERT(v.type == ValueType::i32);
   *address = v.u32;
-  return reinterpret_cast<char*>(memoryArrayPtr<U8>(memory(), v.u32, static_cast<U64>(size)));
+  return reinterpret_cast<char*>(WAVM::Runtime::memoryArrayPtr<U8>(memory(), v.u32, static_cast<U64>(size)));
 }
 
 absl::string_view Wavm::getMemory(uint32_t pointer, uint32_t size) {
-   return {reinterpret_cast<char*>(memoryArrayPtr<U8>(memory(), pointer, static_cast<U64>(size))),
+   return {reinterpret_cast<char*>(WAVM::Runtime::memoryArrayPtr<U8>(memory(), pointer, static_cast<U64>(size))),
      static_cast<size_t>(size) };
 }
 
 bool Wavm::setMemory(uint32_t pointer, uint32_t size, void *data) {
-  auto p = reinterpret_cast<char*>(memoryArrayPtr<U8>(memory(), pointer, static_cast<U64>(size)));
+  auto p = reinterpret_cast<char*>(WAVM::Runtime::memoryArrayPtr<U8>(memory(), pointer, static_cast<U64>(size)));
   if (p) {
      memcpy(p, data, size);
      return true;
@@ -329,7 +332,7 @@ using namespace Wavm;
 
 template<typename R, typename ...Args>
 void registerCallbackWavm(WasmVm* vm, absl::string_view functionName, R (*f)(Args...)) {
-  Wasm::Wavm::Wavm *wavm = static_cast<Wasm::Wavm::Wavm*>(vm);
+  auto wavm = static_cast<Common::Wasm::Wavm::Wavm*>(vm);
   wavm->envoy_functions_.emplace_back(
       new Intrinsics::Function(wavm->envoy_module_, functionName.data(),
         reinterpret_cast<void*>(f), inferEnvoyFunctionType(f),
@@ -360,15 +363,28 @@ template void registerCallbackWavm<U32, void*, U32, U32, U32, U32, U32, U32, U32
 template void registerCallbackWavm<U32, void*, U32, U32, U32, U32, U32, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, U32(*f)(void*, U32, U32, U32, U32, U32, U32, U32, U32, U32));
 template void registerCallbackWavm<U32, void*, U32, U32, U32, U32, U32, U32, U32, U32, U32, U32>(WasmVm* vm, absl::string_view functionName, U32(*f)(void*, U32, U32, U32, U32, U32, U32, U32, U32, U32, U32));
 
+template<typename R, typename... Args>
+IR::FunctionType inferStdFunctionType(std::function<R(Envoy::Extensions::Common::Wasm::Context *, Args...)>*) {
+  return IR::FunctionType(IR::inferResultType<R>(),
+      IR::TypeTuple({IR::inferValueType<Args>()...}));
+}
+
+static bool checkFunctionType(WAVM::Runtime::Function* f, IR::FunctionType t) {
+  return getFunctionType(f) == t;
+}
+
 template<typename R, typename ...Args>
-void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function, uint32_t) {
-  Wasm::Wavm::Wavm *wavm = static_cast<Wasm::Wavm::Wavm*>(vm);
+void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Context*, Args...)> *function, uint32_t) {
+  auto wavm = static_cast<Common::Wasm::Wavm::Wavm*>(vm);
   auto f = asFunctionNullable(getInstanceExport(wavm->moduleInstance(), std::string(functionName)));
   if (!f)
     f = asFunctionNullable(getInstanceExport(wavm->envoyModuleInstance(), std::string(functionName)));
   if (!f) {
     *function = nullptr;
     return;
+  }
+  if (!checkFunctionType(f, inferStdFunctionType(function))) {
+    throw WasmVmException(fmt::format("Bad function signature for: {}", functionName));
   }
   *function = [wavm, f](Context* context, Args... args) -> R {
     CALL_WITH_CONTEXT_RETURN(invokeFunctionChecked(wavm->context(), f, {args...}), context, uint32_t, i32);
@@ -378,8 +394,8 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::func
 struct Void {};
 
 template<typename R, typename ...Args>
-void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function, Void) {
-  Wasm::Wavm::Wavm *wavm = static_cast<Wasm::Wavm::Wavm*>(vm);
+void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::function<R(Context*, Args...)> *function, Void) {
+  auto wavm = static_cast<Common::Wasm::Wavm::Wavm*>(vm);
   auto f = asFunctionNullable(getInstanceExport(wavm->moduleInstance(), std::string(functionName)));
   if (!f)
     f = asFunctionNullable(getInstanceExport(wavm->envoyModuleInstance(), std::string(functionName)));
@@ -387,79 +403,47 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName, std::func
     *function = nullptr;
     return;
   }
+  if (!checkFunctionType(f, inferStdFunctionType(function))) {
+    throw WasmVmException(fmt::format("Bad function signature for: {}", functionName));
+  }
   *function = [wavm, f](Context* context, Args... args) -> R {
     CALL_WITH_CONTEXT(invokeFunctionChecked(wavm->context(), f, {args...}), context);
   };
 }
 
-// NB: Unfortunately 'void' is not treated like every other type in C++.  In
+// NB: Unfortunately 'void' is not treated like every othefunction type in C++.  In
 // particular it is not possible to specialize a template based on 'void'.  Instead
 // we use 'Void' for template matching.  Note that the template implemenation above
 // which matchers on 'bool' does not use 'Void' in the implemenation.
 template<typename R, typename ...Args>
-void getFunctionWavm(WasmVm* vm, absl::string_view functionName, std::function<R(Wasm::Context*, Args...)> *function) {
+void getFunctionWavm(WasmVm* vm, absl::string_view functionName, std::function<R(Context*, Args...)> *function) {
   typename std::conditional<std::is_void<R>::value, Void, uint32_t>::type x{};
   getFunctionWavmReturn(vm, functionName, function, x);
 }
 
-template void getFunctionWavm<void>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*)>*);
-template void getFunctionWavm<void, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t)>*);
-template void getFunctionWavm<void, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t)>*);
-template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void>(WasmVm*, absl::string_view, std::function<void(Context*)>*);
+template void getFunctionWavm<void, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<void, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
 
-template void getFunctionWavm<uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*)>*);
-template void getFunctionWavm<uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t)>*);
-template void getFunctionWavm<uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t)>*);
-template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Wasm::Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
-
-void Context::wasmLogHandler(void* raw_context, uint32_t level, uint32_t address, uint32_t size) {
-  auto context = WASM_CONTEXT(raw_context, Context);
-  context->scriptLog(static_cast<spdlog::level::level_enum>(level),
-      context->wasm_vm->getMemory(address, size));
-}
-  
-void Context::scriptLog(spdlog::level::level_enum level, absl::string_view message) {
-  switch (level) {
-  case spdlog::level::trace:
-    ENVOY_LOG(trace, "wasm log: {}", message);
-    return;
-  case spdlog::level::debug:
-    ENVOY_LOG(debug, "wasm log: {}", message);
-    return;
-  case spdlog::level::info:
-    ENVOY_LOG(info, "wasm log: {}", message);
-    return;
-  case spdlog::level::warn:
-    ENVOY_LOG(warn, "wasm log: {}", message);
-    return;
-  case spdlog::level::err:
-    ENVOY_LOG(error, "wasm log: {}", message);
-    return;
-  case spdlog::level::critical:
-    ENVOY_LOG(critical, "wasm log: {}", message);
-    return;
-  case spdlog::level::off:
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
-  }
-}
-
-uint32_t Context::getTotalMemory() {
-  return 0x7FFFFFFF;
-}
+template void getFunctionWavm<uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*)>*);
+template void getFunctionWavm<uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
+template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>(WasmVm*, absl::string_view, std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>*);
 
 } // namespace Wasm
 } // namespace Common

@@ -10,6 +10,7 @@
 #include "extensions/wasm/config.h"
 
 #include "test/mocks/event/mocks.h"
+#include "test/mocks/thread_local/mocks.h"
 #include "test/test_common/environment.h"
 
 #include "gtest/gtest.h"
@@ -23,13 +24,15 @@ TEST(WasmFactoryTest, CreateWasmFromWASM) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.set_vm("envoy.wasm.vm.wavm");
-  config.mutable_code()->set_filename(
+  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
+  config.set_singleton(true);
   Event::MockDispatcher dispatcher;
+  ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -39,16 +42,36 @@ TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.set_vm("envoy.wasm.vm.wavm");
-  config.mutable_code()->set_filename(
+  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
-  config.set_allow_precompiled(true);
+  config.mutable_vm_config()->set_allow_precompiled(true);
+  config.set_singleton(true);
   Event::MockDispatcher dispatcher;
+  ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
+}
+
+TEST(WasmFactoryTest, CreateWasmFromWASMPerThread) {
+  auto factory =
+      Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
+  ASSERT_NE(factory, nullptr);
+  envoy::config::wasm::v2::WasmConfig config;
+  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->mutable_code()->set_filename(
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
+  config.set_id("test_id");
+  Event::MockDispatcher dispatcher;
+  testing::NiceMock<ThreadLocal::MockInstance> tls;
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
+  auto wasm = factory->createWasm(config, context);
+  EXPECT_EQ(wasm, nullptr);
 }
 
 TEST(WasmFactoryTest, CreateWasmFromWAT) {
@@ -56,13 +79,15 @@ TEST(WasmFactoryTest, CreateWasmFromWAT) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.set_vm("envoy.wasm.vm.wavm");
-  config.mutable_code()->set_filename(
+  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wat"));
+  config.set_singleton(true);
   Event::MockDispatcher dispatcher;
+  ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -72,12 +97,12 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWAT) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.set_vm("envoy.wasm.vm.wavm");
-  config.mutable_code()->set_inline_string(
+  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->mutable_code()->set_inline_string(
       "(module\n"
       "  (type $0 (func (param i32 i32 i32)))\n"
       "  (type $1 (func))\n"
-      "  (import \"envoy\" \"log\" (func $envoy_log (param i32 i32 i32)))\n"
+      "  (import \"envoy\" \"log\" (func $proxy_log (param i32 i32 i32)))\n"
       "  (export \"memory\" (memory $2))\n"
       "  (export \"main\" (func $main))\n"
       "  (memory $2 17)\n"
@@ -87,14 +112,16 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWAT) {
       "   i32.const 1\n"
       "   i32.const 1048576\n"
       "   i32.const 13\n"
-      "   call $envoy_log\n"
+      "   call $proxy_log\n"
       "   )\n"
       " )");
+  config.set_singleton(true);
 
   Event::MockDispatcher dispatcher;
+  ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -104,12 +131,12 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithAlias) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.set_vm("envoy.wasm.vm.wavm");
-  config.mutable_code()->set_inline_string(
+  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->mutable_code()->set_inline_string(
       "(module\n"
       "  (type $0 (func (param i32 i32 i32)))\n"
       "  (type $1 (func))\n"
-      "  (import \"env\" \"envoy_log\" (func $envoy_log (param i32 i32 i32)))\n"
+      "  (import \"env\" \"proxy_log\" (func $proxy_log (param i32 i32 i32)))\n"
       "  (export \"memory\" (memory $2))\n"
       "  (export \"main\" (func $main))\n"
       "  (memory $2 17)\n"
@@ -119,14 +146,16 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithAlias) {
       "   i32.const 1\n"
       "   i32.const 1048576\n"
       "   i32.const 13\n"
-      "   call $envoy_log\n"
+      "   call $proxy_log\n"
       "   )\n"
       " )");
+  config.set_singleton(true);
 
   Event::MockDispatcher dispatcher;
+  ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -136,12 +165,12 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithUnderscoreAlias) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.set_vm("envoy.wasm.vm.wavm");
-  config.mutable_code()->set_inline_string(
+  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->mutable_code()->set_inline_string(
       "(module\n"
       "  (type $0 (func (param i32 i32 i32)))\n"
       "  (type $1 (func))\n"
-      "  (import \"env\" \"_envoy_log\" (func $envoy_log (param i32 i32 i32)))\n"
+      "  (import \"env\" \"_proxy_log\" (func $proxy_log (param i32 i32 i32)))\n"
       "  (export \"memory\" (memory $2))\n"
       "  (export \"main\" (func $main))\n"
       "  (memory $2 17)\n"
@@ -151,14 +180,16 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithUnderscoreAlias) {
       "   i32.const 1\n"
       "   i32.const 1048576\n"
       "   i32.const 13\n"
-      "   call $envoy_log\n"
+      "   call $proxy_log\n"
       "   )\n"
       " )");
+  config.set_singleton(true);
 
   Event::MockDispatcher dispatcher;
+  ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -168,8 +199,8 @@ TEST(WasmFactoryTest, MissingImport) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.set_vm("envoy.wasm.vm.wavm");
-  config.mutable_code()->set_inline_string(
+  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->mutable_code()->set_inline_string(
       "(module\n"
       "  (type $0 (func (param i32 i32 i32)))\n"
       "  (type $1 (func))\n"
@@ -186,11 +217,13 @@ TEST(WasmFactoryTest, MissingImport) {
       "   call $missing\n"
       "   )\n"
       " )");
+  config.set_singleton(true);
 
   Event::MockDispatcher dispatcher;
+  ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, *api);
+  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
   EXPECT_THROW_WITH_MESSAGE(
       factory->createWasm(config, context), Extensions::Common::Wasm::WasmException,
       "Failed to load WASM module due to a missing import: env.missing func (i32, i32, i32)->()");

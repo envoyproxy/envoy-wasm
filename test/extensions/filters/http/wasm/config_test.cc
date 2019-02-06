@@ -34,12 +34,13 @@ protected:
 TEST_F(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   const std::string json = TestEnvironment::substitute(R"EOF(
   {
+  "vm_config": {
     "vm": "envoy.wasm.vm.wavm",
     "code": {
       "filename": "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm"
     },
     "allow_precompiled": true
-  }
+  }}
   )EOF");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
@@ -48,11 +49,13 @@ TEST_F(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
   EXPECT_CALL(filter_callback, addStreamFilter(_));
+  EXPECT_CALL(filter_callback, addAccessLogHandler(_));
   cb(filter_callback);
 }
 
 TEST_F(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   const std::string yaml = TestEnvironment::substitute(R"EOF(
+  vm_config:
     vm: "envoy.wasm.vm.wavm"
     code: { filename: "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm" }
   )EOF");
@@ -63,6 +66,7 @@ TEST_F(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
   EXPECT_CALL(filter_callback, addStreamFilter(_));
+  EXPECT_CALL(filter_callback, addAccessLogHandler(_));
   cb(filter_callback);
 }
 
@@ -70,7 +74,7 @@ TEST_F(WasmFilterConfigTest, YamlLoadInlineWASM) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm"));
   EXPECT_FALSE(code.empty());
-  const std::string yaml = absl::StrCat("vm: \"envoy.wasm.vm.wavm\"\n", "code: { inline_bytes: \"",
+  const std::string yaml = absl::StrCat("vm_config:\n  vm: \"envoy.wasm.vm.wavm\"\n", "  code: { inline_bytes: \"",
                                         Base64::encode(code.data(), code.size()), "\" }\n");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
@@ -79,11 +83,13 @@ TEST_F(WasmFilterConfigTest, YamlLoadInlineWASM) {
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
   EXPECT_CALL(filter_callback, addStreamFilter(_));
+  EXPECT_CALL(filter_callback, addAccessLogHandler(_));
   cb(filter_callback);
 }
 
 TEST_F(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   const std::string yaml = R"EOF(
+  vm_config:
     vm: "envoy.wasm.vm.wavm"
     code: { inline_string: "bad code" }
   )EOF";
@@ -93,7 +99,7 @@ TEST_F(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
-                            "unable to initialize WASM vm");
+                            "Failed to initialize WASM code from <inline>");
 }
 
 } // namespace Wasm

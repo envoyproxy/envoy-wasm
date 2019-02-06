@@ -6,6 +6,6 @@ api_proto_library_internal(
     name = "wasm",
     srcs = ["wasm.proto"],
     deps = [
-        "//envoy/api/v2/core:base",
+        "//envoy/config/wasm/v2:wasm",
     ],
 )

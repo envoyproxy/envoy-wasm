@@ -8,18 +8,29 @@ import "envoy/api/v2/core/base.proto";
 
 import "validate/validate.proto";
 
-// Wasm is configured as a built-in *envoy.wasm_service* :ref:`WasmConig
-// <envoy_api_msg_config.wasm.v2.WasmConfig>`. This opaque configuration will be used to create
-// a Wasm Service.
-message WasmConfig {
-  // The Wasm VM.
+message VmConfig {
+  // The Wasm VM type (see source/extensions/commmon/wasm/well_known_names.h).
   string vm = 1;
   // The Wasm code that Envoy will execute.
   envoy.api.v2.core.DataSource code = 2;
-  // The Wasm configuration string used on initialization.
-  string configuration = 3;
+  // The Wasm configuration string used on initialization of a new VM.
+  string initial_configuration = 3;
   // Allow the wasm_file to include pre-compiled code.
   bool allow_precompiled = 4;
-  // If not zero, setup a periodic timer to call tick() in the Wasm VM.
-  int64 tick_timeout_milliseconds = 5;
+}
+
+// Wasm is configured as a built-in *envoy.wasm_service* :ref:`WasmConig
+// <envoy_api_msg_config.wasm.v2.WasmConfig>`. This opaque configuration will be used to
+// create a Wasm Service.
+message WasmConfig {
+  // A unique ID so that multiple filters/services can call into the same VM.
+  string id = 1;
+  // Configuration for starting a new VM (optionally associated with the given 'id').
+  VmConfig vm_config = 2;
+  // Wasm service configuration string e.g. a serialized protobuf which will be the
+  // argument to the VM configure() call. 
+  string configuration = 3;
+  // If true, create a single VM rather than creating one VM per silo.  Such a singleton can
+  // not be used with filters.
+  bool singleton = 4;
 }

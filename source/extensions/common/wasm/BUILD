@@ -19,6 +19,14 @@ envoy_cc_library(
 envoy_cc_library(
     name = "wasm_hdr",
     hdrs = ["wasm.h"],
+    deps = [
+        ":well_known_names",
+        "//include/envoy/http:codes_interface",
+        "//include/envoy/http:filter_interface",
+        "//include/envoy/upstream:cluster_manager_interface",
+        "//source/extensions/filters/http:well_known_names",
+        "@envoy_api//envoy/config/filter/http/wasm/v2:wasm_cc",
+    ],
 )
 
 envoy_cc_library(
@@ -26,7 +34,12 @@ envoy_cc_library(
     srcs = ["wasm.cc"],
     deps = [
         ":wasm_hdr",
-        ":well_known_names",
+        "//external:abseil_node_hash_map",
+        "//source/common/buffer:buffer_lib",
+        "//source/common/common:enum_to_int",
+        "//source/common/config:datasource_lib",
+        "//source/common/http:message_lib",
+        "//source/common/http:utility_lib",
         "//source/extensions/common/wasm/wavm:wavm_lib",
     ],
 )

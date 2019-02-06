@@ -7,6 +7,8 @@ api_proto_library_internal(
     srcs = ["wasm.proto"],
     visibility = [
         "//envoy/config/bootstrap/v2:__pkg__",
+        "//envoy/config/filter/http/wasm/v2:__pkg__",
+        "//envoy/config/accesslog/v2:__pkg__",
         "//source/extensions/wasm:__pkg__",
     ],
     deps = [
