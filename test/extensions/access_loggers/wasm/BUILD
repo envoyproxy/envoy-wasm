@@ -14,10 +14,10 @@ envoy_package()
 envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
-    extension_name = "envoy.access_loggers.wasm",
     data = [
         "//test/extensions/access_loggers/wasm/test_data:modules",
     ],
+    extension_name = "envoy.access_loggers.wasm",
     deps = [
         "//source/extensions/access_loggers/wasm:config",
         "//test/mocks/server:server_mocks",

@@ -14,7 +14,7 @@ public:
   ~WasmFactory() override {}
   std::string name() override { return "envoy.wasm"; }
   Server::WasmPtr createWasm(const envoy::config::wasm::v2::WasmConfig& config,
-      Server::Configuration::WasmFactoryContext& context) override;
+                             Server::Configuration::WasmFactoryContext& context) override;
 };
 
 } // namespace Wasm

@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #include "common/buffer/buffer_impl.h"
 #include "common/http/message_impl.h"
 #include "common/stats/isolated_store_impl.h"
@@ -36,7 +37,7 @@ namespace Wasm {
 
 class TestFilter : public Envoy::Extensions::Common::Wasm::Context {
 public:
-  TestFilter(Wasm *wasm) : Envoy::Extensions::Common::Wasm::Context(wasm) {}
+  TestFilter(Wasm* wasm) : Envoy::Extensions::Common::Wasm::Context(wasm) {}
 
   MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
 };
@@ -57,7 +58,8 @@ public:
   }
 
   void setupFilter() {
-    wasm_->setGeneralContext(std::make_unique<TestFilter>(wasm_.get()));;
+    wasm_->setGeneralContext(std::make_unique<TestFilter>(wasm_.get()));
+    ;
     filter_ = std::make_unique<TestFilter>(wasm_.get());
   }
 
@@ -76,7 +78,8 @@ public:
 
 // Bad code in initial config.
 TEST_F(WasmHttpFilterTest, BadCode) {
-  EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException, "Failed to initialize WASM code from <inline>");
+  EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException,
+                            "Failed to initialize WASM code from <inline>");
 }
 
 // Script touching headers only, request that is headers only.
@@ -84,7 +87,8 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
   setupFilter();
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
+  EXPECT_CALL(*filter_,
+              scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDone 1"))));
   wasm_->start();
@@ -100,9 +104,11 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
   setupFilter();
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
+  EXPECT_CALL(*filter_,
+              scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+  EXPECT_CALL(*filter_,
+              scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDone 1"))));
   wasm_->start();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
@@ -117,9 +123,11 @@ TEST_F(WasmHttpFilterTest, AccessLog) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm")));
   setupFilter();
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
+  EXPECT_CALL(*filter_,
+              scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+  EXPECT_CALL(*filter_,
+              scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onLog 1 /"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDone 1"))));
   wasm_->start();
@@ -147,8 +155,7 @@ TEST_F(WasmHttpFilterTest, AsyncCall) {
       .WillOnce(
           Invoke([&](Http::MessagePtr& message, Http::AsyncClient::Callbacks& cb,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
-            EXPECT_EQ((Http::TestHeaderMapImpl{
-                                               {":method", "POST"},
+            EXPECT_EQ((Http::TestHeaderMapImpl{{":method", "POST"},
                                                {":path", "/"},
                                                {":authority", "foo"},
                                                {"content-length", "11"}}),
@@ -158,7 +165,8 @@ TEST_F(WasmHttpFilterTest, AsyncCall) {
             return &request;
           }));
 
-  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration, filter_->decodeHeaders(request_headers, false));
+  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter_->decodeHeaders(request_headers, false));
 
   Buffer::OwnedImpl data("hello");
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data, false));

@@ -25,7 +25,7 @@ typedef std::shared_ptr<FilterConfig> FilterConfigConstSharedPtr;
 class FilterConfig : Logger::Loggable<Logger::Id::wasm> {
 public:
   FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& proto_config,
-      Server::Configuration::FactoryContext& context);
+               Server::Configuration::FactoryContext& context);
 
   std::shared_ptr<Context> createFilter() { return tls_slot_->getTyped<Wasm>().createContext(); }
 

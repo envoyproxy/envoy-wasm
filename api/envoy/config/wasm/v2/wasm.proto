@@ -3,6 +3,7 @@ syntax = "proto3";
 // [#protodoc-title: Metrics service]
 
 package envoy.config.wasm.v2;
+option java_package = "io.envoyproxy.envoy.config.wasm.v2";
 
 import "envoy/api/v2/core/base.proto";
 
@@ -28,9 +29,9 @@ message WasmConfig {
   // Configuration for starting a new VM (optionally associated with the given 'id').
   VmConfig vm_config = 2;
   // Wasm service configuration string e.g. a serialized protobuf which will be the
-  // argument to the VM configure() call. 
+  // argument to the VM configure() call.
   string configuration = 3;
-  // If true, create a single VM rather than creating one VM per silo.  Such a singleton can
+  // If true, create a single VM rather than creating one VM per silo. Such a singleton can
   // not be used with filters.
   bool singleton = 4;
 }

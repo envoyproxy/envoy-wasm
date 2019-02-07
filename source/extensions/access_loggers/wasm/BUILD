@@ -32,6 +32,5 @@ envoy_cc_library(
         "//source/extensions/access_loggers:well_known_names",
         "//source/extensions/common/wasm:wasm_lib",
         "@envoy_api//envoy/config/accesslog/v2:wasm_cc",
-                 
     ],
 )

@@ -9,7 +9,9 @@ namespace Configuration {
 
 class WasmFactoryContextImpl : public WasmFactoryContext {
 public:
-  WasmFactoryContextImpl(Event::Dispatcher& dispatcher, ThreadLocal::SlotAllocator& tls, Api::Api& api) : dispatcher_(dispatcher), tls_(tls), api_(api) {}
+  WasmFactoryContextImpl(Event::Dispatcher& dispatcher, ThreadLocal::SlotAllocator& tls,
+                         Api::Api& api)
+      : dispatcher_(dispatcher), tls_(tls), api_(api) {}
 
   Event::Dispatcher& dispatcher() override { return dispatcher_; }
   ThreadLocal::SlotAllocator& threadLocal() override { return tls_; }

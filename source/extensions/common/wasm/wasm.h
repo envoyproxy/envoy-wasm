@@ -7,14 +7,13 @@
 #include "envoy/common/exception.h"
 #include "envoy/config/wasm/v2/wasm.pb.validate.h"
 #include "envoy/http/filter.h"
-#include "envoy/thread_local/thread_local.h"
 #include "envoy/server/wasm.h"
+#include "envoy/thread_local/thread_local.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "common/common/assert.h"
 #include "common/common/c_smart_ptr.h"
 #include "common/common/logger.h"
-#include "envoy/common/exception.h"
 
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/http/well_known_names.h"
@@ -36,10 +35,12 @@ using WasmCall0Void = std::function<void(Context*)>;
 using WasmCall2Void = std::function<void(Context*, uint32_t, uint32_t)>;
 
 using WasmContextCall0Void = std::function<void(Context*, uint32_t context_id)>;
-using WasmContextCall7Void = std::function<void(Context*, uint32_t context_id, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
+using WasmContextCall7Void = std::function<void(Context*, uint32_t context_id, uint32_t, uint32_t,
+                                                uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
 
 using WasmContextCall0Int = std::function<uint32_t(Context*, uint32_t context_id)>;
-using WasmContextCall2Int = std::function<uint32_t(Context*, uint32_t context_id, uint32_t, uint32_t)>;
+using WasmContextCall2Int =
+    std::function<uint32_t(Context*, uint32_t context_id, uint32_t, uint32_t)>;
 
 // A context which will be the target of callbacks for a particular session
 // e.g. a handler of a stream.
@@ -48,13 +49,13 @@ class Context : public Http::StreamFilter,
                 public Logger::Loggable<Logger::Id::wasm>,
                 public std::enable_shared_from_this<Context> {
 public:
-  explicit Context(Wasm *wasm);
+  explicit Context(Wasm* wasm);
 
-  Wasm *wasm() const { return wasm_; }
-  WasmVm *wasmVm() const;
+  Wasm* wasm() const { return wasm_; }
+  WasmVm* wasmVm() const;
   Upstream::ClusterManager* clusterManager() const;
   uint32_t id() const { return id_; }
-  const StreamInfo::StreamInfo &streamInfo() const;
+  const StreamInfo::StreamInfo& streamInfo() const;
 
   //
   // Calls into the WASM code (downcalls).
@@ -74,23 +75,22 @@ public:
   virtual Http::FilterMetadataStatus onResponseMetadata();
   // Async Response Downcalls on any Context.
   virtual void onHttpCallResponse(uint32_t token, const Pairs& response_headers,
-                                  absl::string_view response_body,
-                                  const Pairs& response_trailers);
+                                  absl::string_view response_body, const Pairs& response_trailers);
   virtual void onDone();
 
   //
-	// General Callbacks.
+  // General Callbacks.
   //
-	virtual void scriptLog(spdlog::level::level_enum level, absl::string_view message);
-	virtual void setTickPeriod(std::chrono::milliseconds tick_period);
-	virtual uint32_t getTotalMemory();
+  virtual void scriptLog(spdlog::level::level_enum level, absl::string_view message);
+  virtual void setTickPeriod(std::chrono::milliseconds tick_period);
+  virtual uint32_t getTotalMemory();
 
   //
   // AccessLog::Instance
   //
   void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
-      const Http::HeaderMap* response_trailers,
-      const StreamInfo::StreamInfo& stream_info) override;
+           const Http::HeaderMap* response_trailers,
+           const StreamInfo::StreamInfo& stream_info) override;
 
   //
   // Http::StreamFilterBase
@@ -105,7 +105,7 @@ public:
   Http::FilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) override;
   Http::FilterTrailersStatus decodeTrailers(Http::HeaderMap& trailers) override;
   // Note: this is not yet implementated in envoy.
-  Http::FilterMetadataStatus decodeMetadata(Http::MetadataMap&& metadata_map) /* override */ ;
+  Http::FilterMetadataStatus decodeMetadata(Http::MetadataMap&& metadata_map) /* override */;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks& callbacks) override;
 
   //
@@ -120,7 +120,7 @@ public:
 
   //
   // HTTP Filter Callbacks
-  // 
+  //
   // StreamInfo
   virtual std::string getRequestStreamInfoProtocol();
   virtual std::string getResponseStreamInfoProtocol();
@@ -129,12 +129,19 @@ public:
   virtual void setRequestMetadata(absl::string_view key, absl::string_view serialized_proto_struct);
   virtual PairsWithStringValues getRequestMetadataPairs();
   virtual std::string getResponseMetadata(absl::string_view key);
-  virtual void setResponseMetadata(absl::string_view key, absl::string_view serialized_proto_struct);
+  virtual void setResponseMetadata(absl::string_view key,
+                                   absl::string_view serialized_proto_struct);
   virtual PairsWithStringValues getResponseMetadataPairs();
 
   // Continue
-  virtual void continueRequest() { if (decoder_callbacks_) decoder_callbacks_->continueDecoding(); }
-  virtual void continueResponse() { if (encoder_callbacks_) encoder_callbacks_->continueEncoding(); }
+  virtual void continueRequest() {
+    if (decoder_callbacks_)
+      decoder_callbacks_->continueDecoding();
+  }
+  virtual void continueResponse() {
+    if (encoder_callbacks_)
+      encoder_callbacks_->continueEncoding();
+  }
 
   // Shared Data
   virtual std::pair<std::string, uint32_t> getSharedData(absl::string_view key);
@@ -175,9 +182,10 @@ public:
   // HTTP
   // Returns a token which will be used with the corresponding onHttpCallResponse.
   virtual uint32_t httpCall(absl::string_view cluster, const Pairs& request_headers,
-      absl::string_view request_body, const Pairs& request_trailers, int timeout_millisconds);
-  virtual void httpRespond(const Pairs& response_headers,
-      absl::string_view body, const Pairs& response_trailers);
+                            absl::string_view request_body, const Pairs& request_trailers,
+                            int timeout_millisconds);
+  virtual void httpRespond(const Pairs& response_headers, absl::string_view body,
+                           const Pairs& response_trailers);
 
   // Connection
   virtual bool isSsl();
@@ -189,7 +197,7 @@ protected:
   void onAsyncClientFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
 
   Wasm* const wasm_;
-	const uint32_t id_;
+  const uint32_t id_;
   bool destroyed_ = false;
 
   // Async callback support.
@@ -214,7 +222,7 @@ protected:
   const StreamInfo::StreamInfo* access_log_stream_info_{};
   const Http::HeaderMap* access_log_request_headers_{};
   const Http::HeaderMap* access_log_response_headers_{};
-  const Http::HeaderMap* access_log_request_trailers_{};  // unused
+  const Http::HeaderMap* access_log_request_trailers_{}; // unused
   const Http::HeaderMap* access_log_response_trailers_{};
 };
 
@@ -228,21 +236,29 @@ struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
   Http::AsyncClient::Request* request;
 };
 
-// Wasm execution instance.  Manages the Envoy side of the Wasm interface.
-class Wasm : public Envoy::Server::Wasm, public AccessLog::Instance, public ThreadLocal::ThreadLocalObject, public Logger::Loggable<Logger::Id::wasm>, public std::enable_shared_from_this<Wasm> {
+// Wasm execution instance. Manages the Envoy side of the Wasm interface.
+class Wasm : public Envoy::Server::Wasm,
+             public AccessLog::Instance,
+             public ThreadLocal::ThreadLocalObject,
+             public Logger::Loggable<Logger::Id::wasm>,
+             public std::enable_shared_from_this<Wasm> {
 public:
   Wasm(absl::string_view vm, absl::string_view id);
   Wasm(const Wasm& other);
   ~Wasm() {}
 
   void setDispatcher(Event::Dispatcher& dispatcher) { dispatcher_ = &dispatcher; }
-  void setClusterManager(Upstream::ClusterManager& clusterManager) { clusterManager_ = &clusterManager; }
+  void setClusterManager(Upstream::ClusterManager& clusterManager) {
+    clusterManager_ = &clusterManager;
+  }
 
   bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
   void configure(absl::string_view configuration);
   void start();
 
-  const std::string& context_id_filter_state_data_name() { return context_id_filter_state_data_name_; }
+  const std::string& context_id_filter_state_data_name() {
+    return context_id_filter_state_data_name_;
+  }
   absl::string_view id() const { return id_; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
   Context* generalContext() const { return general_context_.get(); }
@@ -259,8 +275,7 @@ public:
   // AccessLog::Instance
   //
   void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
-      const Http::HeaderMap* response_trailers,
-      const StreamInfo::StreamInfo& stream_info);
+           const Http::HeaderMap* response_trailers, const StreamInfo::StreamInfo& stream_info);
 
   // For testing.
   void setGeneralContext(std::shared_ptr<Context> context) {
@@ -278,7 +293,7 @@ private:
   std::string context_id_filter_state_data_name_;
   uint32_t next_context_id_ = 0;
   std::unique_ptr<WasmVm> wasm_vm_;
-  std::shared_ptr<Context> general_context_;  // Context unrelated to any specific stream.
+  std::shared_ptr<Context> general_context_; // Context unrelated to any specific stream.
   std::function<void(Common::Wasm::Context*)> tick_;
   std::chrono::milliseconds tick_period_;
   Event::TimerPtr timer_;
@@ -320,115 +335,135 @@ inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callb
   return filter_it->second;
 }
 
-// Wasm VM instance.  Provides the low level WASM interface.
-class WasmVm : public Logger::Loggable<Logger::Id::wasm> { 
-  public:
-    virtual ~WasmVm() {}
-    virtual absl::string_view vm() PURE;
+// Wasm VM instance. Provides the low level WASM interface.
+class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
+public:
+  virtual ~WasmVm() {}
+  virtual absl::string_view vm() PURE;
 
-    // Whether or not the VM implementation supports cloning.
-    virtual bool clonable() PURE;
-    // Make a thread-specific copy.  This may not be supported by the underlying VM system in which
-    // case it will return nullptr and the caller will need to create a new VM from scratch.
-    virtual std::unique_ptr<WasmVm> clone() PURE;
+  // Whether or not the VM implementation supports cloning.
+  virtual bool clonable() PURE;
+  // Make a thread-specific copy. This may not be supported by the underlying VM system in which
+  // case it will return nullptr and the caller will need to create a new VM from scratch.
+  virtual std::unique_ptr<WasmVm> clone() PURE;
 
-    // Load the WASM code from a file.  Return true on success.
-    virtual bool initialize(const std::string& code, absl::string_view id, bool allow_precompiled) PURE;
+  // Load the WASM code from a file. Return true on success.
+  virtual bool initialize(const std::string& code, absl::string_view id,
+                          bool allow_precompiled) PURE;
 
-    // Call the 'start' function or main() if there is no start funcition.
-    virtual void start(Context*) PURE;
+  // Call the 'start' function or main() if there is no start funcition.
+  virtual void start(Context*) PURE;
 
-    // Allocate a block of memory in the VM and return the pointer to use as a call arguments.
-    virtual void* allocMemory(uint32_t size, uint32_t *pointer) PURE;
-    // Convert a block of memory in the VM to a string_view.
-    virtual absl::string_view getMemory(uint32_t pointer, uint32_t size) PURE;
-    // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
-    virtual bool setMemory(uint32_t pointer, uint32_t size, void *data) PURE;
+  // Allocate a block of memory in the VM and return the pointer to use as a call arguments.
+  virtual void* allocMemory(uint32_t size, uint32_t* pointer) PURE;
+  // Convert a block of memory in the VM to a string_view.
+  virtual absl::string_view getMemory(uint32_t pointer, uint32_t size) PURE;
+  // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
+  virtual bool setMemory(uint32_t pointer, uint32_t size, void* data) PURE;
 
-    // Convenience functions.
+  // Convenience functions.
 
-    // Allocate a null-terminated string in the VM and return the pointer to use as a call arguments.
-    uint32_t copyString(absl::string_view s) {
-      uint32_t pointer;
-      uint8_t *m = static_cast<uint8_t*>(allocMemory((s.size() + 1), &pointer));
-      if (s.size() > 0) memcpy(m, s.data(), s.size());
-      m[s.size()] = 0;
-      return pointer;
+  // Allocate a null-terminated string in the VM and return the pointer to use as a call arguments.
+  uint32_t copyString(absl::string_view s) {
+    uint32_t pointer;
+    uint8_t* m = static_cast<uint8_t*>(allocMemory((s.size() + 1), &pointer));
+    if (s.size() > 0)
+      memcpy(m, s.data(), s.size());
+    m[s.size()] = 0;
+    return pointer;
+  }
+
+  // Copy the data in 's' into the VM along with the pointer-size pair. Returns true on success.
+  bool copyToPointerSize(absl::string_view s, uint32_t ptr_ptr, uint32_t size_ptr) {
+    uint32_t pointer = 0;
+    uint32_t size = s.size();
+    void* p = nullptr;
+    if (size > 0) {
+      p = allocMemory(size, &pointer);
+      if (!p)
+        return false;
+      memcpy(p, s.data(), size);
     }
+    if (!setMemory(ptr_ptr, sizeof(uint32_t), &pointer))
+      return false;
+    if (!setMemory(size_ptr, sizeof(uint32_t), &size))
+      return false;
+    return true;
+  }
 
-    // Copy the data in 's' into the VM along with the pointer-size pair.  Returns true on success.
-    bool copyToPointerSize(absl::string_view s, uint32_t ptr_ptr, uint32_t size_ptr) {
-      uint32_t pointer = 0;
-      uint32_t size = s.size();
-      void *p = nullptr;
-      if (size > 0) {
-        p = allocMemory(size, &pointer);
-        if (!p) return false;
-        memcpy(p, s.data(), size);
+  bool copyToPointerSize(const Buffer::Instance& buffer, uint32_t start, uint32_t length,
+                         uint32_t ptr_ptr, uint32_t size_ptr) {
+    uint32_t size = buffer.length();
+    if (size < start + length)
+      return false;
+    auto nslices = buffer.getRawSlices(nullptr, 0);
+    auto slices = std::make_unique<Buffer::RawSlice[]>(nslices + 10 /* pad for evbuffer overrun */);
+    auto actual_slices = buffer.getRawSlices(&slices[0], nslices);
+    uint32_t pointer = 0;
+    char* p = static_cast<char*>(allocMemory(length, &pointer));
+    auto s = start;
+    auto l = length;
+    if (!p)
+      return false;
+    for (uint64_t i = 0; i < actual_slices; i++) {
+      if (slices[i].len_ <= s) {
+        s -= slices[i].len_;
+        continue;
       }
-      if (!setMemory(ptr_ptr, sizeof(uint32_t), &pointer)) return false;
-      if (!setMemory(size_ptr, sizeof(uint32_t), &size)) return false;
-      return true;
+      auto ll = l;
+      if (ll > s + slices[i].len_)
+        ll = s + slices[i].len_;
+      memcpy(p, static_cast<char*>(slices[i].mem_) + s, ll);
+      l -= ll;
+      if (l <= 0)
+        break;
+      s = 0;
+      p += ll;
     }
-
-    bool copyToPointerSize(const Buffer::Instance& buffer, uint32_t start, uint32_t length, uint32_t ptr_ptr, uint32_t size_ptr) {
-      uint32_t size = buffer.length();
-      if (size < start + length) return false;
-      auto nslices = buffer.getRawSlices(nullptr, 0);
-      auto slices = std::make_unique<Buffer::RawSlice[]>(nslices + 10 /* pad for evbuffer overrun */ );
-      auto actual_slices = buffer.getRawSlices(&slices[0], nslices);
-      uint32_t pointer = 0;
-      char *p = static_cast<char*>(allocMemory(length, &pointer));
-      auto s = start;
-      auto l = length;
-      if (!p) return false;
-      for (uint64_t i = 0; i < actual_slices; i++) {
-        if (slices[i].len_ <= s) {
-          s -= slices[i].len_;
-          continue;
-        }
-        auto ll = l;
-        if (ll > s + slices[i].len_) ll =  s + slices[i].len_;
-        memcpy(p, static_cast<char*>(slices[i].mem_) + s, ll);
-        l -= ll;
-        if (l <= 0) break;
-        s = 0;
-        p += ll;
-      }
-      if (!setMemory(ptr_ptr, sizeof(int32_t), &pointer)) return false;
-      if (!setMemory(size_ptr, sizeof(int32_t), &length)) return false;
-      return true;
-    }
+    if (!setMemory(ptr_ptr, sizeof(int32_t), &pointer))
+      return false;
+    if (!setMemory(size_ptr, sizeof(int32_t), &length))
+      return false;
+    return true;
+  }
 };
 
 // Create a new WASM VM of the give type (e.g. "envoy.wasm.vm.wavm").
 std::unique_ptr<WasmVm> createWasmVm(absl::string_view vm);
 
-// Create a new Wasm VM not attached to any thread.  Note: 'id' may be empty if this VM will not be shared by APIs (e.g. HTTP Filter + AccessLog).
-std::unique_ptr<Wasm> createWasm(absl::string_view id, const envoy::config::wasm::v2::VmConfig& vm_config, Api::Api& api);
+// Create a new Wasm VM not attached to any thread. Note: 'id' may be empty if this VM will not be
+// shared by APIs (e.g. HTTP Filter + AccessLog).
+std::unique_ptr<Wasm> createWasm(absl::string_view id,
+                                 const envoy::config::wasm::v2::VmConfig& vm_config, Api::Api& api);
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
-std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, const envoy::config::wasm::v2::VmConfig& vm_config,  Event::Dispatcher& dispatcher, absl::string_view configuration, Api::Api& api);
+std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm,
+                                            const envoy::config::wasm::v2::VmConfig& vm_config,
+                                            Event::Dispatcher& dispatcher,
+                                            absl::string_view configuration, Api::Api& api);
 // Get an existing ThreadLocal VM matching 'id'.
 std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view id, absl::string_view configuration);
 
 class WasmException : public EnvoyException {
-  public:
-    using EnvoyException::EnvoyException;
+public:
+  using EnvoyException::EnvoyException;
 };
 
 class WasmVmException : public EnvoyException {
-  public:
-    using EnvoyException::EnvoyException;
+public:
+  using EnvoyException::EnvoyException;
 };
 
-inline Context::Context(Wasm *wasm) : wasm_(wasm), id_(wasm->allocContextId()) {}
+inline Context::Context(Wasm* wasm) : wasm_(wasm), id_(wasm->allocContextId()) {}
 
 // Forward declarations for VM implemenations.
-template<typename R, typename ...Args> void registerCallbackWavm(WasmVm *vm, absl::string_view functionName, R (*)(Args...));
-template<typename R, typename ...Args> void getFunctionWavm(WasmVm *vm, absl::string_view functionName, std::function<R(Context*, Args...)>*);
+template <typename R, typename... Args>
+void registerCallbackWavm(WasmVm* vm, absl::string_view functionName, R (*)(Args...));
+template <typename R, typename... Args>
+void getFunctionWavm(WasmVm* vm, absl::string_view functionName,
+                     std::function<R(Context*, Args...)>*);
 
-template<typename R, typename ...Args>
-void registerCallback(WasmVm *vm, absl::string_view functionName, R (*f)(Args...)) {
+template <typename R, typename... Args>
+void registerCallback(WasmVm* vm, absl::string_view functionName, R (*f)(Args...)) {
   if (vm->vm() == WasmVmNames::get().Wavm) {
     registerCallbackWavm(vm, functionName, f);
   } else {
@@ -436,7 +471,7 @@ void registerCallback(WasmVm *vm, absl::string_view functionName, R (*f)(Args...
   }
 }
 
-template<typename F> void getFunction(WasmVm *vm, absl::string_view functionName, F* function) {
+template <typename F> void getFunction(WasmVm* vm, absl::string_view functionName, F* function) {
   if (vm->vm() == WasmVmNames::get().Wavm) {
     getFunctionWavm(vm, functionName, function);
   } else {

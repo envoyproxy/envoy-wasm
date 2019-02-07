@@ -3,26 +3,23 @@
 
 #include "envoy_wasm_intrinsics.h"
 
-
 class ExampleContext : public Context {
-  public:
-    explicit ExampleContext(uint32_t id) : Context(id) {}
+public:
+  explicit ExampleContext(uint32_t id) : Context(id) {}
 
-    void onStart() override;
-    FilterHeadersStatus onRequestHeaders() override;
-    FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
-    FilterHeadersStatus onResponseHeaders() override;
-    void onLog() override;
-    void onDone() override;
+  void onStart() override;
+  FilterHeadersStatus onRequestHeaders() override;
+  FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
+  FilterHeadersStatus onResponseHeaders() override;
+  void onLog() override;
+  void onDone() override;
 };
 
 std::unique_ptr<Context> Context::New(uint32_t id) {
   return std::unique_ptr<Context>(new ExampleContext(id));
 }
 
-void ExampleContext::onStart() {
-  logTrace("onStart");
-}
+void ExampleContext::onStart() { logTrace("onStart"); }
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
   logDebug(std::string("onRequestHaders ") + std::to_string(id()));
@@ -54,11 +51,6 @@ FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool e
   return FilterDataStatus::Continue;
 }
 
-void ExampleContext::onLog() {
-  logWarn(std::string("onLog " + std::to_string(id())));
-}
+void ExampleContext::onLog() { logWarn(std::string("onLog " + std::to_string(id()))); }
 
-void ExampleContext::onDone() {
-  logWarn(std::string("onDone " + std::to_string(id())));
-}
-
+void ExampleContext::onDone() { logWarn(std::string("onDone " + std::to_string(id()))); }

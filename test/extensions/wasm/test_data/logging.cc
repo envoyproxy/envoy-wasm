@@ -14,4 +14,3 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart() {
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick() {
   logError(std::string("test tick") + " logging");
 }
-

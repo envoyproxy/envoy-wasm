@@ -1,12 +1,12 @@
 syntax = "proto3";
 
 package envoy.config.accesslog.v2;
+option java_package = "io.envoyproxy.envoy.config.accesslog.v2";
 option go_package = "v2";
 
 import "validate/validate.proto";
 import "google/protobuf/struct.proto";
 import "envoy/config/wasm/v2/wasm.proto";
-
 
 // [#protodoc-title: Wasm access log]
 
@@ -16,7 +16,7 @@ import "envoy/config/wasm/v2/wasm.proto";
 message WasmAccessLog {
   // A unique ID so that multiple filters/services can call into the same VM.
   string id = 1;
-  //  Wasm configuration string e.g. a serialized protobuf which will be the argument to the  
+  //  Wasm configuration string e.g. a serialized protobuf which will be the argument to the
   // VM configure() call.
   string configuration = 2;
   // Configuration for starting a new VM to be associated with the given vm_id.

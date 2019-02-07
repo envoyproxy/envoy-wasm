@@ -5,7 +5,7 @@ Proof of Concept WebAssembly Support.
 The WebAssembly VM is https://github.com/WAVM/WAVM. This VM was chosen for the
 proof of concept because:
 
-  - It is OSS with a permissive licencse.
+  - It is OSS with a permissive license.
   - It compiles with LLVM for high performance.
   - It can attach pre-compiled code to the WASM files (e.g. during distribution
       from a central controller) for faster startup and reduced load on a pool

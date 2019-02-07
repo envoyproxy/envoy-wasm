@@ -74,8 +74,9 @@ TEST_F(WasmFilterConfigTest, YamlLoadInlineWASM) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm"));
   EXPECT_FALSE(code.empty());
-  const std::string yaml = absl::StrCat("vm_config:\n  vm: \"envoy.wasm.vm.wavm\"\n", "  code: { inline_bytes: \"",
-                                        Base64::encode(code.data(), code.size()), "\" }\n");
+  const std::string yaml =
+      absl::StrCat("vm_config:\n  vm: \"envoy.wasm.vm.wavm\"\n", "  code: { inline_bytes: \"",
+                   Base64::encode(code.data(), code.size()), "\" }\n");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   MessageUtil::loadFromYaml(yaml, proto_config);

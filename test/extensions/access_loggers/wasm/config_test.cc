@@ -23,24 +23,25 @@ namespace AccessLoggers {
 namespace Wasm {
 
 class TestContext : public Common::Wasm::Context {
-  public:
-    TestContext(Common::Wasm::Wasm *wasm) : Common::Wasm::Context(wasm) {}
-    ~TestContext() override {}
-    MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
+public:
+  TestContext(Common::Wasm::Wasm* wasm) : Common::Wasm::Context(wasm) {}
+  ~TestContext() override {}
+  MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-class TestFactoryContext: public NiceMock<Server::Configuration::MockFactoryContext> {
-  public:
-    TestFactoryContext(Api::Api& api) : api_(api) {}
-    Api::Api& api() override { return api_; }
-  private:
-    Api::Api& api_;
-};
+class TestFactoryContext : public NiceMock<Server::Configuration::MockFactoryContext> {
+public:
+  TestFactoryContext(Api::Api& api) : api_(api) {}
+  Api::Api& api() override { return api_; }
 
+private:
+  Api::Api& api_;
+};
 
 TEST(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
   auto factory =
-    Registry::FactoryRegistry<Server::Configuration::AccessLogInstanceFactory>::getFactory(AccessLogNames::get().Wasm);
+      Registry::FactoryRegistry<Server::Configuration::AccessLogInstanceFactory>::getFactory(
+          AccessLogNames::get().Wasm);
   ASSERT_NE(factory, nullptr);
 
   ProtobufTypes::MessagePtr message = factory->createEmptyConfigProto();
@@ -50,26 +51,29 @@ TEST(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
   NiceMock<Server::Configuration::MockFactoryContext> context;
 
   AccessLog::InstanceSharedPtr instance;
-  EXPECT_THROW_WITH_MESSAGE(instance = factory->createAccessLogInstance(*message, std::move(filter), context),
+  EXPECT_THROW_WITH_MESSAGE(
+      instance = factory->createAccessLogInstance(*message, std::move(filter), context),
       Common::Wasm::WasmVmException, "No WASM VM Id or vm_config specified");
 }
 
 TEST(WasmAccessLogConfigTest, CreateWasmFromWASM) {
   auto factory =
-    Registry::FactoryRegistry<Server::Configuration::AccessLogInstanceFactory>::getFactory(AccessLogNames::get().Wasm);
+      Registry::FactoryRegistry<Server::Configuration::AccessLogInstanceFactory>::getFactory(
+          AccessLogNames::get().Wasm);
   ASSERT_NE(factory, nullptr);
 
   envoy::config::accesslog::v2::WasmAccessLog config;
   config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
-  config.mutable_vm_config()->mutable_code()->set_filename(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging.wasm"));
+  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging.wasm"));
 
   AccessLog::FilterPtr filter;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   TestFactoryContext context(*api);
 
-  AccessLog::InstanceSharedPtr instance = factory->createAccessLogInstance(config, std::move(filter), context);
+  AccessLog::InstanceSharedPtr instance =
+      factory->createAccessLogInstance(config, std::move(filter), context);
   EXPECT_NE(nullptr, instance);
   EXPECT_NE(nullptr, dynamic_cast<WasmAccessLog*>(instance.get()));
 }

@@ -3,15 +3,14 @@
 
 #include "envoy_wasm_intrinsics.h"
 
-
 class ExampleContext : public Context {
-  public:
-    explicit ExampleContext(uint32_t id) : Context(id) {}
+public:
+  explicit ExampleContext(uint32_t id) : Context(id) {}
 
-    FilterHeadersStatus onRequestHeaders() override;
-    FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
-    void onLog() override;
-    void onDone() override;
+  FilterHeadersStatus onRequestHeaders() override;
+  FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
+  void onLog() override;
+  void onDone() override;
 };
 
 std::unique_ptr<Context> Context::New(uint32_t id) {
@@ -38,6 +37,4 @@ void ExampleContext::onLog() {
   logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
 }
 
-void ExampleContext::onDone() {
-  logWarn("onDone " + std::to_string(id()));
-}
+void ExampleContext::onDone() { logWarn("onDone " + std::to_string(id())); }

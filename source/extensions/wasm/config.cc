@@ -1,5 +1,7 @@
 #include "extensions/wasm/config.h"
 
+#include <stdio.h>
+
 #include "envoy/registry/registry.h"
 
 #include "common/common/empty_string.h"
@@ -7,8 +9,6 @@
 #include "common/protobuf/utility.h"
 
 #include "extensions/common/wasm/wasm.h"
-
-#include <stdio.h>
 
 namespace Envoy {
 namespace Extensions {
@@ -25,12 +25,15 @@ Server::WasmPtr WasmFactory::createWasm(const envoy::config::wasm::v2::WasmConfi
   }
   // Per-thread WASM VM.
   auto base_wasm = Common::Wasm::createWasm(config.id(), config.vm_config(), context.api());
-  context.threadLocal().allocateSlot()->set([&config, &context, &base_wasm](Event::Dispatcher& dispatcher) {
-      // NB: no need to store the result as it is cached on each thread.
-      Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, config.vm_config(), dispatcher, config.configuration(), context.api());
-      return nullptr;
+  context.threadLocal().allocateSlot()->set(
+      [&config, &context, &base_wasm](Event::Dispatcher& dispatcher) {
+        // NB: no need to store the result as it is cached on each thread.
+        Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, config.vm_config(), dispatcher,
+                                                        config.configuration(), context.api());
+        return nullptr;
       });
-  // Do not return this WASM VM since this is per-thread.  Returning it would indicate that this is a singleton.
+  // Do not return this WASM VM since this is per-thread. Returning it would indicate that this is a
+  // singleton.
   return nullptr;
 }
 

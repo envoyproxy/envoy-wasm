@@ -10,8 +10,8 @@
 #include "common/common/logger.h"
 #include "common/protobuf/protobuf.h"
 
-#include "extensions/access_loggers/well_known_names.h"
 #include "extensions/access_loggers/wasm/wasm_access_log_impl.h"
+#include "extensions/access_loggers/well_known_names.h"
 #include "extensions/common/wasm/wasm.h"
 
 namespace Envoy {
@@ -27,22 +27,25 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& config,
       MessageUtil::downcastAndValidate<const envoy::config::accesslog::v2::WasmAccessLog&>(config);
   auto tls_slot = context.threadLocal().allocateSlot();
   if (wal_config.has_vm_config()) {
-    auto base_wasm = Common::Wasm::createWasm(wal_config.id(), wal_config.vm_config(), context.api());
+    auto base_wasm =
+        Common::Wasm::createWasm(wal_config.id(), wal_config.vm_config(), context.api());
     tls_slot->set([&wal_config, &base_wasm, &context](Event::Dispatcher& dispatcher) {
-        auto result = Common::Wasm::createThreadLocalWasm(*base_wasm, wal_config.vm_config(), dispatcher, wal_config.configuration(), context.api());
-        result->setClusterManager(context. clusterManager());
-        return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
-        });
+      auto result =
+          Common::Wasm::createThreadLocalWasm(*base_wasm, wal_config.vm_config(), dispatcher,
+                                              wal_config.configuration(), context.api());
+      result->setClusterManager(context.clusterManager());
+      return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
+    });
   } else {
     if (wal_config.id().empty()) {
       throw Common::Wasm::WasmVmException("No WASM VM Id or vm_config specified");
     }
     tls_slot->set([&wal_config, &context](Event::Dispatcher& dispatcher) {
-        auto result = Common::Wasm::getThreadLocalWasm(wal_config.id(), wal_config.configuration());
-        result->setDispatcher(dispatcher);
-        result->setClusterManager(context.clusterManager());
-        return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
-        });
+      auto result = Common::Wasm::getThreadLocalWasm(wal_config.id(), wal_config.configuration());
+      result->setDispatcher(dispatcher);
+      result->setClusterManager(context.clusterManager());
+      return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
+    });
   }
   return std::make_shared<WasmAccessLog>(std::move(tls_slot), std::move(filter));
 }
