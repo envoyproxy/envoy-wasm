@@ -98,10 +98,10 @@
     end ;; $if
     )
   
-  (func $_proxy_onConfigure (type $6)
+  (func $_proxy_onConfigure (type $5)
     (param $0 i32)
     (param $1 i32)
-    (local $2 i32)
+    (param $2 i32)
     (local $3 i32)
     (local $4 i32)
     (local $5 i32)
@@ -113,13 +113,13 @@
     i32.add
     set_global $16
     get_local $5
-    tee_local $2
+    tee_local $0
     i64.const 0
     i64.store align=4
-    get_local $2
+    get_local $0
     i32.const 0
     i32.store offset=8
-    get_local $1
+    get_local $2
     i32.const -17
     i32.gt_u
     if $if
@@ -131,24 +131,24 @@
     set_local $3
     block $block
       block $block_0
-        get_local $1
+        get_local $2
         i32.const 11
         i32.lt_u
         if $if_0 (result i32)
+          get_local $0
           get_local $2
-          get_local $1
           i32.store8 offset=11
-          get_local $1
+          get_local $2
           if $if_1 (result i32)
-            get_local $2
+            get_local $0
             set_local $4
             br $block_0
           else
-            get_local $2
+            get_local $0
           end ;; $if_1
         else
+          get_local $0
           get_local $2
-          get_local $1
           i32.const 16
           i32.add
           i32.const -16
@@ -157,13 +157,13 @@
           call $__Znwm
           tee_local $4
           i32.store
-          get_local $2
+          get_local $0
           get_local $6
           i32.const -2147483648
           i32.or
           i32.store offset=8
+          get_local $0
           get_local $2
-          get_local $1
           i32.store offset=4
           br $block_0
         end ;; $if_0
@@ -171,30 +171,30 @@
         br $block
       end ;; $block_0
       get_local $4
-      get_local $0
       get_local $1
+      get_local $2
       call $_memcpy
       drop
     end ;; $block
-    get_local $1
+    get_local $2
     get_local $4
     i32.add
     i32.const 0
     i32.store8
     get_local $3
-    get_local $2
+    get_local $0
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc
-    tee_local $0
+    tee_local $1
     i64.load align=4
     i64.store align=4
     get_local $3
-    get_local $0
+    get_local $1
     i32.load offset=8
     i32.store offset=8
-    get_local $0
+    get_local $1
     i64.const 0
     i64.store align=4
-    get_local $0
+    get_local $1
     i32.const 0
     i32.store offset=8
     i32.const 3
@@ -204,22 +204,22 @@
     get_local $3
     i32.const 11
     i32.add
-    tee_local $4
-    i32.load8_s
     tee_local $1
+    i32.load8_s
+    tee_local $2
     i32.const 0
     i32.lt_s
-    tee_local $0
+    tee_local $4
     select
     get_local $3
     i32.load offset=4
-    get_local $1
+    get_local $2
     i32.const 255
     i32.and
-    get_local $0
+    get_local $4
     select
     call $_proxy_log
-    get_local $4
+    get_local $1
     i32.load8_s
     i32.const 0
     i32.lt_s
@@ -228,7 +228,7 @@
       i32.load
       call $__ZdlPv
     end ;; $if_2
-    get_local $2
+    get_local $0
     i32.load8_s offset=11
     i32.const 0
     i32.ge_s
@@ -237,7 +237,7 @@
       set_global $16
       return
     end ;; $if_3
-    get_local $2
+    get_local $0
     i32.load
     call $__ZdlPv
     get_local $5
