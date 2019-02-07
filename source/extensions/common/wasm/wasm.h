@@ -43,7 +43,10 @@ using WasmContextCall2Int = std::function<uint32_t(Context*, uint32_t context_id
 
 // A context which will be the target of callbacks for a particular session
 // e.g. a handler of a stream.
-class Context : public Http::StreamFilter, public AccessLog::Instance, public Logger::Loggable<Logger::Id::wasm>, std::enable_shared_from_this<Context> {
+class Context : public Http::StreamFilter,
+                public AccessLog::Instance,
+                public Logger::Loggable<Logger::Id::wasm>,
+                public std::enable_shared_from_this<Context> {
 public:
   explicit Context(Wasm *wasm);
 
