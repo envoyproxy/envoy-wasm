@@ -102,7 +102,7 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWAT) {
       "(module\n"
       "  (type $0 (func (param i32 i32 i32)))\n"
       "  (type $1 (func))\n"
-      "  (import \"envoy\" \"log\" (func $proxy_log (param i32 i32 i32)))\n"
+      "  (import \"env\" \"_proxy_log\" (func $_proxy_log (param i32 i32 i32)))\n"
       "  (export \"memory\" (memory $2))\n"
       "  (export \"main\" (func $main))\n"
       "  (memory $2 17)\n"
@@ -112,7 +112,7 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWAT) {
       "   i32.const 1\n"
       "   i32.const 1048576\n"
       "   i32.const 13\n"
-      "   call $proxy_log\n"
+      "   call $_proxy_log\n"
       "   )\n"
       " )");
   config.set_singleton(true);
@@ -136,7 +136,7 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithAlias) {
       "(module\n"
       "  (type $0 (func (param i32 i32 i32)))\n"
       "  (type $1 (func))\n"
-      "  (import \"env\" \"proxy_log\" (func $proxy_log (param i32 i32 i32)))\n"
+      "  (import \"env\" \"_proxy_log\" (func $_proxy_log (param i32 i32 i32)))\n"
       "  (export \"memory\" (memory $2))\n"
       "  (export \"main\" (func $main))\n"
       "  (memory $2 17)\n"
@@ -146,7 +146,7 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithAlias) {
       "   i32.const 1\n"
       "   i32.const 1048576\n"
       "   i32.const 13\n"
-      "   call $proxy_log\n"
+      "   call $_proxy_log\n"
       "   )\n"
       " )");
   config.set_singleton(true);

@@ -58,17 +58,22 @@ public:
   const StreamInfo::StreamInfo& streamInfo() const;
 
   //
-  // Calls into the WASM code (downcalls).
+  // VM level downcalls into the WASM code on Context(id == 0).
   //
-  // VM level downcalls on Context(id == 0)
   virtual void onStart();
   virtual void onConfigure(absl::string_view configuration);
-  // HTTP Filter Stream Request Downcalls on Context(id > 0)
+
+  //
+  // Stream downcalls on Context(id > 0).
+  //
+  // General stream downcall on a new stream.
+  virtual void onCreate();
+  // HTTP Filter Stream Request Downcalls.
   virtual Http::FilterHeadersStatus onRequestHeaders();
   virtual Http::FilterDataStatus onRequestBody(int body_buffer_length, bool end_of_stream);
   virtual Http::FilterTrailersStatus onRequestTrailers();
   virtual Http::FilterMetadataStatus onRequestMetadata();
-  // HTTP Filter STream Response Donwcalls on Context(id > 0)
+  // HTTP Filter Stream Response Downcalls.
   virtual Http::FilterHeadersStatus onResponseHeaders();
   virtual Http::FilterDataStatus onResponseBody(int body_buffer_length, bool end_of_stream);
   virtual Http::FilterTrailersStatus onResponseTrailers();
@@ -76,14 +81,18 @@ public:
   // Async Response Downcalls on any Context.
   virtual void onHttpCallResponse(uint32_t token, const Pairs& response_headers,
                                   absl::string_view response_body, const Pairs& response_trailers);
+  // General stream downcall when the stream has ended.
   virtual void onDone();
+  // General stream downcall for logging. Occurs after onDone().
+  virtual void onLog();
+  // General stream downcall when no futher stream calls will occur.
+  virtual void onDelete();
 
   //
   // General Callbacks.
   //
   virtual void scriptLog(spdlog::level::level_enum level, absl::string_view message);
   virtual void setTickPeriod(std::chrono::milliseconds tick_period);
-  virtual uint32_t getTotalMemory();
 
   //
   // AccessLog::Instance
@@ -304,6 +313,8 @@ private:
   WasmCall0Void onTick_;
 
   // Calls into the VM with a context.
+  WasmContextCall0Void onCreate_;
+
   WasmContextCall0Int onRequestHeaders_;
   WasmContextCall2Int onRequestBody_;
   WasmContextCall0Int onRequestTrailers_;
@@ -316,8 +327,9 @@ private:
 
   WasmContextCall7Void onHttpCallResponse_;
 
-  WasmContextCall0Void onLog_;
   WasmContextCall0Void onDone_;
+  WasmContextCall0Void onLog_;
+  WasmContextCall0Void onDelete_;
 };
 
 inline WasmVm* Context::wasmVm() const { return wasm_->wasmVm(); }

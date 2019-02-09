@@ -1,18 +1,22 @@
+// NOLINT(namespace-envoy)
 #include <string>
 #include <unordered_map>
 
-#include "envoy_wasm_intrinsics.h"
+#include "proxy_wasm_intrinsics.h"
 
 class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id) : Context(id) {}
 
   void onStart() override;
+
+  void onCreate() override;
   FilterHeadersStatus onRequestHeaders() override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   FilterHeadersStatus onResponseHeaders() override;
-  void onLog() override;
   void onDone() override;
+  void onLog() override;
+  void onDelete() override;
 };
 
 std::unique_ptr<Context> Context::New(uint32_t id) {
@@ -21,8 +25,10 @@ std::unique_ptr<Context> Context::New(uint32_t id) {
 
 void ExampleContext::onStart() { logTrace("onStart"); }
 
+void ExampleContext::onCreate() { logWarn(std::string("onCreate " + std::to_string(id()))); }
+
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
-  logDebug(std::string("onRequestHaders ") + std::to_string(id()));
+  logDebug(std::string("onRequestHeaders ") + std::to_string(id()));
   auto result = getRequestHeaderPairs();
   auto pairs = result->pairs();
   logInfo(std::string("headers: ") + std::to_string(pairs.size()));
@@ -33,7 +39,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
 }
 
 FilterHeadersStatus ExampleContext::onResponseHeaders() {
-  logDebug(std::string("onResponseHaders ") + std::to_string(id()));
+  logDebug(std::string("onResponseHeaders ") + std::to_string(id()));
   auto result = getResponseHeaderPairs();
   auto pairs = result->pairs();
   logInfo(std::string("headers: ") + std::to_string(pairs.size()));
@@ -51,6 +57,8 @@ FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool e
   return FilterDataStatus::Continue;
 }
 
+void ExampleContext::onDone() { logWarn(std::string("onDone " + std::to_string(id()))); }
+
 void ExampleContext::onLog() { logWarn(std::string("onLog " + std::to_string(id()))); }
 
-void ExampleContext::onDone() { logWarn(std::string("onDone " + std::to_string(id()))); }
+void ExampleContext::onDelete() { logWarn(std::string("onDelete " + std::to_string(id()))); }

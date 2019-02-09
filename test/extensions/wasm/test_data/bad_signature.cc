@@ -1,6 +1,7 @@
+// NOLINT(namespace-envoy)
 #include <string>
 
-#include "envoy_wasm_intrinsics.h"
+#include "proxy_wasm_intrinsics.h"
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(int bad, char* configuration, int size) {
   logWarn(std::string("warn " + std::string(configuration, size)));

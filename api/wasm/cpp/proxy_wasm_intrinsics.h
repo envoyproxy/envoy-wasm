@@ -1,6 +1,7 @@
 /*
  * Intrinsic functions available to WASM modules.
  */
+// NOLINT(namespace-envoy)
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -18,6 +19,7 @@
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart();
    extern "C" EMSCRIPTEN_KEEPALIVE int main();  // only called if proxy_onStart() is not available.
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick();
+   extern "C" ENSCRIPTEN_KEEPALIVE void proxy_onCreate(uint32_t context_id);
    extern "C" ENSCRIPTEN_KEEPALIVE void proxy_onRequestHeaders(uint32_t context_id);
    extern "C" ENSCRIPTEN_KEEPALIVE void proxy_onRequestBody(uint32_t context_id,  uint32_t
    body_buffer_length, uint32_t end_of_stream size); extern "C" ENSCRIPTEN_KEEPALIVE void
@@ -34,6 +36,8 @@
    extern "C" ENSCRIPTEN_KEEPALIVE void proxy_onDone(uint32_t context_id);
    // onLog occurs after onDone.
    extern "C" ENSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t context_id);
+   // The Context in the proxy has been destroyed and no further calls will be coming.
+   extern "C" ENSCRIPTEN_KEEPALIVE void proxy_onDelete(uint32_t context_id);
 */
 
 enum class LogLevel : int { trace, debug, info, warn, error, critical };
@@ -209,6 +213,7 @@ public:
   virtual void onStart() {}
 
   // Called on individual requests/response streams.
+  virtual void onCreate() {}
   virtual FilterHeadersStatus onRequestHeaders() { return FilterHeadersStatus::Continue; }
   virtual FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) {
     return FilterDataStatus::Continue;
@@ -221,6 +226,7 @@ public:
   virtual FilterTrailersStatus onResponseTrailers() { return FilterTrailersStatus::Continue; }
   virtual void onDone() {}
   virtual void onLog() {}
+  virtual void onDelete() {}
 
   virtual void onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
                                   std::unique_ptr<WasmData> body,

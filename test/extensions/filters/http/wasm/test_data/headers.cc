@@ -1,7 +1,8 @@
+// NOLINT(namespace-envoy)
 #include <string>
 #include <unordered_map>
 
-#include "envoy_wasm_intrinsics.h"
+#include "proxy_wasm_intrinsics.h"
 
 class ExampleContext : public Context {
 public:

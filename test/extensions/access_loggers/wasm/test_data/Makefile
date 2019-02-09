@@ -7,8 +7,8 @@ API=../../../../../api/wasm/cpp
 
 all: logging.wasm
 
-logging.wasm logging.wat: logging.cc ${API}/envoy_wasm_intrinsics.h ${API}/envoy_wasm_intrinsics.cc ${API}/envoy_wasm_intrinsics.js
-	em++ -s WASM=1 --std=c++14 $(OPT) -g3 -I${API} --js-library ${API}/envoy_wasm_intrinsics.js logging.cc ${API}/envoy_wasm_intrinsics.cc -o logging.js
+logging.wasm logging.wat: logging.cc ${API}/proxy_wasm_intrinsics.h ${API}/proxy_wasm_intrinsics.cc ${API}/proxy_wasm_intrinsics.js
+	em++ -s WASM=1 --std=c++14 $(OPT) -g3 -I${API} --js-library ${API}/proxy_wasm_intrinsics.js logging.cc ${API}/proxy_wasm_intrinsics.cc -o logging.js
 	wasm-gc logging.wasm
 	wavm-disas logging.wasm logging.wat
 	rm -f logging.js logging.wast

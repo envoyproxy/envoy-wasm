@@ -440,6 +440,7 @@ uint32_t httpCallHandler(void* raw_context, uint32_t uri_ptr, uint32_t uri_size,
 }
 
 uint32_t getTotalMemoryHandler(void*) { return 0x7FFFFFFF; }
+uint32_t _emscripten_get_heap_sizeHandler(void*) { return 0x7FFFFFFF; }
 
 void setTickPeriodMillisecondsHandler(void* raw_context, uint32_t tick_period_milliseconds) {
   WASM_CONTEXT(raw_context)->setTickPeriod(std::chrono::milliseconds(tick_period_milliseconds));
@@ -801,8 +802,6 @@ void Context::scriptLog(spdlog::level::level_enum level, absl::string_view messa
   }
 }
 
-uint32_t Context::getTotalMemory() { return 0x7FFFFFFF; }
-
 // Connection
 bool Context::isSsl() { return decoder_callbacks_->connection()->ssl() != nullptr; }
 
@@ -827,7 +826,14 @@ void Context::onConfigure(absl::string_view configuration) {
   wasm_->onConfigure_(this, address, static_cast<uint32_t>(configuration.size()));
 }
 
+void Context::onCreate() {
+  if (wasm_->onCreate_) {
+    wasm_->onCreate_(this, id_);
+  }
+}
+
 Http::FilterHeadersStatus Context::onRequestHeaders() {
+  onCreate();
   if (!wasm_->onRequestHeaders_)
     return Http::FilterHeadersStatus::Continue;
   if (wasm_->onRequestHeaders_(this, id_) == 0) {
@@ -930,7 +936,14 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
   if (wasm_vm_) {
+
 #define _REGISTER(_fn) registerCallback(wasm_vm_.get(), #_fn, &_fn##Handler);
+    _REGISTER(getTotalMemory);
+    _REGISTER(_emscripten_get_heap_size);
+#undef _REGISTER
+
+    // Calls with the "_proxy_" prefix.
+#define _REGISTER(_fn) registerCallback(wasm_vm_.get(), "_proxy_" #_fn, &_fn##Handler);
     _REGISTER(log);
 
     _REGISTER(getRequestStreamInfoProtocol);
@@ -978,8 +991,6 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id) {
 
     _REGISTER(httpCall);
 
-    _REGISTER(getTotalMemory);
-
     _REGISTER(setTickPeriodMilliseconds);
 #undef _REGISTER
   }
@@ -989,6 +1000,9 @@ void Wasm::getFunctions() {
 #define _GET(_fn) getFunction(wasm_vm_.get(), "_proxy_" #_fn, &_fn##_);
   _GET(onStart);
   _GET(onConfigure);
+  _GET(onTick);
+
+  _GET(onCreate);
   _GET(onRequestHeaders);
   _GET(onRequestBody);
   _GET(onRequestTrailers);
@@ -1000,7 +1014,7 @@ void Wasm::getFunctions() {
   _GET(onHttpCallResponse);
   _GET(onLog);
   _GET(onDone);
-  _GET(onTick);
+  _GET(onDelete);
 #undef _GET
 }
 
@@ -1058,22 +1072,21 @@ void Wasm::log(const Http::HeaderMap* request_headers, const Http::HeaderMap* re
 void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
                   const Http::HeaderMap* response_trailers,
                   const StreamInfo::StreamInfo& stream_info) {
-  if (!wasm_->onLog_)
-    return;
-  ;
   access_log_request_headers_ = request_headers;
   // ? request_trailers  ?
   access_log_response_headers_ = response_headers;
   access_log_response_headers_ = response_trailers;
   access_log_stream_info_ = &stream_info;
 
-  wasm_->onLog_(this, id_);
+  onLog();
 
   access_log_request_headers_ = nullptr;
   // ? request_trailers  ?
   access_log_response_headers_ = nullptr;
   access_log_response_headers_ = nullptr;
   access_log_stream_info_ = nullptr;
+
+  onDelete();
 }
 
 void Context::onDestroy() {
@@ -1086,6 +1099,16 @@ void Context::onDestroy() {
 void Context::onDone() {
   if (wasm_->onDone_)
     wasm_->onDone_(this, id_);
+}
+
+void Context::onLog() {
+  if (wasm_->onLog_)
+    wasm_->onLog_(this, id_);
+}
+
+void Context::onDelete() {
+  if (wasm_->onDelete_)
+    wasm_->onDelete_(this, id_);
 }
 
 Http::FilterHeadersStatus Context::decodeHeaders(Http::HeaderMap& headers, bool end_stream) {

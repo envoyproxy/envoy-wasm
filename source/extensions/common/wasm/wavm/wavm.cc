@@ -90,25 +90,16 @@ public:
 
   bool resolve(const std::string& moduleName, const std::string& exportName, ExternType type,
                WAVM::Runtime::Object*& outObject) override {
-    // Link from "env.proxy_<function>" and "env._proxy_<function>" (for Emscripten)
-    // to "envoy.<function>" to support languages without support for import namespaces.
-    if (moduleName == "env" &&
-        (absl::StartsWith(exportName, "proxy_") || absl::StartsWith(exportName, "_proxy_"))) {
-      return resolveInternal("envoy",
-                             exportName.substr(exportName.find("proxy_") + sizeof("proxy_") - 1),
-                             type, outObject);
-    } else {
-      if (moduleName == "env") {
-        auto envoyInstance = moduleNameToInstanceMap_.get("envoy");
-        if (envoyInstance) {
-          outObject = getInstanceExport(*envoyInstance, exportName);
-          if (outObject && isA(outObject, type)) {
-            return resolveInternal("envoy", exportName, type, outObject);
-          }
+    if (moduleName == "env") {
+      auto envoyInstance = moduleNameToInstanceMap_.get("envoy");
+      if (envoyInstance) {
+        outObject = getInstanceExport(*envoyInstance, exportName);
+        if (outObject && isA(outObject, type)) {
+          return resolveInternal("envoy", exportName, type, outObject);
         }
       }
-      return resolveInternal(moduleName, exportName, type, outObject);
     }
+    return resolveInternal(moduleName, exportName, type, outObject);
   }
 
   bool resolveInternal(const std::string& moduleName, const std::string& exportName,

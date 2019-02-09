@@ -136,8 +136,8 @@ TEST_F(WasmHttpFilterTest, AccessLog) {
   Buffer::OwnedImpl data("hello");
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
   StreamInfo::MockStreamInfo stream_info;
-  filter_->log(&request_headers, nullptr, nullptr, stream_info);
   filter_->onDestroy();
+  filter_->log(&request_headers, nullptr, nullptr, stream_info);
 }
 
 TEST_F(WasmHttpFilterTest, AsyncCall) {
