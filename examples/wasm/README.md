@@ -63,3 +63,24 @@ Curl output should include our headers:
 * Connection #0 to host localhost left intact
 }
 ```
+
+# Build WASM Binary
+## prerequisite
+1. [Download and install `emscripten`](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions)
+2. Activate emsdk archived version 1.38.25 (Note: by 02/11/2019 the latest build is broken for envoy-wasm)
+
+```
+# in emsdk directory
+./emsdk install sdk-1.38.25-64bit
+./emsdk activate sdk-1.38.25-64bit
+source emsdk_env.sh
+# verify
+em++ -v 2>&1 |grep Emscripten  ## should output 1.38.25
+```
+3. Build wasm filter in envoy directory 
+
+```shell
+envoy/examples/wasm$ source <path/to/emsdk>/emsdk_env.sh  # Only needed if in another shell session
+envoy/examples/wasm$ touch envoy_filter_http_wasm_example.cc && make
+```
+
