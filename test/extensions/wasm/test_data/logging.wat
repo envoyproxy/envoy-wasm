@@ -6771,4 +6771,7 @@
   (func $b0 (type $0)
     i32.const 0
     call $abort
-    ))
+    )
+  ;; User section "emscripten_metadata":
+    ;; "\00\00\00\01\b0\0e\01"
+  )
