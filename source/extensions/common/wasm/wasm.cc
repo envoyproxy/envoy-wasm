@@ -943,79 +943,79 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id) {
 #undef _REGISTER
 
     // Calls with the "_proxy_" prefix.
-#define _REGISTER(_fn) registerCallback(wasm_vm_.get(), "_proxy_" #_fn, &_fn##Handler);
-    _REGISTER(log);
+#define _REGISTER_PROXY(_fn) registerCallback(wasm_vm_.get(), "_proxy_" #_fn, &_fn##Handler);
+    _REGISTER_PROXY(log);
 
-    _REGISTER(getRequestStreamInfoProtocol);
-    _REGISTER(getResponseStreamInfoProtocol);
+    _REGISTER_PROXY(getRequestStreamInfoProtocol);
+    _REGISTER_PROXY(getResponseStreamInfoProtocol);
 
-    _REGISTER(getRequestMetadata);
-    _REGISTER(setRequestMetadata);
-    _REGISTER(getRequestMetadataPairs);
-    _REGISTER(getResponseMetadata);
-    _REGISTER(setResponseMetadata);
-    _REGISTER(getResponseMetadataPairs);
+    _REGISTER_PROXY(getRequestMetadata);
+    _REGISTER_PROXY(setRequestMetadata);
+    _REGISTER_PROXY(getRequestMetadataPairs);
+    _REGISTER_PROXY(getResponseMetadata);
+    _REGISTER_PROXY(setResponseMetadata);
+    _REGISTER_PROXY(getResponseMetadataPairs);
 
-    _REGISTER(continueRequest);
-    _REGISTER(continueResponse);
+    _REGISTER_PROXY(continueRequest);
+    _REGISTER_PROXY(continueResponse);
 
-    _REGISTER(getSharedData);
-    _REGISTER(setSharedData);
+    _REGISTER_PROXY(getSharedData);
+    _REGISTER_PROXY(setSharedData);
 
-    _REGISTER(getRequestHeader);
-    _REGISTER(addRequestHeader);
-    _REGISTER(replaceRequestHeader);
-    _REGISTER(removeRequestHeader);
-    _REGISTER(getRequestHeaderPairs);
+    _REGISTER_PROXY(getRequestHeader);
+    _REGISTER_PROXY(addRequestHeader);
+    _REGISTER_PROXY(replaceRequestHeader);
+    _REGISTER_PROXY(removeRequestHeader);
+    _REGISTER_PROXY(getRequestHeaderPairs);
 
-    _REGISTER(getRequestTrailer);
-    _REGISTER(addRequestTrailer);
-    _REGISTER(replaceRequestTrailer);
-    _REGISTER(removeRequestTrailer);
-    _REGISTER(getRequestTrailerPairs);
+    _REGISTER_PROXY(getRequestTrailer);
+    _REGISTER_PROXY(addRequestTrailer);
+    _REGISTER_PROXY(replaceRequestTrailer);
+    _REGISTER_PROXY(removeRequestTrailer);
+    _REGISTER_PROXY(getRequestTrailerPairs);
 
-    _REGISTER(getResponseHeader);
-    _REGISTER(addResponseHeader);
-    _REGISTER(replaceResponseHeader);
-    _REGISTER(removeResponseHeader);
-    _REGISTER(getResponseHeaderPairs);
+    _REGISTER_PROXY(getResponseHeader);
+    _REGISTER_PROXY(addResponseHeader);
+    _REGISTER_PROXY(replaceResponseHeader);
+    _REGISTER_PROXY(removeResponseHeader);
+    _REGISTER_PROXY(getResponseHeaderPairs);
 
-    _REGISTER(getResponseTrailer);
-    _REGISTER(addResponseTrailer);
-    _REGISTER(replaceResponseTrailer);
-    _REGISTER(removeResponseTrailer);
-    _REGISTER(getResponseTrailerPairs);
+    _REGISTER_PROXY(getResponseTrailer);
+    _REGISTER_PROXY(addResponseTrailer);
+    _REGISTER_PROXY(replaceResponseTrailer);
+    _REGISTER_PROXY(removeResponseTrailer);
+    _REGISTER_PROXY(getResponseTrailerPairs);
 
-    _REGISTER(getRequestBodyBufferBytes);
-    _REGISTER(getResponseBodyBufferBytes);
+    _REGISTER_PROXY(getRequestBodyBufferBytes);
+    _REGISTER_PROXY(getResponseBodyBufferBytes);
 
-    _REGISTER(httpCall);
+    _REGISTER_PROXY(httpCall);
 
-    _REGISTER(setTickPeriodMilliseconds);
-#undef _REGISTER
+    _REGISTER_PROXY(setTickPeriodMilliseconds);
+#undef _REGISTER_PROXY
   }
 }
 
 void Wasm::getFunctions() {
-#define _GET(_fn) getFunction(wasm_vm_.get(), "_proxy_" #_fn, &_fn##_);
-  _GET(onStart);
-  _GET(onConfigure);
-  _GET(onTick);
+#define _GET_PROXY(_fn) getFunction(wasm_vm_.get(), "_proxy_" #_fn, &_fn##_);
+  _GET_PROXY(onStart);
+  _GET_PROXY(onConfigure);
+  _GET_PROXY(onTick);
 
-  _GET(onCreate);
-  _GET(onRequestHeaders);
-  _GET(onRequestBody);
-  _GET(onRequestTrailers);
-  _GET(onRequestMetadata);
-  _GET(onResponseHeaders);
-  _GET(onResponseBody);
-  _GET(onResponseTrailers);
-  _GET(onResponseMetadata);
-  _GET(onHttpCallResponse);
-  _GET(onLog);
-  _GET(onDone);
-  _GET(onDelete);
-#undef _GET
+  _GET_PROXY(onCreate);
+  _GET_PROXY(onRequestHeaders);
+  _GET_PROXY(onRequestBody);
+  _GET_PROXY(onRequestTrailers);
+  _GET_PROXY(onRequestMetadata);
+  _GET_PROXY(onResponseHeaders);
+  _GET_PROXY(onResponseBody);
+  _GET_PROXY(onResponseTrailers);
+  _GET_PROXY(onResponseMetadata);
+  _GET_PROXY(onHttpCallResponse);
+  _GET_PROXY(onDone);
+  _GET_PROXY(onLog);
+  _GET_PROXY(onDelete);
+#undef _GET_PROXY
 }
 
 Wasm::Wasm(const Wasm& wasm) {
