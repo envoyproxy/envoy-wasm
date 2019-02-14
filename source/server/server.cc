@@ -320,8 +320,8 @@ void InstanceImpl::initialize(Options& options,
   if (bootstrap_.wasm_service_size() > 0) {
     auto factory = Registry::FactoryRegistry<Configuration::WasmFactory>::getFactory("envoy.wasm");
     if (factory) {
-      Configuration::WasmFactoryContextImpl wasm_factory_context(*dispatcher_, thread_local_,
-                                                                 api());
+      Configuration::WasmFactoryContextImpl wasm_factory_context(clusterManager(), *dispatcher_,
+                                                                 thread_local_, api());
       for (auto& config : bootstrap_.wasm_service()) {
         auto wasm = factory->createWasm(config, wasm_factory_context);
         if (wasm) {

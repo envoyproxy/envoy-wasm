@@ -11,6 +11,7 @@
 
 #include "test/mocks/event/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
+#include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
 
 #include "gtest/gtest.h"
@@ -28,15 +29,15 @@ TEST(WasmFactoryTest, CreateWasmFromWASM) {
   config.mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
   config.set_singleton(true);
+  Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
-
 TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
@@ -47,11 +48,12 @@ TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
   config.mutable_vm_config()->set_allow_precompiled(true);
   config.set_singleton(true);
+  Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -65,11 +67,12 @@ TEST(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   config.mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
   config.set_id("test_id");
+  Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   testing::NiceMock<ThreadLocal::MockInstance> tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_EQ(wasm, nullptr);
 }
@@ -83,11 +86,12 @@ TEST(WasmFactoryTest, CreateWasmFromWAT) {
   config.mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wat"));
   config.set_singleton(true);
+  Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -117,11 +121,12 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWAT) {
       " )");
   config.set_singleton(true);
 
+  Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -151,11 +156,12 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithAlias) {
       " )");
   config.set_singleton(true);
 
+  Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -185,11 +191,12 @@ TEST(WasmFactoryTest, CreateWasmFromInlineWATWithUnderscoreAlias) {
       " )");
   config.set_singleton(true);
 
+  Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -219,13 +226,15 @@ TEST(WasmFactoryTest, MissingImport) {
       " )");
   config.set_singleton(true);
 
+  Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Server::Configuration::WasmFactoryContextImpl context(dispatcher, tls, *api);
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api);
+  Server::WasmSharedPtr wasm;
   EXPECT_THROW_WITH_MESSAGE(
-      factory->createWasm(config, context), Extensions::Common::Wasm::WasmException,
+      wasm = factory->createWasm(config, context), Extensions::Common::Wasm::WasmException,
       "Failed to load WASM module due to a missing import: env.missing func (i32, i32, i32)->()");
 }
 

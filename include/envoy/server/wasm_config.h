@@ -5,6 +5,7 @@
 #include "envoy/event/dispatcher.h"
 #include "envoy/server/wasm.h"
 #include "envoy/thread_local/thread_local.h"
+#include "envoy/upstream/cluster_manager.h"
 
 #include "common/protobuf/protobuf.h"
 
@@ -15,6 +16,11 @@ namespace Configuration {
 class WasmFactoryContext {
 public:
   virtual ~WasmFactoryContext() {}
+
+  /**
+   * @return Upstream::ClusterManager& singleton for use by the entire server.
+   */
+  virtual Upstream::ClusterManager& clusterManager() PURE;
 
   /**
    * @return Event::Dispatcher& the main thread's dispatcher. This dispatcher should be used
@@ -48,12 +54,12 @@ public:
    * @param config const ProtoBuf::Message& supplies the config for the resource monitor
    *        implementation.
    * @param context WasmFactoryContext& supplies the resource monitor's context.
-   * @return WasmPtr a singleton Wasm servive. May be be nullptr if per silo.
+   * @return WasmSharedPtr a singleton Wasm service. May be be nullptr if per silo.
    * @throw EnvoyException if the implementation is unable to produce an instance with
    *        the provided parameters.
    */
-  virtual WasmPtr createWasm(const envoy::config::wasm::v2::WasmConfig& config,
-                             WasmFactoryContext& context) PURE;
+  virtual WasmSharedPtr createWasm(const envoy::config::wasm::v2::WasmConfig& config,
+                                   WasmFactoryContext& context) PURE;
 };
 
 } // namespace Configuration

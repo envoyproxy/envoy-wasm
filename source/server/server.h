@@ -240,7 +240,7 @@ private:
   Upstream::ProdClusterInfoFactory info_factory_;
   Upstream::HdsDelegatePtr hds_delegate_;
   std::unique_ptr<OverloadManagerImpl> overload_manager_;
-  std::vector<std::unique_ptr<Wasm>> wasm_;
+  std::vector<std::shared_ptr<Wasm>> wasm_;
   std::unique_ptr<RunHelper> run_helper_;
   Envoy::MutexTracer* mutex_tracer_;
   Http::ContextImpl http_context_;

@@ -640,10 +640,7 @@ uint32_t Context::httpCall(absl::string_view cluster, const Pairs& request_heade
   if (timeout_milliseconds < 0)
     return 0;
   auto cluster_string = std::string(cluster);
-  auto cluster_manager = clusterManager();
-  if (!cluster_manager)
-    return 0;
-  if (cluster_manager->get(cluster_string) == nullptr)
+  if (clusterManager().get(cluster_string) == nullptr)
     return 0;
 
   Http::MessagePtr message(new Http::RequestMessageImpl(buildHeaderMapFromPairs(request_headers)));
@@ -670,7 +667,8 @@ uint32_t Context::httpCall(absl::string_view cluster, const Pairs& request_heade
 
   auto token = next_async_token_++;
   auto& handler = http_request_[token];
-  auto http_request = cluster_manager->httpAsyncClientForCluster(cluster_string)
+  auto http_request = clusterManager()
+                          .httpAsyncClientForCluster(cluster_string)
                           .send(std::move(message), handler,
                                 Http::AsyncClient::RequestOptions().setTimeout(timeout));
   if (!http_request) {
@@ -932,7 +930,10 @@ void Context::onHttpCallResponse(uint32_t token, const Pairs& response_headers,
                              trailers_ptr, trailers_size);
 }
 
-Wasm::Wasm(absl::string_view vm, absl::string_view id) {
+Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
+           Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher)
+    : cluster_manager_(cluster_manager), dispatcher_(dispatcher),
+      initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
   if (wasm_vm_) {
@@ -1018,7 +1019,8 @@ void Wasm::getFunctions() {
 #undef _GET_PROXY
 }
 
-Wasm::Wasm(const Wasm& wasm) {
+Wasm::Wasm(const Wasm& wasm)
+    : cluster_manager_(wasm.cluster_manager_), dispatcher_(wasm.dispatcher_) {
   wasm_vm_ = wasm.wasmVm()->clone();
   general_context_ = createContext();
   getFunctions();
@@ -1030,6 +1032,8 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   auto ok = wasm_vm_->initialize(code, name, allow_precompiled);
   if (!ok)
     return false;
+  code_ = code;
+  allow_precompiled_ = allow_precompiled;
   getFunctions();
   return true;
 }
@@ -1046,8 +1050,12 @@ void Wasm::start() { general_context_->onStart(); }
 void Wasm::setTickPeriod(std::chrono::milliseconds tick_period) {
   bool was_running = timer_ && tick_period_.count() > 0;
   tick_period_ = tick_period;
-  if (dispatcher_ && tick_ && tick_period_.count() > 0 && !was_running) {
-    timer_ = dispatcher_->createTimer([this]() { this->tickHandler(); });
+  if (tick_ && tick_period_.count() > 0 && !was_running) {
+    timer_ = dispatcher_.createTimer([weak = std::weak_ptr<Wasm>(shared_from_this())]() {
+      auto shared = weak.lock();
+      if (shared)
+        shared->tickHandler();
+    });
     timer_->enableTimer(tick_period_);
   }
 }
@@ -1213,10 +1221,12 @@ std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
   }
 }
 
-std::unique_ptr<Wasm> createWasm(absl::string_view id,
+std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 Api::Api& api) {
-  auto wasm = std::make_unique<Wasm>(vm_config.vm(), id);
+                                 Upstream::ClusterManager& cluster_manager,
+                                 Event::Dispatcher& dispatcher, Api::Api& api) {
+  auto wasm = std::make_shared<Wasm>(vm_config.vm(), id, vm_config.initial_configuration(),
+                                     cluster_manager, dispatcher);
   const auto& code = Config::DataSource::read(vm_config.code(), true, api);
   const auto& path = Config::DataSource::getPath(vm_config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
@@ -1230,16 +1240,19 @@ std::unique_ptr<Wasm> createWasm(absl::string_view id,
   return wasm;
 }
 
-std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm,
-                                            const envoy::config::wasm::v2::VmConfig& vm_config,
-                                            Event::Dispatcher& dispatcher,
-                                            absl::string_view configuration, Api::Api& api) {
+std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
+                                            Event::Dispatcher& dispatcher) {
   std::shared_ptr<Wasm> wasm;
   if (base_wasm.wasmVm()->clonable()) {
     wasm = std::make_shared<Wasm>(base_wasm);
   } else {
-    wasm = createWasm(base_wasm.id(), vm_config, api);
-    wasm->setDispatcher(dispatcher);
+    wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->vm(), base_wasm.id(),
+                                  base_wasm.initial_configuration(), base_wasm.clusterManager(),
+                                  dispatcher);
+    if (!wasm->initialize(base_wasm.code(), base_wasm.id(), base_wasm.allow_precompiled())) {
+      throw WasmException("Failed to initialize WASM code");
+    }
+    wasm->configure(base_wasm.initial_configuration());
   }
   wasm->configure(configuration);
   if (!wasm->id().empty())

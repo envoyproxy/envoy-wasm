@@ -16,7 +16,7 @@ public:
   virtual ~Wasm() {}
 };
 
-typedef std::unique_ptr<Wasm> WasmPtr;
+typedef std::shared_ptr<Wasm> WasmSharedPtr;
 
 } // namespace Server
 } // namespace Envoy

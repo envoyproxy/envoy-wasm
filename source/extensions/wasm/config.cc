@@ -16,22 +16,24 @@ namespace Wasm {
 
 static const std::string INLINE_STRING = "<inline>";
 
-Server::WasmPtr WasmFactory::createWasm(const envoy::config::wasm::v2::WasmConfig& config,
-                                        Server::Configuration::WasmFactoryContext& context) {
+Server::WasmSharedPtr WasmFactory::createWasm(const envoy::config::wasm::v2::WasmConfig& config,
+                                              Server::Configuration::WasmFactoryContext& context) {
+  // Create a base WASM to verify that the code loads before setting/cloning the for the individual threads.
+  auto base_wasm =
+      Common::Wasm::createWasm(config.id(), config.vm_config(), context.clusterManager(),
+                               context.dispatcher(), context.api());
   if (config.singleton()) {
-    auto wasm = Common::Wasm::createWasm(config.id(), config.vm_config(), context.api());
-    wasm->setDispatcher(context.dispatcher());
-    return Server::WasmPtr(wasm.release());
+    // Return the WASM VM which will be stored as a singleton by the Server.
+    return base_wasm;
   }
+  auto configuration = std::make_shared<std::string>(config.configuration());
   // Per-thread WASM VM.
-  auto base_wasm = Common::Wasm::createWasm(config.id(), config.vm_config(), context.api());
-  context.threadLocal().allocateSlot()->set(
-      [&config, &context, &base_wasm](Event::Dispatcher& dispatcher) {
-        // NB: no need to store the result as it is cached on each thread.
-        Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, config.vm_config(), dispatcher,
-                                                        config.configuration(), context.api());
-        return nullptr;
-      });
+  // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
+  // NB: no need to keep the resulting slot as Wasm is cached on each thread.
+  context.threadLocal().allocateSlot()->set([base_wasm,
+                                             configuration](Event::Dispatcher& dispatcher) {
+    return Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, *configuration, dispatcher);
+  });
   // Do not return this WASM VM since this is per-thread. Returning it would indicate that this is a
   // singleton.
   return nullptr;

@@ -53,7 +53,7 @@ public:
 
   Wasm* wasm() const { return wasm_; }
   WasmVm* wasmVm() const;
-  Upstream::ClusterManager* clusterManager() const;
+  Upstream::ClusterManager& clusterManager() const;
   uint32_t id() const { return id_; }
   const StreamInfo::StreamInfo& streamInfo() const;
 
@@ -252,14 +252,10 @@ class Wasm : public Envoy::Server::Wasm,
              public Logger::Loggable<Logger::Id::wasm>,
              public std::enable_shared_from_this<Wasm> {
 public:
-  Wasm(absl::string_view vm, absl::string_view id);
+  Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
+       Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher);
   Wasm(const Wasm& other);
   ~Wasm() {}
-
-  void setDispatcher(Event::Dispatcher& dispatcher) { dispatcher_ = &dispatcher; }
-  void setClusterManager(Upstream::ClusterManager& clusterManager) {
-    clusterManager_ = &clusterManager;
-  }
 
   bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
   void configure(absl::string_view configuration);
@@ -271,7 +267,7 @@ public:
   absl::string_view id() const { return id_; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
   Context* generalContext() const { return general_context_.get(); }
-  Upstream::ClusterManager* clusterManager() const { return clusterManager_; }
+  Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
 
   std::shared_ptr<Context> createContext() { return std::make_shared<Context>(this); }
 
@@ -279,6 +275,13 @@ public:
   void tickHandler();
 
   uint32_t allocContextId();
+
+  const std::string& code() const { return code_; }
+  const std::string& initial_configuration() const { return initial_configuration_; }
+  bool allow_precompiled() const { return allow_precompiled_; }
+  void setInitialConfiguration(const std::string& initial_configuration) {
+    initial_configuration_ = initial_configuration;
+  }
 
   //
   // AccessLog::Instance
@@ -296,8 +299,8 @@ private:
 
   void getFunctions();
 
-  Event::Dispatcher* dispatcher_ = nullptr;
-  Upstream::ClusterManager* clusterManager_ = nullptr;
+  Upstream::ClusterManager& cluster_manager_;
+  Event::Dispatcher& dispatcher_;
   std::string id_;
   std::string context_id_filter_state_data_name_;
   uint32_t next_context_id_ = 0;
@@ -330,10 +333,15 @@ private:
   WasmContextCall0Void onDone_;
   WasmContextCall0Void onLog_;
   WasmContextCall0Void onDelete_;
+
+  // Used by the base_wasm to enable non-clonable thread local Wasm(s) to be constructed.
+  std::string code_;
+  std::string initial_configuration_;
+  bool allow_precompiled_ = false;
 };
 
 inline WasmVm* Context::wasmVm() const { return wasm_->wasmVm(); }
-inline Upstream::ClusterManager* Context::clusterManager() const { return wasm_->clusterManager(); }
+inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_->clusterManager(); }
 
 inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callbacks) {
   if (callbacks->route() == nullptr || callbacks->route()->routeEntry() == nullptr) {
@@ -440,18 +448,20 @@ public:
   }
 };
 
-// Create a new WASM VM of the give type (e.g. "envoy.wasm.vm.wavm").
+// Create a new low-level WASM VM of the give type (e.g. "envoy.wasm.vm.wavm").
 std::unique_ptr<WasmVm> createWasmVm(absl::string_view vm);
 
-// Create a new Wasm VM not attached to any thread. Note: 'id' may be empty if this VM will not be
-// shared by APIs (e.g. HTTP Filter + AccessLog).
-std::unique_ptr<Wasm> createWasm(absl::string_view id,
-                                 const envoy::config::wasm::v2::VmConfig& vm_config, Api::Api& api);
+// Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
+// be shared by APIs (e.g. HTTP Filter + AccessLog).
+std::shared_ptr<Wasm> createWasm(absl::string_view id,
+                                 const envoy::config::wasm::v2::VmConfig& vm_config,
+                                 Upstream::ClusterManager& cluster_manager,
+                                 Event::Dispatcher& dispatcher, Api::Api& api);
+
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
-std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm,
-                                            const envoy::config::wasm::v2::VmConfig& vm_config,
-                                            Event::Dispatcher& dispatcher,
-                                            absl::string_view configuration, Api::Api& api);
+std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
+                                            Event::Dispatcher& dispatcher);
+
 // Get an existing ThreadLocal VM matching 'id'.
 std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view id, absl::string_view configuration);
 
