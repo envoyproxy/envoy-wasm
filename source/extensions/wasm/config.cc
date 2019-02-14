@@ -18,7 +18,8 @@ static const std::string INLINE_STRING = "<inline>";
 
 Server::WasmSharedPtr WasmFactory::createWasm(const envoy::config::wasm::v2::WasmConfig& config,
                                               Server::Configuration::WasmFactoryContext& context) {
-  // Create a base WASM to verify that the code loads before setting/cloning the for the individual threads.
+  // Create a base WASM to verify that the code loads before setting/cloning the for the individual
+  // threads.
   auto base_wasm =
       Common::Wasm::createWasm(config.id(), config.vm_config(), context.clusterManager(),
                                context.dispatcher(), context.api());

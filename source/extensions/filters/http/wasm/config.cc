@@ -17,7 +17,7 @@ namespace Wasm {
 Http::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
     const envoy::config::filter::http::wasm::v2::Wasm& proto_config, const std::string&,
     Server::Configuration::FactoryContext& context) {
-  FilterConfigConstSharedPtr filter_config(new FilterConfig{proto_config, context});
+  auto filter_config = std::make_shared<FilterConfig>(proto_config, context);
   return [filter_config](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     auto filter = filter_config->createFilter();
     callbacks.addStreamFilter(filter);

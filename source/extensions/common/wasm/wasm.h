@@ -306,7 +306,7 @@ private:
   uint32_t next_context_id_ = 0;
   std::unique_ptr<WasmVm> wasm_vm_;
   std::shared_ptr<Context> general_context_; // Context unrelated to any specific stream.
-  std::function<void(Common::Wasm::Context*)> tick_;
+  std::function<void(Context*)> tick_;
   std::chrono::milliseconds tick_period_;
   Event::TimerPtr timer_;
 

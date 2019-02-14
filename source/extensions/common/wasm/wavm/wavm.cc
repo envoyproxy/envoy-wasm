@@ -215,7 +215,7 @@ Wavm::~Wavm() {
 }
 
 std::unique_ptr<WasmVm> Wavm::clone() {
-  auto wavm = new Wavm();
+  auto wavm = std::make_unique<Wavm>();
   wavm->compartment_ = WAVM::Runtime::cloneCompartment(compartment_);
   wavm->memory_ = WAVM::Runtime::remapToClonedCompartment(memory_, wavm->compartment_);
   wavm->context_ = WAVM::Runtime::createContext(wavm->compartment_);
@@ -223,7 +223,7 @@ std::unique_ptr<WasmVm> Wavm::clone() {
       WAVM::Runtime::remapToClonedCompartment(envoyModuleInstance_, wavm->compartment_);
   wavm->moduleInstance_ =
       WAVM::Runtime::remapToClonedCompartment(moduleInstance_, wavm->compartment_);
-  return std::unique_ptr<WasmVm>(wavm);
+  return wavm;
 }
 
 bool Wavm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <map>
+#include <memory>
 
 #include "envoy/config/filter/http/wasm/v2/wasm.pb.validate.h"
 #include "envoy/http/filter.h"
@@ -18,10 +18,6 @@ namespace Wasm {
 using Envoy::Extensions::Common::Wasm::Context;
 using Envoy::Extensions::Common::Wasm::Wasm;
 
-class FilterConfig;
-
-typedef std::shared_ptr<FilterConfig> FilterConfigConstSharedPtr;
-
 class FilterConfig : Logger::Loggable<Logger::Id::wasm> {
 public:
   FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& proto_config,
@@ -32,6 +28,8 @@ public:
 private:
   ThreadLocal::SlotPtr tls_slot_;
 };
+
+typedef std::shared_ptr<FilterConfig> FilterConfigSharedPtr;
 
 } // namespace Wasm
 } // namespace HttpFilters
