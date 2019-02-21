@@ -806,12 +806,10 @@ bool Context::isSsl() { return decoder_callbacks_->connection()->ssl() != nullpt
 // Calls into the WASM code.
 //
 void Context::onStart() {
+  wasm_->wasmVm()->start(this);
   if (wasm_->onStart_) {
     wasm_->onStart_(this);
-    return;
   }
-  // Fall back to any start or main() function.
-  wasm_->wasmVm()->start(this);
 }
 
 void Context::onConfigure(absl::string_view configuration) {

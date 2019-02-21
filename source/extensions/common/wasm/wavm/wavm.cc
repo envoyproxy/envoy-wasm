@@ -276,8 +276,16 @@ bool Wavm::initialize(const std::string& code, absl::string_view name, bool allo
 
 void Wavm::start(Context* context) {
   auto f = getStartFunction(moduleInstance_);
-  if (!f)
+  if (f) {
+    CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
+  }
+  if (emscriptenInstance_) {
+    Emscripten::initializeGlobals(context_, irModule_, moduleInstance_);
+  }
+  f = asFunctionNullable(getInstanceExport(moduleInstance_, "main"));
+  if (!f) {
     f = asFunctionNullable(getInstanceExport(moduleInstance_, "_main"));
+  }
   if (f) {
     CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
   }

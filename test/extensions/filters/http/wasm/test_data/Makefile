@@ -2,11 +2,7 @@ API=../../../../../../api/wasm/cpp
 
 EMSCRIPTEN_OPT=-s WASM=1 -s EMIT_EMSCRIPTEN_METADATA=1
 
-# Note that optimizations are disabled, because optimized WASM module
-# throws wavm.integerDivideByZeroOrOverflow, possibly due to an issue
-# with getFunctionWavm() templates and/or their usage.
-#CXXFLAGS=--std=c++14 -O3 -g3
-CXXFLAGS=--std=c++14 -g3
+CXXFLAGS=--std=c++14 -O3 -g3
 
 all: headers.wasm async_call.wasm
 
