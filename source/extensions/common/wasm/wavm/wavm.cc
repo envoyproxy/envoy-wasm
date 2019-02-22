@@ -73,13 +73,26 @@ struct SaveRestoreContext {
 #define CALL_WITH_CONTEXT(_x, _context)                                                            \
   do {                                                                                             \
     SaveRestoreContext _saved_context(static_cast<Context*>(_context));                            \
-    _x;                                                                                            \
+    WAVM::Runtime::catchRuntimeExceptions([&] { _x; },                                             \
+                                          [&](WAVM::Runtime::Exception* exception) {               \
+                                            auto description = describeException(exception);       \
+                                            destroyException(exception);                           \
+                                            throw WasmException(description);                      \
+                                          });                                                      \
   } while (0)
 
 #define CALL_WITH_CONTEXT_RETURN(_x, _context, _type, _member)                                     \
   do {                                                                                             \
     SaveRestoreContext _saved_context(static_cast<Context*>(_context));                            \
-    return static_cast<_type>(_x[0]._member);                                                      \
+    _type _return_value;                                                                           \
+    WAVM::Runtime::catchRuntimeExceptions(                                                         \
+        [&] { _return_value = static_cast<_type>(_x[0]._member); },                                \
+        [&](WAVM::Runtime::Exception* exception) {                                                 \
+          auto description = describeException(exception);                                         \
+          destroyException(exception);                                                             \
+          throw WasmException(description);                                                        \
+        });                                                                                        \
+    return _return_value;                                                                          \
   } while (0)
 
 class RootResolver : public WAVM::Runtime::Resolver, public Logger::Loggable<wasmId> {

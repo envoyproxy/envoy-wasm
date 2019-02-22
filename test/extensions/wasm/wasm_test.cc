@@ -73,6 +73,47 @@ TEST(WasmTest, BadSignature) {
                             "Bad function signature for: _proxy_onConfigure");
 }
 
+TEST(WasmTest, Segv) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::SimulatedTimeSystem time_system;
+  Event::DispatcherImpl dispatcher(time_system, *api);
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
+                                                               cluster_manager, dispatcher);
+  EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/segv.wasm"));
+  EXPECT_FALSE(code.empty());
+  auto context = std::make_unique<TestContext>(wasm.get());
+  EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("before badptr")));
+  EXPECT_TRUE(wasm->initialize(code, "<test>", false));
+  wasm->setGeneralContext(std::move(context));
+  EXPECT_THROW_WITH_MESSAGE(wasm->start(), Extensions::Common::Wasm::WasmException,
+                            "emscripten llvm_trap");
+}
+
+TEST(WasmTest, DivByZero) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::SimulatedTimeSystem time_system;
+  Event::DispatcherImpl dispatcher(time_system, *api);
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
+                                                               cluster_manager, dispatcher);
+  EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/segv.wasm"));
+  EXPECT_FALSE(code.empty());
+  auto context = std::make_unique<TestContext>(wasm.get());
+  EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("before div by zero")));
+  EXPECT_TRUE(wasm->initialize(code, "<test>", false));
+  wasm->setGeneralContext(std::move(context));
+  wasm->wasmVm()->start(wasm->generalContext());
+  EXPECT_THROW_WITH_REGEX(wasm->generalContext()->onLog(), Extensions::Common::Wasm::WasmException,
+                         "wavm.integerDivideByZeroOrOverflow.*");
+}
+
 } // namespace Wasm
 } // namespace Extensions
 } // namespace Envoy

@@ -440,6 +440,7 @@ uint32_t httpCallHandler(void* raw_context, uint32_t uri_ptr, uint32_t uri_size,
 
 uint32_t getTotalMemoryHandler(void*) { return 0x7FFFFFFF; }
 uint32_t _emscripten_get_heap_sizeHandler(void*) { return 0x7FFFFFFF; }
+void _llvm_trapHandler(void*) { throw WasmException("emscripten llvm_trap"); }
 
 void setTickPeriodMillisecondsHandler(void* raw_context, uint32_t tick_period_milliseconds) {
   WASM_CONTEXT(raw_context)->setTickPeriod(std::chrono::milliseconds(tick_period_milliseconds));
@@ -938,6 +939,7 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
 #define _REGISTER(_fn) registerCallback(wasm_vm_.get(), #_fn, &_fn##Handler);
     _REGISTER(getTotalMemory);
     _REGISTER(_emscripten_get_heap_size);
+    _REGISTER(_llvm_trap);
 #undef _REGISTER
 
     // Calls with the "_proxy_" prefix.
