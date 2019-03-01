@@ -1019,7 +1019,7 @@ void Wasm::getFunctions() {
 }
 
 Wasm::Wasm(const Wasm& wasm)
-    : std::enable_shared_from_this<Wasm>(), cluster_manager_(wasm.cluster_manager_),
+    : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(wasm.dispatcher_) {
   wasm_vm_ = wasm.wasmVm()->clone();
   general_context_ = createContext();
