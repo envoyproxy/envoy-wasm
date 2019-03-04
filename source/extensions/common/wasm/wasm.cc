@@ -807,7 +807,6 @@ bool Context::isSsl() { return decoder_callbacks_->connection()->ssl() != nullpt
 // Calls into the WASM code.
 //
 void Context::onStart() {
-  wasm_->wasmVm()->start(this);
   if (wasm_->onStart_) {
     wasm_->onStart_(this);
   }
@@ -1032,6 +1031,8 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   auto ok = wasm_vm_->initialize(code, name, allow_precompiled);
   if (!ok)
     return false;
+  general_context_ = createContext();
+  wasm_vm_->start(general_context_.get());
   code_ = code;
   allow_precompiled_ = allow_precompiled;
   getFunctions();
@@ -1255,6 +1256,7 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
     wasm->configure(base_wasm.initial_configuration());
   }
   wasm->configure(configuration);
+  wasm->start();
   if (!wasm->id().empty())
     local_wasms[wasm->id()] = wasm;
   return wasm;

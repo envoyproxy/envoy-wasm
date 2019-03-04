@@ -111,7 +111,7 @@ TEST(WasmTest, DivByZero) {
   wasm->setGeneralContext(std::move(context));
   wasm->wasmVm()->start(wasm->generalContext());
   EXPECT_THROW_WITH_REGEX(wasm->generalContext()->onLog(), Extensions::Common::Wasm::WasmException,
-                         "wavm.integerDivideByZeroOrOverflow.*");
+                          "wavm.integerDivideByZeroOrOverflow.*");
 }
 
 } // namespace Wasm

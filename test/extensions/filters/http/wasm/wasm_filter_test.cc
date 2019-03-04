@@ -58,15 +58,16 @@ public:
   }
 
   void setupFilter() {
-    wasm_->setGeneralContext(std::make_unique<TestFilter>(wasm_.get()));
-    filter_ = std::make_unique<TestFilter>(wasm_.get());
+    filter_ = std::make_shared<TestFilter>(wasm_.get());
+    wasm_->setGeneralContext(
+        std::static_pointer_cast<Envoy::Extensions::Common::Wasm::Context>(filter_));
   }
 
   NiceMock<ThreadLocal::MockInstance> tls_;
   NiceMock<Event::MockDispatcher> dispatcher_;
   Upstream::MockClusterManager cluster_manager_;
   std::shared_ptr<Wasm> wasm_;
-  std::unique_ptr<TestFilter> filter_;
+  std::shared_ptr<TestFilter> filter_;
   Http::MockStreamDecoderFilterCallbacks decoder_callbacks_;
   Http::MockStreamEncoderFilterCallbacks encoder_callbacks_;
   envoy::api::v2::core::Metadata metadata_;

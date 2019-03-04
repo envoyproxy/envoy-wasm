@@ -25,6 +25,7 @@ Server::WasmSharedPtr WasmFactory::createWasm(const envoy::config::wasm::v2::Was
                                context.dispatcher(), context.api());
   if (config.singleton()) {
     // Return the WASM VM which will be stored as a singleton by the Server.
+    base_wasm->start();
     return base_wasm;
   }
   auto configuration = std::make_shared<std::string>(config.configuration());
