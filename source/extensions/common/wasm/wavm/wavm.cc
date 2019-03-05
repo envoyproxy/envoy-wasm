@@ -175,8 +175,7 @@ template <typename F> EnvoyHandlerBase* MakeEnvoyHandler(F handler) {
   return new EnvoyHandler<F>(handler);
 }
 
-class Wavm : public WasmVm {
-public:
+struct Wavm : public WasmVm {
   Wavm() = default;
   ~Wavm() override;
 
@@ -184,11 +183,13 @@ public:
   absl::string_view vm() override { return WasmVmNames::get().Wavm; }
   bool clonable() override { return true; };
   std::unique_ptr<WasmVm> clone() override;
-  bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled) override;
+  bool load(const std::string& code, bool allow_precompiled) override;
+  void link(absl::string_view debug_name, bool needs_emscripten) override;
   void start(Context* context) override;
   void* allocMemory(uint32_t size, uint32_t* pointer) override;
   absl::string_view getMemory(uint32_t pointer, uint32_t size) override;
   bool setMemory(uint32_t pointer, uint32_t size, void* data) override;
+  absl::string_view getUserSection(absl::string_view name, bool* present) override;
 
   WAVM::Runtime::Memory* memory() { return memory_; }
   WAVM::Runtime::Context* context() { return context_; }
@@ -200,6 +201,7 @@ public:
 
   bool hasInstantiatedModule_ = false;
   IR::Module irModule_;
+  WAVM::Runtime::ModuleRef module_ = nullptr;
   WAVM::Runtime::GCPointer<WAVM::Runtime::ModuleInstance> moduleInstance_;
   WAVM::Runtime::Memory* memory_;
   Emscripten::Instance* emscriptenInstance_ = nullptr;
@@ -239,7 +241,7 @@ std::unique_ptr<WasmVm> Wavm::clone() {
   return wavm;
 }
 
-bool Wavm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
+bool Wavm::load(const std::string& code, bool allow_precompiled) {
   ASSERT(!hasInstantiatedModule_);
   hasInstantiatedModule_ = true;
   compartment_ = WAVM::Runtime::createCompartment();
@@ -247,7 +249,6 @@ bool Wavm::initialize(const std::string& code, absl::string_view name, bool allo
   if (!loadModule(code, irModule_)) {
     return false;
   }
-  WAVM::Runtime::ModuleRef module = nullptr;
   // todo check percompiled section is permitted
   const UserSection* precompiledObjectSection = nullptr;
   if (allow_precompiled) {
@@ -259,21 +260,17 @@ bool Wavm::initialize(const std::string& code, absl::string_view name, bool allo
     }
   }
   if (!precompiledObjectSection) {
-    module = WAVM::Runtime::compileModule(irModule_);
+    module_ = WAVM::Runtime::compileModule(irModule_);
   } else {
-    module = WAVM::Runtime::loadPrecompiledModule(irModule_, precompiledObjectSection->data);
+    module_ = WAVM::Runtime::loadPrecompiledModule(irModule_, precompiledObjectSection->data);
   }
+  return true;
+}
+
+void Wavm::link(absl::string_view name, bool needs_emscripten) {
   RootResolver rootResolver(compartment_);
   envoyModuleInstance_ = Intrinsics::instantiateModule(compartment_, envoy_module_, "envoy");
   rootResolver.moduleNameToInstanceMap().set("envoy", envoyModuleInstance_);
-  // Auto-detect if WASM module needs Emscripten.
-  bool needs_emscripten = false;
-  for (const auto& func : irModule_.functions.imports) {
-    if (func.exportName == "_emscripten_memcpy_big" && func.moduleName == "env") {
-      needs_emscripten = true;
-      break;
-    }
-  }
   if (needs_emscripten) {
     emscriptenInstance_ = Emscripten::instantiate(compartment_, irModule_);
     rootResolver.moduleNameToInstanceMap().set("env", emscriptenInstance_->env);
@@ -281,10 +278,9 @@ bool Wavm::initialize(const std::string& code, absl::string_view name, bool allo
     rootResolver.moduleNameToInstanceMap().set("global", emscriptenInstance_->global);
   }
   WAVM::Runtime::LinkResult linkResult = linkModule(irModule_, rootResolver);
-  moduleInstance_ = instantiateModule(compartment_, module, std::move(linkResult.resolvedImports),
+  moduleInstance_ = instantiateModule(compartment_, module_, std::move(linkResult.resolvedImports),
                                       std::string(name));
   memory_ = getDefaultMemory(moduleInstance_);
-  return true;
 }
 
 void Wavm::start(Context* context) {
@@ -332,6 +328,21 @@ bool Wavm::setMemory(uint32_t pointer, uint32_t size, void* data) {
   } else {
     return false;
   }
+}
+
+absl::string_view Wavm::getUserSection(absl::string_view name, bool* present) {
+  for (auto& section : irModule_.userSections) {
+    if (section.name == name) {
+      if (present) {
+        *present = true;
+      }
+      return {reinterpret_cast<char*>(section.data.data()), section.data.size()};
+    }
+  }
+  if (present) {
+    *present = false;
+  }
+  return {};
 }
 
 std::unique_ptr<WasmVm> createWavm() { return std::make_unique<Wavm>(); }

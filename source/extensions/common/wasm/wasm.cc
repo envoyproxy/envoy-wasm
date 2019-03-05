@@ -504,6 +504,22 @@ void replaceHeader(Http::HeaderMap* map, absl::string_view key, absl::string_vie
     map->addCopy(lower_key, std::string(value));
 }
 
+const uint8_t* decodeVarint(const uint8_t* pos, const uint8_t* end, uint32_t* out) {
+  uint32_t ret = 0;
+  int shift = 0;
+  while (pos < end && (*pos & 0x80)) {
+    ret |= (*pos & 0x7f) << shift;
+    shift += 7;
+    pos++;
+  }
+  if (pos < end) {
+    ret |= *pos << shift;
+    pos++;
+  }
+  *out = ret;
+  return pos;
+}
+
 } // namespace
 
 void Context::setTickPeriod(std::chrono::milliseconds tick_period) {
@@ -933,66 +949,68 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
       initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
-  if (wasm_vm_) {
+}
 
+void Wasm::registerFunctions() {
 #define _REGISTER(_fn) registerCallback(wasm_vm_.get(), #_fn, &_fn##Handler);
+  if (is_emscripten_) {
     _REGISTER(getTotalMemory);
     _REGISTER(_emscripten_get_heap_size);
     _REGISTER(_llvm_trap);
+  }
 #undef _REGISTER
 
-    // Calls with the "_proxy_" prefix.
+  // Calls with the "_proxy_" prefix.
 #define _REGISTER_PROXY(_fn) registerCallback(wasm_vm_.get(), "_proxy_" #_fn, &_fn##Handler);
-    _REGISTER_PROXY(log);
+  _REGISTER_PROXY(log);
 
-    _REGISTER_PROXY(getRequestStreamInfoProtocol);
-    _REGISTER_PROXY(getResponseStreamInfoProtocol);
+  _REGISTER_PROXY(getRequestStreamInfoProtocol);
+  _REGISTER_PROXY(getResponseStreamInfoProtocol);
 
-    _REGISTER_PROXY(getRequestMetadata);
-    _REGISTER_PROXY(setRequestMetadata);
-    _REGISTER_PROXY(getRequestMetadataPairs);
-    _REGISTER_PROXY(getResponseMetadata);
-    _REGISTER_PROXY(setResponseMetadata);
-    _REGISTER_PROXY(getResponseMetadataPairs);
+  _REGISTER_PROXY(getRequestMetadata);
+  _REGISTER_PROXY(setRequestMetadata);
+  _REGISTER_PROXY(getRequestMetadataPairs);
+  _REGISTER_PROXY(getResponseMetadata);
+  _REGISTER_PROXY(setResponseMetadata);
+  _REGISTER_PROXY(getResponseMetadataPairs);
 
-    _REGISTER_PROXY(continueRequest);
-    _REGISTER_PROXY(continueResponse);
+  _REGISTER_PROXY(continueRequest);
+  _REGISTER_PROXY(continueResponse);
 
-    _REGISTER_PROXY(getSharedData);
-    _REGISTER_PROXY(setSharedData);
+  _REGISTER_PROXY(getSharedData);
+  _REGISTER_PROXY(setSharedData);
 
-    _REGISTER_PROXY(getRequestHeader);
-    _REGISTER_PROXY(addRequestHeader);
-    _REGISTER_PROXY(replaceRequestHeader);
-    _REGISTER_PROXY(removeRequestHeader);
-    _REGISTER_PROXY(getRequestHeaderPairs);
+  _REGISTER_PROXY(getRequestHeader);
+  _REGISTER_PROXY(addRequestHeader);
+  _REGISTER_PROXY(replaceRequestHeader);
+  _REGISTER_PROXY(removeRequestHeader);
+  _REGISTER_PROXY(getRequestHeaderPairs);
 
-    _REGISTER_PROXY(getRequestTrailer);
-    _REGISTER_PROXY(addRequestTrailer);
-    _REGISTER_PROXY(replaceRequestTrailer);
-    _REGISTER_PROXY(removeRequestTrailer);
-    _REGISTER_PROXY(getRequestTrailerPairs);
+  _REGISTER_PROXY(getRequestTrailer);
+  _REGISTER_PROXY(addRequestTrailer);
+  _REGISTER_PROXY(replaceRequestTrailer);
+  _REGISTER_PROXY(removeRequestTrailer);
+  _REGISTER_PROXY(getRequestTrailerPairs);
 
-    _REGISTER_PROXY(getResponseHeader);
-    _REGISTER_PROXY(addResponseHeader);
-    _REGISTER_PROXY(replaceResponseHeader);
-    _REGISTER_PROXY(removeResponseHeader);
-    _REGISTER_PROXY(getResponseHeaderPairs);
+  _REGISTER_PROXY(getResponseHeader);
+  _REGISTER_PROXY(addResponseHeader);
+  _REGISTER_PROXY(replaceResponseHeader);
+  _REGISTER_PROXY(removeResponseHeader);
+  _REGISTER_PROXY(getResponseHeaderPairs);
 
-    _REGISTER_PROXY(getResponseTrailer);
-    _REGISTER_PROXY(addResponseTrailer);
-    _REGISTER_PROXY(replaceResponseTrailer);
-    _REGISTER_PROXY(removeResponseTrailer);
-    _REGISTER_PROXY(getResponseTrailerPairs);
+  _REGISTER_PROXY(getResponseTrailer);
+  _REGISTER_PROXY(addResponseTrailer);
+  _REGISTER_PROXY(replaceResponseTrailer);
+  _REGISTER_PROXY(removeResponseTrailer);
+  _REGISTER_PROXY(getResponseTrailerPairs);
 
-    _REGISTER_PROXY(getRequestBodyBufferBytes);
-    _REGISTER_PROXY(getResponseBodyBufferBytes);
+  _REGISTER_PROXY(getRequestBodyBufferBytes);
+  _REGISTER_PROXY(getResponseBodyBufferBytes);
 
-    _REGISTER_PROXY(httpCall);
+  _REGISTER_PROXY(httpCall);
 
-    _REGISTER_PROXY(setTickPeriodMilliseconds);
+  _REGISTER_PROXY(setTickPeriodMilliseconds);
 #undef _REGISTER_PROXY
-  }
 }
 
 void Wasm::getFunctions() {
@@ -1028,9 +1046,23 @@ Wasm::Wasm(const Wasm& wasm)
 bool Wasm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
   if (!wasm_vm_)
     return false;
-  auto ok = wasm_vm_->initialize(code, name, allow_precompiled);
+  auto ok = wasm_vm_->load(code, allow_precompiled);
   if (!ok)
     return false;
+  auto metadata = wasm_vm_->getUserSection("emscripten_metadata");
+  if (!metadata.empty()) {
+    is_emscripten_ = true;
+    auto start = reinterpret_cast<const uint8_t*>(metadata.data());
+    auto end = reinterpret_cast<const uint8_t*>(metadata.data() + metadata.size());
+    start = decodeVarint(start, end, &emscripten_major_version_);
+    start = decodeVarint(start, end, &emscripten_minor_version_);
+    start = decodeVarint(start, end, &emscripten_abi_major_version_);
+    start = decodeVarint(start, end, &emscripten_abi_minor_version_);
+    start = decodeVarint(start, end, &emscripten_memory_size_);
+    decodeVarint(start, end, &emscripten_table_size_);
+  }
+  registerFunctions();
+  wasm_vm_->link(name, is_emscripten_);
   general_context_ = createContext();
   wasm_vm_->start(general_context_.get());
   code_ = code;

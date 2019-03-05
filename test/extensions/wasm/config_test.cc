@@ -84,7 +84,7 @@ TEST(WasmFactoryTest, CreateWasmFromWAT) {
   envoy::config::wasm::v2::WasmConfig config;
   config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
   config.mutable_vm_config()->mutable_code()->set_filename(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wat"));
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/wat.wat"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;

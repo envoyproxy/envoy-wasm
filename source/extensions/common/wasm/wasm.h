@@ -294,10 +294,24 @@ public:
     general_context_ = std::move(context);
   }
 
+  bool getEmscriptenVersion(uint32_t* emscripten_major_version, uint32_t* emscripten_minor_version,
+                            uint32_t* emscripten_abi_major_version,
+                            uint32_t* emscripten_abi_minor_version) {
+    if (!is_emscripten_) {
+      return false;
+    }
+    *emscripten_major_version = emscripten_major_version_;
+    *emscripten_minor_version = emscripten_minor_version_;
+    *emscripten_abi_major_version = emscripten_abi_major_version_;
+    *emscripten_abi_minor_version = emscripten_abi_minor_version_;
+    return true;
+  }
+
 private:
   friend class Context;
 
-  void getFunctions();
+  void registerFunctions(); // Register functions called out from WASM.
+  void getFunctions();      // Get functions call into WASM.
 
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
@@ -338,6 +352,14 @@ private:
   std::string code_;
   std::string initial_configuration_;
   bool allow_precompiled_ = false;
+
+  bool is_emscripten_ = false;
+  uint32_t emscripten_major_version_ = 0;
+  uint32_t emscripten_minor_version_ = 0;
+  uint32_t emscripten_abi_major_version_ = 0;
+  uint32_t emscripten_abi_minor_version_ = 0;
+  uint32_t emscripten_memory_size_ = 0;
+  uint32_t emscripten_table_size_ = 0;
 };
 
 inline WasmVm* Context::wasmVm() const { return wasm_->wasmVm(); }
@@ -368,10 +390,11 @@ public:
   virtual std::unique_ptr<WasmVm> clone() PURE;
 
   // Load the WASM code from a file. Return true on success.
-  virtual bool initialize(const std::string& code, absl::string_view id,
-                          bool allow_precompiled) PURE;
+  virtual bool load(const std::string& code, bool allow_precompiled) PURE;
+  // Link to registered function.
+  virtual void link(absl::string_view debug_name, bool needs_emscripten) PURE;
 
-  // Call the 'start' function or main() if there is no start funcition.
+  // Call the 'start' function and initialize globals.
   virtual void start(Context*) PURE;
 
   // Allocate a block of memory in the VM and return the pointer to use as a call arguments.
@@ -380,6 +403,10 @@ public:
   virtual absl::string_view getMemory(uint32_t pointer, uint32_t size) PURE;
   // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
   virtual bool setMemory(uint32_t pointer, uint32_t size, void* data) PURE;
+
+  // Get the contents of the user section with the given name or "" if it does not exist and
+  // optionally a presence indicator.
+  virtual absl::string_view getUserSection(absl::string_view name, bool* present = nullptr) PURE;
 
   // Convenience functions.
 
