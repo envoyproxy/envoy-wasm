@@ -240,7 +240,6 @@ Wavm::~Wavm() {
   moduleInstance_ = nullptr;
   if (emscriptenInstance_) {
     emscriptenInstance_->env = nullptr;
-    emscriptenInstance_->asm2wasm = nullptr;
     emscriptenInstance_->global = nullptr;
     emscriptenInstance_->emscriptenMemory = nullptr;
     delete emscriptenInstance_;
@@ -306,7 +305,6 @@ void Wavm::link(absl::string_view name, bool needs_emscripten) {
   if (needs_emscripten) {
     emscriptenInstance_ = Emscripten::instantiate(compartment_, irModule_);
     rootResolver.moduleNameToInstanceMap().set("env", emscriptenInstance_->env);
-    rootResolver.moduleNameToInstanceMap().set("asm2wasm", emscriptenInstance_->asm2wasm);
   }
   WAVM::Runtime::LinkResult linkResult = linkModule(irModule_, rootResolver);
   moduleInstance_ = instantiateModule(compartment_, module_, std::move(linkResult.resolvedImports),

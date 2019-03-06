@@ -156,6 +156,31 @@ TEST(WasmTest, IntrinsicGlobals) {
   wasm->start();
 }
 
+// The asm2wasm.wasm file uses operations which would require the asm2wasm Emscripten module *if*
+// em++ is invoked with the trap mode "clamp". See
+// https://emscripten.org/docs/compiling/WebAssembly.html This test demonstrates that the asm2wasm
+// module is not required with the trap mode is set to "allow". Note: future WASM standards will
+// change this behavior by providing non-trapping instructions, but in the mean time we support the
+// default Emscripten behavior.
+TEST(WasmTest, Asm2Wasm) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::SimulatedTimeSystem time_system;
+  Event::DispatcherImpl dispatcher(time_system, *api);
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
+                                                               cluster_manager, dispatcher);
+  EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm.wasm"));
+  EXPECT_FALSE(code.empty());
+  auto context = std::make_unique<TestContext>(wasm.get());
+  EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("out 0 0 0")));
+  EXPECT_TRUE(wasm->initialize(code, "<test>", false));
+  wasm->setGeneralContext(std::move(context));
+  wasm->start();
+}
+
 } // namespace Wasm
 } // namespace Extensions
 } // namespace Envoy
