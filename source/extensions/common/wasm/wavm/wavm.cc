@@ -6,6 +6,7 @@
 #include <atomic>
 #include <fstream>
 #include <memory>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -46,8 +47,6 @@
 using namespace WAVM;
 using namespace WAVM::IR;
 
-DECLARE_INTRINSIC_MODULE(env);
-
 namespace Envoy {
 namespace Extensions {
 namespace Common {
@@ -56,6 +55,9 @@ namespace Wasm {
 extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
 
 namespace Wavm {
+
+struct Wavm;
+
 namespace {
 
 using Context = Common::Wasm::Context; // Shadowing WAVM::Runtime::Context.
@@ -176,6 +178,28 @@ template <typename F> EnvoyHandlerBase* MakeEnvoyHandler(F handler) {
   return new EnvoyHandler<F>(handler);
 }
 
+struct WavmGlobalBase {
+  WAVM::Runtime::Global* global_ = nullptr;
+};
+
+template <typename T> struct WavmGlobal : Global<T>, Intrinsics::GenericGlobal<T>, WavmGlobalBase {
+  WavmGlobal(Common::Wasm::Wavm::Wavm* wavm, Intrinsics::Module& module, const std::string& name,
+             T value)
+      : Intrinsics::GenericGlobal<T>(module, name.c_str(), value), wavm_(wavm) {}
+  virtual ~WavmGlobal() {}
+
+  T get() override;
+  void set(const T& t) override;
+
+  Common::Wasm::Wavm::Wavm* wavm_;
+};
+
+struct PairHash {
+  template <typename T, typename U> std::size_t operator()(const std::pair<T, U>& x) const {
+    return std::hash<T>()(x.first) + std::hash<U>()(x.second);
+  }
+};
+
 struct Wavm : public WasmVm {
   Wavm() = default;
   ~Wavm() override;
@@ -193,8 +217,7 @@ struct Wavm : public WasmVm {
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name, bool* present) override;
 
-  void GetFunctions();
-  void RegisterCallbacks();
+  void getInstantiatedGlobals();
 
   bool hasInstantiatedModule_ = false;
   IR::Module irModule_;
@@ -208,6 +231,9 @@ struct Wavm : public WasmVm {
   absl::node_hash_map<std::string, WAVM::Runtime::GCPointer<WAVM::Runtime::ModuleInstance>>
       intrinsicModuleInstances_;
   std::vector<std::unique_ptr<Intrinsics::Function>> envoyFunctions_;
+  // The values of this map are owned by the Wasm owning this Wavm.
+  std::unordered_map<std::pair<std::string, std::string>, WavmGlobalBase*, PairHash>
+      intrinsicGlobals_;
 };
 
 Wavm::~Wavm() {
@@ -281,12 +307,25 @@ void Wavm::link(absl::string_view name, bool needs_emscripten) {
     emscriptenInstance_ = Emscripten::instantiate(compartment_, irModule_);
     rootResolver.moduleNameToInstanceMap().set("env", emscriptenInstance_->env);
     rootResolver.moduleNameToInstanceMap().set("asm2wasm", emscriptenInstance_->asm2wasm);
-    rootResolver.moduleNameToInstanceMap().set("global", emscriptenInstance_->global);
   }
   WAVM::Runtime::LinkResult linkResult = linkModule(irModule_, rootResolver);
   moduleInstance_ = instantiateModule(compartment_, module_, std::move(linkResult.resolvedImports),
                                       std::string(name));
   memory_ = getDefaultMemory(moduleInstance_);
+  getInstantiatedGlobals();
+}
+
+void Wavm::getInstantiatedGlobals() {
+  for (auto& p : intrinsicGlobals_) {
+    auto o =
+        WAVM::Runtime::getInstanceExport(intrinsicModuleInstances_[p.first.first], p.first.second);
+    auto g = WAVM::Runtime::as<WAVM::Runtime::Global>(o);
+    if (!g) {
+      throw WasmVmException(
+          fmt::format("Unable to resolve intrinsic global {} {}", p.first.first, p.first.second));
+    }
+    p.second->global_ = g;
+  }
 }
 
 void Wavm::makeModule(absl::string_view name) {
@@ -499,9 +538,9 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName,
   };
 }
 
-// NB: Unfortunately 'void' is not treated like every othefunction type in C++. In
+// NB: Unfortunately 'void' is not treated like every other function type in C++. In
 // particular it is not possible to specialize a template based on 'void'. Instead
-// we use 'Void' for template matching. Note that the template implemenation above
+// we use 'Void' for template matching. Note that the template implementation above
 // which matchers on 'bool' does not use 'Void' in the implemenation.
 template <typename R, typename... Args>
 void getFunctionWavm(WasmVm* vm, absl::string_view functionName,
@@ -577,6 +616,36 @@ template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, 
     WasmVm*, absl::string_view,
     std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
                            uint32_t, uint32_t, uint32_t, uint32_t)>*);
+
+template <typename T> T getValue(IR::Value) {}
+template <> int32_t getValue(IR::Value v) { return v.i32; }
+template <> uint32_t getValue(IR::Value v) { return v.u32; }
+template <> int64_t getValue(IR::Value v) { return v.i64; }
+template <> uint64_t getValue(IR::Value v) { return v.u64; }
+template <> float getValue(IR::Value v) { return v.f32; }
+template <> double getValue(IR::Value v) { return v.f64; }
+
+template <typename T> T WavmGlobal<T>::get() {
+  return getValue<T>(getGlobalValue(wavm_->context_, global_));
+}
+
+template <typename T> void WavmGlobal<T>::set(const T& t) {
+  setGlobalValue(wavm_->context_, global_, IR::Value(t));
+}
+
+template <typename T>
+std::unique_ptr<Global<T>> makeGlobalWavm(WasmVm* vm, absl::string_view moduleName,
+                                          absl::string_view name, T initialValue) {
+  auto wavm = static_cast<Common::Wasm::Wavm::Wavm*>(vm);
+  auto g = std::make_unique<WavmGlobal<T>>(wavm, wavm->intrinsicModules_[moduleName],
+                                           std::string(name), initialValue);
+  wavm->intrinsicGlobals_[std::make_pair(std::string(moduleName), std::string(name))] = g.get();
+  return g;
+}
+
+template std::unique_ptr<Global<double>> makeGlobalWavm(WasmVm* vm, absl::string_view moduleName,
+                                                        absl::string_view name,
+                                                        double initialValue);
 
 } // namespace Wasm
 } // namespace Common

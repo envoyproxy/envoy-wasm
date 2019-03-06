@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+#include <limits>
 #include <memory>
 #include <string>
 
@@ -951,7 +952,7 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
   id_ = std::string(id);
 }
 
-void Wasm::registerFunctions() {
+void Wasm::registerCallbacks() {
 #define _REGISTER(_fn) registerCallback(wasm_vm_.get(), "envoy", #_fn, &_fn##Handler);
   if (is_emscripten_) {
     _REGISTER(getTotalMemory);
@@ -1014,6 +1015,15 @@ void Wasm::registerFunctions() {
 #undef _REGISTER_PROXY
 }
 
+void Wasm::establishEnvironment() {
+  if (is_emscripten_) {
+    wasm_vm_->makeModule("global");
+    emscripten_NaN_ = makeGlobal(wasm_vm_.get(), "global", "NaN", std::nan("0"));
+    emscripten_Infinity_ =
+        makeGlobal(wasm_vm_.get(), "global", "Infinity", std::numeric_limits<double>::infinity());
+  }
+}
+
 void Wasm::getFunctions() {
 #define _GET_PROXY(_fn) getFunction(wasm_vm_.get(), "_proxy_" #_fn, &_fn##_);
   _GET_PROXY(onStart);
@@ -1062,10 +1072,15 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
     start = decodeVarint(start, end, &emscripten_memory_size_);
     decodeVarint(start, end, &emscripten_table_size_);
   }
-  registerFunctions();
+  registerCallbacks();
+  establishEnvironment();
   wasm_vm_->link(name, is_emscripten_);
   general_context_ = createContext();
   wasm_vm_->start(general_context_.get());
+  if (is_emscripten_) {
+    ASSERT(std::isnan(emscripten_NaN_->get()));
+    ASSERT(std::isinf(emscripten_Infinity_->get()));
+  }
   code_ = code;
   allow_precompiled_ = allow_precompiled;
   getFunctions();

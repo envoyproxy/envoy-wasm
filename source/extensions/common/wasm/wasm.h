@@ -245,6 +245,12 @@ struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
   Http::AsyncClient::Request* request;
 };
 
+template <typename T> struct Global {
+  virtual ~Global() {}
+  virtual T get() PURE;
+  virtual void set(const T& t) PURE;
+};
+
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
 class Wasm : public Envoy::Server::Wasm,
              public AccessLog::Instance,
@@ -310,8 +316,9 @@ public:
 private:
   friend class Context;
 
-  void registerFunctions(); // Register functions called out from WASM.
-  void getFunctions();      // Get functions call into WASM.
+  void registerCallbacks();    // Register functions called out from WASM.
+  void establishEnvironment(); // Language specific enviroments.
+  void getFunctions();         // Get functions call into WASM.
 
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
@@ -360,6 +367,9 @@ private:
   uint32_t emscripten_abi_minor_version_ = 0;
   uint32_t emscripten_memory_size_ = 0;
   uint32_t emscripten_table_size_ = 0;
+
+  std::unique_ptr<Global<double>> emscripten_NaN_;
+  std::unique_ptr<Global<double>> emscripten_Infinity_;
 };
 
 inline WasmVm* Context::wasmVm() const { return wasm_->wasmVm(); }
@@ -514,13 +524,17 @@ template <typename R, typename... Args>
 void getFunctionWavm(WasmVm* vm, absl::string_view functionName,
                      std::function<R(Context*, Args...)>*);
 
+template <typename T>
+std::unique_ptr<Global<T>> makeGlobalWavm(WasmVm* vm, absl::string_view moduleName,
+                                          absl::string_view name, T initialValue);
+
 template <typename R, typename... Args>
 void registerCallback(WasmVm* vm, absl::string_view moduleName, absl::string_view functionName,
                       R (*f)(Args...)) {
   if (vm->vm() == WasmVmNames::get().Wavm) {
     registerCallbackWavm(vm, moduleName, functionName, f);
   } else {
-    throw WasmVmException("unsupoorted wasm vm");
+    throw WasmVmException("unsupported wasm vm");
   }
 }
 
@@ -528,7 +542,17 @@ template <typename F> void getFunction(WasmVm* vm, absl::string_view functionNam
   if (vm->vm() == WasmVmNames::get().Wavm) {
     getFunctionWavm(vm, functionName, function);
   } else {
-    throw WasmVmException("unsupoorted wasm vm");
+    throw WasmVmException("unsupported wasm vm");
+  }
+}
+
+template <typename T>
+std::unique_ptr<Global<T>> makeGlobal(WasmVm* vm, absl::string_view moduleName,
+                                      absl::string_view name, T initialValue) {
+  if (vm->vm() == WasmVmNames::get().Wavm) {
+    return makeGlobalWavm(vm, moduleName, name, initialValue);
+  } else {
+    throw WasmVmException("unsupported wasm vm");
   }
 }
 
