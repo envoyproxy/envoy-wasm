@@ -952,7 +952,7 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
 }
 
 void Wasm::registerFunctions() {
-#define _REGISTER(_fn) registerCallback(wasm_vm_.get(), #_fn, &_fn##Handler);
+#define _REGISTER(_fn) registerCallback(wasm_vm_.get(), "envoy", #_fn, &_fn##Handler);
   if (is_emscripten_) {
     _REGISTER(getTotalMemory);
     _REGISTER(_emscripten_get_heap_size);
@@ -961,7 +961,8 @@ void Wasm::registerFunctions() {
 #undef _REGISTER
 
   // Calls with the "_proxy_" prefix.
-#define _REGISTER_PROXY(_fn) registerCallback(wasm_vm_.get(), "_proxy_" #_fn, &_fn##Handler);
+#define _REGISTER_PROXY(_fn)                                                                       \
+  registerCallback(wasm_vm_.get(), "envoy", "_proxy_" #_fn, &_fn##Handler);
   _REGISTER_PROXY(log);
 
   _REGISTER_PROXY(getRequestStreamInfoProtocol);

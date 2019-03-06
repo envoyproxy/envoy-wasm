@@ -403,6 +403,8 @@ public:
   virtual absl::string_view getMemory(uint32_t pointer, uint32_t size) PURE;
   // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
   virtual bool setMemory(uint32_t pointer, uint32_t size, void* data) PURE;
+  // Make a new intrinsic module (e.g. for Emscripten support).
+  virtual void makeModule(absl::string_view name) PURE;
 
   // Get the contents of the user section with the given name or "" if it does not exist and
   // optionally a presence indicator.
@@ -506,15 +508,17 @@ inline Context::Context(Wasm* wasm) : wasm_(wasm), id_(wasm->allocContextId()) {
 
 // Forward declarations for VM implemenations.
 template <typename R, typename... Args>
-void registerCallbackWavm(WasmVm* vm, absl::string_view functionName, R (*)(Args...));
+void registerCallbackWavm(WasmVm* vm, absl::string_view moduleName, absl::string_view functionName,
+                          R (*)(Args...));
 template <typename R, typename... Args>
 void getFunctionWavm(WasmVm* vm, absl::string_view functionName,
                      std::function<R(Context*, Args...)>*);
 
 template <typename R, typename... Args>
-void registerCallback(WasmVm* vm, absl::string_view functionName, R (*f)(Args...)) {
+void registerCallback(WasmVm* vm, absl::string_view moduleName, absl::string_view functionName,
+                      R (*f)(Args...)) {
   if (vm->vm() == WasmVmNames::get().Wavm) {
-    registerCallbackWavm(vm, functionName, f);
+    registerCallbackWavm(vm, moduleName, functionName, f);
   } else {
     throw WasmVmException("unsupoorted wasm vm");
   }

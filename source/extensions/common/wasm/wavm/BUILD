@@ -27,6 +27,7 @@ envoy_cc_library(
         "wavm_with_llvm",
     ],
     deps = [
+        "//external:abseil_node_hash_map",
         "//include/envoy/server:wasm_interface",
         "//include/envoy/thread_local:thread_local_interface",
         "//source/common/common:assert_lib",
