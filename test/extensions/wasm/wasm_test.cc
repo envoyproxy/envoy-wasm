@@ -7,7 +7,6 @@
 
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
-#include "test/test_common/simulated_time_system.h"
 #include "test/test_common/utility.h"
 
 #include "absl/types/optional.h"
@@ -31,9 +30,8 @@ public:
 TEST(WasmTest, Logging) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Event::SimulatedTimeSystem time_system;
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(time_system, *api);
+  Event::DispatcherImpl dispatcher(*api);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
@@ -58,9 +56,8 @@ TEST(WasmTest, Logging) {
 TEST(WasmTest, BadSignature) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Event::SimulatedTimeSystem time_system;
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(time_system, *api);
+  Event::DispatcherImpl dispatcher(*api);
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
@@ -77,8 +74,7 @@ TEST(WasmTest, Segv) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::SimulatedTimeSystem time_system;
-  Event::DispatcherImpl dispatcher(time_system, *api);
+  Event::DispatcherImpl dispatcher(*api);
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
@@ -97,8 +93,7 @@ TEST(WasmTest, DivByZero) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::SimulatedTimeSystem time_system;
-  Event::DispatcherImpl dispatcher(time_system, *api);
+  Event::DispatcherImpl dispatcher(*api);
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
@@ -118,8 +113,7 @@ TEST(WasmTest, EmscriptenVersion) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::SimulatedTimeSystem time_system;
-  Event::DispatcherImpl dispatcher(time_system, *api);
+  Event::DispatcherImpl dispatcher(*api);
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
@@ -140,8 +134,7 @@ TEST(WasmTest, IntrinsicGlobals) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::SimulatedTimeSystem time_system;
-  Event::DispatcherImpl dispatcher(time_system, *api);
+  Event::DispatcherImpl dispatcher(*api);
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
@@ -166,8 +159,7 @@ TEST(WasmTest, Asm2Wasm) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::SimulatedTimeSystem time_system;
-  Event::DispatcherImpl dispatcher(time_system, *api);
+  Event::DispatcherImpl dispatcher(*api);
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);

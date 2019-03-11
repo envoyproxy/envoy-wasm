@@ -28,7 +28,7 @@ cc_library(
 cc_library(
     name = "wavm_with_llvm",
     srcs = select({
-        ":windows_x86_64": ["WINDOWS_IS_NOT_SUPPORTED_YET"],
+        "@envoy//bazel:windows_x86_64": ["WINDOWS_IS_NOT_SUPPORTED_YET"],
         "//conditions:default": [
             # ld: Runtime and WASTParse need to be listed first.
             "thirdparty_build/lib/WAVM/RelWithDebInfo/libRuntime.a",
