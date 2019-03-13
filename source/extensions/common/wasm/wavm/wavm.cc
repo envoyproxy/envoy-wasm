@@ -335,9 +335,16 @@ void Wavm::start(Context* context) {
   if (f) {
     CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
   }
+
   if (emscriptenInstance_) {
     Emscripten::initializeGlobals(context_, irModule_, moduleInstance_);
   }
+
+  f = asFunctionNullable(getInstanceExport(moduleInstance_, "__post_instantiate"));
+  if (f) {
+    CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
+  }
+
   f = asFunctionNullable(getInstanceExport(moduleInstance_, "main"));
   if (!f) {
     f = asFunctionNullable(getInstanceExport(moduleInstance_, "_main"));
