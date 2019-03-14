@@ -38,7 +38,7 @@ TEST_F(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   "vm_config": {
     "vm": "envoy.wasm.vm.wavm",
     "code": {
-      "filename": "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm"
+      "filename": "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"
     },
     "allow_precompiled": true
   }}
@@ -58,7 +58,7 @@ TEST_F(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   const std::string yaml = TestEnvironment::substitute(R"EOF(
   vm_config:
     vm: "envoy.wasm.vm.wavm"
-    code: { filename: "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm" }
+    code: { filename: "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm" }
   )EOF");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
@@ -73,7 +73,7 @@ TEST_F(WasmFilterConfigTest, YamlLoadFromFileWASM) {
 
 TEST_F(WasmFilterConfigTest, YamlLoadInlineWASM) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers.wasm"));
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   const std::string yaml =
       absl::StrCat("vm_config:\n  vm: \"envoy.wasm.vm.wavm\"\n", "  code: { inline_bytes: \"",

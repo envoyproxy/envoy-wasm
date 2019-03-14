@@ -35,8 +35,8 @@ TEST(WasmTest, Logging) {
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
-  const auto code = TestEnvironment::readFileToStringForTest(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
@@ -62,7 +62,7 @@ TEST(WasmTest, BadSignature) {
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature.wasm"));
+      "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_THROW_WITH_MESSAGE(wasm->initialize(code, "<test>", false),
@@ -78,8 +78,8 @@ TEST(WasmTest, Segv) {
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
-  const auto code = TestEnvironment::readFileToStringForTest(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/segv.wasm"));
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("before badptr")));
@@ -97,8 +97,8 @@ TEST(WasmTest, DivByZero) {
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
-  const auto code = TestEnvironment::readFileToStringForTest(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/segv.wasm"));
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("before div by zero")));
@@ -117,8 +117,8 @@ TEST(WasmTest, EmscriptenVersion) {
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
-  const auto code = TestEnvironment::readFileToStringForTest(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/segv.wasm"));
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
@@ -139,7 +139,7 @@ TEST(WasmTest, IntrinsicGlobals) {
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/emscript.wasm"));
+      "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("NaN nan")));
@@ -164,7 +164,7 @@ TEST(WasmTest, Asm2Wasm) {
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm.wasm"));
+      "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("out 0 0 0")));

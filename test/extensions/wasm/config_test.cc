@@ -26,8 +26,8 @@ TEST(WasmFactoryTest, CreateWasmFromWASM) {
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
-  config.mutable_vm_config()->mutable_code()->set_filename(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
+  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
@@ -44,8 +44,8 @@ TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
-  config.mutable_vm_config()->mutable_code()->set_filename(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
+  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.mutable_vm_config()->set_allow_precompiled(true);
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
@@ -64,8 +64,8 @@ TEST(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
-  config.mutable_vm_config()->mutable_code()->set_filename(
-      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/logging.wasm"));
+  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.set_id("test_id");
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;

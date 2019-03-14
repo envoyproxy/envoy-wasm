@@ -1,5 +1,5 @@
 NO_CONTEXT = true
 
-all: logging.wasm bad_signature.wasm segv.wasm emscript.wasm asm2wasm.wasm
+all: logging_cpp.wasm bad_signature_cpp.wasm segv_cpp.wasm emscripten_cpp.wasm asm2wasm_cpp.wasm
 
 include ../../../../api/wasm/cpp/Makefile.base
