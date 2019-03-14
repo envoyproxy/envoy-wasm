@@ -33,17 +33,6 @@ envoy_extension_cc_test(
 )
 
 envoy_extension_cc_test(
-    name = "wasm_integration_test",
-    srcs = ["wasm_integration_test.cc"],
-    extension_name = "envoy.filters.http.wasm",
-    deps = [
-        "//source/extensions/filters/http/wasm:config",
-        "//test/integration:http_integration_lib",
-        "//test/test_common:utility_lib",
-    ],
-)
-
-envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
     data = [
