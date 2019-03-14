@@ -156,12 +156,12 @@ Pairs toPairs(absl::string_view buffer) {
 template <typename Pairs>
 void getPairs(Context* context, const Pairs& result, uint32_t ptr_ptr, uint32_t size_ptr) {
   if (result.empty()) {
-    context->wasmVm()->copyToPointerSize("", ptr_ptr, size_ptr);
+    context->wasm()->copyToPointerSize("", ptr_ptr, size_ptr);
     return;
   }
   uint32_t size = pairsSize(result);
   uint32_t ptr;
-  char* buffer = static_cast<char*>(context->wasmVm()->allocMemory(size, &ptr));
+  char* buffer = static_cast<char*>(context->wasm()->allocMemory(size, &ptr));
   marshalPairs(result, buffer);
   context->wasmVm()->setMemory(ptr_ptr, sizeof(int32_t), &ptr);
   context->wasmVm()->setMemory(size_ptr, sizeof(int32_t), &size);
@@ -174,7 +174,7 @@ void exportPairs(Context* context, const Pairs& pairs, uint32_t* ptr_ptr, uint32
     return;
   }
   uint32_t size = pairsSize(pairs);
-  char* buffer = static_cast<char*>(context->wasmVm()->allocMemory(size, ptr_ptr));
+  char* buffer = static_cast<char*>(context->wasm()->allocMemory(size, ptr_ptr));
   marshalPairs(pairs, buffer);
   *size_ptr = size;
 }
@@ -199,21 +199,21 @@ Http::HeaderMapPtr buildHeaderMapFromPairs(const Pairs& pairs) {
 void getRequestStreamInfoProtocolHandler(void* raw_context, uint32_t value_ptr_ptr,
                                          uint32_t value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
-  context->wasmVm()->copyToPointerSize(context->getRequestStreamInfoProtocol(), value_ptr_ptr,
-                                       value_size_ptr);
+  context->wasm()->copyToPointerSize(context->getRequestStreamInfoProtocol(), value_ptr_ptr,
+                                     value_size_ptr);
 }
 
 void getResponseStreamInfoProtocolHandler(void* raw_context, uint32_t value_ptr_ptr,
                                           uint32_t value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
-  context->wasmVm()->copyToPointerSize(context->getResponseStreamInfoProtocol(), value_ptr_ptr,
-                                       value_size_ptr);
+  context->wasm()->copyToPointerSize(context->getResponseStreamInfoProtocol(), value_ptr_ptr,
+                                     value_size_ptr);
 }
 
 void getRequestMetadataHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
                                uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
-  context->wasmVm()->copyToPointerSize(
+  context->wasm()->copyToPointerSize(
       context->getRequestMetadata(context->wasmVm()->getMemory(key_ptr, key_size)), value_ptr_ptr,
       value_size_ptr);
 }
@@ -233,7 +233,7 @@ void getRequestMetadataPairsHandler(void* raw_context, uint32_t ptr_ptr, uint32_
 void getResponseMetadataHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
                                 uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
-  context->wasmVm()->copyToPointerSize(
+  context->wasm()->copyToPointerSize(
       context->getResponseMetadata(context->wasmVm()->getMemory(key_ptr, key_size)), value_ptr_ptr,
       value_size_ptr);
 }
@@ -267,7 +267,7 @@ void getSharedDataHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size
   auto context = WASM_CONTEXT(raw_context);
   auto key = context->wasmVm()->getMemory(key_ptr, key_size);
   auto p = context->getSharedData(key);
-  context->wasmVm()->copyToPointerSize(p.first, value_ptr_ptr, value_size_ptr);
+  context->wasm()->copyToPointerSize(p.first, value_ptr_ptr, value_size_ptr);
   context->wasmVm()->setMemory(cas_ptr, sizeof(uint32_t), &p.second);
 }
 
@@ -292,7 +292,7 @@ void getRequestHeaderHandler(void* raw_context, uint32_t key_ptr, uint32_t key_s
                              uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto result = context->getRequestHeader(context->wasmVm()->getMemory(key_ptr, key_size));
-  context->wasmVm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
+  context->wasm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
 }
 
 void replaceRequestHeaderHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
@@ -325,7 +325,7 @@ void getRequestTrailerHandler(void* raw_context, uint32_t key_ptr, uint32_t key_
                               uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto result = context->getRequestTrailer(context->wasmVm()->getMemory(key_ptr, key_size));
-  context->wasmVm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
+  context->wasm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
 }
 
 void replaceRequestTrailerHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
@@ -358,7 +358,7 @@ void getResponseHeaderHandler(void* raw_context, uint32_t key_ptr, uint32_t key_
                               uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto result = context->getResponseHeader(context->wasmVm()->getMemory(key_ptr, key_size));
-  context->wasmVm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
+  context->wasm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
 }
 
 void replaceResponseHeaderHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
@@ -391,7 +391,7 @@ void getResponseTrailerHandler(void* raw_context, uint32_t key_ptr, uint32_t key
                                uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto result = context->getResponseTrailer(context->wasmVm()->getMemory(key_ptr, key_size));
-  context->wasmVm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
+  context->wasm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
 }
 
 void replaceResponseTrailerHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
@@ -417,14 +417,14 @@ void getRequestBodyBufferBytesHandler(void* raw_context, uint32_t start, uint32_
                                       uint32_t ptr_ptr, uint32_t size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto result = context->getRequestBodyBufferBytes(start, length);
-  context->wasmVm()->copyToPointerSize(result, ptr_ptr, size_ptr);
+  context->wasm()->copyToPointerSize(result, ptr_ptr, size_ptr);
 }
 
 void getResponseBodyBufferBytesHandler(void* raw_context, uint32_t start, uint32_t length,
                                        uint32_t ptr_ptr, uint32_t size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto result = context->getResponseBodyBufferBytes(start, length);
-  context->wasmVm()->copyToPointerSize(result, ptr_ptr, size_ptr);
+  context->wasm()->copyToPointerSize(result, ptr_ptr, size_ptr);
 }
 
 uint32_t httpCallHandler(void* raw_context, uint32_t uri_ptr, uint32_t uri_size,
@@ -834,7 +834,7 @@ void Context::onConfigure(absl::string_view configuration) {
     return;
   if (configuration.empty())
     return;
-  auto address = wasm_->wasmVm()->copyString(configuration);
+  auto address = wasm_->copyString(configuration);
   wasm_->onConfigure_(this, address, static_cast<uint32_t>(configuration.size()));
 }
 
@@ -938,7 +938,7 @@ void Context::onHttpCallResponse(uint32_t token, const Pairs& response_headers,
   uint32_t headers_ptr, headers_size, trailers_ptr, trailers_size;
   exportPairs(this, response_headers, &headers_ptr, &headers_size);
   exportPairs(this, response_trailers, &trailers_ptr, &trailers_size);
-  uint32_t body_ptr = wasm_->wasmVm()->copyString(response_body);
+  uint32_t body_ptr = wasm_->copyString(response_body);
   uint32_t body_size = response_body.size();
   wasm_->onHttpCallResponse_(this, id_, token, headers_ptr, headers_size, body_ptr, body_size,
                              trailers_ptr, trailers_size);
@@ -1025,6 +1025,11 @@ void Wasm::establishEnvironment() {
 }
 
 void Wasm::getFunctions() {
+#define _GET(_fn) getFunction(wasm_vm_.get(), "_" #_fn, &_fn##_);
+  _GET(malloc);
+  _GET(free);
+#undef _GET
+
 #define _GET_PROXY(_fn) getFunction(wasm_vm_.get(), "_proxy_" #_fn, &_fn##_);
   _GET_PROXY(onStart);
   _GET_PROXY(onConfigure);
@@ -1044,6 +1049,10 @@ void Wasm::getFunctions() {
   _GET_PROXY(onLog);
   _GET_PROXY(onDelete);
 #undef _GET_PROXY
+
+  if (!malloc_ || !free_) {
+    throw WasmException("WAVM missing malloc/free");
+  }
 }
 
 Wasm::Wasm(const Wasm& wasm)
@@ -1089,7 +1098,7 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
 
 void Wasm::configure(absl::string_view configuration) {
   if (onConfigure_ && !configuration.empty()) {
-    auto address = wasm_vm_->copyString(configuration);
+    auto address = copyString(configuration);
     onConfigure_(general_context_.get(), address, configuration.size());
   }
 }

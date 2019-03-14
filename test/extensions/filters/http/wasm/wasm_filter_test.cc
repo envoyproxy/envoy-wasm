@@ -16,6 +16,7 @@
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/printers.h"
+#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
 
 #include "gmock/gmock.h"
@@ -42,7 +43,7 @@ public:
   MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-class WasmHttpFilterTest : public testing::Test {
+class WasmHttpFilterTest : public TestBase {
 public:
   WasmHttpFilterTest() {}
   ~WasmHttpFilterTest() {}

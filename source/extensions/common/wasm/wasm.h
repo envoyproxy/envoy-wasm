@@ -32,6 +32,8 @@ using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
 using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::string>>;
 
 using WasmCall0Void = std::function<void(Context*)>;
+using WasmCall1Void = std::function<void(Context*, uint32_t)>;
+using WasmCall1Int = std::function<uint32_t(Context*, uint32_t)>;
 using WasmCall2Void = std::function<void(Context*, uint32_t, uint32_t)>;
 
 using WasmContextCall0Void = std::function<void(Context*, uint32_t context_id)>;
@@ -295,6 +297,17 @@ public:
   void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
            const Http::HeaderMap* response_trailers, const StreamInfo::StreamInfo& stream_info);
 
+  // Support functions.
+  void* allocMemory(uint32_t size, uint32_t* address);
+  bool freeMemory(void* pointer);
+  void freeMemoryOffset(uint32_t address);
+  // Allocate a null-terminated string in the VM and return the pointer to use as a call arguments.
+  uint32_t copyString(absl::string_view s);
+  // Copy the data in 's' into the VM along with the pointer-size pair. Returns true on success.
+  bool copyToPointerSize(absl::string_view s, uint32_t ptr_ptr, uint32_t size_ptr);
+  bool copyToPointerSize(const Buffer::Instance& buffer, uint32_t start, uint32_t length,
+                         uint32_t ptr_ptr, uint32_t size_ptr);
+
   // For testing.
   void setGeneralContext(std::shared_ptr<Context> context) {
     general_context_ = std::move(context);
@@ -335,6 +348,9 @@ private:
   WasmCall0Void onStart_;
   WasmCall2Void onConfigure_;
   WasmCall0Void onTick_;
+
+  WasmCall1Int malloc_;
+  WasmCall1Void free_;
 
   // Calls into the VM with a context.
   WasmContextCall0Void onCreate_;
@@ -407,10 +423,10 @@ public:
   // Call the 'start' function and initialize globals.
   virtual void start(Context*) PURE;
 
-  // Allocate a block of memory in the VM and return the pointer to use as a call arguments.
-  virtual void* allocMemory(uint32_t size, uint32_t* pointer) PURE;
   // Convert a block of memory in the VM to a string_view.
   virtual absl::string_view getMemory(uint32_t pointer, uint32_t size) PURE;
+  // Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).
+  virtual bool getMemoryOffset(void* host_pointer, uint32_t* vm_pointer) PURE;
   // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
   virtual bool setMemory(uint32_t pointer, uint32_t size, void* data) PURE;
   // Make a new intrinsic module (e.g. for Emscripten support).
@@ -419,72 +435,6 @@ public:
   // Get the contents of the user section with the given name or "" if it does not exist and
   // optionally a presence indicator.
   virtual absl::string_view getUserSection(absl::string_view name, bool* present = nullptr) PURE;
-
-  // Convenience functions.
-
-  // Allocate a null-terminated string in the VM and return the pointer to use as a call arguments.
-  uint32_t copyString(absl::string_view s) {
-    uint32_t pointer;
-    uint8_t* m = static_cast<uint8_t*>(allocMemory((s.size() + 1), &pointer));
-    if (s.size() > 0)
-      memcpy(m, s.data(), s.size());
-    m[s.size()] = 0;
-    return pointer;
-  }
-
-  // Copy the data in 's' into the VM along with the pointer-size pair. Returns true on success.
-  bool copyToPointerSize(absl::string_view s, uint32_t ptr_ptr, uint32_t size_ptr) {
-    uint32_t pointer = 0;
-    uint32_t size = s.size();
-    void* p = nullptr;
-    if (size > 0) {
-      p = allocMemory(size, &pointer);
-      if (!p)
-        return false;
-      memcpy(p, s.data(), size);
-    }
-    if (!setMemory(ptr_ptr, sizeof(uint32_t), &pointer))
-      return false;
-    if (!setMemory(size_ptr, sizeof(uint32_t), &size))
-      return false;
-    return true;
-  }
-
-  bool copyToPointerSize(const Buffer::Instance& buffer, uint32_t start, uint32_t length,
-                         uint32_t ptr_ptr, uint32_t size_ptr) {
-    uint32_t size = buffer.length();
-    if (size < start + length)
-      return false;
-    auto nslices = buffer.getRawSlices(nullptr, 0);
-    auto slices = std::make_unique<Buffer::RawSlice[]>(nslices + 10 /* pad for evbuffer overrun */);
-    auto actual_slices = buffer.getRawSlices(&slices[0], nslices);
-    uint32_t pointer = 0;
-    char* p = static_cast<char*>(allocMemory(length, &pointer));
-    auto s = start;
-    auto l = length;
-    if (!p)
-      return false;
-    for (uint64_t i = 0; i < actual_slices; i++) {
-      if (slices[i].len_ <= s) {
-        s -= slices[i].len_;
-        continue;
-      }
-      auto ll = l;
-      if (ll > s + slices[i].len_)
-        ll = s + slices[i].len_;
-      memcpy(p, static_cast<char*>(slices[i].mem_) + s, ll);
-      l -= ll;
-      if (l <= 0)
-        break;
-      s = 0;
-      p += ll;
-    }
-    if (!setMemory(ptr_ptr, sizeof(int32_t), &pointer))
-      return false;
-    if (!setMemory(size_ptr, sizeof(int32_t), &length))
-      return false;
-    return true;
-  }
 };
 
 // Create a new low-level WASM VM of the give type (e.g. "envoy.wasm.vm.wavm").
@@ -554,6 +504,91 @@ std::unique_ptr<Global<T>> makeGlobal(WasmVm* vm, absl::string_view moduleName,
   } else {
     throw WasmVmException("unsupported wasm vm");
   }
+}
+
+inline void* Wasm::allocMemory(uint32_t size, uint32_t* address) {
+  uint32_t a = malloc_(generalContext(), size);
+  *address = a;
+  // Note: this can thorw a WAVM exception.
+  return const_cast<void*>(reinterpret_cast<const void*>(wasm_vm_->getMemory(a, size).data()));
+}
+
+inline void Wasm::freeMemoryOffset(uint32_t address) { free_(generalContext(), address); }
+
+inline bool Wasm::freeMemory(void* pointer) {
+  uint32_t offset;
+  if (!wasm_vm_->getMemoryOffset(pointer, &offset)) {
+    return false;
+  }
+  freeMemoryOffset(offset);
+  return true;
+}
+
+inline uint32_t Wasm::copyString(absl::string_view s) {
+  uint32_t pointer;
+  uint8_t* m = static_cast<uint8_t*>(allocMemory((s.size() + 1), &pointer));
+  if (s.size() > 0)
+    memcpy(m, s.data(), s.size());
+  m[s.size()] = 0;
+  return pointer;
+}
+
+inline bool Wasm::copyToPointerSize(absl::string_view s, uint32_t ptr_ptr, uint32_t size_ptr) {
+  uint32_t pointer = 0;
+  uint32_t size = s.size();
+  void* p = nullptr;
+  if (size > 0) {
+    p = allocMemory(size, &pointer);
+    if (!p)
+      return false;
+    memcpy(p, s.data(), size);
+  }
+  if (!wasm_vm_->setMemory(ptr_ptr, sizeof(uint32_t), &pointer))
+    return false;
+  if (!wasm_vm_->setMemory(size_ptr, sizeof(uint32_t), &size))
+    return false;
+  return true;
+}
+
+inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint32_t start, uint32_t length,
+                                    uint32_t ptr_ptr, uint32_t size_ptr) {
+  uint32_t size = buffer.length();
+  if (size < start + length) {
+    return false;
+  }
+  auto nslices = buffer.getRawSlices(nullptr, 0);
+  auto slices = std::make_unique<Buffer::RawSlice[]>(nslices + 10 /* pad for evbuffer overrun */);
+  auto actual_slices = buffer.getRawSlices(&slices[0], nslices);
+  uint32_t pointer = 0;
+  char* p = static_cast<char*>(allocMemory(length, &pointer));
+  auto s = start;
+  auto l = length;
+  if (!p) {
+    return false;
+  }
+  for (uint64_t i = 0; i < actual_slices; i++) {
+    if (slices[i].len_ <= s) {
+      s -= slices[i].len_;
+      continue;
+    }
+    auto ll = l;
+    if (ll > s + slices[i].len_)
+      ll = s + slices[i].len_;
+    memcpy(p, static_cast<char*>(slices[i].mem_) + s, ll);
+    l -= ll;
+    if (l <= 0) {
+      break;
+    }
+    s = 0;
+    p += ll;
+  }
+  if (!wasm_vm_->setMemory(ptr_ptr, sizeof(int32_t), &pointer)) {
+    return false;
+  }
+  if (!wasm_vm_->setMemory(size_ptr, sizeof(int32_t), &length)) {
+    return false;
+  }
+  return true;
 }
 
 } // namespace Wasm

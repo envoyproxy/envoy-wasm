@@ -147,6 +147,8 @@ private:
   HashMap<std::string, WAVM::Runtime::ModuleInstance*> moduleNameToInstanceMap_;
 };
 
+const uint64_t wasmPageSize = 1 << 16;
+
 bool loadModule(const std::string& code, IR::Module& outModule) {
   // If the code starts with the WASM binary magic number, load it as a binary irModule.
   static const uint8_t wasmMagicNumber[4] = {0x00, 0x61, 0x73, 0x6d};
@@ -211,8 +213,8 @@ struct Wavm : public WasmVm {
   bool load(const std::string& code, bool allow_precompiled) override;
   void link(absl::string_view debug_name, bool needs_emscripten) override;
   void start(Context* context) override;
-  void* allocMemory(uint32_t size, uint32_t* pointer) override;
   absl::string_view getMemory(uint32_t pointer, uint32_t size) override;
+  bool getMemoryOffset(void* host_pointer, uint32_t* vm_pointer) override;
   bool setMemory(uint32_t pointer, uint32_t size, void* data) override;
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name, bool* present) override;
@@ -234,6 +236,8 @@ struct Wavm : public WasmVm {
   // The values of this map are owned by the Wasm owning this Wavm.
   std::unordered_map<std::pair<std::string, std::string>, WavmGlobalBase*, PairHash>
       intrinsicGlobals_;
+  uint8_t* memory_base_ = nullptr;
+  size_t memory_size_ = 0;
 };
 
 Wavm::~Wavm() {
@@ -257,6 +261,9 @@ std::unique_ptr<WasmVm> Wavm::clone() {
   auto wavm = std::make_unique<Wavm>();
   wavm->compartment_ = WAVM::Runtime::cloneCompartment(compartment_);
   wavm->memory_ = WAVM::Runtime::remapToClonedCompartment(memory_, wavm->compartment_);
+  memory_base_ = WAVM::Runtime::getMemoryBaseAddress(memory_);
+  memory_size_ = WAVM::Runtime::getMemoryMaxPages(memory_);
+  memory_size_ *= wasmPageSize;
   wavm->context_ = WAVM::Runtime::createContext(wavm->compartment_);
   for (auto& p : intrinsicModuleInstances_) {
     wavm->intrinsicModuleInstances_.emplace(
@@ -310,6 +317,9 @@ void Wavm::link(absl::string_view name, bool needs_emscripten) {
   moduleInstance_ = instantiateModule(compartment_, module_, std::move(linkResult.resolvedImports),
                                       std::string(name));
   memory_ = getDefaultMemory(moduleInstance_);
+  memory_base_ = WAVM::Runtime::getMemoryBaseAddress(memory_);
+  memory_size_ = WAVM::Runtime::getMemoryMaxPages(memory_);
+  memory_size_ *= wasmPageSize;
   getInstantiatedGlobals();
 }
 
@@ -354,23 +364,22 @@ void Wavm::start(Context* context) {
   }
 }
 
-void* Wavm::allocMemory(uint32_t size, uint32_t* address) {
-  auto f = asFunctionNullable(getInstanceExport(moduleInstance_, "_malloc"));
-  if (!f)
-    return nullptr;
-  auto values = invokeFunctionChecked(context_, f, {size});
-  ASSERT(values.values.size() == 1);
-  auto& v = values[0];
-  ASSERT(v.type == ValueType::i32);
-  *address = v.u32;
-  return reinterpret_cast<char*>(
-      WAVM::Runtime::memoryArrayPtr<U8>(memory_, v.u32, static_cast<U64>(size)));
-}
-
 absl::string_view Wavm::getMemory(uint32_t pointer, uint32_t size) {
   return {reinterpret_cast<char*>(
               WAVM::Runtime::memoryArrayPtr<U8>(memory_, pointer, static_cast<U64>(size))),
           static_cast<size_t>(size)};
+}
+
+bool Wavm::getMemoryOffset(void* host_pointer, uint32_t* vm_pointer) {
+  intptr_t offset = (static_cast<uint8_t*>(host_pointer) - memory_base_);
+  if (offset < 0) {
+    return false;
+  }
+  if (static_cast<size_t>(offset) > memory_size_) {
+    return false;
+  }
+  *vm_pointer = static_cast<uint32_t>(offset);
+  return true;
 }
 
 bool Wavm::setMemory(uint32_t pointer, uint32_t size, void* data) {
