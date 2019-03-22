@@ -54,6 +54,17 @@ namespace Wasm {
 
 extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
 
+// Forward declarations.
+template <typename R, typename... Args>
+void getFunctionWavm(WasmVm* vm, absl::string_view functionName,
+                     std::function<R(Context*, Args...)>* function);
+template <typename R, typename... Args>
+void registerCallbackWavm(WasmVm* vm, absl::string_view moduleName, absl::string_view functionName,
+                          R (*)(Args...));
+template <typename T>
+std::unique_ptr<Global<T>> makeGlobalWavm(WasmVm* vm, absl::string_view moduleName,
+                                          absl::string_view name, T initialValue);
+
 namespace Wavm {
 
 struct Wavm;
@@ -220,6 +231,40 @@ struct Wavm : public WasmVm {
   absl::string_view getUserSection(absl::string_view name, bool* present) override;
 
   void getInstantiatedGlobals();
+
+#define _GET_FUNCTION(_type)                                                                       \
+  void getFunction(absl::string_view functionName, _type* f) override {                            \
+    getFunctionWavm(this, functionName, f);                                                        \
+  };
+  _GET_FUNCTION(WasmCall0Void);
+  _GET_FUNCTION(WasmCall1Void);
+  _GET_FUNCTION(WasmCall2Void);
+  _GET_FUNCTION(WasmCall8Void);
+  _GET_FUNCTION(WasmCall1Int);
+  _GET_FUNCTION(WasmCall3Int);
+#undef _GET_FUNCTION
+
+#define _REGISTER_CALLBACK(_type)                                                                  \
+  void registerCallback(absl::string_view moduleName, absl::string_view functionName,              \
+                        _type f) override {                                                        \
+    registerCallbackWavm(this, moduleName, functionName, f);                                       \
+  };
+  _REGISTER_CALLBACK(WasmCallback0Void);
+  _REGISTER_CALLBACK(WasmCallback1Void);
+  _REGISTER_CALLBACK(WasmCallback2Void);
+  _REGISTER_CALLBACK(WasmCallback3Void);
+  _REGISTER_CALLBACK(WasmCallback4Void);
+  _REGISTER_CALLBACK(WasmCallback5Void);
+  _REGISTER_CALLBACK(WasmCallback0Int);
+  _REGISTER_CALLBACK(WasmCallback3Int);
+  _REGISTER_CALLBACK(WasmCallback5Int);
+  _REGISTER_CALLBACK(WasmCallback9Int);
+#undef _REGISTER_CALLBACK
+
+  std::unique_ptr<Global<double>> makeGlobal(absl::string_view moduleName, absl::string_view name,
+                                             double initialValue) override {
+    return makeGlobalWavm(this, moduleName, name, initialValue);
+  };
 
   bool hasInstantiatedModule_ = false;
   IR::Module irModule_;
