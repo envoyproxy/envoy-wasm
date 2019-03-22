@@ -1,13 +1,13 @@
-API:=$(shell git rev-parse --show-toplevel)/api/wasm/cpp
+CPP_API:=$(shell git rev-parse --show-toplevel)/api/wasm/cpp
 
 ifdef NO_CONTEXT
   CONTEXT_LIB =
 else
-  CONTEXT_LIB = ${API}/proxy_wasm_intrinsics.cc
+  CONTEXT_LIB = ${CPP_API}/proxy_wasm_intrinsics.cc
 endif
 
-%.wasm %.wat: %.cc ${API}/proxy_wasm_intrinsics.h ${API}/proxy_wasm_intrinsics.js
-	em++ -s WASM=1 -s LEGALIZE_JS_FFI=0 -s EMIT_EMSCRIPTEN_METADATA=1 --std=c++17 -O3 -g3 -I${API} --js-library ${API}/proxy_wasm_intrinsics.js $*.cc ${CONTEXT_LIB} -o $*.js
+%.wasm %.wat: %.cc ${CPP_API}/proxy_wasm_intrinsics.h ${CPP_API}/proxy_wasm_intrinsics.js
+	em++ -s WASM=1 -s LEGALIZE_JS_FFI=0 -s EMIT_EMSCRIPTEN_METADATA=1 --std=c++17 -O3 -g3 -I${CPP_API} --js-library ${CPP_API}/proxy_wasm_intrinsics.js $*.cc ${CONTEXT_LIB} -o $*.js
 	wavm-disas $*.wasm $*.wat
 	wavm-compile $*.wasm $*.wasm
 	rm -f $*.js $*.wast

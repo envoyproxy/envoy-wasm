@@ -8,10 +8,11 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(char* configuration, int 
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart() {
+  logTrace(std::string("test trace") + " logging");
   logDebug(std::string("test debug") + " logging");
-  logInfo(std::string("test info") + " logging");
+  logError(std::string("test error") + " logging");
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick() {
-  logError(std::string("test tick") + " logging");
+  logInfo(std::string("test tick") + " logging");
 }

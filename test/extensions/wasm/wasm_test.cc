@@ -27,7 +27,11 @@ public:
   MOCK_METHOD1(setTickPeriodMilliseconds, void(uint32_t tick_period_milliseconds));
 };
 
-TEST(WasmTest, Logging) {
+class WasmTestCppRust : public TestBaseWithParam<std::string> {};
+
+INSTANTIATE_TEST_SUITE_P(SourceLanguages, WasmTestCppRust, testing::Values("cpp", "rust"));
+
+TEST_P(WasmTestCppRust, Logging) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -35,15 +39,17 @@ TEST(WasmTest, Logging) {
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
                                                                cluster_manager, dispatcher);
   EXPECT_NE(wasm, nullptr);
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
+  const auto code =
+      TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
+          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_", GetParam(), ".wasm")));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
-  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq("test debug logging")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("test info logging")));
   EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq("warn configure-test")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("test tick logging")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, Eq("test trace logging")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq("test debug logging")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("test error logging")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("test tick logging")));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   // NB: Must be done after initialize has created the context.
