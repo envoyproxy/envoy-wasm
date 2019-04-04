@@ -1,5 +1,6 @@
 mergeInto(LibraryManager.library, {
     proxy_log: function () {},
+    proxy_setTickPeriodMilliseconds: function () {},
     proxy_getRequestMetadata: function () {},
     proxy_setRequestMetadata: function () {},
     proxy_getRequestMetadataPairs: function () {},
