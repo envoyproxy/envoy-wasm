@@ -1054,9 +1054,9 @@ void Wasm::getFunctions() {
   }
 }
 
-Wasm::Wasm(const Wasm& wasm)
+Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
-      dispatcher_(wasm.dispatcher_) {
+      dispatcher_(dispatcher) {
   wasm_vm_ = wasm.wasmVm()->clone();
   general_context_ = createContext();
   getFunctions();
@@ -1107,7 +1107,7 @@ void Wasm::start() { general_context_->onStart(); }
 void Wasm::setTickPeriod(std::chrono::milliseconds tick_period) {
   bool was_running = timer_ && tick_period_.count() > 0;
   tick_period_ = tick_period;
-  if (tick_ && tick_period_.count() > 0 && !was_running) {
+  if (tick_period_.count() > 0 && !was_running) {
     timer_ = dispatcher_.createTimer([weak = std::weak_ptr<Wasm>(shared_from_this())]() {
       auto shared = weak.lock();
       if (shared)
@@ -1301,7 +1301,7 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
                                             Event::Dispatcher& dispatcher) {
   std::shared_ptr<Wasm> wasm;
   if (base_wasm.wasmVm()->clonable()) {
-    wasm = std::make_shared<Wasm>(base_wasm);
+    wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
   } else {
     wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->vm(), base_wasm.id(),
                                   base_wasm.initial_configuration(), base_wasm.clusterManager(),
