@@ -23,7 +23,7 @@ static_resources:
                 route: 
                   cluster: web_service
           http_filters:
-          - name: envoy.filters.http.wasm
+          - name: envoy.wasm
             config:
               vm_config:
                 vm: "envoy.wasm.vm.wavm"

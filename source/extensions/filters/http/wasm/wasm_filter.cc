@@ -23,7 +23,7 @@ FilterConfig::FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& co
     // Create a base WASM to verify that the code loads before setting/cloning the for the
     // individual threads.
     auto base_wasm = Common::Wasm::createWasm(id, config.vm_config(), context.clusterManager(),
-                                              context.dispatcher(), context.api());
+                                              context.dispatcher(), context.api(), context.scope());
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     tls_slot_->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {
       auto result =

@@ -256,9 +256,14 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback4Void);
   _REGISTER_CALLBACK(WasmCallback5Void);
   _REGISTER_CALLBACK(WasmCallback0Int);
+  _REGISTER_CALLBACK(WasmCallback1Int);
+  _REGISTER_CALLBACK(WasmCallback2Int);
   _REGISTER_CALLBACK(WasmCallback3Int);
   _REGISTER_CALLBACK(WasmCallback5Int);
   _REGISTER_CALLBACK(WasmCallback9Int);
+  _REGISTER_CALLBACK(WasmCallback_Zjl);
+  _REGISTER_CALLBACK(WasmCallback_Zjm);
+  _REGISTER_CALLBACK(WasmCallback_mjj);
 #undef _REGISTER_CALLBACK
 
   std::unique_ptr<Global<double>> makeGlobal(absl::string_view moduleName, absl::string_view name,
@@ -543,6 +548,16 @@ template void registerCallbackWavm<U32, void*, U32, U32, U32, U32, U32, U32, U32
 template void registerCallbackWavm<U32, void*, U32, U32, U32, U32, U32, U32, U32, U32, U32, U32>(
     WasmVm* vm, absl::string_view moduleName, absl::string_view functionName,
     U32 (*f)(void*, U32, U32, U32, U32, U32, U32, U32, U32, U32, U32));
+
+template void registerCallbackWavm<U64, void*, U32>(WasmVm* vm, absl::string_view moduleName,
+                                                    absl::string_view functionName,
+                                                    U64 (*f)(void*, U32));
+template void registerCallbackWavm<void, void*, U32, I64>(WasmVm* vm, absl::string_view moduleName,
+                                                          absl::string_view functionName,
+                                                          void (*f)(void*, U32, I64));
+template void registerCallbackWavm<void, void*, U32, U64>(WasmVm* vm, absl::string_view moduleName,
+                                                          absl::string_view functionName,
+                                                          void (*f)(void*, U32, U64));
 
 template <typename R, typename... Args>
 IR::FunctionType

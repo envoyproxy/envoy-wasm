@@ -196,58 +196,64 @@ Http::HeaderMapPtr buildHeaderMapFromPairs(const Pairs& pairs) {
 //
 
 // StreamInfo
-void getRequestStreamInfoProtocolHandler(void* raw_context, uint32_t value_ptr_ptr,
-                                         uint32_t value_size_ptr) {
+void getProtocolHandler(void* raw_context, uint32_t type, uint32_t value_ptr_ptr,
+                        uint32_t value_size_ptr) {
+  if (type > static_cast<int>(StreamType::MAX))
+    return;
   auto context = WASM_CONTEXT(raw_context);
-  context->wasm()->copyToPointerSize(context->getRequestStreamInfoProtocol(), value_ptr_ptr,
-                                     value_size_ptr);
+  context->wasm()->copyToPointerSize(context->getProtocol(static_cast<StreamType>(type)),
+                                    value_ptr_ptr, value_size_ptr);
 }
 
-void getResponseStreamInfoProtocolHandler(void* raw_context, uint32_t value_ptr_ptr,
-                                          uint32_t value_size_ptr) {
-  auto context = WASM_CONTEXT(raw_context);
-  context->wasm()->copyToPointerSize(context->getResponseStreamInfoProtocol(), value_ptr_ptr,
-                                     value_size_ptr);
-}
-
-void getRequestMetadataHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
-                               uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
+// Metadata
+void getMetadataHandler(void* raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size,
+                        uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
   auto context = WASM_CONTEXT(raw_context);
   context->wasm()->copyToPointerSize(
-      context->getRequestMetadata(context->wasmVm()->getMemory(key_ptr, key_size)), value_ptr_ptr,
-      value_size_ptr);
+      context->getMetadata(static_cast<MetadataType>(type),
+                           context->wasmVm()->getMemory(key_ptr, key_size)),
+      value_ptr_ptr, value_size_ptr);
 }
 
-void setRequestMetadataHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
-                               uint32_t value_ptr, uint32_t value_size) {
+void setMetadataHandler(void* raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size,
+                        uint32_t value_ptr, uint32_t value_size) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
   auto context = WASM_CONTEXT(raw_context);
-  context->setRequestMetadata(context->wasmVm()->getMemory(key_ptr, key_size),
-                              context->wasmVm()->getMemory(value_ptr, value_size));
+  context->setMetadata(static_cast<MetadataType>(type),
+                       context->wasmVm()->getMemory(key_ptr, key_size),
+                       context->wasmVm()->getMemory(value_ptr, value_size));
 }
 
-void getRequestMetadataPairsHandler(void* raw_context, uint32_t ptr_ptr, uint32_t size_ptr) {
+void getMetadataPairsHandler(void* raw_context, uint32_t type, uint32_t ptr_ptr,
+                             uint32_t size_ptr) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
   auto context = WASM_CONTEXT(raw_context);
-  getPairs(context, context->getRequestMetadataPairs(), ptr_ptr, size_ptr);
+  getPairs(context, context->getMetadataPairs(static_cast<MetadataType>(type)), ptr_ptr, size_ptr);
 }
 
-void getResponseMetadataHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
-                                uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
+void getMetadataStructHandler(void* raw_context, uint32_t type, uint32_t name_ptr,
+                              uint32_t name_size, uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
   auto context = WASM_CONTEXT(raw_context);
   context->wasm()->copyToPointerSize(
-      context->getResponseMetadata(context->wasmVm()->getMemory(key_ptr, key_size)), value_ptr_ptr,
-      value_size_ptr);
+      context->getMetadataStruct(static_cast<MetadataType>(type),
+                                 context->wasmVm()->getMemory(name_ptr, name_size)),
+      value_ptr_ptr, value_size_ptr);
 }
 
-void setResponseMetadataHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
-                                uint32_t value_ptr, uint32_t value_size) {
+void setMetadataStructHandler(void* raw_context, uint32_t type, uint32_t name_ptr,
+                              uint32_t name_size, uint32_t value_ptr, uint32_t value_size) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
   auto context = WASM_CONTEXT(raw_context);
-  context->setResponseMetadata(context->wasmVm()->getMemory(key_ptr, key_size),
-                               context->wasmVm()->getMemory(value_ptr, value_size));
-}
-
-void getResponseMetadataPairsHandler(void* raw_context, uint32_t ptr_ptr, uint32_t size_ptr) {
-  auto context = WASM_CONTEXT(raw_context);
-  getPairs(context, context->getResponseMetadataPairs(), ptr_ptr, size_ptr);
+  context->setMetadataStruct(static_cast<MetadataType>(type),
+                             context->wasmVm()->getMemory(name_ptr, name_size),
+                             context->wasmVm()->getMemory(value_ptr, value_size));
 }
 
 // Continue
@@ -439,9 +445,72 @@ uint32_t httpCallHandler(void* raw_context, uint32_t uri_ptr, uint32_t uri_size,
   return context->httpCall(uri, headers, body, trailers, timeout_milliseconds);
 }
 
+uint32_t defineMetricHandler(void* raw_context, uint32_t metric_type, uint32_t name_ptr,
+                             uint32_t name_size) {
+  if (metric_type > static_cast<uint32_t>(Context::MetricType::Max))
+    return 0;
+  auto context = WASM_CONTEXT(raw_context);
+  auto name = context->wasmVm()->getMemory(name_ptr, name_size);
+  return context->defineMetric(static_cast<Context::MetricType>(metric_type), name);
+}
+
+void incrementMetricHandler(void* raw_context, uint32_t metric_id, int64_t offset) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->incrementMetric(metric_id, offset);
+}
+
+void recordMetricHandler(void* raw_context, uint32_t metric_id, uint64_t value) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->recordMetric(metric_id, value);
+}
+
+uint64_t getMetricHandler(void* raw_context, uint32_t metric_id) {
+  auto context = WASM_CONTEXT(raw_context);
+  return context->getMetric(metric_id);
+}
+
 uint32_t getTotalMemoryHandler(void*) { return 0x7FFFFFFF; }
 uint32_t _emscripten_get_heap_sizeHandler(void*) { return 0x7FFFFFFF; }
 void _llvm_trapHandler(void*) { throw WasmException("emscripten llvm_trap"); }
+void ___cxa_pure_virtualHandler(void*) { throw WasmException("emscripten cxa_pure_virtual"); }
+uint32_t ___call_mainHandler(void*, uint32_t, uint32_t) {
+  throw WasmException("emscripten call_main");
+  return 0;
+}
+uint32_t ___clock_gettimeHandler(void*, uint32_t, uint32_t) {
+  throw WasmException("emscripten clock_gettime");
+  return 0;
+}
+// pthread_equal is required to return 0 by the protobuf libarary.
+uint32_t _pthread_equalHandler(void*, uint32_t,
+                               uint32_t) { /* throw WasmException("emscripten pthread_equal"); */
+  return 0;
+}
+uint32_t _pthread_mutex_destroyHandler(void*, uint32_t) {
+  throw WasmException("emscripten pthread_mutex_destroy");
+  return 0;
+}
+uint32_t _pthread_cond_waitHandler(void*, uint32_t) {
+  throw WasmException("emscripten pthread_cond_wait");
+  return 0;
+}
+uint32_t _pthread_getspecificHandler(void*, uint32_t) {
+  throw WasmException("emscripten pthread_getspecific");
+  return 0;
+}
+uint32_t _pthread_key_createHandler(void*, uint32_t) {
+  throw WasmException("emscripten pthread_key_create");
+  return 0;
+}
+uint32_t _pthread_onceHandler(void*, uint32_t) {
+  throw WasmException("emscripten pthread_once");
+  return 0;
+}
+uint32_t _pthread_setspecificHandler(void*, uint32_t) {
+  throw WasmException("emscripten pthread_setspecific");
+  return 0;
+}
+void setTempRet0Handler(void*, uint32_t) { throw WasmException("emscripten setTempRet0"); }
 
 void setTickPeriodMillisecondsHandler(void* raw_context, uint32_t tick_period_milliseconds) {
   WASM_CONTEXT(raw_context)->setTickPeriod(std::chrono::milliseconds(tick_period_milliseconds));
@@ -503,6 +572,27 @@ void replaceHeader(Http::HeaderMap* map, absl::string_view key, absl::string_vie
     entry->value(value.data(), value.size());
   else
     map->addCopy(lower_key, std::string(value));
+}
+
+const ProtobufWkt::Struct*
+getStructProtoFromMetadata(const envoy::api::v2::core::Metadata& metadata,
+                           absl::string_view name = "") {
+  if (name.empty()) {
+    name = HttpFilters::HttpFilterNames::get().Wasm;
+  }
+  const auto filter_it = metadata.filter_metadata().find(std::string(name));
+  if (filter_it == metadata.filter_metadata().end()) {
+    return nullptr;
+  }
+  return &filter_it->second;
+}
+
+const ProtobufWkt::Struct* getRouteMetadataStructProto(Http::StreamFilterCallbacks* callbacks) {
+  if (callbacks == nullptr || callbacks->route() == nullptr ||
+      callbacks->route()->routeEntry() == nullptr) {
+    return nullptr;
+  }
+  return getStructProtoFromMetadata(callbacks->route()->routeEntry()->metadata());
 }
 
 const uint8_t* decodeVarint(const uint8_t* pos, const uint8_t* end, uint32_t* out) {
@@ -705,52 +795,105 @@ void Context::httpRespond(const Pairs& response_headers, absl::string_view body,
   (void)response_trailers;
 }
 
-const StreamInfo::StreamInfo& Context::streamInfo() const {
-  if (access_log_stream_info_)
-    return *access_log_stream_info_;
-  return decoder_callbacks_->streamInfo();
-}
-
 // StreamInfo
-std::string Context::getRequestStreamInfoProtocol() {
-  if (!decoder_callbacks_)
-    return "";
-  return Http::Utility::getProtocolString(streamInfo().protocol().value());
+StreamInfo::StreamInfo* Context::getStreamInfo(MetadataType type) const {
+  switch (type) {
+  case MetadataType::Request:
+    if (decoder_callbacks_) {
+      return &decoder_callbacks_->streamInfo();
+    }
+    break;
+  case MetadataType::Response:
+    if (encoder_callbacks_) {
+      return &encoder_callbacks_->streamInfo();
+    }
+    break;
+    // Note: Log is always const.
+  default:
+    break;
+  }
+  return nullptr;
 }
 
-std::string Context::getResponseStreamInfoProtocol() {
-  if (!encoder_callbacks_)
-    return "";
-  return Http::Utility::getProtocolString(streamInfo().protocol().value());
+const StreamInfo::StreamInfo* Context::getConstStreamInfo(MetadataType type) const {
+  switch (type) {
+  case MetadataType::Request:
+    if (decoder_callbacks_) {
+      return &decoder_callbacks_->streamInfo();
+    }
+    break;
+  case MetadataType::Response:
+    if (encoder_callbacks_) {
+      return &encoder_callbacks_->streamInfo();
+    }
+    break;
+  case MetadataType::Log:
+    if (access_log_stream_info_) {
+      return access_log_stream_info_;
+    }
+    break;
+  default:
+    break;
+  }
+  return nullptr;
 }
 
-// Metadata: the values are serialized ProtobufWkt::Struct
-std::string Context::getRequestMetadata(absl::string_view key) {
-  if (!decoder_callbacks_)
+std::string Context::getProtocol(StreamType type) {
+  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
+  if (!streamInfo)
     return "";
-  auto& proto_struct = getMetadata(decoder_callbacks_);
-  auto it = proto_struct.fields().find(std::string(key));
-  if (it == proto_struct.fields().end())
+  return Http::Utility::getProtocolString(streamInfo->protocol().value());
+}
+
+const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
+                                                           absl::string_view name) {
+  switch (type) {
+  case MetadataType::RequestRoute:
+    return getRouteMetadataStructProto(decoder_callbacks_);
+  case MetadataType::ResponseRoute:
+    return getRouteMetadataStructProto(encoder_callbacks_);
+  default: {
+    auto streamInfo = getConstStreamInfo(type);
+    if (!streamInfo) {
+      return nullptr;
+    }
+    return getStructProtoFromMetadata(streamInfo->dynamicMetadata(), name);
+  }
+  }
+}
+
+std::string Context::getMetadata(MetadataType type, absl::string_view key) {
+  auto proto_struct = getMetadataStructProto(type);
+  if (!proto_struct) {
     return "";
+  }
+  auto it = proto_struct->fields().find(std::string(key));
+  if (it == proto_struct->fields().end()) {
+    return "";
+  }
   std::string result;
   it->second.SerializeToString(&result);
   return result;
 }
 
-void Context::setRequestMetadata(absl::string_view key, absl::string_view serialized_proto_struct) {
-  if (!decoder_callbacks_)
+void Context::setMetadata(MetadataType type, absl::string_view key,
+                          absl::string_view serialized_proto_struct) {
+  auto streamInfo = getStreamInfo(type);
+  if (!streamInfo) {
     return;
-  decoder_callbacks_->streamInfo().setDynamicMetadata(
+  }
+  streamInfo->setDynamicMetadata(
       HttpFilters::HttpFilterNames::get().Wasm,
       MessageUtil::keyValueStruct(std::string(key), std::string(serialized_proto_struct)));
 }
 
-PairsWithStringValues Context::getRequestMetadataPairs() {
-  PairsWithStringValues result;
-  if (!encoder_callbacks_)
+PairsWithStringValues Context::getMetadataPairs(MetadataType type) {
+  auto proto_struct = getMetadataStructProto(type);
+  if (!proto_struct) {
     return {};
-  auto& proto_struct = getMetadata(encoder_callbacks_);
-  for (auto& p : proto_struct.fields()) {
+  }
+  PairsWithStringValues result;
+  for (auto& p : proto_struct->fields()) {
     std::string value;
     p.second.SerializeToString(&value);
     result.emplace_back(p.first, std::move(value));
@@ -758,38 +901,29 @@ PairsWithStringValues Context::getRequestMetadataPairs() {
   return result;
 }
 
-std::string Context::getResponseMetadata(absl::string_view key) {
-  if (!encoder_callbacks_)
+std::string Context::getMetadataStruct(MetadataType type, absl::string_view name) {
+  auto proto_struct = getMetadataStructProto(type, name);
+  if (!proto_struct) {
     return "";
-  auto& proto_struct = getMetadata(encoder_callbacks_);
-  auto it = proto_struct.fields().find(std::string(key));
-  if (it == proto_struct.fields().end())
-    return "";
-  std::string result;
-  it->second.SerializeToString(&result);
-  return result;
-}
-
-void Context::setResponseMetadata(absl::string_view key,
-                                  absl::string_view serialized_proto_struct) {
-  if (!encoder_callbacks_)
-    return;
-  encoder_callbacks_->streamInfo().setDynamicMetadata(
-      HttpFilters::HttpFilterNames::get().Wasm,
-      MessageUtil::keyValueStruct(std::string(key), std::string(serialized_proto_struct)));
-}
-
-PairsWithStringValues Context::getResponseMetadataPairs() {
-  PairsWithStringValues result;
-  if (!encoder_callbacks_)
-    return {};
-  auto& proto_struct = getMetadata(encoder_callbacks_);
-  for (auto& p : proto_struct.fields()) {
-    std::string value;
-    p.second.SerializeToString(&value);
-    result.emplace_back(p.first, std::move(value));
   }
-  return result;
+  std::string result;
+  if (proto_struct->SerializeToString(&result)) {
+    return result;
+  }
+  return "";
+}
+
+void Context::setMetadataStruct(MetadataType type, absl::string_view name,
+                                absl::string_view serialized_proto_struct) {
+  auto streamInfo = getStreamInfo(type);
+  if (!streamInfo) {
+    return;
+  }
+  ProtobufWkt::Struct proto_struct;
+  if (proto_struct.ParseFromArray(serialized_proto_struct.data(), serialized_proto_struct.size())) {
+    return;
+  }
+  streamInfo->setDynamicMetadata(std::string(name), proto_struct);
 }
 
 void Context::scriptLog(spdlog::level::level_enum level, absl::string_view message) {
@@ -944,10 +1078,86 @@ void Context::onHttpCallResponse(uint32_t token, const Pairs& response_headers,
                              trailers_ptr, trailers_size);
 }
 
+uint32_t Context::defineMetric(MetricType type, absl::string_view name) {
+  if (type == MetricType::Counter) {
+    auto id = wasm_->nextCounterMetricId();
+    wasm_->counters_.emplace(id, &wasm_->scope_.counter(std::string(
+                                     name))); // This is inefficient, but it is the Scope API.
+    return id;
+  } else if (type == MetricType::Gauge) {
+    auto id = wasm_->nextGaugeMetricId();
+    wasm_->gauges_.emplace(id, &wasm_->scope_.gauge(std::string(
+                                   name))); // This is inefficient, but it is the Scope API.
+    return id;
+  } else if (type == MetricType::Histogram) {
+    auto id = wasm_->nextHistogramMetricId();
+    wasm_->histograms_.emplace(id, &wasm_->scope_.histogram(std::string(
+                                       name))); // This is inefficient, but it is the Scope API.
+    return id;
+  }
+  return 0;
+}
+
+void Context::incrementMetric(uint32_t metric_id, int64_t offset) {
+  auto type = static_cast<MetricType>(metric_id & Wasm::kMetricTypeMask);
+  if (type == MetricType::Counter) {
+    auto it = wasm_->counters_.find(metric_id);
+    if (it != wasm_->counters_.end()) {
+      if (offset > 0)
+        it->second->add(offset);
+    }
+  } else if (type == MetricType::Gauge) {
+    auto it = wasm_->gauges_.find(metric_id);
+    if (it != wasm_->gauges_.end()) {
+      if (offset > 0)
+        it->second->add(offset);
+      else
+        it->second->sub(-offset);
+    }
+  }
+}
+
+void Context::recordMetric(uint32_t metric_id, uint64_t value) {
+  auto type = static_cast<MetricType>(metric_id & Wasm::kMetricTypeMask);
+  if (type == MetricType::Counter) {
+    auto it = wasm_->counters_.find(metric_id);
+    if (it != wasm_->counters_.end()) {
+      it->second->add(value);
+    }
+  } else if (type == MetricType::Gauge) {
+    auto it = wasm_->gauges_.find(metric_id);
+    if (it != wasm_->gauges_.end()) {
+      it->second->set(value);
+    }
+  } else if (type == MetricType::Histogram) {
+    auto it = wasm_->histograms_.find(metric_id);
+    if (it != wasm_->histograms_.end()) {
+      it->second->recordValue(value);
+    }
+  }
+}
+
+uint64_t Context::getMetric(uint32_t metric_id) {
+  auto type = static_cast<MetricType>(metric_id & Wasm::kMetricTypeMask);
+  if (type == MetricType::Counter) {
+    auto it = wasm_->counters_.find(metric_id);
+    if (it != wasm_->counters_.end()) {
+      return it->second->value();
+    }
+  } else if (type == MetricType::Gauge) {
+    auto it = wasm_->gauges_.find(metric_id);
+    if (it != wasm_->gauges_.end()) {
+      return it->second->value();
+    }
+  }
+  return 0;
+}
+
 Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
-           Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher)
-    : cluster_manager_(cluster_manager), dispatcher_(dispatcher),
-      initial_configuration_(initial_configuration) {
+           Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
+           Stats::Scope& scope, Stats::ScopeSharedPtr owned_scope)
+    : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
+      owned_scope_(owned_scope), initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
 }
@@ -958,6 +1168,17 @@ void Wasm::registerCallbacks() {
     _REGISTER(getTotalMemory);
     _REGISTER(_emscripten_get_heap_size);
     _REGISTER(_llvm_trap);
+    _REGISTER(___cxa_pure_virtual);
+    _REGISTER(___call_main);
+    _REGISTER(___clock_gettime);
+    _REGISTER(_pthread_equal);
+    _REGISTER(_pthread_mutex_destroy);
+    _REGISTER(_pthread_cond_wait);
+    _REGISTER(_pthread_getspecific);
+    _REGISTER(_pthread_key_create);
+    _REGISTER(_pthread_once);
+    _REGISTER(_pthread_setspecific);
+    _REGISTER(setTempRet0);
   }
 #undef _REGISTER
 
@@ -965,15 +1186,14 @@ void Wasm::registerCallbacks() {
 #define _REGISTER_PROXY(_fn) wasm_vm_->registerCallback("envoy", "_proxy_" #_fn, &_fn##Handler);
   _REGISTER_PROXY(log);
 
-  _REGISTER_PROXY(getRequestStreamInfoProtocol);
-  _REGISTER_PROXY(getResponseStreamInfoProtocol);
+  _REGISTER_PROXY(getProtocol);
 
-  _REGISTER_PROXY(getRequestMetadata);
-  _REGISTER_PROXY(setRequestMetadata);
-  _REGISTER_PROXY(getRequestMetadataPairs);
-  _REGISTER_PROXY(getResponseMetadata);
-  _REGISTER_PROXY(setResponseMetadata);
-  _REGISTER_PROXY(getResponseMetadataPairs);
+  _REGISTER_PROXY(getMetadata);
+  _REGISTER_PROXY(setMetadata);
+  _REGISTER_PROXY(getMetadataPairs);
+
+  _REGISTER_PROXY(getMetadataStruct);
+  _REGISTER_PROXY(setMetadataStruct);
 
   _REGISTER_PROXY(continueRequest);
   _REGISTER_PROXY(continueResponse);
@@ -1011,6 +1231,11 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(httpCall);
 
   _REGISTER_PROXY(setTickPeriodMilliseconds);
+
+  _REGISTER_PROXY(defineMetric);
+  _REGISTER_PROXY(incrementMetric);
+  _REGISTER_PROXY(recordMetric);
+  _REGISTER_PROXY(getMetric);
 #undef _REGISTER_PROXY
 }
 
@@ -1056,7 +1281,7 @@ void Wasm::getFunctions() {
 
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
-      dispatcher_(dispatcher) {
+      dispatcher_(dispatcher), scope_(wasm.scope_), owned_scope_(wasm.owned_scope_) {
   wasm_vm_ = wasm.wasmVm()->clone();
   general_context_ = createContext();
   getFunctions();
@@ -1281,9 +1506,10 @@ std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
 std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  const envoy::config::wasm::v2::VmConfig& vm_config,
                                  Upstream::ClusterManager& cluster_manager,
-                                 Event::Dispatcher& dispatcher, Api::Api& api) {
+                                 Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
+                                 Stats::ScopeSharedPtr scope_ptr) {
   auto wasm = std::make_shared<Wasm>(vm_config.vm(), id, vm_config.initial_configuration(),
-                                     cluster_manager, dispatcher);
+                                     cluster_manager, dispatcher, scope, scope_ptr);
   const auto& code = Config::DataSource::read(vm_config.code(), true, api);
   const auto& path = Config::DataSource::getPath(vm_config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
@@ -1305,7 +1531,7 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
   } else {
     wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->vm(), base_wasm.id(),
                                   base_wasm.initial_configuration(), base_wasm.clusterManager(),
-                                  dispatcher);
+                                  dispatcher, base_wasm.scope());
     if (!wasm->initialize(base_wasm.code(), base_wasm.id(), base_wasm.allow_precompiled())) {
       throw WasmException("Failed to initialize WASM code");
     }

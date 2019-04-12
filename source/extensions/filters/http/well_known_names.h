@@ -53,7 +53,7 @@ public:
   // Tap filter
   const std::string Tap = "envoy.filters.http.tap";
   // Wasm filter
-  const std::string Wasm = "envoy.filters.http.wasm";
+  const std::string Wasm = "envoy.wasm";
 
   // Converts names from v1 to v2
   const Config::V1Converter v1_converter_;

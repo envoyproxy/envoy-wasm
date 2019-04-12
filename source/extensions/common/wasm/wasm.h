@@ -8,6 +8,8 @@
 #include "envoy/config/wasm/v2/wasm.pb.validate.h"
 #include "envoy/http/filter.h"
 #include "envoy/server/wasm.h"
+#include "envoy/stats/scope.h"
+#include "envoy/stats/stats.h"
 #include "envoy/thread_local/thread_local.h"
 #include "envoy/upstream/cluster_manager.h"
 
@@ -54,10 +56,33 @@ using WasmCallback3Void = void (*)(void*, uint32_t, uint32_t, uint32_t);
 using WasmCallback4Void = void (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t);
 using WasmCallback5Void = void (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 using WasmCallback0Int = uint32_t (*)(void*);
+using WasmCallback1Int = uint32_t (*)(void*, uint32_t);
+using WasmCallback2Int = uint32_t (*)(void*, uint32_t, uint32_t);
 using WasmCallback3Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t);
 using WasmCallback5Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 using WasmCallback9Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
                                       uint32_t, uint32_t, uint32_t, uint32_t);
+// Using the standard g++/clang mangling algorithm:
+// https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling-builtin
+// Z = void, j = uint32_t, l = int64_t, m = uint64_t
+using WasmCallback_Zjl = void (*)(void*, uint32_t, int64_t);
+using WasmCallback_Zjm = void (*)(void*, uint32_t, uint64_t);
+using WasmCallback_mjj = uint64_t (*)(void*, uint32_t);
+
+// Sadly we don't have enum class inheritance in c++-14.
+enum class StreamType : int { Request = 0, Response = 1, MAX = 1 };
+enum class MetadataType : int {
+  Request = 0,
+  Response = 1,
+  RequestRoute = 2,
+  ResponseRoute = 3,
+  Log = 4,
+  MAX = 4
+};
+
+inline MetadataType StreamType2MetadataType(StreamType type) {
+  return static_cast<MetadataType>(type);
+}
 
 // A context which will be the target of callbacks for a particular session
 // e.g. a handler of a stream.
@@ -72,7 +97,8 @@ public:
   WasmVm* wasmVm() const;
   Upstream::ClusterManager& clusterManager() const;
   uint32_t id() const { return id_; }
-  const StreamInfo::StreamInfo& streamInfo() const;
+  const StreamInfo::StreamInfo* getConstStreamInfo(MetadataType type) const;
+  StreamInfo::StreamInfo* getStreamInfo(MetadataType type) const;
 
   //
   // VM level downcalls into the WASM code on Context(id == 0).
@@ -148,16 +174,20 @@ public:
   // HTTP Filter Callbacks
   //
   // StreamInfo
-  virtual std::string getRequestStreamInfoProtocol();
-  virtual std::string getResponseStreamInfoProtocol();
-  // Metadata: the values are serialized ProtobufWkt::Struct
-  virtual std::string getRequestMetadata(absl::string_view key);
-  virtual void setRequestMetadata(absl::string_view key, absl::string_view serialized_proto_struct);
-  virtual PairsWithStringValues getRequestMetadataPairs();
-  virtual std::string getResponseMetadata(absl::string_view key);
-  virtual void setResponseMetadata(absl::string_view key,
-                                   absl::string_view serialized_proto_struct);
-  virtual PairsWithStringValues getResponseMetadataPairs();
+  virtual std::string getProtocol(StreamType type);
+
+  // Metadata
+  // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the
+  // values are serialized ProtobufWkt::Struct Value
+  virtual std::string getMetadata(MetadataType type, absl::string_view key);
+  virtual void setMetadata(MetadataType type, absl::string_view key,
+                           absl::string_view serialized_proto_struct);
+  virtual PairsWithStringValues getMetadataPairs(MetadataType type);
+  // Name is ignored when the type is not MetadataType::Request/Response: the values are serialized
+  // ProtobufWkt::Struct
+  virtual std::string getMetadataStruct(MetadataType type, absl::string_view name);
+  virtual void setMetadataStruct(MetadataType type, absl::string_view key,
+                                 absl::string_view serialized_proto_struct);
 
   // Continue
   virtual void continueRequest() {
@@ -213,6 +243,18 @@ public:
   virtual void httpRespond(const Pairs& response_headers, absl::string_view body,
                            const Pairs& response_trailers);
 
+  // Stats/Metrics
+  enum class MetricType : uint32_t {
+    Counter = 0,
+    Gauge = 1,
+    Histogram = 2,
+    Max = 2,
+  };
+  virtual uint32_t defineMetric(MetricType type, absl::string_view name);
+  virtual void incrementMetric(uint32_t metric_id, int64_t offset);
+  virtual void recordMetric(uint32_t metric_id, uint64_t value);
+  virtual uint64_t getMetric(uint32_t metric_id);
+
   // Connection
   virtual bool isSsl();
 
@@ -221,6 +263,8 @@ protected:
 
   void onAsyncClientSuccess(uint32_t token, Envoy::Http::MessagePtr& response);
   void onAsyncClientFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
+
+  const ProtobufWkt::Struct* getMetadataStructProto(MetadataType type, absl::string_view name = "");
 
   Wasm* const wasm_;
   const uint32_t id_;
@@ -276,7 +320,8 @@ class Wasm : public Envoy::Server::Wasm,
              public std::enable_shared_from_this<Wasm> {
 public:
   Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
-       Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher);
+       Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
+       Stats::Scope& scope, Stats::ScopeSharedPtr owned_scope = nullptr);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
   ~Wasm() {}
 
@@ -291,6 +336,7 @@ public:
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
   Context* generalContext() const { return general_context_.get(); }
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
+  Stats::Scope& scope() const { return scope_; }
 
   std::shared_ptr<Context> createContext() { return std::make_shared<Context>(this); }
 
@@ -343,6 +389,30 @@ public:
 
 private:
   friend class Context;
+  // These are the same as the values of the Context::MetricType enum, here separately for convenience.
+  static const uint32_t kMetricTypeCounter = 0x0;
+  static const uint32_t kMetricTypeGauge = 0x1;
+  static const uint32_t kMetricTypeHistogram = 0x2;
+  static const uint32_t kMetricTypeMask = 0x3;
+  static const uint32_t kMetricIdIncrement = 0x4;
+  static void StaticAsserts() {
+    static_assert(static_cast<uint32_t>(Context::MetricType::Counter) == kMetricTypeCounter, "");
+    static_assert(static_cast<uint32_t>(Context::MetricType::Gauge) == kMetricTypeGauge, "");
+    static_assert(static_cast<uint32_t>(Context::MetricType::Histogram) == kMetricTypeHistogram, "");
+  }
+
+  bool isCounterMetricId(uint32_t metric_id) {
+    return (metric_id & kMetricTypeMask) == kMetricTypeCounter;
+  }
+  bool isGaugeMetricId(uint32_t metric_id) {
+    return (metric_id & kMetricTypeMask) == kMetricTypeGauge;
+  }
+  bool isHistogramMetricId(uint32_t metric_id) {
+    return (metric_id & kMetricTypeMask) == kMetricTypeHistogram;
+  }
+  uint32_t nextCounterMetricId() { return next_counter_metric_id_ += kMetricIdIncrement; }
+  uint32_t nextGaugeMetricId() { return next_gauge_metric_id_ += kMetricIdIncrement; }
+  uint32_t nextHistogramMetricId() { return next_histogram_metric_id_ += kMetricIdIncrement; }
 
   void registerCallbacks();    // Register functions called out from WASM.
   void establishEnvironment(); // Language specific enviroments.
@@ -350,6 +420,7 @@ private:
 
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
+  Stats::Scope& scope_;  // Either an inherited scope or owned_scope_ below.
   std::string id_;
   std::string context_id_filter_state_data_name_;
   uint32_t next_context_id_ = 0;
@@ -357,6 +428,8 @@ private:
   std::shared_ptr<Context> general_context_; // Context unrelated to any specific stream.
   std::chrono::milliseconds tick_period_;
   Event::TimerPtr timer_;
+  Stats::ScopeSharedPtr
+      owned_scope_; // When scope_ is not owned by a higher level (e.g. for WASM services).
 
   // Calls into the VM.
   WasmCall0Void onStart_;
@@ -400,22 +473,18 @@ private:
 
   std::unique_ptr<Global<double>> emscripten_NaN_;
   std::unique_ptr<Global<double>> emscripten_Infinity_;
+
+  // Stats/Metrics
+  uint32_t next_counter_metric_id_ = kMetricTypeCounter;
+  uint32_t next_gauge_metric_id_ = kMetricTypeGauge;
+  uint32_t next_histogram_metric_id_ = kMetricTypeHistogram;
+  absl::flat_hash_map<uint32_t, Stats::Counter*> counters_;
+  absl::flat_hash_map<uint32_t, Stats::Gauge*> gauges_;
+  absl::flat_hash_map<uint32_t, Stats::Histogram*> histograms_;
 };
 
 inline WasmVm* Context::wasmVm() const { return wasm_->wasmVm(); }
 inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_->clusterManager(); }
-
-inline const ProtobufWkt::Struct& getMetadata(Http::StreamFilterCallbacks* callbacks) {
-  if (callbacks->route() == nullptr || callbacks->route()->routeEntry() == nullptr) {
-    return ProtobufWkt::Struct::default_instance();
-  }
-  const auto& metadata = callbacks->route()->routeEntry()->metadata();
-  const auto filter_it = metadata.filter_metadata().find(HttpFilters::HttpFilterNames::get().Wasm);
-  if (filter_it == metadata.filter_metadata().end()) {
-    return ProtobufWkt::Struct::default_instance();
-  }
-  return filter_it->second;
-}
 
 // Wasm VM instance. Provides the low level WASM interface.
 class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
@@ -474,11 +543,22 @@ public:
   virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
                                 WasmCallback0Int f) PURE;
   virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
+                                WasmCallback1Int f) PURE;
+  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
+                                WasmCallback2Int f) PURE;
+  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
                                 WasmCallback3Int f) PURE;
   virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
                                 WasmCallback5Int f) PURE;
   virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
                                 WasmCallback9Int f) PURE;
+
+  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
+                                WasmCallback_Zjl f) PURE;
+  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
+                                WasmCallback_Zjm f) PURE;
+  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
+                                WasmCallback_mjj f) PURE;
 
   // Register typed value exported by the host environment.
   virtual std::unique_ptr<Global<double>>
@@ -493,7 +573,8 @@ std::unique_ptr<WasmVm> createWasmVm(absl::string_view vm);
 std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  const envoy::config::wasm::v2::VmConfig& vm_config,
                                  Upstream::ClusterManager& cluster_manager,
-                                 Event::Dispatcher& dispatcher, Api::Api& api);
+                                 Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
+                                 Stats::ScopeSharedPtr owned_scope = nullptr);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,

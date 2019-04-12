@@ -26,17 +26,17 @@
   (global $13  i32 (i32.const 1055604))
   (global $14  i32 (i32.const 1055604))
   (elem $10 (i32.const 1)
-    $<&T_as_core::fmt::Display>::fmt::h05feff42ddc07882 $<&T_as_core::fmt::Display>::fmt::h97ffe765290afac5 $core::fmt::ArgumentV1::show_usize::h7e76c008016dd45f $<core::fmt::Error_as_core::fmt::Debug>::fmt::hb56878928eceb98a $<log::SetLoggerError_as_core::fmt::Debug>::fmt::hcde5d013cbb807c1 $core::fmt::num::<impl_core::fmt::Display_for_u32>::fmt::h4f4d56a15c6233ed $<core::ops::range::Range<Idx>_as_core::fmt::Debug>::fmt::hd43772a3c2cd5a20 $<char_as_core::fmt::Debug>::fmt::hda62120a64941310
-    $core::fmt::num::<impl_core::fmt::Debug_for_usize>::fmt::h2a5aa117bff2c084 $core::ptr::real_drop_in_place::h181e24faf7b583a9 $<proxy_wasm::Logger_as_log::Log>::enabled::hd4f20362dffd9c85 $<proxy_wasm::Logger_as_log::Log>::log::ha5526d721aa1eaa4 $<log::NopLogger_as_log::Log>::flush::h1c1a0fd807f0a5b4 $core::ptr::real_drop_in_place::h0e270dec7857294a $<&mut_W_as_core::fmt::Write>::write_str::h338988da53ca7d21 $<&mut_W_as_core::fmt::Write>::write_char::hb69c6ddc18efab2f
-    $<&mut_W_as_core::fmt::Write>::write_fmt::hac86fd38e1c29d74 $<log::NopLogger_as_log::Log>::enabled::h2391219e08939a75 $<log::NopLogger_as_log::Log>::log::hcdd43806b88941ce $<T_as_core::any::Any>::get_type_id::h84858aded9b6f3c7 $core::ptr::real_drop_in_place::h7a6e9b3a26682e2c $<core::fmt::builders::PadAdapter<'_>_as_core::fmt::Write>::write_str::heb6658a92b0d254f $core::fmt::Write::write_char::h699f698034020179 $core::fmt::Write::write_fmt::h88700fc7b71e07ba
+    $<&T_as_core::fmt::Display>::fmt::h05feff42ddc07882 $<core::fmt::Error_as_core::fmt::Debug>::fmt::hb56878928eceb98a $<log::SetLoggerError_as_core::fmt::Debug>::fmt::ha942b054345bd721 $<&T_as_core::fmt::Display>::fmt::h3f145b24ed245033 $core::fmt::ArgumentV1::show_usize::h7e76c008016dd45f $core::fmt::num::<impl_core::fmt::Display_for_u32>::fmt::h4f4d56a15c6233ed $<core::ops::range::Range<Idx>_as_core::fmt::Debug>::fmt::hd43772a3c2cd5a20 $<char_as_core::fmt::Debug>::fmt::hda62120a64941310
+    $core::fmt::num::<impl_core::fmt::Debug_for_usize>::fmt::h2a5aa117bff2c084 $core::ptr::real_drop_in_place::h181e24faf7b583a9 $<proxy_wasm::Logger_as_log::Log>::enabled::hdf38864a8a45225e $<proxy_wasm::Logger_as_log::Log>::log::h2c2b3343c1e0084a $<log::NopLogger_as_log::Log>::flush::hd7e64e1b27d09f04 $core::ptr::real_drop_in_place::h0e270dec7857294a $<&mut_W_as_core::fmt::Write>::write_str::hccd6f22edec2e385 $<&mut_W_as_core::fmt::Write>::write_char::hc45ff4c6ed2a2042
+    $<&mut_W_as_core::fmt::Write>::write_fmt::hc3368130906df163 $<log::NopLogger_as_log::Log>::enabled::h1a8020a0a9c8ab7b $<log::NopLogger_as_log::Log>::log::h3310d0bba2c563ff $<T_as_core::any::Any>::get_type_id::h84858aded9b6f3c7 $core::ptr::real_drop_in_place::h7a6e9b3a26682e2c $<core::fmt::builders::PadAdapter<'_>_as_core::fmt::Write>::write_str::heb6658a92b0d254f $core::fmt::Write::write_char::h699f698034020179 $core::fmt::Write::write_fmt::h88700fc7b71e07ba
     $<&mut_W_as_core::fmt::Write>::write_str::h5e939bfff6b7262a $<&mut_W_as_core::fmt::Write>::write_char::h6c366a2088812c15 $<&mut_W_as_core::fmt::Write>::write_fmt::h1bb28d0d3f773a6a)
   (data $11 (i32.const 1048576)
     "warn logging_rustsrc/lib.rstest trace loggingtest debug loggingt"
-    "est error loggingtest tick logging\00\00\01\00\00\00\00\00\00\00 \00\00\00\00\00\00\00\03\00\00\00\00\00\00\00\03\00\00\00"
-    "\00\00\00\00\03\00\00\00a Display implementation returned an error unexpectedlyc"
-    "alled `Result::unwrap()` on an `Err` valueTried to shrink to a l"
-    "arger capacitysrc/libcore/result.rs: ()\00SetLoggerErrorcapacity o"
-    "verflowsrc/liballoc/raw_vec.rs\00\00\01\00\00\00\00\00\00\00 \00\00\00\00\00\00\00\03\00\00\00\00\00\00\00\03\00\00\00\00\00\00\00"
+    "est error loggingtest tick loggingsrc/libcore/result.rs: \00\00\00\01\00\00\00"
+    "\00\00\00\00 \00\00\00\00\00\00\00\03\00\00\00\00\00\00\00\03\00\00\00\00\00\00\00\03\00\00\00a Display implementation returne"
+    "d an error unexpectedlycalled `Result::unwrap()` on an `Err` val"
+    "ueTried to shrink to a larger capacity\00\00SetLoggerError()capacity"
+    " overflowsrc/liballoc/raw_vec.rs\01\00\00\00\00\00\00\00 \00\00\00\00\00\00\00\03\00\00\00\00\00\00\00\03\00\00\00\00\00\00\00"
     "\03\00\00\00\01\00\00\00\01\00\00\00 \00\00\00\00\00\00\00\03\00\00\00\00\00\00\00\03\00\00\00\00\00\00\00\03\00\00\00index out of bounds: the"
     " len is  but the index is 00010203040506070809101112131415161718"
     "1920212223242526272829303132333435363738394041424344454647484950"
@@ -100,10 +100,10 @@
     "Option::unwrap()` on a `None` valuesrc/libcore/option.rsbegin <="
     " end ( <= ) when slicing ` is out of bounds of `    \n()Error")
   (data $11 (i32.const 1052928)
-    "\00\00\10\00\05\00\00\00\1b\00\10\00\12\00\00\00-\00\10\00\12\00\00\00?\00\10\00\12\00\00\00Q\00\10\00\11\00\00\00\n\00\00\00\00\00\00\00\01\00\00\00\0b\00\00\00\0c\00\00\00\0d\00\00\00"
-    "\a8\01\10\00\00\00\00\00\0e\00\00\00\04\00\00\00\04\00\00\00\0f\00\00\00\10\00\00\00\11\00\00\00\ea\00\10\00$\00\00\00G\01\10\00\17\00\00\00A\02\00\00\09\00\00\00\a8\01\10\00\00\00\00\00"
-    "#\01\10\00\02\00\00\00\0e\01\10\00\15\00\00\00\e5\03\00\00\05\00\00\00\a0\19\10\00\a0\11\10\00\n\00\00\00\00\00\00\00\01\00\00\00\12\00\00\00\13\00\00\00\0d\00\00\00\n\00\00\00\00\00\00\00"
-    "\01\00\00\00\12\00\00\00\13\00\00\00\0d\00\00\006\01\10\00\11\00\00\00G\01\10\00\17\00\00\00\eb\02\00\00\05\00\00\00\a8\01\10\00 \00\00\00\c8\01\10\00\12\00\00\00\n\00\00\00\00\00\00\00"
+    "\00\00\10\00\05\00\00\00\1b\00\10\00\12\00\00\00-\00\10\00\12\00\00\00?\00\10\00\12\00\00\00Q\00\10\00\11\00\00\00\a8\01\10\00\00\00\00\00w\00\10\00\02\00\00\00b\00\10\00\15\00\00\00"
+    "\e5\03\00\00\05\00\00\00\n\00\00\00\00\00\00\00\01\00\00\00\0b\00\00\00\0c\00\00\00\0d\00\00\00\a8\01\10\00\00\00\00\00\02\01\10\00$\00\00\00I\01\10\00\17\00\00\00A\02\00\00\09\00\00\00"
+    "\0e\00\00\00\04\00\00\00\04\00\00\00\0f\00\00\00\10\00\00\00\11\00\00\00\a0\19\10\00\a0\11\10\00\n\00\00\00\00\00\00\00\01\00\00\00\12\00\00\00\13\00\00\00\0d\00\00\00\n\00\00\00\00\00\00\00"
+    "\01\00\00\00\12\00\00\00\13\00\00\00\0d\00\00\008\01\10\00\11\00\00\00I\01\10\00\17\00\00\00\eb\02\00\00\05\00\00\00\a8\01\10\00 \00\00\00\c8\01\10\00\12\00\00\00\n\00\00\00\00\00\00\00"
     "\01\00\00\00\14\00\00\00\ba\02\10\00\06\00\00\00\c0\02\10\00\"\00\00\00\a2\02\10\00\18\00\00\00%\09\00\00\05\00\00\00\e2\02\10\00\16\00\00\00\f8\02\10\00\0d\00\00\00\a2\02\10\00\18\00\00\00"
     "+\09\00\00\05\00\00\00\d6\04\10\00\0b\00\00\00\da\10\10\00\16\00\00\00\05\03\10\00\01\00\00\00\c0\04\10\00\16\00\00\00%\08\00\00\09\00\00\00\b8\10\10\00\0e\00\00\00\c6\10\10\00\04\00\00\00"
     "\ca\10\10\00\10\00\00\00\05\03\10\00\01\00\00\00\c0\04\10\00\16\00\00\00)\08\00\00\05\00\00\00x\10\10\00+\00\00\00\a3\10\10\00\15\00\00\00Y\01\00\00\15\00\00\00\d6\04\10\00\0b\00\00\00"
@@ -210,7 +210,7 @@
       local.get $2
       i32.const 36
       i32.add
-      i32.const 1048676
+      i32.const 1048700
       i32.store
       local.get $2
       i32.const 32
@@ -653,14 +653,390 @@
     global.set $12
     )
   
-  (func $<proxy_wasm::Logger_as_log::Log>::enabled::hd4f20362dffd9c85 (type $2)
+  (func $core::result::unwrap_failed::h1d6d220c53d3f336 (type $4)
+    (local $0 i32)
+    global.get $12
+    i32.const 64
+    i32.sub
+    local.tee $0
+    global.set $12
+    local.get $0
+    i32.const 55
+    i32.store offset=12
+    local.get $0
+    i32.const 1048736
+    i32.store offset=8
+    local.get $0
+    i32.const 40
+    i32.add
+    i32.const 12
+    i32.add
+    i32.const 2
+    i32.store
+    local.get $0
+    i32.const 36
+    i32.add
+    i32.const 2
+    i32.store
+    local.get $0
+    i32.const 16
+    i32.add
+    i32.const 12
+    i32.add
+    i32.const 2
+    i32.store
+    local.get $0
+    i32.const 1
+    i32.store offset=44
+    local.get $0
+    i32.const 1048928
+    i32.store offset=24
+    local.get $0
+    i32.const 2
+    i32.store offset=20
+    local.get $0
+    i32.const 1052968
+    i32.store offset=16
+    local.get $0
+    local.get $0
+    i32.const 56
+    i32.add
+    i32.store offset=48
+    local.get $0
+    local.get $0
+    i32.const 8
+    i32.add
+    i32.store offset=40
+    local.get $0
+    local.get $0
+    i32.const 40
+    i32.add
+    i32.store offset=32
+    local.get $0
+    i32.const 16
+    i32.add
+    i32.const 1052984
+    call $core::panicking::panic_fmt::h74ee8034b317ceed
+    unreachable
+    )
+  
+  (func $<core::fmt::Error_as_core::fmt::Debug>::fmt::hb56878928eceb98a (type $2)
+    (param $0 i32)
+    (param $1 i32)
+    (result i32)
+    local.get $1
+    i32.load offset=24
+    i32.const 1052919
+    i32.const 5
+    local.get $1
+    i32.const 28
+    i32.add
+    i32.load
+    i32.load offset=12
+    call_indirect $10 (type $1)
+    )
+  
+  (func $core::panicking::panic_fmt::h74ee8034b317ceed (type $0)
+    (param $0 i32)
+    (param $1 i32)
+    (local $2 i32)
+    (local $3 i64)
+    global.get $12
+    i32.const 32
+    i32.sub
+    local.tee $2
+    global.set $12
+    local.get $1
+    i64.load align=4
+    local.set $3
+    local.get $2
+    i32.const 20
+    i32.add
+    local.get $1
+    i64.load offset=8 align=4
+    i64.store align=4
+    local.get $2
+    local.get $3
+    i64.store offset=12 align=4
+    local.get $2
+    local.get $0
+    i32.store offset=8
+    local.get $2
+    i32.const 1053176
+    i32.store offset=4
+    local.get $2
+    i32.const 1049000
+    i32.store
+    local.get $2
+    call $rust_begin_unwind
+    unreachable
+    )
+  
+  (func $core::result::unwrap_failed::h53c13222d410a969 (type $4)
+    (local $0 i32)
+    global.get $12
+    i32.const 64
+    i32.sub
+    local.tee $0
+    global.set $12
+    local.get $0
+    i32.const 43
+    i32.store offset=12
+    local.get $0
+    i32.const 1048791
+    i32.store offset=8
+    local.get $0
+    i32.const 40
+    i32.add
+    i32.const 12
+    i32.add
+    i32.const 3
+    i32.store
+    local.get $0
+    i32.const 36
+    i32.add
+    i32.const 2
+    i32.store
+    local.get $0
+    i32.const 16
+    i32.add
+    i32.const 12
+    i32.add
+    i32.const 2
+    i32.store
+    local.get $0
+    i32.const 1
+    i32.store offset=44
+    local.get $0
+    i32.const 1048928
+    i32.store offset=24
+    local.get $0
+    i32.const 2
+    i32.store offset=20
+    local.get $0
+    i32.const 1052968
+    i32.store offset=16
+    local.get $0
+    local.get $0
+    i32.const 56
+    i32.add
+    i32.store offset=48
+    local.get $0
+    local.get $0
+    i32.const 8
+    i32.add
+    i32.store offset=40
+    local.get $0
+    local.get $0
+    i32.const 40
+    i32.add
+    i32.store offset=32
+    local.get $0
+    i32.const 16
+    i32.add
+    i32.const 1052984
+    call $core::panicking::panic_fmt::h74ee8034b317ceed
+    unreachable
+    )
+  
+  (func $<log::SetLoggerError_as_core::fmt::Debug>::fmt::ha942b054345bd721 (type $2)
+    (param $0 i32)
+    (param $1 i32)
+    (result i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    global.get $12
+    i32.const 80
+    i32.sub
+    local.tee $2
+    global.set $12
+    i32.const 1
+    local.set $3
+    block $block
+      local.get $1
+      i32.load offset=24
+      i32.const 1048872
+      i32.const 14
+      local.get $1
+      i32.const 28
+      i32.add
+      i32.load
+      i32.load offset=12
+      call_indirect $10 (type $1)
+      br_if $block
+      block $block_0
+        block $block_1
+          local.get $1
+          i32.load
+          local.tee $3
+          i32.const 4
+          i32.and
+          br_if $block_1
+          i32.const 1
+          local.set $3
+          local.get $1
+          i32.const 24
+          i32.add
+          local.tee $4
+          i32.load
+          i32.const 1052917
+          i32.const 1
+          local.get $1
+          i32.const 28
+          i32.add
+          local.tee $5
+          i32.load
+          i32.load offset=12
+          call_indirect $10 (type $1)
+          br_if $block
+          local.get $4
+          i32.load
+          i32.const 1049000
+          i32.const 0
+          local.get $5
+          i32.load
+          i32.load offset=12
+          call_indirect $10 (type $1)
+          br_if $block
+          local.get $1
+          i32.const 1048886
+          i32.const 2
+          call $core::fmt::Formatter::pad::hfe31e8860a6945ec
+          br_if $block
+          br $block_0
+        end ;; $block_1
+        local.get $2
+        i32.const 52
+        i32.add
+        i32.const 1055080
+        i32.store
+        local.get $2
+        i32.const 0
+        i32.store8 offset=16
+        local.get $2
+        local.get $3
+        i32.store offset=24
+        local.get $2
+        local.get $1
+        i32.const 24
+        i32.add
+        i64.load align=4
+        i64.store offset=8
+        local.get $2
+        local.get $1
+        i32.load8_u offset=48
+        i32.store8 offset=72
+        local.get $2
+        local.get $1
+        i32.load offset=4
+        i32.store offset=28
+        local.get $2
+        local.get $1
+        i64.load offset=8 align=4
+        i64.store offset=32
+        local.get $2
+        local.get $1
+        i64.load offset=40 align=4
+        i64.store offset=64
+        local.get $2
+        local.get $1
+        i64.load offset=32 align=4
+        i64.store offset=56
+        local.get $2
+        local.get $1
+        i64.load offset=16 align=4
+        i64.store offset=40
+        local.get $2
+        local.get $2
+        i32.const 8
+        i32.add
+        i32.store offset=48
+        i32.const 1
+        local.set $3
+        local.get $2
+        i32.const 8
+        i32.add
+        i32.const 1052917
+        i32.const 1
+        call $<core::fmt::builders::PadAdapter<'_>_as_core::fmt::Write>::write_str::heb6658a92b0d254f
+        br_if $block
+        local.get $2
+        i32.const 8
+        i32.add
+        i32.const 1052916
+        i32.const 1
+        call $<core::fmt::builders::PadAdapter<'_>_as_core::fmt::Write>::write_str::heb6658a92b0d254f
+        br_if $block
+        i32.const 1
+        local.set $3
+        local.get $2
+        i32.const 24
+        i32.add
+        i32.const 1048886
+        i32.const 2
+        call $core::fmt::Formatter::pad::hfe31e8860a6945ec
+        br_if $block
+      end ;; $block_0
+      block $block_2
+        local.get $1
+        i32.load8_u
+        i32.const 4
+        i32.and
+        i32.eqz
+        br_if $block_2
+        i32.const 1
+        local.set $3
+        local.get $1
+        i32.const 24
+        i32.add
+        i32.load
+        i32.const 1052916
+        i32.const 1
+        local.get $1
+        i32.const 28
+        i32.add
+        i32.load
+        i32.load offset=12
+        call_indirect $10 (type $1)
+        br_if $block
+      end ;; $block_2
+      local.get $1
+      i32.const 24
+      i32.add
+      i32.load
+      i32.const 1052918
+      i32.const 1
+      local.get $1
+      i32.const 28
+      i32.add
+      i32.load
+      i32.load offset=12
+      call_indirect $10 (type $1)
+      local.set $1
+      local.get $2
+      i32.const 80
+      i32.add
+      global.set $12
+      local.get $1
+      return
+    end ;; $block
+    local.get $2
+    i32.const 80
+    i32.add
+    global.set $12
+    local.get $3
+    )
+  
+  (func $<proxy_wasm::Logger_as_log::Log>::enabled::hdf38864a8a45225e (type $2)
     (param $0 i32)
     (param $1 i32)
     (result i32)
     i32.const 1
     )
   
-  (func $<proxy_wasm::Logger_as_log::Log>::log::ha5526d721aa1eaa4 (type $0)
+  (func $<proxy_wasm::Logger_as_log::Log>::log::h2c2b3343c1e0084a (type $0)
     (param $0 i32)
     (param $1 i32)
     (local $2 i32)
@@ -687,7 +1063,7 @@
     i64.const 1
     i64.store offset=8
     local.get $2
-    i32.const 2
+    i32.const 4
     i32.store offset=28
     local.get $2
     local.get $2
@@ -712,13 +1088,13 @@
     i32.const 1
     i32.store
     local.get $2
-    i32.const 1048676
+    i32.const 1048700
     i32.store offset=48
     local.get $2
     i32.const 1
     i32.store offset=44
     local.get $2
-    i32.const 1052992
+    i32.const 1053024
     i32.store offset=40
     local.get $2
     local.get $2
@@ -731,7 +1107,7 @@
           local.get $2
           i32.const 36
           i32.add
-          i32.const 1053000
+          i32.const 1053056
           local.get $2
           i32.const 40
           i32.add
@@ -817,10 +1193,10 @@
           global.set $12
           return
         end ;; $block_1
-        call $core::result::unwrap_failed::ha1fc68747d7b9775
+        call $core::result::unwrap_failed::h1d6d220c53d3f336
         unreachable
       end ;; $block_0
-      i32.const 1053024
+      i32.const 1053032
       call $core::panicking::panic::h13421bef49a1c627
       unreachable
     end ;; $block
@@ -828,7 +1204,7 @@
     unreachable
     )
   
-  (func $<&T_as_core::fmt::Display>::fmt::h97ffe765290afac5 (type $2)
+  (func $<&T_as_core::fmt::Display>::fmt::h3f145b24ed245033 (type $2)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -1107,7 +1483,7 @@
                                   i32.store
                                   local.get $19
                                   i32.load offset=4
-                                  i32.const 3
+                                  i32.const 5
                                   i32.ne
                                   br_if $block_8
                                   local.get $19
@@ -1134,7 +1510,7 @@
                               i32.add
                               local.tee $19
                               i32.load offset=4
-                              i32.const 3
+                              i32.const 5
                               i32.ne
                               br_if $block_8
                               local.get $19
@@ -1195,7 +1571,7 @@
                                   i32.store
                                   local.get $19
                                   i32.load offset=4
-                                  i32.const 3
+                                  i32.const 5
                                   i32.ne
                                   br_if $block_13
                                   local.get $19
@@ -1224,7 +1600,7 @@
                               i32.add
                               local.tee $19
                               i32.load offset=4
-                              i32.const 3
+                              i32.const 5
                               i32.ne
                               br_if $block_13
                               local.get $19
@@ -1459,73 +1835,6 @@
     call $__rdl_dealloc
     )
   
-  (func $core::result::unwrap_failed::ha1fc68747d7b9775 (type $4)
-    (local $0 i32)
-    global.get $12
-    i32.const 64
-    i32.sub
-    local.tee $0
-    global.set $12
-    local.get $0
-    i32.const 55
-    i32.store offset=12
-    local.get $0
-    i32.const 1048712
-    i32.store offset=8
-    local.get $0
-    i32.const 40
-    i32.add
-    i32.const 12
-    i32.add
-    i32.const 4
-    i32.store
-    local.get $0
-    i32.const 36
-    i32.add
-    i32.const 2
-    i32.store
-    local.get $0
-    i32.const 16
-    i32.add
-    i32.const 12
-    i32.add
-    i32.const 2
-    i32.store
-    local.get $0
-    i32.const 1
-    i32.store offset=44
-    local.get $0
-    i32.const 1048928
-    i32.store offset=24
-    local.get $0
-    i32.const 2
-    i32.store offset=20
-    local.get $0
-    i32.const 1053048
-    i32.store offset=16
-    local.get $0
-    local.get $0
-    i32.const 56
-    i32.add
-    i32.store offset=48
-    local.get $0
-    local.get $0
-    i32.const 8
-    i32.add
-    i32.store offset=40
-    local.get $0
-    local.get $0
-    i32.const 40
-    i32.add
-    i32.store offset=32
-    local.get $0
-    i32.const 16
-    i32.add
-    i32.const 1053064
-    call $core::panicking::panic_fmt::h74ee8034b317ceed
-    unreachable
-    )
-  
   (func $core::panicking::panic::h13421bef49a1c627 (type $5)
     (param $0 i32)
     (local $1 i32)
@@ -1606,11 +1915,11 @@
           br_if $loop
         end ;; $loop
       end ;; $block_0
-      call $core::result::unwrap_failed::h3b23d8a79a9406cb
+      call $core::result::unwrap_failed::h53c13222d410a969
       unreachable
     end ;; $block
     i32.const 0
-    i32.const 1052968
+    i32.const 1053000
     i32.store offset=1053084
     i32.const 0
     i32.const 1049000
@@ -1621,73 +1930,6 @@
     i32.const 0
     i32.const 5
     i32.store offset=1055128
-    )
-  
-  (func $core::result::unwrap_failed::h3b23d8a79a9406cb (type $4)
-    (local $0 i32)
-    global.get $12
-    i32.const 64
-    i32.sub
-    local.tee $0
-    global.set $12
-    local.get $0
-    i32.const 43
-    i32.store offset=12
-    local.get $0
-    i32.const 1048767
-    i32.store offset=8
-    local.get $0
-    i32.const 40
-    i32.add
-    i32.const 12
-    i32.add
-    i32.const 5
-    i32.store
-    local.get $0
-    i32.const 36
-    i32.add
-    i32.const 2
-    i32.store
-    local.get $0
-    i32.const 16
-    i32.add
-    i32.const 12
-    i32.add
-    i32.const 2
-    i32.store
-    local.get $0
-    i32.const 1
-    i32.store offset=44
-    local.get $0
-    i32.const 1048928
-    i32.store offset=24
-    local.get $0
-    i32.const 2
-    i32.store offset=20
-    local.get $0
-    i32.const 1053048
-    i32.store offset=16
-    local.get $0
-    local.get $0
-    i32.const 56
-    i32.add
-    i32.store offset=48
-    local.get $0
-    local.get $0
-    i32.const 8
-    i32.add
-    i32.store offset=40
-    local.get $0
-    local.get $0
-    i32.const 40
-    i32.add
-    i32.store offset=32
-    local.get $0
-    i32.const 16
-    i32.add
-    i32.const 1053064
-    call $core::panicking::panic_fmt::h74ee8034b317ceed
-    unreachable
     )
   
   (func $_malloc (type $6)
@@ -1715,7 +1957,7 @@
         i32.const 1
         return
       end ;; $block_0
-      call $<alloc::raw_vec::RawVec<T_2c__A>>::allocate_in::_7b__7b_closure_7d__7d_::h7770da2616b2ac6b
+      call $<alloc::raw_vec::RawVec<T_2c__A>>::allocate_in::_7b__7b_closure_7d__7d_::haa1dbf56fe1aeb63
       unreachable
     end ;; $block
     unreachable
@@ -1731,7 +1973,7 @@
     call $__rdl_alloc
     )
   
-  (func $<alloc::raw_vec::RawVec<T_2c__A>>::allocate_in::_7b__7b_closure_7d__7d_::h7770da2616b2ac6b (type $4)
+  (func $<alloc::raw_vec::RawVec<T_2c__A>>::allocate_in::_7b__7b_closure_7d__7d_::haa1dbf56fe1aeb63 (type $4)
     call $alloc::raw_vec::capacity_overflow::he82aaa6e8f2774ef
     unreachable
     )
@@ -1747,7 +1989,13 @@
     end ;; $block
     )
   
-  (func $<&mut_W_as_core::fmt::Write>::write_str::h338988da53ca7d21 (type $1)
+  (func $alloc::raw_vec::capacity_overflow::he82aaa6e8f2774ef (type $4)
+    i32.const 1053136
+    call $core::panicking::panic::h13421bef49a1c627
+    unreachable
+    )
+  
+  (func $<&mut_W_as_core::fmt::Write>::write_str::hccd6f22edec2e385 (type $1)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -1857,13 +2105,7 @@
     i32.const 0
     )
   
-  (func $alloc::raw_vec::capacity_overflow::he82aaa6e8f2774ef (type $4)
-    i32.const 1053136
-    call $core::panicking::panic::h13421bef49a1c627
-    unreachable
-    )
-  
-  (func $<&mut_W_as_core::fmt::Write>::write_char::hb69c6ddc18efab2f (type $2)
+  (func $<&mut_W_as_core::fmt::Write>::write_char::hc45ff4c6ed2a2042 (type $2)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -2177,7 +2419,7 @@
     unreachable
     )
   
-  (func $<&mut_W_as_core::fmt::Write>::write_fmt::hac86fd38e1c29d74 (type $2)
+  (func $<&mut_W_as_core::fmt::Write>::write_fmt::hc3368130906df163 (type $2)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -2218,7 +2460,7 @@
     local.get $2
     i32.const 4
     i32.add
-    i32.const 1053000
+    i32.const 1053056
     local.get $2
     i32.const 8
     i32.add
@@ -2231,261 +2473,19 @@
     local.get $1
     )
   
-  (func $<log::SetLoggerError_as_core::fmt::Debug>::fmt::hcde5d013cbb807c1 (type $2)
-    (param $0 i32)
-    (param $1 i32)
-    (result i32)
-    (local $2 i32)
-    (local $3 i32)
-    (local $4 i32)
-    (local $5 i32)
-    global.get $12
-    i32.const 80
-    i32.sub
-    local.tee $2
-    global.set $12
-    i32.const 1
-    local.set $3
-    block $block
-      local.get $1
-      i32.load offset=24
-      i32.const 1048872
-      i32.const 14
-      local.get $1
-      i32.const 28
-      i32.add
-      i32.load
-      i32.load offset=12
-      call_indirect $10 (type $1)
-      br_if $block
-      block $block_0
-        block $block_1
-          local.get $1
-          i32.load
-          local.tee $3
-          i32.const 4
-          i32.and
-          br_if $block_1
-          i32.const 1
-          local.set $3
-          local.get $1
-          i32.const 24
-          i32.add
-          local.tee $4
-          i32.load
-          i32.const 1052917
-          i32.const 1
-          local.get $1
-          i32.const 28
-          i32.add
-          local.tee $5
-          i32.load
-          i32.load offset=12
-          call_indirect $10 (type $1)
-          br_if $block
-          local.get $4
-          i32.load
-          i32.const 1049000
-          i32.const 0
-          local.get $5
-          i32.load
-          i32.load offset=12
-          call_indirect $10 (type $1)
-          br_if $block
-          local.get $1
-          i32.const 1048869
-          i32.const 2
-          call $core::fmt::Formatter::pad::hfe31e8860a6945ec
-          br_if $block
-          br $block_0
-        end ;; $block_1
-        local.get $2
-        i32.const 52
-        i32.add
-        i32.const 1055080
-        i32.store
-        local.get $2
-        i32.const 0
-        i32.store8 offset=16
-        local.get $2
-        local.get $3
-        i32.store offset=24
-        local.get $2
-        local.get $1
-        i32.const 24
-        i32.add
-        i64.load align=4
-        i64.store offset=8
-        local.get $2
-        local.get $1
-        i32.load8_u offset=48
-        i32.store8 offset=72
-        local.get $2
-        local.get $1
-        i32.load offset=4
-        i32.store offset=28
-        local.get $2
-        local.get $1
-        i64.load offset=8 align=4
-        i64.store offset=32
-        local.get $2
-        local.get $1
-        i64.load offset=40 align=4
-        i64.store offset=64
-        local.get $2
-        local.get $1
-        i64.load offset=32 align=4
-        i64.store offset=56
-        local.get $2
-        local.get $1
-        i64.load offset=16 align=4
-        i64.store offset=40
-        local.get $2
-        local.get $2
-        i32.const 8
-        i32.add
-        i32.store offset=48
-        i32.const 1
-        local.set $3
-        local.get $2
-        i32.const 8
-        i32.add
-        i32.const 1052917
-        i32.const 1
-        call $<core::fmt::builders::PadAdapter<'_>_as_core::fmt::Write>::write_str::heb6658a92b0d254f
-        br_if $block
-        local.get $2
-        i32.const 8
-        i32.add
-        i32.const 1052916
-        i32.const 1
-        call $<core::fmt::builders::PadAdapter<'_>_as_core::fmt::Write>::write_str::heb6658a92b0d254f
-        br_if $block
-        i32.const 1
-        local.set $3
-        local.get $2
-        i32.const 24
-        i32.add
-        i32.const 1048869
-        i32.const 2
-        call $core::fmt::Formatter::pad::hfe31e8860a6945ec
-        br_if $block
-      end ;; $block_0
-      block $block_2
-        local.get $1
-        i32.load8_u
-        i32.const 4
-        i32.and
-        i32.eqz
-        br_if $block_2
-        i32.const 1
-        local.set $3
-        local.get $1
-        i32.const 24
-        i32.add
-        i32.load
-        i32.const 1052916
-        i32.const 1
-        local.get $1
-        i32.const 28
-        i32.add
-        i32.load
-        i32.load offset=12
-        call_indirect $10 (type $1)
-        br_if $block
-      end ;; $block_2
-      local.get $1
-      i32.const 24
-      i32.add
-      i32.load
-      i32.const 1052918
-      i32.const 1
-      local.get $1
-      i32.const 28
-      i32.add
-      i32.load
-      i32.load offset=12
-      call_indirect $10 (type $1)
-      local.set $1
-      local.get $2
-      i32.const 80
-      i32.add
-      global.set $12
-      local.get $1
-      return
-    end ;; $block
-    local.get $2
-    i32.const 80
-    i32.add
-    global.set $12
-    local.get $3
-    )
-  
-  (func $core::panicking::panic_fmt::h74ee8034b317ceed (type $0)
-    (param $0 i32)
-    (param $1 i32)
-    (local $2 i32)
-    (local $3 i64)
-    global.get $12
-    i32.const 32
-    i32.sub
-    local.tee $2
-    global.set $12
-    local.get $1
-    i64.load align=4
-    local.set $3
-    local.get $2
-    i32.const 20
-    i32.add
-    local.get $1
-    i64.load offset=8 align=4
-    i64.store align=4
-    local.get $2
-    local.get $3
-    i64.store offset=12 align=4
-    local.get $2
-    local.get $0
-    i32.store offset=8
-    local.get $2
-    i32.const 1053176
-    i32.store offset=4
-    local.get $2
-    i32.const 1049000
-    i32.store
-    local.get $2
-    call $rust_begin_unwind
-    unreachable
-    )
-  
-  (func $<core::fmt::Error_as_core::fmt::Debug>::fmt::hb56878928eceb98a (type $2)
-    (param $0 i32)
-    (param $1 i32)
-    (result i32)
-    local.get $1
-    i32.load offset=24
-    i32.const 1052919
-    i32.const 5
-    local.get $1
-    i32.const 28
-    i32.add
-    i32.load
-    i32.load offset=12
-    call_indirect $10 (type $1)
-    )
-  
-  (func $<log::NopLogger_as_log::Log>::enabled::h2391219e08939a75 (type $2)
+  (func $<log::NopLogger_as_log::Log>::enabled::h1a8020a0a9c8ab7b (type $2)
     (param $0 i32)
     (param $1 i32)
     (result i32)
     i32.const 0
     )
   
-  (func $<log::NopLogger_as_log::Log>::log::hcdd43806b88941ce (type $0)
+  (func $<log::NopLogger_as_log::Log>::log::h3310d0bba2c563ff (type $0)
     (param $0 i32)
     (param $1 i32)
     )
   
-  (func $<log::NopLogger_as_log::Log>::flush::h1c1a0fd807f0a5b4 (type $5)
+  (func $<log::NopLogger_as_log::Log>::flush::hd7e64e1b27d09f04 (type $5)
     (param $0 i32)
     )
   

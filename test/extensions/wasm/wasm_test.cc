@@ -14,6 +14,7 @@
 #include "gtest/gtest.h"
 
 using testing::Eq;
+using testing::StrEq;
 
 namespace Envoy {
 namespace Extensions {
@@ -36,8 +37,9 @@ TEST_P(WasmTestCppRust, Logging) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherImpl dispatcher(*api);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
-                                                               cluster_manager, dispatcher);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code =
       TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
@@ -64,8 +66,9 @@ TEST(WasmTest, BadSignature) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherImpl dispatcher(*api);
-  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
-                                                               cluster_manager, dispatcher);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
@@ -81,14 +84,15 @@ TEST(WasmTest, Segv) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherImpl dispatcher(*api);
-  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
-                                                               cluster_manager, dispatcher);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("before badptr")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("before badptr")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->setGeneralContext(std::move(context));
   EXPECT_THROW_WITH_MESSAGE(wasm->start(), Extensions::Common::Wasm::WasmException,
@@ -100,14 +104,15 @@ TEST(WasmTest, DivByZero) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherImpl dispatcher(*api);
-  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
-                                                               cluster_manager, dispatcher);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("before div by zero")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("before div by zero")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->setGeneralContext(std::move(context));
   wasm->wasmVm()->start(wasm->generalContext());
@@ -120,8 +125,9 @@ TEST(WasmTest, EmscriptenVersion) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherImpl dispatcher(*api);
-  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
-                                                               cluster_manager, dispatcher);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
@@ -141,8 +147,9 @@ TEST(WasmTest, IntrinsicGlobals) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherImpl dispatcher(*api);
-  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
-                                                               cluster_manager, dispatcher);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
@@ -166,8 +173,9 @@ TEST(WasmTest, Asm2Wasm) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherImpl dispatcher(*api);
-  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
-                                                               cluster_manager, dispatcher);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
@@ -177,6 +185,98 @@ TEST(WasmTest, Asm2Wasm) {
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->setGeneralContext(std::move(context));
   wasm->start();
+}
+
+TEST(WasmTest, Stats) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherImpl dispatcher(*api);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
+  EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
+  auto context = std::make_unique<TestContext>(wasm.get());
+
+  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, StrEq("get counter = 1")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, StrEq("get counter = 2")));
+  // recordMetric on a Counter is the same as increment.
+  EXPECT_CALL(*context, scriptLog(spdlog::level::info, StrEq("get counter = 5")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::warn, StrEq("get gauge = 2")));
+  // Get is not supported on histograms.
+  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("get histogram = 0")));
+
+  EXPECT_TRUE(wasm->initialize(code, "<test>", false));
+  // NB: Must be done after initialize has created the context.
+  wasm->setGeneralContext(std::move(context));
+  wasm->start();
+}
+
+TEST(WasmTest, StatsHigherLevel) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherImpl dispatcher(*api);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
+  EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
+  auto context = std::make_unique<TestContext>(wasm.get());
+
+  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, StrEq("get counter = 1")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, StrEq("get counter = 2")));
+  // recordMetric on a Counter is the same as increment.
+  EXPECT_CALL(*context, scriptLog(spdlog::level::info, StrEq("get counter = 5")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::warn, StrEq("get gauge = 2")));
+  // Get is not supported on histograms.
+  EXPECT_CALL(*context,
+              scriptLog(spdlog::level::err,
+                        StrEq(std::string("resolved histogram name = "
+                                          "histogram_int_tag.7.histogram_string_tag.test_tag."
+                                          "histogram_bool_tag.true.test_histogram"))));
+
+  EXPECT_TRUE(wasm->initialize(code, "<test>", false));
+  // NB: Must be done after initialize has created the context.
+  wasm->setGeneralContext(std::move(context));
+  wasm->tickHandler();
+}
+
+TEST(WasmTest, StatsHighLevel) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherImpl dispatcher(*api);
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, scope);
+  EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::substitute("{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
+  auto context = std::make_unique<TestContext>(wasm.get());
+
+  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, StrEq("get counter = 1")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, StrEq("get counter = 2")));
+  // recordMetric on a Counter is the same as increment.
+  EXPECT_CALL(*context, scriptLog(spdlog::level::info, StrEq("get counter = 5")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::warn, StrEq("get gauge = 2")));
+  // Get is not supported on histograms.
+  // EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq(std::string("resolved histogram name
+  // = int_tag.7_string_tag.test_tag.bool_tag.true.test_histogram"))));
+  EXPECT_CALL(*context,
+              scriptLog(spdlog::level::err,
+                        StrEq(std::string(
+                            "h_id = int_tag.7.string_tag.test_tag.bool_tag.true.test_histogram"))));
+  EXPECT_TRUE(wasm->initialize(code, "<test>", false));
+  // NB: Must be done after initialize has created the context.
+  wasm->setGeneralContext(std::move(context));
+  wasm->generalContext()->onLog();
 }
 
 } // namespace Wasm

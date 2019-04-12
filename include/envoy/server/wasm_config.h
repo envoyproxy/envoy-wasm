@@ -37,6 +37,10 @@ public:
    * @return Api::Api& a reference to the api object.
    */
   virtual Api::Api& api() PURE;
+  /**
+   * @return Stats::ScopeSharedPtr shared by all VMs.
+   */
+  virtual Stats::ScopeSharedPtr scope() PURE;
 };
 
 /**

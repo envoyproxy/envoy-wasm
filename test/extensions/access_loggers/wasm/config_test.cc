@@ -31,11 +31,13 @@ public:
 
 class TestFactoryContext : public NiceMock<Server::Configuration::MockFactoryContext> {
 public:
-  TestFactoryContext(Api::Api& api) : api_(api) {}
+  TestFactoryContext(Api::Api& api, Stats::Scope& scope) : api_(api), scope_(scope) {}
   Api::Api& api() override { return api_; }
+  Stats::Scope& scope() override { return scope_; }
 
 private:
   Api::Api& api_;
+  Stats::Scope& scope_;
 };
 
 TEST(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
@@ -70,7 +72,7 @@ TEST(WasmAccessLogConfigTest, CreateWasmFromWASM) {
   AccessLog::FilterPtr filter;
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
-  TestFactoryContext context(*api);
+  TestFactoryContext context(*api, stats_store);
 
   AccessLog::InstanceSharedPtr instance =
       factory->createAccessLogInstance(config, std::move(filter), context);

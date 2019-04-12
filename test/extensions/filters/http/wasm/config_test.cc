@@ -25,6 +25,7 @@ class WasmFilterConfigTest : public TestBase {
 protected:
   WasmFilterConfigTest() : api_(Api::createApiForTest(stats_store_)) {
     ON_CALL(context_, api()).WillByDefault(ReturnRef(*api_));
+    ON_CALL(context_, scope()).WillByDefault(ReturnRef(stats_store_));
   }
 
   NiceMock<Server::Configuration::MockFactoryContext> context_;
