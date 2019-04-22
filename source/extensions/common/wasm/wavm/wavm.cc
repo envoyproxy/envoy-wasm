@@ -264,6 +264,7 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback_Zjl);
   _REGISTER_CALLBACK(WasmCallback_Zjm);
   _REGISTER_CALLBACK(WasmCallback_mjj);
+  _REGISTER_CALLBACK(WasmCallback_mj);
 #undef _REGISTER_CALLBACK
 
   std::unique_ptr<Global<double>> makeGlobal(absl::string_view moduleName, absl::string_view name,

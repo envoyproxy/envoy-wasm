@@ -52,6 +52,8 @@ extern "C" void proxy_log(LogLevel level, const char* logMessage, size_t message
 
 extern "C" void proxy_setTickPeriodMilliseconds(uint32_t millisecond);
 
+extern "C" uint64_t proxy_getCurrentTimeNanoseconds();
+
 //
 // Low Level API.
 //

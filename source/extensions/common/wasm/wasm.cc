@@ -516,6 +516,10 @@ void setTickPeriodMillisecondsHandler(void* raw_context, uint32_t tick_period_mi
   WASM_CONTEXT(raw_context)->setTickPeriod(std::chrono::milliseconds(tick_period_milliseconds));
 }
 
+uint64_t getCurrentTimeNanosecondsHandler(void* raw_context) {
+  return WASM_CONTEXT(raw_context)->getCurrentTimeNanoseconds();
+}
+
 void logHandler(void* raw_context, uint32_t level, uint32_t address, uint32_t size) {
   auto context = WASM_CONTEXT(raw_context);
   context->scriptLog(static_cast<spdlog::level::level_enum>(level),
@@ -615,6 +619,11 @@ const uint8_t* decodeVarint(const uint8_t* pos, const uint8_t* end, uint32_t* ou
 
 void Context::setTickPeriod(std::chrono::milliseconds tick_period) {
   wasm_->setTickPeriod(tick_period);
+}
+
+uint64_t Context::getCurrentTimeNanoseconds() {
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(
+    wasm_->time_source_.systemTime().time_since_epoch()).count();
 }
 
 // Shared Data
@@ -1157,7 +1166,8 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
            Stats::Scope& scope, Stats::ScopeSharedPtr owned_scope)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
-      owned_scope_(owned_scope), initial_configuration_(initial_configuration) {
+      owned_scope_(owned_scope), time_source_(dispatcher.timeSystem()),
+      initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
 }
@@ -1231,6 +1241,7 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(httpCall);
 
   _REGISTER_PROXY(setTickPeriodMilliseconds);
+  _REGISTER_PROXY(getCurrentTimeNanoseconds);
 
   _REGISTER_PROXY(defineMetric);
   _REGISTER_PROXY(incrementMetric);
@@ -1281,7 +1292,8 @@ void Wasm::getFunctions() {
 
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
-      dispatcher_(dispatcher), scope_(wasm.scope_), owned_scope_(wasm.owned_scope_) {
+      dispatcher_(dispatcher), scope_(wasm.scope_), owned_scope_(wasm.owned_scope_),
+      time_source_(dispatcher.timeSystem()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   general_context_ = createContext();
   getFunctions();
