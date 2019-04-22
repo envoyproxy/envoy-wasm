@@ -518,9 +518,8 @@ public:
   // Make a new intrinsic module (e.g. for Emscripten support).
   virtual void makeModule(absl::string_view name) PURE;
 
-  // Get the contents of the user section with the given name or "" if it does not exist and
-  // optionally a presence indicator.
-  virtual absl::string_view getUserSection(absl::string_view name, bool* present = nullptr) PURE;
+  // Get the contents of the user section with the given name or "" if it does not exist.
+  virtual absl::string_view getUserSection(absl::string_view name) PURE;
 
   // Get typed function exported by the WASM module.
   virtual void getFunction(absl::string_view functionName, WasmCall0Void* f) PURE;

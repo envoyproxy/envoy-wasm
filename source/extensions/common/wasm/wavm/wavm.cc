@@ -228,7 +228,7 @@ struct Wavm : public WasmVm {
   bool getMemoryOffset(void* host_pointer, uint32_t* vm_pointer) override;
   bool setMemory(uint32_t pointer, uint32_t size, void* data) override;
   void makeModule(absl::string_view name) override;
-  absl::string_view getUserSection(absl::string_view name, bool* present) override;
+  absl::string_view getUserSection(absl::string_view name) override;
 
   void getInstantiatedGlobals();
 
@@ -444,17 +444,11 @@ bool Wavm::setMemory(uint32_t pointer, uint32_t size, void* data) {
   }
 }
 
-absl::string_view Wavm::getUserSection(absl::string_view name, bool* present) {
+absl::string_view Wavm::getUserSection(absl::string_view name) {
   for (auto& section : irModule_.userSections) {
     if (section.name == name) {
-      if (present) {
-        *present = true;
-      }
       return {reinterpret_cast<char*>(section.data.data()), section.data.size()};
     }
-  }
-  if (present) {
-    *present = false;
   }
   return {};
 }
