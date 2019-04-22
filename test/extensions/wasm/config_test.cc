@@ -89,25 +89,9 @@ TEST(WasmFactoryTest, MissingImport) {
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
   config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
-  config.mutable_vm_config()->mutable_code()->set_inline_string(
-      "(module\n"
-      "  (type $0 (func (param i32 i32 i32)))\n"
-      "  (type $1 (func))\n"
-      "  (import \"env\" \"missing\" (func $missing (param i32 i32 i32)))\n"
-      "  (export \"memory\" (memory $2))\n"
-      "  (export \"main\" (func $main))\n"
-      "  (memory $2 17)\n"
-      "  (data $2 (i32.const 1048576) \"Hello, world!\")\n"
-      ""
-      " (func $main (type $1)\n"
-      "   i32.const 1\n"
-      "   i32.const 1048576\n"
-      "   i32.const 13\n"
-      "   call $missing\n"
-      "   )\n"
-      " )");
+  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/missing_cpp.wasm"));
   config.set_singleton(true);
-
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
@@ -117,9 +101,9 @@ TEST(WasmFactoryTest, MissingImport) {
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api,
                                                         scope);
   Server::WasmSharedPtr wasm;
-  EXPECT_THROW_WITH_MESSAGE(
-      wasm = factory->createWasm(config, context), Extensions::Common::Wasm::WasmException,
-      "Failed to load WASM module due to a missing import: env.missing func (i32, i32, i32)->()");
+  EXPECT_THROW_WITH_REGEX(wasm = factory->createWasm(config, context),
+                          Extensions::Common::Wasm::WasmException,
+                          "Failed to load WASM module due to a missing import: env._missing.*");
 }
 
 } // namespace Wasm
