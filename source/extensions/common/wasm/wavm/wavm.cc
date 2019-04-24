@@ -245,8 +245,8 @@ struct Wavm : public WasmVm {
 #undef _GET_FUNCTION
 
 #define _REGISTER_CALLBACK(_type)                                                                  \
-  void registerCallback(absl::string_view moduleName, absl::string_view functionName,              \
-                        _type f) override {                                                        \
+  void registerCallback(absl::string_view moduleName, absl::string_view functionName, _type f)     \
+      override {                                                                                   \
     registerCallbackWavm(this, moduleName, functionName, f);                                       \
   };
   _REGISTER_CALLBACK(WasmCallback0Void);

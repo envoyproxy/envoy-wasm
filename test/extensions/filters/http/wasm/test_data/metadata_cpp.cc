@@ -30,8 +30,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
 }
 
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
-  auto body = getRequestBodyBufferBytes(0, body_buffer_length);
-  logError(std::string("onRequestBody ") + body->toString());
+  logError(std::string("onRequestBody ") + nodeMetadataValue("wasm_node_get_key").string_value());
   auto s = requestMetadataStruct();
   auto t = requestMetadataStruct();
   logTrace(std::string("Struct ") + s.fields().at("wasm_request_get_key").string_value() + " " +

@@ -33,7 +33,8 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
     // Create a base WASM to verify that the code loads before setting/cloning the for the
     // individual threads.
     auto base_wasm = Common::Wasm::createWasm(id, config.vm_config(), context.clusterManager(),
-                                              context.dispatcher(), context.api(), context.scope());
+                                              context.dispatcher(), context.api(), context.scope(),
+                                              context.localInfo());
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     tls_slot->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {
       auto result = Common::Wasm::createThreadLocalWasm(*base_wasm, *configuration, dispatcher);

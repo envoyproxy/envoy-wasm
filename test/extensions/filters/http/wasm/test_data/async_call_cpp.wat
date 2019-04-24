@@ -2999,7 +2999,9 @@
     (param $0 i32)
     (param $1 i32)
     (result i32)
-    i32.const 0
+    local.get $1
+    i32.const 5
+    i32.eq
     )
   
   (func $__ZN7Context18onHttpCallResponseEjNSt3__210unique_ptrI8WasmDataNS0_14default_deleteIS2_EEEES5_S5_ (type $5)

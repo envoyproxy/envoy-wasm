@@ -10,6 +10,7 @@
 
 #include "test/mocks/http/mocks.h"
 #include "test/mocks/network/mocks.h"
+#include "test/mocks/server/mocks.h"
 #include "test/mocks/ssl/mocks.h"
 #include "test/mocks/stream_info/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
@@ -64,7 +65,8 @@ public:
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasm(proto_config.id(), proto_config.vm_config(),
-                                                 cluster_manager_, dispatcher_, *api, *scope_);
+                                                 cluster_manager_, dispatcher_, *api, *scope_,
+                                                 local_info_);
   }
 
   void setupFilter() {
@@ -87,6 +89,7 @@ public:
   NiceMock<Http::MockStreamDecoderFilterCallbacks> decoder_callbacks_;
   NiceMock<Http::MockStreamEncoderFilterCallbacks> encoder_callbacks_;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> request_stream_info_;
+  NiceMock<LocalInfo::MockLocalInfo> local_info_;
 };
 
 // Bad code in initial config.
@@ -208,12 +211,17 @@ TEST_F(WasmHttpFilterTest, Metadata) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/metadata_cpp.wasm")));
   setupFilter();
+  envoy::api::v2::core::Node node_data;
+  ProtobufWkt::Value node_val;
+  node_val.set_string_value("wasm_node_get_value");
+  (*node_data.mutable_metadata()->mutable_fields())["wasm_node_get_key"] = node_val;
+  EXPECT_CALL(local_info_, node()).WillOnce(ReturnRef(node_data));
   EXPECT_CALL(*filter_,
               scriptLog(spdlog::level::debug,
                         Eq(absl::string_view("onRequestHeaders 1 wasm_request_get_value"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
   EXPECT_CALL(*filter_,
-              scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+              scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody wasm_node_get_value"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onLog 1 /"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDone 1"))));
   EXPECT_CALL(

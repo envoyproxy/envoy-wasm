@@ -322,7 +322,7 @@ void InstanceImpl::initialize(const Options& options,
     if (factory) {
       auto scope = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
       Configuration::WasmFactoryContextImpl wasm_factory_context(clusterManager(), *dispatcher_,
-                                                                 thread_local_, api(), scope);
+                                                                 thread_local_, api(), scope, *local_info_);
       for (auto& config : bootstrap_.wasm_service()) {
         auto wasm = factory->createWasm(config, wasm_factory_context);
         if (wasm) {

@@ -11,15 +11,16 @@ class WasmFactoryContextImpl : public WasmFactoryContext {
 public:
   WasmFactoryContextImpl(Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
                          ThreadLocal::SlotAllocator& tls, Api::Api& api,
-                         Stats::ScopeSharedPtr scope)
+                         Stats::ScopeSharedPtr scope, const LocalInfo::LocalInfo& local_info)
       : cluster_manager_(cluster_manager), dispatcher_(dispatcher), tls_(tls), api_(api),
-        scope_(scope) {}
+        scope_(scope), local_info_(local_info) {}
 
   Upstream::ClusterManager& clusterManager() override { return cluster_manager_; }
   Event::Dispatcher& dispatcher() override { return dispatcher_; }
   ThreadLocal::SlotAllocator& threadLocal() override { return tls_; }
   Api::Api& api() override { return api_; }
   Stats::ScopeSharedPtr scope() override { return scope_; }
+  const LocalInfo::LocalInfo& localInfo() const override { return local_info_; }
 
 private:
   Upstream::ClusterManager& cluster_manager_;
@@ -27,6 +28,7 @@ private:
   ThreadLocal::SlotAllocator& tls_;
   Api::Api& api_;
   Stats::ScopeSharedPtr scope_;
+  const LocalInfo::LocalInfo& local_info_;
 };
 
 } // namespace Configuration

@@ -10,6 +10,7 @@
 #include "extensions/wasm/config.h"
 
 #include "test/mocks/event/mocks.h"
+#include "test/mocks/server/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
@@ -33,10 +34,11 @@ TEST(WasmFactoryTest, CreateWasmFromWASM) {
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api,
-                                                        scope);
+                                                        scope, local_info);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -54,10 +56,11 @@ TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api,
-                                                        scope);
+                                                        scope, local_info);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -75,10 +78,11 @@ TEST(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   Event::MockDispatcher dispatcher;
   testing::NiceMock<ThreadLocal::MockInstance> tls;
   Stats::IsolatedStoreImpl stats_store;
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api,
-                                                        scope);
+                                                        scope, local_info);
   auto wasm = factory->createWasm(config, context);
   EXPECT_EQ(wasm, nullptr);
 }
@@ -96,10 +100,11 @@ TEST(WasmFactoryTest, MissingImport) {
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api,
-                                                        scope);
+                                                        scope, local_info);
   Server::WasmSharedPtr wasm;
   EXPECT_THROW_WITH_REGEX(wasm = factory->createWasm(config, context),
                           Extensions::Common::Wasm::WasmException,

@@ -78,7 +78,8 @@ enum class MetadataType : int {
   RequestRoute = 2,
   ResponseRoute = 3,
   Log = 4,
-  MAX = 4
+  Node = 5,
+  MAX = 5
 };
 
 inline MetadataType StreamType2MetadataType(StreamType type) {
@@ -323,7 +324,8 @@ class Wasm : public Envoy::Server::Wasm,
 public:
   Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
        Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-       Stats::Scope& scope, Stats::ScopeSharedPtr owned_scope = nullptr);
+       Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+       Stats::ScopeSharedPtr owned_scope = nullptr);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
   ~Wasm() {}
 
@@ -339,6 +341,7 @@ public:
   Context* generalContext() const { return general_context_.get(); }
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
   Stats::Scope& scope() const { return scope_; }
+  const LocalInfo::LocalInfo& localInfo() { return local_info_; }
 
   std::shared_ptr<Context> createContext() { return std::make_shared<Context>(this); }
 
@@ -391,7 +394,8 @@ public:
 
 private:
   friend class Context;
-  // These are the same as the values of the Context::MetricType enum, here separately for convenience.
+  // These are the same as the values of the Context::MetricType enum, here separately for
+  // convenience.
   static const uint32_t kMetricTypeCounter = 0x0;
   static const uint32_t kMetricTypeGauge = 0x1;
   static const uint32_t kMetricTypeHistogram = 0x2;
@@ -400,7 +404,8 @@ private:
   static void StaticAsserts() {
     static_assert(static_cast<uint32_t>(Context::MetricType::Counter) == kMetricTypeCounter, "");
     static_assert(static_cast<uint32_t>(Context::MetricType::Gauge) == kMetricTypeGauge, "");
-    static_assert(static_cast<uint32_t>(Context::MetricType::Histogram) == kMetricTypeHistogram, "");
+    static_assert(static_cast<uint32_t>(Context::MetricType::Histogram) == kMetricTypeHistogram,
+                  "");
   }
 
   bool isCounterMetricId(uint32_t metric_id) {
@@ -422,7 +427,8 @@ private:
 
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
-  Stats::Scope& scope_;  // Either an inherited scope or owned_scope_ below.
+  Stats::Scope& scope_; // Either an inherited scope or owned_scope_ below.
+  const LocalInfo::LocalInfo& local_info_;
   std::string id_;
   std::string context_id_filter_state_data_name_;
   uint32_t next_context_id_ = 0;
@@ -578,6 +584,7 @@ std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  const envoy::config::wasm::v2::VmConfig& vm_config,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
+                                 const LocalInfo::LocalInfo& local_info,
                                  Stats::ScopeSharedPtr owned_scope = nullptr);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).

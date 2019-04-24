@@ -41,6 +41,10 @@ public:
    * @return Stats::ScopeSharedPtr shared by all VMs.
    */
   virtual Stats::ScopeSharedPtr scope() PURE;
+  /**
+   * @return information about the local environment the server is running in.
+   */
+  virtual const LocalInfo::LocalInfo& localInfo() const PURE;
 };
 
 /**

@@ -9,6 +9,7 @@
 #include "envoy/common/exception.h"
 #include "envoy/config/wasm/v2/wasm.pb.validate.h"
 #include "envoy/http/codes.h"
+#include "envoy/local_info/local_info.h"
 #include "envoy/server/wasm.h"
 #include "envoy/thread_local/thread_local.h"
 
@@ -202,7 +203,7 @@ void getProtocolHandler(void* raw_context, uint32_t type, uint32_t value_ptr_ptr
     return;
   auto context = WASM_CONTEXT(raw_context);
   context->wasm()->copyToPointerSize(context->getProtocol(static_cast<StreamType>(type)),
-                                    value_ptr_ptr, value_size_ptr);
+                                     value_ptr_ptr, value_size_ptr);
 }
 
 // Metadata
@@ -861,6 +862,8 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
     return getRouteMetadataStructProto(decoder_callbacks_);
   case MetadataType::ResponseRoute:
     return getRouteMetadataStructProto(encoder_callbacks_);
+  case MetadataType::Node:
+    return &wasm_->local_info_.node().metadata();
   default: {
     auto streamInfo = getConstStreamInfo(type);
     if (!streamInfo) {
@@ -1164,9 +1167,10 @@ uint64_t Context::getMetric(uint32_t metric_id) {
 
 Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-           Stats::Scope& scope, Stats::ScopeSharedPtr owned_scope)
+           Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+           Stats::ScopeSharedPtr owned_scope)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
-      owned_scope_(owned_scope), time_source_(dispatcher.timeSystem()),
+      local_info_(local_info), owned_scope_(owned_scope), time_source_(dispatcher.timeSystem()),
       initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
@@ -1292,8 +1296,8 @@ void Wasm::getFunctions() {
 
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
-      dispatcher_(dispatcher), scope_(wasm.scope_), owned_scope_(wasm.owned_scope_),
-      time_source_(dispatcher.timeSystem()) {
+      dispatcher_(dispatcher), scope_(wasm.scope_), local_info_(wasm.local_info_),
+      owned_scope_(wasm.owned_scope_), time_source_(dispatcher.timeSystem()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   general_context_ = createContext();
   getFunctions();
@@ -1519,9 +1523,10 @@ std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  const envoy::config::wasm::v2::VmConfig& vm_config,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
+                                 const LocalInfo::LocalInfo& local_info,
                                  Stats::ScopeSharedPtr scope_ptr) {
   auto wasm = std::make_shared<Wasm>(vm_config.vm(), id, vm_config.initial_configuration(),
-                                     cluster_manager, dispatcher, scope, scope_ptr);
+                                     cluster_manager, dispatcher, scope, local_info, scope_ptr);
   const auto& code = Config::DataSource::read(vm_config.code(), true, api);
   const auto& path = Config::DataSource::getPath(vm_config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
@@ -1543,7 +1548,7 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
   } else {
     wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->vm(), base_wasm.id(),
                                   base_wasm.initial_configuration(), base_wasm.clusterManager(),
-                                  dispatcher, base_wasm.scope());
+                                  dispatcher, base_wasm.scope(), base_wasm.localInfo());
     if (!wasm->initialize(base_wasm.code(), base_wasm.id(), base_wasm.allow_precompiled())) {
       throw WasmException("Failed to initialize WASM code");
     }
