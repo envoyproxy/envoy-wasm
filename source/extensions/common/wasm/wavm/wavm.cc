@@ -267,10 +267,14 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback_mj);
 #undef _REGISTER_CALLBACK
 
-  std::unique_ptr<Global<double>> makeGlobal(absl::string_view moduleName, absl::string_view name,
-                                             double initialValue) override {
-    return makeGlobalWavm(this, moduleName, name, initialValue);
+#define _REGISTER_GLOBAL(_type)                                                                    \
+  std::unique_ptr<Global<_type>> makeGlobal(absl::string_view moduleName, absl::string_view name,  \
+                                            _type initialValue) override {                         \
+    return makeGlobalWavm(this, moduleName, name, initialValue);                                   \
   };
+  _REGISTER_GLOBAL(uint32_t);
+  _REGISTER_GLOBAL(double);
+#undef _REGISTER_GLOBAL
 
   bool hasInstantiatedModule_ = false;
   IR::Module irModule_;
