@@ -392,26 +392,31 @@ void Wavm::makeModule(absl::string_view name) {
 }
 
 void Wavm::start(Context* context) {
-  auto f = getStartFunction(moduleInstance_);
-  if (f) {
-    CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
-  }
+  try {
+    auto f = getStartFunction(moduleInstance_);
+    if (f) {
+      CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
+    }
 
-  if (emscriptenInstance_) {
-    Emscripten::initializeGlobals(context_, irModule_, moduleInstance_);
-  }
+    if (emscriptenInstance_) {
+      Emscripten::initializeGlobals(context_, irModule_, moduleInstance_);
+    }
 
-  f = asFunctionNullable(getInstanceExport(moduleInstance_, "__post_instantiate"));
-  if (f) {
-    CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
-  }
+    f = asFunctionNullable(getInstanceExport(moduleInstance_, "__post_instantiate"));
+    if (f) {
+      CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
+    }
 
-  f = asFunctionNullable(getInstanceExport(moduleInstance_, "main"));
-  if (!f) {
-    f = asFunctionNullable(getInstanceExport(moduleInstance_, "_main"));
-  }
-  if (f) {
-    CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
+    f = asFunctionNullable(getInstanceExport(moduleInstance_, "main"));
+    if (!f) {
+      f = asFunctionNullable(getInstanceExport(moduleInstance_, "_main"));
+    }
+    if (f) {
+      CALL_WITH_CONTEXT(invokeFunctionChecked(context_, f, {}), context);
+    }
+  } catch (const std::exception& e) {
+    std::cerr << "Caught exception \"" << e.what() << "\" in WASM\n";
+    throw;
   }
 }
 
@@ -580,8 +585,13 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName,
   }
   *function = [wavm, f](Context* context, Args... args) -> R {
     UntaggedValue values[] = {args...};
-    CALL_WITH_CONTEXT_RETURN(invokeFunctionUnchecked(wavm->context_, f, &values[0]), context,
-                             uint32_t, i32);
+    try {
+      CALL_WITH_CONTEXT_RETURN(invokeFunctionUnchecked(wavm->context_, f, &values[0]), context,
+                               uint32_t, i32);
+    } catch (const std::exception& e) {
+      std::cerr << "Caught exception \"" << e.what() << "\" in WASM\n";
+      throw;
+    }
   };
 }
 
@@ -603,7 +613,12 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName,
   }
   *function = [wavm, f](Context* context, Args... args) -> R {
     UntaggedValue values[] = {args...};
-    CALL_WITH_CONTEXT(invokeFunctionUnchecked(wavm->context_, f, &values[0]), context);
+    try {
+      CALL_WITH_CONTEXT(invokeFunctionUnchecked(wavm->context_, f, &values[0]), context);
+    } catch (const std::exception& e) {
+      std::cerr << "Caught exception \"" << e.what() << "\" in WASM\n";
+      throw;
+    }
   };
 }
 
