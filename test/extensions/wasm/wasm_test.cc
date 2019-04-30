@@ -118,11 +118,12 @@ TEST(WasmTest, DivByZero) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("before div by zero")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("divide by zero: 0")));
+  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("after div by zero")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->setGeneralContext(std::move(context));
   wasm->wasmVm()->start(wasm->generalContext());
-  EXPECT_THROW_WITH_REGEX(wasm->generalContext()->onLog(), Extensions::Common::Wasm::WasmException,
-                          "wavm.integerDivideByZeroOrOverflow.*");
+  wasm->generalContext()->onLog();
 }
 
 TEST(WasmTest, EmscriptenVersion) {
