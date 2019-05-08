@@ -239,6 +239,9 @@ struct Wavm : public WasmVm {
   _GET_FUNCTION(WasmCall0Void);
   _GET_FUNCTION(WasmCall1Void);
   _GET_FUNCTION(WasmCall2Void);
+  _GET_FUNCTION(WasmCall3Void);
+  _GET_FUNCTION(WasmCall4Void);
+  _GET_FUNCTION(WasmCall5Void);
   _GET_FUNCTION(WasmCall8Void);
   _GET_FUNCTION(WasmCall1Int);
   _GET_FUNCTION(WasmCall3Int);
@@ -259,7 +262,11 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback1Int);
   _REGISTER_CALLBACK(WasmCallback2Int);
   _REGISTER_CALLBACK(WasmCallback3Int);
+  _REGISTER_CALLBACK(WasmCallback4Int);
   _REGISTER_CALLBACK(WasmCallback5Int);
+  _REGISTER_CALLBACK(WasmCallback6Int);
+  _REGISTER_CALLBACK(WasmCallback7Int);
+  _REGISTER_CALLBACK(WasmCallback8Int);
   _REGISTER_CALLBACK(WasmCallback9Int);
   _REGISTER_CALLBACK(WasmCallback_Zjl);
   _REGISTER_CALLBACK(WasmCallback_Zjm);

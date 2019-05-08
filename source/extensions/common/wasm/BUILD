@@ -24,6 +24,7 @@ envoy_cc_library(
         "//include/envoy/http:codes_interface",
         "//include/envoy/http:filter_interface",
         "//include/envoy/upstream:cluster_manager_interface",
+        "//source/common/common:stack_array",
         "//source/extensions/filters/http:well_known_names",
         "@envoy_api//envoy/config/filter/http/wasm/v2:wasm_cc",
     ],
@@ -40,6 +41,7 @@ envoy_cc_library(
         "//source/common/config:datasource_lib",
         "//source/common/http:message_lib",
         "//source/common/http:utility_lib",
+        "//source/common/tracing:http_tracer_lib",
         "//source/extensions/common/wasm/wavm:wavm_lib",
     ],
 )

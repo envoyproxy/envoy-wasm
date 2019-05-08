@@ -25,7 +25,12 @@ public:
   MockAsyncStream();
   ~MockAsyncStream();
 
+  void sendRawMessage(Buffer::InstancePtr request, bool end_stream) {
+    sendRawMessage_(*request, end_stream);
+  }
+
   MOCK_METHOD2_T(sendMessage, void(const Protobuf::Message& request, bool end_stream));
+  MOCK_METHOD2_T(sendRawMessage_, void(Buffer::Instance& request, bool end_stream));
   MOCK_METHOD0_T(closeStream, void());
   MOCK_METHOD0_T(resetStream, void());
 };
@@ -36,9 +41,13 @@ public:
   void onSuccess(std::unique_ptr<ResponseType>&& response, Tracing::Span& span) {
     onSuccess_(*response, span);
   }
+  void onSuccessRaw(Buffer::InstancePtr response, Tracing::Span& span) {
+    onSuccessRaw_(*response, span);
+  }
 
   MOCK_METHOD1_T(onCreateInitialMetadata, void(Http::HeaderMap& metadata));
   MOCK_METHOD2_T(onSuccess_, void(const ResponseType& response, Tracing::Span& span));
+  MOCK_METHOD2_T(onSuccessRaw_, void(Buffer::Instance& response, Tracing::Span& span));
   MOCK_METHOD3_T(onFailure,
                  void(Status::GrpcStatus status, const std::string& message, Tracing::Span& span));
 };
@@ -65,12 +74,27 @@ public:
 
 class MockAsyncClient : public AsyncClient {
 public:
+  AsyncRequest* sendRaw(absl::string_view service_full_name, absl::string_view method_name,
+                        Buffer::InstancePtr request, RawAsyncRequestCallbacks& callbacks,
+                        Tracing::Span& parent_span,
+                        const absl::optional<std::chrono::milliseconds>& timeout) {
+    return sendRaw_(service_full_name, method_name, *request, callbacks, parent_span, timeout);
+  }
+
   MOCK_METHOD5_T(send, AsyncRequest*(const Protobuf::MethodDescriptor& service_method,
                                      const Protobuf::Message& request,
                                      AsyncRequestCallbacks& callbacks, Tracing::Span& parent_span,
                                      const absl::optional<std::chrono::milliseconds>& timeout));
+  MOCK_METHOD6_T(sendRaw_,
+                 AsyncRequest*(absl::string_view service_full_name, absl::string_view method_name,
+                               Buffer::Instance& request, RawAsyncRequestCallbacks& callbacks,
+                               Tracing::Span& parent_span,
+                               const absl::optional<std::chrono::milliseconds>& timeout));
   MOCK_METHOD2_T(start, AsyncStream*(const Protobuf::MethodDescriptor& service_method,
                                      AsyncStreamCallbacks& callbacks));
+  MOCK_METHOD3_T(startRaw,
+                 AsyncStream*(absl::string_view service_full_name, absl::string_view method_name,
+                              RawAsyncStreamCallbacks& callbacks));
 };
 
 class MockAsyncClientFactory : public AsyncClientFactory {

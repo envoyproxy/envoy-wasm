@@ -24560,7 +24560,7 @@
     if $if
       local.get $0
       i32.load
-      call $__ZNSt3__215__refstring_imp12_GLOBAL__N_113rep_from_dataEPKc_745
+      call $__ZNSt3__215__refstring_imp12_GLOBAL__N_113rep_from_dataEPKc_780
       local.tee $1
       i32.const 8
       i32.add
@@ -24584,7 +24584,7 @@
     end ;; $if
     )
   
-  (func $__ZNSt3__215__refstring_imp12_GLOBAL__N_113rep_from_dataEPKc_745 (type $5)
+  (func $__ZNSt3__215__refstring_imp12_GLOBAL__N_113rep_from_dataEPKc_780 (type $5)
     (param $0 i32)
     (result i32)
     local.get $0

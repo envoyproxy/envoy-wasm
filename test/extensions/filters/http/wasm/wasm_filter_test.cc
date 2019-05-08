@@ -8,6 +8,7 @@
 #include "extensions/common/wasm/wasm.h"
 #include "extensions/filters/http/wasm/wasm_filter.h"
 
+#include "test/mocks/grpc/mocks.h"
 #include "test/mocks/http/mocks.h"
 #include "test/mocks/network/mocks.h"
 #include "test/mocks/server/mocks.h"
@@ -182,28 +183,72 @@ TEST_F(WasmHttpFilterTest, AsyncCall) {
             return &request;
           }));
 
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, StrEq("response")));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, StrEq(":status -> 200")));
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter_->decodeHeaders(request_headers, false));
-
-  Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data, false));
-
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::trace, StrEq("1")));
-
-  Http::TestHeaderMapImpl request_trailers{{}};
-  EXPECT_EQ(Http::FilterTrailersStatus::StopIteration, filter_->decodeTrailers(request_trailers));
 
   Http::MessagePtr response_message(new Http::ResponseMessageImpl(
       Http::HeaderMapPtr{new Http::TestHeaderMapImpl{{":status", "200"}}}));
   response_message->body().reset(new Buffer::OwnedImpl("response"));
 
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, StrEq("response")));
-
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, StrEq(":status -> 200")));
-
   EXPECT_NE(callbacks, nullptr);
   if (callbacks) {
     callbacks->onSuccess(std::move(response_message));
+  }
+}
+
+TEST_F(WasmHttpFilterTest, GrpcCall) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/grpc_call_cpp.wasm")));
+  setupFilter();
+  wasm_->start();
+
+  Grpc::MockAsyncRequest request;
+  Grpc::RawAsyncRequestCallbacks* callbacks = nullptr;
+  Grpc::MockAsyncClientManager client_manager;
+  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
+  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
+  Tracing::Span* parent_span{};
+  EXPECT_CALL(*async_client, sendRaw_(_, _, _, _, _, _))
+      .WillOnce(Invoke(
+          [&](absl::string_view service_full_name, absl::string_view method_name,
+              Buffer::Instance& message, Grpc::RawAsyncRequestCallbacks& cb, Tracing::Span& span,
+              const absl::optional<std::chrono::milliseconds>& timeout) -> Grpc::AsyncRequest* {
+            EXPECT_EQ(service_full_name, "service");
+            EXPECT_EQ(method_name, "method");
+            ProtobufWkt::Value value;
+            EXPECT_TRUE(
+                value.ParseFromArray(message.linearize(message.length()), message.length()));
+            EXPECT_EQ(value.string_value(), "request");
+            callbacks = &cb;
+            parent_span = &span;
+            EXPECT_EQ(timeout->count(), 1000);
+            return &request;
+          }));
+  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::AsyncClientPtr {
+    return std::move(async_client);
+  }));
+  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
+      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
+  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
+      .WillOnce(
+          Invoke([&](const envoy::api::v2::core::GrpcService&, Stats::Scope&,
+                     bool) -> Grpc::AsyncClientFactoryPtr { return std::move(client_factory); }));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, StrEq("response")));
+  Http::TestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter_->decodeHeaders(request_headers, false));
+
+  ProtobufWkt::Value value;
+  value.set_string_value("response");
+  std::string response_string;
+  EXPECT_TRUE(value.SerializeToString(&response_string));
+  auto response = std::make_unique<Buffer::OwnedImpl>(response_string);
+  EXPECT_NE(callbacks, nullptr);
+  NiceMock<Tracing::MockSpan> span;
+  if (callbacks) {
+    callbacks->onSuccessRaw(std::move(response), span);
   }
 }
 
@@ -220,8 +265,8 @@ TEST_F(WasmHttpFilterTest, Metadata) {
               scriptLog(spdlog::level::debug,
                         Eq(absl::string_view("onRequestHeaders 1 wasm_request_get_value"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
-  EXPECT_CALL(*filter_,
-              scriptLog(spdlog::level::err, Eq(absl::string_view("onRequestBody wasm_node_get_value"))));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::err,
+                                  Eq(absl::string_view("onRequestBody wasm_node_get_value"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onLog 1 /"))));
   EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDone 1"))));
   EXPECT_CALL(

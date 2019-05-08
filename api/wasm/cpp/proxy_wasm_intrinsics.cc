@@ -110,3 +110,40 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onDelete(uint32_t context_id) {
   c->onDelete();
   context_map.erase(context_id);
 }
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcCreateInitialMetadata(uint32_t context_id, uint32_t token) {
+  auto c = getContext(context_id);
+  if (!c)
+    return;
+  c->onGrpcCreateInitialMetadata(token);
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcReceiveInitialMetadata(uint32_t context_id, uint32_t token) {
+  auto c = getContext(context_id);
+  if (!c)
+    return;
+  c->onGrpcReceiveInitialMetadata(token);
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcReceiveTrailingMetadata(uint32_t context_id, uint32_t token) {
+  auto c = getContext(context_id);
+  if (!c)
+    return;
+  c->onGrpcReceiveTrailingMetadata(token);
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcReceive(uint32_t context_id, uint32_t token,
+    uint32_t response_ptr, uint32_t response_size) {
+  auto c = getContext(context_id);
+  if (!c)
+    return;
+  c->onGrpcReceive(token, std::make_unique<WasmData>(reinterpret_cast<char*>(response_ptr), response_size));
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcClose(uint32_t context_id, uint32_t token,
+    uint32_t status_code, uint32_t status_message_ptr, uint32_t status_message_size) {
+  auto c = getContext(context_id);
+  if (!c)
+    return;
+  c->onGrpcClose(token, static_cast<GrpcStatus>(status_code), std::make_unique<WasmData>(reinterpret_cast<char*>(status_message_ptr), status_message_size));
+}

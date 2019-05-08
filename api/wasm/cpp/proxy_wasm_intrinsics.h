@@ -43,11 +43,18 @@
    // onLog occurs after onDone.
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t context_id);
    // The Context in the proxy has been destroyed and no further calls will be coming.
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onDelete(uint32_t context_id);
+   extern "C" ENSCRIPTEN_KEEPALIVE void proxy_onDelete(uint32_t context_id);
+   extern "C" EMSCRIPTEN_KEEPALIVE proxy_onGrpcCreateInitialMetadata(uint32_t context_id, uint32_t token);
+   extern "C" EMSCRIPTEN_KEEPALIVE proxy_onGrpcReceiveInitialMetadata(uint32_t context_id, uint32_t token);
+   extern "C" EMSCRIPTEN_KEEPALIVE proxy_onGrpcTrailingMetadata(uint32_t context_id, uint32_t token);
+   extern "C" EMSCRIPTEN_KEEPALIVE proxy_onGrpcReceive(uint32_t context_id, uint32_t token,
+     uint32_t response_ptr, uint32_t response_size);
+   extern "C" EMSCRIPTEN_KEEPALIVE proxy_onGrpcClose(uint32_t context_id, uint32_t token,
+     uint32_t status_code, uint32_t status_message_ptr, uint32_t status_message_size);
 */
 // clang-format on
 
-enum class LogLevel : int { trace, debug, info, warn, error, critical };
+enum class LogLevel : uint32_t { trace, debug, info, warn, error, critical };
 extern "C" void proxy_log(LogLevel level, const char* logMessage, size_t messageSize);
 
 extern "C" void proxy_setTickPeriodMilliseconds(uint32_t millisecond);
@@ -57,22 +64,51 @@ extern "C" uint64_t proxy_getCurrentTimeNanoseconds();
 //
 // Low Level API.
 //
-enum class FilterHeadersStatus : int { Continue = 0, StopIteration = 1 };
-enum class FilterTrailersStatus : int { Continue = 0, StopIteration = 1 };
-enum class FilterDataStatus : int {
+enum class FilterHeadersStatus : uint32_t { Continue = 0, StopIteration = 1 };
+enum class FilterTrailersStatus : uint32_t { Continue = 0, StopIteration = 1 };
+enum class FilterDataStatus : uint32_t {
   Continue = 0,
   StopIterationAndBuffer = 1,
   StopIterationAndWatermark = 2,
   StopIterationNoBuffer = 3
 };
-enum class StreamType : int { Request = 0, Response = 1 };
-enum class MetadataType : int {
+enum class StreamType : uint32_t { Request = 0, Response = 1 };
+enum class MetadataType : uint32_t {
   Request = 0,
   Response = 1,
   RequestRoute = 2,   // Immutable
   ResponseRoute = 3,  // Immutable
   Log = 4,            // Immutable
   Node = 5            // Immutable
+};
+enum class HeaderMapType : uint32_t {
+  RequestHeaders = 0,  // During the onLog callback these are immutable
+  RequestTrailers = 1,  // During the onLog callback these are immutable
+  ResponseHeaders = 2,  // During the onLog callback these are immutable
+  ResponseTrailers = 3,  // During the onLog callback these are immutable
+  GrpcCreateInitialMetadata = 4,
+  GrpcReceiveInitialMetadata = 5,  // Immutable
+  GrpcReceiveTrailingMetadata = 6,  // Immutable
+};
+enum GrpcStatus : int32_t {
+  OK = 0,
+  CANCELLED = 1,
+  UNKNOWN = 2,
+  INVALID_ARGUMENT = 3,
+  DEADLINE_EXCEEDED = 4,
+  NOT_FOUND = 5,
+  ALREADY_EXISTS = 6,
+  PERMISSION_DENIED = 7,
+  UNAUTHENTICATED = 16,
+  RESOURCE_EXHAUSTED = 8,
+  FAILED_PRECONDITION = 9,
+  ABORTED = 10,
+  OUT_OF_RANGE = 11,
+  UNIMPLEMENTED = 12,
+  INTERNAL = 13,
+  UNAVAILABLE = 14,
+  DATA_LOSS = 15,
+  DO_NOT_USE = -1
 };
 
 // Stream Info
@@ -103,42 +139,13 @@ extern "C" void proxy_getSharedData(const char* key_ptr, size_t key_size, const 
 extern "C" bool proxy_setSharedData(const char* key_ptr, size_t key_size, const char* value_ptr,
                                     size_t value_size, uint32_t cas);
 
-// Headers/Trailers
-extern "C" void proxy_addRequestHeader(const char* key_ptr, size_t key_size, const char* value_ptr,
-                                       size_t value_size);
-extern "C" void proxy_getRequestHeader(const char* key_ptr, size_t key_size, const char** value_ptr,
-                                       size_t* value_size);
-extern "C" void proxy_getRequestHeaderPairs(const char** ptr, size_t* size);
-extern "C" void proxy_replaceRequestHeader(const char* key_ptr, size_t key_size,
-                                           const char* value_ptr, size_t value_size);
-extern "C" void proxy_removeRequestHeader(const char* key_ptr, size_t key_size);
-
-extern "C" void proxy_addRequestTrailer(const char* key_ptr, size_t key_size, const char* value_ptr,
-                                        size_t value_size);
-extern "C" void proxy_getRequestTrailer(const char* key_ptr, size_t key_size,
-                                        const char** value_ptr, size_t* value_size);
-extern "C" void proxy_getRequestTrailerPairs(const char** ptr, size_t* size);
-extern "C" void proxy_replaceRequestTrailer(const char* key_ptr, size_t key_size,
-                                            const char* value_ptr, size_t value_size);
-extern "C" void proxy_removeRequestTrailer(const char* key_ptr, size_t key_size);
-
-extern "C" void proxy_addResponseHeader(const char* key_ptr, size_t key_size, const char* value_ptr,
-                                        size_t value_size);
-extern "C" void proxy_getResponseHeader(const char* key_ptr, size_t key_size,
-                                        const char** value_ptr, size_t* value_size);
-extern "C" void proxy_getResponseHeaderPairs(const char** ptr, size_t* size);
-extern "C" void proxy_replaceResponseHeader(const char* key_ptr, size_t key_size,
-                                            const char* value_ptr, size_t value_size);
-extern "C" void proxy_removeResponseHeader(const char* key_ptr, size_t key_size);
-
-extern "C" void proxy_addResponseTrailer(const char* key_ptr, size_t key_size,
-                                         const char* value_ptr, size_t value_size);
-extern "C" void proxy_getResponseTrailer(const char* key_ptr, size_t key_size,
-                                         const char** value_ptr, size_t* value_size);
-extern "C" void proxy_getResponseTrailerPairs(const char** ptr, size_t* size);
-extern "C" void proxy_replaceResponseTrailer(const char* key_ptr, size_t key_size,
-                                             const char* value_ptr, size_t value_size);
-extern "C" void proxy_removeResponseTrailer(const char* key_ptr, size_t key_size);
+// Headers/Trailers/Metadata HeaderMaps
+extern "C" void proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
+extern "C" void proxy_getHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char** value_ptr, size_t* value_size);
+extern "C" void proxy_getHeaderMapPairs(HeaderMapType type, const char** ptr, size_t* size);
+extern "C" void proxy_setHeaderMapPairs(HeaderMapType type, const char* ptr, size_t size);
+extern "C" void proxy_replaceHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
+extern "C" void proxy_removeHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size);
 
 // Body
 extern "C" void proxy_getRequestBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr,
@@ -152,6 +159,16 @@ extern "C" uint32_t proxy_httpCall(const char* uri_ptr, size_t uri_size, void* h
                                    size_t header_pairs_size, const char* body_ptr, size_t body_size,
                                    void* trailer_pairs_ptr, size_t trailer_pairs_size,
                                    uint32_t timeout_milliseconds);
+// gRPC
+// Returns token, used in gRPC callbacks (onGrpc...)
+extern "C" uint32_t proxy_grpcCall(const char* service_ptr, size_t service_size, const char* service_name_ptr,
+                                   size_t service_name_size, const char* method_name_ptr, size_t method_name_size,
+                                   const char* request_ptr, size_t request_size, uint32_t timeout_milliseconds);
+extern "C" uint32_t proxy_grpcStream(const char* service_ptr, size_t service_size, const char* service_name_ptr,
+                                     size_t service_name_size, const char* method_name_ptr, size_t method_name_size);
+extern "C" void proxy_grpcCancel(uint32_t token);
+extern "C" void proxy_grpcClose(uint32_t token);
+extern "C" void proxy_grpcSend(uint32_t token, const char* message_ptr, size_t message_size, uint32_t end_stream);
 
 // Metrics
 
@@ -169,6 +186,7 @@ extern "C" uint64_t proxy_getMetric(uint32_t metric_id);
 //
 // High Level C++ API.
 //
+class Context;
 
 class ProxyException : std::runtime_error {
 public:
@@ -203,6 +221,11 @@ public:
   std::string_view view() { return {data_, size_}; }
   std::string toString() { return std::string(view()); }
   std::vector<std::pair<std::string_view, std::string_view>> pairs();
+  template<typename T> T proto() {
+    T p;
+    p.ParseFromArray(data_, size_);
+    return p;
+  }
 
   WasmData& operator=(const WasmData&) = delete;
   WasmData(const WasmData&) = delete;
@@ -235,6 +258,48 @@ inline std::vector<std::pair<std::string_view, std::string_view>> WasmData::pair
   return result;
 }
 
+template <typename Pairs> size_t pairsSize(const Pairs& result) {
+  size_t size = 4; // number of headers
+  for (auto& p : result) {
+    size += 8;                   // size of key, size of value
+    size += p.first.size() + 1;  // null terminated key
+    size += p.second.size() + 1; // null terminated value
+  }
+  return size;
+}
+
+template <typename Pairs> void marshalPairs(const Pairs& result, char* buffer) {
+  char* b = buffer;
+  *reinterpret_cast<uint32_t*>(b) = result.size();
+  b += sizeof(uint32_t);
+  for (auto& p : result) {
+    *reinterpret_cast<uint32_t*>(b) = p.first.size();
+    b += sizeof(uint32_t);
+    *reinterpret_cast<uint32_t*>(b) = p.second.size();
+    b += sizeof(uint32_t);
+  }
+  for (auto& p : result) {
+    memcpy(b, p.first.data(), p.first.size());
+    b += p.first.size();
+    *b++ = 0;
+    memcpy(b, p.second.data(), p.second.size());
+    b += p.second.size();
+    *b++ = 0;
+  }
+}
+
+template <typename Pairs> void exportPairs(const Pairs& pairs, const char** ptr, size_t* size_ptr) {
+  if (pairs.empty()) {
+    *ptr = nullptr;
+    *size_ptr = 0;
+    return;
+  }
+  size_t size = pairsSize(pairs);
+  char* buffer = static_cast<char*>(::malloc(size));
+  marshalPairs(pairs, buffer);
+  *size_ptr = size;
+}
+
 struct PairHash {
   template <typename T, typename U> std::size_t operator()(const std::pair<T, U>& x) const {
     return std::hash<T>()(x.first) + std::hash<U>()(x.second);
@@ -244,6 +309,90 @@ struct PairHash {
 struct Tuple3Hash {
   template <typename T, typename U, typename V> std::size_t operator()(const std::tuple<T, U, V>& x) const {
     return std::hash<T>()(std::get<0>(x)) + std::hash<U>()(std::get<1>(x)) + std::hash<V>()(std::get<2>(x));
+  }
+};
+
+using HeaderStringPairs = std::vector<std::pair<std::string, std::string>>;
+
+class GrpcCallHandlerBase {
+public:
+  GrpcCallHandlerBase(Context* context) : context_(context) {}
+  virtual ~GrpcCallHandlerBase() {}
+
+  void cancel();
+
+  virtual void onCreateInitialMetadata() = 0;
+  virtual void onSuccess(std::unique_ptr<WasmData> message) = 0;
+  virtual void onFailure(GrpcStatus status, std::unique_ptr<WasmData> error_message) = 0;
+
+private:
+  friend class Context;
+
+  Context* const context_;
+  uint32_t token_;
+};
+
+template<typename Message>
+class GrpcCallHandler : public GrpcCallHandlerBase {
+public:
+  GrpcCallHandler(Context* context) : GrpcCallHandlerBase(context) {}
+  virtual ~GrpcCallHandler() {}
+
+  virtual void onSuccess(Message&& response) = 0;
+
+private:
+  void onSuccess(std::unique_ptr<WasmData> message) override {
+    onSuccess(message->proto<Message>());
+  }
+};
+
+class GrpcStreamHandlerBase {
+public:
+  GrpcStreamHandlerBase(Context* context) : context_(context) {}
+  virtual ~GrpcStreamHandlerBase() {}
+
+  // NB: with end_of_stream == true, callbacks can still occur: reset() to prevent further callbacks.
+  void send(std::string_view message, bool end_of_stream);
+  void close(); // NB: callbacks can still occur: reset() to prevent further callbacks.
+  void reset();
+
+  virtual void onCreateInitialMetadata() = 0;
+  virtual void onReceiveInitialMetadata() = 0;
+  virtual void onReceiveTrailingMetadata() = 0;
+  virtual void onReceive(std::unique_ptr<WasmData> message) = 0;
+  virtual void onRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message) = 0;
+
+protected:
+  friend class Context;
+
+  void doRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message);
+
+  bool local_close_ = false;
+  bool remote_close_ = false;
+  Context* const context_;
+  uint32_t token_;
+};
+
+template<typename Request, typename Response>
+class GrpcStreamHandler : public GrpcStreamHandlerBase {
+public:
+  GrpcStreamHandler(Context* context) : GrpcStreamHandlerBase(context) {}
+  virtual ~GrpcStreamHandler() {}
+
+  void send(const Request& message, bool end_of_stream) {
+    std::string output;
+    if (!message.SerializeToString(&output)) {
+      return;
+    }
+    GrpcStreamHandlerBase::send(output, end_of_stream);
+    local_close_ = local_close_ || end_of_stream;
+  }
+
+  virtual void onReceive(Response&& message) = 0;
+
+private:
+  void onReceive(std::unique_ptr<WasmData> message) override {
+    onReceive(message->proto<Response>());
   }
 };
 
@@ -279,9 +428,44 @@ public:
   virtual void onDelete() {}
   virtual void onTick() {}
 
+  // Low level HTTP/gRPC interface.
   virtual void onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
                                   std::unique_ptr<WasmData> body,
-                                  std::unique_ptr<WasmData> trailer_pairs) {}
+                                  std::unique_ptr<WasmData> trailer_pairs);
+  virtual void onGrpcCreateInitialMetadata(uint32_t token);
+  virtual void onGrpcReceiveInitialMetadata(uint32_t token);
+  virtual void onGrpcReceiveTrailingMetadata(uint32_t token);
+  virtual void onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message);
+  virtual void onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message);
+
+  // Default high level HTTP/gRPC interface.  NB: overriding the low level interface will disable this interface.
+  using HttpCallCallback = std::function<void(std::unique_ptr<WasmData> header_pairs,
+      std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs)>;
+  using GrpcSimpleCallCallback = std::function<void(GrpcStatus status, std::unique_ptr<WasmData> message)>;
+  void httpCall(std::string_view uri, const HeaderStringPairs& request_headers,
+      std::string_view request_body, const HeaderStringPairs& request_trailers,
+      uint32_t timeout_milliseconds, HttpCallCallback callback);
+  // NB: the message is the response if status == OK and an error message otherwise.
+  void grpcSimpleCall(std::string_view service, std::string_view service_name, std::string_view method_name,
+      const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds, GrpcSimpleCallCallback callback);
+  template<typename Response> void grpcSimpleCall(std::string_view service, std::string_view service_name,
+      std::string_view method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
+      std::function<void(Response&& response)> success_callback,
+      std::function<void(GrpcStatus status, std::string_view error_message)> failure_callback) {
+    auto callback = [success_callback, failure_callback](GrpcStatus status, std::unique_ptr<WasmData> message) {
+      if (status == GrpcStatus::OK) {
+        success_callback(message->proto<Response>());
+      } else {
+        failure_callback(status, message->view());
+      }
+    };
+    grpcSimpleCall(service, service_name, method_name, request, timeout_milliseconds, callback);
+  }
+  void grpcCallHandler(std::string_view service, std::string_view service_name,
+      std::string_view method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
+      std::unique_ptr<GrpcCallHandlerBase> handler);
+  void grpcStreamHandler(std::string_view service, std::string_view service_name,
+      std::string_view method_name, std::unique_ptr<GrpcStreamHandlerBase> handler);
 
   // Metadata
   bool isImmutable(MetadataType type);
@@ -311,10 +495,17 @@ public:
   google::protobuf::Struct getResponseMetadataStruct(std::string_view name);
 
 private:
+  friend class GrpcCallHandlerBase;
+  friend class GrpcStreamHandlerBase;
+
   uint32_t id_;
   std::unordered_map<std::pair<MetadataType, std::string>, google::protobuf::Value, PairHash> value_cache_;
   std::unordered_map<std::tuple<MetadataType, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
   std::unordered_map<std::pair<MetadataType, std::string>, google::protobuf::Struct, PairHash> struct_cache_;
+  std::unordered_map<uint32_t, HttpCallCallback> http_calls_;
+  std::unordered_map<uint32_t, GrpcSimpleCallCallback> simple_grpc_calls_;
+  std::unordered_map<uint32_t, std::unique_ptr<GrpcCallHandlerBase>> grpc_calls_;
+  std::unordered_map<uint32_t, std::unique_ptr<GrpcStreamHandlerBase>> grpc_streams_;
 };
 
 inline bool Context::isImmutable(MetadataType type) {
@@ -570,108 +761,113 @@ inline bool setSharedData(std::string_view key, std::string_view value, uint32_t
 }
 
 // Headers/Trailers
-inline void addRequestHeader(std::string_view key, std::string_view value) {
-  proxy_addRequestHeader(key.data(), key.size(), value.data(), value.size());
+inline void addHeaderMapValue(HeaderMapType type, std::string_view key, std::string_view value) {
+  proxy_addHeaderMapValue(type, key.data(), key.size(), value.data(), value.size());
 }
 
-inline WasmDataPtr getRequestHeader(std::string_view key) {
+inline WasmDataPtr getHeaderMapValue(HeaderMapType type, std::string_view key) {
   const char* value_ptr = nullptr;
   size_t value_size = 0;
-  proxy_getRequestHeader(key.data(), key.size(), &value_ptr, &value_size);
+  proxy_getHeaderMapValue(type, key.data(), key.size(), &value_ptr, &value_size);
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-inline void replaceRequestHeader(std::string_view key, std::string_view value) {
-  proxy_replaceRequestHeader(key.data(), key.size(), value.data(), value.size());
+inline void replaceHeaderMapValue(HeaderMapType type, std::string_view key, std::string_view value) {
+  proxy_replaceHeaderMapValue(type, key.data(), key.size(), value.data(), value.size());
 }
 
-inline void removeRequestHeader(std::string_view key) {
-  proxy_removeRequestHeader(key.data(), key.size());
+inline void removeHeaderMapValue(HeaderMapType type, std::string_view key) {
+  proxy_removeHeaderMapValue(type, key.data(), key.size());
 }
 
-inline WasmDataPtr getRequestHeaderPairs() {
+inline WasmDataPtr getHeaderMapPairs(HeaderMapType type) {
   const char* ptr = nullptr;
   size_t size = 0;
-  proxy_getRequestHeaderPairs(&ptr, &size);
+  proxy_getHeaderMapPairs(type, &ptr, &size);
   return std::make_unique<WasmData>(ptr, size);
+}
+
+inline void setHeaderMapPairs(HeaderMapType type, const HeaderStringPairs &pairs) {
+  const char* ptr = nullptr;
+  size_t size = 0;
+  exportPairs(pairs, &ptr, &size);
+  proxy_setHeaderMapPairs(type, ptr, size);
+}
+
+inline void addRequestHeader(std::string_view key, std::string_view value) {
+  addHeaderMapValue(HeaderMapType::RequestHeaders, key, value);
+}
+inline WasmDataPtr getRequestHeader(std::string_view key) {
+  return getHeaderMapValue(HeaderMapType::RequestHeaders, key);
+}
+inline void replaceRequestHeader(std::string_view key, std::string_view value) {
+  replaceHeaderMapValue(HeaderMapType::RequestHeaders, key, value);
+}
+inline void removeRequestHeader(std::string_view key) {
+  removeHeaderMapValue(HeaderMapType::RequestHeaders, key);
+}
+inline WasmDataPtr getRequestHeaderPairs() {
+  return getHeaderMapPairs(HeaderMapType::RequestHeaders);
+}
+inline void setRequestHeaderPairs(const HeaderStringPairs &pairs) {
+  return setHeaderMapPairs(HeaderMapType::RequestHeaders, pairs);
 }
 
 inline void addRequestTrailer(std::string_view key, std::string_view value) {
-  proxy_addRequestTrailer(key.data(), key.size(), value.data(), value.size());
+  addHeaderMapValue(HeaderMapType::RequestTrailers, key, value);
 }
-
 inline WasmDataPtr getRequestTrailer(std::string_view key) {
-  const char* value_ptr = nullptr;
-  size_t value_size = 0;
-  proxy_getRequestTrailer(key.data(), key.size(), &value_ptr, &value_size);
-  return std::make_unique<WasmData>(value_ptr, value_size);
+  return getHeaderMapValue(HeaderMapType::RequestTrailers, key);
 }
-
 inline void replaceRequestTrailer(std::string_view key, std::string_view value) {
-  proxy_replaceRequestTrailer(key.data(), key.size(), value.data(), value.size());
+  replaceHeaderMapValue(HeaderMapType::RequestTrailers, key, value);
 }
-
 inline void removeRequestTrailer(std::string_view key) {
-  proxy_removeRequestTrailer(key.data(), key.size());
+  removeHeaderMapValue(HeaderMapType::RequestTrailers, key);
 }
-
 inline WasmDataPtr getRequestTrailerPairs() {
-  const char* ptr = nullptr;
-  size_t size = 0;
-  proxy_getRequestHeaderPairs(&ptr, &size);
-  return std::make_unique<WasmData>(ptr, size);
+  return getHeaderMapPairs(HeaderMapType::RequestTrailers);
+}
+inline void setRequestTrailerPairs(const HeaderStringPairs &pairs) {
+  return setHeaderMapPairs(HeaderMapType::RequestTrailers, pairs);
 }
 
 inline void addResponseHeader(std::string_view key, std::string_view value) {
-  proxy_addResponseHeader(key.data(), key.size(), value.data(), value.size());
+  addHeaderMapValue(HeaderMapType::ResponseHeaders, key, value);
 }
-
 inline WasmDataPtr getResponseHeader(std::string_view key) {
-  const char* value_ptr = nullptr;
-  size_t value_size = 0;
-  proxy_getResponseHeader(key.data(), key.size(), &value_ptr, &value_size);
-  return std::make_unique<WasmData>(value_ptr, value_size);
+  return getHeaderMapValue(HeaderMapType::ResponseHeaders, key);
 }
-
 inline void replaceResponseHeader(std::string_view key, std::string_view value) {
-  proxy_replaceResponseHeader(key.data(), key.size(), value.data(), value.size());
+  replaceHeaderMapValue(HeaderMapType::ResponseHeaders, key, value);
 }
-
 inline void removeResponseHeader(std::string_view key) {
-  proxy_removeResponseHeader(key.data(), key.size());
+  removeHeaderMapValue(HeaderMapType::ResponseHeaders, key);
 }
-
 inline WasmDataPtr getResponseHeaderPairs() {
-  const char* ptr = nullptr;
-  size_t size = 0;
-  proxy_getResponseHeaderPairs(&ptr, &size);
-  return std::make_unique<WasmData>(ptr, size);
+  return getHeaderMapPairs(HeaderMapType::ResponseHeaders);
+}
+inline void setResponseHeaderPairs(const HeaderStringPairs &pairs) {
+  return setHeaderMapPairs(HeaderMapType::ResponseHeaders, pairs);
 }
 
 inline void addResponseTrailer(std::string_view key, std::string_view value) {
-  proxy_addResponseTrailer(key.data(), key.size(), value.data(), value.size());
+  addHeaderMapValue(HeaderMapType::ResponseTrailers, key, value);
 }
-
 inline WasmDataPtr getResponseTrailer(std::string_view key) {
-  const char* value_ptr = nullptr;
-  size_t value_size = 0;
-  proxy_getResponseTrailer(key.data(), key.size(), &value_ptr, &value_size);
-  return std::make_unique<WasmData>(value_ptr, value_size);
+  return getHeaderMapValue(HeaderMapType::ResponseTrailers, key);
 }
-
 inline void replaceResponseTrailer(std::string_view key, std::string_view value) {
-  proxy_replaceResponseTrailer(key.data(), key.size(), value.data(), value.size());
+  replaceHeaderMapValue(HeaderMapType::ResponseTrailers, key, value);
 }
-
 inline void removeResponseTrailer(std::string_view key) {
-  proxy_removeResponseTrailer(key.data(), key.size());
+  removeHeaderMapValue(HeaderMapType::ResponseTrailers, key);
 }
-
 inline WasmDataPtr getResponseTrailerPairs() {
-  const char* ptr = nullptr;
-  size_t size = 0;
-  proxy_getRequestHeaderPairs(&ptr, &size);
-  return std::make_unique<WasmData>(ptr, size);
+  return getHeaderMapPairs(HeaderMapType::ResponseTrailers);
+}
+inline void setResponseTrailerPairs(const HeaderStringPairs &pairs) {
+  return setHeaderMapPairs(HeaderMapType::ResponseTrailers, pairs);
 }
 
 // Body
@@ -690,8 +886,6 @@ inline WasmDataPtr getResponseBodyBufferBytes(size_t start, size_t length) {
 }
 
 // HTTP
-
-using HeaderStringPairs = std::vector<std::pair<std::string, std::string>>;
 
 inline void MakeHeaderStringPairsBuffer(const HeaderStringPairs& headers, void** buffer_ptr,
                                         size_t* size_ptr) {
@@ -845,24 +1039,24 @@ inline std::string MetricBase::nameFromIdSlow(uint32_t id) {
   return "";
 }
 
-template <typename... Fields> uint32_t Metric::resolve(Fields... f) {
+template <typename... Fields> inline uint32_t Metric::resolve(Fields... f) {
   std::vector<const std::string> fields{ToString(f)...};
   return resolveWithFields(fields);
 }
 
-template <typename... Fields> void Metric::increment(int64_t offset, Fields... f) {
+template <typename... Fields> inline void Metric::increment(int64_t offset, Fields... f) {
   std::vector<const std::string> fields{ToString(f)...};
   auto metric_id = resolveWithFields(fields);
   incrementMetric(metric_id, offset);
 }
 
-template <typename... Fields> void Metric::record(uint64_t value, Fields... f) {
+template <typename... Fields> inline void Metric::record(uint64_t value, Fields... f) {
   std::vector<const std::string> fields{ToString(f)...};
   auto metric_id = resolveWithFields(fields);
   recordMetric(metric_id, value);
 }
 
-template <typename... Fields> uint64_t Metric::get(Fields... f) {
+template <typename... Fields> inline uint64_t Metric::get(Fields... f) {
   std::vector<const std::string> fields{ToString(f)...};
   auto metric_id = resolveWithFields(fields);
   return getMetric(metric_id);
@@ -1016,4 +1210,216 @@ inline Histogram<Tags...>* Histogram<Tags...>::New(std::string_view name,
                                                    MetricTagDescriptor<Tags>... descriptors) {
   return new Histogram<Tags...>(std::string(name),
                                 std::vector<MetricTag>({ToMetricTag(descriptors)...}));
+}
+
+inline uint32_t grpcCall(std::string_view service, std::string_view service_name, std::string_view method_name,
+    const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds) {
+  std::string serialized_request;
+  request.SerializeToString(&serialized_request);
+  return proxy_grpcCall(service.data(), service.size(), service_name.data(), service_name.size(), method_name.data(), method_name.size(),
+      serialized_request.data(), serialized_request.size(), timeout_milliseconds);
+                         
+}
+
+inline uint32_t grpcStream(std::string_view service, std::string_view service_name, std::string_view method_name) {
+  return proxy_grpcStream(service.data(), service.size(), service_name.data(), service_name.size(), method_name.data(), method_name.size());
+}
+
+inline void grpcCancel(uint32_t token) {
+  return proxy_grpcCancel(token);
+}
+
+inline void grpcClose(uint32_t token) {
+  return proxy_grpcClose(token);
+}
+
+inline void grpcSend(uint32_t token, std::string_view message, bool end_stream) {
+  return proxy_grpcSend(token, message.data(), message.size(), end_stream ? 1 : 0);
+}
+
+inline void Context::httpCall(std::string_view uri, const HeaderStringPairs& request_headers,
+    std::string_view request_body, const HeaderStringPairs& request_trailers,
+    uint32_t timeout_milliseconds, HttpCallCallback callback) {
+  auto token = ::httpCall(uri, request_headers, request_body, request_trailers, timeout_milliseconds);
+  if (token) {
+    http_calls_[token] = std::move(callback);
+  } else {
+    throw ProxyException("httpCall failed");
+  }
+}
+
+inline void Context::onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
+    std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs) {
+  auto it = http_calls_.find(token);
+  if (it != http_calls_.end()) {
+    it->second(std::move(header_pairs), std::move(body), std::move(trailer_pairs));
+    http_calls_.erase(token);
+  }
+}
+
+inline void Context::grpcSimpleCall(std::string_view service, std::string_view service_name, std::string_view method_name,
+    const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds, Context::GrpcSimpleCallCallback callback) {
+  auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
+  if (token) {
+    simple_grpc_calls_[token] = std::move(callback);
+  } else {
+    throw ProxyException("grpcCall failed");
+  }
+}
+
+inline void GrpcCallHandlerBase::cancel() {
+  grpcCancel(token_);
+  context_->grpc_calls_.erase(token_);
+}
+
+inline void GrpcStreamHandlerBase::reset() {
+  grpcCancel(token_);
+  context_->grpc_streams_.erase(token_);
+}
+
+inline void GrpcStreamHandlerBase::close() {
+  grpcClose(token_);
+  local_close_ = true;
+  if (local_close_ && remote_close_) {
+    context_->grpc_streams_.erase(token_);
+  }
+  // NB: else callbacks can still occur: reset() to prevent further callbacks.
+}
+
+inline void GrpcStreamHandlerBase::send(std::string_view message, bool end_of_stream) {
+  grpcSend(token_, message, end_of_stream);
+  if (end_of_stream) {
+    // NB: callbacks can still occur: reset() to prevent further callbacks.
+    local_close_ = local_close_ || end_of_stream;
+    if (local_close_ && remote_close_) {
+      context_->grpc_streams_.erase(token_);
+    }
+  }
+}
+
+inline void Context::onGrpcCreateInitialMetadata(uint32_t token) {
+  {
+    auto it = grpc_calls_.find(token);
+    if (it != grpc_calls_.end()) {
+      it->second->onCreateInitialMetadata();
+      return;
+    }
+  }
+  {
+    auto it = grpc_streams_.find(token);
+    if (it != grpc_streams_.end()) {
+      it->second->onCreateInitialMetadata();
+      return;
+    }
+  }
+}
+
+inline void Context::onGrpcReceiveInitialMetadata(uint32_t token) {
+  {
+    auto it = grpc_streams_.find(token);
+    if (it != grpc_streams_.end()) {
+      it->second->onReceiveInitialMetadata();
+      return;
+    }
+  }
+}
+
+inline void Context::onGrpcReceiveTrailingMetadata(uint32_t token) {
+  {
+    auto it = grpc_streams_.find(token);
+    if (it != grpc_streams_.end()) {
+      it->second->onReceiveTrailingMetadata();
+      return;
+    }
+  }
+}
+
+inline void Context::onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message) {
+  {
+    auto it = simple_grpc_calls_.find(token);
+    if (it != simple_grpc_calls_.end()) {
+      it->second(GrpcStatus::OK, std::move(message));
+      simple_grpc_calls_.erase(token);
+      return;
+    }
+  }
+  {
+    auto it = grpc_calls_.find(token);
+    if (it != grpc_calls_.end()) {
+      it->second->onSuccess(std::move(message));
+      grpc_calls_.erase(token);
+      return;
+    }
+  }
+  {
+    auto it = grpc_streams_.find(token);
+    if (it != grpc_streams_.end()) {
+      it->second->onReceive(std::move(message));
+      grpc_streams_.erase(token);
+      return;
+    }
+  }
+}
+
+inline void GrpcStreamHandlerBase::doRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message) {
+  auto context = context_;
+  auto token = token_;
+  this->onRemoteClose(status, std::move(error_message));
+  if (context->grpc_streams_.find(token) != context->grpc_streams_.end()) {
+    // We have not been deleted, e.g. by reset() in the onRemoteCall() virtual handler.
+    remote_close_ = true;
+    if (local_close_ && remote_close_) {
+      context_->grpc_streams_.erase(token_);
+    }
+    // else do not erase the token since we can still send in this state.
+  }
+}
+
+inline void Context::onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message) {
+  {
+    auto it = simple_grpc_calls_.find(token);
+    if (it != simple_grpc_calls_.end()) {
+      it->second(status, std::move(message));
+      simple_grpc_calls_.erase(token);
+      return;
+    }
+  }
+  {
+    auto it = grpc_calls_.find(token);
+    if (it != grpc_calls_.end()) {
+      it->second->onFailure(status, std::move(message));
+      grpc_calls_.erase(token);
+      return;
+    }
+  }
+  {
+    auto it = grpc_streams_.find(token);
+    if (it != grpc_streams_.end()) {
+      it->second->doRemoteClose(status, std::move(message));
+      return;
+    }
+  }
+}
+
+inline void Context::grpcCallHandler(std::string_view service, std::string_view service_name,
+    std::string_view method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
+    std::unique_ptr<GrpcCallHandlerBase> handler) {
+  auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
+  if (token) {
+    handler->token_ = token;
+    grpc_calls_[token] = std::move(handler);
+  } else {
+    throw ProxyException("grpcCall failed");
+  }
+}
+
+inline void Context::grpcStreamHandler(std::string_view service, std::string_view service_name,
+    std::string_view method_name, std::unique_ptr<GrpcStreamHandlerBase> handler) {
+  auto token = grpcStream(service, service_name, method_name);
+  if (token) {
+    handler->token_ = token;
+    grpc_streams_[token] = std::move(handler);
+  } else {
+    throw ProxyException("grpcStream failed");
+  }
 }
