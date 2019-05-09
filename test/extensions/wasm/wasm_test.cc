@@ -25,7 +25,11 @@ class TestContext : public Extensions::Common::Wasm::Context {
 public:
   TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
   ~TestContext() override {}
-  MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
+  void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
+    std::cerr << std::string(message) << "\n";
+    scriptLog_(level, message);
+  }
+  MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
   MOCK_METHOD1(setTickPeriodMilliseconds, void(uint32_t tick_period_milliseconds));
 };
 
@@ -49,11 +53,11 @@ TEST_P(WasmTestCppRust, Logging) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
-  EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq("warn configure-test")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, Eq("test trace logging")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, Eq("test debug logging")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq("test error logging")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("test tick logging")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("warn configure-test")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("test trace logging")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, Eq("test debug logging")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("test error logging")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("test tick logging")));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   // NB: Must be done after initialize has created the context.
@@ -96,7 +100,7 @@ TEST(WasmTest, Segv) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("before badptr")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, StrEq("before badptr")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->setGeneralContext(std::move(context));
   EXPECT_THROW_WITH_MESSAGE(wasm->start(), Extensions::Common::Wasm::WasmException,
@@ -117,9 +121,9 @@ TEST(WasmTest, DivByZero) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("before div by zero")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("divide by zero: 0")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("after div by zero")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, StrEq("before div by zero")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, StrEq("divide by zero: 0")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, StrEq("after div by zero")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->setGeneralContext(std::move(context));
   wasm->wasmVm()->start(wasm->generalContext());
@@ -163,8 +167,8 @@ TEST(WasmTest, IntrinsicGlobals) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("NaN nan")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::warn, Eq("inf inf")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("NaN nan")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("inf inf")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->setGeneralContext(std::move(context));
   wasm->start();
@@ -190,7 +194,7 @@ TEST(WasmTest, Asm2Wasm) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog(spdlog::level::info, Eq("out 0 0 0")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("out 0 0 0")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->setGeneralContext(std::move(context));
   wasm->start();
@@ -211,13 +215,13 @@ TEST(WasmTest, Stats) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
-  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, StrEq("get counter = 1")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, StrEq("get counter = 2")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, StrEq("get counter = 1")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, StrEq("get counter = 2")));
   // recordMetric on a Counter is the same as increment.
-  EXPECT_CALL(*context, scriptLog(spdlog::level::info, StrEq("get counter = 5")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::warn, StrEq("get gauge = 2")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, StrEq("get counter = 5")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, StrEq("get gauge = 2")));
   // Get is not supported on histograms.
-  EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq("get histogram = 0")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, StrEq("get histogram = 0")));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   // NB: Must be done after initialize has created the context.
@@ -240,17 +244,17 @@ TEST(WasmTest, StatsHigherLevel) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
-  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, StrEq("get counter = 1")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, StrEq("get counter = 2")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, StrEq("get counter = 1")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, StrEq("get counter = 2")));
   // recordMetric on a Counter is the same as increment.
-  EXPECT_CALL(*context, scriptLog(spdlog::level::info, StrEq("get counter = 5")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::warn, StrEq("get gauge = 2")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, StrEq("get counter = 5")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, StrEq("get gauge = 2")));
   // Get is not supported on histograms.
   EXPECT_CALL(*context,
-              scriptLog(spdlog::level::err,
-                        StrEq(std::string("resolved histogram name = "
-                                          "histogram_int_tag.7.histogram_string_tag.test_tag."
-                                          "histogram_bool_tag.true.test_histogram"))));
+              scriptLog_(spdlog::level::err,
+                         StrEq(std::string("resolved histogram name = "
+                                           "histogram_int_tag.7.histogram_string_tag.test_tag."
+                                           "histogram_bool_tag.true.test_histogram"))));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   // NB: Must be done after initialize has created the context.
@@ -273,18 +277,19 @@ TEST(WasmTest, StatsHighLevel) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
-  EXPECT_CALL(*context, scriptLog(spdlog::level::trace, StrEq("get counter = 1")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::debug, StrEq("get counter = 2")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, StrEq("get counter = 1")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, StrEq("get counter = 2")));
   // recordMetric on a Counter is the same as increment.
-  EXPECT_CALL(*context, scriptLog(spdlog::level::info, StrEq("get counter = 5")));
-  EXPECT_CALL(*context, scriptLog(spdlog::level::warn, StrEq("get gauge = 2")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, StrEq("get counter = 5")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, StrEq("get gauge = 2")));
   // Get is not supported on histograms.
   // EXPECT_CALL(*context, scriptLog(spdlog::level::err, StrEq(std::string("resolved histogram name
   // = int_tag.7_string_tag.test_tag.bool_tag.true.test_histogram"))));
-  EXPECT_CALL(*context,
-              scriptLog(spdlog::level::err,
-                        StrEq(std::string(
-                            "h_id = int_tag.7.string_tag.test_tag.bool_tag.true.test_histogram"))));
+  EXPECT_CALL(
+      *context,
+      scriptLog_(
+          spdlog::level::err,
+          StrEq(std::string("h_id = int_tag.7.string_tag.test_tag.bool_tag.true.test_histogram"))));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   // NB: Must be done after initialize has created the context.
   wasm->setGeneralContext(std::move(context));

@@ -24,37 +24,38 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart() {
 
 // Test the higher level interface.
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick() {
-  auto c = new Metric(MetricType::Counter, "test_counter",
+  Metric c(MetricType::Counter, "test_counter",
                       {MetricTag{"counter_tag", MetricTag::TagType::String}});
-  auto g = new Metric(MetricType::Gauge, "test_gauge",
+  Metric g(MetricType::Gauge, "test_gauge",
                       {MetricTag{"gauge_int_tag", MetricTag::TagType::Int}});
-  auto h = new Metric(MetricType::Gauge, "test_histogram",
+  Metric h(MetricType::Histogram, "test_histogram",
                       {MetricTag{"histogram_int_tag", MetricTag::TagType::Int},
                        MetricTag{"histogram_string_tag", MetricTag::TagType::String},
                        MetricTag{"histogram_bool_tag", MetricTag::TagType::Bool}});
 
-  c->increment(1, "test_tag");
-  g->record(2, 9);
-  h->record(3, 7, "test_tag", true);
+  c.increment(1, "test_tag");
+  g.record(2, 9);
+  h.record(3, 7, "test_tag", true);
 
-  logTrace(std::string("get counter = ") + std::to_string(c->get("test_tag")));
-  c->increment(1, "test_tag");
-  logDebug(std::string("get counter = ") + std::to_string(c->get("test_tag")));
-  c->record(3, "test_tag");
-  logInfo(std::string("get counter = ") + std::to_string(c->get("test_tag")));
-  logWarn(std::string("get gauge = ") + std::to_string(g->get(9)));
+  logTrace(std::string("get counter = ") + std::to_string(c.get("test_tag")));
+  c.increment(1, "test_tag");
+  logDebug(std::string("get counter = ") + std::to_string(c.get("test_tag")));
+  c.record(3, "test_tag");
+  logInfo(std::string("get counter = ") + std::to_string(c.get("test_tag")));
+  logWarn(std::string("get gauge = ") + std::to_string(g.get(9)));
 
-  auto h_id = h->resolve(7, "test_tag", true);
-  logError(std::string("resolved histogram name = ") + h->nameFromIdSlow(h_id));
+  auto hh = h.partiallyResolve(7);
+  auto h_id = hh.resolve("test_tag", true);
+  logError(std::string("resolved histogram name = ") + hh.nameFromIdSlow(h_id));
 }
 
 // Test the high level interface.
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t /* context_zero */) {
   auto c =
       Counter<std::string, int, bool>::New("test_counter", "string_tag", "int_tag", "bool_tag");
-  auto g = Counter<std::string, std::string>::New("test_counter", "string_tag1", "string_tag2");
+  auto g = Gauge<std::string, std::string>::New("test_gauge", "string_tag1", "string_tag2");
   auto h =
-      Counter<int, std::string, bool>::New("test_histogram", "int_tag", "string_tag", "bool_tag");
+      Histogram<int, std::string, bool>::New("test_histogram", "int_tag", "string_tag", "bool_tag");
 
   c->increment(1, "test_tag", 7, true);
   logTrace(std::string("get counter = ") + std::to_string(c->get("test_tag", 7, true)));
@@ -68,6 +69,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t /* context_zero */) {
   logWarn(std::string("get gauge = ") + std::to_string(g->get("test_tag1", "test_tag2")));
 
   h->record(3, 7, "test_tag", true);
-  auto simple_h = h->resolve(7, "test_tag", true);
-  logError(std::string("h_id = ") + h->nameFromIdSlow(simple_h.metric_id));
+  auto base_h = Counter<int>::New("test_histogram", "int_tag");
+  auto complete_h = base_h->resolveAndExtend<std::string, bool>(7, "string_tag", "bool_tag");
+  auto simple_h = complete_h->resolve("test_tag", true);
+  logError(std::string("h_id = ") + complete_h->nameFromIdSlow(simple_h.metric_id));
 }
