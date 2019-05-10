@@ -41,13 +41,9 @@ public:
   void onSuccess(std::unique_ptr<ResponseType>&& response, Tracing::Span& span) {
     onSuccess_(*response, span);
   }
-  void onSuccessRaw(Buffer::InstancePtr response, Tracing::Span& span) {
-    onSuccessRaw_(*response, span);
-  }
 
   MOCK_METHOD1_T(onCreateInitialMetadata, void(Http::HeaderMap& metadata));
   MOCK_METHOD2_T(onSuccess_, void(const ResponseType& response, Tracing::Span& span));
-  MOCK_METHOD2_T(onSuccessRaw_, void(Buffer::Instance& response, Tracing::Span& span));
   MOCK_METHOD3_T(onFailure,
                  void(Status::GrpcStatus status, const std::string& message, Tracing::Span& span));
 };
