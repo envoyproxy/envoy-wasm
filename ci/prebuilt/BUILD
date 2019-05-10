@@ -30,19 +30,7 @@ cc_library(
     srcs = select({
         "@envoy//bazel:windows_x86_64": ["WINDOWS_IS_NOT_SUPPORTED_YET"],
         "//conditions:default": [
-            # ld: Runtime and WASTParse need to be listed first.
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libRuntime.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libWASTParse.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libEmscripten.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libIR.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libLLVMJIT.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libLogging.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libNFA.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libPlatform.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libRegExp.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libThreadTest.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libWASM.a",
-            "thirdparty_build/lib/WAVM/RelWithDebInfo/libWASTPrint.a",
+            "thirdparty_build/lib/libWAVM.a",
             "thirdparty_build/lib/WAVM/libWAVMUnwind.a",
         ] + [
             # ld: listed in order from llvm-config --libnames.
