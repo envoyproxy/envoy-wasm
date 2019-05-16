@@ -40,7 +40,11 @@ private:
   Stats::Scope& scope_;
 };
 
-TEST(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
+class WasmAccessLogConfigTest : public TestBaseWithParam<std::string> {};
+
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmAccessLogConfigTest, testing::Values("wavm", "v8"));
+
+TEST_P(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::AccessLogInstanceFactory>::getFactory(
           AccessLogNames::get().Wasm);
@@ -58,14 +62,14 @@ TEST(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
       Common::Wasm::WasmVmException, "No WASM VM Id or vm_config specified");
 }
 
-TEST(WasmAccessLogConfigTest, CreateWasmFromWASM) {
+TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::AccessLogInstanceFactory>::getFactory(
           AccessLogNames::get().Wasm);
   ASSERT_NE(factory, nullptr);
 
   envoy::config::accesslog::v2::WasmAccessLog config;
-  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
   config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging.wasm"));
 

@@ -26,6 +26,23 @@ cc_library(
 )
 
 cc_library(
+    name = "v8",
+    srcs = select({
+        "@envoy//bazel:windows_x86_64": ["WINDOWS_IS_NOT_SUPPORTED_YET"],
+        "//conditions:default": [
+            # Order matters!
+            "thirdparty_build/lib/libwasm.a",
+            "thirdparty_build/lib/libv8_monolith.a",
+        ],
+    }),
+    hdrs = [
+        "thirdparty_build/include/wasm-c-api/wasm.hh",
+        "thirdparty_build/include/wasm-c-api/wasm-bin.hh",
+    ],
+    includes = ["thirdparty_build/include"],
+)
+
+cc_library(
     name = "wavm_with_llvm",
     srcs = select({
         "@envoy//bazel:windows_x86_64": ["WINDOWS_IS_NOT_SUPPORTED_YET"],

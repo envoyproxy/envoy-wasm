@@ -5,5 +5,6 @@ TARGET_RECIPES = {
     "tcmalloc_and_profiler": "gperftools",
     "tcmalloc_debug": "gperftools",
     "luajit": "luajit",
+    "v8": "v8",
     "wavm_with_llvm": "wavm",
 }

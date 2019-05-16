@@ -13,6 +13,8 @@ namespace Wasm {
  */
 class WasmVmValues {
 public:
+  // V8 (https://v8.dev) WASM VM.
+  const std::string v8 = "envoy.wasm.vm.v8";
   // WAVM (https://github.com/WAVM/WAVM) Wasm VM.
   const std::string Wavm = "envoy.wasm.vm.wavm";
 };

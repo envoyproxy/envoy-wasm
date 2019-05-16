@@ -469,7 +469,7 @@ absl::string_view Wavm::getUserSection(absl::string_view name) {
   return {};
 }
 
-std::unique_ptr<WasmVm> createWavm() { return std::make_unique<Wavm>(); }
+std::unique_ptr<WasmVm> createVm() { return std::make_unique<Wavm>(); }
 
 } // namespace Wavm
 

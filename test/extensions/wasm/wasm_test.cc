@@ -33,11 +33,17 @@ public:
   MOCK_METHOD1(setTickPeriodMilliseconds, void(uint32_t tick_period_milliseconds));
 };
 
-class WasmTestCppRust : public TestBaseWithParam<std::string> {};
+class WasmTest : public TestBaseWithParam<std::string> {};
 
-INSTANTIATE_TEST_SUITE_P(SourceLanguages, WasmTestCppRust, testing::Values("cpp", "rust"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing::Values("wavm", "v8"));
 
-TEST_P(WasmTestCppRust, Logging) {
+class WasmTestMatrix : public TestBaseWithParam<std::tuple<std::string, std::string>> {};
+
+INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
+                         testing::Combine(testing::Values("wavm", "v8"),
+                                          testing::Values("cpp", "rust")));
+
+TEST_P(WasmTestMatrix, Logging) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -45,11 +51,12 @@ TEST_P(WasmTestCppRust, Logging) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      absl::StrCat("envoy.wasm.vm.", std::get<0>(GetParam())), "", "", cluster_manager, dispatcher,
+      *scope, local_info, scope);
   EXPECT_NE(wasm, nullptr);
-  const auto code =
-      TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
-          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_", GetParam(), ".wasm")));
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
+                   std::get<1>(GetParam()), ".wasm")));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
@@ -67,7 +74,7 @@ TEST_P(WasmTestCppRust, Logging) {
   wasm->tickHandler();
 }
 
-TEST(WasmTest, BadSignature) {
+TEST_P(WasmTest, BadSignature) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -75,7 +82,8 @@ TEST(WasmTest, BadSignature) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
@@ -86,7 +94,8 @@ TEST(WasmTest, BadSignature) {
                             "Bad function signature for: _proxy_onConfigure");
 }
 
-TEST(WasmTest, Segv) {
+// TODO(PiotrSikora): catch llvm_trap in v8.
+TEST(WasmTestWavmOnly, Segv) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -107,7 +116,7 @@ TEST(WasmTest, Segv) {
                             "emscripten llvm_trap");
 }
 
-TEST(WasmTest, DivByZero) {
+TEST_P(WasmTest, DivByZero) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -115,7 +124,8 @@ TEST(WasmTest, DivByZero) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
@@ -130,7 +140,7 @@ TEST(WasmTest, DivByZero) {
   wasm->generalContext()->onLog();
 }
 
-TEST(WasmTest, EmscriptenVersion) {
+TEST_P(WasmTest, EmscriptenVersion) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -138,7 +148,8 @@ TEST(WasmTest, EmscriptenVersion) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
@@ -153,7 +164,7 @@ TEST(WasmTest, EmscriptenVersion) {
   EXPECT_EQ(abi_minor, 1);
 }
 
-TEST(WasmTest, IntrinsicGlobals) {
+TEST_P(WasmTest, IntrinsicGlobals) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -161,7 +172,8 @@ TEST(WasmTest, IntrinsicGlobals) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
@@ -180,7 +192,7 @@ TEST(WasmTest, IntrinsicGlobals) {
 // module is not required with the trap mode is set to "allow". Note: future WASM standards will
 // change this behavior by providing non-trapping instructions, but in the mean time we support the
 // default Emscripten behavior.
-TEST(WasmTest, Asm2Wasm) {
+TEST_P(WasmTest, Asm2Wasm) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -188,7 +200,8 @@ TEST(WasmTest, Asm2Wasm) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
@@ -200,7 +213,7 @@ TEST(WasmTest, Asm2Wasm) {
   wasm->start();
 }
 
-TEST(WasmTest, Stats) {
+TEST_P(WasmTest, Stats) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -208,7 +221,8 @@ TEST(WasmTest, Stats) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
@@ -229,7 +243,7 @@ TEST(WasmTest, Stats) {
   wasm->start();
 }
 
-TEST(WasmTest, StatsHigherLevel) {
+TEST_P(WasmTest, StatsHigherLevel) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -237,7 +251,8 @@ TEST(WasmTest, StatsHigherLevel) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
@@ -262,7 +277,7 @@ TEST(WasmTest, StatsHigherLevel) {
   wasm->tickHandler();
 }
 
-TEST(WasmTest, StatsHighLevel) {
+TEST_P(WasmTest, StatsHighLevel) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -270,7 +285,8 @@ TEST(WasmTest, StatsHighLevel) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));

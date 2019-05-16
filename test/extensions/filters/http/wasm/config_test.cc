@@ -21,7 +21,7 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-class WasmFilterConfigTest : public TestBase {
+class WasmFilterConfigTest : public TestBaseWithParam<std::string> {
 protected:
   WasmFilterConfigTest() : api_(Api::createApiForTest(stats_store_)) {
     ON_CALL(context_, api()).WillByDefault(ReturnRef(*api_));
@@ -33,17 +33,20 @@ protected:
   Api::ApiPtr api_;
 };
 
-TEST_F(WasmFilterConfigTest, JsonLoadFromFileWASM) {
-  const std::string json = TestEnvironment::substitute(R"EOF(
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest, testing::Values("wavm", "v8"));
+
+TEST_P(WasmFilterConfigTest, JsonLoadFromFileWASM) {
+  const std::string json = TestEnvironment::substitute(absl::StrCat(R"EOF(
   {
   "vm_config": {
-    "vm": "envoy.wasm.vm.wavm",
+    "vm": "envoy.wasm.vm.)EOF",
+                                                                    GetParam(), R"EOF(",
     "code": {
       "filename": "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"
     },
     "allow_precompiled": true
   }}
-  )EOF");
+  )EOF"));
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   MessageUtil::loadFromJson(json, proto_config);
@@ -55,11 +58,34 @@ TEST_F(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   cb(filter_callback);
 }
 
-TEST_F(WasmFilterConfigTest, YamlLoadFromFileWASM) {
-  const std::string yaml = TestEnvironment::substitute(R"EOF(
+TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
+  const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   vm_config:
-    vm: "envoy.wasm.vm.wavm"
+    vm: "envoy.wasm.vm.)EOF",
+                                                                    GetParam(), R"EOF("
     code: { filename: "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm" }
+  )EOF"));
+
+  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  MessageUtil::loadFromYaml(yaml, proto_config);
+  WasmFilterConfig factory;
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+  Http::MockFilterChainFactoryCallbacks filter_callback;
+  EXPECT_CALL(filter_callback, addStreamFilter(_));
+  EXPECT_CALL(filter_callback, addAccessLogHandler(_));
+  cb(filter_callback);
+}
+
+TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
+  const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
+  const std::string yaml = absl::StrCat(R"EOF(
+  vm_config:
+    vm: "envoy.wasm.vm.)EOF",
+                                        GetParam(), R"EOF("
+    code: { inline_bytes: ")EOF",
+                                        Base64::encode(code.data(), code.size()), R"EOF(" }
   )EOF");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
@@ -72,30 +98,13 @@ TEST_F(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   cb(filter_callback);
 }
 
-TEST_F(WasmFilterConfigTest, YamlLoadInlineWASM) {
-  const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
-  const std::string yaml =
-      absl::StrCat("vm_config:\n  vm: \"envoy.wasm.vm.wavm\"\n", "  code: { inline_bytes: \"",
-                   Base64::encode(code.data(), code.size()), "\" }\n");
-
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  MessageUtil::loadFromYaml(yaml, proto_config);
-  WasmFilterConfig factory;
-  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
-  Http::MockFilterChainFactoryCallbacks filter_callback;
-  EXPECT_CALL(filter_callback, addStreamFilter(_));
-  EXPECT_CALL(filter_callback, addAccessLogHandler(_));
-  cb(filter_callback);
-}
-
-TEST_F(WasmFilterConfigTest, YamlLoadInlineBadCode) {
-  const std::string yaml = R"EOF(
+TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
+  const std::string yaml = absl::StrCat(R"EOF(
   vm_config:
-    vm: "envoy.wasm.vm.wavm"
+    vm: "envoy.wasm.vm.)EOF",
+                                        GetParam(), R"EOF("
     code: { inline_string: "bad code" }
-  )EOF";
+  )EOF");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   MessageUtil::loadFromYaml(yaml, proto_config);

@@ -26,6 +26,7 @@
 #include "common/http/utility.h"
 #include "common/tracing/http_tracer_impl.h"
 
+#include "extensions/common/wasm/v8/v8.h"
 #include "extensions/common/wasm/wavm/wavm.h"
 #include "extensions/common/wasm/well_known_names.h"
 
@@ -1437,7 +1438,7 @@ void Wasm::getFunctions() {
 #undef _GET_PROXY
 
   if (!malloc_ || !free_) {
-    throw WasmException("WAVM missing malloc/free");
+    throw WasmException("WASM missing malloc/free");
   }
 }
 
@@ -1762,8 +1763,10 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
 }
 
 std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
-  if (wasm_vm == WasmVmNames::get().Wavm) {
-    return Wavm::createWavm();
+  if (wasm_vm == WasmVmNames::get().v8) {
+    return V8::createVm();
+  } else if (wasm_vm == WasmVmNames::get().Wavm) {
+    return Wavm::createVm();
   } else {
     return nullptr;
   }

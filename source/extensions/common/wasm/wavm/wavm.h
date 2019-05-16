@@ -21,7 +21,7 @@ namespace Common {
 namespace Wasm {
 namespace Wavm {
 
-std::unique_ptr<WasmVm> createWavm();
+std::unique_ptr<WasmVm> createVm();
 
 } // namespace Wavm
 } // namespace Wasm

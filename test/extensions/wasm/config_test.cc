@@ -21,12 +21,16 @@ namespace Envoy {
 namespace Extensions {
 namespace Wasm {
 
-TEST(WasmFactoryTest, CreateWasmFromWASM) {
+class WasmFactoryTest : public TestBaseWithParam<std::string> {};
+
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest, testing::Values("wavm", "v8"));
+
+TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
   config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.set_singleton(true);
@@ -42,12 +46,12 @@ TEST(WasmFactoryTest, CreateWasmFromWASM) {
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
-TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
+TEST_P(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
   config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.mutable_vm_config()->set_allow_precompiled(true);
@@ -65,12 +69,12 @@ TEST(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
   EXPECT_NE(wasm, nullptr);
 }
 
-TEST(WasmFactoryTest, CreateWasmFromWASMPerThread) {
+TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
   config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.set_id("test_id");
@@ -87,12 +91,12 @@ TEST(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   EXPECT_EQ(wasm, nullptr);
 }
 
-TEST(WasmFactoryTest, MissingImport) {
+TEST_P(WasmFactoryTest, MissingImport) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
   config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/missing_cpp.wasm"));
   config.set_singleton(true);

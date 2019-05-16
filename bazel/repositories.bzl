@@ -77,6 +77,7 @@ def _build_recipe_repository_impl(ctxt):
     print("Fetching external dependencies...")
     result = ctxt.execute(
         ["./repositories.sh"] + recipes,
+        timeout = 3600,
         quiet = False,
     )
     print(result.stdout)

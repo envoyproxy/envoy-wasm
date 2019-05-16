@@ -732,7 +732,7 @@ inline Context::Context(Wasm* wasm) : wasm_(wasm), id_(wasm->allocContextId()) {
 inline void* Wasm::allocMemory(uint32_t size, uint32_t* address) {
   uint32_t a = malloc_(generalContext(), size);
   *address = a;
-  // Note: this can thorw a WAVM exception.
+  // Note: this can thorw a WASM exception.
   return const_cast<void*>(reinterpret_cast<const void*>(wasm_vm_->getMemory(a, size).data()));
 }
 

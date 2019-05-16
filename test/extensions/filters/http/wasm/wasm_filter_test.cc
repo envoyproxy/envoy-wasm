@@ -54,14 +54,14 @@ public:
   MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-class WasmHttpFilterTest : public TestBase {
+class WasmHttpFilterTest : public TestBaseWithParam<std::string> {
 public:
   WasmHttpFilterTest() {}
   ~WasmHttpFilterTest() {}
 
   void setupConfig(const std::string& code) {
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
-    proto_config.mutable_vm_config()->set_vm("envoy.wasm.vm.wavm");
+    proto_config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
     proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
@@ -93,14 +93,16 @@ public:
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
 };
 
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest, testing::Values("wavm", "v8"));
+
 // Bad code in initial config.
-TEST_F(WasmHttpFilterTest, BadCode) {
+TEST_P(WasmHttpFilterTest, BadCode) {
   EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException,
                             "Failed to initialize WASM code from <inline>");
 }
 
 // Script touching headers only, request that is headers only.
-TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
+TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm")));
   setupFilter();
@@ -117,7 +119,7 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
 }
 
 // Script touching headers only, request that is headers only.
-TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
+TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm")));
   setupFilter();
@@ -136,7 +138,7 @@ TEST_F(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
 }
 
 // Script testing AccessLog::Instance::log.
-TEST_F(WasmHttpFilterTest, AccessLog) {
+TEST_P(WasmHttpFilterTest, AccessLog) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm")));
   setupFilter();
@@ -158,7 +160,7 @@ TEST_F(WasmHttpFilterTest, AccessLog) {
   filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
-TEST_F(WasmHttpFilterTest, AsyncCall) {
+TEST_P(WasmHttpFilterTest, AsyncCall) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/async_call_cpp.wasm")));
   setupFilter();
@@ -198,7 +200,7 @@ TEST_F(WasmHttpFilterTest, AsyncCall) {
   }
 }
 
-TEST_F(WasmHttpFilterTest, GrpcCall) {
+TEST_P(WasmHttpFilterTest, GrpcCall) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/grpc_call_cpp.wasm")));
   setupFilter();
@@ -252,7 +254,7 @@ TEST_F(WasmHttpFilterTest, GrpcCall) {
   }
 }
 
-TEST_F(WasmHttpFilterTest, Metadata) {
+TEST_P(WasmHttpFilterTest, Metadata) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/metadata_cpp.wasm")));
   setupFilter();
