@@ -4,6 +4,8 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
+    "envoy_select_wasm_v8",
+    "envoy_select_wasm_wavm",
 )
 
 envoy_package()
@@ -23,6 +25,7 @@ envoy_cc_library(
         ":well_known_names",
         "//include/envoy/http:codes_interface",
         "//include/envoy/http:filter_interface",
+        "//include/envoy/server:wasm_interface",
         "//include/envoy/upstream:cluster_manager_interface",
         "//source/common/common:stack_array",
         "//source/extensions/filters/http:well_known_names",
@@ -42,7 +45,9 @@ envoy_cc_library(
         "//source/common/http:message_lib",
         "//source/common/http:utility_lib",
         "//source/common/tracing:http_tracer_lib",
+    ] + envoy_select_wasm_v8([
         "//source/extensions/common/wasm/v8:v8_lib",
+    ]) + envoy_select_wasm_wavm([
         "//source/extensions/common/wasm/wavm:wavm_lib",
-    ],
+    ]),
 )

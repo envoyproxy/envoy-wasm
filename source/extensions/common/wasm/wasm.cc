@@ -26,8 +26,12 @@
 #include "common/http/utility.h"
 #include "common/tracing/http_tracer_impl.h"
 
+#ifdef ENVOY_WASM_V8
 #include "extensions/common/wasm/v8/v8.h"
+#endif
+#ifdef ENVOY_WASM_WAVM
 #include "extensions/common/wasm/wavm/wavm.h"
+#endif
 #include "extensions/common/wasm/well_known_names.h"
 
 #include "absl/container/flat_hash_map.h"
@@ -1763,11 +1767,18 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
 }
 
 std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
+#ifdef ENVOY_WASM_V8
   if (wasm_vm == WasmVmNames::get().v8) {
     return V8::createVm();
-  } else if (wasm_vm == WasmVmNames::get().Wavm) {
+  } else
+#endif
+#ifdef ENVOY_WASM_WAVM
+      if (wasm_vm == WasmVmNames::get().Wavm) {
     return Wavm::createVm();
-  } else {
+  } else
+#endif
+  {
+    UNREFERENCED_PARAMETER(wasm_vm);
     return nullptr;
   }
 }

@@ -93,7 +93,16 @@ public:
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest, testing::Values("wavm", "v8"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest,
+                         testing::Values(
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                             "v8", "wavm"
+#elif defined(ENVOY_WASM_V8)
+                             "v8"
+#elif defined(ENVOY_WASM_WAVM)
+                             "wavm"
+#endif
+                             ));
 
 // Bad code in initial config.
 TEST_P(WasmHttpFilterTest, BadCode) {
