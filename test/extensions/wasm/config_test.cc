@@ -21,7 +21,7 @@ namespace Envoy {
 namespace Extensions {
 namespace Wasm {
 
-class WasmFactoryTest : public TestBaseWithParam<std::string> {};
+class WasmFactoryTest : public testing::TestWithParam<std::string> {};
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest, testing::Values("wavm", "v8"));
 

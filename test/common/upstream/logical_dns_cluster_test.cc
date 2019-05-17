@@ -21,10 +21,10 @@
 #include "test/mocks/ssl/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
 #include "test/mocks/upstream/mocks.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::Invoke;
@@ -32,10 +32,11 @@ using testing::NiceMock;
 
 namespace Envoy {
 namespace Upstream {
+namespace {
 
 enum class ConfigType { V2_YAML, V1_JSON };
 
-class LogicalDnsClusterTest : public TestBase {
+class LogicalDnsClusterTest : public testing::Test {
 protected:
   LogicalDnsClusterTest() : api_(Api::createApiForTest(stats_store_)) {}
 
@@ -365,6 +366,30 @@ TEST_F(LogicalDnsClusterTest, BadConfig) {
   EXPECT_THROW_WITH_MESSAGE(
       setupFromV2Yaml(multiple_endpoints_yaml), EnvoyException,
       "LOGICAL_DNS clusters must have a single locality_lb_endpoint and a single lb_endpoint");
+
+  const std::string custom_resolver_yaml = R"EOF(
+  name: name
+  type: LOGICAL_DNS
+  dns_refresh_rate: 4s
+  connect_timeout: 0.25s
+  lb_policy: ROUND_ROBIN
+  dns_lookup_family: V4_ONLY
+  load_assignment:
+    cluster_name: name
+    endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: hello.world.com
+                port_value: 443
+                resolver_name: customresolver
+            health_check_config:
+              port_value: 8000
+  )EOF";
+
+  EXPECT_THROW_WITH_MESSAGE(setupFromV2Yaml(custom_resolver_yaml), EnvoyException,
+                            "LOGICAL_DNS clusters must NOT have a custom resolver name set");
 }
 
 TEST_F(LogicalDnsClusterTest, Basic) {
@@ -422,5 +447,6 @@ TEST_F(LogicalDnsClusterTest, Basic) {
   testBasicSetup(basic_yaml_load_assignment, "foo.bar.com", 8000);
 }
 
+} // namespace
 } // namespace Upstream
 } // namespace Envoy

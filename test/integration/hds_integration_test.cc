@@ -16,18 +16,19 @@
 #include "test/config/utility.h"
 #include "test/integration/http_integration.h"
 #include "test/test_common/network_utility.h"
-#include "test/test_common/test_base.h"
+#include "test/test_common/simulated_time_system.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace Envoy {
 namespace {
 
-class HdsIntegrationTest : public TestBaseWithParam<Network::Address::IpVersion>,
+// TODO(jmarantz): switch this to simulated-time after debugging flakes.
+class HdsIntegrationTest : public testing::TestWithParam<Network::Address::IpVersion>,
                            public HttpIntegrationTest {
 public:
-  HdsIntegrationTest()
-      : HttpIntegrationTest(Http::CodecClient::Type::HTTP1, GetParam(), realTime()) {}
+  HdsIntegrationTest() : HttpIntegrationTest(Http::CodecClient::Type::HTTP1, GetParam()) {}
 
   void createUpstreams() override {
     fake_upstreams_.emplace_back(
@@ -78,19 +79,19 @@ public:
     ASSERT_TRUE(host_stream_->waitForEndStream(*dispatcher_));
 
     host_upstream_->set_allow_unexpected_disconnects(true);
-    EXPECT_STREQ(host_stream_->headers().Path()->value().c_str(), "/healthcheck");
-    EXPECT_STREQ(host_stream_->headers().Method()->value().c_str(), "GET");
-    EXPECT_STREQ(host_stream_->headers().Host()->value().c_str(), "anna");
+    EXPECT_EQ(host_stream_->headers().Path()->value().getStringView(), "/healthcheck");
+    EXPECT_EQ(host_stream_->headers().Method()->value().getStringView(), "GET");
+    EXPECT_EQ(host_stream_->headers().Host()->value().getStringView(), "anna");
 
-    if (cluster2 != "") {
+    if (!cluster2.empty()) {
       ASSERT_TRUE(host2_upstream_->waitForHttpConnection(*dispatcher_, host2_fake_connection_));
       ASSERT_TRUE(host2_fake_connection_->waitForNewStream(*dispatcher_, host2_stream_));
       ASSERT_TRUE(host2_stream_->waitForEndStream(*dispatcher_));
 
       host2_upstream_->set_allow_unexpected_disconnects(true);
-      EXPECT_STREQ(host2_stream_->headers().Path()->value().c_str(), "/healthcheck");
-      EXPECT_STREQ(host2_stream_->headers().Method()->value().c_str(), "GET");
-      EXPECT_STREQ(host2_stream_->headers().Host()->value().c_str(), cluster2.c_str());
+      EXPECT_EQ(host2_stream_->headers().Path()->value().getStringView(), "/healthcheck");
+      EXPECT_EQ(host2_stream_->headers().Method()->value().getStringView(), "GET");
+      EXPECT_EQ(host2_stream_->headers().Host()->value().getStringView(), cluster2);
     }
   }
 
@@ -681,6 +682,46 @@ TEST_P(HdsIntegrationTest, TestUpdateMessage) {
                                       host2_upstream_->localAddress())) {
     ASSERT_TRUE(hds_stream_->waitForGrpcMessage(*dispatcher_, response_));
   }
+
+  // Clean up connections
+  cleanupHostConnections();
+  cleanupHdsConnection();
+}
+
+// Tests Envoy HTTP health checking a single endpoint, receiving an update
+// message from the management server and reporting in a new interval
+TEST_P(HdsIntegrationTest, TestUpdateChangesTimer) {
+  initialize();
+
+  // Server <--> Envoy
+  waitForHdsStream();
+  ASSERT_TRUE(hds_stream_->waitForGrpcMessage(*dispatcher_, envoy_msg_));
+
+  // Server asks for health checking
+  server_health_check_specifier_ = makeHttpHealthCheckSpecifier();
+  hds_stream_->startGrpcStream();
+  hds_stream_->sendGrpcMessage(server_health_check_specifier_);
+  test_server_->waitForCounterGe("hds_delegate.requests", ++hds_requests_);
+
+  healthcheckEndpoints();
+
+  // an update should be received after interval
+  ASSERT_TRUE(
+      hds_stream_->waitForGrpcMessage(*dispatcher_, response_, std::chrono::milliseconds(250)));
+
+  // New HealthCheckSpecifier message
+  server_health_check_specifier_.mutable_interval()->set_nanos(300000000); // 0.3 seconds
+
+  // Server asks for health checking with the new message
+  hds_stream_->sendGrpcMessage(server_health_check_specifier_);
+  test_server_->waitForCounterGe("hds_delegate.requests", ++hds_requests_);
+
+  // A response should not be received until the new timer is completed
+  ASSERT_FALSE(
+      hds_stream_->waitForGrpcMessage(*dispatcher_, response_, std::chrono::milliseconds(250)));
+  // Response should be received now
+  ASSERT_TRUE(
+      hds_stream_->waitForGrpcMessage(*dispatcher_, response_, std::chrono::milliseconds(250)));
 
   // Clean up connections
   cleanupHostConnections();

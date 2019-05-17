@@ -18,10 +18,10 @@
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/printers.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::AtLeast;
@@ -54,7 +54,7 @@ public:
   MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-class WasmHttpFilterTest : public TestBaseWithParam<std::string> {
+class WasmHttpFilterTest : public testing::TestWithParam<std::string> {
 public:
   WasmHttpFilterTest() {}
   ~WasmHttpFilterTest() {}
@@ -85,7 +85,7 @@ public:
   Upstream::MockClusterManager cluster_manager_;
   std::shared_ptr<Wasm> wasm_;
   std::shared_ptr<TestFilter> filter_;
-  NiceMock<Envoy::Ssl::MockConnection> ssl_;
+  NiceMock<Envoy::Ssl::MockConnectionInfo> ssl_;
   NiceMock<Envoy::Network::MockConnection> connection_;
   NiceMock<Http::MockStreamDecoderFilterCallbacks> decoder_callbacks_;
   NiceMock<Http::MockStreamEncoderFilterCallbacks> encoder_callbacks_;
@@ -277,7 +277,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
                 Eq(absl::string_view("Struct wasm_request_get_value wasm_request_get_value"))));
 
   request_stream_info_.metadata_.mutable_filter_metadata()->insert(
-      Protobuf::MapPair<Envoy::ProtobufTypes::String, ProtobufWkt::Struct>(
+      Protobuf::MapPair<std::string, ProtobufWkt::Struct>(
           HttpFilters::HttpFilterNames::get().Wasm,
           MessageUtil::keyValueStruct("wasm_request_get_key", "wasm_request_get_value")));
 

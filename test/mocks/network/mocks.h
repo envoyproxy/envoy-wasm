@@ -13,6 +13,7 @@
 #include "envoy/network/transport_socket.h"
 #include "envoy/stats/scope.h"
 
+#include "common/network/filter_manager_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
 #include "test/mocks/event/mocks.h"
@@ -63,6 +64,7 @@ public:
 
   MOCK_METHOD0(connection, Connection&());
   MOCK_METHOD0(continueReading, void());
+  MOCK_METHOD2(injectReadDataToFilterChain, void(Buffer::Instance& data, bool end_stream));
   MOCK_METHOD0(upstreamHost, Upstream::HostDescriptionConstSharedPtr());
   MOCK_METHOD1(upstreamHost, void(Upstream::HostDescriptionConstSharedPtr host));
 
@@ -82,12 +84,26 @@ public:
   ReadFilterCallbacks* callbacks_{};
 };
 
+class MockWriteFilterCallbacks : public WriteFilterCallbacks {
+public:
+  MockWriteFilterCallbacks();
+  ~MockWriteFilterCallbacks();
+
+  MOCK_METHOD0(connection, Connection&());
+  MOCK_METHOD2(injectWriteDataToFilterChain, void(Buffer::Instance& data, bool end_stream));
+
+  testing::NiceMock<MockConnection> connection_;
+};
+
 class MockWriteFilter : public WriteFilter {
 public:
   MockWriteFilter();
   ~MockWriteFilter();
 
   MOCK_METHOD2(onWrite, FilterStatus(Buffer::Instance& data, bool end_stream));
+  MOCK_METHOD1(initializeWriteFilterCallbacks, void(WriteFilterCallbacks& callbacks));
+
+  WriteFilterCallbacks* write_callbacks_{};
 };
 
 class MockFilter : public Filter {
@@ -99,8 +115,10 @@ public:
   MOCK_METHOD0(onNewConnection, FilterStatus());
   MOCK_METHOD2(onWrite, FilterStatus(Buffer::Instance& data, bool end_stream));
   MOCK_METHOD1(initializeReadFilterCallbacks, void(ReadFilterCallbacks& callbacks));
+  MOCK_METHOD1(initializeWriteFilterCallbacks, void(WriteFilterCallbacks& callbacks));
 
   ReadFilterCallbacks* callbacks_{};
+  WriteFilterCallbacks* write_callbacks_{};
 };
 
 class MockListenerCallbacks : public ListenerCallbacks {
@@ -194,7 +212,7 @@ public:
 class MockListenSocket : public Socket {
 public:
   MockListenSocket();
-  ~MockListenSocket();
+  ~MockListenSocket() override {}
 
   void addOption(const Socket::OptionConstSharedPtr& option) override { addOption_(option); }
   void addOptions(const Socket::OptionsSharedPtr& options) override { addOptions_(options); }
@@ -230,7 +248,7 @@ public:
 class MockConnectionSocket : public ConnectionSocket {
 public:
   MockConnectionSocket();
-  ~MockConnectionSocket();
+  ~MockConnectionSocket() override {}
 
   void addOption(const Socket::OptionConstSharedPtr& option) override { addOption_(option); }
   void addOptions(const Socket::OptionsSharedPtr& options) override { addOptions_(options); }
@@ -288,7 +306,6 @@ public:
   MOCK_METHOD0(listenerScope, Stats::Scope&());
   MOCK_CONST_METHOD0(listenerTag, uint64_t());
   MOCK_CONST_METHOD0(name, const std::string&());
-  MOCK_CONST_METHOD0(reverseWriteFilterOrder, bool());
 
   testing::NiceMock<MockFilterChainFactory> filter_chain_factory_;
   testing::NiceMock<MockListenSocket> socket_;
@@ -367,12 +384,13 @@ public:
 
   MOCK_METHOD1(setTransportSocketCallbacks, void(TransportSocketCallbacks& callbacks));
   MOCK_CONST_METHOD0(protocol, std::string());
+  MOCK_CONST_METHOD0(failureReason, absl::string_view());
   MOCK_METHOD0(canFlushClose, bool());
   MOCK_METHOD1(closeSocket, void(Network::ConnectionEvent event));
   MOCK_METHOD1(doRead, IoResult(Buffer::Instance& buffer));
   MOCK_METHOD2(doWrite, IoResult(Buffer::Instance& buffer, bool end_stream));
   MOCK_METHOD0(onConnected, void());
-  MOCK_CONST_METHOD0(ssl, const Ssl::Connection*());
+  MOCK_CONST_METHOD0(ssl, const Ssl::ConnectionInfo*());
 
   TransportSocketCallbacks* callbacks_{};
 };

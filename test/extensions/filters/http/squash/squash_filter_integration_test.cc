@@ -16,11 +16,10 @@ using Envoy::Protobuf::util::MessageDifferencer;
 
 namespace Envoy {
 
-class SquashFilterIntegrationTest : public TestBaseWithParam<Network::Address::IpVersion>,
+class SquashFilterIntegrationTest : public testing::TestWithParam<Network::Address::IpVersion>,
                                     public HttpIntegrationTest {
 public:
-  SquashFilterIntegrationTest()
-      : HttpIntegrationTest(Http::CodecClient::Type::HTTP1, GetParam(), realTime()) {}
+  SquashFilterIntegrationTest() : HttpIntegrationTest(Http::CodecClient::Type::HTTP1, GetParam()) {}
 
   ~SquashFilterIntegrationTest() {
     if (fake_squash_connection_) {
@@ -134,8 +133,8 @@ TEST_P(SquashFilterIntegrationTest, TestHappyPath) {
 
   response->waitForEndStream();
 
-  EXPECT_STREQ("POST", create_stream->headers().Method()->value().c_str());
-  EXPECT_STREQ("/api/v2/debugattachment/", create_stream->headers().Path()->value().c_str());
+  EXPECT_EQ("POST", create_stream->headers().Method()->value().getStringView());
+  EXPECT_EQ("/api/v2/debugattachment/", create_stream->headers().Path()->value().getStringView());
   // Make sure the env var was replaced
   ProtobufWkt::Struct actualbody;
   MessageUtil::loadFromJson(create_stream->body().toString(), actualbody);
@@ -147,10 +146,11 @@ TEST_P(SquashFilterIntegrationTest, TestHappyPath) {
 
   EXPECT_TRUE(MessageDifferencer::Equals(expectedbody, actualbody));
   // The second request should be for the created object
-  EXPECT_STREQ("GET", get_stream->headers().Method()->value().c_str());
-  EXPECT_STREQ("/api/v2/debugattachment/oF8iVdiJs5", get_stream->headers().Path()->value().c_str());
+  EXPECT_EQ("GET", get_stream->headers().Method()->value().getStringView());
+  EXPECT_EQ("/api/v2/debugattachment/oF8iVdiJs5",
+            get_stream->headers().Path()->value().getStringView());
   EXPECT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
 }
 
 TEST_P(SquashFilterIntegrationTest, ErrorAttaching) {
@@ -164,7 +164,7 @@ TEST_P(SquashFilterIntegrationTest, ErrorAttaching) {
   response->waitForEndStream();
 
   EXPECT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
 }
 
 TEST_P(SquashFilterIntegrationTest, TimeoutAttaching) {
@@ -180,7 +180,7 @@ TEST_P(SquashFilterIntegrationTest, TimeoutAttaching) {
   response->waitForEndStream();
 
   EXPECT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
 }
 
 TEST_P(SquashFilterIntegrationTest, ErrorNoSquashServer) {
@@ -191,7 +191,7 @@ TEST_P(SquashFilterIntegrationTest, ErrorNoSquashServer) {
   response->waitForEndStream();
 
   EXPECT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
 }
 
 TEST_P(SquashFilterIntegrationTest, BadCreateResponse) {
@@ -203,7 +203,7 @@ TEST_P(SquashFilterIntegrationTest, BadCreateResponse) {
   response->waitForEndStream();
 
   EXPECT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
 }
 
 TEST_P(SquashFilterIntegrationTest, BadGetResponse) {
@@ -217,7 +217,7 @@ TEST_P(SquashFilterIntegrationTest, BadGetResponse) {
   response->waitForEndStream();
 
   EXPECT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
 }
 
 } // namespace Envoy

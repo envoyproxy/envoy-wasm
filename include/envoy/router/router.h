@@ -201,6 +201,16 @@ public:
    * policy is enabled.
    */
   virtual const std::vector<uint32_t>& retriableStatusCodes() const PURE;
+
+  /**
+   * @return absl::optional<std::chrono::milliseconds> base retry interval
+   */
+  virtual absl::optional<std::chrono::milliseconds> baseInterval() const PURE;
+
+  /**
+   * @return absl::optional<std::chrono::milliseconds> maximum retry interval
+   */
+  virtual absl::optional<std::chrono::milliseconds> maxInterval() const PURE;
 };
 
 /**
@@ -228,9 +238,8 @@ public:
   virtual bool enabled() PURE;
 
   /**
-   * Determine whether a request should be retried based on the response.
-   * @param response_headers supplies the response headers if available.
-   * @param reset_reason supplies the reset reason if available.
+   * Determine whether a request should be retried based on the response headers.
+   * @param response_headers supplies the response headers.
    * @param callback supplies the callback that will be invoked when the retry should take place.
    *                 This is used to add timed backoff, etc. The callback will never be called
    *                 inline.
@@ -238,9 +247,21 @@ public:
    *         in the future. Otherwise a retry should not take place and the callback will never be
    *         called. Calling code should proceed with error handling.
    */
-  virtual RetryStatus shouldRetry(const Http::HeaderMap* response_headers,
-                                  const absl::optional<Http::StreamResetReason>& reset_reason,
-                                  DoRetryCallback callback) PURE;
+  virtual RetryStatus shouldRetryHeaders(const Http::HeaderMap& response_headers,
+                                         DoRetryCallback callback) PURE;
+
+  /**
+   * Determine whether a request should be retried after a reset based on the reason for the reset.
+   * @param reset_reason supplies the reset reason.
+   * @param callback supplies the callback that will be invoked when the retry should take place.
+   *                 This is used to add timed backoff, etc. The callback will never be called
+   *                 inline.
+   * @return RetryStatus if a retry should take place. @param callback will be called at some point
+   *         in the future. Otherwise a retry should not take place and the callback will never be
+   *         called. Calling code should proceed with error handling.
+   */
+  virtual RetryStatus shouldRetryReset(const Http::StreamResetReason reset_reason,
+                                       DoRetryCallback callback) PURE;
 
   /**
    * Called when a host was attempted but the request failed and is eligible for another retry.
@@ -411,6 +432,32 @@ public:
                AddCookieCallback add_cookie) const PURE;
 };
 
+/**
+ * Route level hedging policy.
+ */
+class HedgePolicy {
+public:
+  virtual ~HedgePolicy() {}
+
+  /**
+   * @return number of upstream requests that should be sent initially.
+   */
+  virtual uint32_t initialRequests() const PURE;
+
+  /**
+   * @return percent chance that an additional upstream request should be sent
+   * on top of the value from initialRequests().
+   */
+  virtual const envoy::type::FractionalPercent& additionalRequestChance() const PURE;
+
+  /**
+   * @return bool indicating whether request hedging should occur when a request
+   * is retried due to a per try timeout. The alternative is the original request
+   * will be canceled immediately.
+   */
+  virtual bool hedgeOnPerTryTimeout() const PURE;
+};
+
 class MetadataMatchCriterion {
 public:
   virtual ~MetadataMatchCriterion() {}
@@ -529,6 +576,12 @@ public:
   virtual const HashPolicy* hashPolicy() const PURE;
 
   /**
+   * @return const HedgePolicy& the hedge policy for the route. All routes have a hedge policy even
+   *         if it is empty and does not allow for hedged requests.
+   */
+  virtual const HedgePolicy& hedgePolicy() const PURE;
+
+  /**
    * @return the priority of the route.
    */
   virtual Upstream::ResourcePriority priority() const PURE;
@@ -567,6 +620,13 @@ public:
    * header, while 0 represents infinity.
    */
   virtual absl::optional<std::chrono::milliseconds> maxGrpcTimeout() const PURE;
+
+  /**
+   * @return absl::optional<std::chrono::milliseconds> the timeout offset to apply to the timeout
+   * provided by the 'grpc-timeout' header of a gRPC request. This value will be positive and should
+   * be subtracted from the value provided by the header.
+   */
+  virtual absl::optional<std::chrono::milliseconds> grpcTimeoutOffset() const PURE;
 
   /**
    * Determine whether a specific request path belongs to a virtual cluster for use in stats, etc.
@@ -743,6 +803,11 @@ public:
    * @return const std::string the RouteConfiguration name.
    */
   virtual const std::string& name() const PURE;
+
+  /**
+   * @return whether router configuration uses VHDS.
+   */
+  virtual bool usesVhds() const PURE;
 };
 
 typedef std::shared_ptr<const Config> ConfigConstSharedPtr;

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <list>
+#include <memory>
 #include <vector>
 
 #include "envoy/api/api.h"
@@ -10,10 +11,12 @@
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/network/connection_handler.h"
+#include "envoy/stats/scope.h"
 
 #include "common/common/logger.h"
 #include "common/common/thread.h"
 #include "common/event/libevent.h"
+#include "common/event/libevent_scheduler.h"
 
 namespace Envoy {
 namespace Event {
@@ -23,17 +26,19 @@ namespace Event {
  */
 class DispatcherImpl : Logger::Loggable<Logger::Id::main>, public Dispatcher {
 public:
-  explicit DispatcherImpl(Api::Api& api);
-  DispatcherImpl(Buffer::WatermarkFactoryPtr&& factory, Api::Api& api);
+  DispatcherImpl(Api::Api& api, Event::TimeSystem& time_system);
+  DispatcherImpl(Buffer::WatermarkFactoryPtr&& factory, Api::Api& api,
+                 Event::TimeSystem& time_system);
   ~DispatcherImpl();
 
   /**
    * @return event_base& the libevent base.
    */
-  event_base& base() { return *base_; }
+  event_base& base() { return base_scheduler_.base(); }
 
   // Event::Dispatcher
-  TimeSystem& timeSystem() override { return api_.timeSystem(); }
+  TimeSource& timeSource() override { return api_.timeSource(); }
+  void initializeStats(Stats::Scope& scope, const std::string& prefix) override;
   void clearDeferredDeleteList() override;
   Network::ConnectionPtr
   createServerConnection(Network::ConnectionSocketPtr&& socket,
@@ -70,9 +75,11 @@ private:
   bool isThreadSafe() const { return run_tid_ == nullptr || run_tid_->isCurrentThreadId(); }
 
   Api::Api& api_;
+  std::string stats_prefix_;
+  std::unique_ptr<DispatcherStats> stats_;
   Thread::ThreadIdPtr run_tid_;
   Buffer::WatermarkFactoryPtr buffer_factory_;
-  Libevent::BasePtr base_;
+  LibeventScheduler base_scheduler_;
   SchedulerPtr scheduler_;
   TimerPtr deferred_delete_timer_;
   TimerPtr post_timer_;

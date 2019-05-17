@@ -89,7 +89,8 @@ void Utility::checkFilesystemSubscriptionBackingPath(const std::string& path, Ap
 void Utility::checkApiConfigSourceNames(
     const envoy::api::v2::core::ApiConfigSource& api_config_source) {
   const bool is_grpc =
-      (api_config_source.api_type() == envoy::api::v2::core::ApiConfigSource::GRPC);
+      (api_config_source.api_type() == envoy::api::v2::core::ApiConfigSource::GRPC ||
+       api_config_source.api_type() == envoy::api::v2::core::ApiConfigSource::DELTA_GRPC);
 
   if (api_config_source.cluster_names().empty() && api_config_source.grpc_services().empty()) {
     throw EnvoyException(
@@ -99,19 +100,19 @@ void Utility::checkApiConfigSourceNames(
 
   if (is_grpc) {
     if (!api_config_source.cluster_names().empty()) {
-      throw EnvoyException(fmt::format(
-          "envoy::api::v2::core::ConfigSource::GRPC must not have a cluster name specified: {}",
-          api_config_source.DebugString()));
+      throw EnvoyException(fmt::format("envoy::api::v2::core::ConfigSource::(DELTA_)GRPC "
+                                       "must not have a cluster name specified: {}",
+                                       api_config_source.DebugString()));
     }
     if (api_config_source.grpc_services().size() > 1) {
-      throw EnvoyException(fmt::format(
-          "envoy::api::v2::core::ConfigSource::GRPC must have a single gRPC service specified: {}",
-          api_config_source.DebugString()));
+      throw EnvoyException(fmt::format("envoy::api::v2::core::ConfigSource::(DELTA_)GRPC "
+                                       "must have a single gRPC service specified: {}",
+                                       api_config_source.DebugString()));
     }
   } else {
     if (!api_config_source.grpc_services().empty()) {
       throw EnvoyException(
-          fmt::format("envoy::api::v2::core::ConfigSource, if not of type gRPC, must not have "
+          fmt::format("envoy::api::v2::core::ConfigSource, if not a gRPC type, must not have "
                       "a gRPC service specified: {}",
                       api_config_source.DebugString()));
     }
@@ -126,6 +127,7 @@ void Utility::checkApiConfigSourceNames(
 void Utility::validateClusterName(const Upstream::ClusterManager::ClusterInfoMap& clusters,
                                   const std::string& cluster_name) {
   const auto& it = clusters.find(cluster_name);
+
   if (it == clusters.end() || it->second.get().info()->addedViaApi() ||
       it->second.get().info()->type() == envoy::api::v2::Cluster::EDS) {
     throw EnvoyException(fmt::format(
@@ -176,6 +178,12 @@ std::chrono::milliseconds Utility::apiConfigSourceRequestTimeout(
       PROTOBUF_GET_MS_OR_DEFAULT(api_config_source, request_timeout, 1000));
 }
 
+std::chrono::milliseconds
+Utility::configSourceInitialFetchTimeout(const envoy::api::v2::core::ConfigSource& config_source) {
+  return std::chrono::milliseconds(
+      PROTOBUF_GET_MS_OR_DEFAULT(config_source, initial_fetch_timeout, 0));
+}
+
 void Utility::translateCdsConfig(const Json::Object& json_config,
                                  envoy::api::v2::core::ConfigSource& cds_config) {
   translateApiConfigSource(json_config.getObject("cluster")->getString("name"),
@@ -186,12 +194,10 @@ void Utility::translateCdsConfig(const Json::Object& json_config,
 
 void Utility::translateRdsConfig(
     const Json::Object& json_rds,
-    envoy::config::filter::network::http_connection_manager::v2::Rds& rds,
-    const Stats::StatsOptions& stats_options) {
+    envoy::config::filter::network::http_connection_manager::v2::Rds& rds) {
   json_rds.validateSchema(Json::Schema::RDS_CONFIGURATION_SCHEMA);
 
   const std::string name = json_rds.getString("route_config_name", "");
-  checkObjNameLength("Invalid route_config name", name, stats_options);
   rds.set_route_config_name(name);
 
   translateApiConfigSource(json_rds.getString("cluster"),
@@ -234,22 +240,14 @@ Utility::createStatsMatcher(const envoy::config::bootstrap::v2::Bootstrap& boots
   return std::make_unique<Stats::StatsMatcherImpl>(bootstrap.stats_config());
 }
 
-void Utility::checkObjNameLength(const std::string& error_prefix, const std::string& name,
-                                 const Stats::StatsOptions& stats_options) {
-  if (name.length() > stats_options.maxNameLength()) {
-    throw EnvoyException(fmt::format("{}: Length of {} ({}) exceeds allowed maximum length ({})",
-                                     error_prefix, name, name.length(),
-                                     stats_options.maxNameLength()));
-  }
-}
-
 Grpc::AsyncClientFactoryPtr Utility::factoryForGrpcApiConfigSource(
     Grpc::AsyncClientManager& async_client_manager,
     const envoy::api::v2::core::ApiConfigSource& api_config_source, Stats::Scope& scope) {
   Utility::checkApiConfigSourceNames(api_config_source);
 
-  if (api_config_source.api_type() != envoy::api::v2::core::ApiConfigSource::GRPC) {
-    throw EnvoyException(fmt::format("envoy::api::v2::core::ConfigSource type must be GRPC: {}",
+  if (api_config_source.api_type() != envoy::api::v2::core::ApiConfigSource::GRPC &&
+      api_config_source.api_type() != envoy::api::v2::core::ApiConfigSource::DELTA_GRPC) {
+    throw EnvoyException(fmt::format("envoy::api::v2::core::ConfigSource type must be gRPC: {}",
                                      api_config_source.DebugString()));
   }
 

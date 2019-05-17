@@ -1,7 +1,8 @@
 #include "test/config_test/config_test.h"
 #include "test/test_common/environment.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
+
+#include "gtest/gtest.h"
 
 namespace Envoy {
 TEST(ExampleConfigsTest, All) {
@@ -16,9 +17,9 @@ TEST(ExampleConfigsTest, All) {
 
 #ifdef __APPLE__
   // freebind/freebind.yaml is not supported on macOS and disabled via Bazel.
-  EXPECT_EQ(21UL, ConfigTest::run(directory));
+  EXPECT_EQ(20UL, ConfigTest::run(directory));
 #else
-  EXPECT_EQ(22UL, ConfigTest::run(directory));
+  EXPECT_EQ(21UL, ConfigTest::run(directory));
 #endif
 
   ConfigTest::testMerge();

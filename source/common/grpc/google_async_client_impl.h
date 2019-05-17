@@ -171,7 +171,7 @@ public:
   AsyncStream* startRaw(absl::string_view service_full_name, absl::string_view method_name,
                         RawAsyncStreamCallbacks& callbacks) override;
 
-  TimeSource& timeSource() { return dispatcher_.timeSystem(); }
+  TimeSource& timeSource() { return dispatcher_.timeSource(); }
 
 private:
   static std::shared_ptr<grpc::Channel>

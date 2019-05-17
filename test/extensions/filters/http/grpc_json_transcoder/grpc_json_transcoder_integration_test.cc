@@ -6,10 +6,10 @@
 #include "test/integration/http_integration.h"
 #include "test/mocks/http/mocks.h"
 #include "test/proto/bookstore.pb.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
 
 #include "absl/strings/match.h"
+#include "gtest/gtest.h"
 
 using Envoy::Protobuf::Message;
 using Envoy::Protobuf::TextFormat;
@@ -19,12 +19,14 @@ using Envoy::ProtobufUtil::error::Code;
 using Envoy::ProtobufWkt::Empty;
 
 namespace Envoy {
+namespace {
 
-class GrpcJsonTranscoderIntegrationTest : public TestBaseWithParam<Network::Address::IpVersion>,
-                                          public HttpIntegrationTest {
+class GrpcJsonTranscoderIntegrationTest
+    : public testing::TestWithParam<Network::Address::IpVersion>,
+      public HttpIntegrationTest {
 public:
   GrpcJsonTranscoderIntegrationTest()
-      : HttpIntegrationTest(Http::CodecClient::Type::HTTP1, GetParam(), realTime()) {}
+      : HttpIntegrationTest(Http::CodecClient::Type::HTTP1, GetParam()) {}
   /**
    * Global initializer for all integration tests.
    */
@@ -107,7 +109,7 @@ protected:
         for (const auto& response_message_str : grpc_response_messages) {
           ResponseType response_message;
           EXPECT_TRUE(TextFormat::ParseFromString(response_message_str, &response_message));
-          auto buffer = Grpc::Common::serializeBody(response_message);
+          auto buffer = Grpc::Common::serializeToGrpcFrame(response_message);
           upstream_request_->encodeData(*buffer, false);
         }
         Http::TestHeaderMapImpl response_trailers;
@@ -134,8 +136,9 @@ protected:
     response_headers.iterate(
         [](const Http::HeaderEntry& entry, void* context) -> Http::HeaderMap::Iterate {
           IntegrationStreamDecoder* response = static_cast<IntegrationStreamDecoder*>(context);
-          Http::LowerCaseString lower_key{entry.key().c_str()};
-          EXPECT_STREQ(entry.value().c_str(), response->headers().get(lower_key)->value().c_str());
+          Http::LowerCaseString lower_key{std::string(entry.key().getStringView())};
+          EXPECT_EQ(entry.value().getStringView(),
+                    response->headers().get(lower_key)->value().getStringView());
           return Http::HeaderMap::Iterate::Continue;
         },
         response.get());
@@ -330,4 +333,5 @@ TEST_P(GrpcJsonTranscoderIntegrationTest, InvalidJson) {
       "Expected : between key:value pair.\n", false);
 }
 
+} // namespace
 } // namespace Envoy

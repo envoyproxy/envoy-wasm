@@ -21,10 +21,10 @@
 #include "test/mocks/thread_local/mocks.h"
 #include "test/mocks/tracing/mocks.h"
 #include "test/mocks/upstream/mocks.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::Invoke;
@@ -36,8 +36,9 @@ namespace Envoy {
 namespace Extensions {
 namespace Tracers {
 namespace Zipkin {
+namespace {
 
-class ZipkinDriverTest : public TestBase {
+class ZipkinDriverTest : public testing::Test {
 public:
   ZipkinDriverTest() : time_source_(test_time_.timeSystem()) {}
 
@@ -144,9 +145,10 @@ TEST_F(ZipkinDriverTest, FlushSeveralSpans) {
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             callback = &callbacks;
 
-            EXPECT_STREQ("/api/v1/spans", message->headers().Path()->value().c_str());
-            EXPECT_STREQ("fake_cluster", message->headers().Host()->value().c_str());
-            EXPECT_STREQ("application/json", message->headers().ContentType()->value().c_str());
+            EXPECT_EQ("/api/v1/spans", message->headers().Path()->value().getStringView());
+            EXPECT_EQ("fake_cluster", message->headers().Host()->value().getStringView());
+            EXPECT_EQ("application/json",
+                      message->headers().ContentType()->value().getStringView());
 
             return &request;
           }));
@@ -194,9 +196,10 @@ TEST_F(ZipkinDriverTest, FlushOneSpanReportFailure) {
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             callback = &callbacks;
 
-            EXPECT_STREQ("/api/v1/spans", message->headers().Path()->value().c_str());
-            EXPECT_STREQ("fake_cluster", message->headers().Host()->value().c_str());
-            EXPECT_STREQ("application/json", message->headers().ContentType()->value().c_str());
+            EXPECT_EQ("/api/v1/spans", message->headers().Path()->value().getStringView());
+            EXPECT_EQ("fake_cluster", message->headers().Host()->value().getStringView());
+            EXPECT_EQ("application/json",
+                      message->headers().ContentType()->value().getStringView());
 
             return &request;
           }));
@@ -451,6 +454,24 @@ TEST_F(ZipkinDriverTest, ZipkinSpanTest) {
   EXPECT_EQ(1ULL, zipkin_zipkin_span3.binaryAnnotations().size());
   EXPECT_EQ("key3", zipkin_zipkin_span3.binaryAnnotations()[0].key());
   EXPECT_EQ("value3", zipkin_zipkin_span3.binaryAnnotations()[0].value());
+
+  // ====
+  // Test effective log()
+  // ====
+
+  Tracing::SpanPtr span4 = driver_->startSpan(config_, request_headers_, operation_name_,
+                                              start_time_, {Tracing::Reason::Sampling, true});
+  const auto timestamp =
+      SystemTime{std::chrono::duration_cast<SystemTime::duration>(std::chrono::hours{123})};
+  const auto timestamp_count =
+      std::chrono::duration_cast<std::chrono::microseconds>(timestamp.time_since_epoch()).count();
+  span4->log(timestamp, "abc");
+
+  ZipkinSpanPtr zipkin_span4(dynamic_cast<ZipkinSpan*>(span4.release()));
+  Span& zipkin_zipkin_span4 = zipkin_span4->span();
+  EXPECT_FALSE(zipkin_zipkin_span4.annotations().empty());
+  EXPECT_EQ(timestamp_count, zipkin_zipkin_span4.annotations().back().timestamp());
+  EXPECT_EQ("abc", zipkin_zipkin_span4.annotations().back().value());
 }
 
 TEST_F(ZipkinDriverTest, ZipkinSpanContextFromB3HeadersTest) {
@@ -474,6 +495,27 @@ TEST_F(ZipkinDriverTest, ZipkinSpanContextFromB3HeadersTest) {
   EXPECT_EQ(trace_id, zipkin_span->span().traceIdAsHexString());
   EXPECT_EQ(span_id, zipkin_span->span().idAsHexString());
   EXPECT_EQ(parent_id, zipkin_span->span().parentIdAsHexString());
+  EXPECT_TRUE(zipkin_span->span().sampled());
+}
+
+TEST_F(ZipkinDriverTest, ZipkinSpanContextFromB3HeadersEmptyParentSpanTest) {
+  setupValidDriver();
+
+  // Root span so have same trace and span id
+  const std::string id = Hex::uint64ToHex(generateRandom64());
+  request_headers_.addReferenceKey(ZipkinCoreConstants::get().X_B3_TRACE_ID, id);
+  request_headers_.addReferenceKey(ZipkinCoreConstants::get().X_B3_SPAN_ID, id);
+  request_headers_.addReferenceKey(ZipkinCoreConstants::get().X_B3_SAMPLED,
+                                   ZipkinCoreConstants::get().SAMPLED);
+
+  // Set parent span id to empty string, to ensure it is ignored
+  const std::string parent_span_id = "";
+  request_headers_.addReferenceKey(ZipkinCoreConstants::get().X_B3_PARENT_SPAN_ID, parent_span_id);
+
+  Tracing::SpanPtr span = driver_->startSpan(config_, request_headers_, operation_name_,
+                                             start_time_, {Tracing::Reason::Sampling, true});
+
+  ZipkinSpanPtr zipkin_span(dynamic_cast<ZipkinSpan*>(span.release()));
   EXPECT_TRUE(zipkin_span->span().sampled());
 }
 
@@ -593,9 +635,9 @@ TEST_F(ZipkinDriverTest, DuplicatedHeader) {
   Tracing::SpanPtr span = driver_->startSpan(config_, request_headers_, operation_name_,
                                              start_time_, {Tracing::Reason::Sampling, false});
 
-  typedef std::function<bool(const std::string& key)> DupCallback;
-  DupCallback dup_callback = [](const std::string& key) -> bool {
-    static std::unordered_map<std::string, bool> dup;
+  typedef std::function<bool(absl::string_view key)> DupCallback;
+  DupCallback dup_callback = [](absl::string_view key) -> bool {
+    static absl::flat_hash_map<std::string, bool> dup;
     if (dup.find(key) == dup.end()) {
       dup[key] = true;
       return false;
@@ -607,11 +649,13 @@ TEST_F(ZipkinDriverTest, DuplicatedHeader) {
   span->injectContext(request_headers_);
   request_headers_.iterate(
       [](const Http::HeaderEntry& header, void* cb) -> Http::HeaderMap::Iterate {
-        EXPECT_FALSE(static_cast<DupCallback*>(cb)->operator()(header.key().c_str()));
+        EXPECT_FALSE(static_cast<DupCallback*>(cb)->operator()(header.key().getStringView()));
         return Http::HeaderMap::Iterate::Continue;
       },
       &dup_callback);
 }
+
+} // namespace
 } // namespace Zipkin
 } // namespace Tracers
 } // namespace Extensions

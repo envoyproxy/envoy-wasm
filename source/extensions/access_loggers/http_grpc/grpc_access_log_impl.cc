@@ -87,7 +87,7 @@ void HttpGrpcAccessLog::responseFlagsToAccessLogResponseFlags(
     envoy::data::accesslog::v2::AccessLogCommon& common_access_log,
     const StreamInfo::StreamInfo& stream_info) {
 
-  static_assert(StreamInfo::ResponseFlag::LastFlag == 0x8000,
+  static_assert(StreamInfo::ResponseFlag::LastFlag == 0x10000,
                 "A flag has been added. Fix this code.");
 
   if (stream_info.hasResponseFlag(StreamInfo::ResponseFlag::FailedLocalHealthCheck)) {
@@ -155,6 +155,10 @@ void HttpGrpcAccessLog::responseFlagsToAccessLogResponseFlags(
   if (stream_info.hasResponseFlag(StreamInfo::ResponseFlag::UpstreamRetryLimitExceeded)) {
     common_access_log.mutable_response_flags()->set_upstream_retry_limit_exceeded(true);
   }
+
+  if (stream_info.hasResponseFlag(StreamInfo::ResponseFlag::StreamIdleTimeout)) {
+    common_access_log.mutable_response_flags()->set_stream_idle_timeout(true);
+  }
 }
 
 void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
@@ -173,7 +177,7 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
   }
 
   if (filter_) {
-    if (!filter_->evaluate(stream_info, *request_headers)) {
+    if (!filter_->evaluate(stream_info, *request_headers, *response_headers, *response_trailers)) {
       return;
     }
   }
@@ -183,7 +187,6 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
 
   // Common log properties.
   // TODO(mattklein123): Populate sample_rate field.
-  // TODO(mattklein123): Populate tls_properties field.
   auto* common_properties = log_entry->mutable_common_properties();
 
   if (stream_info.downstreamRemoteAddress() != nullptr) {
@@ -195,6 +198,28 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
     Network::Utility::addressToProtobufAddress(
         *stream_info.downstreamLocalAddress(),
         *common_properties->mutable_downstream_local_address());
+  }
+  if (stream_info.downstreamSslConnection() != nullptr) {
+    auto* tls_properties = common_properties->mutable_tls_properties();
+
+    tls_properties->set_tls_sni_hostname(stream_info.requestedServerName());
+
+    auto* local_properties = tls_properties->mutable_local_certificate_properties();
+    for (const auto& uri_san : stream_info.downstreamSslConnection()->uriSanLocalCertificate()) {
+      auto* local_san = local_properties->add_subject_alt_name();
+      local_san->set_uri(uri_san);
+    }
+    local_properties->set_subject(stream_info.downstreamSslConnection()->subjectLocalCertificate());
+
+    auto* peer_properties = tls_properties->mutable_peer_certificate_properties();
+    for (const auto& uri_san : stream_info.downstreamSslConnection()->uriSanPeerCertificate()) {
+      auto* peer_san = peer_properties->add_subject_alt_name();
+      peer_san->set_uri(uri_san);
+    }
+
+    peer_properties->set_subject(stream_info.downstreamSslConnection()->subjectPeerCertificate());
+
+    // TODO(snowp): Populate remaining tls_properties fields.
   }
   common_properties->mutable_start_time()->MergeFrom(
       Protobuf::util::TimeUtil::NanosecondsToTimestamp(
@@ -255,6 +280,10 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
         *stream_info.upstreamLocalAddress(), *common_properties->mutable_upstream_local_address());
   }
   responseFlagsToAccessLogResponseFlags(*common_properties, stream_info);
+  if (!stream_info.upstreamTransportFailureReason().empty()) {
+    common_properties->set_upstream_transport_failure_reason(
+        stream_info.upstreamTransportFailureReason());
+  }
   if (stream_info.dynamicMetadata().filter_metadata_size() > 0) {
     common_properties->mutable_metadata()->MergeFrom(stream_info.dynamicMetadata());
   }
@@ -277,28 +306,34 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
   // TODO(mattklein123): Populate port field.
   auto* request_properties = log_entry->mutable_request();
   if (request_headers->Scheme() != nullptr) {
-    request_properties->set_scheme(request_headers->Scheme()->value().c_str());
+    request_properties->set_scheme(std::string(request_headers->Scheme()->value().getStringView()));
   }
   if (request_headers->Host() != nullptr) {
-    request_properties->set_authority(request_headers->Host()->value().c_str());
+    request_properties->set_authority(
+        std::string(request_headers->Host()->value().getStringView()));
   }
   if (request_headers->Path() != nullptr) {
-    request_properties->set_path(request_headers->Path()->value().c_str());
+    request_properties->set_path(std::string(request_headers->Path()->value().getStringView()));
   }
   if (request_headers->UserAgent() != nullptr) {
-    request_properties->set_user_agent(request_headers->UserAgent()->value().c_str());
+    request_properties->set_user_agent(
+        std::string(request_headers->UserAgent()->value().getStringView()));
   }
   if (request_headers->Referer() != nullptr) {
-    request_properties->set_referer(request_headers->Referer()->value().c_str());
+    request_properties->set_referer(
+        std::string(request_headers->Referer()->value().getStringView()));
   }
   if (request_headers->ForwardedFor() != nullptr) {
-    request_properties->set_forwarded_for(request_headers->ForwardedFor()->value().c_str());
+    request_properties->set_forwarded_for(
+        std::string(request_headers->ForwardedFor()->value().getStringView()));
   }
   if (request_headers->RequestId() != nullptr) {
-    request_properties->set_request_id(request_headers->RequestId()->value().c_str());
+    request_properties->set_request_id(
+        std::string(request_headers->RequestId()->value().getStringView()));
   }
   if (request_headers->EnvoyOriginalPath() != nullptr) {
-    request_properties->set_original_path(request_headers->EnvoyOriginalPath()->value().c_str());
+    request_properties->set_original_path(
+        std::string(request_headers->EnvoyOriginalPath()->value().getStringView()));
   }
   request_properties->set_request_headers_bytes(request_headers->byteSize());
   request_properties->set_request_body_bytes(stream_info.bytesReceived());
@@ -306,7 +341,7 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
     envoy::api::v2::core::RequestMethod method =
         envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED;
     envoy::api::v2::core::RequestMethod_Parse(
-        std::string(request_headers->Method()->value().c_str()), &method);
+        std::string(request_headers->Method()->value().getStringView()), &method);
     request_properties->set_request_method(method);
   }
   if (!request_headers_to_log_.empty()) {
@@ -315,7 +350,7 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
     for (const auto& header : request_headers_to_log_) {
       const Http::HeaderEntry* entry = request_headers->get(header);
       if (entry != nullptr) {
-        logged_headers->insert({header.get(), ProtobufTypes::String(entry->value().c_str())});
+        logged_headers->insert({header.get(), std::string(entry->value().getStringView())});
       }
     }
   }
@@ -325,6 +360,9 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
   if (stream_info.responseCode()) {
     response_properties->mutable_response_code()->set_value(stream_info.responseCode().value());
   }
+  if (stream_info.responseCodeDetails()) {
+    response_properties->set_response_code_details(stream_info.responseCodeDetails().value());
+  }
   response_properties->set_response_headers_bytes(response_headers->byteSize());
   response_properties->set_response_body_bytes(stream_info.bytesSent());
   if (!response_headers_to_log_.empty()) {
@@ -333,7 +371,7 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
     for (const auto& header : response_headers_to_log_) {
       const Http::HeaderEntry* entry = response_headers->get(header);
       if (entry != nullptr) {
-        logged_headers->insert({header.get(), ProtobufTypes::String(entry->value().c_str())});
+        logged_headers->insert({header.get(), std::string(entry->value().getStringView())});
       }
     }
   }
@@ -344,7 +382,7 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
     for (const auto& header : response_trailers_to_log_) {
       const Http::HeaderEntry* entry = response_trailers->get(header);
       if (entry != nullptr) {
-        logged_headers->insert({header.get(), ProtobufTypes::String(entry->value().c_str())});
+        logged_headers->insert({header.get(), std::string(entry->value().getStringView())});
       }
     }
   }

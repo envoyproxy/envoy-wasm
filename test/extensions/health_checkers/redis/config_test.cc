@@ -12,10 +12,11 @@ namespace Envoy {
 namespace Extensions {
 namespace HealthCheckers {
 namespace RedisHealthChecker {
+namespace {
 
 typedef Extensions::HealthCheckers::RedisHealthChecker::RedisHealthChecker CustomRedisHealthChecker;
 
-TEST(HealthCheckerFactoryTest, createRedis) {
+TEST(HealthCheckerFactoryTest, CreateRedis) {
   const std::string yaml = R"EOF(
     timeout: 1s
     interval: 1s
@@ -39,7 +40,7 @@ TEST(HealthCheckerFactoryTest, createRedis) {
               .get()));
 }
 
-TEST(HealthCheckerFactoryTest, createRedisWithoutKey) {
+TEST(HealthCheckerFactoryTest, CreateRedisWithoutKey) {
   const std::string yaml = R"EOF(
     timeout: 1s
     interval: 1s
@@ -62,7 +63,7 @@ TEST(HealthCheckerFactoryTest, createRedisWithoutKey) {
               .get()));
 }
 
-TEST(HealthCheckerFactoryTest, createRedisWithLogHCFailure) {
+TEST(HealthCheckerFactoryTest, CreateRedisWithLogHCFailure) {
   const std::string yaml = R"EOF(
     timeout: 1s
     interval: 1s
@@ -86,7 +87,7 @@ TEST(HealthCheckerFactoryTest, createRedisWithLogHCFailure) {
               .get()));
 }
 
-TEST(HealthCheckerFactoryTest, createRedisViaUpstreamHealthCheckerFactory) {
+TEST(HealthCheckerFactoryTest, CreateRedisViaUpstreamHealthCheckerFactory) {
   const std::string yaml = R"EOF(
     timeout: 1s
     interval: 1s
@@ -100,69 +101,20 @@ TEST(HealthCheckerFactoryTest, createRedisViaUpstreamHealthCheckerFactory) {
         key: foo
     )EOF";
 
-  NiceMock<Upstream::MockCluster> cluster;
+  NiceMock<Upstream::MockClusterMockPrioritySet> cluster;
   Runtime::MockLoader runtime;
   Runtime::MockRandomGenerator random;
   Event::MockDispatcher dispatcher;
   AccessLog::MockAccessLogManager log_manager;
+
+  EXPECT_CALL(dispatcher, clearDeferredDeleteList());
   EXPECT_NE(nullptr, dynamic_cast<CustomRedisHealthChecker*>(
                          Upstream::HealthCheckerFactory::create(
                              Upstream::parseHealthCheckFromV2Yaml(yaml), cluster, runtime, random,
                              dispatcher, log_manager)
                              .get()));
 }
-
-TEST(HealthCheckerFactoryTest, createRedisWithDeprecatedV1JsonConfig) {
-  const std::string json = R"EOF(
-    {
-      "type": "redis",
-      "timeout_ms": 1000,
-      "interval_ms": 1000,
-      "unhealthy_threshold": 1,
-      "healthy_threshold": 1
-    }
-    )EOF";
-
-  NiceMock<Upstream::MockCluster> cluster;
-  Runtime::MockLoader runtime;
-  Runtime::MockRandomGenerator random;
-  Event::MockDispatcher dispatcher;
-  AccessLog::MockAccessLogManager log_manager;
-  EXPECT_NE(nullptr, dynamic_cast<CustomRedisHealthChecker*>(
-                         // Always use Upstream's HealthCheckerFactory when creating instance using
-                         // deprecated config.
-                         Upstream::HealthCheckerFactory::create(
-                             Upstream::parseHealthCheckFromV1Json(json), cluster, runtime, random,
-                             dispatcher, log_manager)
-                             .get()));
-}
-
-TEST(HealthCheckerFactoryTest, createRedisWithDeprecatedV1JsonConfigWithKey) {
-  const std::string json = R"EOF(
-    {
-      "type": "redis",
-      "timeout_ms": 1000,
-      "interval_ms": 1000,
-      "unhealthy_threshold": 1,
-      "healthy_threshold": 1,
-      "redis_key": "foo"
-    }
-    )EOF";
-
-  NiceMock<Upstream::MockCluster> cluster;
-  Runtime::MockLoader runtime;
-  Runtime::MockRandomGenerator random;
-  Event::MockDispatcher dispatcher;
-  AccessLog::MockAccessLogManager log_manager;
-  EXPECT_NE(nullptr, dynamic_cast<CustomRedisHealthChecker*>(
-                         // Always use Upstream's HealthCheckerFactory when creating instance using
-                         // deprecated config.
-                         Upstream::HealthCheckerFactory::create(
-                             Upstream::parseHealthCheckFromV1Json(json), cluster, runtime, random,
-                             dispatcher, log_manager)
-                             .get()));
-}
-
+} // namespace
 } // namespace RedisHealthChecker
 } // namespace HealthCheckers
 } // namespace Extensions

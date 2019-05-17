@@ -56,11 +56,6 @@ void MainImpl::initialize(const envoy::config::bootstrap::v2::Bootstrap& bootstr
   ENVOY_LOG(info, "loading {} cluster(s)", bootstrap.static_resources().clusters().size());
   cluster_manager_ = cluster_manager_factory.clusterManagerFromProto(bootstrap);
 
-  // TODO(ramaraochavali): remove this dependency on extension when rate limit service config is
-  // deprecated and removed from bootstrap. For now, just call in to extensions to register the rate
-  // limit service config, so that extensions can build rate limit client.
-  ratelimit_client_factory_ = Envoy::Extensions::Filters::Common::RateLimit::rateLimitClientFactory(
-      server, cluster_manager_->grpcAsyncClientManager(), bootstrap);
   const auto& listeners = bootstrap.static_resources().listeners();
   ENVOY_LOG(info, "loading {} listener(s)", listeners.size());
   for (ssize_t i = 0; i < listeners.size(); i++) {
@@ -132,11 +127,12 @@ InitialImpl::InitialImpl(const envoy::config::bootstrap::v2::Bootstrap& bootstra
     flags_path_ = bootstrap.flags_path();
   }
 
-  if (bootstrap.has_runtime()) {
-    runtime_ = std::make_unique<RuntimeImpl>();
-    runtime_->symlink_root_ = bootstrap.runtime().symlink_root();
-    runtime_->subdirectory_ = bootstrap.runtime().subdirectory();
-    runtime_->override_subdirectory_ = bootstrap.runtime().override_subdirectory();
+  base_runtime_ = bootstrap.runtime().base();
+  if (!bootstrap.runtime().symlink_root().empty()) {
+    disk_runtime_ = std::make_unique<DiskRuntimeImpl>();
+    disk_runtime_->symlink_root_ = bootstrap.runtime().symlink_root();
+    disk_runtime_->subdirectory_ = bootstrap.runtime().subdirectory();
+    disk_runtime_->override_subdirectory_ = bootstrap.runtime().override_subdirectory();
   }
 }
 

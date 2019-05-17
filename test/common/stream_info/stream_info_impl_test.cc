@@ -12,9 +12,9 @@
 #include "test/common/stream_info/test_int_accessor.h"
 #include "test/mocks/router/mocks.h"
 #include "test/mocks/upstream/mocks.h"
-#include "test/test_common/test_base.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace Envoy {
 namespace StreamInfo {
@@ -27,7 +27,7 @@ std::chrono::nanoseconds checkDuration(std::chrono::nanoseconds last,
   return timing.value();
 }
 
-class StreamInfoImplTest : public TestBase {
+class StreamInfoImplTest : public testing::Test {
 protected:
   DangerousDeprecatedTestTime test_time_;
 };
@@ -35,6 +35,7 @@ protected:
 TEST_F(StreamInfoImplTest, TimingTest) {
   MonotonicTime pre_start = test_time_.timeSystem().monotonicTime();
   StreamInfoImpl info(Http::Protocol::Http2, test_time_.timeSystem());
+  Envoy::StreamInfo::UpstreamTiming upstream_timing;
   MonotonicTime post_start = test_time_.timeSystem().monotonicTime();
 
   const MonotonicTime& start = info.startTimeMonotonic();
@@ -48,19 +49,23 @@ TEST_F(StreamInfoImplTest, TimingTest) {
       checkDuration(std::chrono::nanoseconds{0}, info.lastDownstreamRxByteReceived());
 
   EXPECT_FALSE(info.firstUpstreamTxByteSent());
-  info.onFirstUpstreamTxByteSent();
+  upstream_timing.onFirstUpstreamTxByteSent(test_time_.timeSystem());
+  info.setUpstreamTiming(upstream_timing);
   dur = checkDuration(dur, info.firstUpstreamTxByteSent());
 
   EXPECT_FALSE(info.lastUpstreamTxByteSent());
-  info.onLastUpstreamTxByteSent();
+  upstream_timing.onLastUpstreamTxByteSent(test_time_.timeSystem());
+  info.setUpstreamTiming(upstream_timing);
   dur = checkDuration(dur, info.lastUpstreamTxByteSent());
 
   EXPECT_FALSE(info.firstUpstreamRxByteReceived());
-  info.onFirstUpstreamRxByteReceived();
+  upstream_timing.onFirstUpstreamRxByteReceived(test_time_.timeSystem());
+  info.setUpstreamTiming(upstream_timing);
   dur = checkDuration(dur, info.firstUpstreamRxByteReceived());
 
   EXPECT_FALSE(info.lastUpstreamRxByteReceived());
-  info.onLastUpstreamRxByteReceived();
+  upstream_timing.onLastUpstreamRxByteReceived(test_time_.timeSystem());
+  info.setUpstreamTiming(upstream_timing);
   dur = checkDuration(dur, info.lastUpstreamRxByteReceived());
 
   EXPECT_FALSE(info.firstDownstreamTxByteSent());
@@ -137,6 +142,11 @@ TEST_F(StreamInfoImplTest, MiscSettersAndGetters) {
     ASSERT_TRUE(stream_info.responseCode());
     EXPECT_EQ(200, stream_info.responseCode().value());
 
+    EXPECT_FALSE(stream_info.responseCodeDetails().has_value());
+    stream_info.setResponseCodeDetails(ResponseCodeDetails::get().ViaUpstream);
+    ASSERT_TRUE(stream_info.responseCodeDetails().has_value());
+    EXPECT_EQ(ResponseCodeDetails::get().ViaUpstream, stream_info.responseCodeDetails().value());
+
     EXPECT_EQ(nullptr, stream_info.upstreamHost());
     Upstream::HostDescriptionConstSharedPtr host(new NiceMock<Upstream::MockHostDescription>());
     stream_info.onUpstreamHostSelected(host);
@@ -182,7 +192,7 @@ TEST_F(StreamInfoImplTest, DynamicMetadataTest) {
   EXPECT_EQ("test_value",
             Config::Metadata::metadataValue(stream_info.dynamicMetadata(), "com.test", "test_key")
                 .string_value());
-  ProtobufTypes::String json;
+  std::string json;
   const auto test_struct = stream_info.dynamicMetadata().filter_metadata().at("com.test");
   const auto status = Protobuf::util::MessageToJsonString(test_struct, &json);
   EXPECT_TRUE(status.ok());

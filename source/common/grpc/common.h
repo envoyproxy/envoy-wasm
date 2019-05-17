@@ -120,9 +120,9 @@ public:
                                       std::string* method);
 
   /**
-   * Serialize protobuf message. With grpc header.
+   * Serialize protobuf message with gRPC frame header.
    */
-  static Buffer::InstancePtr serializeBody(const Protobuf::Message& message);
+  static Buffer::InstancePtr serializeToGrpcFrame(const Protobuf::Message& message);
 
   /**
    * Serialize protobuf message. Without grpc header.
@@ -168,6 +168,12 @@ public:
    * @param Buffer::InstancePtr target container aliased to the data in grpc::ByteBuffer.
    */
   static Buffer::InstancePtr makeBufferInstance(const grpc::ByteBuffer& byteBuffer);
+
+  /**
+   * Prepend a gRPC frame header to a Buffer::Instance containing a single gRPC frame.
+   * @param buffer containing the frame data which will be modified.
+   */
+  static void prependGrpcFrameHeader(Buffer::Instance& buffer);
 
 private:
   static void checkForHeaderOnlyError(Http::Message& http_response);

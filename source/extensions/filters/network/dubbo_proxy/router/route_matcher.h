@@ -34,7 +34,7 @@ public:
   // Router::RouteEntry
   const std::string& clusterName() const override;
   const Envoy::Router::MetadataMatchCriteria* metadataMatchCriteria() const override {
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+    return metadata_match_criteria_.get();
   }
 
   // Router::Route
@@ -107,7 +107,7 @@ public:
                               uint64_t random_value) const override;
 
 private:
-  bool matchParameter(const std::string& request_data, const ParameterData& config_data) const;
+  bool matchParameter(absl::string_view request_data, const ParameterData& config_data) const;
 
   std::vector<ParameterData> parameter_data_list_;
 };

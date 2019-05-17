@@ -1306,7 +1306,7 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
            Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
            Stats::ScopeSharedPtr owned_scope)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
-      local_info_(local_info), owned_scope_(owned_scope), time_source_(dispatcher.timeSystem()),
+      local_info_(local_info), owned_scope_(owned_scope), time_source_(dispatcher.timeSource()),
       initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
@@ -1445,7 +1445,7 @@ void Wasm::getFunctions() {
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), scope_(wasm.scope_), local_info_(wasm.local_info_),
-      owned_scope_(wasm.owned_scope_), time_source_(dispatcher.timeSystem()) {
+      owned_scope_(wasm.owned_scope_), time_source_(dispatcher.timeSource()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   general_context_ = createContext();
   getFunctions();

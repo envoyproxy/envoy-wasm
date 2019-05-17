@@ -109,6 +109,17 @@ private:
     static const absl::optional<bool> allow_credentials_;
   };
 
+  struct NullHedgePolicy : public Router::HedgePolicy {
+    // Router::HedgePolicy
+    uint32_t initialRequests() const override { return 1; }
+    const envoy::type::FractionalPercent& additionalRequestChance() const override {
+      return additional_request_chance_;
+    }
+    bool hedgeOnPerTryTimeout() const override { return false; }
+
+    const envoy::type::FractionalPercent additional_request_chance_;
+  };
+
   struct NullRateLimitPolicy : public Router::RateLimitPolicy {
     // Router::RateLimitPolicy
     const std::vector<std::reference_wrapper<const Router::RateLimitPolicyEntry>>&
@@ -137,8 +148,12 @@ private:
     const std::vector<uint32_t>& retriableStatusCodes() const override {
       return retriable_status_codes_;
     }
+    absl::optional<std::chrono::milliseconds> baseInterval() const override {
+      return absl::nullopt;
+    }
+    absl::optional<std::chrono::milliseconds> maxInterval() const override { return absl::nullopt; }
 
-    const std::vector<uint32_t> retriable_status_codes_;
+    const std::vector<uint32_t> retriable_status_codes_{};
   };
 
   struct NullShadowPolicy : public Router::ShadowPolicy {
@@ -161,6 +176,7 @@ private:
     }
 
     const std::string& name() const override { return EMPTY_STRING; }
+    bool usesVhds() const override { return false; }
 
     static const std::list<LowerCaseString> internal_only_headers_;
   };
@@ -200,6 +216,7 @@ private:
                                 bool) const override {}
     void finalizeResponseHeaders(Http::HeaderMap&, const StreamInfo::StreamInfo&) const override {}
     const Router::HashPolicy* hashPolicy() const override { return nullptr; }
+    const Router::HedgePolicy& hedgePolicy() const override { return hedge_policy_; }
     const Router::MetadataMatchCriteria* metadataMatchCriteria() const override { return nullptr; }
     Upstream::ResourcePriority priority() const override {
       return Upstream::ResourcePriority::Default;
@@ -216,6 +233,9 @@ private:
     }
     absl::optional<std::chrono::milliseconds> idleTimeout() const override { return absl::nullopt; }
     absl::optional<std::chrono::milliseconds> maxGrpcTimeout() const override {
+      return absl::nullopt;
+    }
+    absl::optional<std::chrono::milliseconds> grpcTimeoutOffset() const override {
       return absl::nullopt;
     }
     const Router::VirtualCluster* virtualCluster(const Http::HeaderMap&) const override {
@@ -243,6 +263,7 @@ private:
       return Router::InternalRedirectAction::PassThrough;
     }
 
+    static const NullHedgePolicy hedge_policy_;
     static const NullRateLimitPolicy rate_limit_policy_;
     static const NullRetryPolicy retry_policy_;
     static const NullShadowPolicy shadow_policy_;
@@ -298,10 +319,18 @@ private:
     // filter which uses this function for buffering.
     ASSERT(buffered_body_ != nullptr);
   }
+  void injectDecodedDataToFilterChain(Buffer::Instance&, bool) override {
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  }
   const Buffer::Instance* decodingBuffer() override { return buffered_body_.get(); }
+  void modifyDecodingBuffer(std::function<void(Buffer::Instance&)>) override {
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  }
   void sendLocalReply(Code code, absl::string_view body,
                       std::function<void(HeaderMap& headers)> modify_headers,
-                      const absl::optional<Grpc::Status::GrpcStatus> grpc_status) override {
+                      const absl::optional<Grpc::Status::GrpcStatus> grpc_status,
+                      absl::string_view details) override {
+    stream_info_.setResponseCodeDetails(details);
     Utility::sendLocalReply(
         is_grpc_request_,
         [this, modify_headers](HeaderMapPtr&& headers, bool end_stream) -> void {
@@ -327,6 +356,8 @@ private:
   void setDecoderBufferLimit(uint32_t) override {}
   uint32_t decoderBufferLimit() override { return 0; }
   bool recreateStream() override { return false; }
+  void addUpstreamSocketOptions(const Network::Socket::OptionsSharedPtr&) override {}
+  Network::Socket::OptionsSharedPtr getUpstreamSocketOptions() const override { return {}; }
 
   AsyncClient::StreamCallbacks& stream_callbacks_;
   const uint64_t stream_id_;
@@ -370,6 +401,9 @@ private:
     // internal use of the router filter which uses this function for buffering.
   }
   const Buffer::Instance* decodingBuffer() override { return request_->body().get(); }
+  void modifyDecodingBuffer(std::function<void(Buffer::Instance&)>) override {
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  }
 
   MessagePtr request_;
   AsyncClient::Callbacks& callbacks_;

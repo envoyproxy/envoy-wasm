@@ -3,9 +3,9 @@
 #include "server/drain_manager_impl.h"
 
 #include "test/mocks/server/mocks.h"
-#include "test/test_common/test_base.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::InSequence;
@@ -14,8 +14,9 @@ using testing::SaveArg;
 
 namespace Envoy {
 namespace Server {
+namespace {
 
-class DrainManagerImplTest : public TestBase {
+class DrainManagerImplTest : public testing::Test {
 public:
   DrainManagerImplTest() {
     ON_CALL(server_.options_, drainTime()).WillByDefault(Return(std::chrono::seconds(600)));
@@ -35,7 +36,7 @@ TEST_F(DrainManagerImplTest, Default) {
   EXPECT_CALL(*shutdown_timer, enableTimer(std::chrono::milliseconds(900000)));
   drain_manager.startParentShutdownSequence();
 
-  EXPECT_CALL(server_.hot_restart_, terminateParent());
+  EXPECT_CALL(server_.hot_restart_, sendParentTerminateRequest());
   shutdown_timer->callback_();
 
   // Verify basic drain close.
@@ -72,5 +73,6 @@ TEST_F(DrainManagerImplTest, ModifyOnly) {
   EXPECT_FALSE(drain_manager.drainClose());
 }
 
+} // namespace
 } // namespace Server
 } // namespace Envoy

@@ -11,6 +11,7 @@
 #include "common/singleton/const_singleton.h"
 
 #include "extensions/filters/network/dubbo_proxy/message.h"
+#include "extensions/filters/network/dubbo_proxy/metadata.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -56,7 +57,7 @@ typedef ConstSingleton<ProtocolNameValues> ProtocolNames;
  */
 class ProtocolCallbacks {
 public:
-  virtual ~ProtocolCallbacks() {}
+  virtual ~ProtocolCallbacks() = default;
   virtual void onRequestMessage(RequestMessagePtr&& req) PURE;
   virtual void onResponseMessage(ResponseMessagePtr&& res) PURE;
 };
@@ -69,9 +70,11 @@ public:
   struct Context {
     bool is_request_ = false;
     size_t body_size_ = 0;
+    size_t header_size_ = 0;
+    bool is_heartbeat_ = false;
   };
-  virtual ~Protocol() {}
-  Protocol() {}
+  virtual ~Protocol() = default;
+  Protocol() = default;
   virtual const std::string& name() const PURE;
 
   /**
@@ -84,12 +87,24 @@ public:
    * If successful, the message is removed from the buffer.
    *
    * @param buffer the currently buffered dubbo data.
-   * @param context save the meta data of current messages
+   * @param context save the meta data of current messages.
+   * @param metadata the meta data of current messages
    * @return bool true if a complete message was successfully consumed, false if more data
    *                 is required.
    * @throws EnvoyException if the data is not valid for this protocol.
    */
-  virtual bool decode(Buffer::Instance& buffer, Context* context) PURE;
+  virtual bool decode(Buffer::Instance& buffer, Context* context,
+                      MessageMetadataSharedPtr metadata) PURE;
+
+  /*
+   * encodes the dubbo protocol message.
+   *
+   * @param buffer save the currently buffered dubbo data.
+   * @param metadata the meta data of dubbo protocol
+   * @return bool true if the protocol coding succeeds.
+   */
+  virtual bool encode(Buffer::Instance& buffer, int32_t body_size,
+                      const MessageMetadata& metadata) PURE;
 };
 
 typedef std::unique_ptr<Protocol> ProtocolPtr;
@@ -100,14 +115,13 @@ typedef std::unique_ptr<Protocol> ProtocolPtr;
  */
 class NamedProtocolConfigFactory {
 public:
-  virtual ~NamedProtocolConfigFactory() {}
+  virtual ~NamedProtocolConfigFactory() = default;
 
   /**
    * Create a particular Dubbo protocol.
-   * @param callbacks the callbacks to be notified of protocol decodes.
    * @return protocol instance pointer.
    */
-  virtual ProtocolPtr createProtocol(ProtocolCallbacks& callbacks) PURE;
+  virtual ProtocolPtr createProtocol() PURE;
 
   /**
    * @return std::string the identifying name for a particular implementation of Dubbo protocol
@@ -130,9 +144,7 @@ public:
  * ProtocolFactoryBase provides a template for a trivial NamedProtocolConfigFactory.
  */
 template <class ProtocolImpl> class ProtocolFactoryBase : public NamedProtocolConfigFactory {
-  ProtocolPtr createProtocol(ProtocolCallbacks& callbacks) override {
-    return std::make_unique<ProtocolImpl>(callbacks);
-  }
+  ProtocolPtr createProtocol() override { return std::make_unique<ProtocolImpl>(); }
 
   std::string name() override { return name_; }
 

@@ -3,10 +3,11 @@
 #include "common/network/address_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 
+#include "server/listener_hooks.h"
 #include "server/proto_descriptors.h"
 #include "server/server.h"
-#include "server/test_hooks.h"
 
+#include "test/common/runtime/utility.h"
 #include "test/fuzz/fuzz_runner.h"
 #include "test/integration/server.h"
 #include "test/mocks/server/mocks.h"
@@ -16,6 +17,7 @@
 
 namespace Envoy {
 namespace Server {
+namespace {
 
 void makePortHermetic(Fuzz::PerTestEnvironment& test_env, envoy::api::v2::core::Address& address) {
   if (address.has_socket_address()) {
@@ -51,9 +53,13 @@ makeHermeticPathsAndPorts(Fuzz::PerTestEnvironment& test_env,
   return output;
 }
 
+class AllFeaturesHooks : public DefaultListenerHooks {
+  void onRuntimeCreated() override { Runtime::RuntimeFeaturesPeer::setAllFeaturesAllowed(); }
+};
+
 DEFINE_PROTO_FUZZER(const envoy::config::bootstrap::v2::Bootstrap& input) {
   testing::NiceMock<MockOptions> options;
-  DefaultTestHooks hooks;
+  AllFeaturesHooks hooks;
   testing::NiceMock<MockHotRestart> restart;
   Stats::TestIsolatedStoreImpl stats_store;
   Thread::MutexBasicLockable fakelock;
@@ -61,8 +67,6 @@ DEFINE_PROTO_FUZZER(const envoy::config::bootstrap::v2::Bootstrap& input) {
   ThreadLocal::InstanceImpl thread_local_instance;
   DangerousDeprecatedTestTime test_time;
   Fuzz::PerTestEnvironment test_env;
-
-  RELEASE_ASSERT(validateProtoDescriptors(), "");
 
   {
     const std::string bootstrap_path = test_env.temporaryPath("bootstrap.pb_text");
@@ -78,7 +82,7 @@ DEFINE_PROTO_FUZZER(const envoy::config::bootstrap::v2::Bootstrap& input) {
         options, test_time.timeSystem(),
         std::make_shared<Network::Address::Ipv4Instance>("127.0.0.1"), hooks, restart, stats_store,
         fakelock, component_factory, std::make_unique<Runtime::RandomGeneratorImpl>(),
-        thread_local_instance, Thread::threadFactoryForTest());
+        thread_local_instance, Thread::threadFactoryForTest(), Filesystem::fileSystemForTest());
   } catch (const EnvoyException& ex) {
     ENVOY_LOG_MISC(debug, "Controlled EnvoyException exit: {}", ex.what());
     return;
@@ -89,5 +93,6 @@ DEFINE_PROTO_FUZZER(const envoy::config::bootstrap::v2::Bootstrap& input) {
   server->dispatcher().run(Event::Dispatcher::RunType::NonBlock);
 }
 
+} // namespace
 } // namespace Server
 } // namespace Envoy

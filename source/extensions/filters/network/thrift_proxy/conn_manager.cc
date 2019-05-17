@@ -13,11 +13,11 @@ namespace NetworkFilters {
 namespace ThriftProxy {
 
 ConnectionManager::ConnectionManager(Config& config, Runtime::RandomGenerator& random_generator,
-                                     Event::TimeSystem& time_system)
+                                     TimeSource& time_source)
     : config_(config), stats_(config_.stats()), transport_(config.createTransport()),
       protocol_(config.createProtocol()),
       decoder_(std::make_unique<Decoder>(*transport_, *protocol_, *this)),
-      random_generator_(random_generator), time_system_(time_system) {}
+      random_generator_(random_generator), time_source_(time_source) {}
 
 ConnectionManager::~ConnectionManager() {}
 
@@ -87,8 +87,11 @@ void ConnectionManager::dispatch() {
 
 void ConnectionManager::sendLocalReply(MessageMetadata& metadata, const DirectResponse& response,
                                        bool end_stream) {
-  Buffer::OwnedImpl buffer;
+  if (read_callbacks_->connection().state() == Network::Connection::State::Closed) {
+    return;
+  }
 
+  Buffer::OwnedImpl buffer;
   const DirectResponse::ResponseType result = response.encode(metadata, *protocol_, buffer);
 
   Buffer::OwnedImpl response_buffer;
@@ -203,6 +206,11 @@ FilterStatus ConnectionManager::ResponseDecoder::transportEnd() {
   ASSERT(metadata_ != nullptr);
 
   ConnectionManager& cm = parent_.parent_;
+
+  if (cm.read_callbacks_->connection().state() == Network::Connection::State::Closed) {
+    complete_ = true;
+    throw EnvoyException("downstream connection is closed");
+  }
 
   Buffer::OwnedImpl buffer;
 

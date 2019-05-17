@@ -40,7 +40,7 @@ private:
   Stats::Scope& scope_;
 };
 
-class WasmAccessLogConfigTest : public TestBaseWithParam<std::string> {};
+class WasmAccessLogConfigTest : public testing::TestWithParam<std::string> {};
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmAccessLogConfigTest, testing::Values("wavm", "v8"));
 
