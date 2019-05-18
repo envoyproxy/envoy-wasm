@@ -114,6 +114,8 @@ public:
 private:
   void callModuleFunction(Context* context, absl::string_view functionName, const wasm::Val args[],
                           wasm::Val results[]);
+  void callModuleFunction(Context* context, absl::string_view functionName, const wasm::Func* func,
+                          const wasm::Val args[], wasm::Val results[]);
 
   template <typename T>
   std::unique_ptr<Global<T>> registerHostGlobalImpl(absl::string_view moduleName,
@@ -448,13 +450,7 @@ void V8::start(Context* context) {
 
     for (const auto& kv : module_functions_) {
       if (absl::StartsWith(kv.first, "__GLOBAL__")) {
-        const wasm::Func* func = kv.second.get();
-        auto trap = func->call(nullptr, nullptr);
-        if (trap) {
-          throw WasmVmException(
-              fmt::format("Function: {} failed: {}", kv.first,
-                          absl::string_view(trap->message().get(), trap->message().size())));
-        }
+        callModuleFunction(context, kv.first, kv.second.get(), nullptr, nullptr);
       }
     }
   }
@@ -464,18 +460,22 @@ void V8::start(Context* context) {
 
 void V8::callModuleFunction(Context* context, absl::string_view functionName,
                             const wasm::Val args[], wasm::Val results[]) {
-  ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", functionName);
-  current_context_ = context;
-
   auto it = module_functions_.find(functionName);
   if (it != module_functions_.end()) {
-    const wasm::Func* func = it->second.get();
-    auto trap = func->call(args, results);
-    if (trap) {
-      throw WasmVmException(
-          fmt::format("Function: {} failed: {}", functionName,
-                      absl::string_view(trap->message().get(), trap->message().size())));
-    }
+    callModuleFunction(context, functionName, it->second.get(), args, results);
+  }
+}
+
+void V8::callModuleFunction(Context* context, absl::string_view functionName,
+                            const wasm::Func* func, const wasm::Val args[], wasm::Val results[]) {
+  ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", functionName);
+
+  current_context_ = context;
+  auto trap = func->call(args, results);
+  if (trap) {
+    throw WasmVmException(
+        fmt::format("Function: {} failed: {}", functionName,
+                    absl::string_view(trap->message().get(), trap->message().size())));
   }
 }
 
