@@ -28,8 +28,6 @@ envoy_cc_library(
     ],
     deps = [
         "//external:abseil_node_hash_map",
-        "//include/envoy/server:wasm_interface",
-        "//include/envoy/thread_local:thread_local_interface",
         "//source/common/common:assert_lib",
         "//source/common/common:c_smart_ptr_lib",
         "//source/common/protobuf",

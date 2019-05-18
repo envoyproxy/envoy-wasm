@@ -2503,7 +2503,7 @@
     end ;; $if_2
     local.get $0
     local.get $4
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     i64.const 1
     call $_proxy_incrementMetric
     local.get $4
@@ -2621,7 +2621,7 @@
     end ;; $if
     local.get $0
     local.get $3
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     i64.const 2
     call $_proxy_recordMetric
     local.get $3
@@ -2869,7 +2869,7 @@
     end ;; $if_3
     local.get $0
     local.get $5
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     i64.const 3
     call $_proxy_recordMetric
     local.get $5
@@ -3054,7 +3054,7 @@
     end ;; $if_2
     local.get $0
     local.get $4
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     call $_proxy_getMetric
     local.set $7
     local.get $4
@@ -3239,7 +3239,7 @@
     end ;; $if_2
     local.get $0
     local.get $4
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     i64.const 3
     call $_proxy_recordMetric
     local.get $4
@@ -3359,7 +3359,7 @@
     end ;; $if
     local.get $0
     local.get $3
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     call $_proxy_getMetric
     local.set $6
     local.get $3
@@ -3483,7 +3483,7 @@
     call $__ZN10MetricBaseC2ERKS_
     local.get $0
     local.get $3
-    call $__ZN10MetricBase26partiallyResolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase26partiallyResolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     local.get $3
     i32.load
     local.tee $1
@@ -3710,7 +3710,7 @@
     end ;; $if_3
     local.get $0
     local.get $5
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     local.set $4
     local.get $5
     i32.load
@@ -6803,7 +6803,7 @@
     end ;; $if_2
     local.get $0
     local.get $5
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     local.get $1
     call $_proxy_incrementMetric
     local.get $5
@@ -7024,7 +7024,7 @@
     end ;; $if_2
     local.get $0
     local.get $4
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     call $_proxy_getMetric
     local.set $7
     local.get $4
@@ -7246,7 +7246,7 @@
     end ;; $if_2
     local.get $0
     local.get $5
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     local.set $4
     local.get $5
     i32.load
@@ -7449,7 +7449,7 @@
     end ;; $if_2
     local.get $0
     local.get $5
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     i64.const 2
     call $_proxy_recordMetric
     local.get $5
@@ -7653,7 +7653,7 @@
     end ;; $if_2
     local.get $0
     local.get $5
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     call $_proxy_getMetric
     local.set $8
     local.get $5
@@ -7874,7 +7874,7 @@
     end ;; $if_2
     local.get $0
     local.get $5
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     i64.const 3
     call $_proxy_recordMetric
     local.get $5
@@ -8365,7 +8365,7 @@
     local.get $5
     local.get $0
     local.get $7
-    call $__ZN10MetricBase16prefixWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase16prefixWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     local.get $1
     i32.const 16
     i32.add
@@ -8594,7 +8594,7 @@
     end ;; $if_1
     local.get $0
     local.get $4
-    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     local.set $3
     local.get $4
     i32.load
@@ -8859,7 +8859,7 @@
     end ;; $if
     )
   
-  (func $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE (type $15)
+  (func $__ZN10MetricBase17resolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE (type $15)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -8956,7 +8956,7 @@
     local.get $4
     local.get $0
     local.get $1
-    call $__ZN10MetricBase16prefixWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase16prefixWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     local.get $0
     i32.const 4
     i32.add
@@ -9067,7 +9067,7 @@
     local.get $0
     )
   
-  (func $__ZN10MetricBase16prefixWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE (type $8)
+  (func $__ZN10MetricBase16prefixWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE (type $8)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -11004,7 +11004,7 @@
     end ;; $loop_0
     )
   
-  (func $__ZN10MetricBase26partiallyResolveWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE (type $11)
+  (func $__ZN10MetricBase26partiallyResolveWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE (type $11)
     (param $0 i32)
     (param $1 i32)
     (local $2 i32)
@@ -11105,7 +11105,7 @@
     local.get $3
     local.get $0
     local.get $1
-    call $__ZN10MetricBase16prefixWithFieldsERKNSt3__26vectorIKNS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS8_EEEE
+    call $__ZN10MetricBase16prefixWithFieldsERKNSt3__26vectorINS0_12basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEENS5_IS7_EEEE
     local.get $0
     i32.const 16
     i32.add

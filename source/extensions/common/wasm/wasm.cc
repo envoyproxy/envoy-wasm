@@ -26,6 +26,7 @@
 #include "common/http/utility.h"
 #include "common/tracing/http_tracer_impl.h"
 
+#include "extensions/common/wasm/null/null.h"
 #include "extensions/common/wasm/v8/v8.h"
 #include "extensions/common/wasm/wavm/wavm.h"
 #include "extensions/common/wasm/well_known_names.h"
@@ -158,26 +159,26 @@ Pairs toPairs(absl::string_view buffer) {
 }
 
 template <typename Pairs>
-void getPairs(Context* context, const Pairs& result, uint32_t ptr_ptr, uint32_t size_ptr) {
+void getPairs(Context* context, const Pairs& result, uint64_t ptr_ptr, uint64_t size_ptr) {
   if (result.empty()) {
     context->wasm()->copyToPointerSize("", ptr_ptr, size_ptr);
     return;
   }
-  uint32_t size = pairsSize(result);
-  uint32_t ptr;
+  uint64_t size = pairsSize(result);
+  uint64_t ptr;
   char* buffer = static_cast<char*>(context->wasm()->allocMemory(size, &ptr));
   marshalPairs(result, buffer);
-  context->wasmVm()->setMemory(ptr_ptr, sizeof(int32_t), &ptr);
-  context->wasmVm()->setMemory(size_ptr, sizeof(int32_t), &size);
+  context->wasmVm()->setWord(ptr_ptr, ptr);
+  context->wasmVm()->setWord(size_ptr, size);
 }
 
-void exportPairs(Context* context, const Pairs& pairs, uint32_t* ptr_ptr, uint32_t* size_ptr) {
+void exportPairs(Context* context, const Pairs& pairs, uint64_t* ptr_ptr, uint64_t* size_ptr) {
   if (pairs.empty()) {
     *ptr_ptr = 0;
     *size_ptr = 0;
     return;
   }
-  uint32_t size = pairsSize(pairs);
+  uint64_t size = pairsSize(pairs);
   char* buffer = static_cast<char*>(context->wasm()->allocMemory(size, ptr_ptr));
   marshalPairs(pairs, buffer);
   *size_ptr = size;
@@ -193,373 +194,6 @@ Http::HeaderMapPtr buildHeaderMapFromPairs(const Pairs& pairs) {
     map->addCopy(Http::LowerCaseString(std::string(p.first)), std::string(p.second));
   }
   return map;
-}
-
-//
-// HTTP Handlers
-//
-
-// StreamInfo
-void getProtocolHandler(void* raw_context, uint32_t type, uint32_t value_ptr_ptr,
-                        uint32_t value_size_ptr) {
-  if (type > static_cast<int>(StreamType::MAX))
-    return;
-  auto context = WASM_CONTEXT(raw_context);
-  context->wasm()->copyToPointerSize(context->getProtocol(static_cast<StreamType>(type)),
-                                     value_ptr_ptr, value_size_ptr);
-}
-
-// Metadata
-void getMetadataHandler(void* raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size,
-                        uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
-  if (type > static_cast<int>(MetadataType::MAX))
-    return;
-  auto context = WASM_CONTEXT(raw_context);
-  context->wasm()->copyToPointerSize(
-      context->getMetadata(static_cast<MetadataType>(type),
-                           context->wasmVm()->getMemory(key_ptr, key_size)),
-      value_ptr_ptr, value_size_ptr);
-}
-
-void setMetadataHandler(void* raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size,
-                        uint32_t value_ptr, uint32_t value_size) {
-  if (type > static_cast<int>(MetadataType::MAX))
-    return;
-  auto context = WASM_CONTEXT(raw_context);
-  context->setMetadata(static_cast<MetadataType>(type),
-                       context->wasmVm()->getMemory(key_ptr, key_size),
-                       context->wasmVm()->getMemory(value_ptr, value_size));
-}
-
-void getMetadataPairsHandler(void* raw_context, uint32_t type, uint32_t ptr_ptr,
-                             uint32_t size_ptr) {
-  if (type > static_cast<int>(MetadataType::MAX))
-    return;
-  auto context = WASM_CONTEXT(raw_context);
-  getPairs(context, context->getMetadataPairs(static_cast<MetadataType>(type)), ptr_ptr, size_ptr);
-}
-
-void getMetadataStructHandler(void* raw_context, uint32_t type, uint32_t name_ptr,
-                              uint32_t name_size, uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
-  if (type > static_cast<int>(MetadataType::MAX))
-    return;
-  auto context = WASM_CONTEXT(raw_context);
-  context->wasm()->copyToPointerSize(
-      context->getMetadataStruct(static_cast<MetadataType>(type),
-                                 context->wasmVm()->getMemory(name_ptr, name_size)),
-      value_ptr_ptr, value_size_ptr);
-}
-
-void setMetadataStructHandler(void* raw_context, uint32_t type, uint32_t name_ptr,
-                              uint32_t name_size, uint32_t value_ptr, uint32_t value_size) {
-  if (type > static_cast<int>(MetadataType::MAX))
-    return;
-  auto context = WASM_CONTEXT(raw_context);
-  context->setMetadataStruct(static_cast<MetadataType>(type),
-                             context->wasmVm()->getMemory(name_ptr, name_size),
-                             context->wasmVm()->getMemory(value_ptr, value_size));
-}
-
-// Continue
-void continueRequestHandler(void* raw_context) {
-  auto context = WASM_CONTEXT(raw_context);
-  context->continueRequest();
-}
-
-void continueResponseHandler(void* raw_context) {
-  auto context = WASM_CONTEXT(raw_context);
-  context->continueResponse();
-}
-
-// SharedData
-void getSharedDataHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
-                          uint32_t value_ptr_ptr, uint32_t value_size_ptr, uint32_t cas_ptr) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto key = context->wasmVm()->getMemory(key_ptr, key_size);
-  auto p = context->getSharedData(key);
-  context->wasm()->copyToPointerSize(p.first, value_ptr_ptr, value_size_ptr);
-  context->wasmVm()->setMemory(cas_ptr, sizeof(uint32_t), &p.second);
-}
-
-uint32_t setSharedDataHandler(void* raw_context, uint32_t key_ptr, uint32_t key_size,
-                              uint32_t value_ptr, uint32_t value_size, uint32_t cas) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto key = context->wasmVm()->getMemory(key_ptr, key_size);
-  auto value = context->wasmVm()->getMemory(value_ptr, value_size);
-  auto ok = context->setSharedData(key, value, cas);
-  return static_cast<uint32_t>(ok);
-}
-
-// Header/Trailer/Metadata Maps
-void addHeaderMapValueHandler(void* raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size,
-                              uint32_t value_ptr, uint32_t value_size) {
-  if (type > static_cast<uint32_t>(HeaderMapType::MAX)) {
-    return;
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  context->addHeaderMapValue(static_cast<HeaderMapType>(type),
-                             context->wasmVm()->getMemory(key_ptr, key_size),
-                             context->wasmVm()->getMemory(value_ptr, value_size));
-}
-
-void getHeaderMapValueHandler(void* raw_context, uint32_t type, uint32_t key_ptr, uint32_t key_size,
-                              uint32_t value_ptr_ptr, uint32_t value_size_ptr) {
-  if (type > static_cast<uint32_t>(HeaderMapType::MAX)) {
-    return;
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  auto result = context->getHeaderMapValue(static_cast<HeaderMapType>(type),
-                                           context->wasmVm()->getMemory(key_ptr, key_size));
-  context->wasm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
-}
-
-void replaceHeaderMapValueHandler(void* raw_context, uint32_t type, uint32_t key_ptr,
-                                  uint32_t key_size, uint32_t value_ptr, uint32_t value_size) {
-  if (type > static_cast<uint32_t>(HeaderMapType::MAX)) {
-    return;
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  context->replaceHeaderMapValue(static_cast<HeaderMapType>(type),
-                                 context->wasmVm()->getMemory(key_ptr, key_size),
-                                 context->wasmVm()->getMemory(value_ptr, value_size));
-}
-
-void removeHeaderMapValueHandler(void* raw_context, uint32_t type, uint32_t key_ptr,
-                                 uint32_t key_size) {
-  if (type > static_cast<uint32_t>(HeaderMapType::MAX)) {
-    return;
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  context->removeHeaderMapValue(static_cast<HeaderMapType>(type),
-                                context->wasmVm()->getMemory(key_ptr, key_size));
-}
-
-void getHeaderMapPairsHandler(void* raw_context, uint32_t type, uint32_t ptr_ptr,
-                              uint32_t size_ptr) {
-  if (type > static_cast<uint32_t>(HeaderMapType::MAX)) {
-    return;
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  auto result = context->getHeaderMapPairs(static_cast<HeaderMapType>(type));
-  getPairs(context, result, ptr_ptr, size_ptr);
-}
-
-void setHeaderMapPairsHandler(void* raw_context, uint32_t type, uint32_t ptr, uint32_t size) {
-  if (type > static_cast<uint32_t>(HeaderMapType::MAX)) {
-    return;
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  context->setHeaderMapPairs(static_cast<HeaderMapType>(type),
-                             toPairs(context->wasmVm()->getMemory(ptr, size)));
-}
-
-// Body Buffer
-void getRequestBodyBufferBytesHandler(void* raw_context, uint32_t start, uint32_t length,
-                                      uint32_t ptr_ptr, uint32_t size_ptr) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto result = context->getRequestBodyBufferBytes(start, length);
-  context->wasm()->copyToPointerSize(result, ptr_ptr, size_ptr);
-}
-
-void getResponseBodyBufferBytesHandler(void* raw_context, uint32_t start, uint32_t length,
-                                       uint32_t ptr_ptr, uint32_t size_ptr) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto result = context->getResponseBodyBufferBytes(start, length);
-  context->wasm()->copyToPointerSize(result, ptr_ptr, size_ptr);
-}
-
-uint32_t httpCallHandler(void* raw_context, uint32_t uri_ptr, uint32_t uri_size,
-                         uint32_t header_pairs_ptr, uint32_t header_pairs_size, uint32_t body_ptr,
-                         uint32_t body_size, uint32_t trailer_pairs_ptr,
-                         uint32_t trailer_pairs_size, uint32_t timeout_milliseconds) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto uri = context->wasmVm()->getMemory(uri_ptr, uri_size);
-  auto headers = toPairs(context->wasmVm()->getMemory(header_pairs_ptr, header_pairs_size));
-  auto body = context->wasmVm()->getMemory(body_ptr, body_size);
-  auto trailers = toPairs(context->wasmVm()->getMemory(trailer_pairs_ptr, trailer_pairs_size));
-  return context->httpCall(uri, headers, body, trailers, timeout_milliseconds);
-}
-
-uint32_t defineMetricHandler(void* raw_context, uint32_t metric_type, uint32_t name_ptr,
-                             uint32_t name_size) {
-  if (metric_type > static_cast<uint32_t>(Context::MetricType::Max))
-    return 0;
-  auto context = WASM_CONTEXT(raw_context);
-  auto name = context->wasmVm()->getMemory(name_ptr, name_size);
-  return context->defineMetric(static_cast<Context::MetricType>(metric_type), name);
-}
-
-void incrementMetricHandler(void* raw_context, uint32_t metric_id, int64_t offset) {
-  auto context = WASM_CONTEXT(raw_context);
-  context->incrementMetric(metric_id, offset);
-}
-
-void recordMetricHandler(void* raw_context, uint32_t metric_id, uint64_t value) {
-  auto context = WASM_CONTEXT(raw_context);
-  context->recordMetric(metric_id, value);
-}
-
-uint64_t getMetricHandler(void* raw_context, uint32_t metric_id) {
-  auto context = WASM_CONTEXT(raw_context);
-  return context->getMetric(metric_id);
-}
-
-uint32_t grpcCallHandler(void* raw_context, uint32_t service_ptr, uint32_t service_size,
-                         uint32_t service_name_ptr, uint32_t service_name_size,
-                         uint32_t method_name_ptr, uint32_t method_name_size, uint32_t request_ptr,
-                         uint32_t request_size, uint32_t timeout_milliseconds) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto service = context->wasmVm()->getMemory(service_ptr, service_size);
-  auto service_name = context->wasmVm()->getMemory(service_name_ptr, service_name_size);
-  auto method_name = context->wasmVm()->getMemory(method_name_ptr, method_name_size);
-  auto request = context->wasmVm()->getMemory(request_ptr, request_size);
-  envoy::api::v2::core::GrpcService service_proto;
-  if (!service_proto.ParseFromArray(service.data(), service.size())) {
-    return false;
-  }
-  return context->grpcCall(service_proto, service_name, method_name, request,
-                           std::chrono::milliseconds(timeout_milliseconds));
-}
-
-uint32_t grpcStreamHandler(void* raw_context, uint32_t service_ptr, uint32_t service_size,
-                           uint32_t service_name_ptr, uint32_t service_name_size,
-                           uint32_t method_name_ptr, uint32_t method_name_size) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto service = context->wasmVm()->getMemory(service_ptr, service_size);
-  auto service_name = context->wasmVm()->getMemory(service_name_ptr, service_name_size);
-  auto method_name = context->wasmVm()->getMemory(method_name_ptr, method_name_size);
-  envoy::api::v2::core::GrpcService service_proto;
-  if (!service_proto.ParseFromArray(service.data(), service.size())) {
-    return false;
-  }
-  return context->grpcStream(service_proto, service_name, method_name);
-}
-
-void grpcCancelHandler(void* raw_context, uint32_t token) {
-  auto context = WASM_CONTEXT(raw_context);
-  context->grpcCancel(token);
-}
-
-void grpcCloseHandler(void* raw_context, uint32_t token) {
-  auto context = WASM_CONTEXT(raw_context);
-  context->grpcClose(token);
-}
-
-void grpcSendHandler(void* raw_context, uint32_t token, uint32_t message_ptr, uint32_t message_size,
-                     uint32_t end_stream) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto message = context->wasmVm()->getMemory(message_ptr, message_size);
-  context->grpcSend(token, message, end_stream);
-}
-
-uint32_t _emscripten_memcpy_bigHandler(void*, uint32_t, uint32_t, uint32_t) {
-  throw WasmException("emscripten emscripten_memcpy_big");
-}
-
-uint32_t _emscripten_get_heap_sizeHandler(void*) { return 0x7FFFFFFF; }
-
-uint32_t _emscripten_resize_heapHandler(void*, uint32_t) {
-  throw WasmException("emscripten emscripten_resize_heap");
-}
-
-uint32_t abortOnCannotGrowMemoryHandler(void*) {
-  throw WasmException("emscripten abortOnCannotGrowMemory");
-}
-
-void abortHandler(void*, uint32_t) { throw WasmException("emscripten abort"); }
-
-void _abortHandler(void*) { throw WasmException("emscripten abort"); }
-
-void _llvm_trapHandler(void*) { throw WasmException("emscripten llvm_trap"); }
-
-void ___assert_failHandler(void*, uint32_t, uint32_t, uint32_t, uint32_t) {
-  throw WasmException("emscripten assert_fail");
-}
-
-void ___cxa_throwHandler(void*, uint32_t, uint32_t, uint32_t) {
-  throw WasmException("emscripten cxa_throw");
-}
-
-void ___cxa_pure_virtualHandler(void*) { throw WasmException("emscripten cxa_pure_virtual"); }
-
-uint32_t ___cxa_allocate_exceptionHandler(void*, uint32_t) {
-  throw WasmException("emscripten cxa_allocate_exception");
-}
-
-uint32_t ___call_mainHandler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten call_main");
-}
-
-uint32_t ___clock_gettimeHandler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten clock_gettime");
-}
-
-void ___lockHandler(void*, uint32_t) { throw WasmException("emscripten lock"); }
-
-void ___unlockHandler(void*, uint32_t) { throw WasmException("emscripten unlock"); }
-
-uint32_t ___syscall6Handler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten syscall6");
-}
-
-uint32_t ___syscall54Handler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten syscall54");
-}
-
-uint32_t ___syscall140Handler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten syscall140");
-}
-
-uint32_t ___syscall146Handler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten syscall146");
-}
-
-void ___setErrNoHandler(void*, uint32_t) { throw WasmException("emscripten setErrNo"); }
-
-// pthread_equal is required to return 0 by the protobuf libarary.
-uint32_t _pthread_equalHandler(void*, uint32_t, uint32_t) {
-  /* throw WasmException("emscripten pthread_equal"); */
-  return 0;
-}
-
-uint32_t _pthread_mutex_destroyHandler(void*, uint32_t) {
-  throw WasmException("emscripten pthread_mutex_destroy");
-}
-
-uint32_t _pthread_cond_waitHandler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten pthread_cond_wait");
-}
-
-uint32_t _pthread_getspecificHandler(void*, uint32_t) {
-  throw WasmException("emscripten pthread_getspecific");
-}
-
-uint32_t _pthread_key_createHandler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten pthread_key_create");
-}
-
-uint32_t _pthread_onceHandler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten pthread_once");
-}
-
-uint32_t _pthread_setspecificHandler(void*, uint32_t, uint32_t) {
-  throw WasmException("emscripten pthread_setspecific");
-}
-
-void setTempRet0Handler(void*, uint32_t) { throw WasmException("emscripten setTempRet0"); }
-
-void setTickPeriodMillisecondsHandler(void* raw_context, uint32_t tick_period_milliseconds) {
-  WASM_CONTEXT(raw_context)->setTickPeriod(std::chrono::milliseconds(tick_period_milliseconds));
-}
-
-uint64_t getCurrentTimeNanosecondsHandler(void* raw_context) {
-  return WASM_CONTEXT(raw_context)->getCurrentTimeNanoseconds();
-}
-
-void logHandler(void* raw_context, uint32_t level, uint32_t address, uint32_t size) {
-  auto context = WASM_CONTEXT(raw_context);
-  context->scriptLog(static_cast<spdlog::level::level_enum>(level),
-                     context->wasmVm()->getMemory(address, size));
 }
 
 const ProtobufWkt::Struct*
@@ -600,6 +234,343 @@ const uint8_t* decodeVarint(const uint8_t* pos, const uint8_t* end, uint32_t* ou
 }
 
 } // namespace
+
+//
+// HTTP Handlers
+//
+
+// StreamInfo
+void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word value_size_ptr) {
+  if (type > static_cast<int>(StreamType::MAX))
+    return;
+  auto context = WASM_CONTEXT(raw_context);
+  context->wasm()->copyToPointerSize(context->getProtocol(static_cast<StreamType>(type.u64)),
+                                     value_ptr_ptr, value_size_ptr);
+}
+
+// Metadata
+void getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+                        Word value_ptr_ptr, Word value_size_ptr) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
+  auto context = WASM_CONTEXT(raw_context);
+  context->wasm()->copyToPointerSize(
+      context->getMetadata(static_cast<MetadataType>(type.u64),
+                           context->wasmVm()->getMemory(key_ptr, key_size)),
+      value_ptr_ptr, value_size_ptr);
+}
+
+void setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
+                        Word value_size) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
+  auto context = WASM_CONTEXT(raw_context);
+  context->setMetadata(static_cast<MetadataType>(type.u64),
+                       context->wasmVm()->getMemory(key_ptr, key_size),
+                       context->wasmVm()->getMemory(value_ptr, value_size));
+}
+
+void getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
+  auto context = WASM_CONTEXT(raw_context);
+  getPairs(context, context->getMetadataPairs(static_cast<MetadataType>(type.u64)), ptr_ptr,
+           size_ptr);
+}
+
+void getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+                              Word value_ptr_ptr, Word value_size_ptr) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
+  auto context = WASM_CONTEXT(raw_context);
+  context->wasm()->copyToPointerSize(
+      context->getMetadataStruct(static_cast<MetadataType>(type.u64),
+                                 context->wasmVm()->getMemory(name_ptr, name_size)),
+      value_ptr_ptr, value_size_ptr);
+}
+
+void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+                              Word value_ptr, Word value_size) {
+  if (type > static_cast<int>(MetadataType::MAX))
+    return;
+  auto context = WASM_CONTEXT(raw_context);
+  context->setMetadataStruct(static_cast<MetadataType>(type.u64),
+                             context->wasmVm()->getMemory(name_ptr, name_size),
+                             context->wasmVm()->getMemory(value_ptr, value_size));
+}
+
+// Continue
+void continueRequestHandler(void* raw_context) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->continueRequest();
+}
+
+void continueResponseHandler(void* raw_context) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->continueResponse();
+}
+
+// SharedData
+void getSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr_ptr,
+                          Word value_size_ptr, Word cas_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto key = context->wasmVm()->getMemory(key_ptr, key_size);
+  auto p = context->getSharedData(key);
+  context->wasm()->copyToPointerSize(p.first, value_ptr_ptr, value_size_ptr);
+  context->wasmVm()->setMemory(cas_ptr, sizeof(uint32_t), &p.second);
+}
+
+Word setSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
+                          Word value_size, Word cas) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto key = context->wasmVm()->getMemory(key_ptr, key_size);
+  auto value = context->wasmVm()->getMemory(value_ptr, value_size);
+  auto ok = context->setSharedData(key, value, cas);
+  return Word(static_cast<uint64_t>(ok));
+}
+
+// Header/Trailer/Metadata Maps
+void addHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+                              Word value_ptr, Word value_size) {
+  if (type > static_cast<uint64_t>(HeaderMapType::MAX)) {
+    return;
+  }
+  auto context = WASM_CONTEXT(raw_context);
+  context->addHeaderMapValue(static_cast<HeaderMapType>(type.u64),
+                             context->wasmVm()->getMemory(key_ptr, key_size),
+                             context->wasmVm()->getMemory(value_ptr, value_size));
+}
+
+void getHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+                              Word value_ptr_ptr, Word value_size_ptr) {
+  if (type > static_cast<uint64_t>(HeaderMapType::MAX)) {
+    return;
+  }
+  auto context = WASM_CONTEXT(raw_context);
+  auto result = context->getHeaderMapValue(static_cast<HeaderMapType>(type.u64),
+                                           context->wasmVm()->getMemory(key_ptr, key_size));
+  context->wasm()->copyToPointerSize(result, value_ptr_ptr, value_size_ptr);
+}
+
+void replaceHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+                                  Word value_ptr, Word value_size) {
+  if (type > static_cast<uint64_t>(HeaderMapType::MAX)) {
+    return;
+  }
+  auto context = WASM_CONTEXT(raw_context);
+  context->replaceHeaderMapValue(static_cast<HeaderMapType>(type.u64),
+                                 context->wasmVm()->getMemory(key_ptr, key_size),
+                                 context->wasmVm()->getMemory(value_ptr, value_size));
+}
+
+void removeHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size) {
+  if (type > static_cast<uint64_t>(HeaderMapType::MAX)) {
+    return;
+  }
+  auto context = WASM_CONTEXT(raw_context);
+  context->removeHeaderMapValue(static_cast<HeaderMapType>(type.u64),
+                                context->wasmVm()->getMemory(key_ptr, key_size));
+}
+
+void getHeaderMapPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
+  if (type > static_cast<uint64_t>(HeaderMapType::MAX)) {
+    return;
+  }
+  auto context = WASM_CONTEXT(raw_context);
+  auto result = context->getHeaderMapPairs(static_cast<HeaderMapType>(type.u64));
+  getPairs(context, result, ptr_ptr, size_ptr);
+}
+
+void setHeaderMapPairsHandler(void* raw_context, Word type, Word ptr, Word size) {
+  if (type > static_cast<uint64_t>(HeaderMapType::MAX)) {
+    return;
+  }
+  auto context = WASM_CONTEXT(raw_context);
+  context->setHeaderMapPairs(static_cast<HeaderMapType>(type.u64),
+                             toPairs(context->wasmVm()->getMemory(ptr, size)));
+}
+
+// Body Buffer
+void getRequestBodyBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                      Word size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto result = context->getRequestBodyBufferBytes(start, length);
+  context->wasm()->copyToPointerSize(result, ptr_ptr, size_ptr);
+}
+
+void getResponseBodyBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                       Word size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto result = context->getResponseBodyBufferBytes(start, length);
+  context->wasm()->copyToPointerSize(result, ptr_ptr, size_ptr);
+}
+
+Word httpCallHandler(void* raw_context, Word uri_ptr, Word uri_size, Word header_pairs_ptr,
+                     Word header_pairs_size, Word body_ptr, Word body_size, Word trailer_pairs_ptr,
+                     Word trailer_pairs_size, Word timeout_milliseconds) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto uri = context->wasmVm()->getMemory(uri_ptr, uri_size);
+  auto headers = toPairs(context->wasmVm()->getMemory(header_pairs_ptr, header_pairs_size));
+  auto body = context->wasmVm()->getMemory(body_ptr, body_size);
+  auto trailers = toPairs(context->wasmVm()->getMemory(trailer_pairs_ptr, trailer_pairs_size));
+  return context->httpCall(uri, headers, body, trailers, timeout_milliseconds);
+}
+
+Word defineMetricHandler(void* raw_context, Word metric_type, Word name_ptr, Word name_size) {
+  if (metric_type > static_cast<uint64_t>(Context::MetricType::Max))
+    return 0;
+  auto context = WASM_CONTEXT(raw_context);
+  auto name = context->wasmVm()->getMemory(name_ptr, name_size);
+  return context->defineMetric(static_cast<Context::MetricType>(metric_type.u64), name);
+}
+
+void incrementMetricHandler(void* raw_context, Word metric_id, int64_t offset) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->incrementMetric(metric_id, offset);
+}
+
+void recordMetricHandler(void* raw_context, Word metric_id, uint64_t value) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->recordMetric(metric_id, value);
+}
+
+uint64_t getMetricHandler(void* raw_context, Word metric_id) {
+  auto context = WASM_CONTEXT(raw_context);
+  return context->getMetric(metric_id);
+}
+
+Word grpcCallHandler(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
+                     Word service_name_size, Word method_name_ptr, Word method_name_size,
+                     Word request_ptr, Word request_size, Word timeout_milliseconds) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto service = context->wasmVm()->getMemory(service_ptr, service_size);
+  auto service_name = context->wasmVm()->getMemory(service_name_ptr, service_name_size);
+  auto method_name = context->wasmVm()->getMemory(method_name_ptr, method_name_size);
+  auto request = context->wasmVm()->getMemory(request_ptr, request_size);
+  envoy::api::v2::core::GrpcService service_proto;
+  if (!service_proto.ParseFromArray(service.data(), service.size())) {
+    return false;
+  }
+  return context->grpcCall(service_proto, service_name, method_name, request,
+                           std::chrono::milliseconds(timeout_milliseconds));
+}
+
+Word grpcStreamHandler(void* raw_context, Word service_ptr, Word service_size,
+                       Word service_name_ptr, Word service_name_size, Word method_name_ptr,
+                       Word method_name_size) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto service = context->wasmVm()->getMemory(service_ptr, service_size);
+  auto service_name = context->wasmVm()->getMemory(service_name_ptr, service_name_size);
+  auto method_name = context->wasmVm()->getMemory(method_name_ptr, method_name_size);
+  envoy::api::v2::core::GrpcService service_proto;
+  if (!service_proto.ParseFromArray(service.data(), service.size())) {
+    return false;
+  }
+  return context->grpcStream(service_proto, service_name, method_name);
+}
+
+void grpcCancelHandler(void* raw_context, Word token) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->grpcCancel(token);
+}
+
+void grpcCloseHandler(void* raw_context, Word token) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->grpcClose(token);
+}
+
+void grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word message_size,
+                     Word end_stream) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto message = context->wasmVm()->getMemory(message_ptr, message_size);
+  context->grpcSend(token, message, end_stream);
+}
+
+Word _emscripten_get_heap_sizeHandler(void*) { return std::numeric_limits<int32_t>::max(); }
+
+Word _emscripten_memcpy_bigHandler(void*, Word, Word, Word) {
+  throw WasmException("emscripten emscripten_memcpy_big");
+}
+
+Word _emscripten_resize_heapHandler(void*, Word) {
+  throw WasmException("emscripten emscripten_resize_heap");
+}
+
+Word abortOnCannotGrowMemoryHandler(void*) {
+  throw WasmException("emscripten abortOnCannotGrowMemory");
+}
+
+void abortHandler(void*, Word) { throw WasmException("emscripten abort"); }
+
+void _abortHandler(void*) { throw WasmException("emscripten abort"); }
+
+void _llvm_trapHandler(void*) { throw WasmException("emscripten llvm_trap"); }
+
+void ___assert_failHandler(void*, Word, Word, Word, Word) {
+  throw WasmException("emscripten assert_fail");
+}
+
+void ___cxa_throwHandler(void*, Word, Word, Word) { throw WasmException("emscripten cxa_throw"); }
+
+void ___cxa_pure_virtualHandler(void*) { throw WasmException("emscripten cxa_pure_virtual"); }
+
+Word ___call_mainHandler(void*, Word, Word) { throw WasmException("emscripten call_main"); }
+
+Word ___cxa_allocate_exceptionHandler(void*, Word) {
+  throw WasmException("emscripten cxa_allocate_exception");
+}
+
+Word ___clock_gettimeHandler(void*, Word, Word) { throw WasmException("emscripten clock_gettime"); }
+
+void ___lockHandler(void*, Word) { throw WasmException("emscripten lock"); }
+
+void ___unlockHandler(void*, Word) { throw WasmException("emscripten unlock"); }
+
+Word ___syscall6Handler(void*, Word, Word) { throw WasmException("emscripten syscall6"); }
+
+Word ___syscall54Handler(void*, Word, Word) { throw WasmException("emscripten syscall54"); }
+
+Word ___syscall140Handler(void*, Word, Word) { throw WasmException("emscripten syscall140"); }
+
+Word ___syscall146Handler(void*, Word, Word) { throw WasmException("emscripten syscall146"); }
+
+void ___setErrNoHandler(void*, Word) { throw WasmException("emscripten setErrNo"); }
+
+// NB: pthread_equal is required to return 0 by the protobuf libarary.
+Word _pthread_equalHandler(void*, Word,
+                           Word) { /* throw WasmException("emscripten pthread_equal"); */
+  return 0;
+}
+// NB: pthread_mutex_destroy is required to return 0 by the protobuf libarary.
+Word _pthread_mutex_destroyHandler(void*, Word) { return 0; }
+Word _pthread_cond_waitHandler(void*, Word, Word) {
+  throw WasmException("emscripten pthread_cond_wait");
+}
+Word _pthread_getspecificHandler(void*, Word) {
+  throw WasmException("emscripten pthread_getspecific");
+}
+Word _pthread_key_createHandler(void*, Word, Word) {
+  throw WasmException("emscripten pthread_key_create");
+}
+Word _pthread_onceHandler(void*, Word, Word) { throw WasmException("emscripten pthread_once"); }
+Word _pthread_setspecificHandler(void*, Word, Word) {
+  throw WasmException("emscripten pthread_setspecific");
+}
+void setTempRet0Handler(void*, Word) { throw WasmException("emscripten setTempRet0"); }
+
+void setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_milliseconds) {
+  WASM_CONTEXT(raw_context)->setTickPeriod(std::chrono::milliseconds(tick_period_milliseconds));
+}
+
+uint64_t getCurrentTimeNanosecondsHandler(void* raw_context) {
+  return WASM_CONTEXT(raw_context)->getCurrentTimeNanoseconds();
+}
+
+void logHandler(void* raw_context, Word level, Word address, Word size) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->scriptLog(static_cast<spdlog::level::level_enum>(level.u64),
+                     context->wasmVm()->getMemory(address, size));
+}
 
 void Context::setTickPeriod(std::chrono::milliseconds tick_period) {
   wasm_->setTickPeriod(tick_period);
@@ -1190,11 +1161,11 @@ void Context::onHttpCallResponse(uint32_t token, const Pairs& response_headers,
                                  absl::string_view response_body, const Pairs& response_trailers) {
   if (!wasm_->onHttpCallResponse_)
     return;
-  uint32_t headers_ptr, headers_size, trailers_ptr, trailers_size;
+  uint64_t headers_ptr, headers_size, trailers_ptr, trailers_size;
   exportPairs(this, response_headers, &headers_ptr, &headers_size);
   exportPairs(this, response_trailers, &trailers_ptr, &trailers_size);
-  uint32_t body_ptr = wasm_->copyString(response_body);
-  uint32_t body_size = response_body.size();
+  auto body_ptr = wasm_->copyString(response_body);
+  auto body_size = response_body.size();
   wasm_->onHttpCallResponse_(this, id_, token, headers_ptr, headers_size, body_ptr, body_size,
                              trailers_ptr, trailers_size);
 }
@@ -1313,7 +1284,11 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
 }
 
 void Wasm::registerCallbacks() {
-#define _REGISTER(_fn) wasm_vm_->registerCallback("envoy", #_fn, &_fn##Handler);
+#define _REGISTER(_fn)                                                                             \
+  wasm_vm_->registerCallback(                                                                      \
+      "envoy", #_fn, &_fn##Handler,                                                                \
+      &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
+                                   _fn##Handler>::convertFunctionWordToUint32);
   if (is_emscripten_) {
     _REGISTER(_emscripten_memcpy_big);
     _REGISTER(_emscripten_get_heap_size);
@@ -1347,7 +1322,11 @@ void Wasm::registerCallbacks() {
 #undef _REGISTER
 
   // Calls with the "_proxy_" prefix.
-#define _REGISTER_PROXY(_fn) wasm_vm_->registerCallback("envoy", "_proxy_" #_fn, &_fn##Handler);
+#define _REGISTER_PROXY(_fn)                                                                       \
+  wasm_vm_->registerCallback(                                                                      \
+      "envoy", "_proxy_" #_fn, &_fn##Handler,                                                      \
+      &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
+                                   _fn##Handler>::convertFunctionWordToUint32);
   _REGISTER_PROXY(log);
 
   _REGISTER_PROXY(getProtocol);
@@ -1395,9 +1374,8 @@ void Wasm::registerCallbacks() {
 
 void Wasm::establishEnvironment() {
   if (is_emscripten_) {
-    emscripten_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", static_cast<uint32_t>(0));
-    emscripten_dynamictop_ =
-        wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", static_cast<uint32_t>(128 * 64 * 1024));
+    emscripten_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
+    emscripten_dynamictop_ = wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(128 * 64 * 1024));
 
     wasm_vm_->makeModule("global");
     emscripten_NaN_ = wasm_vm_->makeGlobal("global", "NaN", std::nan("0"));
@@ -1677,8 +1655,8 @@ void GrpcStreamClientHandler::onReceiveTrailingMetadata(Http::HeaderMapPtr&& met
 
 void Context::onGrpcReceive(uint32_t token, Buffer::InstancePtr response) {
   if (wasm_->onGrpcReceive_) {
-    uint32_t response_size = response->length();
-    uint32_t response_ptr = wasm_->copyBuffer(*response);
+    auto response_size = response->length();
+    auto response_ptr = wasm_->copyBuffer(*response);
     wasm_->onGrpcReceive_(this, id_, token, response_ptr, response_size);
   }
   if (IsGrpcCallToken(token)) {
@@ -1689,8 +1667,8 @@ void Context::onGrpcReceive(uint32_t token, Buffer::InstancePtr response) {
 void Context::onGrpcClose(uint32_t token, const Grpc::Status::GrpcStatus& status,
                           const absl::string_view message) {
   if (wasm_->onGrpcClose_) {
-    uint32_t message_ptr = wasm_->copyString(message);
-    wasm_->onGrpcClose_(this, id_, token, static_cast<uint32_t>(status), message_ptr,
+    auto message_ptr = wasm_->copyString(message);
+    wasm_->onGrpcClose_(this, id_, token, static_cast<uint64_t>(status), message_ptr,
                         message.size());
   }
   if (IsGrpcCallToken(token)) {
@@ -1763,7 +1741,9 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
 }
 
 std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
-  if (wasm_vm == WasmVmNames::get().v8) {
+  if (wasm_vm == WasmVmNames::get().Null) {
+    return Null::createVm();
+  } else if (wasm_vm == WasmVmNames::get().v8) {
     return V8::createVm();
   } else if (wasm_vm == WasmVmNames::get().Wavm) {
     return Wavm::createVm();

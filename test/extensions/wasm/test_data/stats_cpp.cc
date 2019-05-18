@@ -25,13 +25,12 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart() {
 // Test the higher level interface.
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick() {
   Metric c(MetricType::Counter, "test_counter",
-                      {MetricTag{"counter_tag", MetricTag::TagType::String}});
-  Metric g(MetricType::Gauge, "test_gauge",
-                      {MetricTag{"gauge_int_tag", MetricTag::TagType::Int}});
+           {MetricTag{"counter_tag", MetricTag::TagType::String}});
+  Metric g(MetricType::Gauge, "test_gauge", {MetricTag{"gauge_int_tag", MetricTag::TagType::Int}});
   Metric h(MetricType::Histogram, "test_histogram",
-                      {MetricTag{"histogram_int_tag", MetricTag::TagType::Int},
-                       MetricTag{"histogram_string_tag", MetricTag::TagType::String},
-                       MetricTag{"histogram_bool_tag", MetricTag::TagType::Bool}});
+           {MetricTag{"histogram_int_tag", MetricTag::TagType::Int},
+            MetricTag{"histogram_string_tag", MetricTag::TagType::String},
+            MetricTag{"histogram_bool_tag", MetricTag::TagType::Bool}});
 
   c.increment(1, "test_tag");
   g.record(2, 9);

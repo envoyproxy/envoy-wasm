@@ -31,7 +31,6 @@ using testing::Invoke;
 using testing::Return;
 using testing::ReturnPointee;
 using testing::ReturnRef;
-using testing::StrEq;
 
 MATCHER_P(MapEq, rhs, "") {
   const Envoy::ProtobufWkt::Struct& obj = arg;
@@ -63,6 +62,17 @@ public:
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
     proto_config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
     proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(code);
+    Api::ApiPtr api = Api::createApiForTest(stats_store_);
+    scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
+    wasm_ = Extensions::Common::Wasm::createWasm(proto_config.id(), proto_config.vm_config(),
+                                                 cluster_manager_, dispatcher_, *api, *scope_,
+                                                 local_info_);
+  }
+
+  void setupNullConfig(const std::string& name) {
+    envoy::config::filter::http::wasm::v2::Wasm proto_config;
+    proto_config.mutable_vm_config()->set_vm("envoy.wasm.vm.null");
+    proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(name);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasm(proto_config.id(), proto_config.vm_config(),
@@ -113,8 +123,8 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   wasm_->start();
   Http::TestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
-  EXPECT_THAT(request_headers.get_("newheader"), StrEq("newheadervalue"));
-  EXPECT_THAT(request_headers.get_("server"), StrEq("envoy-wasm"));
+  EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
+  EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm"));
   filter_->onDestroy();
 }
 
@@ -185,8 +195,8 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
             return &request;
           }));
 
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, StrEq("response")));
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, StrEq(":status -> 200")));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, Eq("response")));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(":status -> 200")));
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter_->decodeHeaders(request_headers, false));
 
@@ -205,7 +215,6 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/grpc_call_cpp.wasm")));
   setupFilter();
   wasm_->start();
-
   Grpc::MockAsyncRequest request;
   Grpc::RawAsyncRequestCallbacks* callbacks = nullptr;
   Grpc::MockAsyncClientManager client_manager;
@@ -237,7 +246,7 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
       .WillOnce(
           Invoke([&](const envoy::api::v2::core::GrpcService&, Stats::Scope&,
                      bool) -> Grpc::AsyncClientFactoryPtr { return std::move(client_factory); }));
-  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, StrEq("response")));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::debug, Eq("response")));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter_->decodeHeaders(request_headers, false));
@@ -299,6 +308,22 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   filter_->onDestroy();
   StreamInfo::MockStreamInfo log_stream_info;
   filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
+}
+
+// Null VM Plugin, headers only.
+TEST_F(WasmHttpFilterTest, NullVmPluginRequestHeadersOnly) {
+  setupNullConfig("null_vm_plugin");
+  setupFilter();
+  EXPECT_CALL(*filter_,
+              scriptLog(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 1"))));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::info, Eq(absl::string_view("header path /"))));
+  EXPECT_CALL(*filter_, scriptLog(spdlog::level::warn, Eq(absl::string_view("onDone 1"))));
+  wasm_->start();
+  Http::TestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
+  EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm"));
+  filter_->onDestroy();
 }
 
 } // namespace Wasm
