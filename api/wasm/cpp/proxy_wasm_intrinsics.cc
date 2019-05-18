@@ -1,12 +1,14 @@
 // NOLINT(namespace-envoy)
 #include "proxy_wasm_intrinsics.h"
 
+std::unique_ptr<Context> NewContext(uint32_t id);
+
 static std::unordered_map<int32_t, std::unique_ptr<Context>> context_map;
 
 static Context* ensureContext(uint32_t context_id) {
   auto e = context_map.insert(std::make_pair(context_id, nullptr));
   if (e.second)
-    e.first->second = Context::New(context_id);
+    e.first->second = NewContext(context_id);
   return e.first->second.get();
 }
 
@@ -36,6 +38,13 @@ extern "C" EMSCRIPTEN_KEEPALIVE FilterHeadersStatus proxy_onRequestHeaders(uint3
   return c->onRequestHeaders();
 }
 
+extern "C" EMSCRIPTEN_KEEPALIVE FilterMetadataStatus proxy_onRequestMetadata(uint32_t context_id) {
+  auto c = getContext(context_id);
+  if (!c)
+    return FilterMetadataStatus::Continue;
+  return c->onRequestMetadata();
+}
+
 extern "C" EMSCRIPTEN_KEEPALIVE FilterDataStatus proxy_onRequestBody(uint32_t context_id,
                                                                      uint32_t body_buffer_length,
                                                                      uint32_t end_of_stream) {
@@ -57,6 +66,13 @@ extern "C" EMSCRIPTEN_KEEPALIVE FilterHeadersStatus proxy_onResponseHeaders(uint
   if (!c)
     return FilterHeadersStatus::Continue;
   return c->onResponseHeaders();
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE FilterMetadataStatus proxy_onResponseMetadata(uint32_t context_id) {
+  auto c = getContext(context_id);
+  if (!c)
+    return FilterMetadataStatus::Continue;
+  return c->onResponseMetadata();
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE FilterDataStatus proxy_onResponseBody(uint32_t context_id,

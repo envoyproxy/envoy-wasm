@@ -47,6 +47,14 @@
 using namespace WAVM;
 using namespace WAVM::IR;
 
+namespace WAVM {
+namespace IR {
+template <> constexpr ValueType inferValueType<Envoy::Extensions::Common::Wasm::Word>() {
+  return ValueType::i32;
+}
+} // namespace IR
+} // namespace WAVM
+
 namespace Envoy {
 namespace Extensions {
 namespace Common {
@@ -61,6 +69,9 @@ void getFunctionWavm(WasmVm* vm, absl::string_view functionName,
 template <typename R, typename... Args>
 void registerCallbackWavm(WasmVm* vm, absl::string_view moduleName, absl::string_view functionName,
                           R (*)(Args...));
+template <typename F, typename R, typename... Args>
+void registerCallbackWavm(WasmVm* vm, absl::string_view moduleName, absl::string_view functionName,
+                          F, R (*)(Args...));
 template <typename T>
 std::unique_ptr<Global<T>> makeGlobalWavm(WasmVm* vm, absl::string_view moduleName,
                                           absl::string_view name, T initialValue);
@@ -70,6 +81,16 @@ namespace Wavm {
 struct Wavm;
 
 namespace {
+
+struct WasmUntaggedValue : public WAVM::IR::UntaggedValue {
+  WasmUntaggedValue(I32 inI32) { i32 = inI32; }
+  WasmUntaggedValue(I64 inI64) { i64 = inI64; }
+  WasmUntaggedValue(U32 inU32) { u32 = inU32; }
+  WasmUntaggedValue(Word w) { u32 = static_cast<U32>(w.u64); }
+  WasmUntaggedValue(U64 inU64) { u64 = inU64; }
+  WasmUntaggedValue(F32 inF32) { f32 = inF32; }
+  WasmUntaggedValue(F64 inF64) { f64 = inF64; }
+};
 
 using Context = Common::Wasm::Context; // Shadowing WAVM::Runtime::Context.
 
@@ -177,28 +198,21 @@ bool loadModule(const std::string& code, IR::Module& outModule) {
 
 } // namespace
 
-struct EnvoyHandlerBase {
-  virtual ~EnvoyHandlerBase() {}
-};
-
-template <typename F> struct EnvoyHandler : EnvoyHandlerBase {
-  ~EnvoyHandler() override {}
-  explicit EnvoyHandler(F ahandler) : handler(ahandler) {}
-  F handler;
-};
-
-template <typename F> EnvoyHandlerBase* MakeEnvoyHandler(F handler) {
-  return new EnvoyHandler<F>(handler);
-}
-
 struct WavmGlobalBase {
   WAVM::Runtime::Global* global_ = nullptr;
 };
 
-template <typename T> struct WavmGlobal : Global<T>, Intrinsics::GenericGlobal<T>, WavmGlobalBase {
+template <typename T> struct NativeWord { using type = T; };
+template <> struct NativeWord<Word> { using type = uint32_t; };
+
+template <typename T>
+struct WavmGlobal : Global<T>,
+                    Intrinsics::GenericGlobal<typename NativeWord<T>::type>,
+                    WavmGlobalBase {
   WavmGlobal(Common::Wasm::Wavm::Wavm* wavm, Intrinsics::Module& module, const std::string& name,
              T value)
-      : Intrinsics::GenericGlobal<T>(module, name.c_str(), value), wavm_(wavm) {}
+      : Intrinsics::GenericGlobal<typename NativeWord<T>::type>(module, name.c_str(), value),
+        wavm_(wavm) {}
   virtual ~WavmGlobal() {}
 
   T get() override;
@@ -224,9 +238,10 @@ struct Wavm : public WasmVm {
   bool load(const std::string& code, bool allow_precompiled) override;
   void link(absl::string_view debug_name, bool needs_emscripten) override;
   void start(Context* context) override;
-  absl::string_view getMemory(uint32_t pointer, uint32_t size) override;
-  bool getMemoryOffset(void* host_pointer, uint32_t* vm_pointer) override;
-  bool setMemory(uint32_t pointer, uint32_t size, void* data) override;
+  absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
+  bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
+  bool setMemory(uint64_t pointer, uint64_t size, void* data) override;
+  bool setWord(uint64_t pointer, uint64_t data) override;
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name) override;
 
@@ -248,8 +263,8 @@ struct Wavm : public WasmVm {
 #undef _GET_FUNCTION
 
 #define _REGISTER_CALLBACK(_type)                                                                  \
-  void registerCallback(absl::string_view moduleName, absl::string_view functionName, _type f)     \
-      override {                                                                                   \
+  void registerCallback(absl::string_view moduleName, absl::string_view functionName, _type,       \
+                        typename ConvertFunctionTypeWordToUint32<_type>::type f) override {        \
     registerCallbackWavm(this, moduleName, functionName, f);                                       \
   };
   _REGISTER_CALLBACK(WasmCallback0Void);
@@ -268,10 +283,10 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback7Int);
   _REGISTER_CALLBACK(WasmCallback8Int);
   _REGISTER_CALLBACK(WasmCallback9Int);
-  _REGISTER_CALLBACK(WasmCallback_Zjl);
-  _REGISTER_CALLBACK(WasmCallback_Zjm);
-  _REGISTER_CALLBACK(WasmCallback_mjj);
-  _REGISTER_CALLBACK(WasmCallback_mj);
+  _REGISTER_CALLBACK(WasmCallback_ZWl);
+  _REGISTER_CALLBACK(WasmCallback_ZWm);
+  _REGISTER_CALLBACK(WasmCallback_m);
+  _REGISTER_CALLBACK(WasmCallback_mW);
 #undef _REGISTER_CALLBACK
 
 #define _REGISTER_GLOBAL(_type)                                                                    \
@@ -279,7 +294,7 @@ struct Wavm : public WasmVm {
                                             _type initialValue) override {                         \
     return makeGlobalWavm(this, moduleName, name, initialValue);                                   \
   };
-  _REGISTER_GLOBAL(uint32_t);
+  _REGISTER_GLOBAL(Word);
   _REGISTER_GLOBAL(double);
 #undef _REGISTER_GLOBAL
 
@@ -431,13 +446,13 @@ void Wavm::start(Context* context) {
   }
 }
 
-absl::string_view Wavm::getMemory(uint32_t pointer, uint32_t size) {
+absl::string_view Wavm::getMemory(uint64_t pointer, uint64_t size) {
   return {reinterpret_cast<char*>(
               WAVM::Runtime::memoryArrayPtr<U8>(memory_, pointer, static_cast<U64>(size))),
           static_cast<size_t>(size)};
 }
 
-bool Wavm::getMemoryOffset(void* host_pointer, uint32_t* vm_pointer) {
+bool Wavm::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
   intptr_t offset = (static_cast<uint8_t*>(host_pointer) - memory_base_);
   if (offset < 0) {
     return false;
@@ -445,15 +460,27 @@ bool Wavm::getMemoryOffset(void* host_pointer, uint32_t* vm_pointer) {
   if (static_cast<size_t>(offset) > memory_size_) {
     return false;
   }
-  *vm_pointer = static_cast<uint32_t>(offset);
+  *vm_pointer = static_cast<uint64_t>(offset);
   return true;
 }
 
-bool Wavm::setMemory(uint32_t pointer, uint32_t size, void* data) {
+bool Wavm::setMemory(uint64_t pointer, uint64_t size, void* data) {
   auto p = reinterpret_cast<char*>(
       WAVM::Runtime::memoryArrayPtr<U8>(memory_, pointer, static_cast<U64>(size)));
   if (p) {
     memcpy(p, data, size);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool Wavm::setWord(uint64_t pointer, uint64_t data) {
+  auto p = reinterpret_cast<char*>(
+      WAVM::Runtime::memoryArrayPtr<U8>(memory_, pointer, static_cast<U64>(sizeof(uint32_t))));
+  if (p) {
+    uint32_t data32 = static_cast<uint32_t>(data);
+    memcpy(p, &data32, sizeof(uint32_t));
     return true;
   } else {
     return false;
@@ -595,7 +622,7 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName,
     throw WasmVmException(fmt::format("Bad function signature for: {}", functionName));
   }
   *function = [wavm, f](Context* context, Args... args) -> R {
-    UntaggedValue values[] = {args...};
+    WasmUntaggedValue values[] = {args...};
     try {
       CALL_WITH_CONTEXT_RETURN(invokeFunctionUnchecked(wavm->context_, f, &values[0]), context,
                                uint32_t, i32);
@@ -623,7 +650,7 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view functionName,
     throw WasmVmException(fmt::format("Bad function signature for: {}", functionName));
   }
   *function = [wavm, f](Context* context, Args... args) -> R {
-    UntaggedValue values[] = {args...};
+    WasmUntaggedValue values[] = {args...};
     try {
       CALL_WITH_CONTEXT(invokeFunctionUnchecked(wavm->context_, f, &values[0]), context);
     } catch (const std::exception& e) {
@@ -713,6 +740,7 @@ template void getFunctionWavm<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, 
                            uint32_t, uint32_t, uint32_t, uint32_t)>*);
 
 template <typename T> T getValue(IR::Value) {}
+template <> Word getValue(IR::Value v) { return v.u32; }
 template <> int32_t getValue(IR::Value v) { return v.i32; }
 template <> uint32_t getValue(IR::Value v) { return v.u32; }
 template <> int64_t getValue(IR::Value v) { return v.i64; }

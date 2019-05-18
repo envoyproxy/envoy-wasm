@@ -19,7 +19,7 @@ public:
   void onDelete() override;
 };
 
-std::unique_ptr<Context> Context::New(uint32_t id) {
+std::unique_ptr<Context> NewContext(uint32_t id) {
   return std::unique_ptr<Context>(new ExampleContext(id));
 }
 

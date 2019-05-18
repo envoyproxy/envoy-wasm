@@ -31,35 +31,69 @@ class Context;
 class Wasm;
 class WasmVm;
 
+// Represents a WASM-native word-sized datum. On 32-bit VMs, the high bits are always zero.
+// The WASM/VM API treats all bits as significant.
+struct Word {
+  Word(uint64_t w) : u64(w) {}              // Implicit conversion into Word.
+  operator uint64_t() const { return u64; } // Implicit conversion into uint64_t.
+  // Note: no implicit conversion to uint32_t as it is lossy.
+  uint64_t u64;
+};
+
+template <typename T> struct ConvertWordTypeToUint32 { using type = T; };
+template <> struct ConvertWordTypeToUint32<Word> { using type = uint32_t; };
+
+inline uint32_t convertWordToUint32(Word w) { return static_cast<uint32_t>(w.u64); }
+inline uint32_t convertWordToUint32(uint32_t v) { return v; }
+inline uint64_t convertWordToUint32(uint64_t v) { return v; }
+inline int64_t convertWordToUint32(int64_t v) { return v; }
+inline float convertWordToUint32(float v) { return v; }
+inline double convertWordToUint32(double v) { return v; }
+
+// Convert a function of the form Word(Word...) to one of the form uint32_t(uint32_t...).
+template <typename F, F* fn> struct ConvertFunctionWordToUint32 {
+  static void convertFunctionWordToUint32() {}
+};
+template <typename R, typename... Args, auto (*F)(Args...)->R>
+struct ConvertFunctionWordToUint32<R(Args...), F> {
+  static auto convertFunctionWordToUint32(typename ConvertWordTypeToUint32<Args>::type... args) {
+    return convertWordToUint32(F(std::forward<Args>(args)...));
+  }
+};
+template <typename... Args, auto (*F)(Args...)->void>
+struct ConvertFunctionWordToUint32<void(Args...), F> {
+  static void convertFunctionWordToUint32(typename ConvertWordTypeToUint32<Args>::type... args) {
+    F(std::forward<Args>(args)...);
+  }
+};
+
+template <typename F> struct ConvertFunctionTypeWordToUint32 {};
+template <typename R, typename... Args> struct ConvertFunctionTypeWordToUint32<R (*)(Args...)> {
+  using type = typename ConvertWordTypeToUint32<R>::type (*)(
+      typename ConvertWordTypeToUint32<Args>::type...);
+};
+
 using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
 using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::string>>;
 
 // 1st arg is always a pointer to Context (Context*).
 using WasmCall0Void = std::function<void(Context*)>;
-using WasmCall1Void = std::function<void(Context*, uint32_t)>;
-using WasmCall2Void = std::function<void(Context*, uint32_t, uint32_t)>;
-using WasmCall3Void = std::function<void(Context*, uint32_t, uint32_t, uint32_t)>;
-using WasmCall4Void = std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t)>;
-using WasmCall5Void =
-    std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
-using WasmCall6Void =
-    std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
-using WasmCall7Void = std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-                                         uint32_t, uint32_t)>;
-using WasmCall8Void = std::function<void(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-                                         uint32_t, uint32_t, uint32_t)>;
-using WasmCall1Int = std::function<uint32_t(Context*, uint32_t)>;
-using WasmCall2Int = std::function<uint32_t(Context*, uint32_t, uint32_t)>;
-using WasmCall3Int = std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t)>;
-using WasmCall4Int = std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t)>;
-using WasmCall5Int =
-    std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
-using WasmCall6Int =
-    std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)>;
-using WasmCall7Int = std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t,
-                                            uint32_t, uint32_t, uint32_t)>;
-using WasmCall8Int = std::function<uint32_t(Context*, uint32_t, uint32_t, uint32_t, uint32_t,
-                                            uint32_t, uint32_t, uint32_t, uint32_t)>;
+using WasmCall1Void = std::function<void(Context*, Word)>;
+using WasmCall2Void = std::function<void(Context*, Word, Word)>;
+using WasmCall3Void = std::function<void(Context*, Word, Word, Word)>;
+using WasmCall4Void = std::function<void(Context*, Word, Word, Word, Word)>;
+using WasmCall5Void = std::function<void(Context*, Word, Word, Word, Word, Word)>;
+using WasmCall6Void = std::function<void(Context*, Word, Word, Word, Word, Word, Word)>;
+using WasmCall7Void = std::function<void(Context*, Word, Word, Word, Word, Word, Word, Word)>;
+using WasmCall8Void = std::function<void(Context*, Word, Word, Word, Word, Word, Word, Word, Word)>;
+using WasmCall1Int = std::function<Word(Context*, Word)>;
+using WasmCall2Int = std::function<Word(Context*, Word, Word)>;
+using WasmCall3Int = std::function<Word(Context*, Word, Word, Word)>;
+using WasmCall4Int = std::function<Word(Context*, Word, Word, Word, Word)>;
+using WasmCall5Int = std::function<Word(Context*, Word, Word, Word, Word, Word)>;
+using WasmCall6Int = std::function<Word(Context*, Word, Word, Word, Word, Word, Word)>;
+using WasmCall7Int = std::function<Word(Context*, Word, Word, Word, Word, Word, Word, Word)>;
+using WasmCall8Int = std::function<Word(Context*, Word, Word, Word, Word, Word, Word, Word, Word)>;
 
 // 1st arg is always a context_id (uint32_t).
 using WasmContextCall0Void = WasmCall1Void;
@@ -81,36 +115,32 @@ using WasmContextCall7Int = WasmCall8Int;
 
 // 1st arg is always a pointer to raw_context (void*).
 using WasmCallback0Void = void (*)(void*);
-using WasmCallback1Void = void (*)(void*, uint32_t);
-using WasmCallback2Void = void (*)(void*, uint32_t, uint32_t);
-using WasmCallback3Void = void (*)(void*, uint32_t, uint32_t, uint32_t);
-using WasmCallback4Void = void (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t);
-using WasmCallback5Void = void (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
-using WasmCallback6Void = void (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-                                   uint32_t);
-using WasmCallback7Void = void (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-                                   uint32_t, uint32_t);
-using WasmCallback0Int = uint32_t (*)(void*);
-using WasmCallback1Int = uint32_t (*)(void*, uint32_t);
-using WasmCallback2Int = uint32_t (*)(void*, uint32_t, uint32_t);
-using WasmCallback3Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t);
-using WasmCallback4Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t);
-using WasmCallback5Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
-using WasmCallback6Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-                                      uint32_t);
-using WasmCallback7Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-                                      uint32_t, uint32_t, uint32_t);
-using WasmCallback8Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-                                      uint32_t, uint32_t, uint32_t, uint32_t);
-using WasmCallback9Int = uint32_t (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-                                      uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+using WasmCallback1Void = void (*)(void*, Word);
+using WasmCallback2Void = void (*)(void*, Word, Word);
+using WasmCallback3Void = void (*)(void*, Word, Word, Word);
+using WasmCallback4Void = void (*)(void*, Word, Word, Word, Word);
+using WasmCallback5Void = void (*)(void*, Word, Word, Word, Word, Word);
+using WasmCallback6Void = void (*)(void*, Word, Word, Word, Word, Word, Word);
+using WasmCallback7Void = void (*)(void*, Word, Word, Word, Word, Word, Word, Word);
+using WasmCallback0Int = Word (*)(void*);
+using WasmCallback1Int = Word (*)(void*, Word);
+using WasmCallback2Int = Word (*)(void*, Word, Word);
+using WasmCallback3Int = Word (*)(void*, Word, Word, Word);
+using WasmCallback4Int = Word (*)(void*, Word, Word, Word, Word);
+using WasmCallback5Int = Word (*)(void*, Word, Word, Word, Word, Word);
+using WasmCallback6Int = Word (*)(void*, Word, Word, Word, Word, Word, Word);
+using WasmCallback7Int = Word (*)(void*, Word, Word, Word, Word, Word, Word, Word, Word);
+using WasmCallback8Int = Word (*)(void*, Word, Word, Word, Word, Word, Word, Word, Word, Word);
+using WasmCallback9Int = Word (*)(void*, Word, Word, Word, Word, Word, Word, Word, Word, Word,
+                                  Word);
 // Using the standard g++/clang mangling algorithm:
 // https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling-builtin
+// Extended with W = Word
 // Z = void, j = uint32_t, l = int64_t, m = uint64_t
-using WasmCallback_Zjl = void (*)(void*, uint32_t, int64_t);
-using WasmCallback_Zjm = void (*)(void*, uint32_t, uint64_t);
-using WasmCallback_mjj = uint64_t (*)(void*, uint32_t);
-using WasmCallback_mj = uint64_t (*)(void*);
+using WasmCallback_ZWl = void (*)(void*, Word, int64_t);
+using WasmCallback_ZWm = void (*)(void*, Word, uint64_t);
+using WasmCallback_m = uint64_t (*)(void*);
+using WasmCallback_mW = uint64_t (*)(void*, Word);
 
 // Sadly we don't have enum class inheritance in c++-14.
 enum class StreamType : uint32_t { Request = 0, Response = 1, MAX = 1 };
@@ -133,6 +163,57 @@ enum class HeaderMapType : uint32_t {
   GrpcReceiveTrailingMetadata = 6,
   MAX = 6,
 };
+
+// Handlers for functions exported from envoy to wasm.
+void logHandler(void* raw_context, Word level, Word address, Word size);
+void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word value_size_ptr);
+void getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+                        Word value_ptr_ptr, Word value_size_ptr);
+void setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
+                        Word value_size);
+void getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr);
+void getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+                              Word value_ptr_ptr, Word value_size_ptr);
+void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+                              Word value_ptr, Word value_size);
+void continueRequestHandler(void* raw_context);
+void continueResponseHandler(void* raw_context);
+void getSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr_ptr,
+                          Word value_size_ptr, Word cas_ptr);
+Word setSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
+                          Word value_size, Word cas);
+void addHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+                              Word value_ptr, Word value_size);
+void getHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+                              Word value_ptr_ptr, Word value_size_ptr);
+void replaceHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+                                  Word value_ptr, Word value_size);
+void removeHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size);
+void getHeaderMapPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr);
+void setHeaderMapPairsHandler(void* raw_context, Word type, Word ptr, Word size);
+void getRequestBodyBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                      Word size_ptr);
+void getResponseBodyBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                       Word size_ptr);
+Word httpCallHandler(void* raw_context, Word uri_ptr, Word uri_size, Word header_pairs_ptr,
+                     Word header_pairs_size, Word body_ptr, Word body_size, Word trailer_pairs_ptr,
+                     Word trailer_pairs_size, Word timeout_milliseconds);
+Word defineMetricHandler(void* raw_context, Word metric_type, Word name_ptr, Word name_size);
+void incrementMetricHandler(void* raw_context, Word metric_id, int64_t offset);
+void recordMetricHandler(void* raw_context, Word metric_id, uint64_t value);
+uint64_t getMetricHandler(void* raw_context, Word metric_id);
+Word grpcCallHandler(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
+                     Word service_name_size, Word method_name_ptr, Word method_name_size,
+                     Word request_ptr, Word request_size, Word timeout_milliseconds);
+Word grpcStreamHandler(void* raw_context, Word service_ptr, Word service_size,
+                       Word service_name_ptr, Word service_name_size, Word method_name_ptr,
+                       Word method_name_size);
+void grpcCancelHandler(void* raw_context, Word token);
+void grpcCloseHandler(void* raw_context, Word token);
+void grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word message_size,
+                     Word end_stream);
+void setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_milliseconds);
+uint64_t getCurrentTimeNanosecondsHandler(void* raw_context);
 
 inline MetadataType StreamType2MetadataType(StreamType type) {
   return static_cast<MetadataType>(type);
@@ -465,16 +546,16 @@ public:
            const Http::HeaderMap* response_trailers, const StreamInfo::StreamInfo& stream_info);
 
   // Support functions.
-  void* allocMemory(uint32_t size, uint32_t* address);
+  void* allocMemory(uint64_t size, uint64_t* address);
   bool freeMemory(void* pointer);
-  void freeMemoryOffset(uint32_t address);
+  void freeMemoryOffset(uint64_t address);
   // Allocate a null-terminated string in the VM and return the pointer to use as a call arguments.
-  uint32_t copyString(absl::string_view s);
-  uint32_t copyBuffer(const Buffer::Instance& buffer);
+  uint64_t copyString(absl::string_view s);
+  uint64_t copyBuffer(const Buffer::Instance& buffer);
   // Copy the data in 's' into the VM along with the pointer-size pair. Returns true on success.
-  bool copyToPointerSize(absl::string_view s, uint32_t ptr_ptr, uint32_t size_ptr);
-  bool copyToPointerSize(const Buffer::Instance& buffer, uint32_t start, uint32_t length,
-                         uint32_t ptr_ptr, uint32_t size_ptr);
+  bool copyToPointerSize(absl::string_view s, uint64_t ptr_ptr, uint64_t size_ptr);
+  bool copyToPointerSize(const Buffer::Instance& buffer, uint64_t start, uint64_t length,
+                         uint64_t ptr_ptr, uint64_t size_ptr);
 
   // For testing.
   void setGeneralContext(std::shared_ptr<Context> context) {
@@ -588,8 +669,8 @@ private:
   uint32_t emscripten_memory_size_ = 0;
   uint32_t emscripten_table_size_ = 0;
 
-  std::unique_ptr<Global<uint32_t>> emscripten_table_base_;
-  std::unique_ptr<Global<uint32_t>> emscripten_dynamictop_;
+  std::unique_ptr<Global<Word>> emscripten_table_base_;
+  std::unique_ptr<Global<Word>> emscripten_dynamictop_;
   std::unique_ptr<Global<double>> emscripten_NaN_;
   std::unique_ptr<Global<double>> emscripten_Infinity_;
 
@@ -626,11 +707,13 @@ public:
   virtual void start(Context*) PURE;
 
   // Convert a block of memory in the VM to a string_view.
-  virtual absl::string_view getMemory(uint32_t pointer, uint32_t size) PURE;
+  virtual absl::string_view getMemory(uint64_t pointer, uint64_t size) PURE;
   // Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).
-  virtual bool getMemoryOffset(void* host_pointer, uint32_t* vm_pointer) PURE;
+  virtual bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) PURE;
   // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
-  virtual bool setMemory(uint32_t pointer, uint32_t size, void* data) PURE;
+  virtual bool setMemory(uint64_t pointer, uint64_t size, void* data) PURE;
+  // Set a Word in the VM, returns true on success, false if the pointer is invalid.
+  virtual bool setWord(uint64_t pointer, uint64_t data) PURE;
   // Make a new intrinsic module (e.g. for Emscripten support).
   virtual void makeModule(absl::string_view name) PURE;
 
@@ -649,53 +732,36 @@ public:
   virtual void getFunction(absl::string_view functionName, WasmCall3Int* f) PURE;
 
   // Register typed callbacks exported by the host environment.
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback0Void f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback1Void f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback2Void f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback3Void f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback4Void f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback5Void f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback0Int f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback1Int f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback2Int f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback3Int f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback4Int f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback5Int f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback6Int f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback7Int f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback8Int f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback9Int f) PURE;
-
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback_Zjl f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback_Zjm f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback_mjj f) PURE;
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,
-                                WasmCallback_mj f) PURE;
+#define REGISTER_CALLBACK(_t)                                                                      \
+  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,      \
+                                _t f, typename ConvertFunctionTypeWordToUint32<_t>::type) PURE;
+  REGISTER_CALLBACK(WasmCallback0Void);
+  REGISTER_CALLBACK(WasmCallback1Void);
+  REGISTER_CALLBACK(WasmCallback2Void);
+  REGISTER_CALLBACK(WasmCallback3Void);
+  REGISTER_CALLBACK(WasmCallback4Void);
+  REGISTER_CALLBACK(WasmCallback5Void);
+  REGISTER_CALLBACK(WasmCallback0Int);
+  REGISTER_CALLBACK(WasmCallback1Int);
+  REGISTER_CALLBACK(WasmCallback2Int);
+  REGISTER_CALLBACK(WasmCallback3Int);
+  REGISTER_CALLBACK(WasmCallback4Int);
+  REGISTER_CALLBACK(WasmCallback5Int);
+  REGISTER_CALLBACK(WasmCallback6Int);
+  REGISTER_CALLBACK(WasmCallback7Int);
+  REGISTER_CALLBACK(WasmCallback8Int);
+  REGISTER_CALLBACK(WasmCallback9Int);
+  REGISTER_CALLBACK(WasmCallback_ZWl);
+  REGISTER_CALLBACK(WasmCallback_ZWm);
+  REGISTER_CALLBACK(WasmCallback_m);
+  REGISTER_CALLBACK(WasmCallback_mW);
+#undef REGISTER_CALLBACK
 
   // Register typed value exported by the host environment.
-  virtual std::unique_ptr<Global<uint32_t>>
-  makeGlobal(absl::string_view moduleName, absl::string_view name, uint32_t initialValue) PURE;
+  virtual std::unique_ptr<Global<Word>> makeGlobal(absl::string_view module_name,
+                                                   absl::string_view name, Word initial_value) PURE;
   virtual std::unique_ptr<Global<double>>
-  makeGlobal(absl::string_view moduleName, absl::string_view name, double initialValue) PURE;
+  makeGlobal(absl::string_view module_name, absl::string_view name, double initial_value) PURE;
 };
 
 // Create a new low-level WASM VM of the give type (e.g. "envoy.wasm.vm.wavm").
@@ -729,17 +795,17 @@ public:
 
 inline Context::Context(Wasm* wasm) : wasm_(wasm), id_(wasm->allocContextId()) {}
 
-inline void* Wasm::allocMemory(uint32_t size, uint32_t* address) {
-  uint32_t a = malloc_(generalContext(), size);
-  *address = a;
-  // Note: this can thorw a WASM exception.
+inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
+  Word a = malloc_(generalContext(), size);
+  *address = a.u64;
+  // Note: this can throw a WASM exception.
   return const_cast<void*>(reinterpret_cast<const void*>(wasm_vm_->getMemory(a, size).data()));
 }
 
-inline void Wasm::freeMemoryOffset(uint32_t address) { free_(generalContext(), address); }
+inline void Wasm::freeMemoryOffset(uint64_t address) { free_(generalContext(), address); }
 
 inline bool Wasm::freeMemory(void* pointer) {
-  uint32_t offset;
+  uint64_t offset;
   if (!wasm_vm_->getMemoryOffset(pointer, &offset)) {
     return false;
   }
@@ -747,8 +813,8 @@ inline bool Wasm::freeMemory(void* pointer) {
   return true;
 }
 
-inline uint32_t Wasm::copyString(absl::string_view s) {
-  uint32_t pointer;
+inline uint64_t Wasm::copyString(absl::string_view s) {
+  uint64_t pointer;
   uint8_t* m = static_cast<uint8_t*>(allocMemory((s.size() + 1), &pointer));
   if (s.size() > 0)
     memcpy(m, s.data(), s.size());
@@ -756,8 +822,8 @@ inline uint32_t Wasm::copyString(absl::string_view s) {
   return pointer;
 }
 
-inline uint32_t Wasm::copyBuffer(const Buffer::Instance& buffer) {
-  uint32_t pointer;
+inline uint64_t Wasm::copyBuffer(const Buffer::Instance& buffer) {
+  uint64_t pointer;
   auto length = buffer.length();
   if (length <= 0) {
     return 0;
@@ -783,33 +849,36 @@ inline uint32_t Wasm::copyBuffer(const Buffer::Instance& buffer) {
   return pointer;
 }
 
-inline bool Wasm::copyToPointerSize(absl::string_view s, uint32_t ptr_ptr, uint32_t size_ptr) {
-  uint32_t pointer = 0;
-  uint32_t size = s.size();
+inline bool Wasm::copyToPointerSize(absl::string_view s, uint64_t ptr_ptr, uint64_t size_ptr) {
+  uint64_t pointer = 0;
+  uint64_t size = s.size();
   void* p = nullptr;
   if (size > 0) {
     p = allocMemory(size, &pointer);
-    if (!p)
+    if (!p) {
       return false;
+    }
     memcpy(p, s.data(), size);
   }
-  if (!wasm_vm_->setMemory(ptr_ptr, sizeof(uint32_t), &pointer))
+  if (!wasm_vm_->setWord(ptr_ptr, pointer)) {
     return false;
-  if (!wasm_vm_->setMemory(size_ptr, sizeof(uint32_t), &size))
+  }
+  if (!wasm_vm_->setWord(size_ptr, size)) {
     return false;
+  }
   return true;
 }
 
-inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint32_t start, uint32_t length,
-                                    uint32_t ptr_ptr, uint32_t size_ptr) {
-  uint32_t size = buffer.length();
+inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t start, uint64_t length,
+                                    uint64_t ptr_ptr, uint64_t size_ptr) {
+  uint64_t size = buffer.length();
   if (size < start + length) {
     return false;
   }
   auto nslices = buffer.getRawSlices(nullptr, 0);
   auto slices = std::make_unique<Buffer::RawSlice[]>(nslices + 10 /* pad for evbuffer overrun */);
   auto actual_slices = buffer.getRawSlices(&slices[0], nslices);
-  uint32_t pointer = 0;
+  uint64_t pointer = 0;
   char* p = static_cast<char*>(allocMemory(length, &pointer));
   auto s = start;
   auto l = length;
@@ -832,10 +901,10 @@ inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint32_t sta
     s = 0;
     p += ll;
   }
-  if (!wasm_vm_->setMemory(ptr_ptr, sizeof(int32_t), &pointer)) {
+  if (!wasm_vm_->setWord(ptr_ptr, pointer)) {
     return false;
   }
-  if (!wasm_vm_->setMemory(size_ptr, sizeof(int32_t), &length)) {
+  if (!wasm_vm_->setWord(size_ptr, length)) {
     return false;
   }
   return true;
