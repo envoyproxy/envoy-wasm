@@ -2,9 +2,8 @@
 
 #include "common/network/address_impl.h"
 
-#include "test/test_common/test_base.h"
-
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::Const;
@@ -63,8 +62,15 @@ MockStreamInfo::MockStreamInfo()
             downstream_remote_address_ = downstream_remote_address;
           }));
   ON_CALL(*this, downstreamRemoteAddress()).WillByDefault(ReturnRef(downstream_remote_address_));
+  ON_CALL(*this, setDownstreamSslConnection(_))
+      .WillByDefault(Invoke(
+          [this](const auto* connection_info) { downstream_connection_info_ = connection_info; }));
+  ON_CALL(*this, downstreamSslConnection()).WillByDefault(Invoke([this]() {
+    return downstream_connection_info_;
+  }));
   ON_CALL(*this, protocol()).WillByDefault(ReturnPointee(&protocol_));
   ON_CALL(*this, responseCode()).WillByDefault(ReturnPointee(&response_code_));
+  ON_CALL(*this, responseCodeDetails()).WillByDefault(ReturnPointee(&response_code_details_));
   ON_CALL(*this, addBytesReceived(_)).WillByDefault(Invoke([this](uint64_t bytes_received) {
     bytes_received_ += bytes_received;
   }));
@@ -82,6 +88,8 @@ MockStreamInfo::MockStreamInfo()
         requested_server_name_ = std::string(requested_server_name);
       }));
   ON_CALL(*this, requestedServerName()).WillByDefault(ReturnRef(requested_server_name_));
+  ON_CALL(*this, upstreamTransportFailureReason())
+      .WillByDefault(ReturnRef(upstream_transport_failure_reason_));
 }
 
 MockStreamInfo::~MockStreamInfo() {}

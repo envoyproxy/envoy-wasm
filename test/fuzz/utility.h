@@ -11,10 +11,27 @@ namespace Envoy {
 namespace Fuzz {
 
 // Convert from test proto Headers to TestHeaderMapImpl.
-inline Http::TestHeaderMapImpl fromHeaders(const test::fuzz::Headers& headers) {
+inline Http::TestHeaderMapImpl fromHeaders(
+    const test::fuzz::Headers& headers,
+    const std::unordered_set<std::string>& ignore_headers = std::unordered_set<std::string>()) {
   Http::TestHeaderMapImpl header_map;
   for (const auto& header : headers.headers()) {
-    header_map.addCopy(header.key(), header.value());
+    // HeaderMapImpl and places such as the route lookup should never see strings with embedded NULL
+    // values, the HTTP codecs should reject them. So, don't inject any such strings into the fuzz
+    // tests.
+    const auto clean = [](const std::string& s) {
+      const auto n = s.find('\0');
+      if (n == std::string::npos) {
+        return s;
+      }
+      return s.substr(0, n);
+    };
+    // When we are injecting headers, we don't allow the key to ever be empty,
+    // since calling code is not supposed to do this.
+    const std::string key = header.key().empty() ? "not-empty" : clean(header.key());
+    if (ignore_headers.find(StringUtil::toLower(key)) != ignore_headers.end()) {
+      header_map.addCopy(key, clean(header.value()));
+    }
   }
   return header_map;
 }
@@ -25,8 +42,8 @@ inline test::fuzz::Headers toHeaders(const Http::HeaderMap& headers) {
   headers.iterate(
       [](const Http::HeaderEntry& header, void* ctxt) -> Http::HeaderMap::Iterate {
         auto* fuzz_header = static_cast<test::fuzz::Headers*>(ctxt)->add_headers();
-        fuzz_header->set_key(header.key().c_str());
-        fuzz_header->set_value(header.value().c_str());
+        fuzz_header->set_key(std::string(header.key().getStringView()));
+        fuzz_header->set_value(std::string(header.value().getStringView()));
         return Http::HeaderMap::Iterate::Continue;
       },
       &fuzz_headers);
@@ -38,7 +55,8 @@ inline TestStreamInfo fromStreamInfo(const test::fuzz::StreamInfo& stream_info) 
   test_stream_info.metadata_ = stream_info.dynamic_metadata();
   // libc++ clocks don't track at nanosecond on macOS.
   const auto start_time =
-      std::numeric_limits<std::chrono::nanoseconds::rep>::max() < stream_info.start_time()
+      static_cast<uint64_t>(std::numeric_limits<std::chrono::nanoseconds::rep>::max()) <
+              stream_info.start_time()
           ? 0
           : stream_info.start_time() / 1000;
   test_stream_info.start_time_ = SystemTime(std::chrono::microseconds(start_time));

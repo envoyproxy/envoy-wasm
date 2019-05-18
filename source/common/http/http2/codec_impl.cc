@@ -33,7 +33,8 @@ bool Utility::reconstituteCrumbledCookies(const HeaderString& key, const HeaderS
     cookies.append("; ", 2);
   }
 
-  cookies.append(value.c_str(), value.size());
+  const absl::string_view value_view = value.getStringView();
+  cookies.append(value_view.data(), value_view.size());
   return true;
 }
 
@@ -66,9 +67,11 @@ static void insertHeader(std::vector<nghttp2_nv>& headers, const HeaderEntry& he
   if (header.value().type() == HeaderString::Type::Reference) {
     flags |= NGHTTP2_NV_FLAG_NO_COPY_VALUE;
   }
-  headers.push_back({remove_const<uint8_t>(header.key().c_str()),
-                     remove_const<uint8_t>(header.value().c_str()), header.key().size(),
-                     header.value().size(), flags});
+  const absl::string_view header_key = header.key().getStringView();
+  const absl::string_view header_value = header.value().getStringView();
+  headers.push_back({remove_const<uint8_t>(header_key.data()),
+                     remove_const<uint8_t>(header_value.data()), header_key.size(),
+                     header_value.size(), flags});
 }
 
 void ConnectionImpl::StreamImpl::buildHeaders(std::vector<nghttp2_nv>& final_headers,
@@ -532,7 +535,8 @@ int ConnectionImpl::onFrameSend(const nghttp2_frame* frame) {
 }
 
 int ConnectionImpl::onInvalidFrame(int32_t stream_id, int error_code) {
-  ENVOY_CONN_LOG(debug, "invalid frame: {}", connection_, nghttp2_strerror(error_code));
+  ENVOY_CONN_LOG(debug, "invalid frame: {} on stream {}", connection_, nghttp2_strerror(error_code),
+                 stream_id);
 
   // The stream is about to be closed due to an invalid header or messaging. Don't kill the
   // entire connection if one stream has bad headers or messaging.
@@ -853,6 +857,10 @@ ConnectionImpl::Http2Options::Http2Options(const Http2Settings& http2_settings) 
   // of kept alive HTTP/2 connections.
   nghttp2_option_set_no_closed_streams(options_, 1);
   nghttp2_option_set_no_auto_window_update(options_, 1);
+
+  // The max send header block length is configured to an arbitrarily high number so as to never
+  // trigger the check within nghttp2, as we check request headers length in codec_impl::saveHeader.
+  nghttp2_option_set_max_send_header_block_length(options_, 0x2000000);
 
   if (http2_settings.hpack_table_size_ != NGHTTP2_DEFAULT_HEADER_TABLE_SIZE) {
     nghttp2_option_set_max_deflate_dynamic_table_size(options_, http2_settings.hpack_table_size_);

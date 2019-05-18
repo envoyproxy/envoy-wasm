@@ -22,8 +22,6 @@
 #include "common/network/resolver_impl.h"
 #include "common/network/utility.h"
 
-#include "extensions/filters/common/ratelimit/ratelimit_registration.h"
-
 namespace Envoy {
 namespace Server {
 namespace Configuration {
@@ -129,7 +127,6 @@ private:
   std::chrono::milliseconds watchdog_megamiss_timeout_;
   std::chrono::milliseconds watchdog_kill_timeout_;
   std::chrono::milliseconds watchdog_multikill_timeout_;
-  Extensions::Filters::Common::RateLimit::ClientFactoryPtr ratelimit_client_factory_;
 };
 
 /**
@@ -142,7 +139,8 @@ public:
   // Server::Configuration::Initial
   Admin& admin() override { return admin_; }
   absl::optional<std::string> flagsPath() override { return flags_path_; }
-  Runtime* runtime() override { return runtime_.get(); }
+  const ProtobufWkt::Struct& baseRuntime() override { return base_runtime_; }
+  DiskRuntime* diskRuntime() override { return disk_runtime_.get(); }
 
 private:
   struct AdminImpl : public Admin {
@@ -156,8 +154,8 @@ private:
     Network::Address::InstanceConstSharedPtr address_;
   };
 
-  struct RuntimeImpl : public Runtime {
-    // Server::Configuration::Runtime
+  struct DiskRuntimeImpl : public DiskRuntime {
+    // Server::Configuration::DiskRuntime
     const std::string& symlinkRoot() override { return symlink_root_; }
     const std::string& subdirectory() override { return subdirectory_; }
     const std::string& overrideSubdirectory() override { return override_subdirectory_; }
@@ -169,7 +167,8 @@ private:
 
   AdminImpl admin_;
   absl::optional<std::string> flags_path_;
-  std::unique_ptr<RuntimeImpl> runtime_;
+  ProtobufWkt::Struct base_runtime_;
+  std::unique_ptr<DiskRuntimeImpl> disk_runtime_;
 };
 
 } // namespace Configuration

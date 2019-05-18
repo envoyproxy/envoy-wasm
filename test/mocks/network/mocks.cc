@@ -10,9 +10,9 @@
 #include "common/network/utility.h"
 
 #include "test/test_common/printers.h"
-#include "test/test_common/test_base.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::Invoke;
@@ -64,13 +64,26 @@ MockReadFilter::MockReadFilter() {
 
 MockReadFilter::~MockReadFilter() {}
 
-MockWriteFilter::MockWriteFilter() {}
+MockWriteFilterCallbacks::MockWriteFilterCallbacks() {
+  ON_CALL(*this, connection()).WillByDefault(ReturnRef(connection_));
+}
+
+MockWriteFilterCallbacks::~MockWriteFilterCallbacks() {}
+
+MockWriteFilter::MockWriteFilter() {
+  EXPECT_CALL(*this, initializeWriteFilterCallbacks(_))
+      .WillOnce(Invoke(
+          [this](WriteFilterCallbacks& callbacks) -> void { write_callbacks_ = &callbacks; }));
+}
 MockWriteFilter::~MockWriteFilter() {}
 
 MockFilter::MockFilter() {
   EXPECT_CALL(*this, initializeReadFilterCallbacks(_))
       .WillOnce(
           Invoke([this](ReadFilterCallbacks& callbacks) -> void { callbacks_ = &callbacks; }));
+  EXPECT_CALL(*this, initializeWriteFilterCallbacks(_))
+      .WillOnce(Invoke(
+          [this](WriteFilterCallbacks& callbacks) -> void { write_callbacks_ = &callbacks; }));
 }
 
 MockFilter::~MockFilter() {}
@@ -107,15 +120,13 @@ MockFilterChainFactory::MockFilterChainFactory() {
 MockFilterChainFactory::~MockFilterChainFactory() {}
 
 MockListenSocket::MockListenSocket()
-    : io_handle_(std::make_unique<IoSocketHandle>()),
+    : io_handle_(std::make_unique<IoSocketHandleImpl>()),
       local_address_(new Address::Ipv4Instance(80)) {
   ON_CALL(*this, localAddress()).WillByDefault(ReturnRef(local_address_));
   ON_CALL(*this, options()).WillByDefault(ReturnRef(options_));
   ON_CALL(*this, ioHandle()).WillByDefault(ReturnRef(*io_handle_));
   ON_CALL(testing::Const(*this), ioHandle()).WillByDefault(ReturnRef(*io_handle_));
 }
-
-MockListenSocket::~MockListenSocket() { io_handle_->close(); }
 
 MockSocketOption::MockSocketOption() {
   ON_CALL(*this, setOption(_, _)).WillByDefault(Return(true));
@@ -124,15 +135,14 @@ MockSocketOption::MockSocketOption() {
 MockSocketOption::~MockSocketOption() {}
 
 MockConnectionSocket::MockConnectionSocket()
-    : io_handle_(std::make_unique<IoSocketHandle>()), local_address_(new Address::Ipv4Instance(80)),
+    : io_handle_(std::make_unique<IoSocketHandleImpl>()),
+      local_address_(new Address::Ipv4Instance(80)),
       remote_address_(new Address::Ipv4Instance(80)) {
   ON_CALL(*this, localAddress()).WillByDefault(ReturnRef(local_address_));
   ON_CALL(*this, remoteAddress()).WillByDefault(ReturnRef(remote_address_));
   ON_CALL(*this, ioHandle()).WillByDefault(ReturnRef(*io_handle_));
   ON_CALL(testing::Const(*this), ioHandle()).WillByDefault(ReturnRef(*io_handle_));
 }
-
-MockConnectionSocket::~MockConnectionSocket() { io_handle_->close(); }
 
 MockListener::MockListener() {}
 MockListener::~MockListener() { onDestroy(); }

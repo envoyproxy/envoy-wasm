@@ -7,7 +7,6 @@
 #include "envoy/admin/v2alpha/server_info.pb.h"
 #include "envoy/common/pure.h"
 #include "envoy/network/address.h"
-#include "envoy/stats/stats_options.h"
 
 #include "spdlog/spdlog.h"
 
@@ -149,17 +148,6 @@ public:
   virtual const std::string& serviceZone() const PURE;
 
   /**
-   * @return uint64_t the maximum number of stats gauges and counters.
-   */
-  virtual uint64_t maxStats() const PURE;
-
-  /**
-   * @return StatsOptions& the max stat name / suffix lengths for stats.
-   * router/cluster/listener.
-   */
-  virtual const Stats::StatsOptions& statsOptions() const PURE;
-
-  /**
    * @return bool indicating whether the hot restart functionality has been disabled via cli flags.
    */
   virtual bool hotRestartDisabled() const PURE;
@@ -173,6 +161,16 @@ public:
    * @return bool indicating whether mutex tracing functionality has been enabled.
    */
   virtual bool mutexTracingEnabled() const PURE;
+
+  /**
+   * @return whether to use the old libevent evbuffer-based Buffer implementation.
+   */
+  virtual bool libeventBufferEnabled() const PURE;
+
+  /**
+   * @return bool indicating whether cpuset size should determine the number of worker threads.
+   */
+  virtual bool cpusetThreadsEnabled() const PURE;
 
   /**
    * Converts the Options in to CommandLineOptions proto message defined in server_info.proto.

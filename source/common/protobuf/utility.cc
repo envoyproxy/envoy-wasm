@@ -6,8 +6,36 @@
 #include "common/protobuf/protobuf.h"
 
 #include "absl/strings/match.h"
+#include "yaml-cpp/yaml.h"
 
 namespace Envoy {
+namespace {
+
+absl::string_view filenameFromPath(absl::string_view full_path) {
+  size_t index = full_path.rfind("/");
+  if (index == std::string::npos || index == full_path.size()) {
+    return full_path;
+  }
+  return full_path.substr(index + 1, full_path.size());
+}
+
+void blockFormat(YAML::Node node) {
+  node.SetStyle(YAML::EmitterStyle::Block);
+
+  if (node.Type() == YAML::NodeType::Sequence) {
+    for (auto it : node) {
+      blockFormat(it);
+    }
+  }
+  if (node.Type() == YAML::NodeType::Map) {
+    for (auto it : node) {
+      blockFormat(it.second);
+    }
+  }
+}
+
+} // namespace
+
 namespace ProtobufPercentHelper {
 
 uint64_t checkAndReturnDefault(uint64_t default_value, uint64_t max_value) {
@@ -19,6 +47,11 @@ uint64_t convertPercent(double percent, uint64_t max_value) {
   // Checked by schema.
   ASSERT(percent >= 0.0 && percent <= 100.0);
   return max_value * (percent / 100.0);
+}
+
+bool evaluateFractionalPercent(envoy::type::FractionalPercent percent, uint64_t random_value) {
+  return random_value % fractionalPercentDenominatorToInt(percent.denominator()) <
+         percent.numerator();
 }
 
 uint64_t fractionalPercentDenominatorToInt(
@@ -62,6 +95,7 @@ void MessageUtil::loadFromJsonEx(const std::string& json, Protobuf::Message& mes
   if (proto_unknown_fields == ProtoUnknownFieldsMode::Allow) {
     options.ignore_unknown_fields = true;
   }
+  options.case_insensitive_enum_parsing = true;
   const auto status = Protobuf::util::JsonStringToMessage(json, &message, options);
   if (!status.ok()) {
     throw EnvoyException("Unable to parse JSON as proto (" + status.ToString() + "): " + json);
@@ -82,7 +116,7 @@ void MessageUtil::loadFromYaml(const std::string& yaml, Protobuf::Message& messa
 void MessageUtil::loadFromFile(const std::string& path, Protobuf::Message& message, Api::Api& api) {
   const std::string contents = api.fileSystem().fileReadToEnd(path);
   // If the filename ends with .pb, attempt to parse it as a binary proto.
-  if (absl::EndsWith(path, ".pb")) {
+  if (absl::EndsWith(path, FileExtensions::get().ProtoBinary)) {
     // Attempt to parse the binary format.
     if (message.ParseFromString(contents)) {
       MessageUtil::checkUnknownFields(message);
@@ -92,21 +126,21 @@ void MessageUtil::loadFromFile(const std::string& path, Protobuf::Message& messa
                          message.GetTypeName() + ")");
   }
   // If the filename ends with .pb_text, attempt to parse it as a text proto.
-  if (absl::EndsWith(path, ".pb_text")) {
+  if (absl::EndsWith(path, FileExtensions::get().ProtoText)) {
     if (Protobuf::TextFormat::ParseFromString(contents, &message)) {
       return;
     }
     throw EnvoyException("Unable to parse file \"" + path + "\" as a text protobuf (type " +
                          message.GetTypeName() + ")");
   }
-  if (absl::EndsWith(path, ".yaml")) {
+  if (absl::EndsWith(path, FileExtensions::get().Yaml)) {
     loadFromYaml(contents, message);
   } else {
     loadFromJson(contents, message);
   }
 }
 
-void MessageUtil::checkForDeprecation(const Protobuf::Message& message, bool warn_only) {
+void MessageUtil::checkForDeprecation(const Protobuf::Message& message, Runtime::Loader* runtime) {
   const Protobuf::Descriptor* descriptor = message.GetDescriptor();
   const Protobuf::Reflection* reflection = message.GetReflection();
   for (int i = 0; i < descriptor->field_count(); ++i) {
@@ -118,17 +152,33 @@ void MessageUtil::checkForDeprecation(const Protobuf::Message& message, bool war
       continue;
     }
 
+    bool warn_only = true;
+    absl::string_view filename = filenameFromPath(field->file()->name());
+    // Allow runtime to be null both to not crash if this is called before server initialization,
+    // and so proto validation works in context where runtime singleton is not set up (e.g.
+    // standalone config validation utilities)
+    if (runtime && field->options().deprecated() &&
+        !runtime->snapshot().deprecatedFeatureEnabled(
+            absl::StrCat("envoy.deprecated_features.", filename, ":", field->name()))) {
+      warn_only = false;
+    }
+
     // If this field is deprecated, warn or throw an error.
     if (field->options().deprecated()) {
       std::string err = fmt::format(
-          "Using deprecated option '{}'. This configuration will be removed from Envoy soon. "
-          "Please see https://github.com/envoyproxy/envoy/blob/master/DEPRECATED.md for "
-          "details.",
-          field->full_name());
+          "Using deprecated option '{}' from file {}. This configuration will be removed from "
+          "Envoy soon. Please see https://www.envoyproxy.io/docs/envoy/latest/intro/deprecated "
+          "for details.",
+          field->full_name(), filename);
       if (warn_only) {
         ENVOY_LOG_MISC(warn, "{}", err);
       } else {
-        throw ProtoValidationException(err, message);
+        const char fatal_error[] =
+            " If continued use of this field is absolutely necessary, see "
+            "https://www.envoyproxy.io/docs/envoy/latest/configuration/runtime"
+            "#using-runtime-overrides-for-deprecated-features for how to apply a temporary and"
+            "highly discouraged override.";
+        throw ProtoValidationException(err + fatal_error, message);
       }
     }
 
@@ -137,13 +187,26 @@ void MessageUtil::checkForDeprecation(const Protobuf::Message& message, bool war
       if (field->is_repeated()) {
         const int size = reflection->FieldSize(message, field);
         for (int j = 0; j < size; ++j) {
-          checkForDeprecation(reflection->GetRepeatedMessage(message, field, j), warn_only);
+          checkForDeprecation(reflection->GetRepeatedMessage(message, field, j), runtime);
         }
       } else {
-        checkForDeprecation(reflection->GetMessage(message, field), warn_only);
+        checkForDeprecation(reflection->GetMessage(message, field), runtime);
       }
     }
   }
+}
+
+std::string MessageUtil::getYamlStringFromMessage(const Protobuf::Message& message,
+                                                  const bool block_print,
+                                                  const bool always_print_primitive_fields) {
+  std::string json = getJsonStringFromMessage(message, false, always_print_primitive_fields);
+  auto node = YAML::Load(json);
+  if (block_print) {
+    blockFormat(node);
+  }
+  YAML::Emitter out;
+  out << node;
+  return out.c_str();
 }
 
 std::string MessageUtil::getJsonStringFromMessage(const Protobuf::Message& message,
@@ -162,7 +225,7 @@ std::string MessageUtil::getJsonStringFromMessage(const Protobuf::Message& messa
   if (always_print_primitive_fields) {
     json_options.always_print_primitive_fields = true;
   }
-  ProtobufTypes::String json;
+  std::string json;
   const auto status = Protobuf::util::MessageToJsonString(message, &json, json_options);
   // This should always succeed unless something crash-worthy such as out-of-memory.
   RELEASE_ASSERT(status.ok(), "");
@@ -173,7 +236,7 @@ void MessageUtil::jsonConvert(const Protobuf::Message& source, Protobuf::Message
   // TODO(htuch): Consolidate with the inflight cleanups here.
   Protobuf::util::JsonPrintOptions json_options;
   json_options.preserve_proto_field_names = true;
-  ProtobufTypes::String json;
+  std::string json;
   const auto status = Protobuf::util::MessageToJsonString(source, &json, json_options);
   if (!status.ok()) {
     throw EnvoyException(fmt::format("Unable to convert protobuf message to JSON string: {} {}",
@@ -188,6 +251,49 @@ ProtobufWkt::Struct MessageUtil::keyValueStruct(const std::string& key, const st
   val.set_string_value(value);
   (*struct_obj.mutable_fields())[key] = val;
   return struct_obj;
+}
+
+// TODO(alyssawilk) see if we can get proto's CodeEnumToString made accessible
+// to avoid copying it. Otherwise change this to absl::string_view.
+std::string MessageUtil::CodeEnumToString(ProtobufUtil::error::Code code) {
+  switch (code) {
+  case ProtobufUtil::error::OK:
+    return "OK";
+  case ProtobufUtil::error::CANCELLED:
+    return "CANCELLED";
+  case ProtobufUtil::error::UNKNOWN:
+    return "UNKNOWN";
+  case ProtobufUtil::error::INVALID_ARGUMENT:
+    return "INVALID_ARGUMENT";
+  case ProtobufUtil::error::DEADLINE_EXCEEDED:
+    return "DEADLINE_EXCEEDED";
+  case ProtobufUtil::error::NOT_FOUND:
+    return "NOT_FOUND";
+  case ProtobufUtil::error::ALREADY_EXISTS:
+    return "ALREADY_EXISTS";
+  case ProtobufUtil::error::PERMISSION_DENIED:
+    return "PERMISSION_DENIED";
+  case ProtobufUtil::error::UNAUTHENTICATED:
+    return "UNAUTHENTICATED";
+  case ProtobufUtil::error::RESOURCE_EXHAUSTED:
+    return "RESOURCE_EXHAUSTED";
+  case ProtobufUtil::error::FAILED_PRECONDITION:
+    return "FAILED_PRECONDITION";
+  case ProtobufUtil::error::ABORTED:
+    return "ABORTED";
+  case ProtobufUtil::error::OUT_OF_RANGE:
+    return "OUT_OF_RANGE";
+  case ProtobufUtil::error::UNIMPLEMENTED:
+    return "UNIMPLEMENTED";
+  case ProtobufUtil::error::INTERNAL:
+    return "INTERNAL";
+  case ProtobufUtil::error::UNAVAILABLE:
+    return "UNAVAILABLE";
+  case ProtobufUtil::error::DATA_LOSS:
+    return "DATA_LOSS";
+  default:
+    return "";
+  }
 }
 
 bool ValueUtil::equal(const ProtobufWkt::Value& v1, const ProtobufWkt::Value& v2) {

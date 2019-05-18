@@ -9,7 +9,7 @@
 #include "envoy/common/mutex_tracer.h"
 #include "envoy/event/timer.h"
 #include "envoy/http/context.h"
-#include "envoy/init/init.h"
+#include "envoy/init/manager.h"
 #include "envoy/local_info/local_info.h"
 #include "envoy/network/listen_socket.h"
 #include "envoy/runtime/runtime.h"
@@ -17,6 +17,7 @@
 #include "envoy/server/admin.h"
 #include "envoy/server/drain_manager.h"
 #include "envoy/server/hot_restart.h"
+#include "envoy/server/lifecycle_notifier.h"
 #include "envoy/server/listener_manager.h"
 #include "envoy/server/options.h"
 #include "envoy/server/overload_manager.h"
@@ -87,12 +88,6 @@ public:
   virtual void failHealthcheck(bool fail) PURE;
 
   /**
-   * Fetch server stats specific to this process vs. global shared stats in a hot restart scenario.
-   * @param info supplies the stats structure to fill.
-   */
-  virtual void getParentStats(HotRestart::GetParentStatsInfo& info) PURE;
-
-  /**
    * @return whether external healthchecks are currently failed or not.
    */
   virtual bool healthCheckFailed() PURE;
@@ -148,6 +143,11 @@ public:
   virtual Runtime::Loader& runtime() PURE;
 
   /**
+   * @return ServerLifecycleNotifier& the singleton lifecycle notifier for the server.
+   */
+  virtual ServerLifecycleNotifier& lifecycleNotifier() PURE;
+
+  /**
    * Shutdown the server gracefully.
    */
   virtual void shutdown() PURE;
@@ -199,9 +199,9 @@ public:
   virtual const LocalInfo::LocalInfo& localInfo() PURE;
 
   /**
-   * @return the time system used for the server.
+   * @return the time source used for the server.
    */
-  virtual Event::TimeSystem& timeSystem() PURE;
+  virtual TimeSource& timeSource() PURE;
 
   /**
    * @return the flush interval of stats sinks.

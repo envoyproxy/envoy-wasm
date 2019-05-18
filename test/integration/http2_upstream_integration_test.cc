@@ -6,24 +6,17 @@
 
 #include "test/integration/autonomous_upstream.h"
 #include "test/test_common/printers.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
+
+#include "gtest/gtest.h"
+
+using testing::HasSubstr;
 
 namespace Envoy {
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, Http2UpstreamIntegrationTest,
                          testing::ValuesIn(TestEnvironment::getIpVersionsForTest()),
                          TestUtility::ipTestParamsToString);
-
-TEST_P(Http2UpstreamIntegrationTest, RouterNotFound) { testRouterNotFound(); }
-
-TEST_P(Http2UpstreamIntegrationTest, RouterRedirect) { testRouterRedirect(); }
-
-TEST_P(Http2UpstreamIntegrationTest, ComputedHealthCheck) { testComputedHealthCheck(); }
-
-TEST_P(Http2UpstreamIntegrationTest, AddEncodedTrailers) { testAddEncodedTrailers(); }
-
-TEST_P(Http2UpstreamIntegrationTest, DrainClose) { testDrainClose(); }
 
 TEST_P(Http2UpstreamIntegrationTest, RouterRequestAndResponseWithBodyNoBuffer) {
   testRouterRequestAndResponseWithBody(1024, 512, false);
@@ -57,31 +50,9 @@ TEST_P(Http2UpstreamIntegrationTest, RouterUpstreamResponseBeforeRequestComplete
   testRouterUpstreamResponseBeforeRequestComplete();
 }
 
-TEST_P(Http2UpstreamIntegrationTest, TwoRequests) { testTwoRequests(); }
-
 TEST_P(Http2UpstreamIntegrationTest, Retry) { testRetry(); }
 
-TEST_P(Http2UpstreamIntegrationTest, EnvoyHandling100Continue) { testEnvoyHandling100Continue(); }
-
-TEST_P(Http2UpstreamIntegrationTest, EnvoyHandlingDuplicate100Continue) {
-  testEnvoyHandling100Continue(true);
-}
-
-TEST_P(Http2UpstreamIntegrationTest, EnvoyProxyingEarly100Continue) {
-  testEnvoyProxying100Continue(true);
-}
-
-TEST_P(Http2UpstreamIntegrationTest, EnvoyProxyingLate100Continue) {
-  testEnvoyProxying100Continue(false);
-}
-
-TEST_P(Http2UpstreamIntegrationTest, RetryHittingBufferLimit) { testRetryHittingBufferLimit(); }
-
 TEST_P(Http2UpstreamIntegrationTest, GrpcRetry) { testGrpcRetry(); }
-
-TEST_P(Http2UpstreamIntegrationTest, DownstreamResetBeforeResponseComplete) {
-  testDownstreamResetBeforeResponseComplete();
-}
 
 TEST_P(Http2UpstreamIntegrationTest, Trailers) { testTrailers(1024, 2048); }
 
@@ -206,7 +177,7 @@ void Http2UpstreamIntegrationTest::simultaneousRequest(uint32_t request1_bytes,
   EXPECT_TRUE(upstream_request2->complete());
   EXPECT_EQ(request2_bytes, upstream_request2->bodyLength());
   EXPECT_TRUE(response2->complete());
-  EXPECT_STREQ("200", response2->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response2->headers().Status()->value().getStringView());
   EXPECT_EQ(response2_bytes, response2->body().size());
 
   // Respond to request 1
@@ -216,7 +187,7 @@ void Http2UpstreamIntegrationTest::simultaneousRequest(uint32_t request1_bytes,
   EXPECT_TRUE(upstream_request1->complete());
   EXPECT_EQ(request1_bytes, upstream_request1->bodyLength());
   EXPECT_TRUE(response1->complete());
-  EXPECT_STREQ("200", response1->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response1->headers().Status()->value().getStringView());
   EXPECT_EQ(response1_bytes, response1->body().size());
 }
 
@@ -261,11 +232,11 @@ void Http2UpstreamIntegrationTest::manySimultaneousRequests(uint32_t request_byt
     responses[i]->waitForEndStream();
     if (i % 2 != 0) {
       EXPECT_TRUE(responses[i]->complete());
-      EXPECT_STREQ("200", responses[i]->headers().Status()->value().c_str());
+      EXPECT_EQ("200", responses[i]->headers().Status()->value().getStringView());
       EXPECT_EQ(response_bytes[i], responses[i]->body().length());
     } else {
       // Upstream stream reset.
-      EXPECT_STREQ("503", responses[i]->headers().Status()->value().c_str());
+      EXPECT_EQ("503", responses[i]->headers().Status()->value().getStringView());
     }
   }
 }
@@ -342,6 +313,64 @@ TEST_P(Http2UpstreamIntegrationTest, UpstreamConnectionCloseWithManyStreams) {
   for (uint32_t i = 1; i < num_requests; ++i) {
     responses[i]->waitForReset();
   }
+}
+
+// Regression test for https://github.com/envoyproxy/envoy/issues/6744
+TEST_P(Http2UpstreamIntegrationTest, HittingEncoderFilterLimitForGrpc) {
+  config_helper_.addConfigModifier(
+      [&](envoy::config::filter::network::http_connection_manager::v2::HttpConnectionManager& hcm)
+          -> void {
+        const std::string access_log_name =
+            TestEnvironment::temporaryPath(TestUtility::uniqueFilename());
+        // Configure just enough of an upstream access log to reference the upstream headers.
+        const std::string yaml_string = R"EOF(
+name: envoy.router
+config:
+  upstream_log:
+    name: envoy.file_access_log
+    filter:
+      not_health_check_filter: {}
+    config:
+      path: /dev/null
+  )EOF";
+        const std::string json = Json::Factory::loadFromYamlString(yaml_string)->asJsonString();
+        MessageUtil::loadFromJson(json, *hcm.mutable_http_filters(1));
+      });
+
+  // As with ProtocolIntegrationTest.HittingEncoderFilterLimit use a filter
+  // which buffers response data but in this case, make sure the sendLocalReply
+  // is gRPC.
+  config_helper_.addFilter("{ name: envoy.http_dynamo_filter, config: {} }");
+  config_helper_.setBufferLimits(1024, 1024);
+  initialize();
+
+  // Send the request.
+  codec_client_ = makeHttpConnection(lookupPort("http"));
+  auto encoder_decoder =
+      codec_client_->startRequest(Http::TestHeaderMapImpl{{":method", "POST"},
+                                                          {":path", "/test/long/url"},
+                                                          {":scheme", "http"},
+                                                          {":authority", "host"},
+                                                          {"te", "trailers"}});
+  auto downstream_request = &encoder_decoder.first;
+  auto response = std::move(encoder_decoder.second);
+  Buffer::OwnedImpl data(R"({"TableName":"locations"})");
+  codec_client_->sendData(*downstream_request, data, true);
+  waitForNextUpstreamRequest();
+
+  // Send the response headers.
+  upstream_request_->encodeHeaders(default_response_headers_, false);
+
+  // Now send an overly large response body. At some point, too much data will
+  // be buffered, the stream will be reset, and the connection will disconnect.
+  fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
+  upstream_request_->encodeData(1024 * 65, false);
+  ASSERT_TRUE(upstream_request_->waitForReset());
+  ASSERT_TRUE(fake_upstream_connection_->close());
+  ASSERT_TRUE(fake_upstream_connection_->waitForDisconnect());
+
+  response->waitForEndStream();
+  EXPECT_TRUE(response->complete());
 }
 
 } // namespace Envoy

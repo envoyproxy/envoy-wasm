@@ -22,10 +22,10 @@
 #include "test/mocks/tracing/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/printers.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::AtLeast;
@@ -38,8 +38,9 @@ namespace Envoy {
 namespace Extensions {
 namespace Tracers {
 namespace Lightstep {
+namespace {
 
-class LightStepDriverTest : public TestBase {
+class LightStepDriverTest : public testing::Test {
 public:
   void setup(envoy::config::trace::v2::LightstepConfig& lightstep_config, bool init_timer,
              Common::Ot::OpenTracingDriver::PropagationMode propagation_mode =
@@ -167,10 +168,11 @@ TEST_F(LightStepDriverTest, FlushSeveralSpans) {
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             callback = &callbacks;
 
-            EXPECT_STREQ("/lightstep.collector.CollectorService/Report",
-                         message->headers().Path()->value().c_str());
-            EXPECT_STREQ("fake_cluster", message->headers().Host()->value().c_str());
-            EXPECT_STREQ("application/grpc", message->headers().ContentType()->value().c_str());
+            EXPECT_EQ("/lightstep.collector.CollectorService/Report",
+                      message->headers().Path()->value().getStringView());
+            EXPECT_EQ("fake_cluster", message->headers().Host()->value().getStringView());
+            EXPECT_EQ("application/grpc",
+                      message->headers().ContentType()->value().getStringView());
 
             return &request;
           }));
@@ -201,7 +203,7 @@ TEST_F(LightStepDriverTest, FlushSeveralSpans) {
   std::unique_ptr<Protobuf::Message> collector_response =
       lightstep::Transporter::MakeCollectorResponse();
   EXPECT_NE(collector_response, nullptr);
-  msg->body() = Grpc::Common::serializeBody(*collector_response);
+  msg->body() = Grpc::Common::serializeToGrpcFrame(*collector_response);
 
   callback->onSuccess(std::move(msg));
 
@@ -229,10 +231,11 @@ TEST_F(LightStepDriverTest, FlushOneFailure) {
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             callback = &callbacks;
 
-            EXPECT_STREQ("/lightstep.collector.CollectorService/Report",
-                         message->headers().Path()->value().c_str());
-            EXPECT_STREQ("fake_cluster", message->headers().Host()->value().c_str());
-            EXPECT_STREQ("application/grpc", message->headers().ContentType()->value().c_str());
+            EXPECT_EQ("/lightstep.collector.CollectorService/Report",
+                      message->headers().Path()->value().getStringView());
+            EXPECT_EQ("fake_cluster", message->headers().Host()->value().getStringView());
+            EXPECT_EQ("application/grpc",
+                      message->headers().ContentType()->value().getStringView());
 
             return &request;
           }));
@@ -273,10 +276,11 @@ TEST_F(LightStepDriverTest, FlushOneInvalidResponse) {
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             callback = &callbacks;
 
-            EXPECT_STREQ("/lightstep.collector.CollectorService/Report",
-                         message->headers().Path()->value().c_str());
-            EXPECT_STREQ("fake_cluster", message->headers().Host()->value().c_str());
-            EXPECT_STREQ("application/grpc", message->headers().ContentType()->value().c_str());
+            EXPECT_EQ("/lightstep.collector.CollectorService/Report",
+                      message->headers().Path()->value().getStringView());
+            EXPECT_EQ("fake_cluster", message->headers().Host()->value().getStringView());
+            EXPECT_EQ("application/grpc",
+                      message->headers().ContentType()->value().getStringView());
 
             return &request;
           }));
@@ -351,10 +355,11 @@ TEST_F(LightStepDriverTest, FlushOneSpanGrpcFailure) {
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             callback = &callbacks;
 
-            EXPECT_STREQ("/lightstep.collector.CollectorService/Report",
-                         message->headers().Path()->value().c_str());
-            EXPECT_STREQ("fake_cluster", message->headers().Host()->value().c_str());
-            EXPECT_STREQ("application/grpc", message->headers().ContentType()->value().c_str());
+            EXPECT_EQ("/lightstep.collector.CollectorService/Report",
+                      message->headers().Path()->value().getStringView());
+            EXPECT_EQ("fake_cluster", message->headers().Host()->value().getStringView());
+            EXPECT_EQ("application/grpc",
+                      message->headers().ContentType()->value().getStringView());
 
             return &request;
           }));
@@ -428,7 +433,7 @@ TEST_F(LightStepDriverTest, SerializeAndDeserializeContext) {
                        {Tracing::Reason::Sampling, true});
     EXPECT_EQ(1U, stats_.counter("tracing.opentracing.span_context_extraction_error").value());
 
-    std::string injected_ctx = request_headers_.OtSpanContext()->value().c_str();
+    std::string injected_ctx(request_headers_.OtSpanContext()->value().getStringView());
     EXPECT_FALSE(injected_ctx.empty());
 
     // Supply empty context.
@@ -439,7 +444,7 @@ TEST_F(LightStepDriverTest, SerializeAndDeserializeContext) {
     EXPECT_EQ(nullptr, request_headers_.OtSpanContext());
     span->injectContext(request_headers_);
 
-    injected_ctx = request_headers_.OtSpanContext()->value().c_str();
+    injected_ctx = std::string(request_headers_.OtSpanContext()->value().getStringView());
     EXPECT_FALSE(injected_ctx.empty());
 
     // Context can be parsed fine.
@@ -453,7 +458,7 @@ TEST_F(LightStepDriverTest, SerializeAndDeserializeContext) {
         config_, request_headers_, operation_name_, start_time_, {Tracing::Reason::Sampling, true});
     request_headers_.removeOtSpanContext();
     span_with_parent->injectContext(request_headers_);
-    injected_ctx = request_headers_.OtSpanContext()->value().c_str();
+    injected_ctx = std::string(request_headers_.OtSpanContext()->value().getStringView());
     EXPECT_FALSE(injected_ctx.empty());
   }
 }
@@ -475,13 +480,16 @@ TEST_F(LightStepDriverTest, SpawnChild) {
   childViaHeaders->injectContext(base1);
   childViaSpawn->injectContext(base2);
 
-  std::string base1_context = Base64::decode(base1.OtSpanContext()->value().c_str());
-  std::string base2_context = Base64::decode(base2.OtSpanContext()->value().c_str());
+  std::string base1_context =
+      Base64::decode(std::string(base1.OtSpanContext()->value().getStringView()));
+  std::string base2_context =
+      Base64::decode(std::string(base2.OtSpanContext()->value().getStringView()));
 
   EXPECT_FALSE(base1_context.empty());
   EXPECT_FALSE(base2_context.empty());
 }
 
+} // namespace
 } // namespace Lightstep
 } // namespace Tracers
 } // namespace Extensions

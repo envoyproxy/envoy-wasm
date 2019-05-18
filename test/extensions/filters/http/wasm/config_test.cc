@@ -8,7 +8,6 @@
 
 #include "test/mocks/server/mocks.h"
 #include "test/test_common/environment.h"
-#include "test/test_common/test_base.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -21,7 +20,7 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-class WasmFilterConfigTest : public TestBaseWithParam<std::string> {
+class WasmFilterConfigTest : public testing::TestWithParam<std::string> {
 protected:
   WasmFilterConfigTest() : api_(Api::createApiForTest(stats_store_)) {
     ON_CALL(context_, api()).WillByDefault(ReturnRef(*api_));

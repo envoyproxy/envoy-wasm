@@ -11,8 +11,9 @@
 
 #include "test/test_common/contention.h"
 #include "test/test_common/environment.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
+
+#include "gtest/gtest.h"
 
 #ifdef ENVOY_HANDLE_SIGNALS
 #include "exe/signal_action.h"
@@ -31,7 +32,7 @@ namespace Envoy {
  * an argv array that is terminated with nullptr. Identifies the config
  * file relative to $TEST_RUNDIR.
  */
-class MainCommonTest : public TestBaseWithParam<Network::Address::IpVersion> {
+class MainCommonTest : public testing::TestWithParam<Network::Address::IpVersion> {
 protected:
   MainCommonTest()
       : config_file_(TestEnvironment::temporaryFileSubstitute(
@@ -39,20 +40,7 @@ protected:
             TestEnvironment::PortMap(), GetParam())),
         random_string_(fmt::format("{}", computeBaseId())),
         argv_({"envoy-static", "--base-id", random_string_.c_str(), "-c", config_file_.c_str(),
-               nullptr}) {
-    // The test main() sets the ThreadFactorySingleton since it is required by all other tests not
-    // instantiating their own MainCommon.
-    // Reset the singleton to a nullptr to avoid triggering an assertion when MainCommonBase() calls
-    // set() in the tests below.
-    Thread::ThreadFactorySingleton::set(nullptr);
-  }
-
-  ~MainCommonTest() override {
-    // This is ugly, but necessary to enable a stronger ASSERT() in ThreadFactorySingleton::set().
-    // The singleton needs to be reset to a non nullptr value such that when the constructor runs
-    // again, the ThreadFactorySingleton::set(nullptr) does not trigger the assertion.
-    Thread::ThreadFactorySingleton::set(&Thread::threadFactoryForTest());
-  }
+               nullptr}) {}
 
   /**
    * Computes a numeric ID to incorporate into the names of
@@ -62,7 +50,7 @@ protected:
    * The PID is needed to isolate namespaces between concurrent
    * processes in CI. The random number generator is needed
    * sequentially executed test methods fail with an error in
-   * bindDomainSocket if the the same base-id is re-used.
+   * bindDomainSocket if the same base-id is re-used.
    *
    * @return uint32_t a unique numeric ID based on the PID and a random number.
    */
@@ -210,6 +198,28 @@ protected:
     }
   }
 
+  // Wait until Envoy is inside the main server run loop proper. Before entering, Envoy runs any
+  // pending post callbacks, so it's not reliable to use adminRequest() or post() to do this.
+  // Generally, tests should not depend on this for correctness, but as a result of
+  // https://github.com/libevent/libevent/issues/779 we need to for TSAN. This is because the entry
+  // to event_base_loop() is where the signal base race occurs, but once we're in that loop in
+  // blocking mode, we're safe to take signals.
+  // TODO(htuch): Remove when https://github.com/libevent/libevent/issues/779 is fixed.
+  void waitForEnvoyRun() {
+    absl::Notification done;
+    main_common_->dispatcherForTest().post([this, &done] {
+      struct Sacrifice : Event::DeferredDeletable {
+        Sacrifice(absl::Notification& notify) : notify_(notify) {}
+        ~Sacrifice() { notify_.Notify(); }
+        absl::Notification& notify_;
+      };
+      auto sacrifice = std::make_unique<Sacrifice>(done);
+      // Wait for a deferred delete cleanup, this only happens in the main server run loop.
+      main_common_->dispatcherForTest().deferredDelete(std::move(sacrifice));
+    });
+    done.WaitForNotification();
+  }
+
   // Having triggered Envoy to quit (via signal or /quitquitquit), this blocks until Envoy exits.
   bool waitForEnvoyToExit() {
     finished_.WaitForNotification();
@@ -234,7 +244,7 @@ protected:
 TEST_P(AdminRequestTest, AdminRequestGetStatsAndQuit) {
   startEnvoy();
   started_.WaitForNotification();
-  EXPECT_THAT(adminRequest("/stats", "GET"), HasSubstr("filesystem.reopen_failed"));
+  EXPECT_THAT(adminRequest("/stats", "GET"), HasSubstr("access_log_file.reopen_failed"));
   adminRequest("/quitquitquit", "POST");
   EXPECT_TRUE(waitForEnvoyToExit());
 }
@@ -244,7 +254,10 @@ TEST_P(AdminRequestTest, AdminRequestGetStatsAndQuit) {
 TEST_P(AdminRequestTest, AdminRequestGetStatsAndKill) {
   startEnvoy();
   started_.WaitForNotification();
-  EXPECT_THAT(adminRequest("/stats", "GET"), HasSubstr("filesystem.reopen_failed"));
+  // TODO(htuch): Remove when https://github.com/libevent/libevent/issues/779 is
+  // fixed, started_ will then become our real synchronization point.
+  waitForEnvoyRun();
+  EXPECT_THAT(adminRequest("/stats", "GET"), HasSubstr("access_log_file.reopen_failed"));
   kill(getpid(), SIGTERM);
   EXPECT_TRUE(waitForEnvoyToExit());
 }
@@ -254,7 +267,10 @@ TEST_P(AdminRequestTest, AdminRequestGetStatsAndKill) {
 TEST_P(AdminRequestTest, AdminRequestGetStatsAndCtrlC) {
   startEnvoy();
   started_.WaitForNotification();
-  EXPECT_THAT(adminRequest("/stats", "GET"), HasSubstr("filesystem.reopen_failed"));
+  // TODO(htuch): Remove when https://github.com/libevent/libevent/issues/779 is
+  // fixed, started_ will then become our real synchronization point.
+  waitForEnvoyRun();
+  EXPECT_THAT(adminRequest("/stats", "GET"), HasSubstr("access_log_file.reopen_failed"));
   kill(getpid(), SIGINT);
   EXPECT_TRUE(waitForEnvoyToExit());
 }
@@ -262,6 +278,9 @@ TEST_P(AdminRequestTest, AdminRequestGetStatsAndCtrlC) {
 TEST_P(AdminRequestTest, AdminRequestContentionDisabled) {
   startEnvoy();
   started_.WaitForNotification();
+  // TODO(htuch): Remove when https://github.com/libevent/libevent/issues/779 is
+  // fixed, started_ will then become our real synchronization point.
+  waitForEnvoyRun();
   EXPECT_THAT(adminRequest("/contention", "GET"), HasSubstr("not enabled"));
   kill(getpid(), SIGTERM);
   EXPECT_TRUE(waitForEnvoyToExit());
@@ -271,9 +290,12 @@ TEST_P(AdminRequestTest, AdminRequestContentionEnabled) {
   addArg("--enable-mutex-tracing");
   startEnvoy();
   started_.WaitForNotification();
+  // TODO(htuch): Remove when https://github.com/libevent/libevent/issues/779 is
+  // fixed, started_ will then become our real synchronization point.
+  waitForEnvoyRun();
 
   // Induce contention to guarantee a non-zero num_contentions count.
-  Thread::TestUtil::ContentionGenerator contention_generator;
+  Thread::TestUtil::ContentionGenerator contention_generator(main_common_->server()->api());
   contention_generator.generateContention(MutexTracerImpl::getOrCreateTracer());
 
   std::string response = adminRequest("/contention", "GET");
@@ -317,7 +339,7 @@ TEST_P(AdminRequestTest, AdminRequestBeforeRun) {
   EXPECT_TRUE(admin_handler_was_called);
 
   // This just checks that some stat output was reported. We could pick any stat.
-  EXPECT_THAT(out, HasSubstr("filesystem.reopen_failed"));
+  EXPECT_THAT(out, HasSubstr("access_log_file.reopen_failed"));
 }
 
 // Class to track whether an object has been destroyed, which it does by bumping an atomic.

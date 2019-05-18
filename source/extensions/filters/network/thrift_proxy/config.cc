@@ -109,7 +109,7 @@ Network::FilterFactoryCb ThriftProxyFilterConfigFactory::createFilterFactoryFrom
 
   return [filter_config, &context](Network::FilterManager& filter_manager) -> void {
     filter_manager.addReadFilter(std::make_shared<ConnectionManager>(
-        *filter_config, context.random(), context.dispatcher().timeSystem()));
+        *filter_config, context.random(), context.dispatcher().timeSource()));
   };
 }
 
@@ -156,7 +156,7 @@ ProtocolPtr ConfigImpl::createProtocol() {
 
 void ConfigImpl::processFilter(
     const envoy::config::filter::network::thrift_proxy::v2alpha1::ThriftFilter& proto_config) {
-  const ProtobufTypes::String& string_name = proto_config.name();
+  const std::string& string_name = proto_config.name();
 
   ENVOY_LOG(debug, "    thrift filter #{}", filter_factories_.size());
   ENVOY_LOG(debug, "      name: {}", string_name);

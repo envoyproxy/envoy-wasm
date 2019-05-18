@@ -11,6 +11,7 @@
 #include "extensions/tracers/zipkin/tracer_interface.h"
 #include "extensions/tracers/zipkin/util.h"
 
+#include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 
 namespace Envoy {
@@ -224,7 +225,7 @@ public:
    * @param key The key name of the annotation.
    * @param value The value associated with the key.
    */
-  BinaryAnnotation(const std::string& key, const std::string& value)
+  BinaryAnnotation(absl::string_view key, absl::string_view value)
       : key_(key), value_(value), annotation_type_(STRING) {}
 
   /**
@@ -357,7 +358,7 @@ public:
   /**
    * Adds an annotation to the span (move semantics).
    */
-  void addAnnotation(const Annotation&& ann) { annotations_.push_back(ann); }
+  void addAnnotation(Annotation&& ann) { annotations_.emplace_back(std::move(ann)); }
 
   /**
    * Sets the span's binary annotations all at once.
@@ -372,7 +373,9 @@ public:
   /**
    * Adds a binary annotation to the span (move semantics).
    */
-  void addBinaryAnnotation(const BinaryAnnotation&& bann) { binary_annotations_.push_back(bann); }
+  void addBinaryAnnotation(BinaryAnnotation&& bann) {
+    binary_annotations_.emplace_back(std::move(bann));
+  }
 
   /**
    * Sets the span's debug attribute.
@@ -545,7 +548,15 @@ public:
    * @param name The binary annotation's key.
    * @param value The binary annotation's value.
    */
-  void setTag(const std::string& name, const std::string& value);
+  void setTag(absl::string_view name, absl::string_view value);
+
+  /**
+   * Adds an annotation to the span
+   *
+   * @param timestamp The annotation's timestamp.
+   * @param event The annotation's value.
+   */
+  void log(SystemTime timestamp, const std::string& event);
 
 private:
   static const std::string EMPTY_HEX_STRING_;

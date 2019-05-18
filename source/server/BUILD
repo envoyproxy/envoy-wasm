@@ -4,6 +4,7 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
+    "envoy_proto_library",
     "envoy_select_hot_restart",
 )
 
@@ -43,7 +44,6 @@ envoy_cc_library(
         "//source/common/network:utility_lib",
         "//source/common/protobuf:utility_lib",
         "//source/common/tracing:http_tracer_lib",
-        "//source/extensions/filters/common/ratelimit:ratelimit_registration_lib",
         "@envoy_api//envoy/api/v2:lds_cc",
         "@envoy_api//envoy/config/bootstrap/v2:bootstrap_cc",
         "@envoy_api//envoy/config/wasm/v2:wasm_cc",
@@ -109,11 +109,17 @@ envoy_cc_library(
     ],
 )
 
+envoy_proto_library(
+    name = "hot_restart",
+    srcs = ["hot_restart.proto"],
+)
+
 envoy_cc_library(
-    name = "hot_restart_lib",
-    srcs = envoy_select_hot_restart(["hot_restart_impl.cc"]),
-    hdrs = envoy_select_hot_restart(["hot_restart_impl.h"]),
+    name = "hot_restarting_base",
+    srcs = envoy_select_hot_restart(["hot_restarting_base.cc"]),
+    hdrs = envoy_select_hot_restart(["hot_restarting_base.h"]),
     deps = [
+        ":hot_restart_cc",
         "//include/envoy/api:os_sys_calls_interface",
         "//include/envoy/event:dispatcher_interface",
         "//include/envoy/event:file_event_interface",
@@ -122,11 +128,47 @@ envoy_cc_library(
         "//include/envoy/server:options_interface",
         "//source/common/api:os_sys_calls_lib",
         "//source/common/common:assert_lib",
-        "//source/common/common:block_memory_hash_set_lib",
         "//source/common/common:utility_lib",
         "//source/common/network:utility_lib",
-        "//source/common/stats:raw_stat_data_lib",
-        "//source/common/stats:stats_options_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "hot_restarting_child",
+    srcs = envoy_select_hot_restart(["hot_restarting_child.cc"]),
+    hdrs = envoy_select_hot_restart(["hot_restarting_child.h"]),
+    deps = [
+        ":hot_restarting_base",
+        "//source/common/stats:stat_merger_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "hot_restarting_parent",
+    srcs = envoy_select_hot_restart(["hot_restarting_parent.cc"]),
+    hdrs = envoy_select_hot_restart(["hot_restarting_parent.h"]),
+    deps = [
+        ":hot_restarting_base",
+        "//source/common/memory:stats_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "hot_restart_lib",
+    srcs = envoy_select_hot_restart(["hot_restart_impl.cc"]),
+    hdrs = envoy_select_hot_restart(["hot_restart_impl.h"]),
+    deps = [
+        ":hot_restarting_child",
+        ":hot_restarting_parent",
+        "//include/envoy/api:os_sys_calls_interface",
+        "//include/envoy/event:dispatcher_interface",
+        "//include/envoy/event:file_event_interface",
+        "//include/envoy/server:hot_restart_interface",
+        "//include/envoy/server:instance_interface",
+        "//include/envoy/server:options_interface",
+        "//source/common/api:os_sys_calls_lib",
+        "//source/common/common:assert_lib",
+        "//source/common/stats:heap_stat_data_lib",
     ],
 )
 
@@ -140,24 +182,27 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "init_manager_lib",
-    srcs = ["init_manager_impl.cc"],
-    hdrs = ["init_manager_impl.h"],
-    deps = [
-        "//include/envoy/init:init_interface",
-        "//source/common/common:assert_lib",
-    ],
-)
-
-envoy_cc_library(
     name = "options_lib",
-    srcs = ["options_impl.cc"],
-    hdrs = ["options_impl.h"],
+    srcs = ["options_impl.cc"] + select({
+        "//bazel:linux_x86_64": ["options_impl_platform_linux.cc"],
+        "//bazel:linux_aarch64": ["options_impl_platform_linux.cc"],
+        "//conditions:default": ["options_impl_platform_default.cc"],
+    }),
+    hdrs = [
+        "options_impl.h",
+        "options_impl_platform.h",
+    ] + select({
+        "//bazel:linux_x86_64": ["options_impl_platform_linux.h"],
+        "//bazel:linux_aarch64": ["options_impl_platform_linux.h"],
+        "//conditions:default": [],
+    }),
     external_deps = ["tclap"],
     deps = [
         "//include/envoy/network:address_interface",
         "//include/envoy/server:options_interface",
         "//include/envoy/stats:stats_interface",
+        "//source/common/api:os_sys_calls_lib",
+        "//source/common/common:logger_lib",
         "//source/common/common:macros",
         "//source/common/common:version_lib",
         "//source/common/protobuf:utility_lib",
@@ -186,12 +231,13 @@ envoy_cc_library(
     hdrs = ["lds_api.h"],
     deps = [
         "//include/envoy/config:subscription_interface",
-        "//include/envoy/init:init_interface",
+        "//include/envoy/init:manager_interface",
         "//include/envoy/server:listener_manager_interface",
         "//source/common/common:cleanup_lib",
         "//source/common/config:resources_lib",
         "//source/common/config:subscription_factory_lib",
         "//source/common/config:utility_lib",
+        "//source/common/init:target_lib",
         "//source/common/protobuf:utility_lib",
         "@envoy_api//envoy/api/v2:lds_cc",
     ],
@@ -204,7 +250,6 @@ envoy_cc_library(
     deps = [
         ":configuration_lib",
         ":drain_manager_lib",
-        ":init_manager_lib",
         ":lds_api_lib",
         ":transport_socket_config_lib",
         "//include/envoy/server:filter_config_interface",
@@ -214,6 +259,7 @@ envoy_cc_library(
         "//source/common/api:os_sys_calls_lib",
         "//source/common/common:empty_string",
         "//source/common/config:utility_lib",
+        "//source/common/init:manager_lib",
         "//source/common/network:cidr_range_lib",
         "//source/common/network:lc_trie_lib",
         "//source/common/network:listen_socket_lib",
@@ -242,10 +288,8 @@ envoy_cc_library(
         "@envoy_api//envoy/api/v2:eds_cc",
         "@envoy_api//envoy/api/v2:lds_cc",
         "@envoy_api//envoy/api/v2:rds_cc",
-        "@envoy_api//envoy/service/accesslog/v2:als_cc",
         "@envoy_api//envoy/service/discovery/v2:ads_cc",
         "@envoy_api//envoy/service/discovery/v2:hds_cc",
-        "@envoy_api//envoy/service/metrics/v2:metrics_service_cc",
         "@envoy_api//envoy/service/ratelimit/v2:rls_cc",
     ],
 )
@@ -275,9 +319,8 @@ envoy_cc_library(
         ":configuration_lib",
         ":connection_handler_lib",
         ":guarddog_lib",
-        ":init_manager_lib",
+        ":listener_hooks_lib",
         ":listener_manager_lib",
-        ":test_hooks_lib",
         ":wasm_config_lib",
         ":worker_lib",
         "//include/envoy/event:dispatcher_interface",
@@ -295,6 +338,7 @@ envoy_cc_library(
         "//include/envoy/upstream:cluster_manager_interface",
         "//source/common/access_log:access_log_manager_lib",
         "//source/common/api:api_lib",
+        "//source/common/buffer:buffer_lib",
         "//source/common/common:logger_lib",
         "//source/common/common:mutex_tracer_lib",
         "//source/common/common:utility_lib",
@@ -304,7 +348,9 @@ envoy_cc_library(
         "//source/common/grpc:async_client_manager_lib",
         "//source/common/http:codes_lib",
         "//source/common/http:context_lib",
+        "//source/common/init:manager_lib",
         "//source/common/local_info:local_info_lib",
+        "//source/common/memory:heap_shrinker_lib",
         "//source/common/memory:stats_lib",
         "//source/common/protobuf:utility_lib",
         "//source/common/router:rds_lib",
@@ -321,8 +367,8 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "test_hooks_lib",
-    hdrs = ["test_hooks.h"],
+    name = "listener_hooks_lib",
+    hdrs = ["listener_hooks.h"],
 )
 
 envoy_cc_library(
@@ -343,7 +389,7 @@ envoy_cc_library(
     hdrs = ["worker_impl.h"],
     deps = [
         ":connection_handler_lib",
-        ":test_hooks_lib",
+        ":listener_hooks_lib",
         "//include/envoy/api:api_interface",
         "//include/envoy/event:dispatcher_interface",
         "//include/envoy/event:timer_interface",

@@ -15,10 +15,10 @@
 #include "test/common/stream_info/test_int_accessor.h"
 #include "test/mocks/http/mocks.h"
 #include "test/mocks/upstream/mocks.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::NiceMock;
 using testing::Return;
@@ -27,13 +27,15 @@ using testing::ReturnRef;
 
 namespace Envoy {
 namespace Router {
+namespace {
+
 static envoy::api::v2::route::Route parseRouteFromV2Yaml(const std::string& yaml) {
   envoy::api::v2::route::Route route;
   MessageUtil::loadFromYaml(yaml, route);
   return route;
 }
 
-class StreamInfoHeaderFormatterTest : public TestBase {
+class StreamInfoHeaderFormatterTest : public testing::Test {
 public:
   void testFormatting(const Envoy::StreamInfo::MockStreamInfo& stream_info,
                       const std::string& variable, const std::string& expected_output) {
@@ -674,15 +676,15 @@ request_headers_to_add:
   EXPECT_EQ("123456000, 1, 12, 123, 1234, 12345, 123456, 1234560, 12345600, 123456000",
             header_map.get_("x-request-start-range"));
 
-  typedef std::map<std::string, int> CountMap;
+  typedef absl::flat_hash_map<std::string, int> CountMap;
   CountMap counts;
   header_map.iterate(
       [](const Http::HeaderEntry& header, void* cb_v) -> Http::HeaderMap::Iterate {
         CountMap* m = static_cast<CountMap*>(cb_v);
-        std::string key = std::string{header.key().c_str()};
+        absl::string_view key = header.key().getStringView();
         CountMap::iterator i = m->find(key);
         if (i == m->end()) {
-          m->insert({key, 1});
+          m->insert({std::string(key), 1});
         } else {
           i->second++;
         }
@@ -800,5 +802,6 @@ response_headers_to_remove: ["x-foo-header"]
   EXPECT_EQ("bar", header_map.get_("x-foo-header"));
 }
 
+} // namespace
 } // namespace Router
 } // namespace Envoy

@@ -47,6 +47,20 @@ public:
                         Event::Dispatcher& dispatcher, Runtime::Loader& runtime,
                         Runtime::RandomGenerator& random, HealthCheckEventLoggerPtr&& event_logger);
 
+  /**
+   * Utility class checking if given http status matches configured expectations.
+   */
+  class HttpStatusChecker {
+  public:
+    HttpStatusChecker(const Protobuf::RepeatedPtrField<envoy::type::Int64Range>& expected_statuses,
+                      uint64_t default_expected_status);
+
+    bool inRange(uint64_t http_status) const;
+
+  private:
+    std::vector<std::pair<uint64_t, uint64_t>> ranges_;
+  };
+
 private:
   struct HttpActiveHealthCheckSession : public ActiveHealthCheckSession,
                                         public Http::StreamDecoder,
@@ -61,6 +75,7 @@ private:
     // ActiveHealthCheckSession
     void onInterval() override;
     void onTimeout() override;
+    void onDeferredDelete() final;
 
     // Http::StreamDecoder
     void decode100ContinueHeaders(Http::HeaderMapPtr&&) override {}
@@ -74,7 +89,8 @@ private:
     void decodeMetadata(Http::MetadataMapPtr&&) override {}
 
     // Http::StreamCallbacks
-    void onResetStream(Http::StreamResetReason reason) override;
+    void onResetStream(Http::StreamResetReason reason,
+                       absl::string_view transport_failure_reason) override;
     void onAboveWriteBufferHighWatermark() override {}
     void onBelowWriteBufferLowWatermark() override {}
 
@@ -121,6 +137,7 @@ private:
   const std::string host_value_;
   absl::optional<std::string> service_name_;
   Router::HeaderParserPtr request_headers_parser_;
+  const HttpStatusChecker http_status_checker_;
 
 protected:
   const Http::CodecClient::Type codec_client_type_;
@@ -230,10 +247,14 @@ private:
     // ActiveHealthCheckSession
     void onInterval() override;
     void onTimeout() override;
+    void onDeferredDelete() final;
 
     TcpHealthCheckerImpl& parent_;
     Network::ClientConnectionPtr client_;
     std::shared_ptr<TcpSessionCallbacks> session_callbacks_;
+    // If true, stream close was initiated by us, not e.g. remote close or TCP reset.
+    // In this case healthcheck status already reported, only state cleanup required.
+    bool expect_close_{};
   };
 
   typedef std::unique_ptr<TcpActiveHealthCheckSession> TcpActiveHealthCheckSessionPtr;
@@ -276,6 +297,7 @@ private:
     // ActiveHealthCheckSession
     void onInterval() override;
     void onTimeout() override;
+    void onDeferredDelete() final;
 
     // Http::StreamDecoder
     void decode100ContinueHeaders(Http::HeaderMapPtr&&) override {}
@@ -285,7 +307,8 @@ private:
     void decodeMetadata(Http::MetadataMapPtr&&) override {}
 
     // Http::StreamCallbacks
-    void onResetStream(Http::StreamResetReason reason) override;
+    void onResetStream(Http::StreamResetReason reason,
+                       absl::string_view transport_failure_reason) override;
     void onAboveWriteBufferHighWatermark() override {}
     void onBelowWriteBufferLowWatermark() override {}
 

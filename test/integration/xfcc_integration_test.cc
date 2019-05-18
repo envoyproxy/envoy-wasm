@@ -17,10 +17,10 @@
 
 #include "test/test_common/network_utility.h"
 #include "test/test_common/printers.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "integration.h"
 #include "utility.h"
 
@@ -159,8 +159,8 @@ void XfccIntegrationTest::testRequestAndResponseWithXfccHeader(std::string previ
   if (expected_xfcc.empty()) {
     EXPECT_EQ(nullptr, upstream_request_->headers().ForwardedClientCert());
   } else {
-    EXPECT_STREQ(expected_xfcc.c_str(),
-                 upstream_request_->headers().ForwardedClientCert()->value().c_str());
+    EXPECT_EQ(expected_xfcc,
+              upstream_request_->headers().ForwardedClientCert()->value().getStringView());
   }
   upstream_request_->encodeHeaders(Http::TestHeaderMapImpl{{":status", "200"}}, true);
   response->waitForEndStream();
@@ -640,7 +640,6 @@ TEST_P(XfccIntegrationTest, TagExtractedNameGenerationTest) {
       {"http.admin.downstream_rq_tx_reset", "http.downstream_rq_tx_reset"},
       {"http.admin.downstream_flow_control_resumed_reading_total",
        "http.downstream_flow_control_resumed_reading_total"},
-      {"stats.overflow", "stats.overflow"},
       {"http.admin.downstream_cx_total", "http.downstream_cx_total"},
       {"http.admin.downstream_rq_3xx", "http.downstream_rq_xx"},
       {"http.admin.downstream_cx_idle_timeout", "http.downstream_cx_idle_timeout"},

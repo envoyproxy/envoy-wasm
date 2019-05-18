@@ -33,7 +33,7 @@ public:
   MOCK_METHOD1(setTickPeriodMilliseconds, void(uint32_t tick_period_milliseconds));
 };
 
-class WasmTest : public TestBaseWithParam<std::string> {};
+class WasmTest : public testing::TestWithParam<std::string> {};
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
                          testing::Values(
@@ -46,7 +46,7 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
 #endif
                              ));
 
-class WasmTestMatrix : public TestBaseWithParam<std::tuple<std::string, std::string>> {};
+class WasmTestMatrix : public testing::TestWithParam<std::tuple<std::string, std::string>> {};
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
                          testing::Combine(testing::Values(
@@ -64,11 +64,11 @@ TEST_P(WasmTestMatrix, Logging) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.vm.", std::get<0>(GetParam())), "", "", cluster_manager, dispatcher,
+      absl::StrCat("envoy.wasm.vm.", std::get<0>(GetParam())), "", "", cluster_manager, *dispatcher,
       *scope, local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -95,11 +95,11 @@ TEST_P(WasmTest, BadSignature) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
       local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -117,11 +117,11 @@ TEST(WasmTestWavmOnly, Segv) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, dispatcher, *scope, local_info, scope);
+      "envoy.wasm.vm.wavm", "", "", cluster_manager, *dispatcher, *scope, local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
@@ -139,11 +139,11 @@ TEST_P(WasmTest, DivByZero) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
       local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -163,11 +163,11 @@ TEST_P(WasmTest, EmscriptenVersion) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
       local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -187,11 +187,11 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
       local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -215,11 +215,11 @@ TEST_P(WasmTest, Asm2Wasm) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
       local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -236,11 +236,11 @@ TEST_P(WasmTest, Stats) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
       local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -266,11 +266,11 @@ TEST_P(WasmTest, StatsHigherLevel) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
       local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -300,11 +300,11 @@ TEST_P(WasmTest, StatsHighLevel) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherImpl dispatcher(*api);
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, dispatcher, *scope,
+      absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
       local_info, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(

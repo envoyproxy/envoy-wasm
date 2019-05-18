@@ -182,6 +182,14 @@ void setHealthFlag(Upstream::Host::HealthFlag flag, const Upstream::Host& host,
     health_status.set_failed_active_degraded_check(
         host.healthFlagGet(Upstream::Host::HealthFlag::DEGRADED_ACTIVE_HC));
     break;
+  case Upstream::Host::HealthFlag::PENDING_DYNAMIC_REMOVAL:
+    health_status.set_pending_dynamic_removal(
+        host.healthFlagGet(Upstream::Host::HealthFlag::PENDING_DYNAMIC_REMOVAL));
+    break;
+  case Upstream::Host::HealthFlag::PENDING_ACTIVE_HC:
+    health_status.set_pending_active_hc(
+        host.healthFlagGet(Upstream::Host::HealthFlag::PENDING_ACTIVE_HC));
+    break;
   }
 }
 } // namespace
@@ -514,6 +522,53 @@ Http::Code AdminImpl::handlerCpuProfiler(absl::string_view url, Http::HeaderMap&
   return Http::Code::OK;
 }
 
+Http::Code AdminImpl::handlerHeapProfiler(absl::string_view url, Http::HeaderMap&,
+                                          Buffer::Instance& response, AdminStream&) {
+  if (!Profiler::Heap::profilerEnabled()) {
+    response.add("The current build does not support heap profiler");
+    return Http::Code::NotImplemented;
+  }
+
+  Http::Utility::QueryParams query_params = Http::Utility::parseQueryString(url);
+  if (query_params.size() != 1 || query_params.begin()->first != "enable" ||
+      (query_params.begin()->second != "y" && query_params.begin()->second != "n")) {
+    response.add("?enable=<y|n>\n");
+    return Http::Code::BadRequest;
+  }
+
+  Http::Code res = Http::Code::OK;
+  bool enable = query_params.begin()->second == "y";
+  if (enable) {
+    if (Profiler::Heap::isProfilerStarted()) {
+      response.add("Fail to start heap profiler: already started");
+      res = Http::Code::BadRequest;
+    } else if (!Profiler::Heap::startProfiler(profile_path_)) {
+      // GCOVR_EXCL_START
+      // TODO(silentdai) remove the GCOVR when startProfiler is better implemented
+      response.add("Fail to start the heap profiler");
+      res = Http::Code::InternalServerError;
+      // GCOVR_EXCL_END
+    } else {
+      response.add("Starting heap profiler");
+      res = Http::Code::OK;
+    }
+  } else {
+    // !enable
+    if (!Profiler::Heap::isProfilerStarted()) {
+      response.add("Fail to stop heap profiler: not started");
+      res = Http::Code::BadRequest;
+    } else {
+      Profiler::Heap::stopProfiler();
+      response.add(
+          fmt::format("Heap profiler stopped and data written to {}. See "
+                      "http://goog-perftools.sourceforge.net/doc/heap_profiler.html for details.",
+                      profile_path_));
+      res = Http::Code::OK;
+    }
+  }
+  return res;
+}
+
 Http::Code AdminImpl::handlerHealthcheckFail(absl::string_view, Http::HeaderMap&,
                                              Buffer::Instance& response, AdminStream&) {
   server_.failHealthcheck(true);
@@ -539,7 +594,7 @@ Http::Code AdminImpl::handlerLogging(absl::string_view url, Http::HeaderMap&,
   Http::Utility::QueryParams query_params = Http::Utility::parseQueryString(url);
 
   Http::Code rc = Http::Code::OK;
-  if (query_params.size() > 0 && !changeLogLevel(query_params)) {
+  if (!query_params.empty() && !changeLogLevel(query_params)) {
     response.add("usage: /logging?<name>=<level> (change single level)\n");
     response.add("usage: /logging?level=<level> (change all levels)\n");
     response.add("levels: ");
@@ -592,7 +647,7 @@ Http::Code AdminImpl::handlerServerInfo(absl::string_view, Http::HeaderMap& head
   server_info.set_version(VersionInfo::version());
 
   switch (server_.initManager().state()) {
-  case Init::Manager::State::NotInitialized:
+  case Init::Manager::State::Uninitialized:
     server_info.set_state(envoy::admin::v2alpha::ServerInfo::PRE_INITIALIZING);
     break;
   case Init::Manager::State::Initializing:
@@ -773,7 +828,7 @@ uint64_t PrometheusStatsFormatter::statsAsPrometheus(
 
     response.add(fmt::format("{0}_bucket{{{1}le=\"+Inf\"}} {2}\n", metric_name, hist_tags,
                              stats.sampleCount()));
-    response.add(fmt::format("{0}_sum{{{1}}} {2}\n", metric_name, tags, stats.sampleSum()));
+    response.add(fmt::format("{0}_sum{{{1}}} {2:.32g}\n", metric_name, tags, stats.sampleSum()));
     response.add(fmt::format("{0}_count{{{1}}} {2}\n", metric_name, tags, stats.sampleCount()));
   }
 
@@ -1063,7 +1118,7 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
       stats_(Http::ConnectionManagerImpl::generateStats("http.admin.", server_.stats())),
       tracing_stats_(
           Http::ConnectionManagerImpl::generateTracingStats("http.admin.", no_op_store_)),
-      route_config_provider_(server.timeSystem()),
+      route_config_provider_(server.timeSource()),
       // TODO(jsedgwick) add /runtime_reset endpoint that removes all admin-set values
       handlers_{
           {"/", "Admin home page", MAKE_ADMIN_HANDLER(handlerAdminHome), false, false},
@@ -1076,6 +1131,8 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
            MAKE_ADMIN_HANDLER(handlerContention), false, false},
           {"/cpuprofiler", "enable/disable the CPU profiler",
            MAKE_ADMIN_HANDLER(handlerCpuProfiler), false, true},
+          {"/heapprofiler", "enable/disable the heap profiler",
+           MAKE_ADMIN_HANDLER(handlerHeapProfiler), false, true},
           {"/healthcheck/fail", "cause the server to fail health checks",
            MAKE_ADMIN_HANDLER(handlerHealthcheckFail), false, true},
           {"/healthcheck/ok", "cause the server to pass health checks",
@@ -1103,7 +1160,7 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
           {"/runtime_modify", "modify runtime values", MAKE_ADMIN_HANDLER(handlerRuntimeModify),
            false, true},
       },
-      date_provider_(server.dispatcher().timeSystem()),
+      date_provider_(server.dispatcher().timeSource()),
       admin_filter_chain_(std::make_shared<AdminFilterChain>()) {}
 
 Http::ServerConnectionPtr AdminImpl::createCodec(Network::Connection& connection,
@@ -1120,7 +1177,7 @@ bool AdminImpl::createNetworkFilterChain(Network::Connection& connection,
   // the envoy is overloaded.
   connection.addReadFilter(Network::ReadFilterSharedPtr{new Http::ConnectionManagerImpl(
       *this, server_.drainManager(), server_.random(), server_.httpContext(), server_.runtime(),
-      server_.localInfo(), server_.clusterManager(), nullptr, server_.timeSystem())});
+      server_.localInfo(), server_.clusterManager(), nullptr, server_.timeSource())});
   return true;
 }
 
@@ -1148,8 +1205,8 @@ Http::Code AdminImpl::runCallback(absl::string_view path_and_query,
         if (method != Http::Headers::get().MethodValues.Post) {
           ENVOY_LOG(error, "admin path \"{}\" mutates state, method={} rather than POST",
                     handler.prefix_, method);
-          code = Http::Code::BadRequest;
-          response.add("Invalid request; POST required");
+          code = Http::Code::MethodNotAllowed;
+          response.add(fmt::format("Method {} not allowed, POST required.", method));
           break;
         }
       }

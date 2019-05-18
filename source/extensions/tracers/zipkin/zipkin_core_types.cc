@@ -252,10 +252,18 @@ void Span::finish() {
   }
 }
 
-void Span::setTag(const std::string& name, const std::string& value) {
-  if (name.size() > 0 && value.size() > 0) {
+void Span::setTag(absl::string_view name, absl::string_view value) {
+  if (!name.empty() && !value.empty()) {
     addBinaryAnnotation(BinaryAnnotation(name, value));
   }
+}
+
+void Span::log(SystemTime timestamp, const std::string& event) {
+  Annotation annotation;
+  annotation.setTimestamp(
+      std::chrono::duration_cast<std::chrono::microseconds>(timestamp.time_since_epoch()).count());
+  annotation.setValue(event);
+  addAnnotation(std::move(annotation));
 }
 
 } // namespace Zipkin

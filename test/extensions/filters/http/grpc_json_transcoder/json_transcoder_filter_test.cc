@@ -15,10 +15,10 @@
 #include "test/proto/bookstore.pb.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/printers.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
 
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::Invoke;
@@ -41,16 +41,16 @@ namespace Envoy {
 namespace Extensions {
 namespace HttpFilters {
 namespace GrpcJsonTranscoder {
+namespace {
 
 class GrpcJsonTranscoderFilterTestBase {
 protected:
-  GrpcJsonTranscoderFilterTestBase() : api_(Api::createApiForTest(stats_)) {}
+  GrpcJsonTranscoderFilterTestBase() : api_(Api::createApiForTest()) {}
 
-  Stats::IsolatedStoreImpl stats_;
   Api::ApiPtr api_;
 };
 
-class GrpcJsonTranscoderConfigTest : public TestBase, public GrpcJsonTranscoderFilterTestBase {
+class GrpcJsonTranscoderConfigTest : public testing::Test, public GrpcJsonTranscoderFilterTestBase {
 protected:
   const envoy::config::filter::http::transcoder::v2::GrpcJsonTranscoder
   getProtoConfig(const std::string& descriptor_path, const std::string& service_name,
@@ -97,7 +97,7 @@ protected:
     }
   }
 
-  void stripImports(FileDescriptorSet& descriptor_set, const ProtobufTypes::String& file_name) {
+  void stripImports(FileDescriptorSet& descriptor_set, const std::string& file_name) {
     FileDescriptorProto file_descriptor;
     // filter down descriptor_set to only contain one proto specified as file_name but none of its
     // dependencies
@@ -107,7 +107,7 @@ protected:
                        // return whether file.name() ends with file_name
                        return file.name().length() >= file_name.length() &&
                               0 == file.name().compare(file.name().length() - file_name.length(),
-                                                       ProtobufTypes::String::npos, file_name);
+                                                       std::string::npos, file_name);
                      });
     RELEASE_ASSERT(file_itr != descriptor_set.file().end(), "");
     file_descriptor = *file_itr;
@@ -208,6 +208,27 @@ TEST_F(GrpcJsonTranscoderConfigTest, CreateTranscoder) {
   EXPECT_EQ("bookstore.Bookstore.ListShelves", method_descriptor->full_name());
 }
 
+TEST_F(GrpcJsonTranscoderConfigTest, CreateTranscoderAutoMap) {
+  auto proto_config = getProtoConfig(
+      TestEnvironment::runfilesPath("test/proto/bookstore.descriptor"), "bookstore.Bookstore");
+  proto_config.set_auto_mapping(true);
+
+  JsonTranscoderConfig config(proto_config, *api_);
+
+  Http::TestHeaderMapImpl headers{{":method", "POST"},
+                                  {":path", "/bookstore.Bookstore/DeleteShelf"}};
+
+  TranscoderInputStreamImpl request_in, response_in;
+  std::unique_ptr<Transcoder> transcoder;
+  const MethodDescriptor* method_descriptor;
+  auto status =
+      config.createTranscoder(headers, request_in, response_in, transcoder, method_descriptor);
+
+  EXPECT_TRUE(status.ok());
+  EXPECT_TRUE(transcoder);
+  EXPECT_EQ("bookstore.Bookstore.DeleteShelf", method_descriptor->full_name());
+}
+
 TEST_F(GrpcJsonTranscoderConfigTest, InvalidQueryParameter) {
   JsonTranscoderConfig config(
       getProtoConfig(TestEnvironment::runfilesPath("test/proto/bookstore.descriptor"),
@@ -271,7 +292,7 @@ TEST_F(GrpcJsonTranscoderConfigTest, InvalidVariableBinding) {
   EXPECT_FALSE(transcoder);
 }
 
-class GrpcJsonTranscoderFilterTest : public TestBase, public GrpcJsonTranscoderFilterTestBase {
+class GrpcJsonTranscoderFilterTest : public testing::Test, public GrpcJsonTranscoderFilterTestBase {
 protected:
   GrpcJsonTranscoderFilterTest(const bool match_incoming_request_route = false)
       : config_(bookstoreProtoConfig(match_incoming_request_route), *api_), filter_(config_) {
@@ -390,7 +411,7 @@ TEST_F(GrpcJsonTranscoderFilterTest, TranscodingUnaryPost) {
   response.set_id(20);
   response.set_theme("Children");
 
-  auto response_data = Grpc::Common::serializeBody(response);
+  auto response_data = Grpc::Common::serializeToGrpcFrame(response);
 
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer,
             filter_.encodeData(*response_data, false));
@@ -454,7 +475,7 @@ TEST_F(GrpcJsonTranscoderFilterTest, TranscodingUnaryPostWithPackageServiceMetho
   response.set_id(20);
   response.set_theme("Children");
 
-  auto response_data = Grpc::Common::serializeBody(response);
+  auto response_data = Grpc::Common::serializeToGrpcFrame(response);
 
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer,
             filter_.encodeData(*response_data, false));
@@ -482,7 +503,7 @@ TEST_F(GrpcJsonTranscoderFilterTest, ForwardUnaryPostGrpc) {
   bookstore::CreateShelfRequest request;
   request.mutable_shelf()->set_theme("Children");
 
-  Buffer::InstancePtr request_data = Grpc::Common::serializeBody(request);
+  Buffer::InstancePtr request_data = Grpc::Common::serializeToGrpcFrame(request);
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter_.decodeData(*request_data, true));
 
   Grpc::Decoder decoder;
@@ -517,7 +538,7 @@ TEST_F(GrpcJsonTranscoderFilterTest, ForwardUnaryPostGrpc) {
   response.set_id(20);
   response.set_theme("Children");
 
-  Buffer::InstancePtr response_data = Grpc::Common::serializeBody(response);
+  Buffer::InstancePtr response_data = Grpc::Common::serializeToGrpcFrame(response);
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter_.encodeData(*response_data, true));
 
   frames.clear();
@@ -571,13 +592,14 @@ TEST_F(GrpcJsonTranscoderFilterTest, TranscodingUnaryError) {
 
   EXPECT_CALL(decoder_callbacks_, encodeHeaders_(_, false))
       .WillOnce(Invoke([](Http::HeaderMap& headers, bool end_stream) {
-        EXPECT_STREQ("400", headers.Status()->value().c_str());
+        EXPECT_EQ("400", headers.Status()->value().getStringView());
         EXPECT_FALSE(end_stream);
       }));
   EXPECT_CALL(decoder_callbacks_, encodeData(_, true));
 
   EXPECT_EQ(Http::FilterDataStatus::StopIterationNoBuffer, filter_.decodeData(request_data, true));
   EXPECT_EQ(0, request_data.length());
+  EXPECT_EQ(decoder_callbacks_.details_, "grpc_json_transcode_failure{INVALID_ARGUMENT}");
 }
 
 TEST_F(GrpcJsonTranscoderFilterTest, TranscodingUnaryTimeout) {
@@ -640,7 +662,7 @@ TEST_F(GrpcJsonTranscoderFilterTest, TranscodingUnaryWithHttpBodyAsOutput) {
   response.set_content_type("text/html");
   response.set_data("<h1>Hello, world!</h1>");
 
-  auto response_data = Grpc::Common::serializeBody(response);
+  auto response_data = Grpc::Common::serializeToGrpcFrame(response);
 
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer,
             filter_.encodeData(*response_data, false));
@@ -674,7 +696,7 @@ TEST_F(GrpcJsonTranscoderFilterTest, TranscodingUnaryWithHttpBodyAsOutputAndSpli
   response.set_content_type("text/html");
   response.set_data("<h1>Hello, world!</h1>");
 
-  auto response_data = Grpc::Common::serializeBody(response);
+  auto response_data = Grpc::Common::serializeToGrpcFrame(response);
 
   // Firstly, the response data buffer is split into two parts.
   Buffer::OwnedImpl response_data_first_part;
@@ -702,7 +724,7 @@ struct GrpcJsonTranscoderFilterPrintTestParam {
 };
 
 class GrpcJsonTranscoderFilterPrintTest
-    : public TestBaseWithParam<GrpcJsonTranscoderFilterPrintTestParam>,
+    : public testing::TestWithParam<GrpcJsonTranscoderFilterPrintTestParam>,
       public GrpcJsonTranscoderFilterTestBase {
 protected:
   GrpcJsonTranscoderFilterPrintTest() {
@@ -737,7 +759,7 @@ TEST_P(GrpcJsonTranscoderFilterPrintTest, PrintOptions) {
   author.set_gender(bookstore::Author_Gender_MALE);
   author.set_last_name("Shakespeare");
 
-  const auto response_data = Grpc::Common::serializeBody(author);
+  const auto response_data = Grpc::Common::serializeToGrpcFrame(author);
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer,
             filter_->encodeData(*response_data, false));
 
@@ -786,6 +808,7 @@ INSTANTIATE_TEST_SUITE_P(
     })",
             R"({"id":"101","gender":"MALE","last_name":"Shakespeare"})"}));
 
+} // namespace
 } // namespace GrpcJsonTranscoder
 } // namespace HttpFilters
 } // namespace Extensions

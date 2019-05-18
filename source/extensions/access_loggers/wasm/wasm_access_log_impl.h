@@ -19,8 +19,9 @@ public:
   void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
            const Http::HeaderMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override {
-    if (filter_ && request_headers) {
-      if (!filter_->evaluate(stream_info, *request_headers)) {
+    if (filter_ && request_headers && response_headers && response_trailers) {
+      if (!filter_->evaluate(stream_info, *request_headers, *response_headers,
+                             *response_trailers)) {
         return;
       }
     }

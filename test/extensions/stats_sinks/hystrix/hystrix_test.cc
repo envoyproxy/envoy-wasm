@@ -8,12 +8,12 @@
 #include "test/mocks/server/mocks.h"
 #include "test/mocks/stats/mocks.h"
 #include "test/mocks/upstream/mocks.h"
-#include "test/test_common/test_base.h"
 
 #include "absl/strings/str_split.h"
 #include "circllhist.h"
 #include "fmt/printf.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::HasSubstr;
@@ -28,6 +28,7 @@ namespace Envoy {
 namespace Extensions {
 namespace StatSinks {
 namespace Hystrix {
+namespace {
 
 class ClusterTestInfo {
 
@@ -82,7 +83,7 @@ public:
     cluster_info_->stats().upstream_rq_pending_overflow_.add(rejected_step);
   }
 
-  NiceMock<Upstream::MockCluster> cluster_;
+  NiceMock<Upstream::MockClusterMockPrioritySet> cluster_;
   Upstream::MockClusterInfo* cluster_info_ = new NiceMock<Upstream::MockClusterInfo>();
   Upstream::ClusterInfoConstSharedPtr cluster_info_ptr_{cluster_info_};
 
@@ -116,7 +117,7 @@ private:
   histogram_t* histogram_;
 };
 
-class HystrixSinkTest : public TestBase {
+class HystrixSinkTest : public testing::Test {
 public:
   HystrixSinkTest() { sink_ = std::make_unique<HystrixSink>(server_, window_size_); }
 
@@ -136,7 +137,8 @@ public:
     return buffer;
   }
 
-  void addClusterToMap(const std::string& cluster_name, NiceMock<Upstream::MockCluster>& cluster) {
+  void addClusterToMap(const std::string& cluster_name,
+                       NiceMock<Upstream::MockClusterMockPrioritySet>& cluster) {
     cluster_map_.emplace(cluster_name, cluster);
     // Redefining since cluster_map_ is returned by value.
     ON_CALL(cluster_manager_, clusters()).WillByDefault(Return(cluster_map_));
@@ -460,17 +462,8 @@ TEST_F(HystrixSinkTest, HistogramTest) {
   // Create histogram for the Hystrix sink to read.
   auto histogram = std::make_shared<NiceMock<Stats::MockParentHistogram>>();
   histogram->name_ = "cluster." + cluster1_name_ + ".upstream_rq_time";
-  const std::string tag_extracted_name = "cluster.upstream_rq_time";
-  ON_CALL(*histogram, tagExtractedName())
-      .WillByDefault(testing::ReturnRefOfCopy(tag_extracted_name));
-  std::vector<Stats::Tag> tags;
-  Stats::Tag tag = {
-      Config::TagNames::get().CLUSTER_NAME, // name_
-      cluster1_name_                        // value_
-  };
-  tags.emplace_back(tag);
-  ON_CALL(*histogram, tags()).WillByDefault(testing::ReturnRef(tags));
-
+  histogram->setTagExtractedName("cluster.upstream_rq_time");
+  histogram->addTag(Stats::Tag{Config::TagNames::get().CLUSTER_NAME, cluster1_name_});
   histogram->used_ = true;
 
   // Init with data such that the quantile value is equal to the quantile.
@@ -543,6 +536,7 @@ TEST_F(HystrixSinkTest, HystrixEventStreamHandler) {
   EXPECT_THAT(access_control_allow_headers, HasSubstr("Accept"));
 }
 
+} // namespace
 } // namespace Hystrix
 } // namespace StatSinks
 } // namespace Extensions

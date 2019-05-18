@@ -4,7 +4,8 @@
 #include "common/network/utility.h"
 
 #include "test/test_common/network_utility.h"
-#include "test/test_common/test_base.h"
+
+#include "gtest/gtest.h"
 
 namespace Envoy {
 
@@ -75,6 +76,31 @@ HttpIntegrationTest::ConnectionCreationFunction UdsListenerIntegrationTest::crea
     conn->enableHalfClose(enable_half_close_);
     return conn;
   };
+}
+
+TEST_P(UdsListenerIntegrationTest, TestPeerCredentials) {
+  fake_upstreams_count_ = 1;
+  initialize();
+  auto client_connection = createConnectionFn()();
+  codec_client_ = makeHttpConnection(std::move(client_connection));
+  Http::TestHeaderMapImpl request_headers{
+      {":method", "POST"},    {":path", "/test/long/url"}, {":scheme", "http"},
+      {":authority", "host"}, {"x-lyft-user-id", "123"},   {"x-forwarded-for", "10.0.0.1"}};
+  auto response = codec_client_->makeHeaderOnlyRequest(request_headers);
+  waitForNextUpstreamRequest(0);
+
+  auto credentials = codec_client_->connection()->unixSocketPeerCredentials();
+#ifndef SO_PEERCRED
+  EXPECT_EQ(credentials, absl::nullopt);
+#else
+  EXPECT_EQ(credentials->pid, getpid());
+  EXPECT_EQ(credentials->uid, getuid());
+  EXPECT_EQ(credentials->gid, getgid());
+#endif
+
+  upstream_request_->encodeHeaders(Http::TestHeaderMapImpl{{":status", "200"}}, true);
+
+  response->waitForEndStream();
 }
 
 TEST_P(UdsListenerIntegrationTest, RouterRequestAndResponseWithBodyNoBuffer) {

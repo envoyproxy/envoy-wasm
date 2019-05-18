@@ -9,8 +9,9 @@
 #include "test/mocks/http/mocks.h"
 #include "test/test_common/network_utility.h"
 #include "test/test_common/printers.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
+
+#include "gtest/gtest.h"
 
 using ::testing::HasSubstr;
 using ::testing::MatchesRegex;
@@ -20,28 +21,6 @@ namespace Envoy {
 INSTANTIATE_TEST_SUITE_P(IpVersions, Http2IntegrationTest,
                          testing::ValuesIn(TestEnvironment::getIpVersionsForTest()),
                          TestUtility::ipTestParamsToString);
-
-TEST_P(Http2IntegrationTest, RouterNotFound) { testRouterNotFound(); }
-
-TEST_P(Http2IntegrationTest, RouterNotFoundBodyNoBuffer) { testRouterNotFoundWithBody(); }
-
-TEST_P(Http2IntegrationTest, RouterClusterNotFound404) { testRouterClusterNotFound404(); }
-
-TEST_P(Http2IntegrationTest, RouterClusterNotFound503) { testRouterClusterNotFound503(); }
-
-TEST_P(Http2IntegrationTest, RouterRedirect) { testRouterRedirect(); }
-
-TEST_P(Http2IntegrationTest, ValidZeroLengthContent) { testValidZeroLengthContent(); }
-
-TEST_P(Http2IntegrationTest, InvalidContentLength) { testInvalidContentLength(); }
-
-TEST_P(Http2IntegrationTest, MultipleContentLengths) { testMultipleContentLengths(); }
-
-TEST_P(Http2IntegrationTest, ComputedHealthCheck) { testComputedHealthCheck(); }
-
-TEST_P(Http2IntegrationTest, AddEncodedTrailers) { testAddEncodedTrailers(); }
-
-TEST_P(Http2IntegrationTest, DrainClose) { testDrainClose(); }
 
 TEST_P(Http2IntegrationTest, RouterRequestAndResponseWithBodyNoBuffer) {
   testRouterRequestAndResponseWithBody(1024, 512, false);
@@ -58,10 +37,6 @@ TEST_P(Http2IntegrationTest, RouterHeaderOnlyRequestAndResponseNoBuffer) {
 
 TEST_P(Http2IntegrationTest, RouterRequestAndResponseLargeHeaderNoBuffer) {
   testRouterRequestAndResponseWithBody(1024, 512, true);
-}
-
-TEST_P(Http2IntegrationTest, ShutdownWithActiveConnPoolConnections) {
-  testRequestAndResponseShutdownWithActiveConnection();
 }
 
 TEST_P(Http2IntegrationTest, RouterUpstreamDisconnectBeforeRequestcomplete) {
@@ -84,15 +59,9 @@ TEST_P(Http2IntegrationTest, RouterUpstreamResponseBeforeRequestComplete) {
   testRouterUpstreamResponseBeforeRequestComplete();
 }
 
-TEST_P(Http2IntegrationTest, TwoRequests) { testTwoRequests(); }
-
-TEST_P(Http2IntegrationTest, TwoRequestsWithForcedBackup) { testTwoRequests(true); }
-
 TEST_P(Http2IntegrationTest, Retry) { testRetry(); }
 
 TEST_P(Http2IntegrationTest, RetryAttemptCount) { testRetryAttemptCountHeader(); }
-
-TEST_P(Http2IntegrationTest, EnvoyHandling100Continue) { testEnvoyHandling100Continue(); }
 
 static std::string response_metadata_filter = R"EOF(
 name: response-metadata-filter
@@ -445,41 +414,21 @@ TEST_P(Http2MetadataIntegrationTest, ProxyMultipleMetadataReachSizeLimit) {
   ASSERT_FALSE(response->complete());
 }
 
-TEST_P(Http2IntegrationTest, EnvoyHandlingDuplicate100Continue) {
-  testEnvoyHandling100Continue(true);
+TEST_P(Http2IntegrationTest, GrpcRouterNotFound) {
+  config_helper_.setDefaultHostAndRoute("foo.com", "/found");
+  initialize();
+
+  BufferingStreamDecoderPtr response = IntegrationUtil::makeSingleRequest(
+      lookupPort("http"), "POST", "/service/notfound", "", downstream_protocol_, version_, "host",
+      Http::Headers::get().ContentTypeValues.Grpc);
+  ASSERT_TRUE(response->complete());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
+  EXPECT_EQ(Http::Headers::get().ContentTypeValues.Grpc,
+            response->headers().ContentType()->value().getStringView());
+  EXPECT_EQ("12", response->headers().GrpcStatus()->value().getStringView());
 }
-
-TEST_P(Http2IntegrationTest, EnvoyProxyingEarly100Continue) { testEnvoyProxying100Continue(true); }
-
-TEST_P(Http2IntegrationTest, EnvoyProxyingLate100Continue) { testEnvoyProxying100Continue(false); }
-
-TEST_P(Http2IntegrationTest, RetryHittingBufferLimit) { testRetryHittingBufferLimit(); }
-
-TEST_P(Http2IntegrationTest, HittingDecoderFilterLimit) { testHittingDecoderFilterLimit(); }
-
-TEST_P(Http2IntegrationTest, HittingEncoderFilterLimit) { testHittingEncoderFilterLimit(); }
-
-TEST_P(Http2IntegrationTest, GrpcRouterNotFound) { testGrpcRouterNotFound(); }
-
-TEST_P(Http2IntegrationTest, RetryHostPredicateFilter) { testRetryHostPredicateFilter(); }
-
-TEST_P(Http2IntegrationTest, RetryPriority) { testRetryPriority(); }
 
 TEST_P(Http2IntegrationTest, GrpcRetry) { testGrpcRetry(); }
-
-TEST_P(Http2IntegrationTest, LargeHeadersInvokeResetStream) { testLargeRequestHeaders(63, 60); }
-
-TEST_P(Http2IntegrationTest, LargeHeadersAcceptedIfConfigured) { testLargeRequestHeaders(63, 64); }
-
-TEST_P(Http2IntegrationTest, EncodingHeaderOnlyResponse) { testHeadersOnlyFilterEncoding(); }
-
-TEST_P(Http2IntegrationTest, DecodingHeaderOnlyResponse) { testHeadersOnlyFilterDecoding(); }
-
-TEST_P(Http2IntegrationTest, DecodingHeaderOnlyInterleaved) { testHeadersOnlyFilterInterleaved(); }
-
-TEST_P(Http2IntegrationTest, DownstreamResetBeforeResponseComplete) {
-  testDownstreamResetBeforeResponseComplete();
-}
 
 TEST_P(Http2IntegrationTest, BadMagic) {
   initialize();
@@ -528,7 +477,7 @@ TEST_P(Http2IntegrationTest, GoAway) {
   codec_client_->close();
 
   EXPECT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
 }
 
 TEST_P(Http2IntegrationTest, Trailers) { testTrailers(1024, 2048); }
@@ -562,19 +511,11 @@ TEST_P(Http2IntegrationTest, GrpcRequestTimeout) {
                               {"content-type", "application/grpc"}});
   response->waitForEndStream();
   EXPECT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_NE(response->headers().GrpcStatus(), nullptr);
-  EXPECT_STREQ("14", response->headers().GrpcStatus()->value().c_str()); // Service Unavailable
+  EXPECT_EQ("14", response->headers().GrpcStatus()->value().getStringView()); // Service Unavailable
   EXPECT_LT(0, test_server_->counter("cluster.cluster_0.upstream_rq_timeout")->value());
 }
-
-// Tests idle timeout behaviour with single request and validates that idle timer kicks in
-// after given timeout.
-TEST_P(Http2IntegrationTest, IdleTimoutBasic) { testIdleTimeoutBasic(); }
-
-// Tests idle timeout behaviour with multiple requests and validates that idle timer kicks in
-// after both the requests are done.
-TEST_P(Http2IntegrationTest, IdleTimeoutWithTwoRequests) { testIdleTimeoutWithTwoRequests(); }
 
 // Interleave two requests and responses and make sure that idle timeout is handled correctly.
 TEST_P(Http2IntegrationTest, IdleTimeoutWithSimultaneousRequests) {
@@ -639,7 +580,7 @@ TEST_P(Http2IntegrationTest, IdleTimeoutWithSimultaneousRequests) {
   EXPECT_TRUE(upstream_request2->complete());
   EXPECT_EQ(request2_bytes, upstream_request2->bodyLength());
   EXPECT_TRUE(response2->complete());
-  EXPECT_STREQ("200", response2->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response2->headers().Status()->value().getStringView());
   EXPECT_EQ(request2_bytes, response2->body().size());
 
   // Validate that idle time is not kicked in.
@@ -653,7 +594,7 @@ TEST_P(Http2IntegrationTest, IdleTimeoutWithSimultaneousRequests) {
   EXPECT_TRUE(upstream_request1->complete());
   EXPECT_EQ(request1_bytes, upstream_request1->bodyLength());
   EXPECT_TRUE(response1->complete());
-  EXPECT_STREQ("200", response1->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response1->headers().Status()->value().getStringView());
   EXPECT_EQ(request1_bytes, response1->body().size());
 
   // Do not send any requests and validate idle timeout kicks in after both the requests are done.
@@ -759,7 +700,7 @@ void Http2IntegrationTest::simultaneousRequest(int32_t request1_bytes, int32_t r
   EXPECT_TRUE(upstream_request2->complete());
   EXPECT_EQ(request2_bytes, upstream_request2->bodyLength());
   EXPECT_TRUE(response2->complete());
-  EXPECT_STREQ("200", response2->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response2->headers().Status()->value().getStringView());
   EXPECT_EQ(request2_bytes, response2->body().size());
 
   // Respond to request 1
@@ -769,7 +710,7 @@ void Http2IntegrationTest::simultaneousRequest(int32_t request1_bytes, int32_t r
   EXPECT_TRUE(upstream_request1->complete());
   EXPECT_EQ(request1_bytes, upstream_request1->bodyLength());
   EXPECT_TRUE(response1->complete());
-  EXPECT_STREQ("200", response1->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response1->headers().Status()->value().getStringView());
   EXPECT_EQ(request2_bytes, response1->body().size());
 
   // Cleanup both downstream and upstream
@@ -956,10 +897,10 @@ TEST_P(Http2RingHashIntegrationTest, CookieRoutingNoCookieNoTtl) {
                               {":scheme", "http"},
                               {":authority", "host"}},
       [&](IntegrationStreamDecoder& response) {
-        EXPECT_STREQ("200", response.headers().Status()->value().c_str());
+        EXPECT_EQ("200", response.headers().Status()->value().getStringView());
         EXPECT_TRUE(response.headers().get(Http::Headers::get().SetCookie) == nullptr);
-        served_by.insert(
-            response.headers().get(Http::LowerCaseString("x-served-by"))->value().c_str());
+        served_by.insert(std::string(
+            response.headers().get(Http::LowerCaseString("x-served-by"))->value().getStringView()));
       });
   EXPECT_EQ(served_by.size(), num_upstreams_);
 }
@@ -986,8 +927,9 @@ TEST_P(Http2RingHashIntegrationTest, CookieRoutingNoCookieWithNonzeroTtlSet) {
                               {":scheme", "http"},
                               {":authority", "host"}},
       [&](IntegrationStreamDecoder& response) {
-        EXPECT_STREQ("200", response.headers().Status()->value().c_str());
-        std::string value = response.headers().get(Http::Headers::get().SetCookie)->value().c_str();
+        EXPECT_EQ("200", response.headers().Status()->value().getStringView());
+        std::string value(
+            response.headers().get(Http::Headers::get().SetCookie)->value().getStringView());
         set_cookies.insert(value);
         EXPECT_THAT(value, MatchesRegex("foo=.*; Max-Age=15; HttpOnly"));
       });
@@ -1016,8 +958,9 @@ TEST_P(Http2RingHashIntegrationTest, CookieRoutingNoCookieWithZeroTtlSet) {
                               {":scheme", "http"},
                               {":authority", "host"}},
       [&](IntegrationStreamDecoder& response) {
-        EXPECT_STREQ("200", response.headers().Status()->value().c_str());
-        std::string value = response.headers().get(Http::Headers::get().SetCookie)->value().c_str();
+        EXPECT_EQ("200", response.headers().Status()->value().getStringView());
+        std::string value(
+            response.headers().get(Http::Headers::get().SetCookie)->value().getStringView());
         set_cookies.insert(value);
         EXPECT_THAT(value, MatchesRegex("^foo=.*$"));
       });
@@ -1046,10 +989,10 @@ TEST_P(Http2RingHashIntegrationTest, CookieRoutingWithCookieNoTtl) {
                               {":scheme", "http"},
                               {":authority", "host"}},
       [&](IntegrationStreamDecoder& response) {
-        EXPECT_STREQ("200", response.headers().Status()->value().c_str());
+        EXPECT_EQ("200", response.headers().Status()->value().getStringView());
         EXPECT_TRUE(response.headers().get(Http::Headers::get().SetCookie) == nullptr);
-        served_by.insert(
-            response.headers().get(Http::LowerCaseString("x-served-by"))->value().c_str());
+        served_by.insert(std::string(
+            response.headers().get(Http::LowerCaseString("x-served-by"))->value().getStringView()));
       });
   EXPECT_EQ(served_by.size(), 1);
 }
@@ -1077,10 +1020,10 @@ TEST_P(Http2RingHashIntegrationTest, CookieRoutingWithCookieWithTtlSet) {
                               {":scheme", "http"},
                               {":authority", "host"}},
       [&](IntegrationStreamDecoder& response) {
-        EXPECT_STREQ("200", response.headers().Status()->value().c_str());
+        EXPECT_EQ("200", response.headers().Status()->value().getStringView());
         EXPECT_TRUE(response.headers().get(Http::Headers::get().SetCookie) == nullptr);
-        served_by.insert(
-            response.headers().get(Http::LowerCaseString("x-served-by"))->value().c_str());
+        served_by.insert(std::string(
+            response.headers().get(Http::LowerCaseString("x-served-by"))->value().getStringView()));
       });
   EXPECT_EQ(served_by.size(), 1);
 }

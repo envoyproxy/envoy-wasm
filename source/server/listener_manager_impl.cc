@@ -51,7 +51,7 @@ std::vector<Network::FilterFactoryCb> ProdListenerComponentFactory::createNetwor
   std::vector<Network::FilterFactoryCb> ret;
   for (ssize_t i = 0; i < filters.size(); i++) {
     const auto& proto_config = filters[i];
-    const ProtobufTypes::String string_name = proto_config.name();
+    const std::string& string_name = proto_config.name();
     ENVOY_LOG(debug, "  filter #{}:", i);
     ENVOY_LOG(debug, "    name: {}", string_name);
     const Json::ObjectSharedPtr filter_config =
@@ -81,7 +81,7 @@ ProdListenerComponentFactory::createListenerFilterFactoryList_(
   std::vector<Network::ListenerFilterFactoryCb> ret;
   for (ssize_t i = 0; i < filters.size(); i++) {
     const auto& proto_config = filters[i];
-    const ProtobufTypes::String string_name = proto_config.name();
+    const std::string& string_name = proto_config.name();
     ENVOY_LOG(debug, "  filter #{}:", i);
     ENVOY_LOG(debug, "    name: {}", string_name);
     const Json::ObjectSharedPtr filter_config =
@@ -118,8 +118,8 @@ Network::SocketSharedPtr ProdListenerComponentFactory::createListenSocket(
     }
     const std::string addr = fmt::format("unix://{}", address->asString());
     const int fd = server_.hotRestart().duplicateParentListenSocket(addr);
-    Network::IoHandlePtr io_handle = std::make_unique<Network::IoSocketHandle>(fd);
-    if (io_handle->fd() != -1) {
+    Network::IoHandlePtr io_handle = std::make_unique<Network::IoSocketHandleImpl>(fd);
+    if (io_handle->isOpen()) {
       ENVOY_LOG(debug, "obtained socket for address {} from parent", addr);
       return std::make_shared<Network::UdsListenSocket>(std::move(io_handle), address);
     }
@@ -133,7 +133,7 @@ Network::SocketSharedPtr ProdListenerComponentFactory::createListenSocket(
   const int fd = server_.hotRestart().duplicateParentListenSocket(addr);
   if (fd != -1) {
     ENVOY_LOG(debug, "obtained socket for address {} from parent", addr);
-    Network::IoHandlePtr io_handle = std::make_unique<Network::IoSocketHandle>(fd);
+    Network::IoHandlePtr io_handle = std::make_unique<Network::IoSocketHandleImpl>(fd);
     if (socket_type == Network::Address::SocketType::Stream) {
       return std::make_shared<Network::TcpListenSocket>(std::move(io_handle), address, options);
     } else {
@@ -165,10 +165,11 @@ ListenerImpl::ListenerImpl(const envoy::api::v2::Listener& config, const std::st
           PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, use_original_dst, false)),
       per_connection_buffer_limit_bytes_(
           PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, per_connection_buffer_limit_bytes, 1024 * 1024)),
-      listener_tag_(parent_.factory_.nextListenerTag()), name_(name),
-      reverse_write_filter_order_(
-          PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, bugfix_reverse_write_filter_order, true)),
-      modifiable_(modifiable), workers_started_(workers_started), hash_(hash),
+      listener_tag_(parent_.factory_.nextListenerTag()), name_(name), modifiable_(modifiable),
+      workers_started_(workers_started), hash_(hash),
+      dynamic_init_manager_(fmt::format("Listener {}", name)),
+      init_watcher_(std::make_unique<Init::WatcherImpl>(
+          "ListenerImpl", [this] { parent_.onListenerWarmed(*this); })),
       local_drain_manager_(parent.factory_.createDrainManager(config.drain_type())),
       config_(config), version_info_(version_info),
       listener_filters_timeout_(
@@ -184,7 +185,7 @@ ListenerImpl::ListenerImpl(const envoy::api::v2::Listener& config, const std::st
         config.tcp_fast_open_queue_length().value()));
   }
 
-  if (config.socket_options().size() > 0) {
+  if (!config.socket_options().empty()) {
     addListenSocketOptions(
         Network::SocketOptionFactory::buildLiteralOptions(config.socket_options()));
   }
@@ -219,6 +220,12 @@ ListenerImpl::ListenerImpl(const envoy::api::v2::Listener& config, const std::st
 
   for (const auto& filter_chain : config.filter_chains()) {
     const auto& filter_chain_match = filter_chain.filter_chain_match();
+    if (!filter_chain_match.address_suffix().empty() || filter_chain_match.has_suffix_len() ||
+        filter_chain_match.source_prefix_ranges_size() || filter_chain_match.source_ports_size()) {
+      throw EnvoyException(fmt::format("error adding listener '{}': contains filter chains with "
+                                       "unimplemented fields",
+                                       address_->asString()));
+    }
     if (filter_chains.find(filter_chain_match) != filter_chains.end()) {
       throw EnvoyException(fmt::format("error adding listener '{}': multiple filter chains with "
                                        "the same matching rules are defined",
@@ -318,9 +325,9 @@ ListenerImpl::~ListenerImpl() {
   // The filter factories may have pending initialize actions (like in the case of RDS). Those
   // actions will fire in the destructor to avoid blocking initial server startup. If we are using
   // a local init manager we should block the notification from trying to move us from warming to
-  // active. This is done here explicitly by setting a boolean and then clearing the factory
+  // active. This is done here explicitly by resetting the watcher and then clearing the factory
   // vector for clarity.
-  initialize_canceled_ = true;
+  init_watcher_.reset();
   destination_ports_map_.clear();
 }
 
@@ -419,6 +426,14 @@ void ListenerImpl::addFilterChainForSourceTypes(
     SourceTypesArray& source_types_array,
     const envoy::api::v2::listener::FilterChainMatch_ConnectionSourceType source_type,
     const Network::FilterChainSharedPtr& filter_chain) {
+  if (source_types_array[source_type] != nullptr) {
+    // If we got here and found already configured branch, then it means that this FilterChainMatch
+    // is a duplicate, and that there is some overlap in the repeated fields with already processed
+    // FilterChainMatches.
+    throw EnvoyException(fmt::format("error adding listener '{}': multiple filter chains with "
+                                     "overlapping matching rules are defined",
+                                     address_->asString()));
+  }
   source_types_array[source_type] = filter_chain;
 }
 
@@ -621,13 +636,9 @@ void ListenerImpl::initialize() {
   last_updated_ = timeSource().systemTime();
   // If workers have already started, we shift from using the global init manager to using a local
   // per listener init manager. See ~ListenerImpl() for why we gate the onListenerWarmed() call
-  // with initialize_canceled_.
+  // by resetting the watcher.
   if (workers_started_) {
-    dynamic_init_manager_.initialize([this]() -> void {
-      if (!initialize_canceled_) {
-        parent_.onListenerWarmed(*this);
-      }
-    });
+    dynamic_init_manager_.initialize(*init_watcher_);
   }
 }
 
@@ -665,10 +676,13 @@ void ListenerImpl::setSocket(const Network::SocketSharedPtr& socket) {
 
 ListenerManagerImpl::ListenerManagerImpl(Instance& server,
                                          ListenerComponentFactory& listener_factory,
-                                         WorkerFactory& worker_factory)
-    : server_(server), factory_(listener_factory), stats_(generateStats(server.stats())),
+                                         WorkerFactory& worker_factory,
+                                         bool enable_dispatcher_stats)
+    : server_(server), factory_(listener_factory),
+      scope_(server.stats().createScope("listener_manager.")), stats_(generateStats(*scope_)),
       config_tracker_entry_(server.admin().getConfigTracker().add(
-          "listeners", [this] { return dumpListenerConfigs(); })) {
+          "listeners", [this] { return dumpListenerConfigs(); })),
+      enable_dispatcher_stats_(enable_dispatcher_stats) {
   for (uint32_t i = 0; i < server.options().concurrency(); i++) {
     workers_.emplace_back(worker_factory.createWorker(server.overloadManager()));
   }
@@ -712,9 +726,7 @@ ProtobufTypes::MessagePtr ListenerManagerImpl::dumpListenerConfigs() {
 }
 
 ListenerManagerStats ListenerManagerImpl::generateStats(Stats::Scope& scope) {
-  const std::string final_prefix = "listener_manager.";
-  return {ALL_LISTENER_MANAGER_STATS(POOL_COUNTER_PREFIX(scope, final_prefix),
-                                     POOL_GAUGE_PREFIX(scope, final_prefix))};
+  return {ALL_LISTENER_MANAGER_STATS(POOL_COUNTER(scope), POOL_GAUGE(scope))};
 }
 
 bool ListenerManagerImpl::addOrUpdateListener(const envoy::api::v2::Listener& config,
@@ -1000,12 +1012,16 @@ void ListenerManagerImpl::startWorkers(GuardDog& guard_dog) {
   ENVOY_LOG(info, "all dependencies initialized. starting workers");
   ASSERT(!workers_started_);
   workers_started_ = true;
+  uint32_t i = 0;
   for (const auto& worker : workers_) {
     ASSERT(warming_listeners_.empty());
     for (const auto& listener : active_listeners_) {
       addListenerToWorker(*worker, *listener);
     }
     worker->start(guard_dog);
+    if (enable_dispatcher_stats_) {
+      worker->initializeStats(*scope_, fmt::format("worker_{}.", i++));
+    }
   }
 }
 

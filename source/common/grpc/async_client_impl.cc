@@ -27,7 +27,7 @@ AsyncRequest* AsyncClientImpl::send(const Protobuf::MethodDescriptor& service_me
                                     AsyncRequestCallbacks& callbacks, Tracing::Span& parent_span,
                                     const absl::optional<std::chrono::milliseconds>& timeout) {
   return sendRaw(service_method.service()->full_name(), service_method.name(),
-                 Common::serializeBody(request), callbacks, parent_span, timeout);
+                 Common::serializeToGrpcFrame(request), callbacks, parent_span, timeout);
 }
 
 AsyncRequest* AsyncClientImpl::sendRaw(absl::string_view service_full_name,
@@ -190,7 +190,7 @@ void AsyncStreamImpl::onReset() {
 }
 
 void AsyncStreamImpl::sendMessage(const Protobuf::Message& request, bool end_stream) {
-  sendRawMessage(Common::serializeBody(request), end_stream);
+  sendRawMessage(Common::serializeToGrpcFrame(request), end_stream);
 }
 
 void AsyncStreamImpl::sendRawMessage(Buffer::InstancePtr request, bool end_stream) {
@@ -228,8 +228,8 @@ AsyncRequestImpl::AsyncRequestImpl(AsyncClientImpl& parent, absl::string_view se
   current_span_ = parent_span.spawnChild(Tracing::EgressConfig::get(),
                                          "async " + parent.remote_cluster_name_ + " egress",
                                          parent.time_source_.systemTime());
-  current_span_->setTag(Tracing::Tags::get().UPSTREAM_CLUSTER, parent.remote_cluster_name_);
-  current_span_->setTag(Tracing::Tags::get().COMPONENT, Tracing::Tags::get().PROXY);
+  current_span_->setTag(Tracing::Tags::get().UpstreamCluster, parent.remote_cluster_name_);
+  current_span_->setTag(Tracing::Tags::get().Component, Tracing::Tags::get().Proxy);
 }
 
 AsyncRequestImpl::AsyncRequestImpl(AsyncClientImpl& parent,
@@ -238,7 +238,7 @@ AsyncRequestImpl::AsyncRequestImpl(AsyncClientImpl& parent,
                                    AsyncRequestCallbacks& callbacks, Tracing::Span& parent_span,
                                    const absl::optional<std::chrono::milliseconds>& timeout)
     : AsyncRequestImpl(parent, service_method.service()->full_name(), service_method.name(),
-                       Common::serializeBody(request), callbacks, parent_span, timeout) {}
+                       Common::serializeToGrpcFrame(request), callbacks, parent_span, timeout) {}
 
 void AsyncRequestImpl::initialize(bool buffer_body_for_retry) {
   AsyncStreamImpl::initialize(buffer_body_for_retry);
@@ -249,7 +249,7 @@ void AsyncRequestImpl::initialize(bool buffer_body_for_retry) {
 }
 
 void AsyncRequestImpl::cancel() {
-  current_span_->setTag(Tracing::Tags::get().STATUS, Tracing::Tags::get().CANCELED);
+  current_span_->setTag(Tracing::Tags::get().Status, Tracing::Tags::get().Canceled);
   current_span_->finishSpan();
   this->resetStream();
 }
@@ -273,13 +273,13 @@ bool AsyncRequestImpl::onReceiveRawMessage(Buffer::InstancePtr response) {
 void AsyncRequestImpl::onReceiveTrailingMetadata(Http::HeaderMapPtr&&) {}
 
 void AsyncRequestImpl::onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) {
-  current_span_->setTag(Tracing::Tags::get().GRPC_STATUS_CODE, std::to_string(status));
+  current_span_->setTag(Tracing::Tags::get().GrpcStatusCode, std::to_string(status));
 
   if (status != Grpc::Status::GrpcStatus::Ok) {
-    current_span_->setTag(Tracing::Tags::get().ERROR, Tracing::Tags::get().TRUE);
+    current_span_->setTag(Tracing::Tags::get().Error, Tracing::Tags::get().True);
     callbacks_.onFailure(status, message, *current_span_);
   } else if (response_ == nullptr) {
-    current_span_->setTag(Tracing::Tags::get().ERROR, Tracing::Tags::get().TRUE);
+    current_span_->setTag(Tracing::Tags::get().Error, Tracing::Tags::get().True);
     callbacks_.onFailure(Status::Internal, EMPTY_STRING, *current_span_);
   } else {
     callbacks_.onSuccessRaw(std::move(response_), *current_span_);

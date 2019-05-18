@@ -2,10 +2,12 @@ licenses(["notice"])  # Apache 2
 
 load(
     "//bazel:envoy_build_system.bzl",
+    "envoy_cc_fuzz_test",
     "envoy_cc_test",
     "envoy_cc_test_binary",
     "envoy_cc_test_library",
     "envoy_package",
+    "envoy_proto_library",
 )
 
 envoy_package()
@@ -19,6 +21,31 @@ envoy_cc_test_library(
     ],
 )
 
+envoy_proto_library(
+    name = "buffer_fuzz_proto",
+    srcs = ["buffer_fuzz.proto"],
+)
+
+envoy_cc_test_library(
+    name = "buffer_fuzz_lib",
+    srcs = ["buffer_fuzz.cc"],
+    hdrs = ["buffer_fuzz.h"],
+    deps = [
+        ":buffer_fuzz_proto_cc",
+        "//source/common/buffer:buffer_lib",
+        "//source/common/common:stack_array",
+        "//source/common/memory:stats_lib",
+        "//source/common/network:io_socket_handle_lib",
+    ],
+)
+
+envoy_cc_fuzz_test(
+    name = "buffer_fuzz_test",
+    srcs = ["buffer_fuzz_test.cc"],
+    corpus = "buffer_corpus",
+    deps = [":buffer_fuzz_lib"],
+)
+
 envoy_cc_test(
     name = "buffer_test",
     srcs = ["buffer_test.cc"],
@@ -30,12 +57,22 @@ envoy_cc_test(
     ],
 )
 
+envoy_cc_fuzz_test(
+    name = "new_buffer_fuzz_test",
+    srcs = ["new_buffer_fuzz_test.cc"],
+    corpus = "buffer_corpus",
+    deps = [":buffer_fuzz_lib"],
+)
+
 envoy_cc_test(
     name = "owned_impl_test",
     srcs = ["owned_impl_test.cc"],
     deps = [
+        ":utility_lib",
         "//source/common/buffer:buffer_lib",
+        "//source/common/network:io_socket_handle_lib",
         "//test/mocks/api:api_mocks",
+        "//test/test_common:logging_lib",
         "//test/test_common:threadsafe_singleton_injector_lib",
     ],
 )
@@ -44,8 +81,10 @@ envoy_cc_test(
     name = "watermark_buffer_test",
     srcs = ["watermark_buffer_test.cc"],
     deps = [
+        ":utility_lib",
         "//source/common/buffer:buffer_lib",
         "//source/common/buffer:watermark_buffer_lib",
+        "//source/common/network:io_socket_handle_lib",
     ],
 )
 
@@ -53,6 +92,7 @@ envoy_cc_test(
     name = "zero_copy_input_stream_test",
     srcs = ["zero_copy_input_stream_test.cc"],
     deps = [
+        ":utility_lib",
         "//source/common/buffer:zero_copy_input_stream_lib",
     ],
 )

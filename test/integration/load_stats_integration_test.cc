@@ -8,17 +8,17 @@
 #include "test/config/utility.h"
 #include "test/integration/http_integration.h"
 #include "test/test_common/network_utility.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
+
+#include "gtest/gtest.h"
 
 namespace Envoy {
 namespace {
 
-class LoadStatsIntegrationTest : public TestBaseWithParam<Network::Address::IpVersion>,
+class LoadStatsIntegrationTest : public testing::TestWithParam<Network::Address::IpVersion>,
                                  public HttpIntegrationTest {
 public:
-  LoadStatsIntegrationTest()
-      : HttpIntegrationTest(Http::CodecClient::Type::HTTP1, GetParam(), realTime()) {
+  LoadStatsIntegrationTest() : HttpIntegrationTest(Http::CodecClient::Type::HTTP1, GetParam()) {
     // We rely on some fairly specific load balancing picks in this test, so
     // determinize the schedule.
     setDeterministic();
@@ -51,7 +51,8 @@ public:
                                    const LocalityAssignment& p1_dragon_upstreams) {
     uint32_t num_endpoints = 0;
     envoy::api::v2::ClusterLoadAssignment cluster_load_assignment;
-    cluster_load_assignment.set_cluster_name("cluster_0");
+    // EDS service_name is set in cluster_0
+    cluster_load_assignment.set_cluster_name("service_name_0");
 
     auto* winter = cluster_load_assignment.add_endpoints();
     winter->mutable_locality()->set_region("some_region");
@@ -126,6 +127,7 @@ public:
       cluster_0->set_type(envoy::api::v2::Cluster::EDS);
       auto* eds_cluster_config = cluster_0->mutable_eds_cluster_config();
       eds_cluster_config->mutable_eds_config()->set_path(eds_helper_.eds_path());
+      eds_cluster_config->set_service_name("service_name_0");
       if (locality_weighted_lb_) {
         cluster_0->mutable_common_lb_config()->mutable_locality_weighted_lb_config();
       }
@@ -195,6 +197,9 @@ public:
           upstream_locality_stats->set_total_error_requests(
               upstream_locality_stats->total_error_requests() +
               local_upstream_locality_stats.total_error_requests());
+          upstream_locality_stats->set_total_issued_requests(
+              upstream_locality_stats->total_issued_requests() +
+              local_upstream_locality_stats.total_issued_requests());
           break;
         }
       }
@@ -212,6 +217,8 @@ public:
     if (!expected_locality_stats.empty() || dropped != 0) {
       auto* cluster_stats = expected_cluster_stats.Add();
       cluster_stats->set_cluster_name("cluster_0");
+      // Verify the eds service_name is passed back.
+      cluster_stats->set_cluster_service_name("service_name_0");
       if (dropped > 0) {
         cluster_stats->set_total_dropped_requests(dropped);
       }
@@ -244,10 +251,11 @@ public:
         ENVOY_LOG_MISC(debug, "HTD {}", loadstats_request.cluster_stats()[0].DebugString());
       }
 
-      EXPECT_STREQ("POST", loadstats_stream_->headers().Method()->value().c_str());
-      EXPECT_STREQ("/envoy.service.load_stats.v2.LoadReportingService/StreamLoadStats",
-                   loadstats_stream_->headers().Path()->value().c_str());
-      EXPECT_STREQ("application/grpc", loadstats_stream_->headers().ContentType()->value().c_str());
+      EXPECT_EQ("POST", loadstats_stream_->headers().Method()->value().getStringView());
+      EXPECT_EQ("/envoy.service.load_stats.v2.LoadReportingService/StreamLoadStats",
+                loadstats_stream_->headers().Path()->value().getStringView());
+      EXPECT_EQ("application/grpc",
+                loadstats_stream_->headers().ContentType()->value().getStringView());
     } while (!TestUtility::assertRepeatedPtrFieldEqual(expected_cluster_stats,
                                                        loadstats_request.cluster_stats()));
   }
@@ -270,8 +278,8 @@ public:
     EXPECT_EQ(request_size_, upstream_request_->bodyLength());
 
     ASSERT_TRUE(response_->complete());
-    EXPECT_STREQ(std::to_string(response_code).c_str(),
-                 response_->headers().Status()->value().c_str());
+    EXPECT_EQ(std::to_string(response_code),
+              response_->headers().Status()->value().getStringView());
     EXPECT_EQ(response_size_, response_->body().size());
   }
 
@@ -289,7 +297,7 @@ public:
 
   envoy::api::v2::endpoint::UpstreamLocalityStats localityStats(const std::string& sub_zone,
                                                                 uint64_t success, uint64_t error,
-                                                                uint64_t active,
+                                                                uint64_t active, uint64_t issued,
                                                                 uint32_t priority = 0) {
     envoy::api::v2::endpoint::UpstreamLocalityStats locality_stats;
     auto* locality = locality_stats.mutable_locality();
@@ -299,6 +307,7 @@ public:
     locality_stats.set_total_successful_requests(success);
     locality_stats.set_total_error_requests(error);
     locality_stats.set_total_requests_in_progress(active);
+    locality_stats.set_total_issued_requests(issued);
     locality_stats.set_priority(priority);
     return locality_stats;
   }
@@ -359,7 +368,8 @@ TEST_P(LoadStatsIntegrationTest, Success) {
   }
 
   // Verify we do not get empty stats for non-zero priorities.
-  waitForLoadStatsRequest({localityStats("winter", 2, 0, 0), localityStats("dragon", 2, 0, 0)});
+  waitForLoadStatsRequest(
+      {localityStats("winter", 2, 0, 0, 2), localityStats("dragon", 2, 0, 0, 2)});
 
   EXPECT_EQ(1, test_server_->counter("load_reporter.requests")->value());
   // On slow machines, more than one load stats response may be pushed while we are simulating load.
@@ -376,7 +386,8 @@ TEST_P(LoadStatsIntegrationTest, Success) {
 
   // No locality for priority=1 since there's no "winter" endpoints.
   // The hosts for dragon were received because membership_total is accurate.
-  waitForLoadStatsRequest({localityStats("winter", 2, 0, 0), localityStats("dragon", 4, 0, 0)});
+  waitForLoadStatsRequest(
+      {localityStats("winter", 2, 0, 0, 2), localityStats("dragon", 4, 0, 0, 4)});
 
   EXPECT_EQ(2, test_server_->counter("load_reporter.requests")->value());
   EXPECT_LE(3, test_server_->counter("load_reporter.responses")->value());
@@ -392,7 +403,7 @@ TEST_P(LoadStatsIntegrationTest, Success) {
   }
 
   waitForLoadStatsRequest(
-      {localityStats("winter", 2, 0, 0, 1), localityStats("dragon", 2, 0, 0, 1)});
+      {localityStats("winter", 2, 0, 0, 2, 1), localityStats("dragon", 2, 0, 0, 2, 1)});
   EXPECT_EQ(3, test_server_->counter("load_reporter.requests")->value());
   EXPECT_LE(4, test_server_->counter("load_reporter.responses")->value());
   EXPECT_EQ(0, test_server_->counter("load_reporter.errors")->value());
@@ -406,7 +417,7 @@ TEST_P(LoadStatsIntegrationTest, Success) {
     sendAndReceiveUpstream(1);
   }
 
-  waitForLoadStatsRequest({localityStats("winter", 1, 0, 0)});
+  waitForLoadStatsRequest({localityStats("winter", 1, 0, 0, 1)});
   EXPECT_EQ(4, test_server_->counter("load_reporter.requests")->value());
   EXPECT_LE(5, test_server_->counter("load_reporter.responses")->value());
   EXPECT_EQ(0, test_server_->counter("load_reporter.errors")->value());
@@ -419,7 +430,7 @@ TEST_P(LoadStatsIntegrationTest, Success) {
   sendAndReceiveUpstream(1);
   sendAndReceiveUpstream(1);
 
-  waitForLoadStatsRequest({localityStats("winter", 3, 0, 0)});
+  waitForLoadStatsRequest({localityStats("winter", 3, 0, 0, 3)});
 
   EXPECT_EQ(6, test_server_->counter("load_reporter.requests")->value());
   EXPECT_LE(6, test_server_->counter("load_reporter.responses")->value());
@@ -433,7 +444,7 @@ TEST_P(LoadStatsIntegrationTest, Success) {
   sendAndReceiveUpstream(1);
   sendAndReceiveUpstream(1);
 
-  waitForLoadStatsRequest({localityStats("winter", 2, 0, 0)});
+  waitForLoadStatsRequest({localityStats("winter", 2, 0, 0, 2)});
 
   EXPECT_EQ(8, test_server_->counter("load_reporter.requests")->value());
   EXPECT_LE(7, test_server_->counter("load_reporter.responses")->value());
@@ -468,7 +479,8 @@ TEST_P(LoadStatsIntegrationTest, LocalityWeighted) {
   sendAndReceiveUpstream(0);
 
   // Verify we get the expect request distribution.
-  waitForLoadStatsRequest({localityStats("winter", 4, 0, 0), localityStats("dragon", 2, 0, 0)});
+  waitForLoadStatsRequest(
+      {localityStats("winter", 4, 0, 0, 4), localityStats("dragon", 2, 0, 0, 2)});
 
   EXPECT_EQ(1, test_server_->counter("load_reporter.requests")->value());
   // On slow machines, more than one load stats response may be pushed while we are simulating load.
@@ -501,7 +513,8 @@ TEST_P(LoadStatsIntegrationTest, NoLocalLocality) {
   // order of locality stats is different to the Success case, where winter is
   // the local locality (and hence first in the list as per
   // HostsPerLocality::get()).
-  waitForLoadStatsRequest({localityStats("dragon", 2, 0, 0), localityStats("winter", 2, 0, 0)});
+  waitForLoadStatsRequest(
+      {localityStats("dragon", 2, 0, 0, 2), localityStats("winter", 2, 0, 0, 2)});
 
   EXPECT_EQ(1, test_server_->counter("load_reporter.requests")->value());
   // On slow machines, more than one load stats response may be pushed while we are simulating load.
@@ -528,7 +541,7 @@ TEST_P(LoadStatsIntegrationTest, Error) {
   // This should count as "success" since non-5xx.
   sendAndReceiveUpstream(0, 404);
 
-  waitForLoadStatsRequest({localityStats("winter", 1, 1, 0)});
+  waitForLoadStatsRequest({localityStats("winter", 1, 1, 0, 2)});
 
   EXPECT_EQ(1, test_server_->counter("load_reporter.requests")->value());
   EXPECT_LE(2, test_server_->counter("load_reporter.responses")->value());
@@ -548,7 +561,7 @@ TEST_P(LoadStatsIntegrationTest, InProgress) {
 
   requestLoadStatsResponse({"cluster_0"});
   initiateClientConnection();
-  waitForLoadStatsRequest({localityStats("winter", 0, 0, 1)});
+  waitForLoadStatsRequest({localityStats("winter", 0, 0, 1, 1)});
 
   waitForUpstreamResponse(0, 503);
   cleanupUpstreamAndDownstream();
@@ -579,7 +592,7 @@ TEST_P(LoadStatsIntegrationTest, Dropped) {
   initiateClientConnection();
   response_->waitForEndStream();
   ASSERT_TRUE(response_->complete());
-  EXPECT_STREQ("503", response_->headers().Status()->value().c_str());
+  EXPECT_EQ("503", response_->headers().Status()->value().getStringView());
   cleanupUpstreamAndDownstream();
 
   waitForLoadStatsRequest({}, 1);

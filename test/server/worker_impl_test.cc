@@ -6,8 +6,9 @@
 #include "test/mocks/network/mocks.h"
 #include "test/mocks/server/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
-#include "test/test_common/test_base.h"
 #include "test/test_common/utility.h"
+
+#include "gtest/gtest.h"
 
 using testing::_;
 using testing::InSequence;
@@ -19,30 +20,36 @@ using testing::Throw;
 
 namespace Envoy {
 namespace Server {
+namespace {
 
-class WorkerImplTest : public TestBase {
+class WorkerImplTest : public testing::Test {
 public:
-  WorkerImplTest() : api_(Api::createApiForTest(stats_store_)) {
+  WorkerImplTest()
+      : api_(Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
+        no_exit_timer_(dispatcher_->createTimer([]() -> void {})),
+        worker_(tls_, hooks_, std::move(dispatcher_), Network::ConnectionHandlerPtr{handler_},
+                overload_manager_, *api_) {
     // In the real worker the watchdog has timers that prevent exit. Here we need to prevent event
     // loop exit since we use mock timers.
     no_exit_timer_->enableTimer(std::chrono::hours(1));
   }
 
-  Stats::IsolatedStoreImpl stats_store_;
+  ~WorkerImplTest() override {
+    // We init no_exit_timer_ before worker_ because the dispatcher will be
+    // moved into the worker. However we need to destruct no_exit_timer_ before
+    // destructing the worker, otherwise the timer will outlive its dispatcher.
+    no_exit_timer_.reset();
+  }
+
   NiceMock<ThreadLocal::MockInstance> tls_;
   Network::MockConnectionHandler* handler_ = new Network::MockConnectionHandler();
   NiceMock<MockGuardDog> guard_dog_;
   NiceMock<MockOverloadManager> overload_manager_;
   Api::ApiPtr api_;
-  Event::DispatcherImpl* dispatcher_ = new Event::DispatcherImpl(*api_);
-  DefaultTestHooks hooks_;
-  WorkerImpl worker_{tls_,
-                     hooks_,
-                     Event::DispatcherPtr{dispatcher_},
-                     Network::ConnectionHandlerPtr{handler_},
-                     overload_manager_,
-                     *api_};
-  Event::TimerPtr no_exit_timer_ = dispatcher_->createTimer([]() -> void {});
+  Event::DispatcherPtr dispatcher_;
+  DefaultListenerHooks hooks_;
+  Event::TimerPtr no_exit_timer_;
+  WorkerImpl worker_;
 };
 
 TEST_F(WorkerImplTest, BasicFlow) {
@@ -64,7 +71,9 @@ TEST_F(WorkerImplTest, BasicFlow) {
     ci.setReady();
   });
 
+  NiceMock<Stats::MockStore> store;
   worker_.start(guard_dog_);
+  worker_.initializeStats(store, "test");
   ci.waitReady();
 
   // After a worker is started adding/stopping/removing a listener happens on the worker thread.
@@ -137,5 +146,6 @@ TEST_F(WorkerImplTest, ListenerException) {
   worker_.stop();
 }
 
+} // namespace
 } // namespace Server
 } // namespace Envoy

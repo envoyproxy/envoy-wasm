@@ -9,7 +9,7 @@ namespace Envoy {
 namespace Grpc {
 
 void AsyncStream::sendMessage(const Protobuf::Message& request, bool end_stream) {
-  sendRawMessage(Common::serializeBody(request), end_stream);
+  sendRawMessage(Common::serializeToGrpcFrame(request), end_stream);
 }
 
 AsyncRequest* AsyncClient::send(const Protobuf::MethodDescriptor& service_method,
@@ -17,7 +17,7 @@ AsyncRequest* AsyncClient::send(const Protobuf::MethodDescriptor& service_method
                                 Tracing::Span& parent_span,
                                 const absl::optional<std::chrono::milliseconds>& timeout) {
   return sendRaw(service_method.service()->full_name(), service_method.name(),
-                 Common::serializeBody(request), callbacks, parent_span, timeout);
+                 Common::serializeToGrpcFrame(request), callbacks, parent_span, timeout);
 }
 
 AsyncStream* AsyncClient::start(const Protobuf::MethodDescriptor& service_method,

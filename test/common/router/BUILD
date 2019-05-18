@@ -4,6 +4,8 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_fuzz_test",
     "envoy_cc_test",
+    "envoy_cc_test_binary",
+    "envoy_cc_test_library",
     "envoy_directory_genrule",
     "envoy_package",
     "envoy_proto_library",
@@ -13,14 +15,17 @@ envoy_package()
 
 envoy_cc_test(
     name = "config_impl_test",
+    deps = [":config_impl_test_lib"],
+)
+
+envoy_cc_test_library(
+    name = "config_impl_test_lib",
     srcs = ["config_impl_test.cc"],
     deps = [
         ":route_fuzz_proto_cc",
         "//source/common/config:metadata_lib",
-        "//source/common/config:rds_json_lib",
         "//source/common/http:header_map_lib",
         "//source/common/http:headers_lib",
-        "//source/common/json:json_loader_lib",
         "//source/common/router:config_lib",
         "//source/extensions/filters/http/common:empty_http_filter_config_lib",
         "//test/fuzz:utility_lib",
@@ -28,6 +33,8 @@ envoy_cc_test(
         "//test/test_common:environment_lib",
         "//test/test_common:registry_lib",
         "//test/test_common:utility_lib",
+        "@envoy_api//envoy/api/v2:rds_cc",
+        "@envoy_api//envoy/config/filter/http/router/v2:router_cc",
     ],
 )
 
@@ -62,7 +69,27 @@ envoy_cc_test(
         "//source/common/json:json_loader_lib",
         "//source/common/router:rds_lib",
         "//source/server/http:admin_lib",
-        "//test/mocks/init:init_mocks",
+        "//test/mocks/local_info:local_info_mocks",
+        "//test/mocks/server:server_mocks",
+        "//test/mocks/thread_local:thread_local_mocks",
+        "//test/mocks/upstream:upstream_mocks",
+        "//test/test_common:simulated_time_system_lib",
+        "//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "vhds_test",
+    srcs = ["vhds_test.cc"],
+    deps = [
+        "//source/common/config:filter_json_lib",
+        "//source/common/config:utility_lib",
+        "//source/common/http:message_lib",
+        "//source/common/json:json_loader_lib",
+        "//source/common/protobuf",
+        "//source/common/router:rds_lib",
+        "//source/common/router:vhds_lib",
+        "//source/server/http:admin_lib",
         "//test/mocks/local_info:local_info_mocks",
         "//test/mocks/server:server_mocks",
         "//test/mocks/thread_local:thread_local_mocks",
@@ -95,6 +122,15 @@ envoy_proto_library(
     ],
 )
 
+# envoy_cc_test_binary is generating mostly static binary regardless of config
+envoy_cc_test_binary(
+    name = "config_impl_test_static",
+    deps = [
+        ":config_impl_test_lib",
+        "//test:main",
+    ],
+)
+
 sh_binary(
     name = "corpus_from_config_impl_sh",
     srcs = ["corpus_from_config_impl.sh"],
@@ -106,11 +142,11 @@ envoy_directory_genrule(
     srcs = [
         # This is deliberately in srcs, since we run into host/target confusion
         # otherwise in oss-fuzz builds.
-        ":config_impl_test",
+        ":config_impl_test_static",
     ],
     cmd = " ".join([
         "$(location corpus_from_config_impl_sh)",
-        "$(location //test/common/router:config_impl_test)",
+        "$(location //test/common/router:config_impl_test_static)",
     ]),
     tools = [":corpus_from_config_impl_sh"],
 )
@@ -138,7 +174,7 @@ envoy_cc_test(
     srcs = ["router_ratelimit_test.cc"],
     deps = [
         "//source/common/http:header_map_lib",
-        "//source/common/json:json_loader_lib",
+        "//source/common/protobuf:utility_lib",
         "//source/common/router:config_lib",
         "//source/common/router:router_ratelimit_lib",
         "//test/mocks/http:http_mocks",
@@ -169,7 +205,7 @@ envoy_cc_test(
         "//test/mocks/ssl:ssl_mocks",
         "//test/mocks/upstream:upstream_mocks",
         "//test/test_common:environment_lib",
-        "//test/test_common:test_time_lib",
+        "//test/test_common:simulated_time_system_lib",
         "//test/test_common:utility_lib",
     ],
 )
@@ -180,7 +216,6 @@ envoy_cc_test(
     external_deps = ["abseil_optional"],
     deps = [
         "//source/common/buffer:buffer_lib",
-        "//source/common/config:filter_json_lib",
         "//source/common/network:utility_lib",
         "//source/common/router:router_lib",
         "//source/common/upstream:upstream_includes",
