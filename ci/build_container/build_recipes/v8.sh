@@ -4,8 +4,8 @@ set -e
 
 # Get wasm-c-api.
 
-COMMIT=111a3e4a0962fae4da2428b8680f7dfbc8deef47  # Mon May 13 11:10:04 2019 +0200
-SHA256=4eb700586902d0f6ebdcbc0147f5674df95743cc831495191b7df4cb32fb3ef0
+COMMIT=dc8cc29340e0c374dd350e0de8ff4b22d429af1e  # Thu May 16 21:03:37 2019 +0200
+SHA256=dea56d64f58110aee585857bca279701d39bdcb2dc70bdb8eb02fe6a8571c714
 
 curl https://github.com/WebAssembly/wasm-c-api/archive/"$COMMIT".tar.gz -sLo wasm-c-api-"$COMMIT".tar.gz \
   && echo "$SHA256" wasm-c-api-"$COMMIT".tar.gz | sha256sum --check
@@ -75,23 +75,12 @@ cat <<\EOF | patch -p1
  C_COMP = clang
 EOF
 
-# 3. Enable "wasm_bulk_memory" required to load WASM modules with DataCount
-#    section, even when DataCount = 1.
-# 4. Force full GC when destroying VMs.
+# 3. Force full GC when destroying VMs.
 
 cat <<\EOF | patch -p1
 --- a/src/wasm-v8.cc
 +++ b/src/wasm-v8.cc
-@@ -296,7 +296,7 @@ auto Engine::make(own<Config*>&& config) -> own<Engine*> {
-   v8::internal::FLAG_experimental_wasm_bigint = true;
-   v8::internal::FLAG_experimental_wasm_mv = true;
-   // v8::internal::FLAG_experimental_wasm_anyref = true;
--  // v8::internal::FLAG_experimental_wasm_bulk_memory = true;
-+  v8::internal::FLAG_experimental_wasm_bulk_memory = true;
-   // v8::V8::SetFlagsFromCommandLine(&argc, const_cast<char**>(argv), false);
-   auto engine = new(std::nothrow) EngineImpl;
-   if (!engine) return own<Engine*>();
-@@ -349,7 +349,7 @@ public:
+@@ -352,7 +352,7 @@ public:
    }
 
    ~StoreImpl() {
