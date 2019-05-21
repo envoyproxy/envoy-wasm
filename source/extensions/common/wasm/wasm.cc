@@ -539,11 +539,7 @@ Word ___syscall146Handler(void*, Word, Word) { throw WasmException("emscripten s
 
 void ___setErrNoHandler(void*, Word) { throw WasmException("emscripten setErrNo"); }
 
-// NB: pthread_equal is required to return 0 by the protobuf libarary.
-Word _pthread_equalHandler(void*, Word,
-                           Word) { /* throw WasmException("emscripten pthread_equal"); */
-  return 0;
-}
+Word _pthread_equalHandler(void*, Word left, Word right) { return left == right; }
 // NB: pthread_mutex_destroy is required to return 0 by the protobuf libarary.
 Word _pthread_mutex_destroyHandler(void*, Word) { return 0; }
 Word _pthread_cond_waitHandler(void*, Word, Word) {
