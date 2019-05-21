@@ -37,6 +37,16 @@ wasm::Engine* engine() {
   return engine.get();
 }
 
+struct FuncData {
+  FuncData(std::string name) : name(name) {}
+
+  std::string name;
+  wasm::own<wasm::Func*> callback;
+  void* raw_func;
+};
+
+typedef std::unique_ptr<FuncData> FuncDataPtr;
+
 class V8 : public WasmVm {
 public:
   V8() = default;
@@ -148,7 +158,7 @@ private:
   wasm::own<wasm::Table*> table_;
 
   absl::flat_hash_map<std::string, wasm::own<wasm::Global*>> host_globals_;
-  absl::flat_hash_map<std::string, wasm::own<wasm::Func*>> host_functions_;
+  absl::flat_hash_map<std::string, FuncDataPtr> host_functions_;
   absl::flat_hash_map<std::string, wasm::own<wasm::Func*>> module_functions_;
   bool module_needs_emscripten_{};
 };
@@ -336,11 +346,11 @@ void V8::link(absl::string_view debug_name, bool needs_emscripten) {
       const wasm::Func* func = nullptr;
       auto it = host_functions_.find(absl::StrCat(module, ".", name));
       if (it != host_functions_.end()) {
-        func = it->second.get();
+        func = it->second.get()->callback.get();
       } else {
         it = host_functions_.find(absl::StrCat("envoy", ".", name));
         if (it != host_functions_.end()) {
-          func = it->second.get();
+          func = it->second.get()->callback.get();
         }
       }
       if (func) {
@@ -552,39 +562,49 @@ template <typename... Args>
 void V8::registerHostFunctionImpl(absl::string_view moduleName, absl::string_view functionName,
                                   void (*function)(void*, Args...)) {
   ENVOY_LOG(trace, "[wasm] registerHostFunction(\"{}.{}\")", moduleName, functionName);
+  auto data = std::make_unique<FuncData>(absl::StrCat(moduleName, ".", functionName));
   auto type = wasm::FuncType::make(convertArgsTupleToValTypes<std::tuple<Args...>>(),
                                    convertArgsTupleToValTypes<std::tuple<>>());
   auto func = wasm::Func::make(
       store_.get(), type.get(),
       [](void* data, const wasm::Val params[], wasm::Val[]) -> wasm::own<wasm::Trap*> {
+        auto func_data = reinterpret_cast<FuncData*>(data);
+        ENVOY_LOG(trace, "[wasm] callHostFunction(\"{}\")", func_data->name);
         auto args_tuple = convertValTypesToArgsTuple<std::tuple<Args...>>(params);
         auto args = std::tuple_cat(std::make_tuple(current_context_), args_tuple);
-        auto function = reinterpret_cast<void (*)(void*, Args...)>(data);
+        auto function = reinterpret_cast<void (*)(void*, Args...)>(func_data->raw_func);
         absl::apply(function, args);
         return nullptr;
       },
-      reinterpret_cast<void*>(function));
-  host_functions_.emplace(absl::StrCat(moduleName, ".", functionName), std::move(func));
+      data.get());
+  data.get()->callback = std::move(func);
+  data.get()->raw_func = reinterpret_cast<void*>(function);
+  host_functions_.emplace(absl::StrCat(moduleName, ".", functionName), std::move(data));
 }
 
 template <typename R, typename... Args>
 void V8::registerHostFunctionImpl(absl::string_view moduleName, absl::string_view functionName,
                                   R (*function)(void*, Args...)) {
   ENVOY_LOG(trace, "[wasm] registerHostFunction(\"{}.{}\")", moduleName, functionName);
+  auto data = std::make_unique<FuncData>(absl::StrCat(moduleName, ".", functionName));
   auto type = wasm::FuncType::make(convertArgsTupleToValTypes<std::tuple<Args...>>(),
                                    convertArgsTupleToValTypes<std::tuple<R>>());
   auto func = wasm::Func::make(
       store_.get(), type.get(),
       [](void* data, const wasm::Val params[], wasm::Val results[]) -> wasm::own<wasm::Trap*> {
+        auto func_data = reinterpret_cast<FuncData*>(data);
+        ENVOY_LOG(trace, "[wasm] callHostFunction(\"{}\")", func_data->name);
         auto args_tuple = convertValTypesToArgsTuple<std::tuple<Args...>>(params);
         auto args = std::tuple_cat(std::make_tuple(current_context_), args_tuple);
-        auto function = reinterpret_cast<R (*)(void*, Args...)>(data);
+        auto function = reinterpret_cast<R (*)(void*, Args...)>(func_data->raw_func);
         R rvalue = absl::apply(function, args);
         results[0] = makeVal(rvalue);
         return nullptr;
       },
-      reinterpret_cast<void*>(function));
-  host_functions_.emplace(absl::StrCat(moduleName, ".", functionName), std::move(func));
+      data.get());
+  data.get()->callback = std::move(func);
+  data.get()->raw_func = reinterpret_cast<void*>(function);
+  host_functions_.emplace(absl::StrCat(moduleName, ".", functionName), std::move(data));
 }
 
 template <typename... Args>
