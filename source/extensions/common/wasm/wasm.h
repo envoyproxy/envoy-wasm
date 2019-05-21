@@ -706,6 +706,8 @@ public:
   // Call the 'start' function and initialize globals.
   virtual void start(Context*) PURE;
 
+  // Get size of the currently allocated memory in the VM.
+  virtual uint64_t getMemorySize() PURE;
   // Convert a block of memory in the VM to a string_view.
   virtual absl::string_view getMemory(uint64_t pointer, uint64_t size) PURE;
   // Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).

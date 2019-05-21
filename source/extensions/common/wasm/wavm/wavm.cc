@@ -238,6 +238,7 @@ struct Wavm : public WasmVm {
   bool load(const std::string& code, bool allow_precompiled) override;
   void link(absl::string_view debug_name, bool needs_emscripten) override;
   void start(Context* context) override;
+  uint64_t getMemorySize() override;
   absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, void* data) override;
@@ -314,7 +315,6 @@ struct Wavm : public WasmVm {
   std::unordered_map<std::pair<std::string, std::string>, WavmGlobalBase*, PairHash>
       intrinsicGlobals_;
   uint8_t* memory_base_ = nullptr;
-  size_t memory_size_ = 0;
 };
 
 Wavm::~Wavm() {
@@ -339,8 +339,6 @@ std::unique_ptr<WasmVm> Wavm::clone() {
   wavm->compartment_ = WAVM::Runtime::cloneCompartment(compartment_);
   wavm->memory_ = WAVM::Runtime::remapToClonedCompartment(memory_, wavm->compartment_);
   memory_base_ = WAVM::Runtime::getMemoryBaseAddress(memory_);
-  memory_size_ = WAVM::Runtime::getMemoryMaxPages(memory_);
-  memory_size_ *= wasmPageSize;
   wavm->context_ = WAVM::Runtime::createContext(wavm->compartment_);
   for (auto& p : intrinsicModuleInstances_) {
     wavm->intrinsicModuleInstances_.emplace(
@@ -395,8 +393,6 @@ void Wavm::link(absl::string_view name, bool needs_emscripten) {
                                       std::string(name));
   memory_ = getDefaultMemory(moduleInstance_);
   memory_base_ = WAVM::Runtime::getMemoryBaseAddress(memory_);
-  memory_size_ = WAVM::Runtime::getMemoryMaxPages(memory_);
-  memory_size_ *= wasmPageSize;
   getInstantiatedGlobals();
 }
 
@@ -448,6 +444,8 @@ void Wavm::start(Context* context) {
   }
 }
 
+uint64_t Wavm::getMemorySize() { return WAVM::Runtime::getMemoryNumPages(memory_) * wasmPageSize; }
+
 absl::string_view Wavm::getMemory(uint64_t pointer, uint64_t size) {
   return {reinterpret_cast<char*>(
               WAVM::Runtime::memoryArrayPtr<U8>(memory_, pointer, static_cast<U64>(size))),
@@ -459,7 +457,7 @@ bool Wavm::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
   if (offset < 0) {
     return false;
   }
-  if (static_cast<size_t>(offset) > memory_size_) {
+  if (static_cast<size_t>(offset) > WAVM::Runtime::getMemoryNumPages(memory_) * wasmPageSize) {
     return false;
   }
   *vm_pointer = static_cast<uint64_t>(offset);
