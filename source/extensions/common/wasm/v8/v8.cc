@@ -56,6 +56,8 @@ public:
   std::unique_ptr<WasmVm> clone() override { return nullptr; }
 
   void start(Context* context) override;
+
+  uint64_t getMemorySize() override;
   absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, void* data) override;
@@ -494,6 +496,11 @@ void V8::callModuleFunction(Context* context, absl::string_view functionName,
         fmt::format("Function: {} failed: {}", functionName,
                     absl::string_view(trap->message().get(), trap->message().size())));
   }
+}
+
+uint64_t V8::getMemorySize() {
+  ENVOY_LOG(trace, "[wasm] getMemorySize()");
+  return memory_->data_size();
 }
 
 absl::string_view V8::getMemory(uint64_t pointer, uint64_t size) {

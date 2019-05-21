@@ -486,7 +486,10 @@ void grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word messa
   context->grpcSend(token, message, end_stream);
 }
 
-Word _emscripten_get_heap_sizeHandler(void*) { return std::numeric_limits<int32_t>::max(); }
+Word _emscripten_get_heap_sizeHandler(void* raw_context) {
+  auto context = WASM_CONTEXT(raw_context);
+  return context->wasmVm()->getMemorySize();
+}
 
 Word _emscripten_memcpy_bigHandler(void*, Word, Word, Word) {
   throw WasmException("emscripten emscripten_memcpy_big");
