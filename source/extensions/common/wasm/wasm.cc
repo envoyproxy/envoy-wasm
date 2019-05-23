@@ -535,7 +535,48 @@ Word ___syscall54Handler(void*, Word, Word) { throw WasmException("emscripten sy
 
 Word ___syscall140Handler(void*, Word, Word) { throw WasmException("emscripten syscall140"); }
 
-Word ___syscall146Handler(void*, Word, Word) { throw WasmException("emscripten syscall146"); }
+// Implementation of writev() syscall that redirects stdout/stderr to Envoy logs.
+// ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
+Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+
+  // Read syscall args.
+  auto memslice = context->wasmVm()->getMemory(syscall_args_ptr, 3 * sizeof(uint32_t));
+  const uint32_t* syscall_args = reinterpret_cast<const uint32_t*>(memslice.data());
+
+  spdlog::level::level_enum log_level;
+  switch (syscall_args[0] /* fd */) {
+  case 1 /* stdout */:
+    log_level = spdlog::level::info;
+    break;
+  case 2 /* stderr */:
+    log_level = spdlog::level::err;
+    break;
+  default:
+    throw WasmException("emscripten syscall146 (writev)");
+  }
+
+  std::string s;
+  for (size_t i = 0; i < syscall_args[2] /* iovcnt */; i++) {
+    memslice = context->wasmVm()->getMemory(syscall_args[1] /* iov */ + i * 2 * sizeof(uint32_t),
+                                            2 * sizeof(uint32_t));
+    const uint32_t* iovec = reinterpret_cast<const uint32_t*>(memslice.data());
+    if (iovec[1] /* size */) {
+      memslice = context->wasmVm()->getMemory(iovec[0] /* data */, iovec[1] /* size */);
+      s.append(memslice.data(), memslice.size());
+    }
+  }
+
+  size_t written = s.size();
+  if (written) {
+    // Remove trailing newline from the logs, if any.
+    if (s[written - 1] == '\n') {
+      s.erase(written - 1);
+    }
+    context->scriptLog(log_level, s);
+  }
+  return written;
+}
 
 void ___setErrNoHandler(void*, Word) { throw WasmException("emscripten setErrNo"); }
 
