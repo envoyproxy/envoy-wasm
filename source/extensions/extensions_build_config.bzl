@@ -23,6 +23,7 @@ EXTENSIONS = {
     # WASM
     #
     "envoy.wasm":                                      "//source/extensions/wasm:config",
+    "envoy.wasm.metadata_exchange":                    "//source/extensions/wasm/metadata_exchange:metadata_exchange_lib",
 
     #
     # Health checkers
