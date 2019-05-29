@@ -17,6 +17,9 @@ constexpr char NodeMetadataKey[] = "istio.io/metadata";
 // DownstreamMetadataKey is the key in the request metadata for downstream peer metadata
 constexpr char DownstreamMetadataKey[] = "envoy.wasm.metadata_exchange.downstream";
 
+// UpstreamMetadataKey is the key in the request metadata for downstream peer metadata
+constexpr char UpstreamMetadataKey[] = "envoy.wasm.metadata_exchange.upstream";
+
 using Common::Wasm::Null::Plugin::Context;
 
 // TODO(kuat) Using h2 METADATA frames:
@@ -31,6 +34,7 @@ public:
 
   void onCreate() override;
   Http::FilterHeadersStatus onRequestHeaders() override;
+  Http::FilterHeadersStatus onResponseHeaders() override;
 
 private:
   // pre-populated serialized values for passing to peers

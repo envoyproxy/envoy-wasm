@@ -1015,8 +1015,7 @@ void Context::setMetadataStruct(MetadataType type, absl::string_view name,
     return;
   }
   ProtobufWkt::Struct proto_struct;
-  if (proto_struct.ParseFromArray(serialized_proto_struct.data(), serialized_proto_struct.size())) {
-    ENVOY_LOG(info, "calling metadata struct on {} failed to parse struct", std::string(name));
+  if (!proto_struct.ParseFromArray(serialized_proto_struct.data(), serialized_proto_struct.size())) {
     return;
   }
   streamInfo->setDynamicMetadata(std::string(name), proto_struct);

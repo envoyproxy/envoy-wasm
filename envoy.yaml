@@ -43,7 +43,7 @@ static_resources:
           - name: envoy.file_access_log
             config:
               path: "/dev/stdout"
-              format: "client %RESPONSE_CODE% \n"
+              format: "client %RESPONSE_CODE% downstream:%DYNAMIC_METADATA(envoy.wasm.metadata_exchange.downstream:labels)% upstream:%DYNAMIC_METADATA(envoy.wasm.metadata_exchange.upstream:labels)%\n"
   - name: server
     address:
       socket_address:
@@ -80,7 +80,7 @@ static_resources:
           - name: envoy.file_access_log
             config:
               path: "/dev/stdout"
-              format: "server %RESPONSE_CODE% downstream:%DYNAMIC_METADATA(envoy.wasm.metadata_exchange.downstream)%\n"
+              format: "server %RESPONSE_CODE% downstream:%DYNAMIC_METADATA(envoy.wasm.metadata_exchange.downstream:labels)% upstream:%DYNAMIC_METADATA(envoy.wasm.metadata_exchange.upstream:labels)%\n"
   - name: staticreply
     address:
       socket_address:
