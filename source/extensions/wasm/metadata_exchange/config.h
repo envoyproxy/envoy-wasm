@@ -11,6 +11,9 @@ namespace MetadataExchange {
 constexpr char ExchangeIDHeader[] = "x-envoy-peer-id";
 constexpr char ExchangeMetadataHeader[] = "x-envoy-peer-metadata";
 
+// Metadata key is the key in the node metadata struct that is passed between peers.
+constexpr char MetadataKey[] = "istio.io/metadata";
+
 using Common::Wasm::Null::Plugin::Context;
 using Common::Wasm::Null::Plugin::WasmData;
 
@@ -22,7 +25,10 @@ using Common::Wasm::Null::Plugin::WasmData;
 
 class PluginContext : public Context {
 public:
-  explicit PluginContext(uint32_t id) : Context(id) {}
+  explicit PluginContext(uint32_t id) : Context(id) {
+    Common::Wasm::Null::Plugin::logInfo("context " + std::to_string(id));
+  }
+
   void onConfigure(std::unique_ptr<WasmData> /* configuration */) override;
   Http::FilterHeadersStatus onRequestHeaders() override;
 
