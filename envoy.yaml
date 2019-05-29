@@ -39,6 +39,11 @@ static_resources:
               configuration: "test"
           - name: envoy.router
             config: {}
+          access_log:
+          - name: envoy.file_access_log
+            config:
+              path: "/dev/stdout"
+              format: "client %RESPONSE_CODE% \n"
   - name: server
     address:
       socket_address:
@@ -71,6 +76,11 @@ static_resources:
               configuration: "test"
           - name: envoy.router
             config: {}
+          access_log:
+          - name: envoy.file_access_log
+            config:
+              path: "/dev/stdout"
+              format: "server %RESPONSE_CODE% downstream:%DYNAMIC_METADATA(envoy.wasm.metadata_exchange.downstream)%\n"
   - name: staticreply
     address:
       socket_address:
@@ -98,11 +108,6 @@ static_resources:
           http_filters:
           - name: envoy.router
             config: {}
-          access_log:
-          - name: envoy.file_access_log
-            config:
-              path: "/dev/stdout"
-              format: "%RESPONSE_CODE% peer-id: %REQ(x-envoy-peer-id)% metadata-id: %REQ(x-envoy-peer-metadata)%\n"
   clusters:
   - name: web_service
     connect_timeout: 0.25s
