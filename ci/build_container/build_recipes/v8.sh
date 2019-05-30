@@ -72,23 +72,7 @@ cat <<\EOF | patch -p1
 
 EOF
 
-# 2. Force full GC when destroying VMs.
-
-cat <<\EOF | patch -p1
---- a/src/wasm-v8.cc
-+++ b/src/wasm-v8.cc
-@@ -352,7 +352,7 @@ public:
-   }
-
-   ~StoreImpl() {
--#ifdef DEBUG
-+#if 1 //def DEBUG
-     isolate_->RequestGarbageCollectionForTesting(
-       v8::Isolate::kFullGarbageCollection);
- #endif
-EOF
-
-# 3. Don't leak implementation into headers.
+# 2. Don't leak implementation into headers.
 
 cat <<\EOF | patch -p1
 --- a/include/wasm.hh
