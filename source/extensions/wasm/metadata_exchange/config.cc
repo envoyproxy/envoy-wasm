@@ -62,7 +62,7 @@ Http::FilterHeadersStatus PluginContext::onResponseHeaders() {
                             upstream_metadata_bytes.data(), upstream_metadata_bytes.size());
   }
 
-  // insert peer metadata struct for upstream
+  // insert peer metadata struct for downstream
   if (metadata_value_.size() > 0) {
     replaceResponseHeader(ExchangeMetadataHeader, metadata_value_);
   }
