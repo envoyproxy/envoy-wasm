@@ -983,7 +983,42 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
   case MetadataType::ResponseRoute:
     return getRouteMetadataStructProto(encoder_callbacks_);
   case MetadataType::Node:
+    if (name == "_") {
+      temporary_metadata_.Clear();
+      (*temporary_metadata_.mutable_fields())["id"].set_string_value(
+          wasm_->local_info_.node().id());
+      (*temporary_metadata_.mutable_fields())["cluster"].set_string_value(
+          wasm_->local_info_.node().cluster());
+      (*temporary_metadata_.mutable_fields())["locality.region"].set_string_value(
+          wasm_->local_info_.node().locality().region());
+      (*temporary_metadata_.mutable_fields())["locality.zone"].set_string_value(
+          wasm_->local_info_.node().locality().zone());
+      (*temporary_metadata_.mutable_fields())["locality.sub_zone"].set_string_value(
+          wasm_->local_info_.node().locality().sub_zone());
+      (*temporary_metadata_.mutable_fields())["build_version"].set_string_value(
+          wasm_->local_info_.node().build_version());
+      return &temporary_metadata_;
+    }
     return &wasm_->local_info_.node().metadata();
+  case MetadataType::Listener:
+    if (wasm_->listener_metadata_) {
+      return getStructProtoFromMetadata(*wasm_->listener_metadata_, name);
+    }
+    return nullptr;
+  case MetadataType::Cluster:
+    if (name == "_") {
+      temporary_metadata_.Clear();
+      (*temporary_metadata_.mutable_fields())["local_cluster_name"].set_string_value(
+          clusterManager().localClusterName());
+      return &temporary_metadata_;
+    }
+    {
+      auto cluster = clusterManager().get(clusterManager().localClusterName());
+      if (cluster) {
+        return getStructProtoFromMetadata(cluster->info()->metadata(), name);
+      }
+    }
+    return nullptr;
   default: {
     auto streamInfo = getConstStreamInfo(type);
     if (!streamInfo) {
@@ -1315,10 +1350,11 @@ uint64_t Context::getMetric(uint32_t metric_id) {
 Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
            Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+           const envoy::api::v2::core::Metadata* listener_metadata,
            Stats::ScopeSharedPtr owned_scope)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
-      local_info_(local_info), owned_scope_(owned_scope), time_source_(dispatcher.timeSource()),
-      initial_configuration_(initial_configuration) {
+      local_info_(local_info), listener_metadata_(listener_metadata), owned_scope_(owned_scope),
+      time_source_(dispatcher.timeSource()), initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
 }
@@ -1463,7 +1499,8 @@ void Wasm::getFunctions() {
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), scope_(wasm.scope_), local_info_(wasm.local_info_),
-      owned_scope_(wasm.owned_scope_), time_source_(dispatcher.timeSource()) {
+      listener_metadata_(wasm.listener_metadata_), owned_scope_(wasm.owned_scope_),
+      time_source_(dispatcher.timeSource()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   general_context_ = createContext();
   getFunctions();
@@ -1797,9 +1834,11 @@ std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
                                  const LocalInfo::LocalInfo& local_info,
+                                 const envoy::api::v2::core::Metadata* listener_metadata,
                                  Stats::ScopeSharedPtr scope_ptr) {
-  auto wasm = std::make_shared<Wasm>(vm_config.vm(), id, vm_config.initial_configuration(),
-                                     cluster_manager, dispatcher, scope, local_info, scope_ptr);
+  auto wasm =
+      std::make_shared<Wasm>(vm_config.vm(), id, vm_config.initial_configuration(), cluster_manager,
+                             dispatcher, scope, local_info, listener_metadata, scope_ptr);
   const auto& code = Config::DataSource::read(vm_config.code(), true, api);
   const auto& path = Config::DataSource::getPath(vm_config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
@@ -1821,7 +1860,8 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
   } else {
     wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->vm(), base_wasm.id(),
                                   base_wasm.initial_configuration(), base_wasm.clusterManager(),
-                                  dispatcher, base_wasm.scope(), base_wasm.localInfo());
+                                  dispatcher, base_wasm.scope(), base_wasm.localInfo(),
+                                  base_wasm.listenerMetadata(), nullptr /* owned scope */);
     if (!wasm->initialize(base_wasm.code(), base_wasm.id(), base_wasm.allow_precompiled())) {
       throw WasmException("Failed to initialize WASM code");
     }

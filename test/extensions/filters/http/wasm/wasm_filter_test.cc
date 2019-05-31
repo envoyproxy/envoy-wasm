@@ -66,7 +66,7 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasm(proto_config.id(), proto_config.vm_config(),
                                                  cluster_manager_, dispatcher_, *api, *scope_,
-                                                 local_info_);
+                                                 local_info_, &listener_metadata_, nullptr);
   }
 
   void setupNullConfig(const std::string& name) {
@@ -77,7 +77,7 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasm(proto_config.id(), proto_config.vm_config(),
                                                  cluster_manager_, dispatcher_, *api, *scope_,
-                                                 local_info_);
+                                                 local_info_, &listener_metadata_, nullptr);
   }
 
   void setupFilter() {
@@ -92,7 +92,7 @@ public:
   Stats::ScopeSharedPtr scope_;
   NiceMock<ThreadLocal::MockInstance> tls_;
   NiceMock<Event::MockDispatcher> dispatcher_;
-  Upstream::MockClusterManager cluster_manager_;
+  NiceMock<Upstream::MockClusterManager> cluster_manager_;
   std::shared_ptr<Wasm> wasm_;
   std::shared_ptr<TestFilter> filter_;
   NiceMock<Envoy::Ssl::MockConnectionInfo> ssl_;
@@ -101,6 +101,7 @@ public:
   NiceMock<Http::MockStreamEncoderFilterCallbacks> encoder_callbacks_;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> request_stream_info_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
+  envoy::api::v2::core::Metadata listener_metadata_;
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest, testing::Values("wavm", "v8"));
