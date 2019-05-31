@@ -53,42 +53,71 @@ cd ../..
 
 # Patch wasm-c-api.
 
-# 1. Disable DEBUG (alloc/free accounting), since it seems to be broken
-#    in optimized builds and/or when using sanitizers.
-# 2. Disable hardcoded sanitizers.
+# 1. Disable hardcoded sanitizers.
 
 cat <<\EOF | patch -p1
 --- a/Makefile
 +++ b/Makefile
-@@ -7,10 +7,10 @@ V8_VERSION = branch-heads/7.4
- V8_ARCH = x64
+@@ -8,9 +8,9 @@ V8_ARCH = x64
  V8_MODE = release
 
--WASM_FLAGS = -DDEBUG  # -DDEBUG_LOG
+ WASM_FLAGS = -DDEBUG  # -DDEBUG_LOG
 -C_FLAGS = ${WASM_FLAGS} -Wall -Werror -ggdb -O -fsanitize=address
-+WASM_FLAGS =
 +C_FLAGS = ${WASM_FLAGS} -Wall -Werror -ggdb -O
  CC_FLAGS = ${C_FLAGS}
 -LD_FLAGS = -fsanitize-memory-track-origins -fsanitize-memory-use-after-dtor
 +LD_FLAGS =
 
  C_COMP = clang
+
 EOF
 
-# 3. Force full GC when destroying VMs.
+# 2. Don't leak implementation into headers.
 
 cat <<\EOF | patch -p1
+--- a/include/wasm.hh
++++ b/include/wasm.hh
+@@ -111,13 +111,8 @@ class vec {
+   size_t size_;
+   std::unique_ptr<T[]> data_;
+
+-#ifdef DEBUG
+   void make_data();
+   void free_data();
+-#else
+-  void make_data() {}
+-  void free_data() {}
+-#endif
+
+   vec(size_t size) : vec(size, size ? new(std::nothrow) T[size] : nullptr) {
+     make_data();
 --- a/src/wasm-v8.cc
 +++ b/src/wasm-v8.cc
-@@ -352,7 +352,7 @@ public:
+@@ -210,6 +210,14 @@ Stats stats;
+     if (data_) stats.free(Stats::STAT, data_.get(), Stats::VEC); \
    }
 
-   ~StoreImpl() {
--#ifdef DEBUG
-+#if 1 //def DEBUG
-     isolate_->RequestGarbageCollectionForTesting(
-       v8::Isolate::kFullGarbageCollection);
- #endif
++#else
++
++#define DEFINE_VEC(type, STAT) \
++  template<> void vec<type>::make_data() {} \
++  template<> void vec<type>::free_data() {}
++
++#endif  // #ifdef DEBUG
++
+ DEFINE_VEC(byte_t, BYTE)
+ DEFINE_VEC(Frame*, FRAME)
+ DEFINE_VEC(ValType*, VALTYPE)
+@@ -231,8 +239,6 @@ DEFINE_VEC(Memory*, MEMORY)
+ DEFINE_VEC(Extern*, EXTERN)
+ DEFINE_VEC(Val, VAL)
+
+-#endif  // #ifdef DEBUG
+-
+
+ ///////////////////////////////////////////////////////////////////////////////
+ // Runtime Environment
+
 EOF
 
 # Build wasm-c-api.
