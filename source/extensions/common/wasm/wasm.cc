@@ -1427,6 +1427,8 @@ void Wasm::registerCallbacks() {
 
 void Wasm::establishEnvironment() {
   if (is_emscripten_) {
+    wasm_vm_->setMemoryLayout(emscripten_dynamic_base_, emscripten_dynamictop_ptr_);
+
     global_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
     global_dynamictop_ =
         wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(emscripten_dynamictop_ptr_));

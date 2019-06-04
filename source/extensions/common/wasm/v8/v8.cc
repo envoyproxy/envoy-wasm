@@ -57,6 +57,7 @@ public:
   bool load(const std::string& code, bool allow_precompiled) override;
   absl::string_view getUserSection(absl::string_view name) override;
   void link(absl::string_view debug_name, bool needs_emscripten) override;
+  void setMemoryLayout(uint64_t heap_base, uint64_t heap_base_pointer) override;
 
   // We don't care about this.
   void makeModule(absl::string_view) override {}
@@ -160,6 +161,10 @@ private:
   absl::flat_hash_map<std::string, wasm::own<wasm::Global*>> host_globals_;
   absl::flat_hash_map<std::string, FuncDataPtr> host_functions_;
   absl::flat_hash_map<std::string, wasm::own<wasm::Func*>> module_functions_;
+
+  uint32_t memory_heap_base_;
+  uint32_t memory_heap_base_pointer_;
+
   bool module_needs_emscripten_{};
 };
 
@@ -468,13 +473,18 @@ void V8::link(absl::string_view debug_name, bool needs_emscripten) {
   }
 }
 
+void V8::setMemoryLayout(uint64_t heap_base, uint64_t heap_base_pointer) {
+  memory_heap_base_ = heap_base;
+  memory_heap_base_pointer_ = heap_base_pointer;
+}
+
 void V8::start(Context* context) {
   ENVOY_LOG(trace, "[wasm] start()");
 
   if (module_needs_emscripten_) {
-    const wasm::Val args[] = {wasm::Val::make(static_cast<uint32_t>(64 * 64 * 1024 /* 4MB */)),
-                              wasm::Val::make(static_cast<uint32_t>(128 * 64 * 1024 /* 8MB */))};
-    callModuleFunction(context, "establishStackSpace", args, nullptr);
+    // Set initial heap base value at DYNAMICTOP_PTR.
+    setMemory(memory_heap_base_pointer_, sizeof(uint32_t), &memory_heap_base_);
+
     callModuleFunction(context, "globalCtors", nullptr, nullptr);
 
     for (const auto& kv : module_functions_) {

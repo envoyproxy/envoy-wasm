@@ -708,6 +708,9 @@ public:
   // Link to registered function.
   virtual void link(absl::string_view debug_name, bool needs_emscripten) PURE;
 
+  // Set memory layout (start of dynamic heap base, etc.) in the VM.
+  virtual void setMemoryLayout(uint64_t heap_base, uint64_t heap_base_pointer) PURE;
+
   // Call the 'start' function and initialize globals.
   virtual void start(Context*) PURE;
 
