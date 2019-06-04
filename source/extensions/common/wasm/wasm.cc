@@ -499,11 +499,11 @@ Word _emscripten_resize_heapHandler(void*, Word) {
   throw WasmException("emscripten emscripten_resize_heap");
 }
 
-Word abortOnCannotGrowMemoryabi0_0Handler(void*) {
+Word abortOnCannotGrowMemoryAbi00Handler(void*) {
   throw WasmException("emscripten abortOnCannotGrowMemory");
 }
 
-Word abortOnCannotGrowMemoryabi0_2Handler(void*, Word) {
+Word abortOnCannotGrowMemoryAbi02Handler(void*, Word) {
   throw WasmException("emscripten abortOnCannotGrowMemory");
 }
 
@@ -1339,9 +1339,9 @@ void Wasm::registerCallbacks() {
   if (is_emscripten_) {
     if (emscripten_abi_major_version_ > 0 || emscripten_abi_minor_version_ > 1) {
       // abi 0.2 - abortOnCannotGrowMemory() changed singature to (param i32) (result i32).
-      _REGISTER_ABI(abortOnCannotGrowMemory, abi0_2);
+      _REGISTER_ABI(abortOnCannotGrowMemory, Abi02);
     } else {
-      _REGISTER_ABI(abortOnCannotGrowMemory, abi0_0);
+      _REGISTER_ABI(abortOnCannotGrowMemory, Abi00);
     }
 
     _REGISTER(_emscripten_memcpy_big);
