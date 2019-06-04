@@ -296,11 +296,11 @@ public:
   // Async Response Downcalls on any Context.
   virtual void onHttpCallResponse(uint32_t token, const Pairs& response_headers,
                                   absl::string_view response_body, const Pairs& response_trailers);
-  // General stream downcall when the stream has ended.
+  // General stream downcall when no futher stream calls will occur.
   virtual void onDone();
   // General stream downcall for logging. Occurs after onDone().
   virtual void onLog();
-  // General stream downcall when no futher stream calls will occur.
+  // General stream downcall when the stream has ended.
   virtual void onDelete();
 
   //

@@ -1558,14 +1558,14 @@ void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap*
   access_log_response_headers_ = nullptr;
   access_log_stream_info_ = nullptr;
 
-  onDelete();
+  onDone();
 }
 
 void Context::onDestroy() {
   if (destroyed_)
     return;
   destroyed_ = true;
-  onDone();
+  onDelete();
 }
 
 void Context::onDone() {
