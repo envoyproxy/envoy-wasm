@@ -30,6 +30,9 @@
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
 #include <google/protobuf/unknown_field_set.h>
+#include <google/protobuf/any.pb.h>
+#include <google/protobuf/duration.pb.h>
+#include <google/protobuf/empty.pb.h>
 #include <google/protobuf/struct.pb.h>
 // @@protoc_insertion_point(includes)
 #define PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto 
@@ -39,18 +42,66 @@ namespace protobuf_proxy_5fwasm_5fintrinsics_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[1];
+  static const ::google::protobuf::internal::ParseTable schema[13];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
 };
 void AddDescriptors();
 }  // namespace protobuf_proxy_5fwasm_5fintrinsics_2eproto
+class DataSource;
+class DataSourceDefaultTypeInternal;
+extern DataSourceDefaultTypeInternal _DataSource_default_instance_;
+class GrpcService;
+class GrpcServiceDefaultTypeInternal;
+extern GrpcServiceDefaultTypeInternal _GrpcService_default_instance_;
+class GrpcService_EnvoyGrpc;
+class GrpcService_EnvoyGrpcDefaultTypeInternal;
+extern GrpcService_EnvoyGrpcDefaultTypeInternal _GrpcService_EnvoyGrpc_default_instance_;
+class GrpcService_GoogleGrpc;
+class GrpcService_GoogleGrpcDefaultTypeInternal;
+extern GrpcService_GoogleGrpcDefaultTypeInternal _GrpcService_GoogleGrpc_default_instance_;
+class GrpcService_GoogleGrpc_CallCredentials;
+class GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal;
+extern GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal _GrpcService_GoogleGrpc_CallCredentials_default_instance_;
+class GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials;
+class GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentialsDefaultTypeInternal;
+extern GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentialsDefaultTypeInternal _GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials_default_instance_;
+class GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin;
+class GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPluginDefaultTypeInternal;
+extern GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPluginDefaultTypeInternal _GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_default_instance_;
+class GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials;
+class GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentialsDefaultTypeInternal;
+extern GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentialsDefaultTypeInternal _GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_default_instance_;
+class GrpcService_GoogleGrpc_ChannelCredentials;
+class GrpcService_GoogleGrpc_ChannelCredentialsDefaultTypeInternal;
+extern GrpcService_GoogleGrpc_ChannelCredentialsDefaultTypeInternal _GrpcService_GoogleGrpc_ChannelCredentials_default_instance_;
+class GrpcService_GoogleGrpc_GoogleLocalCredentials;
+class GrpcService_GoogleGrpc_GoogleLocalCredentialsDefaultTypeInternal;
+extern GrpcService_GoogleGrpc_GoogleLocalCredentialsDefaultTypeInternal _GrpcService_GoogleGrpc_GoogleLocalCredentials_default_instance_;
+class GrpcService_GoogleGrpc_SslCredentials;
+class GrpcService_GoogleGrpc_SslCredentialsDefaultTypeInternal;
+extern GrpcService_GoogleGrpc_SslCredentialsDefaultTypeInternal _GrpcService_GoogleGrpc_SslCredentials_default_instance_;
+class GrpcService_HeaderValue;
+class GrpcService_HeaderValueDefaultTypeInternal;
+extern GrpcService_HeaderValueDefaultTypeInternal _GrpcService_HeaderValue_default_instance_;
 class WKT;
 class WKTDefaultTypeInternal;
 extern WKTDefaultTypeInternal _WKT_default_instance_;
 namespace google {
 namespace protobuf {
+template<> ::DataSource* Arena::CreateMaybeMessage<::DataSource>(Arena*);
+template<> ::GrpcService* Arena::CreateMaybeMessage<::GrpcService>(Arena*);
+template<> ::GrpcService_EnvoyGrpc* Arena::CreateMaybeMessage<::GrpcService_EnvoyGrpc>(Arena*);
+template<> ::GrpcService_GoogleGrpc* Arena::CreateMaybeMessage<::GrpcService_GoogleGrpc>(Arena*);
+template<> ::GrpcService_GoogleGrpc_CallCredentials* Arena::CreateMaybeMessage<::GrpcService_GoogleGrpc_CallCredentials>(Arena*);
+template<> ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* Arena::CreateMaybeMessage<::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials>(Arena*);
+template<> ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* Arena::CreateMaybeMessage<::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin>(Arena*);
+template<> ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* Arena::CreateMaybeMessage<::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials>(Arena*);
+template<> ::GrpcService_GoogleGrpc_ChannelCredentials* Arena::CreateMaybeMessage<::GrpcService_GoogleGrpc_ChannelCredentials>(Arena*);
+template<> ::GrpcService_GoogleGrpc_GoogleLocalCredentials* Arena::CreateMaybeMessage<::GrpcService_GoogleGrpc_GoogleLocalCredentials>(Arena*);
+template<> ::GrpcService_GoogleGrpc_SslCredentials* Arena::CreateMaybeMessage<::GrpcService_GoogleGrpc_SslCredentials>(Arena*);
+template<> ::GrpcService_HeaderValue* Arena::CreateMaybeMessage<::GrpcService_HeaderValue>(Arena*);
 template<> ::WKT* Arena::CreateMaybeMessage<::WKT>(Arena*);
 }  // namespace protobuf
 }  // namespace google
@@ -164,6 +215,1767 @@ class WKT : public ::google::protobuf::Message /* @@protoc_insertion_point(class
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
 };
+// -------------------------------------------------------------------
+
+class DataSource : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:DataSource) */ {
+ public:
+  DataSource();
+  virtual ~DataSource();
+
+  DataSource(const DataSource& from);
+
+  inline DataSource& operator=(const DataSource& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  DataSource(DataSource&& from) noexcept
+    : DataSource() {
+    *this = ::std::move(from);
+  }
+
+  inline DataSource& operator=(DataSource&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DataSource& default_instance();
+
+  enum SpecifierCase {
+    kFilename = 1,
+    kInlineBytes = 2,
+    kInlineString = 3,
+    SPECIFIER_NOT_SET = 0,
+  };
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const DataSource* internal_default_instance() {
+    return reinterpret_cast<const DataSource*>(
+               &_DataSource_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    1;
+
+  void Swap(DataSource* other);
+  friend void swap(DataSource& a, DataSource& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DataSource* New() const final {
+    return CreateMaybeMessage<DataSource>(NULL);
+  }
+
+  DataSource* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<DataSource>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const DataSource& from);
+  void MergeFrom(const DataSource& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(DataSource* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string filename = 1;
+  private:
+  bool has_filename() const;
+  public:
+  void clear_filename();
+  static const int kFilenameFieldNumber = 1;
+  const ::std::string& filename() const;
+  void set_filename(const ::std::string& value);
+  #if LANG_CXX11
+  void set_filename(::std::string&& value);
+  #endif
+  void set_filename(const char* value);
+  void set_filename(const char* value, size_t size);
+  ::std::string* mutable_filename();
+  ::std::string* release_filename();
+  void set_allocated_filename(::std::string* filename);
+
+  // bytes inline_bytes = 2;
+  private:
+  bool has_inline_bytes() const;
+  public:
+  void clear_inline_bytes();
+  static const int kInlineBytesFieldNumber = 2;
+  const ::std::string& inline_bytes() const;
+  void set_inline_bytes(const ::std::string& value);
+  #if LANG_CXX11
+  void set_inline_bytes(::std::string&& value);
+  #endif
+  void set_inline_bytes(const char* value);
+  void set_inline_bytes(const void* value, size_t size);
+  ::std::string* mutable_inline_bytes();
+  ::std::string* release_inline_bytes();
+  void set_allocated_inline_bytes(::std::string* inline_bytes);
+
+  // string inline_string = 3;
+  private:
+  bool has_inline_string() const;
+  public:
+  void clear_inline_string();
+  static const int kInlineStringFieldNumber = 3;
+  const ::std::string& inline_string() const;
+  void set_inline_string(const ::std::string& value);
+  #if LANG_CXX11
+  void set_inline_string(::std::string&& value);
+  #endif
+  void set_inline_string(const char* value);
+  void set_inline_string(const char* value, size_t size);
+  ::std::string* mutable_inline_string();
+  ::std::string* release_inline_string();
+  void set_allocated_inline_string(::std::string* inline_string);
+
+  void clear_specifier();
+  SpecifierCase specifier_case() const;
+  // @@protoc_insertion_point(class_scope:DataSource)
+ private:
+  void set_has_filename();
+  void set_has_inline_bytes();
+  void set_has_inline_string();
+
+  inline bool has_specifier() const;
+  inline void clear_has_specifier();
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  union SpecifierUnion {
+    SpecifierUnion() {}
+    ::google::protobuf::internal::ArenaStringPtr filename_;
+    ::google::protobuf::internal::ArenaStringPtr inline_bytes_;
+    ::google::protobuf::internal::ArenaStringPtr inline_string_;
+  } specifier_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  ::google::protobuf::uint32 _oneof_case_[1];
+
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_EnvoyGrpc : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.EnvoyGrpc) */ {
+ public:
+  GrpcService_EnvoyGrpc();
+  virtual ~GrpcService_EnvoyGrpc();
+
+  GrpcService_EnvoyGrpc(const GrpcService_EnvoyGrpc& from);
+
+  inline GrpcService_EnvoyGrpc& operator=(const GrpcService_EnvoyGrpc& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_EnvoyGrpc(GrpcService_EnvoyGrpc&& from) noexcept
+    : GrpcService_EnvoyGrpc() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_EnvoyGrpc& operator=(GrpcService_EnvoyGrpc&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_EnvoyGrpc& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_EnvoyGrpc* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_EnvoyGrpc*>(
+               &_GrpcService_EnvoyGrpc_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  void Swap(GrpcService_EnvoyGrpc* other);
+  friend void swap(GrpcService_EnvoyGrpc& a, GrpcService_EnvoyGrpc& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_EnvoyGrpc* New() const final {
+    return CreateMaybeMessage<GrpcService_EnvoyGrpc>(NULL);
+  }
+
+  GrpcService_EnvoyGrpc* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_EnvoyGrpc>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_EnvoyGrpc& from);
+  void MergeFrom(const GrpcService_EnvoyGrpc& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_EnvoyGrpc* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string cluster_name = 1;
+  void clear_cluster_name();
+  static const int kClusterNameFieldNumber = 1;
+  const ::std::string& cluster_name() const;
+  void set_cluster_name(const ::std::string& value);
+  #if LANG_CXX11
+  void set_cluster_name(::std::string&& value);
+  #endif
+  void set_cluster_name(const char* value);
+  void set_cluster_name(const char* value, size_t size);
+  ::std::string* mutable_cluster_name();
+  ::std::string* release_cluster_name();
+  void set_allocated_cluster_name(::std::string* cluster_name);
+
+  // @@protoc_insertion_point(class_scope:GrpcService.EnvoyGrpc)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr cluster_name_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_GoogleGrpc_SslCredentials : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.GoogleGrpc.SslCredentials) */ {
+ public:
+  GrpcService_GoogleGrpc_SslCredentials();
+  virtual ~GrpcService_GoogleGrpc_SslCredentials();
+
+  GrpcService_GoogleGrpc_SslCredentials(const GrpcService_GoogleGrpc_SslCredentials& from);
+
+  inline GrpcService_GoogleGrpc_SslCredentials& operator=(const GrpcService_GoogleGrpc_SslCredentials& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_GoogleGrpc_SslCredentials(GrpcService_GoogleGrpc_SslCredentials&& from) noexcept
+    : GrpcService_GoogleGrpc_SslCredentials() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_GoogleGrpc_SslCredentials& operator=(GrpcService_GoogleGrpc_SslCredentials&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_GoogleGrpc_SslCredentials& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_GoogleGrpc_SslCredentials* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_GoogleGrpc_SslCredentials*>(
+               &_GrpcService_GoogleGrpc_SslCredentials_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    3;
+
+  void Swap(GrpcService_GoogleGrpc_SslCredentials* other);
+  friend void swap(GrpcService_GoogleGrpc_SslCredentials& a, GrpcService_GoogleGrpc_SslCredentials& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_GoogleGrpc_SslCredentials* New() const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_SslCredentials>(NULL);
+  }
+
+  GrpcService_GoogleGrpc_SslCredentials* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_SslCredentials>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_GoogleGrpc_SslCredentials& from);
+  void MergeFrom(const GrpcService_GoogleGrpc_SslCredentials& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_GoogleGrpc_SslCredentials* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .DataSource root_certs = 1;
+  bool has_root_certs() const;
+  void clear_root_certs();
+  static const int kRootCertsFieldNumber = 1;
+  private:
+  const ::DataSource& _internal_root_certs() const;
+  public:
+  const ::DataSource& root_certs() const;
+  ::DataSource* release_root_certs();
+  ::DataSource* mutable_root_certs();
+  void set_allocated_root_certs(::DataSource* root_certs);
+
+  // .DataSource private_key = 2;
+  bool has_private_key() const;
+  void clear_private_key();
+  static const int kPrivateKeyFieldNumber = 2;
+  private:
+  const ::DataSource& _internal_private_key() const;
+  public:
+  const ::DataSource& private_key() const;
+  ::DataSource* release_private_key();
+  ::DataSource* mutable_private_key();
+  void set_allocated_private_key(::DataSource* private_key);
+
+  // .DataSource cert_chain = 3;
+  bool has_cert_chain() const;
+  void clear_cert_chain();
+  static const int kCertChainFieldNumber = 3;
+  private:
+  const ::DataSource& _internal_cert_chain() const;
+  public:
+  const ::DataSource& cert_chain() const;
+  ::DataSource* release_cert_chain();
+  ::DataSource* mutable_cert_chain();
+  void set_allocated_cert_chain(::DataSource* cert_chain);
+
+  // @@protoc_insertion_point(class_scope:GrpcService.GoogleGrpc.SslCredentials)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::DataSource* root_certs_;
+  ::DataSource* private_key_;
+  ::DataSource* cert_chain_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_GoogleGrpc_GoogleLocalCredentials : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.GoogleGrpc.GoogleLocalCredentials) */ {
+ public:
+  GrpcService_GoogleGrpc_GoogleLocalCredentials();
+  virtual ~GrpcService_GoogleGrpc_GoogleLocalCredentials();
+
+  GrpcService_GoogleGrpc_GoogleLocalCredentials(const GrpcService_GoogleGrpc_GoogleLocalCredentials& from);
+
+  inline GrpcService_GoogleGrpc_GoogleLocalCredentials& operator=(const GrpcService_GoogleGrpc_GoogleLocalCredentials& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_GoogleGrpc_GoogleLocalCredentials(GrpcService_GoogleGrpc_GoogleLocalCredentials&& from) noexcept
+    : GrpcService_GoogleGrpc_GoogleLocalCredentials() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_GoogleGrpc_GoogleLocalCredentials& operator=(GrpcService_GoogleGrpc_GoogleLocalCredentials&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_GoogleGrpc_GoogleLocalCredentials& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_GoogleGrpc_GoogleLocalCredentials* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_GoogleGrpc_GoogleLocalCredentials*>(
+               &_GrpcService_GoogleGrpc_GoogleLocalCredentials_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    4;
+
+  void Swap(GrpcService_GoogleGrpc_GoogleLocalCredentials* other);
+  friend void swap(GrpcService_GoogleGrpc_GoogleLocalCredentials& a, GrpcService_GoogleGrpc_GoogleLocalCredentials& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_GoogleGrpc_GoogleLocalCredentials* New() const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_GoogleLocalCredentials>(NULL);
+  }
+
+  GrpcService_GoogleGrpc_GoogleLocalCredentials* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_GoogleLocalCredentials>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_GoogleGrpc_GoogleLocalCredentials& from);
+  void MergeFrom(const GrpcService_GoogleGrpc_GoogleLocalCredentials& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_GoogleGrpc_GoogleLocalCredentials* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_GoogleGrpc_ChannelCredentials : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.GoogleGrpc.ChannelCredentials) */ {
+ public:
+  GrpcService_GoogleGrpc_ChannelCredentials();
+  virtual ~GrpcService_GoogleGrpc_ChannelCredentials();
+
+  GrpcService_GoogleGrpc_ChannelCredentials(const GrpcService_GoogleGrpc_ChannelCredentials& from);
+
+  inline GrpcService_GoogleGrpc_ChannelCredentials& operator=(const GrpcService_GoogleGrpc_ChannelCredentials& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_GoogleGrpc_ChannelCredentials(GrpcService_GoogleGrpc_ChannelCredentials&& from) noexcept
+    : GrpcService_GoogleGrpc_ChannelCredentials() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_GoogleGrpc_ChannelCredentials& operator=(GrpcService_GoogleGrpc_ChannelCredentials&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_GoogleGrpc_ChannelCredentials& default_instance();
+
+  enum CredentialSpecifierCase {
+    kSslCredentials = 1,
+    kGoogleDefault = 2,
+    kLocalCredentials = 3,
+    CREDENTIAL_SPECIFIER_NOT_SET = 0,
+  };
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_GoogleGrpc_ChannelCredentials* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_GoogleGrpc_ChannelCredentials*>(
+               &_GrpcService_GoogleGrpc_ChannelCredentials_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    5;
+
+  void Swap(GrpcService_GoogleGrpc_ChannelCredentials* other);
+  friend void swap(GrpcService_GoogleGrpc_ChannelCredentials& a, GrpcService_GoogleGrpc_ChannelCredentials& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_GoogleGrpc_ChannelCredentials* New() const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_ChannelCredentials>(NULL);
+  }
+
+  GrpcService_GoogleGrpc_ChannelCredentials* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_ChannelCredentials>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_GoogleGrpc_ChannelCredentials& from);
+  void MergeFrom(const GrpcService_GoogleGrpc_ChannelCredentials& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_GoogleGrpc_ChannelCredentials* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .GrpcService.GoogleGrpc.SslCredentials ssl_credentials = 1;
+  bool has_ssl_credentials() const;
+  void clear_ssl_credentials();
+  static const int kSslCredentialsFieldNumber = 1;
+  private:
+  const ::GrpcService_GoogleGrpc_SslCredentials& _internal_ssl_credentials() const;
+  public:
+  const ::GrpcService_GoogleGrpc_SslCredentials& ssl_credentials() const;
+  ::GrpcService_GoogleGrpc_SslCredentials* release_ssl_credentials();
+  ::GrpcService_GoogleGrpc_SslCredentials* mutable_ssl_credentials();
+  void set_allocated_ssl_credentials(::GrpcService_GoogleGrpc_SslCredentials* ssl_credentials);
+
+  // .google.protobuf.Empty google_default = 2;
+  bool has_google_default() const;
+  void clear_google_default();
+  static const int kGoogleDefaultFieldNumber = 2;
+  private:
+  const ::google::protobuf::Empty& _internal_google_default() const;
+  public:
+  const ::google::protobuf::Empty& google_default() const;
+  ::google::protobuf::Empty* release_google_default();
+  ::google::protobuf::Empty* mutable_google_default();
+  void set_allocated_google_default(::google::protobuf::Empty* google_default);
+
+  // .GrpcService.GoogleGrpc.GoogleLocalCredentials local_credentials = 3;
+  bool has_local_credentials() const;
+  void clear_local_credentials();
+  static const int kLocalCredentialsFieldNumber = 3;
+  private:
+  const ::GrpcService_GoogleGrpc_GoogleLocalCredentials& _internal_local_credentials() const;
+  public:
+  const ::GrpcService_GoogleGrpc_GoogleLocalCredentials& local_credentials() const;
+  ::GrpcService_GoogleGrpc_GoogleLocalCredentials* release_local_credentials();
+  ::GrpcService_GoogleGrpc_GoogleLocalCredentials* mutable_local_credentials();
+  void set_allocated_local_credentials(::GrpcService_GoogleGrpc_GoogleLocalCredentials* local_credentials);
+
+  void clear_credential_specifier();
+  CredentialSpecifierCase credential_specifier_case() const;
+  // @@protoc_insertion_point(class_scope:GrpcService.GoogleGrpc.ChannelCredentials)
+ private:
+  void set_has_ssl_credentials();
+  void set_has_google_default();
+  void set_has_local_credentials();
+
+  inline bool has_credential_specifier() const;
+  inline void clear_has_credential_specifier();
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  union CredentialSpecifierUnion {
+    CredentialSpecifierUnion() {}
+    ::GrpcService_GoogleGrpc_SslCredentials* ssl_credentials_;
+    ::google::protobuf::Empty* google_default_;
+    ::GrpcService_GoogleGrpc_GoogleLocalCredentials* local_credentials_;
+  } credential_specifier_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  ::google::protobuf::uint32 _oneof_case_[1];
+
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials) */ {
+ public:
+  GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials();
+  virtual ~GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials();
+
+  GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials(const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& from);
+
+  inline GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& operator=(const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials(GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials&& from) noexcept
+    : GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& operator=(GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials*>(
+               &_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    6;
+
+  void Swap(GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* other);
+  friend void swap(GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& a, GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* New() const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials>(NULL);
+  }
+
+  GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& from);
+  void MergeFrom(const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string json_key = 1;
+  void clear_json_key();
+  static const int kJsonKeyFieldNumber = 1;
+  const ::std::string& json_key() const;
+  void set_json_key(const ::std::string& value);
+  #if LANG_CXX11
+  void set_json_key(::std::string&& value);
+  #endif
+  void set_json_key(const char* value);
+  void set_json_key(const char* value, size_t size);
+  ::std::string* mutable_json_key();
+  ::std::string* release_json_key();
+  void set_allocated_json_key(::std::string* json_key);
+
+  // uint64 token_lifetime_seconds = 2;
+  void clear_token_lifetime_seconds();
+  static const int kTokenLifetimeSecondsFieldNumber = 2;
+  ::google::protobuf::uint64 token_lifetime_seconds() const;
+  void set_token_lifetime_seconds(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr json_key_;
+  ::google::protobuf::uint64 token_lifetime_seconds_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials) */ {
+ public:
+  GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials();
+  virtual ~GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials();
+
+  GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials(const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& from);
+
+  inline GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& operator=(const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials(GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials&& from) noexcept
+    : GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& operator=(GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials*>(
+               &_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    7;
+
+  void Swap(GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* other);
+  friend void swap(GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& a, GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* New() const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials>(NULL);
+  }
+
+  GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& from);
+  void MergeFrom(const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string authorization_token = 1;
+  void clear_authorization_token();
+  static const int kAuthorizationTokenFieldNumber = 1;
+  const ::std::string& authorization_token() const;
+  void set_authorization_token(const ::std::string& value);
+  #if LANG_CXX11
+  void set_authorization_token(::std::string&& value);
+  #endif
+  void set_authorization_token(const char* value);
+  void set_authorization_token(const char* value, size_t size);
+  ::std::string* mutable_authorization_token();
+  ::std::string* release_authorization_token();
+  void set_allocated_authorization_token(::std::string* authorization_token);
+
+  // string authority_selector = 2;
+  void clear_authority_selector();
+  static const int kAuthoritySelectorFieldNumber = 2;
+  const ::std::string& authority_selector() const;
+  void set_authority_selector(const ::std::string& value);
+  #if LANG_CXX11
+  void set_authority_selector(::std::string&& value);
+  #endif
+  void set_authority_selector(const char* value);
+  void set_authority_selector(const char* value, size_t size);
+  ::std::string* mutable_authority_selector();
+  ::std::string* release_authority_selector();
+  void set_allocated_authority_selector(::std::string* authority_selector);
+
+  // @@protoc_insertion_point(class_scope:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr authorization_token_;
+  ::google::protobuf::internal::ArenaStringPtr authority_selector_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin) */ {
+ public:
+  GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin();
+  virtual ~GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin();
+
+  GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin(const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& from);
+
+  inline GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& operator=(const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin(GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin&& from) noexcept
+    : GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& operator=(GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& default_instance();
+
+  enum ConfigTypeCase {
+    kConfig = 2,
+    kTypedConfig = 3,
+    CONFIG_TYPE_NOT_SET = 0,
+  };
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin*>(
+               &_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    8;
+
+  void Swap(GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* other);
+  friend void swap(GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& a, GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* New() const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin>(NULL);
+  }
+
+  GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& from);
+  void MergeFrom(const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string name = 1;
+  void clear_name();
+  static const int kNameFieldNumber = 1;
+  const ::std::string& name() const;
+  void set_name(const ::std::string& value);
+  #if LANG_CXX11
+  void set_name(::std::string&& value);
+  #endif
+  void set_name(const char* value);
+  void set_name(const char* value, size_t size);
+  ::std::string* mutable_name();
+  ::std::string* release_name();
+  void set_allocated_name(::std::string* name);
+
+  // .google.protobuf.Struct config = 2 [deprecated = true];
+  GOOGLE_PROTOBUF_DEPRECATED_ATTR bool has_config() const;
+  GOOGLE_PROTOBUF_DEPRECATED_ATTR void clear_config();
+  GOOGLE_PROTOBUF_DEPRECATED_ATTR static const int kConfigFieldNumber = 2;
+  private:
+  const ::google::protobuf::Struct& _internal_config() const;
+  public:
+  GOOGLE_PROTOBUF_DEPRECATED_ATTR const ::google::protobuf::Struct& config() const;
+  GOOGLE_PROTOBUF_DEPRECATED_ATTR ::google::protobuf::Struct* release_config();
+  GOOGLE_PROTOBUF_DEPRECATED_ATTR ::google::protobuf::Struct* mutable_config();
+  GOOGLE_PROTOBUF_DEPRECATED_ATTR void set_allocated_config(::google::protobuf::Struct* config);
+
+  // .google.protobuf.Any typed_config = 3;
+  bool has_typed_config() const;
+  void clear_typed_config();
+  static const int kTypedConfigFieldNumber = 3;
+  private:
+  const ::google::protobuf::Any& _internal_typed_config() const;
+  public:
+  const ::google::protobuf::Any& typed_config() const;
+  ::google::protobuf::Any* release_typed_config();
+  ::google::protobuf::Any* mutable_typed_config();
+  void set_allocated_typed_config(::google::protobuf::Any* typed_config);
+
+  void clear_config_type();
+  ConfigTypeCase config_type_case() const;
+  // @@protoc_insertion_point(class_scope:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+ private:
+  void set_has_config();
+  void set_has_typed_config();
+
+  inline bool has_config_type() const;
+  inline void clear_has_config_type();
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr name_;
+  union ConfigTypeUnion {
+    ConfigTypeUnion() {}
+    ::google::protobuf::Struct* config_;
+    ::google::protobuf::Any* typed_config_;
+  } config_type_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  ::google::protobuf::uint32 _oneof_case_[1];
+
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_GoogleGrpc_CallCredentials : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.GoogleGrpc.CallCredentials) */ {
+ public:
+  GrpcService_GoogleGrpc_CallCredentials();
+  virtual ~GrpcService_GoogleGrpc_CallCredentials();
+
+  GrpcService_GoogleGrpc_CallCredentials(const GrpcService_GoogleGrpc_CallCredentials& from);
+
+  inline GrpcService_GoogleGrpc_CallCredentials& operator=(const GrpcService_GoogleGrpc_CallCredentials& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_GoogleGrpc_CallCredentials(GrpcService_GoogleGrpc_CallCredentials&& from) noexcept
+    : GrpcService_GoogleGrpc_CallCredentials() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_GoogleGrpc_CallCredentials& operator=(GrpcService_GoogleGrpc_CallCredentials&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_GoogleGrpc_CallCredentials& default_instance();
+
+  enum CredentialSpecifierCase {
+    kAccessToken = 1,
+    kGoogleComputeEngine = 2,
+    kGoogleRefreshToken = 3,
+    kServiceAccountJwtAccess = 4,
+    kGoogleIam = 5,
+    kFromPlugin = 6,
+    CREDENTIAL_SPECIFIER_NOT_SET = 0,
+  };
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_GoogleGrpc_CallCredentials* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_GoogleGrpc_CallCredentials*>(
+               &_GrpcService_GoogleGrpc_CallCredentials_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    9;
+
+  void Swap(GrpcService_GoogleGrpc_CallCredentials* other);
+  friend void swap(GrpcService_GoogleGrpc_CallCredentials& a, GrpcService_GoogleGrpc_CallCredentials& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_GoogleGrpc_CallCredentials* New() const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_CallCredentials>(NULL);
+  }
+
+  GrpcService_GoogleGrpc_CallCredentials* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc_CallCredentials>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_GoogleGrpc_CallCredentials& from);
+  void MergeFrom(const GrpcService_GoogleGrpc_CallCredentials& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_GoogleGrpc_CallCredentials* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  typedef GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials ServiceAccountJWTAccessCredentials;
+  typedef GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials GoogleIAMCredentials;
+  typedef GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin MetadataCredentialsFromPlugin;
+
+  // accessors -------------------------------------------------------
+
+  // string access_token = 1;
+  private:
+  bool has_access_token() const;
+  public:
+  void clear_access_token();
+  static const int kAccessTokenFieldNumber = 1;
+  const ::std::string& access_token() const;
+  void set_access_token(const ::std::string& value);
+  #if LANG_CXX11
+  void set_access_token(::std::string&& value);
+  #endif
+  void set_access_token(const char* value);
+  void set_access_token(const char* value, size_t size);
+  ::std::string* mutable_access_token();
+  ::std::string* release_access_token();
+  void set_allocated_access_token(::std::string* access_token);
+
+  // .google.protobuf.Empty google_compute_engine = 2;
+  bool has_google_compute_engine() const;
+  void clear_google_compute_engine();
+  static const int kGoogleComputeEngineFieldNumber = 2;
+  private:
+  const ::google::protobuf::Empty& _internal_google_compute_engine() const;
+  public:
+  const ::google::protobuf::Empty& google_compute_engine() const;
+  ::google::protobuf::Empty* release_google_compute_engine();
+  ::google::protobuf::Empty* mutable_google_compute_engine();
+  void set_allocated_google_compute_engine(::google::protobuf::Empty* google_compute_engine);
+
+  // string google_refresh_token = 3;
+  private:
+  bool has_google_refresh_token() const;
+  public:
+  void clear_google_refresh_token();
+  static const int kGoogleRefreshTokenFieldNumber = 3;
+  const ::std::string& google_refresh_token() const;
+  void set_google_refresh_token(const ::std::string& value);
+  #if LANG_CXX11
+  void set_google_refresh_token(::std::string&& value);
+  #endif
+  void set_google_refresh_token(const char* value);
+  void set_google_refresh_token(const char* value, size_t size);
+  ::std::string* mutable_google_refresh_token();
+  ::std::string* release_google_refresh_token();
+  void set_allocated_google_refresh_token(::std::string* google_refresh_token);
+
+  // .GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials service_account_jwt_access = 4;
+  bool has_service_account_jwt_access() const;
+  void clear_service_account_jwt_access();
+  static const int kServiceAccountJwtAccessFieldNumber = 4;
+  private:
+  const ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& _internal_service_account_jwt_access() const;
+  public:
+  const ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& service_account_jwt_access() const;
+  ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* release_service_account_jwt_access();
+  ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* mutable_service_account_jwt_access();
+  void set_allocated_service_account_jwt_access(::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* service_account_jwt_access);
+
+  // .GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials google_iam = 5;
+  bool has_google_iam() const;
+  void clear_google_iam();
+  static const int kGoogleIamFieldNumber = 5;
+  private:
+  const ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& _internal_google_iam() const;
+  public:
+  const ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& google_iam() const;
+  ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* release_google_iam();
+  ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* mutable_google_iam();
+  void set_allocated_google_iam(::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* google_iam);
+
+  // .GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin from_plugin = 6;
+  bool has_from_plugin() const;
+  void clear_from_plugin();
+  static const int kFromPluginFieldNumber = 6;
+  private:
+  const ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& _internal_from_plugin() const;
+  public:
+  const ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& from_plugin() const;
+  ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* release_from_plugin();
+  ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* mutable_from_plugin();
+  void set_allocated_from_plugin(::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* from_plugin);
+
+  void clear_credential_specifier();
+  CredentialSpecifierCase credential_specifier_case() const;
+  // @@protoc_insertion_point(class_scope:GrpcService.GoogleGrpc.CallCredentials)
+ private:
+  void set_has_access_token();
+  void set_has_google_compute_engine();
+  void set_has_google_refresh_token();
+  void set_has_service_account_jwt_access();
+  void set_has_google_iam();
+  void set_has_from_plugin();
+
+  inline bool has_credential_specifier() const;
+  inline void clear_has_credential_specifier();
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  union CredentialSpecifierUnion {
+    CredentialSpecifierUnion() {}
+    ::google::protobuf::internal::ArenaStringPtr access_token_;
+    ::google::protobuf::Empty* google_compute_engine_;
+    ::google::protobuf::internal::ArenaStringPtr google_refresh_token_;
+    ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* service_account_jwt_access_;
+    ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* google_iam_;
+    ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* from_plugin_;
+  } credential_specifier_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  ::google::protobuf::uint32 _oneof_case_[1];
+
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_GoogleGrpc : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.GoogleGrpc) */ {
+ public:
+  GrpcService_GoogleGrpc();
+  virtual ~GrpcService_GoogleGrpc();
+
+  GrpcService_GoogleGrpc(const GrpcService_GoogleGrpc& from);
+
+  inline GrpcService_GoogleGrpc& operator=(const GrpcService_GoogleGrpc& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_GoogleGrpc(GrpcService_GoogleGrpc&& from) noexcept
+    : GrpcService_GoogleGrpc() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_GoogleGrpc& operator=(GrpcService_GoogleGrpc&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_GoogleGrpc& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_GoogleGrpc* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_GoogleGrpc*>(
+               &_GrpcService_GoogleGrpc_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    10;
+
+  void Swap(GrpcService_GoogleGrpc* other);
+  friend void swap(GrpcService_GoogleGrpc& a, GrpcService_GoogleGrpc& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_GoogleGrpc* New() const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc>(NULL);
+  }
+
+  GrpcService_GoogleGrpc* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_GoogleGrpc>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_GoogleGrpc& from);
+  void MergeFrom(const GrpcService_GoogleGrpc& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_GoogleGrpc* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  typedef GrpcService_GoogleGrpc_SslCredentials SslCredentials;
+  typedef GrpcService_GoogleGrpc_GoogleLocalCredentials GoogleLocalCredentials;
+  typedef GrpcService_GoogleGrpc_ChannelCredentials ChannelCredentials;
+  typedef GrpcService_GoogleGrpc_CallCredentials CallCredentials;
+
+  // accessors -------------------------------------------------------
+
+  // repeated .GrpcService.GoogleGrpc.CallCredentials call_credentials = 3;
+  int call_credentials_size() const;
+  void clear_call_credentials();
+  static const int kCallCredentialsFieldNumber = 3;
+  ::GrpcService_GoogleGrpc_CallCredentials* mutable_call_credentials(int index);
+  ::google::protobuf::RepeatedPtrField< ::GrpcService_GoogleGrpc_CallCredentials >*
+      mutable_call_credentials();
+  const ::GrpcService_GoogleGrpc_CallCredentials& call_credentials(int index) const;
+  ::GrpcService_GoogleGrpc_CallCredentials* add_call_credentials();
+  const ::google::protobuf::RepeatedPtrField< ::GrpcService_GoogleGrpc_CallCredentials >&
+      call_credentials() const;
+
+  // string target_uri = 1;
+  void clear_target_uri();
+  static const int kTargetUriFieldNumber = 1;
+  const ::std::string& target_uri() const;
+  void set_target_uri(const ::std::string& value);
+  #if LANG_CXX11
+  void set_target_uri(::std::string&& value);
+  #endif
+  void set_target_uri(const char* value);
+  void set_target_uri(const char* value, size_t size);
+  ::std::string* mutable_target_uri();
+  ::std::string* release_target_uri();
+  void set_allocated_target_uri(::std::string* target_uri);
+
+  // string stat_prefix = 4;
+  void clear_stat_prefix();
+  static const int kStatPrefixFieldNumber = 4;
+  const ::std::string& stat_prefix() const;
+  void set_stat_prefix(const ::std::string& value);
+  #if LANG_CXX11
+  void set_stat_prefix(::std::string&& value);
+  #endif
+  void set_stat_prefix(const char* value);
+  void set_stat_prefix(const char* value, size_t size);
+  ::std::string* mutable_stat_prefix();
+  ::std::string* release_stat_prefix();
+  void set_allocated_stat_prefix(::std::string* stat_prefix);
+
+  // string credentials_factory_name = 5;
+  void clear_credentials_factory_name();
+  static const int kCredentialsFactoryNameFieldNumber = 5;
+  const ::std::string& credentials_factory_name() const;
+  void set_credentials_factory_name(const ::std::string& value);
+  #if LANG_CXX11
+  void set_credentials_factory_name(::std::string&& value);
+  #endif
+  void set_credentials_factory_name(const char* value);
+  void set_credentials_factory_name(const char* value, size_t size);
+  ::std::string* mutable_credentials_factory_name();
+  ::std::string* release_credentials_factory_name();
+  void set_allocated_credentials_factory_name(::std::string* credentials_factory_name);
+
+  // .GrpcService.GoogleGrpc.ChannelCredentials channel_credentials = 2;
+  bool has_channel_credentials() const;
+  void clear_channel_credentials();
+  static const int kChannelCredentialsFieldNumber = 2;
+  private:
+  const ::GrpcService_GoogleGrpc_ChannelCredentials& _internal_channel_credentials() const;
+  public:
+  const ::GrpcService_GoogleGrpc_ChannelCredentials& channel_credentials() const;
+  ::GrpcService_GoogleGrpc_ChannelCredentials* release_channel_credentials();
+  ::GrpcService_GoogleGrpc_ChannelCredentials* mutable_channel_credentials();
+  void set_allocated_channel_credentials(::GrpcService_GoogleGrpc_ChannelCredentials* channel_credentials);
+
+  // .google.protobuf.Struct config = 6;
+  bool has_config() const;
+  void clear_config();
+  static const int kConfigFieldNumber = 6;
+  private:
+  const ::google::protobuf::Struct& _internal_config() const;
+  public:
+  const ::google::protobuf::Struct& config() const;
+  ::google::protobuf::Struct* release_config();
+  ::google::protobuf::Struct* mutable_config();
+  void set_allocated_config(::google::protobuf::Struct* config);
+
+  // @@protoc_insertion_point(class_scope:GrpcService.GoogleGrpc)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::GrpcService_GoogleGrpc_CallCredentials > call_credentials_;
+  ::google::protobuf::internal::ArenaStringPtr target_uri_;
+  ::google::protobuf::internal::ArenaStringPtr stat_prefix_;
+  ::google::protobuf::internal::ArenaStringPtr credentials_factory_name_;
+  ::GrpcService_GoogleGrpc_ChannelCredentials* channel_credentials_;
+  ::google::protobuf::Struct* config_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService_HeaderValue : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService.HeaderValue) */ {
+ public:
+  GrpcService_HeaderValue();
+  virtual ~GrpcService_HeaderValue();
+
+  GrpcService_HeaderValue(const GrpcService_HeaderValue& from);
+
+  inline GrpcService_HeaderValue& operator=(const GrpcService_HeaderValue& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService_HeaderValue(GrpcService_HeaderValue&& from) noexcept
+    : GrpcService_HeaderValue() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService_HeaderValue& operator=(GrpcService_HeaderValue&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService_HeaderValue& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService_HeaderValue* internal_default_instance() {
+    return reinterpret_cast<const GrpcService_HeaderValue*>(
+               &_GrpcService_HeaderValue_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    11;
+
+  void Swap(GrpcService_HeaderValue* other);
+  friend void swap(GrpcService_HeaderValue& a, GrpcService_HeaderValue& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService_HeaderValue* New() const final {
+    return CreateMaybeMessage<GrpcService_HeaderValue>(NULL);
+  }
+
+  GrpcService_HeaderValue* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService_HeaderValue>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService_HeaderValue& from);
+  void MergeFrom(const GrpcService_HeaderValue& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService_HeaderValue* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string key = 1;
+  void clear_key();
+  static const int kKeyFieldNumber = 1;
+  const ::std::string& key() const;
+  void set_key(const ::std::string& value);
+  #if LANG_CXX11
+  void set_key(::std::string&& value);
+  #endif
+  void set_key(const char* value);
+  void set_key(const char* value, size_t size);
+  ::std::string* mutable_key();
+  ::std::string* release_key();
+  void set_allocated_key(::std::string* key);
+
+  // string value = 2;
+  void clear_value();
+  static const int kValueFieldNumber = 2;
+  const ::std::string& value() const;
+  void set_value(const ::std::string& value);
+  #if LANG_CXX11
+  void set_value(::std::string&& value);
+  #endif
+  void set_value(const char* value);
+  void set_value(const char* value, size_t size);
+  ::std::string* mutable_value();
+  ::std::string* release_value();
+  void set_allocated_value(::std::string* value);
+
+  // @@protoc_insertion_point(class_scope:GrpcService.HeaderValue)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr key_;
+  ::google::protobuf::internal::ArenaStringPtr value_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GrpcService : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:GrpcService) */ {
+ public:
+  GrpcService();
+  virtual ~GrpcService();
+
+  GrpcService(const GrpcService& from);
+
+  inline GrpcService& operator=(const GrpcService& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GrpcService(GrpcService&& from) noexcept
+    : GrpcService() {
+    *this = ::std::move(from);
+  }
+
+  inline GrpcService& operator=(GrpcService&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GrpcService& default_instance();
+
+  enum TargetSpecifierCase {
+    kEnvoyGrpc = 1,
+    kGoogleGrpc = 2,
+    TARGET_SPECIFIER_NOT_SET = 0,
+  };
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GrpcService* internal_default_instance() {
+    return reinterpret_cast<const GrpcService*>(
+               &_GrpcService_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    12;
+
+  void Swap(GrpcService* other);
+  friend void swap(GrpcService& a, GrpcService& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GrpcService* New() const final {
+    return CreateMaybeMessage<GrpcService>(NULL);
+  }
+
+  GrpcService* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GrpcService>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GrpcService& from);
+  void MergeFrom(const GrpcService& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GrpcService* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  typedef GrpcService_EnvoyGrpc EnvoyGrpc;
+  typedef GrpcService_GoogleGrpc GoogleGrpc;
+  typedef GrpcService_HeaderValue HeaderValue;
+
+  // accessors -------------------------------------------------------
+
+  // repeated .GrpcService.HeaderValue initial_metadata = 5;
+  int initial_metadata_size() const;
+  void clear_initial_metadata();
+  static const int kInitialMetadataFieldNumber = 5;
+  ::GrpcService_HeaderValue* mutable_initial_metadata(int index);
+  ::google::protobuf::RepeatedPtrField< ::GrpcService_HeaderValue >*
+      mutable_initial_metadata();
+  const ::GrpcService_HeaderValue& initial_metadata(int index) const;
+  ::GrpcService_HeaderValue* add_initial_metadata();
+  const ::google::protobuf::RepeatedPtrField< ::GrpcService_HeaderValue >&
+      initial_metadata() const;
+
+  // .google.protobuf.Duration timeout = 3;
+  bool has_timeout() const;
+  void clear_timeout();
+  static const int kTimeoutFieldNumber = 3;
+  private:
+  const ::google::protobuf::Duration& _internal_timeout() const;
+  public:
+  const ::google::protobuf::Duration& timeout() const;
+  ::google::protobuf::Duration* release_timeout();
+  ::google::protobuf::Duration* mutable_timeout();
+  void set_allocated_timeout(::google::protobuf::Duration* timeout);
+
+  // .GrpcService.EnvoyGrpc envoy_grpc = 1;
+  bool has_envoy_grpc() const;
+  void clear_envoy_grpc();
+  static const int kEnvoyGrpcFieldNumber = 1;
+  private:
+  const ::GrpcService_EnvoyGrpc& _internal_envoy_grpc() const;
+  public:
+  const ::GrpcService_EnvoyGrpc& envoy_grpc() const;
+  ::GrpcService_EnvoyGrpc* release_envoy_grpc();
+  ::GrpcService_EnvoyGrpc* mutable_envoy_grpc();
+  void set_allocated_envoy_grpc(::GrpcService_EnvoyGrpc* envoy_grpc);
+
+  // .GrpcService.GoogleGrpc google_grpc = 2;
+  bool has_google_grpc() const;
+  void clear_google_grpc();
+  static const int kGoogleGrpcFieldNumber = 2;
+  private:
+  const ::GrpcService_GoogleGrpc& _internal_google_grpc() const;
+  public:
+  const ::GrpcService_GoogleGrpc& google_grpc() const;
+  ::GrpcService_GoogleGrpc* release_google_grpc();
+  ::GrpcService_GoogleGrpc* mutable_google_grpc();
+  void set_allocated_google_grpc(::GrpcService_GoogleGrpc* google_grpc);
+
+  void clear_target_specifier();
+  TargetSpecifierCase target_specifier_case() const;
+  // @@protoc_insertion_point(class_scope:GrpcService)
+ private:
+  void set_has_envoy_grpc();
+  void set_has_google_grpc();
+
+  inline bool has_target_specifier() const;
+  inline void clear_has_target_specifier();
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::GrpcService_HeaderValue > initial_metadata_;
+  ::google::protobuf::Duration* timeout_;
+  union TargetSpecifierUnion {
+    TargetSpecifierUnion() {}
+    ::GrpcService_EnvoyGrpc* envoy_grpc_;
+    ::GrpcService_GoogleGrpc* google_grpc_;
+  } target_specifier_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  ::google::protobuf::uint32 _oneof_case_[1];
+
+  friend struct ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::TableStruct;
+};
 // ===================================================================
 
 
@@ -224,9 +2036,1969 @@ inline void WKT::set_allocated_struct_(::google::protobuf::Struct* struct_) {
   // @@protoc_insertion_point(field_set_allocated:WKT.struct)
 }
 
+// -------------------------------------------------------------------
+
+// DataSource
+
+// string filename = 1;
+inline bool DataSource::has_filename() const {
+  return specifier_case() == kFilename;
+}
+inline void DataSource::set_has_filename() {
+  _oneof_case_[0] = kFilename;
+}
+inline void DataSource::clear_filename() {
+  if (has_filename()) {
+    specifier_.filename_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    clear_has_specifier();
+  }
+}
+inline const ::std::string& DataSource::filename() const {
+  // @@protoc_insertion_point(field_get:DataSource.filename)
+  if (has_filename()) {
+    return specifier_.filename_.GetNoArena();
+  }
+  return *&::google::protobuf::internal::GetEmptyStringAlreadyInited();
+}
+inline void DataSource::set_filename(const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:DataSource.filename)
+  if (!has_filename()) {
+    clear_specifier();
+    set_has_filename();
+    specifier_.filename_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.filename_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:DataSource.filename)
+}
+#if LANG_CXX11
+inline void DataSource::set_filename(::std::string&& value) {
+  // @@protoc_insertion_point(field_set:DataSource.filename)
+  if (!has_filename()) {
+    clear_specifier();
+    set_has_filename();
+    specifier_.filename_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.filename_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:DataSource.filename)
+}
+#endif
+inline void DataSource::set_filename(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  if (!has_filename()) {
+    clear_specifier();
+    set_has_filename();
+    specifier_.filename_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.filename_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:DataSource.filename)
+}
+inline void DataSource::set_filename(const char* value, size_t size) {
+  if (!has_filename()) {
+    clear_specifier();
+    set_has_filename();
+    specifier_.filename_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.filename_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:DataSource.filename)
+}
+inline ::std::string* DataSource::mutable_filename() {
+  if (!has_filename()) {
+    clear_specifier();
+    set_has_filename();
+    specifier_.filename_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_mutable:DataSource.filename)
+  return specifier_.filename_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* DataSource::release_filename() {
+  // @@protoc_insertion_point(field_release:DataSource.filename)
+  if (has_filename()) {
+    clear_has_specifier();
+    return specifier_.filename_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  } else {
+    return NULL;
+  }
+}
+inline void DataSource::set_allocated_filename(::std::string* filename) {
+  if (!has_filename()) {
+    specifier_.filename_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  clear_specifier();
+  if (filename != NULL) {
+    set_has_filename();
+    specifier_.filename_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), filename);
+  }
+  // @@protoc_insertion_point(field_set_allocated:DataSource.filename)
+}
+
+// bytes inline_bytes = 2;
+inline bool DataSource::has_inline_bytes() const {
+  return specifier_case() == kInlineBytes;
+}
+inline void DataSource::set_has_inline_bytes() {
+  _oneof_case_[0] = kInlineBytes;
+}
+inline void DataSource::clear_inline_bytes() {
+  if (has_inline_bytes()) {
+    specifier_.inline_bytes_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    clear_has_specifier();
+  }
+}
+inline const ::std::string& DataSource::inline_bytes() const {
+  // @@protoc_insertion_point(field_get:DataSource.inline_bytes)
+  if (has_inline_bytes()) {
+    return specifier_.inline_bytes_.GetNoArena();
+  }
+  return *&::google::protobuf::internal::GetEmptyStringAlreadyInited();
+}
+inline void DataSource::set_inline_bytes(const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:DataSource.inline_bytes)
+  if (!has_inline_bytes()) {
+    clear_specifier();
+    set_has_inline_bytes();
+    specifier_.inline_bytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.inline_bytes_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:DataSource.inline_bytes)
+}
+#if LANG_CXX11
+inline void DataSource::set_inline_bytes(::std::string&& value) {
+  // @@protoc_insertion_point(field_set:DataSource.inline_bytes)
+  if (!has_inline_bytes()) {
+    clear_specifier();
+    set_has_inline_bytes();
+    specifier_.inline_bytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.inline_bytes_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:DataSource.inline_bytes)
+}
+#endif
+inline void DataSource::set_inline_bytes(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  if (!has_inline_bytes()) {
+    clear_specifier();
+    set_has_inline_bytes();
+    specifier_.inline_bytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.inline_bytes_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:DataSource.inline_bytes)
+}
+inline void DataSource::set_inline_bytes(const void* value, size_t size) {
+  if (!has_inline_bytes()) {
+    clear_specifier();
+    set_has_inline_bytes();
+    specifier_.inline_bytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.inline_bytes_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:DataSource.inline_bytes)
+}
+inline ::std::string* DataSource::mutable_inline_bytes() {
+  if (!has_inline_bytes()) {
+    clear_specifier();
+    set_has_inline_bytes();
+    specifier_.inline_bytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_mutable:DataSource.inline_bytes)
+  return specifier_.inline_bytes_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* DataSource::release_inline_bytes() {
+  // @@protoc_insertion_point(field_release:DataSource.inline_bytes)
+  if (has_inline_bytes()) {
+    clear_has_specifier();
+    return specifier_.inline_bytes_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  } else {
+    return NULL;
+  }
+}
+inline void DataSource::set_allocated_inline_bytes(::std::string* inline_bytes) {
+  if (!has_inline_bytes()) {
+    specifier_.inline_bytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  clear_specifier();
+  if (inline_bytes != NULL) {
+    set_has_inline_bytes();
+    specifier_.inline_bytes_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), inline_bytes);
+  }
+  // @@protoc_insertion_point(field_set_allocated:DataSource.inline_bytes)
+}
+
+// string inline_string = 3;
+inline bool DataSource::has_inline_string() const {
+  return specifier_case() == kInlineString;
+}
+inline void DataSource::set_has_inline_string() {
+  _oneof_case_[0] = kInlineString;
+}
+inline void DataSource::clear_inline_string() {
+  if (has_inline_string()) {
+    specifier_.inline_string_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    clear_has_specifier();
+  }
+}
+inline const ::std::string& DataSource::inline_string() const {
+  // @@protoc_insertion_point(field_get:DataSource.inline_string)
+  if (has_inline_string()) {
+    return specifier_.inline_string_.GetNoArena();
+  }
+  return *&::google::protobuf::internal::GetEmptyStringAlreadyInited();
+}
+inline void DataSource::set_inline_string(const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:DataSource.inline_string)
+  if (!has_inline_string()) {
+    clear_specifier();
+    set_has_inline_string();
+    specifier_.inline_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.inline_string_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:DataSource.inline_string)
+}
+#if LANG_CXX11
+inline void DataSource::set_inline_string(::std::string&& value) {
+  // @@protoc_insertion_point(field_set:DataSource.inline_string)
+  if (!has_inline_string()) {
+    clear_specifier();
+    set_has_inline_string();
+    specifier_.inline_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.inline_string_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:DataSource.inline_string)
+}
+#endif
+inline void DataSource::set_inline_string(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  if (!has_inline_string()) {
+    clear_specifier();
+    set_has_inline_string();
+    specifier_.inline_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.inline_string_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:DataSource.inline_string)
+}
+inline void DataSource::set_inline_string(const char* value, size_t size) {
+  if (!has_inline_string()) {
+    clear_specifier();
+    set_has_inline_string();
+    specifier_.inline_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  specifier_.inline_string_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:DataSource.inline_string)
+}
+inline ::std::string* DataSource::mutable_inline_string() {
+  if (!has_inline_string()) {
+    clear_specifier();
+    set_has_inline_string();
+    specifier_.inline_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_mutable:DataSource.inline_string)
+  return specifier_.inline_string_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* DataSource::release_inline_string() {
+  // @@protoc_insertion_point(field_release:DataSource.inline_string)
+  if (has_inline_string()) {
+    clear_has_specifier();
+    return specifier_.inline_string_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  } else {
+    return NULL;
+  }
+}
+inline void DataSource::set_allocated_inline_string(::std::string* inline_string) {
+  if (!has_inline_string()) {
+    specifier_.inline_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  clear_specifier();
+  if (inline_string != NULL) {
+    set_has_inline_string();
+    specifier_.inline_string_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), inline_string);
+  }
+  // @@protoc_insertion_point(field_set_allocated:DataSource.inline_string)
+}
+
+inline bool DataSource::has_specifier() const {
+  return specifier_case() != SPECIFIER_NOT_SET;
+}
+inline void DataSource::clear_has_specifier() {
+  _oneof_case_[0] = SPECIFIER_NOT_SET;
+}
+inline DataSource::SpecifierCase DataSource::specifier_case() const {
+  return DataSource::SpecifierCase(_oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
+// GrpcService_EnvoyGrpc
+
+// string cluster_name = 1;
+inline void GrpcService_EnvoyGrpc::clear_cluster_name() {
+  cluster_name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_EnvoyGrpc::cluster_name() const {
+  // @@protoc_insertion_point(field_get:GrpcService.EnvoyGrpc.cluster_name)
+  return cluster_name_.GetNoArena();
+}
+inline void GrpcService_EnvoyGrpc::set_cluster_name(const ::std::string& value) {
+  
+  cluster_name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.EnvoyGrpc.cluster_name)
+}
+#if LANG_CXX11
+inline void GrpcService_EnvoyGrpc::set_cluster_name(::std::string&& value) {
+  
+  cluster_name_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.EnvoyGrpc.cluster_name)
+}
+#endif
+inline void GrpcService_EnvoyGrpc::set_cluster_name(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  cluster_name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.EnvoyGrpc.cluster_name)
+}
+inline void GrpcService_EnvoyGrpc::set_cluster_name(const char* value, size_t size) {
+  
+  cluster_name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.EnvoyGrpc.cluster_name)
+}
+inline ::std::string* GrpcService_EnvoyGrpc::mutable_cluster_name() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.EnvoyGrpc.cluster_name)
+  return cluster_name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_EnvoyGrpc::release_cluster_name() {
+  // @@protoc_insertion_point(field_release:GrpcService.EnvoyGrpc.cluster_name)
+  
+  return cluster_name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_EnvoyGrpc::set_allocated_cluster_name(::std::string* cluster_name) {
+  if (cluster_name != NULL) {
+    
+  } else {
+    
+  }
+  cluster_name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), cluster_name);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.EnvoyGrpc.cluster_name)
+}
+
+// -------------------------------------------------------------------
+
+// GrpcService_GoogleGrpc_SslCredentials
+
+// .DataSource root_certs = 1;
+inline bool GrpcService_GoogleGrpc_SslCredentials::has_root_certs() const {
+  return this != internal_default_instance() && root_certs_ != NULL;
+}
+inline void GrpcService_GoogleGrpc_SslCredentials::clear_root_certs() {
+  if (GetArenaNoVirtual() == NULL && root_certs_ != NULL) {
+    delete root_certs_;
+  }
+  root_certs_ = NULL;
+}
+inline const ::DataSource& GrpcService_GoogleGrpc_SslCredentials::_internal_root_certs() const {
+  return *root_certs_;
+}
+inline const ::DataSource& GrpcService_GoogleGrpc_SslCredentials::root_certs() const {
+  const ::DataSource* p = root_certs_;
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.SslCredentials.root_certs)
+  return p != NULL ? *p : *reinterpret_cast<const ::DataSource*>(
+      &::_DataSource_default_instance_);
+}
+inline ::DataSource* GrpcService_GoogleGrpc_SslCredentials::release_root_certs() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.SslCredentials.root_certs)
+  
+  ::DataSource* temp = root_certs_;
+  root_certs_ = NULL;
+  return temp;
+}
+inline ::DataSource* GrpcService_GoogleGrpc_SslCredentials::mutable_root_certs() {
+  
+  if (root_certs_ == NULL) {
+    auto* p = CreateMaybeMessage<::DataSource>(GetArenaNoVirtual());
+    root_certs_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.SslCredentials.root_certs)
+  return root_certs_;
+}
+inline void GrpcService_GoogleGrpc_SslCredentials::set_allocated_root_certs(::DataSource* root_certs) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == NULL) {
+    delete root_certs_;
+  }
+  if (root_certs) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      root_certs = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, root_certs, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  root_certs_ = root_certs;
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.SslCredentials.root_certs)
+}
+
+// .DataSource private_key = 2;
+inline bool GrpcService_GoogleGrpc_SslCredentials::has_private_key() const {
+  return this != internal_default_instance() && private_key_ != NULL;
+}
+inline void GrpcService_GoogleGrpc_SslCredentials::clear_private_key() {
+  if (GetArenaNoVirtual() == NULL && private_key_ != NULL) {
+    delete private_key_;
+  }
+  private_key_ = NULL;
+}
+inline const ::DataSource& GrpcService_GoogleGrpc_SslCredentials::_internal_private_key() const {
+  return *private_key_;
+}
+inline const ::DataSource& GrpcService_GoogleGrpc_SslCredentials::private_key() const {
+  const ::DataSource* p = private_key_;
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.SslCredentials.private_key)
+  return p != NULL ? *p : *reinterpret_cast<const ::DataSource*>(
+      &::_DataSource_default_instance_);
+}
+inline ::DataSource* GrpcService_GoogleGrpc_SslCredentials::release_private_key() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.SslCredentials.private_key)
+  
+  ::DataSource* temp = private_key_;
+  private_key_ = NULL;
+  return temp;
+}
+inline ::DataSource* GrpcService_GoogleGrpc_SslCredentials::mutable_private_key() {
+  
+  if (private_key_ == NULL) {
+    auto* p = CreateMaybeMessage<::DataSource>(GetArenaNoVirtual());
+    private_key_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.SslCredentials.private_key)
+  return private_key_;
+}
+inline void GrpcService_GoogleGrpc_SslCredentials::set_allocated_private_key(::DataSource* private_key) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == NULL) {
+    delete private_key_;
+  }
+  if (private_key) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      private_key = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, private_key, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  private_key_ = private_key;
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.SslCredentials.private_key)
+}
+
+// .DataSource cert_chain = 3;
+inline bool GrpcService_GoogleGrpc_SslCredentials::has_cert_chain() const {
+  return this != internal_default_instance() && cert_chain_ != NULL;
+}
+inline void GrpcService_GoogleGrpc_SslCredentials::clear_cert_chain() {
+  if (GetArenaNoVirtual() == NULL && cert_chain_ != NULL) {
+    delete cert_chain_;
+  }
+  cert_chain_ = NULL;
+}
+inline const ::DataSource& GrpcService_GoogleGrpc_SslCredentials::_internal_cert_chain() const {
+  return *cert_chain_;
+}
+inline const ::DataSource& GrpcService_GoogleGrpc_SslCredentials::cert_chain() const {
+  const ::DataSource* p = cert_chain_;
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.SslCredentials.cert_chain)
+  return p != NULL ? *p : *reinterpret_cast<const ::DataSource*>(
+      &::_DataSource_default_instance_);
+}
+inline ::DataSource* GrpcService_GoogleGrpc_SslCredentials::release_cert_chain() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.SslCredentials.cert_chain)
+  
+  ::DataSource* temp = cert_chain_;
+  cert_chain_ = NULL;
+  return temp;
+}
+inline ::DataSource* GrpcService_GoogleGrpc_SslCredentials::mutable_cert_chain() {
+  
+  if (cert_chain_ == NULL) {
+    auto* p = CreateMaybeMessage<::DataSource>(GetArenaNoVirtual());
+    cert_chain_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.SslCredentials.cert_chain)
+  return cert_chain_;
+}
+inline void GrpcService_GoogleGrpc_SslCredentials::set_allocated_cert_chain(::DataSource* cert_chain) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == NULL) {
+    delete cert_chain_;
+  }
+  if (cert_chain) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      cert_chain = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, cert_chain, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  cert_chain_ = cert_chain;
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.SslCredentials.cert_chain)
+}
+
+// -------------------------------------------------------------------
+
+// GrpcService_GoogleGrpc_GoogleLocalCredentials
+
+// -------------------------------------------------------------------
+
+// GrpcService_GoogleGrpc_ChannelCredentials
+
+// .GrpcService.GoogleGrpc.SslCredentials ssl_credentials = 1;
+inline bool GrpcService_GoogleGrpc_ChannelCredentials::has_ssl_credentials() const {
+  return credential_specifier_case() == kSslCredentials;
+}
+inline void GrpcService_GoogleGrpc_ChannelCredentials::set_has_ssl_credentials() {
+  _oneof_case_[0] = kSslCredentials;
+}
+inline void GrpcService_GoogleGrpc_ChannelCredentials::clear_ssl_credentials() {
+  if (has_ssl_credentials()) {
+    delete credential_specifier_.ssl_credentials_;
+    clear_has_credential_specifier();
+  }
+}
+inline const ::GrpcService_GoogleGrpc_SslCredentials& GrpcService_GoogleGrpc_ChannelCredentials::_internal_ssl_credentials() const {
+  return *credential_specifier_.ssl_credentials_;
+}
+inline ::GrpcService_GoogleGrpc_SslCredentials* GrpcService_GoogleGrpc_ChannelCredentials::release_ssl_credentials() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.ChannelCredentials.ssl_credentials)
+  if (has_ssl_credentials()) {
+    clear_has_credential_specifier();
+      ::GrpcService_GoogleGrpc_SslCredentials* temp = credential_specifier_.ssl_credentials_;
+    credential_specifier_.ssl_credentials_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::GrpcService_GoogleGrpc_SslCredentials& GrpcService_GoogleGrpc_ChannelCredentials::ssl_credentials() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.ChannelCredentials.ssl_credentials)
+  return has_ssl_credentials()
+      ? *credential_specifier_.ssl_credentials_
+      : *reinterpret_cast< ::GrpcService_GoogleGrpc_SslCredentials*>(&::_GrpcService_GoogleGrpc_SslCredentials_default_instance_);
+}
+inline ::GrpcService_GoogleGrpc_SslCredentials* GrpcService_GoogleGrpc_ChannelCredentials::mutable_ssl_credentials() {
+  if (!has_ssl_credentials()) {
+    clear_credential_specifier();
+    set_has_ssl_credentials();
+    credential_specifier_.ssl_credentials_ = CreateMaybeMessage< ::GrpcService_GoogleGrpc_SslCredentials >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.ChannelCredentials.ssl_credentials)
+  return credential_specifier_.ssl_credentials_;
+}
+
+// .google.protobuf.Empty google_default = 2;
+inline bool GrpcService_GoogleGrpc_ChannelCredentials::has_google_default() const {
+  return credential_specifier_case() == kGoogleDefault;
+}
+inline void GrpcService_GoogleGrpc_ChannelCredentials::set_has_google_default() {
+  _oneof_case_[0] = kGoogleDefault;
+}
+inline const ::google::protobuf::Empty& GrpcService_GoogleGrpc_ChannelCredentials::_internal_google_default() const {
+  return *credential_specifier_.google_default_;
+}
+inline ::google::protobuf::Empty* GrpcService_GoogleGrpc_ChannelCredentials::release_google_default() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.ChannelCredentials.google_default)
+  if (has_google_default()) {
+    clear_has_credential_specifier();
+      ::google::protobuf::Empty* temp = credential_specifier_.google_default_;
+    credential_specifier_.google_default_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::google::protobuf::Empty& GrpcService_GoogleGrpc_ChannelCredentials::google_default() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.ChannelCredentials.google_default)
+  return has_google_default()
+      ? *credential_specifier_.google_default_
+      : *reinterpret_cast< ::google::protobuf::Empty*>(&::google::protobuf::_Empty_default_instance_);
+}
+inline ::google::protobuf::Empty* GrpcService_GoogleGrpc_ChannelCredentials::mutable_google_default() {
+  if (!has_google_default()) {
+    clear_credential_specifier();
+    set_has_google_default();
+    credential_specifier_.google_default_ = CreateMaybeMessage< ::google::protobuf::Empty >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.ChannelCredentials.google_default)
+  return credential_specifier_.google_default_;
+}
+
+// .GrpcService.GoogleGrpc.GoogleLocalCredentials local_credentials = 3;
+inline bool GrpcService_GoogleGrpc_ChannelCredentials::has_local_credentials() const {
+  return credential_specifier_case() == kLocalCredentials;
+}
+inline void GrpcService_GoogleGrpc_ChannelCredentials::set_has_local_credentials() {
+  _oneof_case_[0] = kLocalCredentials;
+}
+inline void GrpcService_GoogleGrpc_ChannelCredentials::clear_local_credentials() {
+  if (has_local_credentials()) {
+    delete credential_specifier_.local_credentials_;
+    clear_has_credential_specifier();
+  }
+}
+inline const ::GrpcService_GoogleGrpc_GoogleLocalCredentials& GrpcService_GoogleGrpc_ChannelCredentials::_internal_local_credentials() const {
+  return *credential_specifier_.local_credentials_;
+}
+inline ::GrpcService_GoogleGrpc_GoogleLocalCredentials* GrpcService_GoogleGrpc_ChannelCredentials::release_local_credentials() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.ChannelCredentials.local_credentials)
+  if (has_local_credentials()) {
+    clear_has_credential_specifier();
+      ::GrpcService_GoogleGrpc_GoogleLocalCredentials* temp = credential_specifier_.local_credentials_;
+    credential_specifier_.local_credentials_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::GrpcService_GoogleGrpc_GoogleLocalCredentials& GrpcService_GoogleGrpc_ChannelCredentials::local_credentials() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.ChannelCredentials.local_credentials)
+  return has_local_credentials()
+      ? *credential_specifier_.local_credentials_
+      : *reinterpret_cast< ::GrpcService_GoogleGrpc_GoogleLocalCredentials*>(&::_GrpcService_GoogleGrpc_GoogleLocalCredentials_default_instance_);
+}
+inline ::GrpcService_GoogleGrpc_GoogleLocalCredentials* GrpcService_GoogleGrpc_ChannelCredentials::mutable_local_credentials() {
+  if (!has_local_credentials()) {
+    clear_credential_specifier();
+    set_has_local_credentials();
+    credential_specifier_.local_credentials_ = CreateMaybeMessage< ::GrpcService_GoogleGrpc_GoogleLocalCredentials >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.ChannelCredentials.local_credentials)
+  return credential_specifier_.local_credentials_;
+}
+
+inline bool GrpcService_GoogleGrpc_ChannelCredentials::has_credential_specifier() const {
+  return credential_specifier_case() != CREDENTIAL_SPECIFIER_NOT_SET;
+}
+inline void GrpcService_GoogleGrpc_ChannelCredentials::clear_has_credential_specifier() {
+  _oneof_case_[0] = CREDENTIAL_SPECIFIER_NOT_SET;
+}
+inline GrpcService_GoogleGrpc_ChannelCredentials::CredentialSpecifierCase GrpcService_GoogleGrpc_ChannelCredentials::credential_specifier_case() const {
+  return GrpcService_GoogleGrpc_ChannelCredentials::CredentialSpecifierCase(_oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
+// GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials
+
+// string json_key = 1;
+inline void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::clear_json_key() {
+  json_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::json_key() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key)
+  return json_key_.GetNoArena();
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::set_json_key(const ::std::string& value) {
+  
+  json_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key)
+}
+#if LANG_CXX11
+inline void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::set_json_key(::std::string&& value) {
+  
+  json_key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key)
+}
+#endif
+inline void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::set_json_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  json_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key)
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::set_json_key(const char* value, size_t size) {
+  
+  json_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key)
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::mutable_json_key() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key)
+  return json_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::release_json_key() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key)
+  
+  return json_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::set_allocated_json_key(::std::string* json_key) {
+  if (json_key != NULL) {
+    
+  } else {
+    
+  }
+  json_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), json_key);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key)
+}
+
+// uint64 token_lifetime_seconds = 2;
+inline void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::clear_token_lifetime_seconds() {
+  token_lifetime_seconds_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::token_lifetime_seconds() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.token_lifetime_seconds)
+  return token_lifetime_seconds_;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::set_token_lifetime_seconds(::google::protobuf::uint64 value) {
+  
+  token_lifetime_seconds_ = value;
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.token_lifetime_seconds)
+}
+
+// -------------------------------------------------------------------
+
+// GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials
+
+// string authorization_token = 1;
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::clear_authorization_token() {
+  authorization_token_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::authorization_token() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token)
+  return authorization_token_.GetNoArena();
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_authorization_token(const ::std::string& value) {
+  
+  authorization_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token)
+}
+#if LANG_CXX11
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_authorization_token(::std::string&& value) {
+  
+  authorization_token_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token)
+}
+#endif
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_authorization_token(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  authorization_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token)
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_authorization_token(const char* value, size_t size) {
+  
+  authorization_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token)
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::mutable_authorization_token() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token)
+  return authorization_token_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::release_authorization_token() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token)
+  
+  return authorization_token_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_allocated_authorization_token(::std::string* authorization_token) {
+  if (authorization_token != NULL) {
+    
+  } else {
+    
+  }
+  authorization_token_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), authorization_token);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token)
+}
+
+// string authority_selector = 2;
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::clear_authority_selector() {
+  authority_selector_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::authority_selector() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector)
+  return authority_selector_.GetNoArena();
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_authority_selector(const ::std::string& value) {
+  
+  authority_selector_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector)
+}
+#if LANG_CXX11
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_authority_selector(::std::string&& value) {
+  
+  authority_selector_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector)
+}
+#endif
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_authority_selector(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  authority_selector_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector)
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_authority_selector(const char* value, size_t size) {
+  
+  authority_selector_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector)
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::mutable_authority_selector() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector)
+  return authority_selector_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::release_authority_selector() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector)
+  
+  return authority_selector_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::set_allocated_authority_selector(::std::string* authority_selector) {
+  if (authority_selector != NULL) {
+    
+  } else {
+    
+  }
+  authority_selector_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), authority_selector);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector)
+}
+
+// -------------------------------------------------------------------
+
+// GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin
+
+// string name = 1;
+inline void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::clear_name() {
+  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::name() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name)
+  return name_.GetNoArena();
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::set_name(const ::std::string& value) {
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name)
+}
+#if LANG_CXX11
+inline void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::set_name(::std::string&& value) {
+  
+  name_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name)
+}
+#endif
+inline void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::set_name(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name)
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::set_name(const char* value, size_t size) {
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name)
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::mutable_name() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name)
+  return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::release_name() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name)
+  
+  return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::set_allocated_name(::std::string* name) {
+  if (name != NULL) {
+    
+  } else {
+    
+  }
+  name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name)
+}
+
+// .google.protobuf.Struct config = 2 [deprecated = true];
+inline bool GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::has_config() const {
+  return config_type_case() == kConfig;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::set_has_config() {
+  _oneof_case_[0] = kConfig;
+}
+inline const ::google::protobuf::Struct& GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::_internal_config() const {
+  return *config_type_.config_;
+}
+inline ::google::protobuf::Struct* GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::release_config() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.config)
+  if (has_config()) {
+    clear_has_config_type();
+      ::google::protobuf::Struct* temp = config_type_.config_;
+    config_type_.config_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::google::protobuf::Struct& GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::config() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.config)
+  return has_config()
+      ? *config_type_.config_
+      : *reinterpret_cast< ::google::protobuf::Struct*>(&::google::protobuf::_Struct_default_instance_);
+}
+inline ::google::protobuf::Struct* GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::mutable_config() {
+  if (!has_config()) {
+    clear_config_type();
+    set_has_config();
+    config_type_.config_ = CreateMaybeMessage< ::google::protobuf::Struct >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.config)
+  return config_type_.config_;
+}
+
+// .google.protobuf.Any typed_config = 3;
+inline bool GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::has_typed_config() const {
+  return config_type_case() == kTypedConfig;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::set_has_typed_config() {
+  _oneof_case_[0] = kTypedConfig;
+}
+inline const ::google::protobuf::Any& GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::_internal_typed_config() const {
+  return *config_type_.typed_config_;
+}
+inline ::google::protobuf::Any* GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::release_typed_config() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.typed_config)
+  if (has_typed_config()) {
+    clear_has_config_type();
+      ::google::protobuf::Any* temp = config_type_.typed_config_;
+    config_type_.typed_config_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::google::protobuf::Any& GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::typed_config() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.typed_config)
+  return has_typed_config()
+      ? *config_type_.typed_config_
+      : *reinterpret_cast< ::google::protobuf::Any*>(&::google::protobuf::_Any_default_instance_);
+}
+inline ::google::protobuf::Any* GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::mutable_typed_config() {
+  if (!has_typed_config()) {
+    clear_config_type();
+    set_has_typed_config();
+    config_type_.typed_config_ = CreateMaybeMessage< ::google::protobuf::Any >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.typed_config)
+  return config_type_.typed_config_;
+}
+
+inline bool GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::has_config_type() const {
+  return config_type_case() != CONFIG_TYPE_NOT_SET;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::clear_has_config_type() {
+  _oneof_case_[0] = CONFIG_TYPE_NOT_SET;
+}
+inline GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::ConfigTypeCase GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::config_type_case() const {
+  return GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::ConfigTypeCase(_oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
+// GrpcService_GoogleGrpc_CallCredentials
+
+// string access_token = 1;
+inline bool GrpcService_GoogleGrpc_CallCredentials::has_access_token() const {
+  return credential_specifier_case() == kAccessToken;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_has_access_token() {
+  _oneof_case_[0] = kAccessToken;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::clear_access_token() {
+  if (has_access_token()) {
+    credential_specifier_.access_token_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    clear_has_credential_specifier();
+  }
+}
+inline const ::std::string& GrpcService_GoogleGrpc_CallCredentials::access_token() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.access_token)
+  if (has_access_token()) {
+    return credential_specifier_.access_token_.GetNoArena();
+  }
+  return *&::google::protobuf::internal::GetEmptyStringAlreadyInited();
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_access_token(const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.access_token)
+  if (!has_access_token()) {
+    clear_credential_specifier();
+    set_has_access_token();
+    credential_specifier_.access_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  credential_specifier_.access_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.access_token)
+}
+#if LANG_CXX11
+inline void GrpcService_GoogleGrpc_CallCredentials::set_access_token(::std::string&& value) {
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.access_token)
+  if (!has_access_token()) {
+    clear_credential_specifier();
+    set_has_access_token();
+    credential_specifier_.access_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  credential_specifier_.access_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.GoogleGrpc.CallCredentials.access_token)
+}
+#endif
+inline void GrpcService_GoogleGrpc_CallCredentials::set_access_token(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  if (!has_access_token()) {
+    clear_credential_specifier();
+    set_has_access_token();
+    credential_specifier_.access_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  credential_specifier_.access_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.GoogleGrpc.CallCredentials.access_token)
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_access_token(const char* value, size_t size) {
+  if (!has_access_token()) {
+    clear_credential_specifier();
+    set_has_access_token();
+    credential_specifier_.access_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  credential_specifier_.access_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.GoogleGrpc.CallCredentials.access_token)
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials::mutable_access_token() {
+  if (!has_access_token()) {
+    clear_credential_specifier();
+    set_has_access_token();
+    credential_specifier_.access_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.access_token)
+  return credential_specifier_.access_token_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials::release_access_token() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.access_token)
+  if (has_access_token()) {
+    clear_has_credential_specifier();
+    return credential_specifier_.access_token_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  } else {
+    return NULL;
+  }
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_allocated_access_token(::std::string* access_token) {
+  if (!has_access_token()) {
+    credential_specifier_.access_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  clear_credential_specifier();
+  if (access_token != NULL) {
+    set_has_access_token();
+    credential_specifier_.access_token_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), access_token);
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.access_token)
+}
+
+// .google.protobuf.Empty google_compute_engine = 2;
+inline bool GrpcService_GoogleGrpc_CallCredentials::has_google_compute_engine() const {
+  return credential_specifier_case() == kGoogleComputeEngine;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_has_google_compute_engine() {
+  _oneof_case_[0] = kGoogleComputeEngine;
+}
+inline const ::google::protobuf::Empty& GrpcService_GoogleGrpc_CallCredentials::_internal_google_compute_engine() const {
+  return *credential_specifier_.google_compute_engine_;
+}
+inline ::google::protobuf::Empty* GrpcService_GoogleGrpc_CallCredentials::release_google_compute_engine() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.google_compute_engine)
+  if (has_google_compute_engine()) {
+    clear_has_credential_specifier();
+      ::google::protobuf::Empty* temp = credential_specifier_.google_compute_engine_;
+    credential_specifier_.google_compute_engine_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::google::protobuf::Empty& GrpcService_GoogleGrpc_CallCredentials::google_compute_engine() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.google_compute_engine)
+  return has_google_compute_engine()
+      ? *credential_specifier_.google_compute_engine_
+      : *reinterpret_cast< ::google::protobuf::Empty*>(&::google::protobuf::_Empty_default_instance_);
+}
+inline ::google::protobuf::Empty* GrpcService_GoogleGrpc_CallCredentials::mutable_google_compute_engine() {
+  if (!has_google_compute_engine()) {
+    clear_credential_specifier();
+    set_has_google_compute_engine();
+    credential_specifier_.google_compute_engine_ = CreateMaybeMessage< ::google::protobuf::Empty >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.google_compute_engine)
+  return credential_specifier_.google_compute_engine_;
+}
+
+// string google_refresh_token = 3;
+inline bool GrpcService_GoogleGrpc_CallCredentials::has_google_refresh_token() const {
+  return credential_specifier_case() == kGoogleRefreshToken;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_has_google_refresh_token() {
+  _oneof_case_[0] = kGoogleRefreshToken;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::clear_google_refresh_token() {
+  if (has_google_refresh_token()) {
+    credential_specifier_.google_refresh_token_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    clear_has_credential_specifier();
+  }
+}
+inline const ::std::string& GrpcService_GoogleGrpc_CallCredentials::google_refresh_token() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+  if (has_google_refresh_token()) {
+    return credential_specifier_.google_refresh_token_.GetNoArena();
+  }
+  return *&::google::protobuf::internal::GetEmptyStringAlreadyInited();
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_google_refresh_token(const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+  if (!has_google_refresh_token()) {
+    clear_credential_specifier();
+    set_has_google_refresh_token();
+    credential_specifier_.google_refresh_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  credential_specifier_.google_refresh_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+}
+#if LANG_CXX11
+inline void GrpcService_GoogleGrpc_CallCredentials::set_google_refresh_token(::std::string&& value) {
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+  if (!has_google_refresh_token()) {
+    clear_credential_specifier();
+    set_has_google_refresh_token();
+    credential_specifier_.google_refresh_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  credential_specifier_.google_refresh_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+}
+#endif
+inline void GrpcService_GoogleGrpc_CallCredentials::set_google_refresh_token(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  if (!has_google_refresh_token()) {
+    clear_credential_specifier();
+    set_has_google_refresh_token();
+    credential_specifier_.google_refresh_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  credential_specifier_.google_refresh_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_google_refresh_token(const char* value, size_t size) {
+  if (!has_google_refresh_token()) {
+    clear_credential_specifier();
+    set_has_google_refresh_token();
+    credential_specifier_.google_refresh_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  credential_specifier_.google_refresh_token_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials::mutable_google_refresh_token() {
+  if (!has_google_refresh_token()) {
+    clear_credential_specifier();
+    set_has_google_refresh_token();
+    credential_specifier_.google_refresh_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+  return credential_specifier_.google_refresh_token_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_GoogleGrpc_CallCredentials::release_google_refresh_token() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+  if (has_google_refresh_token()) {
+    clear_has_credential_specifier();
+    return credential_specifier_.google_refresh_token_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  } else {
+    return NULL;
+  }
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_allocated_google_refresh_token(::std::string* google_refresh_token) {
+  if (!has_google_refresh_token()) {
+    credential_specifier_.google_refresh_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  clear_credential_specifier();
+  if (google_refresh_token != NULL) {
+    set_has_google_refresh_token();
+    credential_specifier_.google_refresh_token_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), google_refresh_token);
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.google_refresh_token)
+}
+
+// .GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials service_account_jwt_access = 4;
+inline bool GrpcService_GoogleGrpc_CallCredentials::has_service_account_jwt_access() const {
+  return credential_specifier_case() == kServiceAccountJwtAccess;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_has_service_account_jwt_access() {
+  _oneof_case_[0] = kServiceAccountJwtAccess;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::clear_service_account_jwt_access() {
+  if (has_service_account_jwt_access()) {
+    delete credential_specifier_.service_account_jwt_access_;
+    clear_has_credential_specifier();
+  }
+}
+inline const ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& GrpcService_GoogleGrpc_CallCredentials::_internal_service_account_jwt_access() const {
+  return *credential_specifier_.service_account_jwt_access_;
+}
+inline ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* GrpcService_GoogleGrpc_CallCredentials::release_service_account_jwt_access() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.service_account_jwt_access)
+  if (has_service_account_jwt_access()) {
+    clear_has_credential_specifier();
+      ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* temp = credential_specifier_.service_account_jwt_access_;
+    credential_specifier_.service_account_jwt_access_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& GrpcService_GoogleGrpc_CallCredentials::service_account_jwt_access() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.service_account_jwt_access)
+  return has_service_account_jwt_access()
+      ? *credential_specifier_.service_account_jwt_access_
+      : *reinterpret_cast< ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials*>(&::_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_default_instance_);
+}
+inline ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* GrpcService_GoogleGrpc_CallCredentials::mutable_service_account_jwt_access() {
+  if (!has_service_account_jwt_access()) {
+    clear_credential_specifier();
+    set_has_service_account_jwt_access();
+    credential_specifier_.service_account_jwt_access_ = CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.service_account_jwt_access)
+  return credential_specifier_.service_account_jwt_access_;
+}
+
+// .GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials google_iam = 5;
+inline bool GrpcService_GoogleGrpc_CallCredentials::has_google_iam() const {
+  return credential_specifier_case() == kGoogleIam;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_has_google_iam() {
+  _oneof_case_[0] = kGoogleIam;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::clear_google_iam() {
+  if (has_google_iam()) {
+    delete credential_specifier_.google_iam_;
+    clear_has_credential_specifier();
+  }
+}
+inline const ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& GrpcService_GoogleGrpc_CallCredentials::_internal_google_iam() const {
+  return *credential_specifier_.google_iam_;
+}
+inline ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* GrpcService_GoogleGrpc_CallCredentials::release_google_iam() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.google_iam)
+  if (has_google_iam()) {
+    clear_has_credential_specifier();
+      ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* temp = credential_specifier_.google_iam_;
+    credential_specifier_.google_iam_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& GrpcService_GoogleGrpc_CallCredentials::google_iam() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.google_iam)
+  return has_google_iam()
+      ? *credential_specifier_.google_iam_
+      : *reinterpret_cast< ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials*>(&::_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials_default_instance_);
+}
+inline ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* GrpcService_GoogleGrpc_CallCredentials::mutable_google_iam() {
+  if (!has_google_iam()) {
+    clear_credential_specifier();
+    set_has_google_iam();
+    credential_specifier_.google_iam_ = CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.google_iam)
+  return credential_specifier_.google_iam_;
+}
+
+// .GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin from_plugin = 6;
+inline bool GrpcService_GoogleGrpc_CallCredentials::has_from_plugin() const {
+  return credential_specifier_case() == kFromPlugin;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::set_has_from_plugin() {
+  _oneof_case_[0] = kFromPlugin;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::clear_from_plugin() {
+  if (has_from_plugin()) {
+    delete credential_specifier_.from_plugin_;
+    clear_has_credential_specifier();
+  }
+}
+inline const ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& GrpcService_GoogleGrpc_CallCredentials::_internal_from_plugin() const {
+  return *credential_specifier_.from_plugin_;
+}
+inline ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* GrpcService_GoogleGrpc_CallCredentials::release_from_plugin() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.CallCredentials.from_plugin)
+  if (has_from_plugin()) {
+    clear_has_credential_specifier();
+      ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* temp = credential_specifier_.from_plugin_;
+    credential_specifier_.from_plugin_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& GrpcService_GoogleGrpc_CallCredentials::from_plugin() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.CallCredentials.from_plugin)
+  return has_from_plugin()
+      ? *credential_specifier_.from_plugin_
+      : *reinterpret_cast< ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin*>(&::_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_default_instance_);
+}
+inline ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* GrpcService_GoogleGrpc_CallCredentials::mutable_from_plugin() {
+  if (!has_from_plugin()) {
+    clear_credential_specifier();
+    set_has_from_plugin();
+    credential_specifier_.from_plugin_ = CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.CallCredentials.from_plugin)
+  return credential_specifier_.from_plugin_;
+}
+
+inline bool GrpcService_GoogleGrpc_CallCredentials::has_credential_specifier() const {
+  return credential_specifier_case() != CREDENTIAL_SPECIFIER_NOT_SET;
+}
+inline void GrpcService_GoogleGrpc_CallCredentials::clear_has_credential_specifier() {
+  _oneof_case_[0] = CREDENTIAL_SPECIFIER_NOT_SET;
+}
+inline GrpcService_GoogleGrpc_CallCredentials::CredentialSpecifierCase GrpcService_GoogleGrpc_CallCredentials::credential_specifier_case() const {
+  return GrpcService_GoogleGrpc_CallCredentials::CredentialSpecifierCase(_oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
+// GrpcService_GoogleGrpc
+
+// string target_uri = 1;
+inline void GrpcService_GoogleGrpc::clear_target_uri() {
+  target_uri_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_GoogleGrpc::target_uri() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.target_uri)
+  return target_uri_.GetNoArena();
+}
+inline void GrpcService_GoogleGrpc::set_target_uri(const ::std::string& value) {
+  
+  target_uri_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.target_uri)
+}
+#if LANG_CXX11
+inline void GrpcService_GoogleGrpc::set_target_uri(::std::string&& value) {
+  
+  target_uri_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.GoogleGrpc.target_uri)
+}
+#endif
+inline void GrpcService_GoogleGrpc::set_target_uri(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  target_uri_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.GoogleGrpc.target_uri)
+}
+inline void GrpcService_GoogleGrpc::set_target_uri(const char* value, size_t size) {
+  
+  target_uri_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.GoogleGrpc.target_uri)
+}
+inline ::std::string* GrpcService_GoogleGrpc::mutable_target_uri() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.target_uri)
+  return target_uri_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_GoogleGrpc::release_target_uri() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.target_uri)
+  
+  return target_uri_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_GoogleGrpc::set_allocated_target_uri(::std::string* target_uri) {
+  if (target_uri != NULL) {
+    
+  } else {
+    
+  }
+  target_uri_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), target_uri);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.target_uri)
+}
+
+// .GrpcService.GoogleGrpc.ChannelCredentials channel_credentials = 2;
+inline bool GrpcService_GoogleGrpc::has_channel_credentials() const {
+  return this != internal_default_instance() && channel_credentials_ != NULL;
+}
+inline void GrpcService_GoogleGrpc::clear_channel_credentials() {
+  if (GetArenaNoVirtual() == NULL && channel_credentials_ != NULL) {
+    delete channel_credentials_;
+  }
+  channel_credentials_ = NULL;
+}
+inline const ::GrpcService_GoogleGrpc_ChannelCredentials& GrpcService_GoogleGrpc::_internal_channel_credentials() const {
+  return *channel_credentials_;
+}
+inline const ::GrpcService_GoogleGrpc_ChannelCredentials& GrpcService_GoogleGrpc::channel_credentials() const {
+  const ::GrpcService_GoogleGrpc_ChannelCredentials* p = channel_credentials_;
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.channel_credentials)
+  return p != NULL ? *p : *reinterpret_cast<const ::GrpcService_GoogleGrpc_ChannelCredentials*>(
+      &::_GrpcService_GoogleGrpc_ChannelCredentials_default_instance_);
+}
+inline ::GrpcService_GoogleGrpc_ChannelCredentials* GrpcService_GoogleGrpc::release_channel_credentials() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.channel_credentials)
+  
+  ::GrpcService_GoogleGrpc_ChannelCredentials* temp = channel_credentials_;
+  channel_credentials_ = NULL;
+  return temp;
+}
+inline ::GrpcService_GoogleGrpc_ChannelCredentials* GrpcService_GoogleGrpc::mutable_channel_credentials() {
+  
+  if (channel_credentials_ == NULL) {
+    auto* p = CreateMaybeMessage<::GrpcService_GoogleGrpc_ChannelCredentials>(GetArenaNoVirtual());
+    channel_credentials_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.channel_credentials)
+  return channel_credentials_;
+}
+inline void GrpcService_GoogleGrpc::set_allocated_channel_credentials(::GrpcService_GoogleGrpc_ChannelCredentials* channel_credentials) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == NULL) {
+    delete channel_credentials_;
+  }
+  if (channel_credentials) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      channel_credentials = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, channel_credentials, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  channel_credentials_ = channel_credentials;
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.channel_credentials)
+}
+
+// repeated .GrpcService.GoogleGrpc.CallCredentials call_credentials = 3;
+inline int GrpcService_GoogleGrpc::call_credentials_size() const {
+  return call_credentials_.size();
+}
+inline void GrpcService_GoogleGrpc::clear_call_credentials() {
+  call_credentials_.Clear();
+}
+inline ::GrpcService_GoogleGrpc_CallCredentials* GrpcService_GoogleGrpc::mutable_call_credentials(int index) {
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.call_credentials)
+  return call_credentials_.Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField< ::GrpcService_GoogleGrpc_CallCredentials >*
+GrpcService_GoogleGrpc::mutable_call_credentials() {
+  // @@protoc_insertion_point(field_mutable_list:GrpcService.GoogleGrpc.call_credentials)
+  return &call_credentials_;
+}
+inline const ::GrpcService_GoogleGrpc_CallCredentials& GrpcService_GoogleGrpc::call_credentials(int index) const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.call_credentials)
+  return call_credentials_.Get(index);
+}
+inline ::GrpcService_GoogleGrpc_CallCredentials* GrpcService_GoogleGrpc::add_call_credentials() {
+  // @@protoc_insertion_point(field_add:GrpcService.GoogleGrpc.call_credentials)
+  return call_credentials_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::GrpcService_GoogleGrpc_CallCredentials >&
+GrpcService_GoogleGrpc::call_credentials() const {
+  // @@protoc_insertion_point(field_list:GrpcService.GoogleGrpc.call_credentials)
+  return call_credentials_;
+}
+
+// string stat_prefix = 4;
+inline void GrpcService_GoogleGrpc::clear_stat_prefix() {
+  stat_prefix_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_GoogleGrpc::stat_prefix() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.stat_prefix)
+  return stat_prefix_.GetNoArena();
+}
+inline void GrpcService_GoogleGrpc::set_stat_prefix(const ::std::string& value) {
+  
+  stat_prefix_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.stat_prefix)
+}
+#if LANG_CXX11
+inline void GrpcService_GoogleGrpc::set_stat_prefix(::std::string&& value) {
+  
+  stat_prefix_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.GoogleGrpc.stat_prefix)
+}
+#endif
+inline void GrpcService_GoogleGrpc::set_stat_prefix(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  stat_prefix_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.GoogleGrpc.stat_prefix)
+}
+inline void GrpcService_GoogleGrpc::set_stat_prefix(const char* value, size_t size) {
+  
+  stat_prefix_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.GoogleGrpc.stat_prefix)
+}
+inline ::std::string* GrpcService_GoogleGrpc::mutable_stat_prefix() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.stat_prefix)
+  return stat_prefix_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_GoogleGrpc::release_stat_prefix() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.stat_prefix)
+  
+  return stat_prefix_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_GoogleGrpc::set_allocated_stat_prefix(::std::string* stat_prefix) {
+  if (stat_prefix != NULL) {
+    
+  } else {
+    
+  }
+  stat_prefix_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), stat_prefix);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.stat_prefix)
+}
+
+// string credentials_factory_name = 5;
+inline void GrpcService_GoogleGrpc::clear_credentials_factory_name() {
+  credentials_factory_name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_GoogleGrpc::credentials_factory_name() const {
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.credentials_factory_name)
+  return credentials_factory_name_.GetNoArena();
+}
+inline void GrpcService_GoogleGrpc::set_credentials_factory_name(const ::std::string& value) {
+  
+  credentials_factory_name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.GoogleGrpc.credentials_factory_name)
+}
+#if LANG_CXX11
+inline void GrpcService_GoogleGrpc::set_credentials_factory_name(::std::string&& value) {
+  
+  credentials_factory_name_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.GoogleGrpc.credentials_factory_name)
+}
+#endif
+inline void GrpcService_GoogleGrpc::set_credentials_factory_name(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  credentials_factory_name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.GoogleGrpc.credentials_factory_name)
+}
+inline void GrpcService_GoogleGrpc::set_credentials_factory_name(const char* value, size_t size) {
+  
+  credentials_factory_name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.GoogleGrpc.credentials_factory_name)
+}
+inline ::std::string* GrpcService_GoogleGrpc::mutable_credentials_factory_name() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.credentials_factory_name)
+  return credentials_factory_name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_GoogleGrpc::release_credentials_factory_name() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.credentials_factory_name)
+  
+  return credentials_factory_name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_GoogleGrpc::set_allocated_credentials_factory_name(::std::string* credentials_factory_name) {
+  if (credentials_factory_name != NULL) {
+    
+  } else {
+    
+  }
+  credentials_factory_name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), credentials_factory_name);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.credentials_factory_name)
+}
+
+// .google.protobuf.Struct config = 6;
+inline bool GrpcService_GoogleGrpc::has_config() const {
+  return this != internal_default_instance() && config_ != NULL;
+}
+inline const ::google::protobuf::Struct& GrpcService_GoogleGrpc::_internal_config() const {
+  return *config_;
+}
+inline const ::google::protobuf::Struct& GrpcService_GoogleGrpc::config() const {
+  const ::google::protobuf::Struct* p = config_;
+  // @@protoc_insertion_point(field_get:GrpcService.GoogleGrpc.config)
+  return p != NULL ? *p : *reinterpret_cast<const ::google::protobuf::Struct*>(
+      &::google::protobuf::_Struct_default_instance_);
+}
+inline ::google::protobuf::Struct* GrpcService_GoogleGrpc::release_config() {
+  // @@protoc_insertion_point(field_release:GrpcService.GoogleGrpc.config)
+  
+  ::google::protobuf::Struct* temp = config_;
+  config_ = NULL;
+  return temp;
+}
+inline ::google::protobuf::Struct* GrpcService_GoogleGrpc::mutable_config() {
+  
+  if (config_ == NULL) {
+    auto* p = CreateMaybeMessage<::google::protobuf::Struct>(GetArenaNoVirtual());
+    config_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.GoogleGrpc.config)
+  return config_;
+}
+inline void GrpcService_GoogleGrpc::set_allocated_config(::google::protobuf::Struct* config) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == NULL) {
+    delete reinterpret_cast< ::google::protobuf::MessageLite*>(config_);
+  }
+  if (config) {
+    ::google::protobuf::Arena* submessage_arena =
+      reinterpret_cast<::google::protobuf::MessageLite*>(config)->GetArena();
+    if (message_arena != submessage_arena) {
+      config = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, config, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  config_ = config;
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.config)
+}
+
+// -------------------------------------------------------------------
+
+// GrpcService_HeaderValue
+
+// string key = 1;
+inline void GrpcService_HeaderValue::clear_key() {
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_HeaderValue::key() const {
+  // @@protoc_insertion_point(field_get:GrpcService.HeaderValue.key)
+  return key_.GetNoArena();
+}
+inline void GrpcService_HeaderValue::set_key(const ::std::string& value) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.HeaderValue.key)
+}
+#if LANG_CXX11
+inline void GrpcService_HeaderValue::set_key(::std::string&& value) {
+  
+  key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.HeaderValue.key)
+}
+#endif
+inline void GrpcService_HeaderValue::set_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.HeaderValue.key)
+}
+inline void GrpcService_HeaderValue::set_key(const char* value, size_t size) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.HeaderValue.key)
+}
+inline ::std::string* GrpcService_HeaderValue::mutable_key() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.HeaderValue.key)
+  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_HeaderValue::release_key() {
+  // @@protoc_insertion_point(field_release:GrpcService.HeaderValue.key)
+  
+  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_HeaderValue::set_allocated_key(::std::string* key) {
+  if (key != NULL) {
+    
+  } else {
+    
+  }
+  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.HeaderValue.key)
+}
+
+// string value = 2;
+inline void GrpcService_HeaderValue::clear_value() {
+  value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& GrpcService_HeaderValue::value() const {
+  // @@protoc_insertion_point(field_get:GrpcService.HeaderValue.value)
+  return value_.GetNoArena();
+}
+inline void GrpcService_HeaderValue::set_value(const ::std::string& value) {
+  
+  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:GrpcService.HeaderValue.value)
+}
+#if LANG_CXX11
+inline void GrpcService_HeaderValue::set_value(::std::string&& value) {
+  
+  value_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:GrpcService.HeaderValue.value)
+}
+#endif
+inline void GrpcService_HeaderValue::set_value(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:GrpcService.HeaderValue.value)
+}
+inline void GrpcService_HeaderValue::set_value(const char* value, size_t size) {
+  
+  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:GrpcService.HeaderValue.value)
+}
+inline ::std::string* GrpcService_HeaderValue::mutable_value() {
+  
+  // @@protoc_insertion_point(field_mutable:GrpcService.HeaderValue.value)
+  return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* GrpcService_HeaderValue::release_value() {
+  // @@protoc_insertion_point(field_release:GrpcService.HeaderValue.value)
+  
+  return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void GrpcService_HeaderValue::set_allocated_value(::std::string* value) {
+  if (value != NULL) {
+    
+  } else {
+    
+  }
+  value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.HeaderValue.value)
+}
+
+// -------------------------------------------------------------------
+
+// GrpcService
+
+// .GrpcService.EnvoyGrpc envoy_grpc = 1;
+inline bool GrpcService::has_envoy_grpc() const {
+  return target_specifier_case() == kEnvoyGrpc;
+}
+inline void GrpcService::set_has_envoy_grpc() {
+  _oneof_case_[0] = kEnvoyGrpc;
+}
+inline void GrpcService::clear_envoy_grpc() {
+  if (has_envoy_grpc()) {
+    delete target_specifier_.envoy_grpc_;
+    clear_has_target_specifier();
+  }
+}
+inline const ::GrpcService_EnvoyGrpc& GrpcService::_internal_envoy_grpc() const {
+  return *target_specifier_.envoy_grpc_;
+}
+inline ::GrpcService_EnvoyGrpc* GrpcService::release_envoy_grpc() {
+  // @@protoc_insertion_point(field_release:GrpcService.envoy_grpc)
+  if (has_envoy_grpc()) {
+    clear_has_target_specifier();
+      ::GrpcService_EnvoyGrpc* temp = target_specifier_.envoy_grpc_;
+    target_specifier_.envoy_grpc_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::GrpcService_EnvoyGrpc& GrpcService::envoy_grpc() const {
+  // @@protoc_insertion_point(field_get:GrpcService.envoy_grpc)
+  return has_envoy_grpc()
+      ? *target_specifier_.envoy_grpc_
+      : *reinterpret_cast< ::GrpcService_EnvoyGrpc*>(&::_GrpcService_EnvoyGrpc_default_instance_);
+}
+inline ::GrpcService_EnvoyGrpc* GrpcService::mutable_envoy_grpc() {
+  if (!has_envoy_grpc()) {
+    clear_target_specifier();
+    set_has_envoy_grpc();
+    target_specifier_.envoy_grpc_ = CreateMaybeMessage< ::GrpcService_EnvoyGrpc >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.envoy_grpc)
+  return target_specifier_.envoy_grpc_;
+}
+
+// .GrpcService.GoogleGrpc google_grpc = 2;
+inline bool GrpcService::has_google_grpc() const {
+  return target_specifier_case() == kGoogleGrpc;
+}
+inline void GrpcService::set_has_google_grpc() {
+  _oneof_case_[0] = kGoogleGrpc;
+}
+inline void GrpcService::clear_google_grpc() {
+  if (has_google_grpc()) {
+    delete target_specifier_.google_grpc_;
+    clear_has_target_specifier();
+  }
+}
+inline const ::GrpcService_GoogleGrpc& GrpcService::_internal_google_grpc() const {
+  return *target_specifier_.google_grpc_;
+}
+inline ::GrpcService_GoogleGrpc* GrpcService::release_google_grpc() {
+  // @@protoc_insertion_point(field_release:GrpcService.google_grpc)
+  if (has_google_grpc()) {
+    clear_has_target_specifier();
+      ::GrpcService_GoogleGrpc* temp = target_specifier_.google_grpc_;
+    target_specifier_.google_grpc_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::GrpcService_GoogleGrpc& GrpcService::google_grpc() const {
+  // @@protoc_insertion_point(field_get:GrpcService.google_grpc)
+  return has_google_grpc()
+      ? *target_specifier_.google_grpc_
+      : *reinterpret_cast< ::GrpcService_GoogleGrpc*>(&::_GrpcService_GoogleGrpc_default_instance_);
+}
+inline ::GrpcService_GoogleGrpc* GrpcService::mutable_google_grpc() {
+  if (!has_google_grpc()) {
+    clear_target_specifier();
+    set_has_google_grpc();
+    target_specifier_.google_grpc_ = CreateMaybeMessage< ::GrpcService_GoogleGrpc >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.google_grpc)
+  return target_specifier_.google_grpc_;
+}
+
+// .google.protobuf.Duration timeout = 3;
+inline bool GrpcService::has_timeout() const {
+  return this != internal_default_instance() && timeout_ != NULL;
+}
+inline const ::google::protobuf::Duration& GrpcService::_internal_timeout() const {
+  return *timeout_;
+}
+inline const ::google::protobuf::Duration& GrpcService::timeout() const {
+  const ::google::protobuf::Duration* p = timeout_;
+  // @@protoc_insertion_point(field_get:GrpcService.timeout)
+  return p != NULL ? *p : *reinterpret_cast<const ::google::protobuf::Duration*>(
+      &::google::protobuf::_Duration_default_instance_);
+}
+inline ::google::protobuf::Duration* GrpcService::release_timeout() {
+  // @@protoc_insertion_point(field_release:GrpcService.timeout)
+  
+  ::google::protobuf::Duration* temp = timeout_;
+  timeout_ = NULL;
+  return temp;
+}
+inline ::google::protobuf::Duration* GrpcService::mutable_timeout() {
+  
+  if (timeout_ == NULL) {
+    auto* p = CreateMaybeMessage<::google::protobuf::Duration>(GetArenaNoVirtual());
+    timeout_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:GrpcService.timeout)
+  return timeout_;
+}
+inline void GrpcService::set_allocated_timeout(::google::protobuf::Duration* timeout) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == NULL) {
+    delete reinterpret_cast< ::google::protobuf::MessageLite*>(timeout_);
+  }
+  if (timeout) {
+    ::google::protobuf::Arena* submessage_arena =
+      reinterpret_cast<::google::protobuf::MessageLite*>(timeout)->GetArena();
+    if (message_arena != submessage_arena) {
+      timeout = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, timeout, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  timeout_ = timeout;
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.timeout)
+}
+
+// repeated .GrpcService.HeaderValue initial_metadata = 5;
+inline int GrpcService::initial_metadata_size() const {
+  return initial_metadata_.size();
+}
+inline void GrpcService::clear_initial_metadata() {
+  initial_metadata_.Clear();
+}
+inline ::GrpcService_HeaderValue* GrpcService::mutable_initial_metadata(int index) {
+  // @@protoc_insertion_point(field_mutable:GrpcService.initial_metadata)
+  return initial_metadata_.Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField< ::GrpcService_HeaderValue >*
+GrpcService::mutable_initial_metadata() {
+  // @@protoc_insertion_point(field_mutable_list:GrpcService.initial_metadata)
+  return &initial_metadata_;
+}
+inline const ::GrpcService_HeaderValue& GrpcService::initial_metadata(int index) const {
+  // @@protoc_insertion_point(field_get:GrpcService.initial_metadata)
+  return initial_metadata_.Get(index);
+}
+inline ::GrpcService_HeaderValue* GrpcService::add_initial_metadata() {
+  // @@protoc_insertion_point(field_add:GrpcService.initial_metadata)
+  return initial_metadata_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::GrpcService_HeaderValue >&
+GrpcService::initial_metadata() const {
+  // @@protoc_insertion_point(field_list:GrpcService.initial_metadata)
+  return initial_metadata_;
+}
+
+inline bool GrpcService::has_target_specifier() const {
+  return target_specifier_case() != TARGET_SPECIFIER_NOT_SET;
+}
+inline void GrpcService::clear_has_target_specifier() {
+  _oneof_case_[0] = TARGET_SPECIFIER_NOT_SET;
+}
+inline GrpcService::TargetSpecifierCase GrpcService::target_specifier_case() const {
+  return GrpcService::TargetSpecifierCase(_oneof_case_[0]);
+}
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
