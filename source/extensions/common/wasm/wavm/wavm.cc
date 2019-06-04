@@ -236,6 +236,7 @@ struct Wavm : public WasmVm {
   bool clonable() override { return true; };
   std::unique_ptr<WasmVm> clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
+  void setMemoryLayout(uint64_t, uint64_t, uint64_t) override {}
   void link(absl::string_view debug_name, bool needs_emscripten) override;
   void start(Context* context) override;
   uint64_t getMemorySize() override;

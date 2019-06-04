@@ -499,7 +499,11 @@ Word _emscripten_resize_heapHandler(void*, Word) {
   throw WasmException("emscripten emscripten_resize_heap");
 }
 
-Word abortOnCannotGrowMemoryHandler(void*) {
+Word abortOnCannotGrowMemoryAbi00Handler(void*) {
+  throw WasmException("emscripten abortOnCannotGrowMemory");
+}
+
+Word abortOnCannotGrowMemoryAbi02Handler(void*, Word) {
   throw WasmException("emscripten abortOnCannotGrowMemory");
 }
 
@@ -1052,7 +1056,8 @@ void Context::setMetadataStruct(MetadataType type, absl::string_view name,
     return;
   }
   ProtobufWkt::Struct proto_struct;
-  if (!proto_struct.ParseFromArray(serialized_proto_struct.data(), serialized_proto_struct.size())) {
+  if (!proto_struct.ParseFromArray(serialized_proto_struct.data(),
+                                   serialized_proto_struct.size())) {
     return;
   }
   streamInfo->setDynamicMetadata(std::string(name), proto_struct);
@@ -1324,16 +1329,24 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
 }
 
 void Wasm::registerCallbacks() {
-#define _REGISTER(_fn)                                                                             \
+#define _REGISTER_ABI(_fn, _abi)                                                                   \
   wasm_vm_->registerCallback(                                                                      \
-      "envoy", #_fn, &_fn##Handler,                                                                \
-      &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
-                                   _fn##Handler>::convertFunctionWordToUint32);
+      "envoy", #_fn, &_fn##_abi##Handler,                                                          \
+      &ConvertFunctionWordToUint32<decltype(_fn##_abi##Handler),                                   \
+                                   _fn##_abi##Handler>::convertFunctionWordToUint32)
+#define _REGISTER(_fn) _REGISTER_ABI(_fn, )
+
   if (is_emscripten_) {
+    if (emscripten_abi_major_version_ > 0 || emscripten_abi_minor_version_ > 1) {
+      // abi 0.2 - abortOnCannotGrowMemory() changed singature to (param i32) (result i32).
+      _REGISTER_ABI(abortOnCannotGrowMemory, Abi02);
+    } else {
+      _REGISTER_ABI(abortOnCannotGrowMemory, Abi00);
+    }
+
     _REGISTER(_emscripten_memcpy_big);
     _REGISTER(_emscripten_get_heap_size);
     _REGISTER(_emscripten_resize_heap);
-    _REGISTER(abortOnCannotGrowMemory);
     _REGISTER(abort);
     _REGISTER(_abort);
     _REGISTER(_llvm_trap);
@@ -1360,6 +1373,7 @@ void Wasm::registerCallbacks() {
     _REGISTER(setTempRet0);
   }
 #undef _REGISTER
+#undef _REGISTER_ABI
 
   // Calls with the "_proxy_" prefix.
 #define _REGISTER_PROXY(_fn)                                                                       \
@@ -1414,12 +1428,16 @@ void Wasm::registerCallbacks() {
 
 void Wasm::establishEnvironment() {
   if (is_emscripten_) {
-    emscripten_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
-    emscripten_dynamictop_ = wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(128 * 64 * 1024));
+    wasm_vm_->setMemoryLayout(emscripten_stack_base_, emscripten_dynamic_base_,
+                              emscripten_dynamictop_ptr_);
+
+    global_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
+    global_dynamictop_ =
+        wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(emscripten_dynamictop_ptr_));
 
     wasm_vm_->makeModule("global");
-    emscripten_NaN_ = wasm_vm_->makeGlobal("global", "NaN", std::nan("0"));
-    emscripten_Infinity_ =
+    global_NaN_ = wasm_vm_->makeGlobal("global", "NaN", std::nan("0"));
+    global_Infinity_ =
         wasm_vm_->makeGlobal("global", "Infinity", std::numeric_limits<double>::infinity());
   }
 }
@@ -1480,12 +1498,24 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
     is_emscripten_ = true;
     auto start = reinterpret_cast<const uint8_t*>(metadata.data());
     auto end = reinterpret_cast<const uint8_t*>(metadata.data() + metadata.size());
-    start = decodeVarint(start, end, &emscripten_major_version_);
-    start = decodeVarint(start, end, &emscripten_minor_version_);
+    start = decodeVarint(start, end, &emscripten_metadata_major_version_);
+    start = decodeVarint(start, end, &emscripten_metadata_minor_version_);
     start = decodeVarint(start, end, &emscripten_abi_major_version_);
     start = decodeVarint(start, end, &emscripten_abi_minor_version_);
     start = decodeVarint(start, end, &emscripten_memory_size_);
-    decodeVarint(start, end, &emscripten_table_size_);
+    start = decodeVarint(start, end, &emscripten_table_size_);
+    if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 0) {
+      // metadata 0.1 - added: global_base, dynamic_base, dynamictop_ptr and tempdouble_ptr.
+      start = decodeVarint(start, end, &emscripten_global_base_);
+      start = decodeVarint(start, end, &emscripten_dynamic_base_);
+      start = decodeVarint(start, end, &emscripten_dynamictop_ptr_);
+      decodeVarint(start, end, &emscripten_tempdouble_ptr_);
+    } else {
+      // Workaround for Emscripten versions without heap (dynamic) base in metadata.
+      emscripten_stack_base_ = 64 * 64 * 1024;      // 4MB
+      emscripten_dynamic_base_ = 128 * 64 * 1024;   // 8MB
+      emscripten_dynamictop_ptr_ = 128 * 64 * 1024; // 8MB
+    }
   }
   registerCallbacks();
   establishEnvironment();
@@ -1493,8 +1523,8 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   general_context_ = createContext();
   wasm_vm_->start(general_context_.get());
   if (is_emscripten_) {
-    ASSERT(std::isnan(emscripten_NaN_->get()));
-    ASSERT(std::isinf(emscripten_Infinity_->get()));
+    ASSERT(std::isnan(global_NaN_->get()));
+    ASSERT(std::isinf(global_Infinity_->get()));
   }
   code_ = code;
   allow_precompiled_ = allow_precompiled;

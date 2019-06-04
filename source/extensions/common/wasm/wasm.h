@@ -562,14 +562,15 @@ public:
     general_context_ = std::move(context);
   }
 
-  bool getEmscriptenVersion(uint32_t* emscripten_major_version, uint32_t* emscripten_minor_version,
+  bool getEmscriptenVersion(uint32_t* emscripten_metadata_major_version,
+                            uint32_t* emscripten_metadata_minor_version,
                             uint32_t* emscripten_abi_major_version,
                             uint32_t* emscripten_abi_minor_version) {
     if (!is_emscripten_) {
       return false;
     }
-    *emscripten_major_version = emscripten_major_version_;
-    *emscripten_minor_version = emscripten_minor_version_;
+    *emscripten_metadata_major_version = emscripten_metadata_major_version_;
+    *emscripten_metadata_minor_version = emscripten_metadata_minor_version_;
     *emscripten_abi_major_version = emscripten_abi_major_version_;
     *emscripten_abi_minor_version = emscripten_abi_minor_version_;
     return true;
@@ -662,17 +663,22 @@ private:
   bool allow_precompiled_ = false;
 
   bool is_emscripten_ = false;
-  uint32_t emscripten_major_version_ = 0;
-  uint32_t emscripten_minor_version_ = 0;
+  uint32_t emscripten_metadata_major_version_ = 0;
+  uint32_t emscripten_metadata_minor_version_ = 0;
   uint32_t emscripten_abi_major_version_ = 0;
   uint32_t emscripten_abi_minor_version_ = 0;
   uint32_t emscripten_memory_size_ = 0;
   uint32_t emscripten_table_size_ = 0;
+  uint32_t emscripten_global_base_ = 0;
+  uint32_t emscripten_stack_base_ = 0;
+  uint32_t emscripten_dynamic_base_ = 0;
+  uint32_t emscripten_dynamictop_ptr_ = 0;
+  uint32_t emscripten_tempdouble_ptr_ = 0;
 
-  std::unique_ptr<Global<Word>> emscripten_table_base_;
-  std::unique_ptr<Global<Word>> emscripten_dynamictop_;
-  std::unique_ptr<Global<double>> emscripten_NaN_;
-  std::unique_ptr<Global<double>> emscripten_Infinity_;
+  std::unique_ptr<Global<Word>> global_table_base_;
+  std::unique_ptr<Global<Word>> global_dynamictop_;
+  std::unique_ptr<Global<double>> global_NaN_;
+  std::unique_ptr<Global<double>> global_Infinity_;
 
   // Stats/Metrics
   uint32_t next_counter_metric_id_ = kMetricTypeCounter;
@@ -702,6 +708,10 @@ public:
   virtual bool load(const std::string& code, bool allow_precompiled) PURE;
   // Link to registered function.
   virtual void link(absl::string_view debug_name, bool needs_emscripten) PURE;
+
+  // Set memory layout (start of dynamic heap base, etc.) in the VM.
+  virtual void setMemoryLayout(uint64_t stack_base, uint64_t heap_base,
+                               uint64_t heap_base_pointer) PURE;
 
   // Call the 'start' function and initialize globals.
   virtual void start(Context*) PURE;
