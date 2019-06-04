@@ -1056,7 +1056,8 @@ void Context::setMetadataStruct(MetadataType type, absl::string_view name,
     return;
   }
   ProtobufWkt::Struct proto_struct;
-  if (!proto_struct.ParseFromArray(serialized_proto_struct.data(), serialized_proto_struct.size())) {
+  if (!proto_struct.ParseFromArray(serialized_proto_struct.data(),
+                                   serialized_proto_struct.size())) {
     return;
   }
   streamInfo->setDynamicMetadata(std::string(name), proto_struct);
@@ -1427,7 +1428,8 @@ void Wasm::registerCallbacks() {
 
 void Wasm::establishEnvironment() {
   if (is_emscripten_) {
-    wasm_vm_->setMemoryLayout(emscripten_dynamic_base_, emscripten_dynamictop_ptr_);
+    wasm_vm_->setMemoryLayout(emscripten_stack_base_, emscripten_dynamic_base_,
+                              emscripten_dynamictop_ptr_);
 
     global_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
     global_dynamictop_ =
@@ -1508,6 +1510,11 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
       start = decodeVarint(start, end, &emscripten_dynamic_base_);
       start = decodeVarint(start, end, &emscripten_dynamictop_ptr_);
       decodeVarint(start, end, &emscripten_tempdouble_ptr_);
+    } else {
+      // Workaround for Emscripten versions without heap (dynamic) base in metadata.
+      emscripten_stack_base_ = 64 * 64 * 1024;      // 4MB
+      emscripten_dynamic_base_ = 128 * 64 * 1024;   // 8MB
+      emscripten_dynamictop_ptr_ = 128 * 64 * 1024; // 8MB
     }
   }
   registerCallbacks();

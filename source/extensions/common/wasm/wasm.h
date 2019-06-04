@@ -670,6 +670,7 @@ private:
   uint32_t emscripten_memory_size_ = 0;
   uint32_t emscripten_table_size_ = 0;
   uint32_t emscripten_global_base_ = 0;
+  uint32_t emscripten_stack_base_ = 0;
   uint32_t emscripten_dynamic_base_ = 0;
   uint32_t emscripten_dynamictop_ptr_ = 0;
   uint32_t emscripten_tempdouble_ptr_ = 0;
@@ -709,7 +710,8 @@ public:
   virtual void link(absl::string_view debug_name, bool needs_emscripten) PURE;
 
   // Set memory layout (start of dynamic heap base, etc.) in the VM.
-  virtual void setMemoryLayout(uint64_t heap_base, uint64_t heap_base_pointer) PURE;
+  virtual void setMemoryLayout(uint64_t stack_base, uint64_t heap_base,
+                               uint64_t heap_base_pointer) PURE;
 
   // Call the 'start' function and initialize globals.
   virtual void start(Context*) PURE;
