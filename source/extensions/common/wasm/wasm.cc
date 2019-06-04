@@ -1491,6 +1491,7 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   establishEnvironment();
   wasm_vm_->link(name, is_emscripten_);
   general_context_ = createContext();
+  getFunctions();
   wasm_vm_->start(general_context_.get());
   if (is_emscripten_) {
     ASSERT(std::isnan(emscripten_NaN_->get()));
@@ -1498,7 +1499,6 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   }
   code_ = code;
   allow_precompiled_ = allow_precompiled;
-  getFunctions();
   return true;
 }
 
