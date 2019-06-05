@@ -962,6 +962,17 @@ const StreamInfo::StreamInfo* Context::getConstStreamInfo(MetadataType type) con
       return access_log_stream_info_;
     }
     break;
+  case MetadataType::Cluster:
+    if (decoder_callbacks_) {
+      return &decoder_callbacks_->streamInfo();
+    }
+    if (encoder_callbacks_) {
+      return &encoder_callbacks_->streamInfo();
+    }
+    if (access_log_stream_info_) {
+      return access_log_stream_info_;
+    }
+    break;
   default:
     break;
   }
@@ -983,7 +994,7 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
   case MetadataType::ResponseRoute:
     return getRouteMetadataStructProto(encoder_callbacks_);
   case MetadataType::Node:
-    if (name == "_") {
+    if (name == ".") {
       temporary_metadata_.Clear();
       (*temporary_metadata_.mutable_fields())["id"].set_string_value(
           wasm_->local_info_.node().id());
@@ -1005,26 +1016,33 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
       return getStructProtoFromMetadata(*wasm_->listener_metadata_, name);
     }
     return nullptr;
-  case MetadataType::Cluster:
-    if (name == "_") {
-      temporary_metadata_.Clear();
-      (*temporary_metadata_.mutable_fields())["local_cluster_name"].set_string_value(
-          clusterManager().localClusterName());
-      return &temporary_metadata_;
-    }
-    {
-      auto cluster = clusterManager().get(clusterManager().localClusterName());
-      if (cluster) {
-        return getStructProtoFromMetadata(cluster->info()->metadata(), name);
-      }
-    }
-    return nullptr;
-  default: {
-    auto streamInfo = getConstStreamInfo(type);
-    if (!streamInfo) {
+  case MetadataType::Cluster: {
+    auto stream_info = getConstStreamInfo(type);
+    if (!stream_info) {
       return nullptr;
     }
-    return getStructProtoFromMetadata(streamInfo->dynamicMetadata(), name);
+    auto router_entry = stream_info->routeEntry();
+    if (!router_entry) {
+      return nullptr;
+    }
+    auto cluster_name = router_entry->clusterName();
+    if (name == ".") {
+      temporary_metadata_.Clear();
+      (*temporary_metadata_.mutable_fields())["cluster_name"].set_string_value(cluster_name);
+      return &temporary_metadata_;
+    }
+    if (cluster_name.empty()) {
+      return nullptr;
+    }
+    auto cluster = clusterManager().get(cluster_name);
+    return getStructProtoFromMetadata(cluster->info()->metadata(), name);
+  }
+  default: {
+    auto stream_info = getConstStreamInfo(type);
+    if (!stream_info) {
+      return nullptr;
+    }
+    return getStructProtoFromMetadata(stream_info->dynamicMetadata(), name);
   }
   }
 }
