@@ -1017,25 +1017,22 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
     }
     return nullptr;
   case MetadataType::Cluster: {
+    std::string cluster_name;
     auto stream_info = getConstStreamInfo(type);
     if (!stream_info) {
       return nullptr;
     }
-    auto router_entry = stream_info->routeEntry();
-    if (!router_entry) {
+    auto host = stream_info->upstreamHost();
+    if (!host) {
       return nullptr;
     }
-    auto cluster_name = router_entry->clusterName();
+    cluster_name = host->cluster().name();
     if (name == ".") {
       temporary_metadata_.Clear();
       (*temporary_metadata_.mutable_fields())["cluster_name"].set_string_value(cluster_name);
       return &temporary_metadata_;
     }
-    if (cluster_name.empty()) {
-      return nullptr;
-    }
-    auto cluster = clusterManager().get(cluster_name);
-    return getStructProtoFromMetadata(cluster->info()->metadata(), name);
+    return getStructProtoFromMetadata(host->cluster().metadata(), name);
   }
   default: {
     auto stream_info = getConstStreamInfo(type);
