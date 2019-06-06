@@ -18,6 +18,7 @@ using FilterDataStatus = Http::FilterDataStatus;
 using GrpcStatus = ProtobufUtil::error::Code;
 using MetricType = Envoy::Extensions::Common::Wasm::Context::MetricType;
 using StringView = absl::string_view;
+using EnumType = uint32_t;
 } // namespace Plugin
 } // namespace Null
 } // namespace Wasm

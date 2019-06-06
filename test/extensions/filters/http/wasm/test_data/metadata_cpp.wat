@@ -4889,7 +4889,7 @@
     i32.add
     local.tee $16
     local.get $10
-    call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE4findISA_EENS_15__hash_iteratorIPNS_11__hash_nodeISE_PvEEEERKT_
+    call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE4findIS9_EENS_15__hash_iteratorIPNS_11__hash_nodeISD_PvEEEERKT_
     local.tee $4
     if $if_2
       local.get $0
@@ -4925,7 +4925,7 @@
           call $__Z16getMetadataValue12MetadataTypeNSt3__217basic_string_viewIcNS0_11char_traitsIcEEEE
           local.get $16
           local.get $10
-          call $__ZNSt3__213unordered_mapINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueE8PairHashNS_8equal_toIS9_EENS6_INS1_IKS9_SC_EEEEEixERSG_
+          call $__ZNSt3__213unordered_mapINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueE8PairHashNS_8equal_toIS8_EENS5_INS1_IKS8_SB_EEEEEixERSF_
           local.get $0
           call $__ZN6google8protobuf5Value8CopyFromERKS1_
           br $block_1
@@ -5187,7 +5187,7 @@
                   local.set $2
                   local.get $16
                   local.get $10
-                  call $__ZNSt3__213unordered_mapINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueE8PairHashNS_8equal_toIS9_EENS6_INS1_IKS9_SC_EEEEEixERSG_
+                  call $__ZNSt3__213unordered_mapINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueE8PairHashNS_8equal_toIS8_EENS5_INS1_IKS8_SB_EEEEEixERSF_
                   local.get $9
                   call $__ZN6google8protobuf5Value8CopyFromERKS1_
                   local.get $2
@@ -5226,7 +5226,7 @@
         end ;; $if_12
         local.get $16
         local.get $10
-        call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE4findISA_EENS_15__hash_iteratorIPNS_11__hash_nodeISE_PvEEEERKT_
+        call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE4findIS9_EENS_15__hash_iteratorIPNS_11__hash_nodeISD_PvEEEERKT_
         local.tee $1
         if $if_13
           local.get $0
@@ -5289,7 +5289,7 @@
     end ;; $if
     )
   
-  (func $__ZNSt3__213unordered_mapINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueE8PairHashNS_8equal_toIS9_EENS6_INS1_IKS9_SC_EEEEEixERSG_ (type $4)
+  (func $__ZNSt3__213unordered_mapINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueE8PairHashNS_8equal_toIS8_EENS5_INS1_IKS8_SB_EEEEEixERSF_ (type $4)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -5880,7 +5880,7 @@
           local.get $2
           i32.lt_u
           select
-          call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE6rehashEm
+          call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE6rehashEm
           local.get $14
           i32.load
           local.tee $2
@@ -6004,7 +6004,7 @@
     i32.add
     )
   
-  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE4findISA_EENS_15__hash_iteratorIPNS_11__hash_nodeISE_PvEEEERKT_ (type $4)
+  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE4findIS9_EENS_15__hash_iteratorIPNS_11__hash_nodeISD_PvEEEERKT_ (type $4)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -6609,7 +6609,7 @@
     call $__ZdlPv
     )
   
-  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE6rehashEm (type $3)
+  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE6rehashEm (type $3)
     (param $0 i32)
     (param $1 i32)
     (local $2 i32)
@@ -6641,7 +6641,7 @@
     if $if_1
       local.get $0
       local.get $1
-      call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE8__rehashEm
+      call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE8__rehashEm
       return
     end ;; $if_1
     local.get $1
@@ -6703,10 +6703,10 @@
     end ;; $if_4
     local.get $0
     local.get $1
-    call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE8__rehashEm
+    call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE8__rehashEm
     )
   
-  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE8__rehashEm (type $3)
+  (func $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE8__rehashEm (type $3)
     (param $0 i32)
     (param $1 i32)
     (local $2 i32)
@@ -7425,7 +7425,7 @@
     i32.add
     local.tee $5
     local.get $9
-    call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE4findISA_EENS_15__hash_iteratorIPNS_11__hash_nodeISE_PvEEEERKT_
+    call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE4findIS9_EENS_15__hash_iteratorIPNS_11__hash_nodeISD_PvEEEERKT_
     local.tee $1
     if $if_2
       local.get $0
@@ -7447,7 +7447,7 @@
       call $__Z17getMetadataStruct12MetadataTypeNSt3__217basic_string_viewIcNS0_11char_traitsIcEEEE
       local.get $5
       local.get $9
-      call $__ZNSt3__213unordered_mapINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf6StructE8PairHashNS_8equal_toIS9_EENS6_INS1_IKS9_SC_EEEEEixERSG_
+      call $__ZNSt3__213unordered_mapINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf6StructE8PairHashNS_8equal_toIS8_EENS5_INS1_IKS8_SB_EEEEEixERSF_
       local.get $8
       call $__ZN6google8protobuf6Struct8CopyFromERKS1_
       local.get $0
@@ -7625,7 +7625,7 @@
     global.set $36
     )
   
-  (func $__ZNSt3__213unordered_mapINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf6StructE8PairHashNS_8equal_toIS9_EENS6_INS1_IKS9_SC_EEEEEixERSG_ (type $4)
+  (func $__ZNSt3__213unordered_mapINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf6StructE8PairHashNS_8equal_toIS8_EENS5_INS1_IKS8_SB_EEEEEixERSF_ (type $4)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -8216,7 +8216,7 @@
           local.get $2
           i32.lt_u
           select
-          call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairI12MetadataTypeNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherISA_SE_8PairHashLb1EEENS_21__unordered_map_equalISA_SE_NS_8equal_toISA_EELb1EEENS7_ISE_EEE6rehashEm
+          call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_4pairIjNS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEN6google8protobuf5ValueEEENS_22__unordered_map_hasherIS9_SD_8PairHashLb1EEENS_21__unordered_map_equalIS9_SD_NS_8equal_toIS9_EELb1EEENS6_ISD_EEE6rehashEm
           local.get $14
           i32.load
           local.tee $2
