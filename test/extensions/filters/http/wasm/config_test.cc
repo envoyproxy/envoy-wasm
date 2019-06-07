@@ -25,11 +25,13 @@ protected:
   WasmFilterConfigTest() : api_(Api::createApiForTest(stats_store_)) {
     ON_CALL(context_, api()).WillByDefault(ReturnRef(*api_));
     ON_CALL(context_, scope()).WillByDefault(ReturnRef(stats_store_));
+    ON_CALL(context_, listenerMetadata()).WillByDefault(ReturnRef(listener_metadata_));
   }
 
   NiceMock<Server::Configuration::MockFactoryContext> context_;
   Stats::IsolatedStoreImpl stats_store_;
   Api::ApiPtr api_;
+  envoy::api::v2::core::Metadata listener_metadata_;
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest, testing::Values("wavm", "v8"));

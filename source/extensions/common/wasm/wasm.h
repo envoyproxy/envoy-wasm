@@ -151,7 +151,9 @@ enum class MetadataType : uint32_t {
   ResponseRoute = 3,
   Log = 4,
   Node = 5,
-  MAX = 5
+  Listener = 6,
+  Cluster = 7,
+  MAX = 7
 };
 enum class HeaderMapType : uint32_t {
   RequestHeaders = 0,
@@ -489,6 +491,8 @@ protected:
   const Http::HeaderMap* access_log_response_headers_{};
   const Http::HeaderMap* access_log_request_trailers_{}; // unused
   const Http::HeaderMap* access_log_response_trailers_{};
+
+  ProtobufWkt::Struct temporary_metadata_;
 };
 
 template <typename T> struct Global {
@@ -507,6 +511,7 @@ public:
   Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
        Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
        Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+       const envoy::api::v2::core::Metadata* listener_metadata,
        Stats::ScopeSharedPtr owned_scope = nullptr);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
   ~Wasm() {}
@@ -524,6 +529,7 @@ public:
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
   Stats::Scope& scope() const { return scope_; }
   const LocalInfo::LocalInfo& localInfo() { return local_info_; }
+  const envoy::api::v2::core::Metadata* listenerMetadata() { return listener_metadata_; }
 
   std::shared_ptr<Context> createContext() { return std::make_shared<Context>(this); }
 
@@ -613,6 +619,7 @@ private:
   Event::Dispatcher& dispatcher_;
   Stats::Scope& scope_; // Either an inherited scope or owned_scope_ below.
   const LocalInfo::LocalInfo& local_info_;
+  const envoy::api::v2::core::Metadata* listener_metadata_{};
   std::string id_;
   std::string context_id_filter_state_data_name_;
   uint32_t next_context_id_ = 0;
@@ -786,7 +793,8 @@ std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
                                  const LocalInfo::LocalInfo& local_info,
-                                 Stats::ScopeSharedPtr owned_scope = nullptr);
+                                 const envoy::api::v2::core::Metadata* listener_metadata,
+                                 Stats::ScopeSharedPtr owned_scope);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
