@@ -3,18 +3,15 @@ licenses(["notice"])  # Apache 2
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "v8",
+    name = "wee8",
     srcs = select({
         "@envoy//bazel:windows_x86_64": ["WINDOWS_IS_NOT_SUPPORTED_YET"],
         "//conditions:default": [
-            # Order matters!
-            "thirdparty_build/lib/libwasm.a",
-            "thirdparty_build/lib/libv8_monolith.a",
+            "thirdparty_build/lib/libwee8.a",
         ],
     }),
     hdrs = [
         "thirdparty_build/include/wasm-c-api/wasm.hh",
-        "thirdparty_build/include/wasm-c-api/wasm-bin.hh",
     ],
     includes = ["thirdparty_build/include"],
 )
