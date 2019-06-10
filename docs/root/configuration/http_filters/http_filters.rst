@@ -27,3 +27,4 @@ HTTP filters
   router_filter
   squash_filter
   tap_filter
+  wasm_filter
