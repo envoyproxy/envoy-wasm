@@ -239,6 +239,20 @@ REPOSITORY_LOCATIONS = dict(
         strip_prefix = "subpar-1.3.0",
         urls = ["https://github.com/google/subpar/archive/1.3.0.tar.gz"],
     ),
+    wee8_linux = dict(
+        # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
+        # and contains complete checkout of v8 with all dependencies necessary to build wee8 on Linux-x86_64.
+        # TODO(PiotrSikora): switch to local compiler and provide single platform-agnostic archive.
+        sha256 = "1caebced30cb9d3531be4720b70c9132c988b362160f7721bc01caeb572c0eb7",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.5.288.22-linux-x86_64.tar.gz"],
+    ),
+    wee8_macos = dict(
+        # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
+        # and contains complete checkout of v8 with all dependencies necessary to build wee8 on macOS-x86_64.
+        # TODO(PiotrSikora): switch to local compiler and provide single platform-agnostic archive.
+        sha256 = "f84e423417db0b03b96e853b7d92f69be7d4936a33d1e8e05848fb146925ff68",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.5.288.22-macos-x86_64.tar.gz"],
+    ),
     com_googlesource_quiche = dict(
         # Static snapshot of https://quiche.googlesource.com/quiche/+archive/7bf7c3c358eb954e463bde14ea27444f4bd8ea05.tar.gz
         sha256 = "36fe180d532a9ccb18cd32328af5231636c7408104523f9ed5eebbad75f1e039",

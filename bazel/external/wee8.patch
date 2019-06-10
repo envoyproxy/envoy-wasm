@@ -1,0 +1,34 @@
+# 1. Fix handling of f64 globals.
+# 2. Force full GC when destroying VMs.
+# 3. Fix build with -DDEBUG.
+--- a/wee8/src/wasm/c-api.cc
++++ b/wee8/src/wasm/c-api.cc
+@@ -825,7 +825,7 @@ void global_set_f32(v8::Local<v8::Object> global, float val) {
+ void global_set_f64(v8::Local<v8::Object> global, double val) {
+   auto v8_object = v8::Utils::OpenHandle<v8::Object, i::JSReceiver>(global);
+   auto v8_global = i::Handle<i::WasmGlobalObject>::cast(v8_object);
+-  v8_global->SetF32(val);
++  v8_global->SetF64(val);
+ }
+
+ // Tables
+@@ -1107,7 +1107,7 @@ class StoreImpl {
+   StoreImpl() {}
+
+   ~StoreImpl() {
+-#ifdef DEBUG
++#if 1
+     reinterpret_cast<i::Isolate*>(isolate_)->heap()->PreciseCollectAllGarbage(
+         i::Heap::kNoGCFlags, i::GarbageCollectionReason::kTesting,
+         v8::kGCCallbackFlagForced);
+--- a/wee8/third_party/wasm-api/wasm.hh
++++ b/wee8/third_party/wasm-api/wasm.hh
+@@ -111,7 +111,7 @@ class vec {
+   size_t size_;
+   std::unique_ptr<T[]> data_;
+
+-#ifdef DEBUG
++#if 0
+   void make_data();
+   void free_data();
+ #else

@@ -21,7 +21,7 @@
 #include "absl/strings/match.h"
 #include "absl/types/span.h"
 #include "absl/utility/utility.h"
-#include "wasm-c-api/wasm.hh"
+#include "wasm-api/wasm.hh"
 
 namespace Envoy {
 namespace Extensions {
