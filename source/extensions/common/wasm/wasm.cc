@@ -1629,7 +1629,7 @@ void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap*
   access_log_request_headers_ = request_headers;
   // ? request_trailers  ?
   access_log_response_headers_ = response_headers;
-  access_log_response_headers_ = response_trailers;
+  access_log_response_trailers_ = response_trailers;
   access_log_stream_info_ = &stream_info;
 
   onLog();
@@ -1637,7 +1637,7 @@ void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap*
   access_log_request_headers_ = nullptr;
   // ? request_trailers  ?
   access_log_response_headers_ = nullptr;
-  access_log_response_headers_ = nullptr;
+  access_log_response_trailers_ = nullptr;
   access_log_stream_info_ = nullptr;
 
   onDelete();
