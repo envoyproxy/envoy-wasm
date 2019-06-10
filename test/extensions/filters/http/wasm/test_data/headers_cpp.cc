@@ -6,17 +6,14 @@
 
 class ExampleContext : public Context {
 public:
-  explicit ExampleContext(uint32_t id) : Context(id) {}
+  explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
   FilterHeadersStatus onRequestHeaders() override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
   void onDone() override;
 };
-
-std::unique_ptr<Context> NewContext(uint32_t id) {
-  return std::unique_ptr<Context>(new ExampleContext(id));
-}
+static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
   logDebug(std::string("onRequestHeaders ") + std::to_string(id()));

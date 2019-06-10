@@ -4,11 +4,16 @@
 
 #include "proxy_wasm_intrinsics.h"
 
-class ExampleContext : public Context {
+class ExampleRootContext : public RootContext {
 public:
-  explicit ExampleContext(uint32_t id) : Context(id) {}
+  explicit ExampleRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
 
   void onStart() override;
+};
+
+class ExampleContext : public Context {
+public:
+  explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
   void onCreate() override;
   FilterHeadersStatus onRequestHeaders() override;
@@ -18,12 +23,10 @@ public:
   void onLog() override;
   void onDelete() override;
 };
+static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
+                                               ROOT_FACTORY(ExampleRootContext));
 
-std::unique_ptr<Context> NewContext(uint32_t id) {
-  return std::unique_ptr<Context>(new ExampleContext(id));
-}
-
-void ExampleContext::onStart() { logTrace("onStart"); }
+void ExampleRootContext::onStart() { logTrace("onStart"); }
 
 void ExampleContext::onCreate() { logWarn(std::string("onCreate " + std::to_string(id()))); }
 

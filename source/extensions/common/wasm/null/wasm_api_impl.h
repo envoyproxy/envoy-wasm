@@ -9,6 +9,12 @@ extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
 
 namespace Null {
 namespace Plugin {
+class RootContext;
+}
+
+Plugin::RootContext* nullVmGetRoot(absl::string_view root_id);
+
+namespace Plugin {
 
 #define WS(_x) Word(static_cast<uint64_t>(_x))
 #define WR(_x) Word(reinterpret_cast<uint64_t>(_x))
@@ -162,6 +168,8 @@ inline uint64_t proxy_getMetric(uint32_t metric_id) {
 
 #undef WS
 #undef WR
+
+inline RootContext* getRoot(StringView root_id) { return nullVmGetRoot(root_id); }
 
 } // namespace Plugin
 } // namespace Null

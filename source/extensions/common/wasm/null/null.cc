@@ -26,23 +26,7 @@ namespace Envoy {
 namespace Extensions {
 namespace Common {
 namespace Wasm {
-
-extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
-
 namespace Null {
-
-namespace {
-
-struct SaveRestoreContext {
-  explicit SaveRestoreContext(Context* context) {
-    saved_context = current_context_;
-    current_context_ = context;
-  }
-  ~SaveRestoreContext() { current_context_ = saved_context; }
-  Context* saved_context;
-};
-
-} // namespace
 
 using Plugin::Context;
 using Plugin::WasmData;
@@ -171,32 +155,18 @@ absl::string_view NullVm::getUserSection(absl::string_view /* name */) {
 
 std::unique_ptr<WasmVm> createVm() { return std::make_unique<NullVm>(); }
 
-void NullVm::getFunction(absl::string_view functionName, WasmCall0Void* f) {
-  if (functionName == "_proxy_onStart") {
-    auto plugin = plugin_.get();
-    *f = [plugin](Common::Wasm::Context* context) {
-      SaveRestoreContext saved_context(context);
-      plugin->onStart();
-    };
-  } else if (functionName == "_proxy_onTick") {
-    auto plugin = plugin_.get();
-    *f = [plugin](Common::Wasm::Context* context) {
-      SaveRestoreContext saved_context(context);
-      plugin->onTick();
-    };
-  } else {
-    throw WasmVmException(fmt::format("Missing getFunction for: {}", functionName));
-  }
+void NullVm::getFunction(absl::string_view functionName, WasmCall0Void* /* f */) {
+  throw WasmVmException(fmt::format("Missing getFunction for: {}", functionName));
 }
 
 void NullVm::getFunction(absl::string_view functionName, WasmCall1Void* f) {
   if (functionName == "_free") {
     *f = [](Common::Wasm::Context*, Word ptr) { return ::free(reinterpret_cast<void*>(ptr.u64)); };
-  } else if (functionName == "_proxy_onCreate") {
+  } else if (functionName == "_proxy_onTick") {
     auto plugin = plugin_.get();
     *f = [plugin](Common::Wasm::Context* context, Word context_id) {
       SaveRestoreContext saved_context(context);
-      plugin->onCreate(context_id.u64);
+      plugin->onTick(context_id.u64);
     };
   } else if (functionName == "_proxy_onDone") {
     auto plugin = plugin_.get();
@@ -222,11 +192,11 @@ void NullVm::getFunction(absl::string_view functionName, WasmCall1Void* f) {
 }
 
 void NullVm::getFunction(absl::string_view functionName, WasmCall2Void* f) {
-  if (functionName == "_proxy_onConfigure") {
+  if (functionName == "_proxy_onCreate") {
     auto plugin = plugin_.get();
-    *f = [plugin](Common::Wasm::Context* context, Word ptr, Word size) {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_context_id) {
       SaveRestoreContext saved_context(context);
-      plugin->onConfigure(ptr.u64, size.u64);
+      plugin->onCreate(context_id.u64, root_context_id.u64);
     };
   } else if (functionName == "_proxy_onGrpcCreateInitialMetadata") {
     auto plugin = plugin_.get();
@@ -251,8 +221,23 @@ void NullVm::getFunction(absl::string_view functionName, WasmCall2Void* f) {
   }
 }
 
-void NullVm::getFunction(absl::string_view functionName, WasmCall3Void* /* f */) {
-  throw WasmVmException(fmt::format("Missing getFunction for: {}", functionName));
+void NullVm::getFunction(absl::string_view functionName, WasmCall3Void* f) {
+  if (functionName == "_proxy_onConfigure") {
+    auto plugin = plugin_.get();
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word ptr, Word size) {
+      SaveRestoreContext saved_context(context);
+      plugin->onConfigure(context_id.u64, ptr.u64, size.u64);
+    };
+  } else if (functionName == "_proxy_onStart") {
+    auto plugin = plugin_.get();
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_id_ptr,
+                  Word root_id_size) {
+      SaveRestoreContext saved_context(context);
+      plugin->onStart(context_id.u64, root_id_ptr.u64, root_id_size.u64);
+    };
+  } else {
+    throw WasmVmException(fmt::format("Missing getFunction for: {}", functionName));
+  }
 }
 
 void NullVm::getFunction(absl::string_view functionName, WasmCall4Void* f) {
@@ -365,182 +350,183 @@ void NullVm::getFunction(absl::string_view functionName, WasmCall3Int* f) {
   }
 }
 
-Context* NullVmPlugin::ensureContext(uint64_t context_id) {
+Plugin::Context* NullVmPlugin::ensureContext(uint64_t context_id, uint64_t root_context_id) {
   auto e = context_map_.insert(std::make_pair(context_id, nullptr));
   if (e.second) {
-    e.first->second = newContext(context_id);
+    auto root_base = context_map_[root_context_id].get();
+    Plugin::RootContext* root = root_base ? root_base->asRoot() : nullptr;
+    std::string root_id = root ? std::string(root->root_id()) : "";
+    auto factory = registry_->context_factories[root_id];
+    if (!factory) {
+      throw WasmException("no context factory for root_id: " + root_id);
+    }
+    e.first->second = factory(context_id, root);
   }
-  return e.first->second.get();
+  return e.first->second->asContext();
 }
 
-Context* NullVmPlugin::getContext(uint64_t context_id) {
+Plugin::RootContext* NullVmPlugin::ensureRootContext(uint64_t context_id,
+                                                     std::unique_ptr<WasmData> root_id) {
   auto it = context_map_.find(context_id);
-  if (it == context_map_.end()) {
-    return nullptr;
+  if (it != context_map_.end()) {
+    return it->second->asRoot();
+  }
+  auto root_id_string = root_id->toString();
+  auto factory = registry_->root_factories[root_id_string];
+  Plugin::RootContext* root_context;
+  if (factory) {
+    auto context = factory(context_id, root_id->view());
+    root_context = context->asRoot();
+    root_context_map_[root_id_string] = root_context;
+    context_map_[context_id] = std::move(context);
+  } else {
+    // Default handlers.
+    auto context = std::make_unique<Plugin::RootContext>(context_id, root_id->view());
+    root_context = context->asRoot();
+    context_map_[context_id] = std::move(context);
+  }
+  return root_context;
+}
+
+Plugin::ContextBase* NullVmPlugin::getContextBase(uint64_t context_id) {
+  auto it = context_map_.find(context_id);
+  if (it == context_map_.end() || !it->second->asContext()) {
+    throw WasmException("no base context context_id: " + std::to_string(context_id));
   }
   return it->second.get();
 }
 
-void NullVmPlugin::onStart() { ensureContext(0)->onStart(); }
-
-void NullVmPlugin::onConfigure(uint64_t ptr, uint64_t size) {
-  ensureContext(0)->onConfigure(std::make_unique<WasmData>(reinterpret_cast<char*>(ptr), size));
+Plugin::Context* NullVmPlugin::getContext(uint64_t context_id) {
+  auto it = context_map_.find(context_id);
+  if (it == context_map_.end() || !it->second->asContext()) {
+    throw WasmException("no context context_id: " + std::to_string(context_id));
+  }
+  return it->second->asContext();
 }
 
-void NullVmPlugin::onTick() { ensureContext(0)->onTick(); }
+Plugin::RootContext* NullVmPlugin::getRootContext(uint64_t context_id) {
+  auto it = context_map_.find(context_id);
+  if (it == context_map_.end() || !it->second->asRoot()) {
+    throw WasmException("no root context_id: " + std::to_string(context_id));
+  }
+  return it->second->asRoot();
+}
 
-void NullVmPlugin::onCreate(uint64_t context_id) { ensureContext(context_id)->onCreate(); }
+Plugin::RootContext* NullVmPlugin::getRoot(absl::string_view root_id) {
+  auto it = root_context_map_.find(std::string(root_id));
+  if (it == root_context_map_.end()) {
+    return nullptr;
+  }
+  return it->second;
+}
+
+void NullVmPlugin::onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size) {
+  ensureRootContext(root_context_id,
+                    std::make_unique<WasmData>(reinterpret_cast<char*>(root_id_ptr), root_id_size))
+      ->onStart();
+}
+
+void NullVmPlugin::onConfigure(uint64_t root_context_id, uint64_t ptr, uint64_t size) {
+  getRootContext(root_context_id)
+      ->onConfigure(std::make_unique<WasmData>(reinterpret_cast<char*>(ptr), size));
+}
+
+void NullVmPlugin::onTick(uint64_t root_context_id) { getRootContext(root_context_id)->onTick(); }
+
+void NullVmPlugin::onCreate(uint64_t context_id, uint64_t root_context_id) {
+  ensureContext(context_id, root_context_id)->onCreate();
+}
 
 uint64_t NullVmPlugin::onRequestHeaders(uint64_t context_id) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return static_cast<uint64_t>(Plugin::FilterHeadersStatus::Continue);
-  }
-  return static_cast<uint64_t>(c->onRequestHeaders());
+  return static_cast<uint64_t>(getContext(context_id)->onRequestHeaders());
 }
 
 uint64_t NullVmPlugin::onRequestBody(uint64_t context_id, uint64_t body_buffer_length,
                                      uint64_t end_of_stream) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return static_cast<uint64_t>(Plugin::FilterDataStatus::Continue);
-  }
   return static_cast<uint64_t>(
-      c->onRequestBody(static_cast<size_t>(body_buffer_length), end_of_stream != 0));
+      getContext(context_id)
+          ->onRequestBody(static_cast<size_t>(body_buffer_length), end_of_stream != 0));
 }
 
 uint64_t NullVmPlugin::onRequestTrailers(uint64_t context_id) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return static_cast<uint64_t>(Plugin::FilterTrailersStatus::Continue);
-  }
-  return static_cast<uint64_t>(c->onRequestTrailers());
+  return static_cast<uint64_t>(getContext(context_id)->onRequestTrailers());
 }
 
 uint64_t NullVmPlugin::onRequestMetadata(uint64_t context_id) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return static_cast<uint64_t>(Plugin::FilterMetadataStatus::Continue);
-  }
-  return static_cast<uint64_t>(c->onRequestMetadata());
+  return static_cast<uint64_t>(getContext(context_id)->onRequestMetadata());
 }
 
 uint64_t NullVmPlugin::onResponseHeaders(uint64_t context_id) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return static_cast<uint64_t>(Plugin::FilterHeadersStatus::Continue);
-  }
-  return static_cast<uint64_t>(c->onResponseHeaders());
+  return static_cast<uint64_t>(getContext(context_id)->onResponseHeaders());
 }
 
 uint64_t NullVmPlugin::onResponseBody(uint64_t context_id, uint64_t body_buffer_length,
                                       uint64_t end_of_stream) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return static_cast<uint64_t>(Plugin::FilterDataStatus::Continue);
-  }
   return static_cast<uint64_t>(
-      c->onResponseBody(static_cast<size_t>(body_buffer_length), end_of_stream != 0));
+      getContext(context_id)
+          ->onResponseBody(static_cast<size_t>(body_buffer_length), end_of_stream != 0));
 }
 
 uint64_t NullVmPlugin::onResponseTrailers(uint64_t context_id) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return static_cast<uint64_t>(Plugin::FilterTrailersStatus::Continue);
-  }
-  return static_cast<uint64_t>(c->onResponseTrailers());
+  return static_cast<uint64_t>(getContext(context_id)->onResponseTrailers());
 }
 
 uint64_t NullVmPlugin::onResponseMetadata(uint64_t context_id) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return static_cast<uint64_t>(Plugin::FilterMetadataStatus::Continue);
-  }
-  return static_cast<uint64_t>(c->onResponseMetadata());
+  return static_cast<uint64_t>(getContext(context_id)->onResponseMetadata());
 }
 
 void NullVmPlugin::onHttpCallResponse(uint64_t context_id, uint64_t token,
                                       uint64_t header_pairs_ptr, uint64_t header_pairs_size,
                                       uint64_t body_ptr, uint64_t body_size,
                                       uint64_t trailer_pairs_ptr, uint64_t trailer_pairs_size) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return;
-  }
-  c->onHttpCallResponse(
-      token,
-      std::make_unique<WasmData>(reinterpret_cast<char*>(header_pairs_ptr), header_pairs_size),
-      std::make_unique<WasmData>(reinterpret_cast<char*>(body_ptr), body_size),
-      std::make_unique<WasmData>(reinterpret_cast<char*>(trailer_pairs_ptr), trailer_pairs_size));
+  getContextBase(context_id)
+      ->onHttpCallResponse(
+          token,
+          std::make_unique<WasmData>(reinterpret_cast<char*>(header_pairs_ptr), header_pairs_size),
+          std::make_unique<WasmData>(reinterpret_cast<char*>(body_ptr), body_size),
+          std::make_unique<WasmData>(reinterpret_cast<char*>(trailer_pairs_ptr),
+                                     trailer_pairs_size));
 }
 
 void NullVmPlugin::onGrpcReceive(uint64_t context_id, uint64_t token, uint64_t response_ptr,
                                  uint64_t response_size) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return;
-  }
-  c->onGrpcReceive(
-      token, std::make_unique<WasmData>(reinterpret_cast<char*>(response_ptr), response_size));
+  getContextBase(context_id)
+      ->onGrpcReceive(
+          token, std::make_unique<WasmData>(reinterpret_cast<char*>(response_ptr), response_size));
 }
 
 void NullVmPlugin::onGrpcClose(uint64_t context_id, uint64_t token, uint64_t status_code,
                                uint64_t status_message_ptr, uint64_t status_message_size) {
-  auto c = getContext(context_id);
-  if (!c)
-    return;
-  c->onGrpcClose(
-      token, static_cast<Plugin::GrpcStatus>(status_code),
-      std::make_unique<WasmData>(reinterpret_cast<char*>(status_message_ptr), status_message_size));
+  getContextBase(context_id)
+      ->onGrpcClose(token, static_cast<Plugin::GrpcStatus>(status_code),
+                    std::make_unique<WasmData>(reinterpret_cast<char*>(status_message_ptr),
+                                               status_message_size));
 }
 
 void NullVmPlugin::onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t token) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return;
-  }
-  c->onGrpcCreateInitialMetadata(token);
+  getContextBase(context_id)->onGrpcCreateInitialMetadata(token);
 }
 
 void NullVmPlugin::onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t token) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return;
-  }
-  c->onGrpcReceiveInitialMetadata(token);
+  getContextBase(context_id)->onGrpcReceiveInitialMetadata(token);
 }
 
 void NullVmPlugin::onGrpcReceiveTrailingMetadata(uint64_t context_id, uint64_t token) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return;
-  }
-  c->onGrpcReceiveTrailingMetadata(token);
+  getContextBase(context_id)->onGrpcReceiveTrailingMetadata(token);
 }
 
-void NullVmPlugin::onLog(uint64_t context_id) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return;
-  }
-  c->onLog();
-}
+void NullVmPlugin::onLog(uint64_t context_id) { getContext(context_id)->onLog(); }
 
-void NullVmPlugin::onDone(uint64_t context_id) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return;
-  }
-  c->onDone();
-}
+void NullVmPlugin::onDone(uint64_t context_id) { getContext(context_id)->onDone(); }
 
 void NullVmPlugin::onDelete(uint64_t context_id) {
-  auto c = getContext(context_id);
-  if (!c) {
-    return;
-  }
-  c->onDelete();
+  getContext(context_id)->onDelete();
   context_map_.erase(context_id);
+}
+
+Plugin::RootContext* nullVmGetRoot(absl::string_view root_id) {
+  auto null_vm = static_cast<NullVm*>(current_context_->wasm()->wasmVm());
+  return null_vm->plugin_->getRoot(root_id);
 }
 
 } // namespace Null

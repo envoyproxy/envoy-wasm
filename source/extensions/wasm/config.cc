@@ -20,23 +20,26 @@ Server::WasmSharedPtr WasmFactory::createWasm(const envoy::config::wasm::v2::Was
                                               Server::Configuration::WasmFactoryContext& context) {
   // Create a base WASM to verify that the code loads before setting/cloning the for the individual
   // threads.
-  auto base_wasm = Common::Wasm::createWasm(config.id(), config.vm_config(),
+  auto root_id = config.root_id();
+  auto base_wasm = Common::Wasm::createWasm(config.vm_id(), config.vm_config(), root_id,
                                             context.clusterManager(), context.dispatcher(),
                                             context.api(), *context.scope(), context.localInfo(),
                                             nullptr /* listener_metadata */, context.scope());
   if (config.singleton()) {
     // Return the WASM VM which will be stored as a singleton by the Server.
-    base_wasm->start();
+    auto root_context = base_wasm->start(root_id);
+    base_wasm->configure(root_context, config.configuration());
     return base_wasm;
   }
-  auto configuration = std::make_shared<std::string>(config.configuration());
   // Per-thread WASM VM.
   // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
   // NB: no need to keep the resulting slot as Wasm is cached on each thread.
-  context.threadLocal().allocateSlot()->set([base_wasm,
-                                             configuration](Event::Dispatcher& dispatcher) {
-    return Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, *configuration, dispatcher);
-  });
+  auto configuration = std::make_shared<std::string>(config.configuration());
+  context.threadLocal().allocateSlot()->set(
+      [base_wasm, configuration, root_id](Event::Dispatcher& dispatcher) {
+        return Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, root_id, *configuration,
+                                                               dispatcher);
+      });
   // Do not return this WASM VM since this is per-thread. Returning it would indicate that this is a
   // singleton.
   return nullptr;

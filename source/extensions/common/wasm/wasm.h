@@ -265,26 +265,33 @@ class Context : public Http::StreamFilter,
                 public Logger::Loggable<Logger::Id::wasm>,
                 public std::enable_shared_from_this<Context> {
 public:
-  explicit Context(Wasm* wasm);
+  explicit Context(Wasm* wasm);                   // General Context.
+  Context(Wasm* wasm, absl::string_view root_id); // Root Context.
+  Context(Wasm* wasm, uint32_t root_context_id);  // Stream/Filter context.
+  ~Context();
 
   Wasm* wasm() const { return wasm_; }
   WasmVm* wasmVm() const;
   Upstream::ClusterManager& clusterManager() const;
   uint32_t id() const { return id_; }
+  absl::string_view root_id();
+  bool isVmContext() { return id_ == 0; }
+  bool isRootContext() { return root_context_id_ == 0; }
+
   const StreamInfo::StreamInfo* getConstStreamInfo(MetadataType type) const;
   StreamInfo::StreamInfo* getStreamInfo(MetadataType type) const;
 
   //
   // VM level downcalls into the WASM code on Context(id == 0).
   //
-  virtual void onStart();
+  virtual void onStart(absl::string_view root_id);
   virtual void onConfigure(absl::string_view configuration);
 
   //
   // Stream downcalls on Context(id > 0).
   //
   // General stream downcall on a new stream.
-  virtual void onCreate();
+  virtual void onCreate(uint32_t root_context_id);
   // HTTP Filter Stream Request Downcalls.
   virtual Http::FilterHeadersStatus onRequestHeaders();
   virtual Http::FilterDataStatus onRequestBody(int body_buffer_length, bool end_of_stream);
@@ -429,6 +436,7 @@ public:
   virtual bool isSsl();
 
 protected:
+  friend class Wasm;
   friend struct AsyncClientHandler;
   friend struct GrpcCallClientHandler;
   friend struct GrpcStreamClientHandler;
@@ -458,6 +466,8 @@ protected:
 
   Wasm* const wasm_;
   const uint32_t id_;
+  const uint32_t root_context_id_; // 0 for roots and the vm context.
+  const std::string root_id_;      // set only in roots.
   bool destroyed_ = false;
 
   uint32_t next_http_call_token_ = 1;
@@ -503,7 +513,6 @@ template <typename T> struct Global {
 
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
 class Wasm : public Envoy::Server::Wasm,
-             public AccessLog::Instance,
              public ThreadLocal::ThreadLocalObject,
              public Logger::Loggable<Logger::Id::wasm>,
              public std::enable_shared_from_this<Wasm> {
@@ -517,24 +526,29 @@ public:
   ~Wasm() {}
 
   bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
-  void configure(absl::string_view configuration);
-  void start();
+  void configure(Context* root_context, absl::string_view configuration);
+  Context* start(absl::string_view root_id); // returns the root Context.
 
   const std::string& context_id_filter_state_data_name() {
     return context_id_filter_state_data_name_;
   }
   absl::string_view id() const { return id_; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
-  Context* generalContext() const { return general_context_.get(); }
+  Context* vmContext() const { return vm_context_.get(); }
+  Context* getRootContext(absl::string_view root_id) { return root_contexts_[root_id].get(); }
+  Context* getContext(uint32_t id) {
+    auto it = contexts_.find(id);
+    if (it != contexts_.end())
+      return it->second;
+    return nullptr;
+  }
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
   Stats::Scope& scope() const { return scope_; }
   const LocalInfo::LocalInfo& localInfo() { return local_info_; }
   const envoy::api::v2::core::Metadata* listenerMetadata() { return listener_metadata_; }
 
-  std::shared_ptr<Context> createContext() { return std::make_shared<Context>(this); }
-
-  void setTickPeriod(std::chrono::milliseconds tick_period);
-  void tickHandler();
+  void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
+  void tickHandler(uint32_t root_context_id);
 
   uint32_t allocContextId();
 
@@ -548,8 +562,9 @@ public:
   //
   // AccessLog::Instance
   //
-  void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
-           const Http::HeaderMap* response_trailers, const StreamInfo::StreamInfo& stream_info);
+  void log(absl::string_view root_id, const Http::HeaderMap* request_headers,
+           const Http::HeaderMap* response_headers, const Http::HeaderMap* response_trailers,
+           const StreamInfo::StreamInfo& stream_info);
 
   // Support functions.
   void* allocMemory(uint64_t size, uint64_t* address);
@@ -564,9 +579,8 @@ public:
                          uint64_t ptr_ptr, uint64_t size_ptr);
 
   // For testing.
-  void setGeneralContext(std::shared_ptr<Context> context) {
-    general_context_ = std::move(context);
-  }
+  void setContext(Context* context) { contexts_[context->id()] = context; }
+  void startForTesting(std::unique_ptr<Context> root_context);
 
   bool getEmscriptenVersion(uint32_t* emscripten_metadata_major_version,
                             uint32_t* emscripten_metadata_minor_version,
@@ -624,23 +638,25 @@ private:
   std::string context_id_filter_state_data_name_;
   uint32_t next_context_id_ = 0;
   std::unique_ptr<WasmVm> wasm_vm_;
-  std::shared_ptr<Context> general_context_; // Context unrelated to any specific stream.
-  std::chrono::milliseconds tick_period_;
-  Event::TimerPtr timer_;
+  std::shared_ptr<Context> vm_context_; // Context unrelated to any specific root or stream
+                                        // (e.g. for global contructors).
+  absl::flat_hash_map<std::string, std::unique_ptr<Context>> root_contexts_;
+  absl::flat_hash_map<uint32_t, Context*> contexts_;                    // Contains all contexts.
+  std::unordered_map<uint32_t, std::chrono::milliseconds> tick_period_; // per root_id.
+  std::unordered_map<uint32_t, Event::TimerPtr> timer_;                 // per root_id.
   Stats::ScopeSharedPtr
       owned_scope_; // When scope_ is not owned by a higher level (e.g. for WASM services).
   TimeSource& time_source_;
 
-  // Calls into the VM.
-  WasmCall0Void onStart_;
-  WasmCall2Void onConfigure_;
-  WasmCall0Void onTick_;
-
   WasmCall1Int malloc_;
   WasmCall1Void free_;
 
-  // Calls into the VM with a context.
-  WasmContextCall0Void onCreate_;
+  // Calls into the VM.
+  WasmContextCall2Void onStart_;
+  WasmContextCall2Void onConfigure_;
+  WasmContextCall0Void onTick_;
+
+  WasmContextCall1Void onCreate_;
 
   WasmContextCall0Int onRequestHeaders_;
   WasmContextCall2Int onRequestBody_;
@@ -788,8 +804,9 @@ std::unique_ptr<WasmVm> createWasmVm(absl::string_view vm);
 
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
-std::shared_ptr<Wasm> createWasm(absl::string_view id,
+std::shared_ptr<Wasm> createWasm(absl::string_view vm_id,
                                  const envoy::config::wasm::v2::VmConfig& vm_config,
+                                 absl::string_view root_id,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
                                  const LocalInfo::LocalInfo& local_info,
@@ -797,11 +814,13 @@ std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  Stats::ScopeSharedPtr owned_scope);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
-std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
+std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view root_id,
+                                            absl::string_view configuration,
                                             Event::Dispatcher& dispatcher);
 
-// Get an existing ThreadLocal VM matching 'id'.
-std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view id, absl::string_view configuration);
+// Get an existing ThreadLocal VM matching 'vm_id'.
+std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_view root_id,
+                                         absl::string_view configuration);
 
 class WasmException : public EnvoyException {
 public:
@@ -813,16 +832,42 @@ public:
   using EnvoyException::EnvoyException;
 };
 
-inline Context::Context(Wasm* wasm) : wasm_(wasm), id_(wasm->allocContextId()) {}
+inline Context::Context(Wasm* wasm) : wasm_(wasm), id_(0), root_context_id_(0), root_id_("") {
+  wasm_->contexts_[id_] = this;
+}
+
+inline Context::Context(Wasm* wasm, uint32_t root_context_id)
+    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(root_context_id), root_id_("") {
+  wasm_->contexts_[id_] = this;
+}
+
+inline Context::Context(Wasm* wasm, absl::string_view root_id)
+    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(0), root_id_(root_id) {
+  wasm_->contexts_[id_] = this;
+}
+
+// Do not remove vm or root contexts which have the same lifetime as wasm_.
+inline Context::~Context() {
+  if (root_context_id_)
+    wasm_->contexts_.erase(id_);
+}
+
+inline absl::string_view Context::root_id() {
+  if (root_context_id_) {
+    return wasm_->getContext(root_context_id_)->root_id_;
+  } else {
+    return root_id_;
+  }
+}
 
 inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
-  Word a = malloc_(generalContext(), size);
+  Word a = malloc_(vmContext(), size);
   *address = a.u64;
   // Note: this can throw a WASM exception.
   return const_cast<void*>(reinterpret_cast<const void*>(wasm_vm_->getMemory(a, size).data()));
 }
 
-inline void Wasm::freeMemoryOffset(uint64_t address) { free_(generalContext(), address); }
+inline void Wasm::freeMemoryOffset(uint64_t address) { free_(vmContext(), address); }
 
 inline bool Wasm::freeMemory(void* pointer) {
   uint64_t offset;
@@ -929,6 +974,17 @@ inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t sta
   }
   return true;
 }
+
+extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
+
+struct SaveRestoreContext {
+  explicit SaveRestoreContext(Context* context) {
+    saved_context = current_context_;
+    current_context_ = context;
+  }
+  ~SaveRestoreContext() { current_context_ = saved_context; }
+  Context* saved_context;
+};
 
 } // namespace Wasm
 } // namespace Common

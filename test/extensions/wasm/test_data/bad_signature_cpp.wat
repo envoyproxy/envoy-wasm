@@ -119,11 +119,11 @@
     end ;; $if
     )
   
-  (func $_proxy_onConfigure (type $8)
+  (func $_proxy_onConfigure (type $1)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
-    (local $3 i32)
+    (param $3 i32)
     (local $4 i32)
     (local $5 i32)
     (local $6 i32)
@@ -140,7 +140,7 @@
     local.get $0
     i32.const 0
     i32.store offset=8
-    local.get $2
+    local.get $3
     i32.const -17
     i32.gt_u
     if $if
@@ -149,34 +149,34 @@
     local.get $5
     i32.const 12
     i32.add
-    local.set $3
+    local.set $4
     block $block
       block $block_0
-        local.get $2
+        local.get $3
         i32.const 11
         i32.lt_u
         if $if_0 (result i32)
           local.get $0
-          local.get $2
+          local.get $3
           i32.store8 offset=11
-          local.get $2
+          local.get $3
           if $if_1 (result i32)
             local.get $0
-            local.set $4
+            local.set $1
             br $block_0
           else
             local.get $0
           end ;; $if_1
         else
           local.get $0
-          local.get $2
+          local.get $3
           i32.const 16
           i32.add
           i32.const -16
           i32.and
           local.tee $6
           call $__Znwm
-          local.tee $4
+          local.tee $1
           i32.store
           local.get $0
           local.get $6
@@ -184,31 +184,31 @@
           i32.or
           i32.store offset=8
           local.get $0
-          local.get $2
+          local.get $3
           i32.store offset=4
           br $block_0
         end ;; $if_0
-        local.set $4
+        local.set $1
         br $block
       end ;; $block_0
-      local.get $4
       local.get $1
       local.get $2
+      local.get $3
       call $_memcpy
       drop
     end ;; $block
-    local.get $2
-    local.get $4
+    local.get $1
+    local.get $3
     i32.add
     i32.const 0
     i32.store8
-    local.get $3
+    local.get $4
     local.get $0
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc
     local.tee $1
     i64.load align=4
     i64.store align=4
-    local.get $3
+    local.get $4
     local.get $1
     i32.load offset=8
     i32.store offset=8
@@ -219,10 +219,10 @@
     i32.const 0
     i32.store offset=8
     i32.const 3
-    local.get $3
+    local.get $4
     i32.load
-    local.get $3
-    local.get $3
+    local.get $4
+    local.get $4
     i32.const 11
     i32.add
     local.tee $1
@@ -230,14 +230,14 @@
     local.tee $2
     i32.const 0
     i32.lt_s
-    local.tee $4
+    local.tee $3
     select
-    local.get $3
+    local.get $4
     i32.load offset=4
     local.get $2
     i32.const 255
     i32.and
-    local.get $4
+    local.get $3
     select
     call $_proxy_log
     local.get $1
@@ -245,7 +245,7 @@
     i32.const 0
     i32.lt_s
     if $if_2
-      local.get $3
+      local.get $4
       i32.load
       call $__ZdlPv
     end ;; $if_2
@@ -265,10 +265,10 @@
     global.set $20
     )
   
-  (func $_proxy_onStart (type $0)
-    (local $0 i32)
-    (local $1 i32)
-    (local $2 i32)
+  (func $_proxy_onStart (type $8)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
     (local $3 i32)
     (local $4 i32)
     (local $5 i32)
@@ -321,22 +321,22 @@
     local.get $1
     i32.const 11
     i32.add
-    local.tee $4
+    local.tee $2
     i32.load8_s
-    local.tee $5
+    local.tee $4
     i32.const 0
     i32.lt_s
-    local.tee $2
+    local.tee $5
     select
     local.get $1
     i32.load offset=4
-    local.get $5
+    local.get $4
     i32.const 255
     i32.and
-    local.get $2
+    local.get $5
     select
     call $_proxy_log
-    local.get $4
+    local.get $2
     i32.load8_s
     i32.const 0
     i32.lt_s
@@ -400,22 +400,22 @@
     local.get $1
     i32.const 11
     i32.add
-    local.tee $4
+    local.tee $2
     i32.load8_s
-    local.tee $5
+    local.tee $4
     i32.const 0
     i32.lt_s
-    local.tee $2
+    local.tee $5
     select
     local.get $1
     i32.load offset=4
-    local.get $5
+    local.get $4
     i32.const 255
     i32.and
-    local.get $2
+    local.get $5
     select
     call $_proxy_log
-    local.get $4
+    local.get $2
     i32.load8_s
     i32.const 0
     i32.lt_s
@@ -440,8 +440,8 @@
     global.set $20
     )
   
-  (func $_proxy_onTick (type $0)
-    (local $0 i32)
+  (func $_proxy_onTick (type $5)
+    (param $0 i32)
     (local $1 i32)
     (local $2 i32)
     (local $3 i32)
@@ -502,22 +502,22 @@
     local.get $1
     i32.const 11
     i32.add
-    local.tee $4
+    local.tee $2
     i32.load8_s
-    local.tee $5
+    local.tee $4
     i32.const 0
     i32.lt_s
-    local.tee $2
+    local.tee $5
     select
     local.get $1
     i32.load offset=4
-    local.get $5
+    local.get $4
     i32.const 255
     i32.and
-    local.get $2
+    local.get $5
     select
     call $_proxy_log
-    local.get $4
+    local.get $2
     i32.load8_s
     i32.const 0
     i32.lt_s

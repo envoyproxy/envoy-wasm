@@ -60,8 +60,6 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
-
 // Forward declarations.
 template <typename R, typename... Args>
 void getFunctionWavm(WasmVm* vm, absl::string_view functionName,
@@ -95,15 +93,6 @@ struct WasmUntaggedValue : public WAVM::IR::UntaggedValue {
 using Context = Common::Wasm::Context; // Shadowing WAVM::Runtime::Context.
 
 const Logger::Id wasmId = Logger::Id::wasm;
-
-struct SaveRestoreContext {
-  explicit SaveRestoreContext(Context* context) {
-    saved_context = current_context_;
-    current_context_ = context;
-  }
-  ~SaveRestoreContext() { current_context_ = saved_context; }
-  Context* saved_context;
-};
 
 #define CALL_WITH_CONTEXT(_x, _context)                                                            \
   do {                                                                                             \

@@ -13,7 +13,7 @@ double f64b = 1.0;
 
 // Emscripten in some modes and versions would use functions from the asm2wasm module to implement
 // these operations: int32_t % /, double conversion to int32_t and remainder().
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart() {
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t) {
   logInfo(std::string("out ") + std::to_string(i32a / i32b) + " " + std::to_string(i32a % i32b) +
           " " + std::to_string((int32_t)remainder(f64a, f64b)));
 }

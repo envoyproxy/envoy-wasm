@@ -196,9 +196,10 @@
     end ;; $if
     )
   
-  (func $_proxy_onStart (type $1)
-    (local $0 i32)
-    (local $1 i32)
+  (func $_proxy_onStart (type $8)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
     global.get $28
     local.set $0
     global.get $28

@@ -22,13 +22,6 @@ namespace Extensions {
 namespace AccessLoggers {
 namespace Wasm {
 
-class TestContext : public Common::Wasm::Context {
-public:
-  TestContext(Common::Wasm::Wasm* wasm) : Common::Wasm::Context(wasm) {}
-  ~TestContext() override {}
-  MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
-};
-
 class TestFactoryContext : public NiceMock<Server::Configuration::MockFactoryContext> {
 public:
   TestFactoryContext(Api::Api& api, Stats::Scope& scope) : api_(api), scope_(scope) {}

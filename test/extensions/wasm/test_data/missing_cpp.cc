@@ -3,4 +3,4 @@
 
 extern "C" void missing();
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart() { missing(); }
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t) { missing(); }

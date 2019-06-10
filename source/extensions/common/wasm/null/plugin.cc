@@ -14,21 +14,19 @@ namespace Wasm {
 namespace Null {
 namespace Plugin {
 namespace ExamplePlugin {
+NULL_PLUGIN_ROOT_REGISTRY;
 #endif
 
 class PluginContext : public Context {
 public:
-  explicit PluginContext(uint32_t id) : Context(id) {}
+  explicit PluginContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
   FilterHeadersStatus onRequestHeaders() override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
   void onDone() override;
 };
-
-std::unique_ptr<Context> NewContext(uint32_t id) {
-  return std::unique_ptr<Context>(new PluginContext(id));
-}
+static RegisterContextFactory register_PluginContext(CONTEXT_FACTORY(PluginContext));
 
 FilterHeadersStatus PluginContext::onRequestHeaders() {
   logDebug(std::string("onRequestHeaders ") + std::to_string(id()));
