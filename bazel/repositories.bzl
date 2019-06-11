@@ -209,6 +209,14 @@ def envoy_dependencies(path = "@envoy_deps//", skip_targets = []):
         actual = "@envoy//bazel:boringssl",
     )
 
+    # Binding to an alias pointing to a platform-specific version of wee8.
+    _wee8_linux()
+    _wee8_macos()
+    native.bind(
+        name = "wee8",
+        actual = "@envoy//bazel:wee8",
+    )
+
     # The long repo names (`com_github_fmtlib_fmt` instead of `fmtlib`) are
     # semi-standard in the Bazel community, intended to avoid both duplicate
     # dependencies and name conflicts.
@@ -705,6 +713,28 @@ def _com_github_gperftools_gperftools():
     native.bind(
         name = "gperftools",
         actual = "@envoy//bazel/foreign_cc:gperftools",
+    )
+
+def _wee8_linux():
+    location = REPOSITORY_LOCATIONS["wee8_linux"]
+    genrule_repository(
+        name = "wee8_linux",
+        urls = location["urls"],
+        sha256 = location["sha256"],
+        genrule_cmd_file = "@envoy//bazel/external:wee8.genrule_cmd",
+        build_file = "@envoy//bazel/external:wee8.BUILD",
+        patches = ["@envoy//bazel/external:wee8.patch"],
+    )
+
+def _wee8_macos():
+    location = REPOSITORY_LOCATIONS["wee8_macos"]
+    genrule_repository(
+        name = "wee8_macos",
+        urls = location["urls"],
+        sha256 = location["sha256"],
+        genrule_cmd_file = "@envoy//bazel/external:wee8.genrule_cmd",
+        build_file = "@envoy//bazel/external:wee8.BUILD",
+        patches = ["@envoy//bazel/external:wee8.patch"],
     )
 
 def _foreign_cc_dependencies():
