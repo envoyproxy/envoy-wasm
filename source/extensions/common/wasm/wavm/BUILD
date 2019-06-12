@@ -24,7 +24,7 @@ envoy_cc_library(
         "-Wno-old-style-cast",
     ],
     external_deps = [
-        "wavm_with_llvm",
+        "wavm",
     ],
     deps = [
         "//external:abseil_node_hash_map",

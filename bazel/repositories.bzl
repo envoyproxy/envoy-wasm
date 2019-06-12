@@ -2,7 +2,6 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load(":genrule_repository.bzl", "genrule_repository")
 load("@envoy_api//bazel:envoy_http_archive.bzl", "envoy_http_archive")
 load(":repository_locations.bzl", "REPOSITORY_LOCATIONS")
-load(":target_recipes.bzl", "TARGET_RECIPES")
 load(
     "@bazel_tools//tools/cpp:windows_cc_configure.bzl",
     "find_vc_path",
@@ -171,26 +170,6 @@ def envoy_dependencies(path = "@envoy_deps//", skip_targets = []):
         },
     )
 
-    # Ideally, we wouldn't have a single repository target for all dependencies, but instead one per
-    # dependency, as suggested in #747. However, it's much faster to build all deps under a single
-    # recursive make job and single make jobserver.
-    recipes = depset()
-    for t in TARGET_RECIPES:
-        if t not in skip_targets:
-            recipes += depset([TARGET_RECIPES[t]])
-
-    envoy_repository(
-        name = "envoy_deps",
-        recipes = recipes.to_list(),
-    )
-
-    for t in TARGET_RECIPES:
-        if t not in skip_targets:
-            native.bind(
-                name = t,
-                actual = path + ":" + t,
-            )
-
     # Treat Envoy's overall build config as an external repo, so projects that
     # build Envoy as a subcomponent can easily override the config.
     if "envoy_build_config" not in native.existing_rules().keys():
@@ -248,6 +227,8 @@ def envoy_dependencies(path = "@envoy_deps//", skip_targets = []):
     _com_google_protobuf()
     _com_github_envoyproxy_sqlparser()
     _com_googlesource_quiche()
+    _org_llvm_llvm()
+    _com_github_wavm_wavm()
 
     # Used for bundling gcovr into a relocatable .par file.
     _repository_impl("subpar")
@@ -713,6 +694,32 @@ def _com_github_gperftools_gperftools():
     native.bind(
         name = "gperftools",
         actual = "@envoy//bazel/foreign_cc:gperftools",
+    )
+
+def _org_llvm_llvm():
+    location = REPOSITORY_LOCATIONS["org_llvm_llvm"]
+    http_archive(
+        name = "org_llvm_llvm",
+        build_file_content = BUILD_ALL_CONTENT,
+        patch_args = ["-p1"],
+        patches = ["@envoy//bazel/foreign_cc:llvm.patch"],
+        **location
+    )
+    native.bind(
+        name = "llvm",
+        actual = "@envoy//bazel/foreign_cc:llvm",
+    )
+
+def _com_github_wavm_wavm():
+    location = REPOSITORY_LOCATIONS["com_github_wavm_wavm"]
+    http_archive(
+        name = "com_github_wavm_wavm",
+        build_file_content = BUILD_ALL_CONTENT,
+        **location
+    )
+    native.bind(
+        name = "wavm",
+        actual = "@envoy//bazel/foreign_cc:wavm",
     )
 
 def _wee8_linux():

@@ -83,6 +83,89 @@ envoy_cmake_external(
 )
 
 envoy_cmake_external(
+    name = "llvm",
+    cache_entries = {
+        "LLVM_BUILD_TOOLS": "off",
+        "LLVM_ENABLE_LIBEDIT": "off",
+        "LLVM_ENABLE_LIBXML2": "off",
+        "LLVM_ENABLE_TERMINFO": "off",
+        "LLVM_ENABLE_ZLIB": "off",
+        "LLVM_TARGETS_TO_BUILD": "X86",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+    },
+    env_vars = {
+        # Workaround for the -DDEBUG flag added in fastbuild on macOS,
+        # which conflicts with DEBUG macro used in LLVM.
+        "CFLAGS": "-UDEBUG",
+        "CXXFLAGS": "-UDEBUG",
+        "ASMFLAGS": "-UDEBUG",
+    },
+    lib_source = "@org_llvm_llvm//:all",
+    static_libraries = select({
+        "//conditions:default": [
+            # Order from llvm-config --libnames.
+            "libLLVMLTO.a",
+            "libLLVMPasses.a",
+            "libLLVMObjCARCOpts.a",
+            "libLLVMSymbolize.a",
+            "libLLVMDebugInfoPDB.a",
+            "libLLVMDebugInfoDWARF.a",
+            "libLLVMFuzzMutate.a",
+            "libLLVMTableGen.a",
+            "libLLVMDlltoolDriver.a",
+            "libLLVMLineEditor.a",
+            "libLLVMOrcJIT.a",
+            "libLLVMCoverage.a",
+            "libLLVMMIRParser.a",
+            "libLLVMObjectYAML.a",
+            "libLLVMLibDriver.a",
+            "libLLVMOption.a",
+            "libLLVMWindowsManifest.a",
+            "libLLVMX86Disassembler.a",
+            "libLLVMX86AsmParser.a",
+            "libLLVMX86CodeGen.a",
+            "libLLVMGlobalISel.a",
+            "libLLVMSelectionDAG.a",
+            "libLLVMAsmPrinter.a",
+            "libLLVMDebugInfoCodeView.a",
+            "libLLVMDebugInfoMSF.a",
+            "libLLVMX86Desc.a",
+            "libLLVMMCDisassembler.a",
+            "libLLVMX86Info.a",
+            "libLLVMX86AsmPrinter.a",
+            "libLLVMX86Utils.a",
+            "libLLVMMCJIT.a",
+            "libLLVMInterpreter.a",
+            "libLLVMExecutionEngine.a",
+            "libLLVMRuntimeDyld.a",
+            "libLLVMCodeGen.a",
+            "libLLVMTarget.a",
+            "libLLVMCoroutines.a",
+            "libLLVMipo.a",
+            "libLLVMInstrumentation.a",
+            "libLLVMVectorize.a",
+            "libLLVMScalarOpts.a",
+            "libLLVMLinker.a",
+            "libLLVMIRReader.a",
+            "libLLVMAsmParser.a",
+            "libLLVMInstCombine.a",
+            "libLLVMTransformUtils.a",
+            "libLLVMBitWriter.a",
+            "libLLVMAnalysis.a",
+            "libLLVMProfileData.a",
+            "libLLVMObject.a",
+            "libLLVMMCParser.a",
+            "libLLVMMC.a",
+            "libLLVMBitReader.a",
+            "libLLVMCore.a",
+            "libLLVMBinaryFormat.a",
+            "libLLVMSupport.a",
+            "libLLVMDemangle.a",
+        ],
+    }),
+)
+
+envoy_cmake_external(
     name = "nghttp2",
     cache_entries = {
         "ENABLE_STATIC_LIB": "on",
@@ -99,6 +182,31 @@ envoy_cmake_external(
         "//bazel:windows_x86_64": ["nghttp2_static.lib"],
         "//conditions:default": ["libnghttp2_static.a"],
     }),
+)
+
+envoy_cmake_external(
+    name = "wavm",
+    cache_entries = {
+        "LLVM_DIR": "$EXT_BUILD_DEPS/copy_llvm/llvm/lib/cmake/llvm",
+        "WAVM_ENABLE_STATIC_LINKING": "on",
+        "WAVM_ENABLE_RELEASE_ASSERTS": "on",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+    },
+    env_vars = {
+        # Workaround for the -DDEBUG flag added in fastbuild on macOS,
+        # which conflicts with DEBUG macro used in LLVM.
+        "CFLAGS": "-UDEBUG",
+        "CXXFLAGS": "-UDEBUG",
+        "ASMFLAGS": "-UDEBUG",
+    },
+    lib_source = "@com_github_wavm_wavm//:all",
+    static_libraries = select({
+        "//conditions:default": [
+            "libWAVM.a",
+            "WAVM/libWAVMUnwind.a",
+        ],
+    }),
+    deps = [":llvm"],
 )
 
 envoy_cmake_external(
