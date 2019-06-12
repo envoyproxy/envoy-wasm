@@ -6,11 +6,8 @@ set -e
 yum install -y centos-release-scl epel-release
 yum update -y
 yum install -y devtoolset-7-gcc devtoolset-7-gcc-c++ devtoolset-7-binutils java-1.8.0-openjdk-headless rsync \
-    rh-git218 wget unzip which make cmake3 patch ninja-build devtoolset-7-libatomic-devel openssl python27 \
-    libtool autoconf tcpdump
-
-ln -s /usr/bin/cmake3 /usr/bin/cmake
-ln -s /usr/bin/ninja-build /usr/bin/ninja
+    rh-git218 wget unzip which make patch devtoolset-7-libatomic-devel openssl python27 \
+    libtool autoconf tcpdump glib2-devel
 
 BAZEL_VERSION="$(curl -s https://api.github.com/repos/bazelbuild/bazel/releases/latest |
     python -c "import json, sys; print json.load(sys.stdin)['tag_name']")"
