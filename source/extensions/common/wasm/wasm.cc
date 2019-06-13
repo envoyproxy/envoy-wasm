@@ -1868,7 +1868,15 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
 }
 
 std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
-  if (wasm_vm == WasmVmNames::get().Null) {
+  if (wasm_vm.empty()) {
+#if defined(ENVOY_WASM_V8) && !defined(ENVOY_WASM_WAVM)
+    return V8::createVm();
+#elif defined(ENVOY_WASM_WAVM) && !defined(ENVOY_WASM_V8)
+    return Wavm::createVm();
+#else
+    throw WasmException("Failed to create WASM VM with unspecified runtime.");
+#endif
+  } else if (wasm_vm == WasmVmNames::get().Null) {
     return Null::createVm();
   } else
 #ifdef ENVOY_WASM_V8
