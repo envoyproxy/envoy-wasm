@@ -326,9 +326,9 @@ private:
   friend class GrpcStreamHandlerBase;
 
   uint32_t id_;
-  std::unordered_map<std::pair<MetadataType, std::string>, google::protobuf::Value, PairHash> value_cache_;
-  std::unordered_map<std::tuple<MetadataType, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
-  std::unordered_map<std::pair<MetadataType, std::string>, google::protobuf::Struct, PairHash> struct_cache_;
+  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Value, PairHash> value_cache_;
+  std::unordered_map<std::tuple<EnumType, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
+  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Struct, PairHash> struct_cache_;
   std::unordered_map<uint32_t, HttpCallCallback> http_calls_;
   std::unordered_map<uint32_t, GrpcSimpleCallCallback> simple_grpc_calls_;
   std::unordered_map<uint32_t, std::unique_ptr<GrpcCallHandlerBase>> grpc_calls_;
@@ -439,7 +439,7 @@ inline void setMetadataStruct(MetadataType type, StringView name,
 }
 
 inline google::protobuf::Value Context::metadataValue(MetadataType type, StringView key) {
-  auto cache_key = std::make_pair(type, std::string(key));
+  auto cache_key = std::make_pair(static_cast<EnumType>(type), std::string(key));
   auto it = value_cache_.find(cache_key);
   if (it != value_cache_.end()) {
     return it->second;
@@ -449,7 +449,7 @@ inline google::protobuf::Value Context::metadataValue(MetadataType type, StringV
     for (auto &p : values->pairs()) {
       google::protobuf::Value value;
       if (value.ParseFromArray(p.second.data(), p.second.size())) {
-        auto k = std::make_pair(type, std::string(p.first));
+        auto k = std::make_pair(static_cast<EnumType>(type), std::string(p.first));
         value_cache_[cache_key] = value;
       }
     }
@@ -491,17 +491,17 @@ inline google::protobuf::Value Context::nodeMetadataValue(StringView key) {
 
 inline google::protobuf::Value Context::namedMetadataValue(MetadataType type, StringView name, StringView key) {
   auto n = std::string(name);
-  auto cache_key = std::make_tuple(type,  n, std::string(key));
+  auto cache_key = std::make_tuple(static_cast<EnumType>(type),  n, std::string(key));
   auto it = name_value_cache_.find(cache_key);
   if (it != name_value_cache_.end()) {
     return it->second;
   }
   auto s = metadataStruct(type, name);
   for (auto &f : s.fields()) {
-    auto k = std::make_tuple(type, n, f.first);
+    auto k = std::make_tuple(static_cast<EnumType>(type), n, f.first);
     name_value_cache_[k] =  f.second;
   }
-  struct_cache_[std::make_pair(type, n)] = std::move(s);
+  struct_cache_[std::make_pair(static_cast<EnumType>(type), n)] = std::move(s);
   it = name_value_cache_.find(cache_key);
   if (it != name_value_cache_.end()) {
     return it->second;
@@ -518,7 +518,7 @@ inline google::protobuf::Value Context::responseMetadataValue(StringView name, S
 }
 
 inline google::protobuf::Struct Context::metadataStruct(MetadataType type, StringView name) {
-  auto cache_key = std::make_pair(type,  std::string(name));
+  auto cache_key = std::make_pair(static_cast<EnumType>(type),  std::string(name));
   auto it = struct_cache_.find(cache_key);
   if (it != struct_cache_.end()) {
     return it->second;

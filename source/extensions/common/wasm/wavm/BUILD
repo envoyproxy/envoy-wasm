@@ -25,7 +25,7 @@ envoy_cc_library(
     ],
     defines = ["ENVOY_WASM_WAVM"],
     external_deps = [
-        "wavm_with_llvm",
+        "wavm",
     ],
     deps = [
         "//external:abseil_node_hash_map",

@@ -58,7 +58,9 @@ struct NullVm : public WasmVm {
   std::unique_ptr<WasmVm> clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
   void link(absl::string_view debug_name, bool needs_emscripten) override;
+  void setMemoryLayout(uint64_t, uint64_t, uint64_t) override {}
   void start(Common::Wasm::Context* context) override;
+  uint64_t getMemorySize() override;
   absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, void* data) override;
@@ -138,6 +140,8 @@ void NullVm::start(Common::Wasm::Context* context) {
   SaveRestoreContext saved_context(context);
   plugin_->start();
 }
+
+uint64_t NullVm::getMemorySize() { return std::numeric_limits<uint64_t>::max(); }
 
 absl::string_view NullVm::getMemory(uint64_t pointer, uint64_t size) {
   return {reinterpret_cast<char*>(pointer), static_cast<size_t>(size)};

@@ -19,14 +19,112 @@
 #endif
 // @@protoc_insertion_point(includes)
 
+namespace protobuf_google_2fprotobuf_2fany_2eproto {
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_google_2fprotobuf_2fany_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Any;
+}  // namespace protobuf_google_2fprotobuf_2fany_2eproto
+namespace protobuf_google_2fprotobuf_2fduration_2eproto {
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_google_2fprotobuf_2fduration_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Duration;
+}  // namespace protobuf_google_2fprotobuf_2fduration_2eproto
+namespace protobuf_google_2fprotobuf_2fempty_2eproto {
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_google_2fprotobuf_2fempty_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Empty;
+}  // namespace protobuf_google_2fprotobuf_2fempty_2eproto
 namespace protobuf_google_2fprotobuf_2fstruct_2eproto {
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_google_2fprotobuf_2fstruct_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_ListValue;
 }  // namespace protobuf_google_2fprotobuf_2fstruct_2eproto
+namespace protobuf_proxy_5fwasm_5fintrinsics_2eproto {
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_DataSource;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_EnvoyGrpc;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_GoogleLocalCredentials;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_HeaderValue;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_GrpcService_GoogleGrpc_SslCredentials;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<2> scc_info_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<3> scc_info_GrpcService_GoogleGrpc;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<3> scc_info_GrpcService_GoogleGrpc_ChannelCredentials;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_proxy_5fwasm_5fintrinsics_2eproto ::google::protobuf::internal::SCCInfo<4> scc_info_GrpcService_GoogleGrpc_CallCredentials;
+}  // namespace protobuf_proxy_5fwasm_5fintrinsics_2eproto
 class WKTDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<WKT>
       _instance;
 } _WKT_default_instance_;
+class DataSourceDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<DataSource>
+      _instance;
+  ::google::protobuf::internal::ArenaStringPtr filename_;
+  ::google::protobuf::internal::ArenaStringPtr inline_bytes_;
+  ::google::protobuf::internal::ArenaStringPtr inline_string_;
+} _DataSource_default_instance_;
+class GrpcService_EnvoyGrpcDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_EnvoyGrpc>
+      _instance;
+} _GrpcService_EnvoyGrpc_default_instance_;
+class GrpcService_GoogleGrpc_SslCredentialsDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc_SslCredentials>
+      _instance;
+} _GrpcService_GoogleGrpc_SslCredentials_default_instance_;
+class GrpcService_GoogleGrpc_GoogleLocalCredentialsDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc_GoogleLocalCredentials>
+      _instance;
+} _GrpcService_GoogleGrpc_GoogleLocalCredentials_default_instance_;
+class GrpcService_GoogleGrpc_ChannelCredentialsDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc_ChannelCredentials>
+      _instance;
+  const ::GrpcService_GoogleGrpc_SslCredentials* ssl_credentials_;
+  const ::google::protobuf::Empty* google_default_;
+  const ::GrpcService_GoogleGrpc_GoogleLocalCredentials* local_credentials_;
+} _GrpcService_GoogleGrpc_ChannelCredentials_default_instance_;
+class GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentialsDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials>
+      _instance;
+} _GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_default_instance_;
+class GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentialsDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials>
+      _instance;
+} _GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials_default_instance_;
+class GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPluginDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin>
+      _instance;
+  const ::google::protobuf::Struct* config_;
+  const ::google::protobuf::Any* typed_config_;
+} _GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_default_instance_;
+class GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc_CallCredentials>
+      _instance;
+  ::google::protobuf::internal::ArenaStringPtr access_token_;
+  const ::google::protobuf::Empty* google_compute_engine_;
+  ::google::protobuf::internal::ArenaStringPtr google_refresh_token_;
+  const ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* service_account_jwt_access_;
+  const ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* google_iam_;
+  const ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* from_plugin_;
+} _GrpcService_GoogleGrpc_CallCredentials_default_instance_;
+class GrpcService_GoogleGrpcDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc>
+      _instance;
+} _GrpcService_GoogleGrpc_default_instance_;
+class GrpcService_HeaderValueDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService_HeaderValue>
+      _instance;
+} _GrpcService_HeaderValue_default_instance_;
+class GrpcServiceDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GrpcService>
+      _instance;
+  const ::GrpcService_EnvoyGrpc* envoy_grpc_;
+  const ::GrpcService_GoogleGrpc* google_grpc_;
+} _GrpcService_default_instance_;
 namespace protobuf_proxy_5fwasm_5fintrinsics_2eproto {
 static void InitDefaultsWKT() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -43,11 +141,208 @@ static void InitDefaultsWKT() {
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsWKT}, {
       &protobuf_google_2fprotobuf_2fstruct_2eproto::scc_info_ListValue.base,}};
 
-void InitDefaults() {
-  ::google::protobuf::internal::InitSCC(&scc_info_WKT.base);
+static void InitDefaultsDataSource() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_DataSource_default_instance_;
+    new (ptr) ::DataSource();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::DataSource::InitAsDefaultInstance();
 }
 
-::google::protobuf::Metadata file_level_metadata[1];
+::google::protobuf::internal::SCCInfo<0> scc_info_DataSource =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsDataSource}, {}};
+
+static void InitDefaultsGrpcService_EnvoyGrpc() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_EnvoyGrpc_default_instance_;
+    new (ptr) ::GrpcService_EnvoyGrpc();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_EnvoyGrpc::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_EnvoyGrpc =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsGrpcService_EnvoyGrpc}, {}};
+
+static void InitDefaultsGrpcService_GoogleGrpc_SslCredentials() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_GoogleGrpc_SslCredentials_default_instance_;
+    new (ptr) ::GrpcService_GoogleGrpc_SslCredentials();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_GoogleGrpc_SslCredentials::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<1> scc_info_GrpcService_GoogleGrpc_SslCredentials =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsGrpcService_GoogleGrpc_SslCredentials}, {
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_DataSource.base,}};
+
+static void InitDefaultsGrpcService_GoogleGrpc_GoogleLocalCredentials() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_GoogleGrpc_GoogleLocalCredentials_default_instance_;
+    new (ptr) ::GrpcService_GoogleGrpc_GoogleLocalCredentials();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_GoogleGrpc_GoogleLocalCredentials::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_GoogleLocalCredentials =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsGrpcService_GoogleGrpc_GoogleLocalCredentials}, {}};
+
+static void InitDefaultsGrpcService_GoogleGrpc_ChannelCredentials() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_GoogleGrpc_ChannelCredentials_default_instance_;
+    new (ptr) ::GrpcService_GoogleGrpc_ChannelCredentials();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_GoogleGrpc_ChannelCredentials::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<3> scc_info_GrpcService_GoogleGrpc_ChannelCredentials =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 3, InitDefaultsGrpcService_GoogleGrpc_ChannelCredentials}, {
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_SslCredentials.base,
+      &protobuf_google_2fprotobuf_2fempty_2eproto::scc_info_Empty.base,
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_GoogleLocalCredentials.base,}};
+
+static void InitDefaultsGrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_default_instance_;
+    new (ptr) ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsGrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials}, {}};
+
+static void InitDefaultsGrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials_default_instance_;
+    new (ptr) ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsGrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials}, {}};
+
+static void InitDefaultsGrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_default_instance_;
+    new (ptr) ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<2> scc_info_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 2, InitDefaultsGrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin}, {
+      &protobuf_google_2fprotobuf_2fstruct_2eproto::scc_info_ListValue.base,
+      &protobuf_google_2fprotobuf_2fany_2eproto::scc_info_Any.base,}};
+
+static void InitDefaultsGrpcService_GoogleGrpc_CallCredentials() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_GoogleGrpc_CallCredentials_default_instance_;
+    new (ptr) ::GrpcService_GoogleGrpc_CallCredentials();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_GoogleGrpc_CallCredentials::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<4> scc_info_GrpcService_GoogleGrpc_CallCredentials =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 4, InitDefaultsGrpcService_GoogleGrpc_CallCredentials}, {
+      &protobuf_google_2fprotobuf_2fempty_2eproto::scc_info_Empty.base,
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials.base,
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials.base,
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin.base,}};
+
+static void InitDefaultsGrpcService_GoogleGrpc() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_GoogleGrpc_default_instance_;
+    new (ptr) ::GrpcService_GoogleGrpc();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_GoogleGrpc::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<3> scc_info_GrpcService_GoogleGrpc =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 3, InitDefaultsGrpcService_GoogleGrpc}, {
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_ChannelCredentials.base,
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials.base,
+      &protobuf_google_2fprotobuf_2fstruct_2eproto::scc_info_ListValue.base,}};
+
+static void InitDefaultsGrpcService_HeaderValue() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_HeaderValue_default_instance_;
+    new (ptr) ::GrpcService_HeaderValue();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_HeaderValue::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_GrpcService_HeaderValue =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsGrpcService_HeaderValue}, {}};
+
+static void InitDefaultsGrpcService() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_default_instance_;
+    new (ptr) ::GrpcService();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<4> scc_info_GrpcService =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 4, InitDefaultsGrpcService}, {
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_EnvoyGrpc.base,
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc.base,
+      &protobuf_google_2fprotobuf_2fduration_2eproto::scc_info_Duration.base,
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_HeaderValue.base,}};
+
+void InitDefaults() {
+  ::google::protobuf::internal::InitSCC(&scc_info_WKT.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_DataSource.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_EnvoyGrpc.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_GoogleGrpc_SslCredentials.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_GoogleGrpc_GoogleLocalCredentials.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_GoogleGrpc_ChannelCredentials.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_GoogleGrpc_CallCredentials.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_GoogleGrpc.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService_HeaderValue.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_GrpcService.base);
+}
+
+::google::protobuf::Metadata file_level_metadata[13];
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   ~0u,  // no _has_bits_
@@ -56,13 +351,137 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::WKT, struct__),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::DataSource, _internal_metadata_),
+  ~0u,  // no _extensions_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::DataSource, _oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  offsetof(::DataSourceDefaultTypeInternal, filename_),
+  offsetof(::DataSourceDefaultTypeInternal, inline_bytes_),
+  offsetof(::DataSourceDefaultTypeInternal, inline_string_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::DataSource, specifier_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_EnvoyGrpc, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_EnvoyGrpc, cluster_name_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_SslCredentials, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_SslCredentials, root_certs_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_SslCredentials, private_key_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_SslCredentials, cert_chain_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_GoogleLocalCredentials, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_ChannelCredentials, _internal_metadata_),
+  ~0u,  // no _extensions_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_ChannelCredentials, _oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  offsetof(::GrpcService_GoogleGrpc_ChannelCredentialsDefaultTypeInternal, ssl_credentials_),
+  offsetof(::GrpcService_GoogleGrpc_ChannelCredentialsDefaultTypeInternal, google_default_),
+  offsetof(::GrpcService_GoogleGrpc_ChannelCredentialsDefaultTypeInternal, local_credentials_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_ChannelCredentials, credential_specifier_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials, json_key_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials, token_lifetime_seconds_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials, authorization_token_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials, authority_selector_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin, _internal_metadata_),
+  ~0u,  // no _extensions_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin, _oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin, name_),
+  offsetof(::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPluginDefaultTypeInternal, config_),
+  offsetof(::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPluginDefaultTypeInternal, typed_config_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin, config_type_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials, _internal_metadata_),
+  ~0u,  // no _extensions_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials, _oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  offsetof(::GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal, access_token_),
+  offsetof(::GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal, google_compute_engine_),
+  offsetof(::GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal, google_refresh_token_),
+  offsetof(::GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal, service_account_jwt_access_),
+  offsetof(::GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal, google_iam_),
+  offsetof(::GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal, from_plugin_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc_CallCredentials, credential_specifier_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc, target_uri_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc, channel_credentials_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc, call_credentials_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc, stat_prefix_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc, credentials_factory_name_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_GoogleGrpc, config_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_HeaderValue, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_HeaderValue, key_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService_HeaderValue, value_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService, _internal_metadata_),
+  ~0u,  // no _extensions_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService, _oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  offsetof(::GrpcServiceDefaultTypeInternal, envoy_grpc_),
+  offsetof(::GrpcServiceDefaultTypeInternal, google_grpc_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService, timeout_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService, initial_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::GrpcService, target_specifier_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::WKT)},
+  { 6, -1, sizeof(::DataSource)},
+  { 15, -1, sizeof(::GrpcService_EnvoyGrpc)},
+  { 21, -1, sizeof(::GrpcService_GoogleGrpc_SslCredentials)},
+  { 29, -1, sizeof(::GrpcService_GoogleGrpc_GoogleLocalCredentials)},
+  { 34, -1, sizeof(::GrpcService_GoogleGrpc_ChannelCredentials)},
+  { 43, -1, sizeof(::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials)},
+  { 50, -1, sizeof(::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials)},
+  { 57, -1, sizeof(::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin)},
+  { 66, -1, sizeof(::GrpcService_GoogleGrpc_CallCredentials)},
+  { 78, -1, sizeof(::GrpcService_GoogleGrpc)},
+  { 89, -1, sizeof(::GrpcService_HeaderValue)},
+  { 96, -1, sizeof(::GrpcService)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&::_WKT_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_DataSource_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_EnvoyGrpc_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_GoogleGrpc_SslCredentials_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_GoogleGrpc_GoogleLocalCredentials_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_GoogleGrpc_ChannelCredentials_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_GoogleGrpc_CallCredentials_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_GoogleGrpc_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_HeaderValue_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::_GrpcService_default_instance_),
 };
 
 void protobuf_AssignDescriptors() {
@@ -80,20 +499,71 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 1);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 13);
 }
 
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\033proxy_wasm_intrinsics.proto\032\034google/pr"
-      "otobuf/struct.proto\".\n\003WKT\022\'\n\006struct\030\001 \001"
-      "(\0132\027.google.protobuf.Structb\006proto3"
+      "\n\033proxy_wasm_intrinsics.proto\032\031google/pr"
+      "otobuf/any.proto\032\036google/protobuf/durati"
+      "on.proto\032\033google/protobuf/empty.proto\032\034g"
+      "oogle/protobuf/struct.proto\".\n\003WKT\022\'\n\006st"
+      "ruct\030\001 \001(\0132\027.google.protobuf.Struct\"^\n\nD"
+      "ataSource\022\022\n\010filename\030\001 \001(\tH\000\022\026\n\014inline_"
+      "bytes\030\002 \001(\014H\000\022\027\n\rinline_string\030\003 \001(\tH\000B\013"
+      "\n\tspecifier\"\311\r\n\013GrpcService\022,\n\nenvoy_grp"
+      "c\030\001 \001(\0132\026.GrpcService.EnvoyGrpcH\000\022.\n\013goo"
+      "gle_grpc\030\002 \001(\0132\027.GrpcService.GoogleGrpcH"
+      "\000\022*\n\007timeout\030\003 \001(\0132\031.google.protobuf.Dur"
+      "ation\0222\n\020initial_metadata\030\005 \003(\0132\030.GrpcSe"
+      "rvice.HeaderValue\032!\n\tEnvoyGrpc\022\024\n\014cluste"
+      "r_name\030\001 \001(\t\032\223\013\n\nGoogleGrpc\022\022\n\ntarget_ur"
+      "i\030\001 \001(\t\022G\n\023channel_credentials\030\002 \001(\0132*.G"
+      "rpcService.GoogleGrpc.ChannelCredentials"
+      "\022A\n\020call_credentials\030\003 \003(\0132\'.GrpcService"
+      ".GoogleGrpc.CallCredentials\022\023\n\013stat_pref"
+      "ix\030\004 \001(\t\022 \n\030credentials_factory_name\030\005 \001"
+      "(\t\022\'\n\006config\030\006 \001(\0132\027.google.protobuf.Str"
+      "uct\032t\n\016SslCredentials\022\037\n\nroot_certs\030\001 \001("
+      "\0132\013.DataSource\022 \n\013private_key\030\002 \001(\0132\013.Da"
+      "taSource\022\037\n\ncert_chain\030\003 \001(\0132\013.DataSourc"
+      "e\032\030\n\026GoogleLocalCredentials\032\356\001\n\022ChannelC"
+      "redentials\022A\n\017ssl_credentials\030\001 \001(\0132&.Gr"
+      "pcService.GoogleGrpc.SslCredentialsH\000\0220\n"
+      "\016google_default\030\002 \001(\0132\026.google.protobuf."
+      "EmptyH\000\022K\n\021local_credentials\030\003 \001(\0132..Grp"
+      "cService.GoogleGrpc.GoogleLocalCredentia"
+      "lsH\000B\026\n\024credential_specifier\032\203\006\n\017CallCre"
+      "dentials\022\026\n\014access_token\030\001 \001(\tH\000\0227\n\025goog"
+      "le_compute_engine\030\002 \001(\0132\026.google.protobu"
+      "f.EmptyH\000\022\036\n\024google_refresh_token\030\003 \001(\tH"
+      "\000\022p\n\032service_account_jwt_access\030\004 \001(\0132J."
+      "GrpcService.GoogleGrpc.CallCredentials.S"
+      "erviceAccountJWTAccessCredentialsH\000\022R\n\ng"
+      "oogle_iam\030\005 \001(\0132<.GrpcService.GoogleGrpc"
+      ".CallCredentials.GoogleIAMCredentialsH\000\022"
+      "\\\n\013from_plugin\030\006 \001(\0132E.GrpcService.Googl"
+      "eGrpc.CallCredentials.MetadataCredential"
+      "sFromPluginH\000\032V\n\"ServiceAccountJWTAccess"
+      "Credentials\022\020\n\010json_key\030\001 \001(\t\022\036\n\026token_l"
+      "ifetime_seconds\030\002 \001(\004\032O\n\024GoogleIAMCreden"
+      "tials\022\033\n\023authorization_token\030\001 \001(\t\022\032\n\022au"
+      "thority_selector\030\002 \001(\t\032\231\001\n\035MetadataCrede"
+      "ntialsFromPlugin\022\014\n\004name\030\001 \001(\t\022-\n\006config"
+      "\030\002 \001(\0132\027.google.protobuf.StructB\002\030\001H\000\022,\n"
+      "\014typed_config\030\003 \001(\0132\024.google.protobuf.An"
+      "yH\000B\r\n\013config_typeB\026\n\024credential_specifi"
+      "er\032)\n\013HeaderValue\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030"
+      "\002 \001(\tB\022\n\020target_specifierJ\004\010\004\020\005b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 115);
+      descriptor, 2039);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "proxy_wasm_intrinsics.proto", &protobuf_RegisterTypes);
+  ::protobuf_google_2fprotobuf_2fany_2eproto::AddDescriptors();
+  ::protobuf_google_2fprotobuf_2fduration_2eproto::AddDescriptors();
+  ::protobuf_google_2fprotobuf_2fempty_2eproto::AddDescriptors();
   ::protobuf_google_2fprotobuf_2fstruct_2eproto::AddDescriptors();
 }
 
@@ -349,11 +819,4423 @@ void WKT::InternalSwap(WKT* other) {
 }
 
 
+// ===================================================================
+
+void DataSource::InitAsDefaultInstance() {
+  ::_DataSource_default_instance_.filename_.UnsafeSetDefault(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::_DataSource_default_instance_.inline_bytes_.UnsafeSetDefault(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::_DataSource_default_instance_.inline_string_.UnsafeSetDefault(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int DataSource::kFilenameFieldNumber;
+const int DataSource::kInlineBytesFieldNumber;
+const int DataSource::kInlineStringFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+DataSource::DataSource()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_DataSource.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:DataSource)
+}
+DataSource::DataSource(const DataSource& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  clear_has_specifier();
+  switch (from.specifier_case()) {
+    case kFilename: {
+      set_filename(from.filename());
+      break;
+    }
+    case kInlineBytes: {
+      set_inline_bytes(from.inline_bytes());
+      break;
+    }
+    case kInlineString: {
+      set_inline_string(from.inline_string());
+      break;
+    }
+    case SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  // @@protoc_insertion_point(copy_constructor:DataSource)
+}
+
+void DataSource::SharedCtor() {
+  clear_has_specifier();
+}
+
+DataSource::~DataSource() {
+  // @@protoc_insertion_point(destructor:DataSource)
+  SharedDtor();
+}
+
+void DataSource::SharedDtor() {
+  if (has_specifier()) {
+    clear_specifier();
+  }
+}
+
+void DataSource::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* DataSource::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const DataSource& DataSource::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_DataSource.base);
+  return *internal_default_instance();
+}
+
+
+void DataSource::clear_specifier() {
+// @@protoc_insertion_point(one_of_clear_start:DataSource)
+  switch (specifier_case()) {
+    case kFilename: {
+      specifier_.filename_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+      break;
+    }
+    case kInlineBytes: {
+      specifier_.inline_bytes_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+      break;
+    }
+    case kInlineString: {
+      specifier_.inline_string_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+      break;
+    }
+    case SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  _oneof_case_[0] = SPECIFIER_NOT_SET;
+}
+
+
+void DataSource::Clear() {
+// @@protoc_insertion_point(message_clear_start:DataSource)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  clear_specifier();
+  _internal_metadata_.Clear();
+}
+
+bool DataSource::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:DataSource)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string filename = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_filename()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->filename().data(), static_cast<int>(this->filename().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "DataSource.filename"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // bytes inline_bytes = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_inline_bytes()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string inline_string = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_inline_string()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->inline_string().data(), static_cast<int>(this->inline_string().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "DataSource.inline_string"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:DataSource)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:DataSource)
+  return false;
+#undef DO_
+}
+
+void DataSource::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:DataSource)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string filename = 1;
+  if (has_filename()) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->filename().data(), static_cast<int>(this->filename().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "DataSource.filename");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->filename(), output);
+  }
+
+  // bytes inline_bytes = 2;
+  if (has_inline_bytes()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      2, this->inline_bytes(), output);
+  }
+
+  // string inline_string = 3;
+  if (has_inline_string()) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->inline_string().data(), static_cast<int>(this->inline_string().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "DataSource.inline_string");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      3, this->inline_string(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:DataSource)
+}
+
+::google::protobuf::uint8* DataSource::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:DataSource)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string filename = 1;
+  if (has_filename()) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->filename().data(), static_cast<int>(this->filename().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "DataSource.filename");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->filename(), target);
+  }
+
+  // bytes inline_bytes = 2;
+  if (has_inline_bytes()) {
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+        2, this->inline_bytes(), target);
+  }
+
+  // string inline_string = 3;
+  if (has_inline_string()) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->inline_string().data(), static_cast<int>(this->inline_string().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "DataSource.inline_string");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        3, this->inline_string(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:DataSource)
+  return target;
+}
+
+size_t DataSource::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:DataSource)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  switch (specifier_case()) {
+    // string filename = 1;
+    case kFilename: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->filename());
+      break;
+    }
+    // bytes inline_bytes = 2;
+    case kInlineBytes: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::BytesSize(
+          this->inline_bytes());
+      break;
+    }
+    // string inline_string = 3;
+    case kInlineString: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->inline_string());
+      break;
+    }
+    case SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void DataSource::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:DataSource)
+  GOOGLE_DCHECK_NE(&from, this);
+  const DataSource* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const DataSource>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:DataSource)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:DataSource)
+    MergeFrom(*source);
+  }
+}
+
+void DataSource::MergeFrom(const DataSource& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:DataSource)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  switch (from.specifier_case()) {
+    case kFilename: {
+      set_filename(from.filename());
+      break;
+    }
+    case kInlineBytes: {
+      set_inline_bytes(from.inline_bytes());
+      break;
+    }
+    case kInlineString: {
+      set_inline_string(from.inline_string());
+      break;
+    }
+    case SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+}
+
+void DataSource::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:DataSource)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void DataSource::CopyFrom(const DataSource& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:DataSource)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool DataSource::IsInitialized() const {
+  return true;
+}
+
+void DataSource::Swap(DataSource* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void DataSource::InternalSwap(DataSource* other) {
+  using std::swap;
+  swap(specifier_, other->specifier_);
+  swap(_oneof_case_[0], other->_oneof_case_[0]);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata DataSource::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_EnvoyGrpc::InitAsDefaultInstance() {
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService_EnvoyGrpc::kClusterNameFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_EnvoyGrpc::GrpcService_EnvoyGrpc()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_EnvoyGrpc.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.EnvoyGrpc)
+}
+GrpcService_EnvoyGrpc::GrpcService_EnvoyGrpc(const GrpcService_EnvoyGrpc& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  cluster_name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.cluster_name().size() > 0) {
+    cluster_name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.cluster_name_);
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService.EnvoyGrpc)
+}
+
+void GrpcService_EnvoyGrpc::SharedCtor() {
+  cluster_name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+GrpcService_EnvoyGrpc::~GrpcService_EnvoyGrpc() {
+  // @@protoc_insertion_point(destructor:GrpcService.EnvoyGrpc)
+  SharedDtor();
+}
+
+void GrpcService_EnvoyGrpc::SharedDtor() {
+  cluster_name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void GrpcService_EnvoyGrpc::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_EnvoyGrpc::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_EnvoyGrpc& GrpcService_EnvoyGrpc::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_EnvoyGrpc.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_EnvoyGrpc::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.EnvoyGrpc)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cluster_name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_EnvoyGrpc::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.EnvoyGrpc)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string cluster_name = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_cluster_name()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->cluster_name().data(), static_cast<int>(this->cluster_name().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.EnvoyGrpc.cluster_name"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.EnvoyGrpc)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.EnvoyGrpc)
+  return false;
+#undef DO_
+}
+
+void GrpcService_EnvoyGrpc::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.EnvoyGrpc)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string cluster_name = 1;
+  if (this->cluster_name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->cluster_name().data(), static_cast<int>(this->cluster_name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.EnvoyGrpc.cluster_name");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->cluster_name(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.EnvoyGrpc)
+}
+
+::google::protobuf::uint8* GrpcService_EnvoyGrpc::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.EnvoyGrpc)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string cluster_name = 1;
+  if (this->cluster_name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->cluster_name().data(), static_cast<int>(this->cluster_name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.EnvoyGrpc.cluster_name");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->cluster_name(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.EnvoyGrpc)
+  return target;
+}
+
+size_t GrpcService_EnvoyGrpc::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.EnvoyGrpc)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string cluster_name = 1;
+  if (this->cluster_name().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->cluster_name());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_EnvoyGrpc::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.EnvoyGrpc)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_EnvoyGrpc* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_EnvoyGrpc>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.EnvoyGrpc)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.EnvoyGrpc)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_EnvoyGrpc::MergeFrom(const GrpcService_EnvoyGrpc& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.EnvoyGrpc)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.cluster_name().size() > 0) {
+
+    cluster_name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.cluster_name_);
+  }
+}
+
+void GrpcService_EnvoyGrpc::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.EnvoyGrpc)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_EnvoyGrpc::CopyFrom(const GrpcService_EnvoyGrpc& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.EnvoyGrpc)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_EnvoyGrpc::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_EnvoyGrpc::Swap(GrpcService_EnvoyGrpc* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_EnvoyGrpc::InternalSwap(GrpcService_EnvoyGrpc* other) {
+  using std::swap;
+  cluster_name_.Swap(&other->cluster_name_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_EnvoyGrpc::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_GoogleGrpc_SslCredentials::InitAsDefaultInstance() {
+  ::_GrpcService_GoogleGrpc_SslCredentials_default_instance_._instance.get_mutable()->root_certs_ = const_cast< ::DataSource*>(
+      ::DataSource::internal_default_instance());
+  ::_GrpcService_GoogleGrpc_SslCredentials_default_instance_._instance.get_mutable()->private_key_ = const_cast< ::DataSource*>(
+      ::DataSource::internal_default_instance());
+  ::_GrpcService_GoogleGrpc_SslCredentials_default_instance_._instance.get_mutable()->cert_chain_ = const_cast< ::DataSource*>(
+      ::DataSource::internal_default_instance());
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService_GoogleGrpc_SslCredentials::kRootCertsFieldNumber;
+const int GrpcService_GoogleGrpc_SslCredentials::kPrivateKeyFieldNumber;
+const int GrpcService_GoogleGrpc_SslCredentials::kCertChainFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_GoogleGrpc_SslCredentials::GrpcService_GoogleGrpc_SslCredentials()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_SslCredentials.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.GoogleGrpc.SslCredentials)
+}
+GrpcService_GoogleGrpc_SslCredentials::GrpcService_GoogleGrpc_SslCredentials(const GrpcService_GoogleGrpc_SslCredentials& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_root_certs()) {
+    root_certs_ = new ::DataSource(*from.root_certs_);
+  } else {
+    root_certs_ = NULL;
+  }
+  if (from.has_private_key()) {
+    private_key_ = new ::DataSource(*from.private_key_);
+  } else {
+    private_key_ = NULL;
+  }
+  if (from.has_cert_chain()) {
+    cert_chain_ = new ::DataSource(*from.cert_chain_);
+  } else {
+    cert_chain_ = NULL;
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService.GoogleGrpc.SslCredentials)
+}
+
+void GrpcService_GoogleGrpc_SslCredentials::SharedCtor() {
+  ::memset(&root_certs_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&cert_chain_) -
+      reinterpret_cast<char*>(&root_certs_)) + sizeof(cert_chain_));
+}
+
+GrpcService_GoogleGrpc_SslCredentials::~GrpcService_GoogleGrpc_SslCredentials() {
+  // @@protoc_insertion_point(destructor:GrpcService.GoogleGrpc.SslCredentials)
+  SharedDtor();
+}
+
+void GrpcService_GoogleGrpc_SslCredentials::SharedDtor() {
+  if (this != internal_default_instance()) delete root_certs_;
+  if (this != internal_default_instance()) delete private_key_;
+  if (this != internal_default_instance()) delete cert_chain_;
+}
+
+void GrpcService_GoogleGrpc_SslCredentials::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_GoogleGrpc_SslCredentials::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_GoogleGrpc_SslCredentials& GrpcService_GoogleGrpc_SslCredentials::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_SslCredentials.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_GoogleGrpc_SslCredentials::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.GoogleGrpc.SslCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  if (GetArenaNoVirtual() == NULL && root_certs_ != NULL) {
+    delete root_certs_;
+  }
+  root_certs_ = NULL;
+  if (GetArenaNoVirtual() == NULL && private_key_ != NULL) {
+    delete private_key_;
+  }
+  private_key_ = NULL;
+  if (GetArenaNoVirtual() == NULL && cert_chain_ != NULL) {
+    delete cert_chain_;
+  }
+  cert_chain_ = NULL;
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_GoogleGrpc_SslCredentials::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.GoogleGrpc.SslCredentials)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .DataSource root_certs = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_root_certs()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .DataSource private_key = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_private_key()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .DataSource cert_chain = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_cert_chain()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.GoogleGrpc.SslCredentials)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.GoogleGrpc.SslCredentials)
+  return false;
+#undef DO_
+}
+
+void GrpcService_GoogleGrpc_SslCredentials::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.GoogleGrpc.SslCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .DataSource root_certs = 1;
+  if (this->has_root_certs()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, this->_internal_root_certs(), output);
+  }
+
+  // .DataSource private_key = 2;
+  if (this->has_private_key()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->_internal_private_key(), output);
+  }
+
+  // .DataSource cert_chain = 3;
+  if (this->has_cert_chain()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->_internal_cert_chain(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc.SslCredentials)
+}
+
+::google::protobuf::uint8* GrpcService_GoogleGrpc_SslCredentials::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.GoogleGrpc.SslCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .DataSource root_certs = 1;
+  if (this->has_root_certs()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        1, this->_internal_root_certs(), deterministic, target);
+  }
+
+  // .DataSource private_key = 2;
+  if (this->has_private_key()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        2, this->_internal_private_key(), deterministic, target);
+  }
+
+  // .DataSource cert_chain = 3;
+  if (this->has_cert_chain()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        3, this->_internal_cert_chain(), deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.GoogleGrpc.SslCredentials)
+  return target;
+}
+
+size_t GrpcService_GoogleGrpc_SslCredentials::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.GoogleGrpc.SslCredentials)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // .DataSource root_certs = 1;
+  if (this->has_root_certs()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *root_certs_);
+  }
+
+  // .DataSource private_key = 2;
+  if (this->has_private_key()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *private_key_);
+  }
+
+  // .DataSource cert_chain = 3;
+  if (this->has_cert_chain()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *cert_chain_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_GoogleGrpc_SslCredentials::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.GoogleGrpc.SslCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_GoogleGrpc_SslCredentials* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_GoogleGrpc_SslCredentials>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.GoogleGrpc.SslCredentials)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.GoogleGrpc.SslCredentials)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_GoogleGrpc_SslCredentials::MergeFrom(const GrpcService_GoogleGrpc_SslCredentials& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.GoogleGrpc.SslCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.has_root_certs()) {
+    mutable_root_certs()->::DataSource::MergeFrom(from.root_certs());
+  }
+  if (from.has_private_key()) {
+    mutable_private_key()->::DataSource::MergeFrom(from.private_key());
+  }
+  if (from.has_cert_chain()) {
+    mutable_cert_chain()->::DataSource::MergeFrom(from.cert_chain());
+  }
+}
+
+void GrpcService_GoogleGrpc_SslCredentials::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.GoogleGrpc.SslCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_GoogleGrpc_SslCredentials::CopyFrom(const GrpcService_GoogleGrpc_SslCredentials& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.GoogleGrpc.SslCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_GoogleGrpc_SslCredentials::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_GoogleGrpc_SslCredentials::Swap(GrpcService_GoogleGrpc_SslCredentials* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_GoogleGrpc_SslCredentials::InternalSwap(GrpcService_GoogleGrpc_SslCredentials* other) {
+  using std::swap;
+  swap(root_certs_, other->root_certs_);
+  swap(private_key_, other->private_key_);
+  swap(cert_chain_, other->cert_chain_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_GoogleGrpc_SslCredentials::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::InitAsDefaultInstance() {
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_GoogleGrpc_GoogleLocalCredentials::GrpcService_GoogleGrpc_GoogleLocalCredentials()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_GoogleLocalCredentials.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+}
+GrpcService_GoogleGrpc_GoogleLocalCredentials::GrpcService_GoogleGrpc_GoogleLocalCredentials(const GrpcService_GoogleGrpc_GoogleLocalCredentials& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  // @@protoc_insertion_point(copy_constructor:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+}
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::SharedCtor() {
+}
+
+GrpcService_GoogleGrpc_GoogleLocalCredentials::~GrpcService_GoogleGrpc_GoogleLocalCredentials() {
+  // @@protoc_insertion_point(destructor:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  SharedDtor();
+}
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::SharedDtor() {
+}
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_GoogleGrpc_GoogleLocalCredentials::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_GoogleGrpc_GoogleLocalCredentials& GrpcService_GoogleGrpc_GoogleLocalCredentials::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_GoogleLocalCredentials.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_GoogleGrpc_GoogleLocalCredentials::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+  handle_unusual:
+    if (tag == 0) {
+      goto success;
+    }
+    DO_(::google::protobuf::internal::WireFormat::SkipField(
+          input, tag, _internal_metadata_.mutable_unknown_fields()));
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  return false;
+#undef DO_
+}
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+}
+
+::google::protobuf::uint8* GrpcService_GoogleGrpc_GoogleLocalCredentials::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  return target;
+}
+
+size_t GrpcService_GoogleGrpc_GoogleLocalCredentials::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_GoogleGrpc_GoogleLocalCredentials* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_GoogleGrpc_GoogleLocalCredentials>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::MergeFrom(const GrpcService_GoogleGrpc_GoogleLocalCredentials& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+}
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::CopyFrom(const GrpcService_GoogleGrpc_GoogleLocalCredentials& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.GoogleGrpc.GoogleLocalCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_GoogleGrpc_GoogleLocalCredentials::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::Swap(GrpcService_GoogleGrpc_GoogleLocalCredentials* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_GoogleGrpc_GoogleLocalCredentials::InternalSwap(GrpcService_GoogleGrpc_GoogleLocalCredentials* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_GoogleGrpc_GoogleLocalCredentials::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_GoogleGrpc_ChannelCredentials::InitAsDefaultInstance() {
+  ::_GrpcService_GoogleGrpc_ChannelCredentials_default_instance_.ssl_credentials_ = const_cast< ::GrpcService_GoogleGrpc_SslCredentials*>(
+      ::GrpcService_GoogleGrpc_SslCredentials::internal_default_instance());
+  ::_GrpcService_GoogleGrpc_ChannelCredentials_default_instance_.google_default_ = const_cast< ::google::protobuf::Empty*>(
+      ::google::protobuf::Empty::internal_default_instance());
+  ::_GrpcService_GoogleGrpc_ChannelCredentials_default_instance_.local_credentials_ = const_cast< ::GrpcService_GoogleGrpc_GoogleLocalCredentials*>(
+      ::GrpcService_GoogleGrpc_GoogleLocalCredentials::internal_default_instance());
+}
+void GrpcService_GoogleGrpc_ChannelCredentials::set_allocated_ssl_credentials(::GrpcService_GoogleGrpc_SslCredentials* ssl_credentials) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_credential_specifier();
+  if (ssl_credentials) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      ssl_credentials = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, ssl_credentials, submessage_arena);
+    }
+    set_has_ssl_credentials();
+    credential_specifier_.ssl_credentials_ = ssl_credentials;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.ChannelCredentials.ssl_credentials)
+}
+void GrpcService_GoogleGrpc_ChannelCredentials::set_allocated_google_default(::google::protobuf::Empty* google_default) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_credential_specifier();
+  if (google_default) {
+    ::google::protobuf::Arena* submessage_arena =
+      reinterpret_cast<::google::protobuf::MessageLite*>(google_default)->GetArena();
+    if (message_arena != submessage_arena) {
+      google_default = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, google_default, submessage_arena);
+    }
+    set_has_google_default();
+    credential_specifier_.google_default_ = google_default;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.ChannelCredentials.google_default)
+}
+void GrpcService_GoogleGrpc_ChannelCredentials::clear_google_default() {
+  if (has_google_default()) {
+    delete credential_specifier_.google_default_;
+    clear_has_credential_specifier();
+  }
+}
+void GrpcService_GoogleGrpc_ChannelCredentials::set_allocated_local_credentials(::GrpcService_GoogleGrpc_GoogleLocalCredentials* local_credentials) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_credential_specifier();
+  if (local_credentials) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      local_credentials = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, local_credentials, submessage_arena);
+    }
+    set_has_local_credentials();
+    credential_specifier_.local_credentials_ = local_credentials;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.ChannelCredentials.local_credentials)
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService_GoogleGrpc_ChannelCredentials::kSslCredentialsFieldNumber;
+const int GrpcService_GoogleGrpc_ChannelCredentials::kGoogleDefaultFieldNumber;
+const int GrpcService_GoogleGrpc_ChannelCredentials::kLocalCredentialsFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_GoogleGrpc_ChannelCredentials::GrpcService_GoogleGrpc_ChannelCredentials()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_ChannelCredentials.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.GoogleGrpc.ChannelCredentials)
+}
+GrpcService_GoogleGrpc_ChannelCredentials::GrpcService_GoogleGrpc_ChannelCredentials(const GrpcService_GoogleGrpc_ChannelCredentials& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  clear_has_credential_specifier();
+  switch (from.credential_specifier_case()) {
+    case kSslCredentials: {
+      mutable_ssl_credentials()->::GrpcService_GoogleGrpc_SslCredentials::MergeFrom(from.ssl_credentials());
+      break;
+    }
+    case kGoogleDefault: {
+      mutable_google_default()->::google::protobuf::Empty::MergeFrom(from.google_default());
+      break;
+    }
+    case kLocalCredentials: {
+      mutable_local_credentials()->::GrpcService_GoogleGrpc_GoogleLocalCredentials::MergeFrom(from.local_credentials());
+      break;
+    }
+    case CREDENTIAL_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService.GoogleGrpc.ChannelCredentials)
+}
+
+void GrpcService_GoogleGrpc_ChannelCredentials::SharedCtor() {
+  clear_has_credential_specifier();
+}
+
+GrpcService_GoogleGrpc_ChannelCredentials::~GrpcService_GoogleGrpc_ChannelCredentials() {
+  // @@protoc_insertion_point(destructor:GrpcService.GoogleGrpc.ChannelCredentials)
+  SharedDtor();
+}
+
+void GrpcService_GoogleGrpc_ChannelCredentials::SharedDtor() {
+  if (has_credential_specifier()) {
+    clear_credential_specifier();
+  }
+}
+
+void GrpcService_GoogleGrpc_ChannelCredentials::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_GoogleGrpc_ChannelCredentials::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_GoogleGrpc_ChannelCredentials& GrpcService_GoogleGrpc_ChannelCredentials::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_ChannelCredentials.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_GoogleGrpc_ChannelCredentials::clear_credential_specifier() {
+// @@protoc_insertion_point(one_of_clear_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  switch (credential_specifier_case()) {
+    case kSslCredentials: {
+      delete credential_specifier_.ssl_credentials_;
+      break;
+    }
+    case kGoogleDefault: {
+      delete credential_specifier_.google_default_;
+      break;
+    }
+    case kLocalCredentials: {
+      delete credential_specifier_.local_credentials_;
+      break;
+    }
+    case CREDENTIAL_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  _oneof_case_[0] = CREDENTIAL_SPECIFIER_NOT_SET;
+}
+
+
+void GrpcService_GoogleGrpc_ChannelCredentials::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  clear_credential_specifier();
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_GoogleGrpc_ChannelCredentials::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .GrpcService.GoogleGrpc.SslCredentials ssl_credentials = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_ssl_credentials()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .google.protobuf.Empty google_default = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_google_default()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .GrpcService.GoogleGrpc.GoogleLocalCredentials local_credentials = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_local_credentials()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.GoogleGrpc.ChannelCredentials)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.GoogleGrpc.ChannelCredentials)
+  return false;
+#undef DO_
+}
+
+void GrpcService_GoogleGrpc_ChannelCredentials::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .GrpcService.GoogleGrpc.SslCredentials ssl_credentials = 1;
+  if (has_ssl_credentials()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, this->_internal_ssl_credentials(), output);
+  }
+
+  // .google.protobuf.Empty google_default = 2;
+  if (has_google_default()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->_internal_google_default(), output);
+  }
+
+  // .GrpcService.GoogleGrpc.GoogleLocalCredentials local_credentials = 3;
+  if (has_local_credentials()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->_internal_local_credentials(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc.ChannelCredentials)
+}
+
+::google::protobuf::uint8* GrpcService_GoogleGrpc_ChannelCredentials::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .GrpcService.GoogleGrpc.SslCredentials ssl_credentials = 1;
+  if (has_ssl_credentials()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        1, this->_internal_ssl_credentials(), deterministic, target);
+  }
+
+  // .google.protobuf.Empty google_default = 2;
+  if (has_google_default()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        2, this->_internal_google_default(), deterministic, target);
+  }
+
+  // .GrpcService.GoogleGrpc.GoogleLocalCredentials local_credentials = 3;
+  if (has_local_credentials()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        3, this->_internal_local_credentials(), deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.GoogleGrpc.ChannelCredentials)
+  return target;
+}
+
+size_t GrpcService_GoogleGrpc_ChannelCredentials::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  switch (credential_specifier_case()) {
+    // .GrpcService.GoogleGrpc.SslCredentials ssl_credentials = 1;
+    case kSslCredentials: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *credential_specifier_.ssl_credentials_);
+      break;
+    }
+    // .google.protobuf.Empty google_default = 2;
+    case kGoogleDefault: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *credential_specifier_.google_default_);
+      break;
+    }
+    // .GrpcService.GoogleGrpc.GoogleLocalCredentials local_credentials = 3;
+    case kLocalCredentials: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *credential_specifier_.local_credentials_);
+      break;
+    }
+    case CREDENTIAL_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_GoogleGrpc_ChannelCredentials::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_GoogleGrpc_ChannelCredentials* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_GoogleGrpc_ChannelCredentials>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.GoogleGrpc.ChannelCredentials)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.GoogleGrpc.ChannelCredentials)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_GoogleGrpc_ChannelCredentials::MergeFrom(const GrpcService_GoogleGrpc_ChannelCredentials& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  switch (from.credential_specifier_case()) {
+    case kSslCredentials: {
+      mutable_ssl_credentials()->::GrpcService_GoogleGrpc_SslCredentials::MergeFrom(from.ssl_credentials());
+      break;
+    }
+    case kGoogleDefault: {
+      mutable_google_default()->::google::protobuf::Empty::MergeFrom(from.google_default());
+      break;
+    }
+    case kLocalCredentials: {
+      mutable_local_credentials()->::GrpcService_GoogleGrpc_GoogleLocalCredentials::MergeFrom(from.local_credentials());
+      break;
+    }
+    case CREDENTIAL_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+}
+
+void GrpcService_GoogleGrpc_ChannelCredentials::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_GoogleGrpc_ChannelCredentials::CopyFrom(const GrpcService_GoogleGrpc_ChannelCredentials& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.GoogleGrpc.ChannelCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_GoogleGrpc_ChannelCredentials::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_GoogleGrpc_ChannelCredentials::Swap(GrpcService_GoogleGrpc_ChannelCredentials* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_GoogleGrpc_ChannelCredentials::InternalSwap(GrpcService_GoogleGrpc_ChannelCredentials* other) {
+  using std::swap;
+  swap(credential_specifier_, other->credential_specifier_);
+  swap(_oneof_case_[0], other->_oneof_case_[0]);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_GoogleGrpc_ChannelCredentials::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::InitAsDefaultInstance() {
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::kJsonKeyFieldNumber;
+const int GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::kTokenLifetimeSecondsFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+}
+GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials(const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  json_key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.json_key().size() > 0) {
+    json_key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.json_key_);
+  }
+  token_lifetime_seconds_ = from.token_lifetime_seconds_;
+  // @@protoc_insertion_point(copy_constructor:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::SharedCtor() {
+  json_key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  token_lifetime_seconds_ = GOOGLE_ULONGLONG(0);
+}
+
+GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::~GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials() {
+  // @@protoc_insertion_point(destructor:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  SharedDtor();
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::SharedDtor() {
+  json_key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  json_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  token_lifetime_seconds_ = GOOGLE_ULONGLONG(0);
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string json_key = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_json_key()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->json_key().data(), static_cast<int>(this->json_key().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 token_lifetime_seconds = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &token_lifetime_seconds_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  return false;
+#undef DO_
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string json_key = 1;
+  if (this->json_key().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->json_key().data(), static_cast<int>(this->json_key().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->json_key(), output);
+  }
+
+  // uint64 token_lifetime_seconds = 2;
+  if (this->token_lifetime_seconds() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(2, this->token_lifetime_seconds(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+}
+
+::google::protobuf::uint8* GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string json_key = 1;
+  if (this->json_key().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->json_key().data(), static_cast<int>(this->json_key().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials.json_key");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->json_key(), target);
+  }
+
+  // uint64 token_lifetime_seconds = 2;
+  if (this->token_lifetime_seconds() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(2, this->token_lifetime_seconds(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  return target;
+}
+
+size_t GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string json_key = 1;
+  if (this->json_key().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->json_key());
+  }
+
+  // uint64 token_lifetime_seconds = 2;
+  if (this->token_lifetime_seconds() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->token_lifetime_seconds());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::MergeFrom(const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.json_key().size() > 0) {
+
+    json_key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.json_key_);
+  }
+  if (from.token_lifetime_seconds() != 0) {
+    set_token_lifetime_seconds(from.token_lifetime_seconds());
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::CopyFrom(const GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::Swap(GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::InternalSwap(GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* other) {
+  using std::swap;
+  json_key_.Swap(&other->json_key_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  swap(token_lifetime_seconds_, other->token_lifetime_seconds_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::InitAsDefaultInstance() {
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::kAuthorizationTokenFieldNumber;
+const int GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::kAuthoritySelectorFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+}
+GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials(const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  authorization_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.authorization_token().size() > 0) {
+    authorization_token_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.authorization_token_);
+  }
+  authority_selector_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.authority_selector().size() > 0) {
+    authority_selector_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.authority_selector_);
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::SharedCtor() {
+  authorization_token_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  authority_selector_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::~GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials() {
+  // @@protoc_insertion_point(destructor:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  SharedDtor();
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::SharedDtor() {
+  authorization_token_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  authority_selector_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  authorization_token_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  authority_selector_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string authorization_token = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_authorization_token()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->authorization_token().data(), static_cast<int>(this->authorization_token().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string authority_selector = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_authority_selector()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->authority_selector().data(), static_cast<int>(this->authority_selector().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  return false;
+#undef DO_
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string authorization_token = 1;
+  if (this->authorization_token().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->authorization_token().data(), static_cast<int>(this->authorization_token().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->authorization_token(), output);
+  }
+
+  // string authority_selector = 2;
+  if (this->authority_selector().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->authority_selector().data(), static_cast<int>(this->authority_selector().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->authority_selector(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+}
+
+::google::protobuf::uint8* GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string authorization_token = 1;
+  if (this->authorization_token().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->authorization_token().data(), static_cast<int>(this->authorization_token().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authorization_token");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->authorization_token(), target);
+  }
+
+  // string authority_selector = 2;
+  if (this->authority_selector().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->authority_selector().data(), static_cast<int>(this->authority_selector().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials.authority_selector");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        2, this->authority_selector(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  return target;
+}
+
+size_t GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string authorization_token = 1;
+  if (this->authorization_token().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->authorization_token());
+  }
+
+  // string authority_selector = 2;
+  if (this->authority_selector().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->authority_selector());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::MergeFrom(const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.authorization_token().size() > 0) {
+
+    authorization_token_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.authorization_token_);
+  }
+  if (from.authority_selector().size() > 0) {
+
+    authority_selector_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.authority_selector_);
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::CopyFrom(const GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::Swap(GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::InternalSwap(GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* other) {
+  using std::swap;
+  authorization_token_.Swap(&other->authorization_token_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  authority_selector_.Swap(&other->authority_selector_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::InitAsDefaultInstance() {
+  ::_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_default_instance_.config_ = const_cast< ::google::protobuf::Struct*>(
+      ::google::protobuf::Struct::internal_default_instance());
+  ::_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_default_instance_.typed_config_ = const_cast< ::google::protobuf::Any*>(
+      ::google::protobuf::Any::internal_default_instance());
+}
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::set_allocated_config(::google::protobuf::Struct* config) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_config_type();
+  if (config) {
+    ::google::protobuf::Arena* submessage_arena =
+      reinterpret_cast<::google::protobuf::MessageLite*>(config)->GetArena();
+    if (message_arena != submessage_arena) {
+      config = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, config, submessage_arena);
+    }
+    set_has_config();
+    config_type_.config_ = config;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.config)
+}
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::clear_config() {
+  if (has_config()) {
+    delete config_type_.config_;
+    clear_has_config_type();
+  }
+}
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::set_allocated_typed_config(::google::protobuf::Any* typed_config) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_config_type();
+  if (typed_config) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      typed_config = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, typed_config, submessage_arena);
+    }
+    set_has_typed_config();
+    config_type_.typed_config_ = typed_config;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.typed_config)
+}
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::clear_typed_config() {
+  if (has_typed_config()) {
+    delete config_type_.typed_config_;
+    clear_has_config_type();
+  }
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::kNameFieldNumber;
+const int GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::kConfigFieldNumber;
+const int GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::kTypedConfigFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+}
+GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin(const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.name().size() > 0) {
+    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  }
+  clear_has_config_type();
+  switch (from.config_type_case()) {
+    case kConfig: {
+      mutable_config()->::google::protobuf::Struct::MergeFrom(from.config());
+      break;
+    }
+    case kTypedConfig: {
+      mutable_typed_config()->::google::protobuf::Any::MergeFrom(from.typed_config());
+      break;
+    }
+    case CONFIG_TYPE_NOT_SET: {
+      break;
+    }
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::SharedCtor() {
+  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  clear_has_config_type();
+}
+
+GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::~GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin() {
+  // @@protoc_insertion_point(destructor:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  SharedDtor();
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::SharedDtor() {
+  name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (has_config_type()) {
+    clear_config_type();
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::clear_config_type() {
+// @@protoc_insertion_point(one_of_clear_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  switch (config_type_case()) {
+    case kConfig: {
+      delete config_type_.config_;
+      break;
+    }
+    case kTypedConfig: {
+      delete config_type_.typed_config_;
+      break;
+    }
+    case CONFIG_TYPE_NOT_SET: {
+      break;
+    }
+  }
+  _oneof_case_[0] = CONFIG_TYPE_NOT_SET;
+}
+
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  clear_config_type();
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string name = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_name()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->name().data(), static_cast<int>(this->name().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .google.protobuf.Struct config = 2 [deprecated = true];
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_config()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .google.protobuf.Any typed_config = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_typed_config()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  return false;
+#undef DO_
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string name = 1;
+  if (this->name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->name().data(), static_cast<int>(this->name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->name(), output);
+  }
+
+  // .google.protobuf.Struct config = 2 [deprecated = true];
+  if (has_config()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->_internal_config(), output);
+  }
+
+  // .google.protobuf.Any typed_config = 3;
+  if (has_typed_config()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->_internal_typed_config(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+}
+
+::google::protobuf::uint8* GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string name = 1;
+  if (this->name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->name().data(), static_cast<int>(this->name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin.name");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->name(), target);
+  }
+
+  // .google.protobuf.Struct config = 2 [deprecated = true];
+  if (has_config()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        2, this->_internal_config(), deterministic, target);
+  }
+
+  // .google.protobuf.Any typed_config = 3;
+  if (has_typed_config()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        3, this->_internal_typed_config(), deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  return target;
+}
+
+size_t GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string name = 1;
+  if (this->name().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->name());
+  }
+
+  switch (config_type_case()) {
+    // .google.protobuf.Struct config = 2 [deprecated = true];
+    case kConfig: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *config_type_.config_);
+      break;
+    }
+    // .google.protobuf.Any typed_config = 3;
+    case kTypedConfig: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *config_type_.typed_config_);
+      break;
+    }
+    case CONFIG_TYPE_NOT_SET: {
+      break;
+    }
+  }
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::MergeFrom(const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.name().size() > 0) {
+
+    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  }
+  switch (from.config_type_case()) {
+    case kConfig: {
+      mutable_config()->::google::protobuf::Struct::MergeFrom(from.config());
+      break;
+    }
+    case kTypedConfig: {
+      mutable_typed_config()->::google::protobuf::Any::MergeFrom(from.typed_config());
+      break;
+    }
+    case CONFIG_TYPE_NOT_SET: {
+      break;
+    }
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::CopyFrom(const GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::Swap(GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::InternalSwap(GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* other) {
+  using std::swap;
+  name_.Swap(&other->name_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  swap(config_type_, other->config_type_);
+  swap(_oneof_case_[0], other->_oneof_case_[0]);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_GoogleGrpc_CallCredentials::InitAsDefaultInstance() {
+  ::_GrpcService_GoogleGrpc_CallCredentials_default_instance_.access_token_.UnsafeSetDefault(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::_GrpcService_GoogleGrpc_CallCredentials_default_instance_.google_compute_engine_ = const_cast< ::google::protobuf::Empty*>(
+      ::google::protobuf::Empty::internal_default_instance());
+  ::_GrpcService_GoogleGrpc_CallCredentials_default_instance_.google_refresh_token_.UnsafeSetDefault(
+      &::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::_GrpcService_GoogleGrpc_CallCredentials_default_instance_.service_account_jwt_access_ = const_cast< ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials*>(
+      ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::internal_default_instance());
+  ::_GrpcService_GoogleGrpc_CallCredentials_default_instance_.google_iam_ = const_cast< ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials*>(
+      ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::internal_default_instance());
+  ::_GrpcService_GoogleGrpc_CallCredentials_default_instance_.from_plugin_ = const_cast< ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin*>(
+      ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::internal_default_instance());
+}
+void GrpcService_GoogleGrpc_CallCredentials::set_allocated_google_compute_engine(::google::protobuf::Empty* google_compute_engine) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_credential_specifier();
+  if (google_compute_engine) {
+    ::google::protobuf::Arena* submessage_arena =
+      reinterpret_cast<::google::protobuf::MessageLite*>(google_compute_engine)->GetArena();
+    if (message_arena != submessage_arena) {
+      google_compute_engine = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, google_compute_engine, submessage_arena);
+    }
+    set_has_google_compute_engine();
+    credential_specifier_.google_compute_engine_ = google_compute_engine;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.google_compute_engine)
+}
+void GrpcService_GoogleGrpc_CallCredentials::clear_google_compute_engine() {
+  if (has_google_compute_engine()) {
+    delete credential_specifier_.google_compute_engine_;
+    clear_has_credential_specifier();
+  }
+}
+void GrpcService_GoogleGrpc_CallCredentials::set_allocated_service_account_jwt_access(::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* service_account_jwt_access) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_credential_specifier();
+  if (service_account_jwt_access) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      service_account_jwt_access = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, service_account_jwt_access, submessage_arena);
+    }
+    set_has_service_account_jwt_access();
+    credential_specifier_.service_account_jwt_access_ = service_account_jwt_access;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.service_account_jwt_access)
+}
+void GrpcService_GoogleGrpc_CallCredentials::set_allocated_google_iam(::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* google_iam) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_credential_specifier();
+  if (google_iam) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      google_iam = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, google_iam, submessage_arena);
+    }
+    set_has_google_iam();
+    credential_specifier_.google_iam_ = google_iam;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.google_iam)
+}
+void GrpcService_GoogleGrpc_CallCredentials::set_allocated_from_plugin(::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* from_plugin) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_credential_specifier();
+  if (from_plugin) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      from_plugin = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, from_plugin, submessage_arena);
+    }
+    set_has_from_plugin();
+    credential_specifier_.from_plugin_ = from_plugin;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.from_plugin)
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService_GoogleGrpc_CallCredentials::kAccessTokenFieldNumber;
+const int GrpcService_GoogleGrpc_CallCredentials::kGoogleComputeEngineFieldNumber;
+const int GrpcService_GoogleGrpc_CallCredentials::kGoogleRefreshTokenFieldNumber;
+const int GrpcService_GoogleGrpc_CallCredentials::kServiceAccountJwtAccessFieldNumber;
+const int GrpcService_GoogleGrpc_CallCredentials::kGoogleIamFieldNumber;
+const int GrpcService_GoogleGrpc_CallCredentials::kFromPluginFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_GoogleGrpc_CallCredentials::GrpcService_GoogleGrpc_CallCredentials()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.GoogleGrpc.CallCredentials)
+}
+GrpcService_GoogleGrpc_CallCredentials::GrpcService_GoogleGrpc_CallCredentials(const GrpcService_GoogleGrpc_CallCredentials& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  clear_has_credential_specifier();
+  switch (from.credential_specifier_case()) {
+    case kAccessToken: {
+      set_access_token(from.access_token());
+      break;
+    }
+    case kGoogleComputeEngine: {
+      mutable_google_compute_engine()->::google::protobuf::Empty::MergeFrom(from.google_compute_engine());
+      break;
+    }
+    case kGoogleRefreshToken: {
+      set_google_refresh_token(from.google_refresh_token());
+      break;
+    }
+    case kServiceAccountJwtAccess: {
+      mutable_service_account_jwt_access()->::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::MergeFrom(from.service_account_jwt_access());
+      break;
+    }
+    case kGoogleIam: {
+      mutable_google_iam()->::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::MergeFrom(from.google_iam());
+      break;
+    }
+    case kFromPlugin: {
+      mutable_from_plugin()->::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::MergeFrom(from.from_plugin());
+      break;
+    }
+    case CREDENTIAL_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService.GoogleGrpc.CallCredentials)
+}
+
+void GrpcService_GoogleGrpc_CallCredentials::SharedCtor() {
+  clear_has_credential_specifier();
+}
+
+GrpcService_GoogleGrpc_CallCredentials::~GrpcService_GoogleGrpc_CallCredentials() {
+  // @@protoc_insertion_point(destructor:GrpcService.GoogleGrpc.CallCredentials)
+  SharedDtor();
+}
+
+void GrpcService_GoogleGrpc_CallCredentials::SharedDtor() {
+  if (has_credential_specifier()) {
+    clear_credential_specifier();
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_GoogleGrpc_CallCredentials::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_GoogleGrpc_CallCredentials& GrpcService_GoogleGrpc_CallCredentials::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc_CallCredentials.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_GoogleGrpc_CallCredentials::clear_credential_specifier() {
+// @@protoc_insertion_point(one_of_clear_start:GrpcService.GoogleGrpc.CallCredentials)
+  switch (credential_specifier_case()) {
+    case kAccessToken: {
+      credential_specifier_.access_token_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+      break;
+    }
+    case kGoogleComputeEngine: {
+      delete credential_specifier_.google_compute_engine_;
+      break;
+    }
+    case kGoogleRefreshToken: {
+      credential_specifier_.google_refresh_token_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+      break;
+    }
+    case kServiceAccountJwtAccess: {
+      delete credential_specifier_.service_account_jwt_access_;
+      break;
+    }
+    case kGoogleIam: {
+      delete credential_specifier_.google_iam_;
+      break;
+    }
+    case kFromPlugin: {
+      delete credential_specifier_.from_plugin_;
+      break;
+    }
+    case CREDENTIAL_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  _oneof_case_[0] = CREDENTIAL_SPECIFIER_NOT_SET;
+}
+
+
+void GrpcService_GoogleGrpc_CallCredentials::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.GoogleGrpc.CallCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  clear_credential_specifier();
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_GoogleGrpc_CallCredentials::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.GoogleGrpc.CallCredentials)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string access_token = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_access_token()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->access_token().data(), static_cast<int>(this->access_token().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.access_token"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .google.protobuf.Empty google_compute_engine = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_google_compute_engine()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string google_refresh_token = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_google_refresh_token()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->google_refresh_token().data(), static_cast<int>(this->google_refresh_token().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.google_refresh_token"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials service_account_jwt_access = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_service_account_jwt_access()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials google_iam = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_google_iam()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin from_plugin = 6;
+      case 6: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_from_plugin()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.GoogleGrpc.CallCredentials)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.GoogleGrpc.CallCredentials)
+  return false;
+#undef DO_
+}
+
+void GrpcService_GoogleGrpc_CallCredentials::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.GoogleGrpc.CallCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string access_token = 1;
+  if (has_access_token()) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->access_token().data(), static_cast<int>(this->access_token().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.access_token");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->access_token(), output);
+  }
+
+  // .google.protobuf.Empty google_compute_engine = 2;
+  if (has_google_compute_engine()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->_internal_google_compute_engine(), output);
+  }
+
+  // string google_refresh_token = 3;
+  if (has_google_refresh_token()) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->google_refresh_token().data(), static_cast<int>(this->google_refresh_token().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.google_refresh_token");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      3, this->google_refresh_token(), output);
+  }
+
+  // .GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials service_account_jwt_access = 4;
+  if (has_service_account_jwt_access()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      4, this->_internal_service_account_jwt_access(), output);
+  }
+
+  // .GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials google_iam = 5;
+  if (has_google_iam()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      5, this->_internal_google_iam(), output);
+  }
+
+  // .GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin from_plugin = 6;
+  if (has_from_plugin()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      6, this->_internal_from_plugin(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc.CallCredentials)
+}
+
+::google::protobuf::uint8* GrpcService_GoogleGrpc_CallCredentials::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.GoogleGrpc.CallCredentials)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string access_token = 1;
+  if (has_access_token()) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->access_token().data(), static_cast<int>(this->access_token().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.access_token");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->access_token(), target);
+  }
+
+  // .google.protobuf.Empty google_compute_engine = 2;
+  if (has_google_compute_engine()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        2, this->_internal_google_compute_engine(), deterministic, target);
+  }
+
+  // string google_refresh_token = 3;
+  if (has_google_refresh_token()) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->google_refresh_token().data(), static_cast<int>(this->google_refresh_token().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.google_refresh_token");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        3, this->google_refresh_token(), target);
+  }
+
+  // .GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials service_account_jwt_access = 4;
+  if (has_service_account_jwt_access()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        4, this->_internal_service_account_jwt_access(), deterministic, target);
+  }
+
+  // .GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials google_iam = 5;
+  if (has_google_iam()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        5, this->_internal_google_iam(), deterministic, target);
+  }
+
+  // .GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin from_plugin = 6;
+  if (has_from_plugin()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        6, this->_internal_from_plugin(), deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.GoogleGrpc.CallCredentials)
+  return target;
+}
+
+size_t GrpcService_GoogleGrpc_CallCredentials::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.GoogleGrpc.CallCredentials)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  switch (credential_specifier_case()) {
+    // string access_token = 1;
+    case kAccessToken: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->access_token());
+      break;
+    }
+    // .google.protobuf.Empty google_compute_engine = 2;
+    case kGoogleComputeEngine: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *credential_specifier_.google_compute_engine_);
+      break;
+    }
+    // string google_refresh_token = 3;
+    case kGoogleRefreshToken: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->google_refresh_token());
+      break;
+    }
+    // .GrpcService.GoogleGrpc.CallCredentials.ServiceAccountJWTAccessCredentials service_account_jwt_access = 4;
+    case kServiceAccountJwtAccess: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *credential_specifier_.service_account_jwt_access_);
+      break;
+    }
+    // .GrpcService.GoogleGrpc.CallCredentials.GoogleIAMCredentials google_iam = 5;
+    case kGoogleIam: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *credential_specifier_.google_iam_);
+      break;
+    }
+    // .GrpcService.GoogleGrpc.CallCredentials.MetadataCredentialsFromPlugin from_plugin = 6;
+    case kFromPlugin: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *credential_specifier_.from_plugin_);
+      break;
+    }
+    case CREDENTIAL_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.GoogleGrpc.CallCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_GoogleGrpc_CallCredentials* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_GoogleGrpc_CallCredentials>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.GoogleGrpc.CallCredentials)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.GoogleGrpc.CallCredentials)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials::MergeFrom(const GrpcService_GoogleGrpc_CallCredentials& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.GoogleGrpc.CallCredentials)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  switch (from.credential_specifier_case()) {
+    case kAccessToken: {
+      set_access_token(from.access_token());
+      break;
+    }
+    case kGoogleComputeEngine: {
+      mutable_google_compute_engine()->::google::protobuf::Empty::MergeFrom(from.google_compute_engine());
+      break;
+    }
+    case kGoogleRefreshToken: {
+      set_google_refresh_token(from.google_refresh_token());
+      break;
+    }
+    case kServiceAccountJwtAccess: {
+      mutable_service_account_jwt_access()->::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials::MergeFrom(from.service_account_jwt_access());
+      break;
+    }
+    case kGoogleIam: {
+      mutable_google_iam()->::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials::MergeFrom(from.google_iam());
+      break;
+    }
+    case kFromPlugin: {
+      mutable_from_plugin()->::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::MergeFrom(from.from_plugin());
+      break;
+    }
+    case CREDENTIAL_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.GoogleGrpc.CallCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_GoogleGrpc_CallCredentials::CopyFrom(const GrpcService_GoogleGrpc_CallCredentials& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.GoogleGrpc.CallCredentials)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_GoogleGrpc_CallCredentials::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials::Swap(GrpcService_GoogleGrpc_CallCredentials* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_GoogleGrpc_CallCredentials::InternalSwap(GrpcService_GoogleGrpc_CallCredentials* other) {
+  using std::swap;
+  swap(credential_specifier_, other->credential_specifier_);
+  swap(_oneof_case_[0], other->_oneof_case_[0]);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_GoogleGrpc_CallCredentials::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_GoogleGrpc::InitAsDefaultInstance() {
+  ::_GrpcService_GoogleGrpc_default_instance_._instance.get_mutable()->channel_credentials_ = const_cast< ::GrpcService_GoogleGrpc_ChannelCredentials*>(
+      ::GrpcService_GoogleGrpc_ChannelCredentials::internal_default_instance());
+  ::_GrpcService_GoogleGrpc_default_instance_._instance.get_mutable()->config_ = const_cast< ::google::protobuf::Struct*>(
+      ::google::protobuf::Struct::internal_default_instance());
+}
+void GrpcService_GoogleGrpc::clear_config() {
+  if (GetArenaNoVirtual() == NULL && config_ != NULL) {
+    delete config_;
+  }
+  config_ = NULL;
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService_GoogleGrpc::kTargetUriFieldNumber;
+const int GrpcService_GoogleGrpc::kChannelCredentialsFieldNumber;
+const int GrpcService_GoogleGrpc::kCallCredentialsFieldNumber;
+const int GrpcService_GoogleGrpc::kStatPrefixFieldNumber;
+const int GrpcService_GoogleGrpc::kCredentialsFactoryNameFieldNumber;
+const int GrpcService_GoogleGrpc::kConfigFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_GoogleGrpc::GrpcService_GoogleGrpc()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.GoogleGrpc)
+}
+GrpcService_GoogleGrpc::GrpcService_GoogleGrpc(const GrpcService_GoogleGrpc& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      call_credentials_(from.call_credentials_) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  target_uri_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.target_uri().size() > 0) {
+    target_uri_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.target_uri_);
+  }
+  stat_prefix_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.stat_prefix().size() > 0) {
+    stat_prefix_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.stat_prefix_);
+  }
+  credentials_factory_name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.credentials_factory_name().size() > 0) {
+    credentials_factory_name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.credentials_factory_name_);
+  }
+  if (from.has_channel_credentials()) {
+    channel_credentials_ = new ::GrpcService_GoogleGrpc_ChannelCredentials(*from.channel_credentials_);
+  } else {
+    channel_credentials_ = NULL;
+  }
+  if (from.has_config()) {
+    config_ = new ::google::protobuf::Struct(*from.config_);
+  } else {
+    config_ = NULL;
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService.GoogleGrpc)
+}
+
+void GrpcService_GoogleGrpc::SharedCtor() {
+  target_uri_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  stat_prefix_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  credentials_factory_name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::memset(&channel_credentials_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&config_) -
+      reinterpret_cast<char*>(&channel_credentials_)) + sizeof(config_));
+}
+
+GrpcService_GoogleGrpc::~GrpcService_GoogleGrpc() {
+  // @@protoc_insertion_point(destructor:GrpcService.GoogleGrpc)
+  SharedDtor();
+}
+
+void GrpcService_GoogleGrpc::SharedDtor() {
+  target_uri_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  stat_prefix_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  credentials_factory_name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete channel_credentials_;
+  if (this != internal_default_instance()) delete config_;
+}
+
+void GrpcService_GoogleGrpc::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_GoogleGrpc::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_GoogleGrpc& GrpcService_GoogleGrpc::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_GoogleGrpc.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_GoogleGrpc::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.GoogleGrpc)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  call_credentials_.Clear();
+  target_uri_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  stat_prefix_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  credentials_factory_name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == NULL && channel_credentials_ != NULL) {
+    delete channel_credentials_;
+  }
+  channel_credentials_ = NULL;
+  if (GetArenaNoVirtual() == NULL && config_ != NULL) {
+    delete config_;
+  }
+  config_ = NULL;
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_GoogleGrpc::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.GoogleGrpc)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string target_uri = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_target_uri()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->target_uri().data(), static_cast<int>(this->target_uri().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.target_uri"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .GrpcService.GoogleGrpc.ChannelCredentials channel_credentials = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_channel_credentials()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .GrpcService.GoogleGrpc.CallCredentials call_credentials = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+                input, add_call_credentials()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string stat_prefix = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_stat_prefix()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->stat_prefix().data(), static_cast<int>(this->stat_prefix().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.stat_prefix"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string credentials_factory_name = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_credentials_factory_name()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->credentials_factory_name().data(), static_cast<int>(this->credentials_factory_name().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.credentials_factory_name"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .google.protobuf.Struct config = 6;
+      case 6: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_config()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.GoogleGrpc)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.GoogleGrpc)
+  return false;
+#undef DO_
+}
+
+void GrpcService_GoogleGrpc::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.GoogleGrpc)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string target_uri = 1;
+  if (this->target_uri().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->target_uri().data(), static_cast<int>(this->target_uri().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.target_uri");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->target_uri(), output);
+  }
+
+  // .GrpcService.GoogleGrpc.ChannelCredentials channel_credentials = 2;
+  if (this->has_channel_credentials()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->_internal_channel_credentials(), output);
+  }
+
+  // repeated .GrpcService.GoogleGrpc.CallCredentials call_credentials = 3;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->call_credentials_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3,
+      this->call_credentials(static_cast<int>(i)),
+      output);
+  }
+
+  // string stat_prefix = 4;
+  if (this->stat_prefix().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->stat_prefix().data(), static_cast<int>(this->stat_prefix().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.stat_prefix");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      4, this->stat_prefix(), output);
+  }
+
+  // string credentials_factory_name = 5;
+  if (this->credentials_factory_name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->credentials_factory_name().data(), static_cast<int>(this->credentials_factory_name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.credentials_factory_name");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      5, this->credentials_factory_name(), output);
+  }
+
+  // .google.protobuf.Struct config = 6;
+  if (this->has_config()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      6, this->_internal_config(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc)
+}
+
+::google::protobuf::uint8* GrpcService_GoogleGrpc::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.GoogleGrpc)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string target_uri = 1;
+  if (this->target_uri().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->target_uri().data(), static_cast<int>(this->target_uri().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.target_uri");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->target_uri(), target);
+  }
+
+  // .GrpcService.GoogleGrpc.ChannelCredentials channel_credentials = 2;
+  if (this->has_channel_credentials()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        2, this->_internal_channel_credentials(), deterministic, target);
+  }
+
+  // repeated .GrpcService.GoogleGrpc.CallCredentials call_credentials = 3;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->call_credentials_size()); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        3, this->call_credentials(static_cast<int>(i)), deterministic, target);
+  }
+
+  // string stat_prefix = 4;
+  if (this->stat_prefix().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->stat_prefix().data(), static_cast<int>(this->stat_prefix().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.stat_prefix");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        4, this->stat_prefix(), target);
+  }
+
+  // string credentials_factory_name = 5;
+  if (this->credentials_factory_name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->credentials_factory_name().data(), static_cast<int>(this->credentials_factory_name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.credentials_factory_name");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        5, this->credentials_factory_name(), target);
+  }
+
+  // .google.protobuf.Struct config = 6;
+  if (this->has_config()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        6, this->_internal_config(), deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.GoogleGrpc)
+  return target;
+}
+
+size_t GrpcService_GoogleGrpc::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.GoogleGrpc)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // repeated .GrpcService.GoogleGrpc.CallCredentials call_credentials = 3;
+  {
+    unsigned int count = static_cast<unsigned int>(this->call_credentials_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          this->call_credentials(static_cast<int>(i)));
+    }
+  }
+
+  // string target_uri = 1;
+  if (this->target_uri().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->target_uri());
+  }
+
+  // string stat_prefix = 4;
+  if (this->stat_prefix().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->stat_prefix());
+  }
+
+  // string credentials_factory_name = 5;
+  if (this->credentials_factory_name().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->credentials_factory_name());
+  }
+
+  // .GrpcService.GoogleGrpc.ChannelCredentials channel_credentials = 2;
+  if (this->has_channel_credentials()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *channel_credentials_);
+  }
+
+  // .google.protobuf.Struct config = 6;
+  if (this->has_config()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *config_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_GoogleGrpc::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.GoogleGrpc)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_GoogleGrpc* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_GoogleGrpc>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.GoogleGrpc)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.GoogleGrpc)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_GoogleGrpc::MergeFrom(const GrpcService_GoogleGrpc& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.GoogleGrpc)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  call_credentials_.MergeFrom(from.call_credentials_);
+  if (from.target_uri().size() > 0) {
+
+    target_uri_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.target_uri_);
+  }
+  if (from.stat_prefix().size() > 0) {
+
+    stat_prefix_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.stat_prefix_);
+  }
+  if (from.credentials_factory_name().size() > 0) {
+
+    credentials_factory_name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.credentials_factory_name_);
+  }
+  if (from.has_channel_credentials()) {
+    mutable_channel_credentials()->::GrpcService_GoogleGrpc_ChannelCredentials::MergeFrom(from.channel_credentials());
+  }
+  if (from.has_config()) {
+    mutable_config()->::google::protobuf::Struct::MergeFrom(from.config());
+  }
+}
+
+void GrpcService_GoogleGrpc::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.GoogleGrpc)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_GoogleGrpc::CopyFrom(const GrpcService_GoogleGrpc& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.GoogleGrpc)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_GoogleGrpc::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_GoogleGrpc::Swap(GrpcService_GoogleGrpc* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_GoogleGrpc::InternalSwap(GrpcService_GoogleGrpc* other) {
+  using std::swap;
+  CastToBase(&call_credentials_)->InternalSwap(CastToBase(&other->call_credentials_));
+  target_uri_.Swap(&other->target_uri_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  stat_prefix_.Swap(&other->stat_prefix_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  credentials_factory_name_.Swap(&other->credentials_factory_name_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  swap(channel_credentials_, other->channel_credentials_);
+  swap(config_, other->config_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_GoogleGrpc::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService_HeaderValue::InitAsDefaultInstance() {
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService_HeaderValue::kKeyFieldNumber;
+const int GrpcService_HeaderValue::kValueFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService_HeaderValue::GrpcService_HeaderValue()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_HeaderValue.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.HeaderValue)
+}
+GrpcService_HeaderValue::GrpcService_HeaderValue(const GrpcService_HeaderValue& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.key().size() > 0) {
+    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
+  }
+  value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.value().size() > 0) {
+    value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService.HeaderValue)
+}
+
+void GrpcService_HeaderValue::SharedCtor() {
+  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+GrpcService_HeaderValue::~GrpcService_HeaderValue() {
+  // @@protoc_insertion_point(destructor:GrpcService.HeaderValue)
+  SharedDtor();
+}
+
+void GrpcService_HeaderValue::SharedDtor() {
+  key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  value_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void GrpcService_HeaderValue::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService_HeaderValue::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService_HeaderValue& GrpcService_HeaderValue::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService_HeaderValue.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_HeaderValue::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.HeaderValue)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService_HeaderValue::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService.HeaderValue)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string key = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_key()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->key().data(), static_cast<int>(this->key().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.HeaderValue.key"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string value = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_value()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->value().data(), static_cast<int>(this->value().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "GrpcService.HeaderValue.value"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.HeaderValue)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.HeaderValue)
+  return false;
+#undef DO_
+}
+
+void GrpcService_HeaderValue::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.HeaderValue)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string key = 1;
+  if (this->key().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->key().data(), static_cast<int>(this->key().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.HeaderValue.key");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->key(), output);
+  }
+
+  // string value = 2;
+  if (this->value().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->value().data(), static_cast<int>(this->value().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.HeaderValue.value");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->value(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService.HeaderValue)
+}
+
+::google::protobuf::uint8* GrpcService_HeaderValue::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService.HeaderValue)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string key = 1;
+  if (this->key().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->key().data(), static_cast<int>(this->key().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.HeaderValue.key");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->key(), target);
+  }
+
+  // string value = 2;
+  if (this->value().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->value().data(), static_cast<int>(this->value().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.HeaderValue.value");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        2, this->value(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService.HeaderValue)
+  return target;
+}
+
+size_t GrpcService_HeaderValue::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.HeaderValue)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string key = 1;
+  if (this->key().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->key());
+  }
+
+  // string value = 2;
+  if (this->value().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->value());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_HeaderValue::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService.HeaderValue)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService_HeaderValue* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService_HeaderValue>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService.HeaderValue)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService.HeaderValue)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService_HeaderValue::MergeFrom(const GrpcService_HeaderValue& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.HeaderValue)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.key().size() > 0) {
+
+    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
+  }
+  if (from.value().size() > 0) {
+
+    value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
+  }
+}
+
+void GrpcService_HeaderValue::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService.HeaderValue)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService_HeaderValue::CopyFrom(const GrpcService_HeaderValue& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.HeaderValue)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_HeaderValue::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_HeaderValue::Swap(GrpcService_HeaderValue* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService_HeaderValue::InternalSwap(GrpcService_HeaderValue* other) {
+  using std::swap;
+  key_.Swap(&other->key_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  value_.Swap(&other->value_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService_HeaderValue::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+void GrpcService::InitAsDefaultInstance() {
+  ::_GrpcService_default_instance_.envoy_grpc_ = const_cast< ::GrpcService_EnvoyGrpc*>(
+      ::GrpcService_EnvoyGrpc::internal_default_instance());
+  ::_GrpcService_default_instance_.google_grpc_ = const_cast< ::GrpcService_GoogleGrpc*>(
+      ::GrpcService_GoogleGrpc::internal_default_instance());
+  ::_GrpcService_default_instance_._instance.get_mutable()->timeout_ = const_cast< ::google::protobuf::Duration*>(
+      ::google::protobuf::Duration::internal_default_instance());
+}
+void GrpcService::set_allocated_envoy_grpc(::GrpcService_EnvoyGrpc* envoy_grpc) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_target_specifier();
+  if (envoy_grpc) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      envoy_grpc = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, envoy_grpc, submessage_arena);
+    }
+    set_has_envoy_grpc();
+    target_specifier_.envoy_grpc_ = envoy_grpc;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.envoy_grpc)
+}
+void GrpcService::set_allocated_google_grpc(::GrpcService_GoogleGrpc* google_grpc) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_target_specifier();
+  if (google_grpc) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      google_grpc = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, google_grpc, submessage_arena);
+    }
+    set_has_google_grpc();
+    target_specifier_.google_grpc_ = google_grpc;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.google_grpc)
+}
+void GrpcService::clear_timeout() {
+  if (GetArenaNoVirtual() == NULL && timeout_ != NULL) {
+    delete timeout_;
+  }
+  timeout_ = NULL;
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GrpcService::kEnvoyGrpcFieldNumber;
+const int GrpcService::kGoogleGrpcFieldNumber;
+const int GrpcService::kTimeoutFieldNumber;
+const int GrpcService::kInitialMetadataFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GrpcService::GrpcService()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService)
+}
+GrpcService::GrpcService(const GrpcService& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      initial_metadata_(from.initial_metadata_) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_timeout()) {
+    timeout_ = new ::google::protobuf::Duration(*from.timeout_);
+  } else {
+    timeout_ = NULL;
+  }
+  clear_has_target_specifier();
+  switch (from.target_specifier_case()) {
+    case kEnvoyGrpc: {
+      mutable_envoy_grpc()->::GrpcService_EnvoyGrpc::MergeFrom(from.envoy_grpc());
+      break;
+    }
+    case kGoogleGrpc: {
+      mutable_google_grpc()->::GrpcService_GoogleGrpc::MergeFrom(from.google_grpc());
+      break;
+    }
+    case TARGET_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService)
+}
+
+void GrpcService::SharedCtor() {
+  timeout_ = NULL;
+  clear_has_target_specifier();
+}
+
+GrpcService::~GrpcService() {
+  // @@protoc_insertion_point(destructor:GrpcService)
+  SharedDtor();
+}
+
+void GrpcService::SharedDtor() {
+  if (this != internal_default_instance()) delete timeout_;
+  if (has_target_specifier()) {
+    clear_target_specifier();
+  }
+}
+
+void GrpcService::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* GrpcService::descriptor() {
+  ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const GrpcService& GrpcService::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_proxy_5fwasm_5fintrinsics_2eproto::scc_info_GrpcService.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService::clear_target_specifier() {
+// @@protoc_insertion_point(one_of_clear_start:GrpcService)
+  switch (target_specifier_case()) {
+    case kEnvoyGrpc: {
+      delete target_specifier_.envoy_grpc_;
+      break;
+    }
+    case kGoogleGrpc: {
+      delete target_specifier_.google_grpc_;
+      break;
+    }
+    case TARGET_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  _oneof_case_[0] = TARGET_SPECIFIER_NOT_SET;
+}
+
+
+void GrpcService::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  initial_metadata_.Clear();
+  if (GetArenaNoVirtual() == NULL && timeout_ != NULL) {
+    delete timeout_;
+  }
+  timeout_ = NULL;
+  clear_target_specifier();
+  _internal_metadata_.Clear();
+}
+
+bool GrpcService::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:GrpcService)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .GrpcService.EnvoyGrpc envoy_grpc = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_envoy_grpc()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .GrpcService.GoogleGrpc google_grpc = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_google_grpc()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .google.protobuf.Duration timeout = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_timeout()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .GrpcService.HeaderValue initial_metadata = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+                input, add_initial_metadata()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService)
+  return false;
+#undef DO_
+}
+
+void GrpcService::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .GrpcService.EnvoyGrpc envoy_grpc = 1;
+  if (has_envoy_grpc()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, this->_internal_envoy_grpc(), output);
+  }
+
+  // .GrpcService.GoogleGrpc google_grpc = 2;
+  if (has_google_grpc()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->_internal_google_grpc(), output);
+  }
+
+  // .google.protobuf.Duration timeout = 3;
+  if (this->has_timeout()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->_internal_timeout(), output);
+  }
+
+  // repeated .GrpcService.HeaderValue initial_metadata = 5;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->initial_metadata_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      5,
+      this->initial_metadata(static_cast<int>(i)),
+      output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:GrpcService)
+}
+
+::google::protobuf::uint8* GrpcService::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:GrpcService)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .GrpcService.EnvoyGrpc envoy_grpc = 1;
+  if (has_envoy_grpc()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        1, this->_internal_envoy_grpc(), deterministic, target);
+  }
+
+  // .GrpcService.GoogleGrpc google_grpc = 2;
+  if (has_google_grpc()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        2, this->_internal_google_grpc(), deterministic, target);
+  }
+
+  // .google.protobuf.Duration timeout = 3;
+  if (this->has_timeout()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        3, this->_internal_timeout(), deterministic, target);
+  }
+
+  // repeated .GrpcService.HeaderValue initial_metadata = 5;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->initial_metadata_size()); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        5, this->initial_metadata(static_cast<int>(i)), deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:GrpcService)
+  return target;
+}
+
+size_t GrpcService::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // repeated .GrpcService.HeaderValue initial_metadata = 5;
+  {
+    unsigned int count = static_cast<unsigned int>(this->initial_metadata_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          this->initial_metadata(static_cast<int>(i)));
+    }
+  }
+
+  // .google.protobuf.Duration timeout = 3;
+  if (this->has_timeout()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *timeout_);
+  }
+
+  switch (target_specifier_case()) {
+    // .GrpcService.EnvoyGrpc envoy_grpc = 1;
+    case kEnvoyGrpc: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *target_specifier_.envoy_grpc_);
+      break;
+    }
+    // .GrpcService.GoogleGrpc google_grpc = 2;
+    case kGoogleGrpc: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *target_specifier_.google_grpc_);
+      break;
+    }
+    case TARGET_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:GrpcService)
+  GOOGLE_DCHECK_NE(&from, this);
+  const GrpcService* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const GrpcService>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:GrpcService)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:GrpcService)
+    MergeFrom(*source);
+  }
+}
+
+void GrpcService::MergeFrom(const GrpcService& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  initial_metadata_.MergeFrom(from.initial_metadata_);
+  if (from.has_timeout()) {
+    mutable_timeout()->::google::protobuf::Duration::MergeFrom(from.timeout());
+  }
+  switch (from.target_specifier_case()) {
+    case kEnvoyGrpc: {
+      mutable_envoy_grpc()->::GrpcService_EnvoyGrpc::MergeFrom(from.envoy_grpc());
+      break;
+    }
+    case kGoogleGrpc: {
+      mutable_google_grpc()->::GrpcService_GoogleGrpc::MergeFrom(from.google_grpc());
+      break;
+    }
+    case TARGET_SPECIFIER_NOT_SET: {
+      break;
+    }
+  }
+}
+
+void GrpcService::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:GrpcService)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GrpcService::CopyFrom(const GrpcService& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService::IsInitialized() const {
+  return true;
+}
+
+void GrpcService::Swap(GrpcService* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GrpcService::InternalSwap(GrpcService* other) {
+  using std::swap;
+  CastToBase(&initial_metadata_)->InternalSwap(CastToBase(&other->initial_metadata_));
+  swap(timeout_, other->timeout_);
+  swap(target_specifier_, other->target_specifier_);
+  swap(_oneof_case_[0], other->_oneof_case_[0]);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata GrpcService::GetMetadata() const {
+  protobuf_proxy_5fwasm_5fintrinsics_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_proxy_5fwasm_5fintrinsics_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
 // @@protoc_insertion_point(namespace_scope)
 namespace google {
 namespace protobuf {
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::WKT* Arena::CreateMaybeMessage< ::WKT >(Arena* arena) {
   return Arena::CreateInternal< ::WKT >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::DataSource* Arena::CreateMaybeMessage< ::DataSource >(Arena* arena) {
+  return Arena::CreateInternal< ::DataSource >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_EnvoyGrpc* Arena::CreateMaybeMessage< ::GrpcService_EnvoyGrpc >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_EnvoyGrpc >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_GoogleGrpc_SslCredentials* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_SslCredentials >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_GoogleGrpc_SslCredentials >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_GoogleGrpc_GoogleLocalCredentials* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_GoogleLocalCredentials >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_GoogleGrpc_GoogleLocalCredentials >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_GoogleGrpc_ChannelCredentials* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_ChannelCredentials >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_GoogleGrpc_ChannelCredentials >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_GoogleGrpc_CallCredentials* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_GoogleGrpc_CallCredentials >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_GoogleGrpc* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_GoogleGrpc >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService_HeaderValue* Arena::CreateMaybeMessage< ::GrpcService_HeaderValue >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_HeaderValue >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::GrpcService* Arena::CreateMaybeMessage< ::GrpcService >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService >(arena);
 }
 }  // namespace protobuf
 }  // namespace google

@@ -151,7 +151,9 @@ enum class MetadataType : uint32_t {
   ResponseRoute = 3,
   Log = 4,
   Node = 5,
-  MAX = 5
+  Listener = 6,
+  Cluster = 7,
+  MAX = 7
 };
 enum class HeaderMapType : uint32_t {
   RequestHeaders = 0,
@@ -489,6 +491,8 @@ protected:
   const Http::HeaderMap* access_log_response_headers_{};
   const Http::HeaderMap* access_log_request_trailers_{}; // unused
   const Http::HeaderMap* access_log_response_trailers_{};
+
+  ProtobufWkt::Struct temporary_metadata_;
 };
 
 template <typename T> struct Global {
@@ -507,6 +511,7 @@ public:
   Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
        Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
        Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+       const envoy::api::v2::core::Metadata* listener_metadata,
        Stats::ScopeSharedPtr owned_scope = nullptr);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
   ~Wasm() {}
@@ -524,6 +529,7 @@ public:
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
   Stats::Scope& scope() const { return scope_; }
   const LocalInfo::LocalInfo& localInfo() { return local_info_; }
+  const envoy::api::v2::core::Metadata* listenerMetadata() { return listener_metadata_; }
 
   std::shared_ptr<Context> createContext() { return std::make_shared<Context>(this); }
 
@@ -562,14 +568,15 @@ public:
     general_context_ = std::move(context);
   }
 
-  bool getEmscriptenVersion(uint32_t* emscripten_major_version, uint32_t* emscripten_minor_version,
+  bool getEmscriptenVersion(uint32_t* emscripten_metadata_major_version,
+                            uint32_t* emscripten_metadata_minor_version,
                             uint32_t* emscripten_abi_major_version,
                             uint32_t* emscripten_abi_minor_version) {
     if (!is_emscripten_) {
       return false;
     }
-    *emscripten_major_version = emscripten_major_version_;
-    *emscripten_minor_version = emscripten_minor_version_;
+    *emscripten_metadata_major_version = emscripten_metadata_major_version_;
+    *emscripten_metadata_minor_version = emscripten_metadata_minor_version_;
     *emscripten_abi_major_version = emscripten_abi_major_version_;
     *emscripten_abi_minor_version = emscripten_abi_minor_version_;
     return true;
@@ -612,6 +619,7 @@ private:
   Event::Dispatcher& dispatcher_;
   Stats::Scope& scope_; // Either an inherited scope or owned_scope_ below.
   const LocalInfo::LocalInfo& local_info_;
+  const envoy::api::v2::core::Metadata* listener_metadata_{};
   std::string id_;
   std::string context_id_filter_state_data_name_;
   uint32_t next_context_id_ = 0;
@@ -662,17 +670,22 @@ private:
   bool allow_precompiled_ = false;
 
   bool is_emscripten_ = false;
-  uint32_t emscripten_major_version_ = 0;
-  uint32_t emscripten_minor_version_ = 0;
+  uint32_t emscripten_metadata_major_version_ = 0;
+  uint32_t emscripten_metadata_minor_version_ = 0;
   uint32_t emscripten_abi_major_version_ = 0;
   uint32_t emscripten_abi_minor_version_ = 0;
   uint32_t emscripten_memory_size_ = 0;
   uint32_t emscripten_table_size_ = 0;
+  uint32_t emscripten_global_base_ = 0;
+  uint32_t emscripten_stack_base_ = 0;
+  uint32_t emscripten_dynamic_base_ = 0;
+  uint32_t emscripten_dynamictop_ptr_ = 0;
+  uint32_t emscripten_tempdouble_ptr_ = 0;
 
-  std::unique_ptr<Global<Word>> emscripten_table_base_;
-  std::unique_ptr<Global<Word>> emscripten_dynamictop_;
-  std::unique_ptr<Global<double>> emscripten_NaN_;
-  std::unique_ptr<Global<double>> emscripten_Infinity_;
+  std::unique_ptr<Global<Word>> global_table_base_;
+  std::unique_ptr<Global<Word>> global_dynamictop_;
+  std::unique_ptr<Global<double>> global_NaN_;
+  std::unique_ptr<Global<double>> global_Infinity_;
 
   // Stats/Metrics
   uint32_t next_counter_metric_id_ = kMetricTypeCounter;
@@ -703,9 +716,15 @@ public:
   // Link to registered function.
   virtual void link(absl::string_view debug_name, bool needs_emscripten) PURE;
 
+  // Set memory layout (start of dynamic heap base, etc.) in the VM.
+  virtual void setMemoryLayout(uint64_t stack_base, uint64_t heap_base,
+                               uint64_t heap_base_pointer) PURE;
+
   // Call the 'start' function and initialize globals.
   virtual void start(Context*) PURE;
 
+  // Get size of the currently allocated memory in the VM.
+  virtual uint64_t getMemorySize() PURE;
   // Convert a block of memory in the VM to a string_view.
   virtual absl::string_view getMemory(uint64_t pointer, uint64_t size) PURE;
   // Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).
@@ -774,7 +793,8 @@ std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
                                  const LocalInfo::LocalInfo& local_info,
-                                 Stats::ScopeSharedPtr owned_scope = nullptr);
+                                 const envoy::api::v2::core::Metadata* listener_metadata,
+                                 Stats::ScopeSharedPtr owned_scope);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,

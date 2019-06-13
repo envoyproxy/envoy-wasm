@@ -68,7 +68,7 @@ TEST_P(WasmTestMatrix, Logging) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.vm.", std::get<0>(GetParam())), "", "", cluster_manager, *dispatcher,
-      *scope, local_info, scope);
+      *scope, local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
@@ -99,7 +99,7 @@ TEST_P(WasmTest, BadSignature) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
-      local_info, scope);
+      local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
@@ -119,8 +119,9 @@ TEST(WasmTestWavmOnly, Segv) {
   Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.vm.wavm", "", "", cluster_manager, *dispatcher, *scope, local_info, scope);
+  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>("envoy.wasm.vm.wavm", "", "",
+                                                               cluster_manager, *dispatcher, *scope,
+                                                               local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
@@ -143,7 +144,7 @@ TEST_P(WasmTest, DivByZero) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
-      local_info, scope);
+      local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
@@ -167,7 +168,7 @@ TEST_P(WasmTest, EmscriptenVersion) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
-      local_info, scope);
+      local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
@@ -191,7 +192,7 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
-      local_info, scope);
+      local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
@@ -219,7 +220,7 @@ TEST_P(WasmTest, Asm2Wasm) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
-      local_info, scope);
+      local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
@@ -240,7 +241,7 @@ TEST_P(WasmTest, Stats) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
-      local_info, scope);
+      local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
@@ -270,7 +271,7 @@ TEST_P(WasmTest, StatsHigherLevel) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
-      local_info, scope);
+      local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
@@ -286,8 +287,8 @@ TEST_P(WasmTest, StatsHigherLevel) {
   EXPECT_CALL(*context,
               scriptLog_(spdlog::level::err,
                          Eq(std::string("resolved histogram name = "
-                                           "histogram_int_tag.7.histogram_string_tag.test_tag."
-                                           "histogram_bool_tag.true.test_histogram"))));
+                                        "histogram_int_tag.7.histogram_string_tag.test_tag."
+                                        "histogram_bool_tag.true.test_histogram"))));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   // NB: Must be done after initialize has created the context.
@@ -304,7 +305,7 @@ TEST_P(WasmTest, StatsHighLevel) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.vm.", GetParam()), "", "", cluster_manager, *dispatcher, *scope,
-      local_info, scope);
+      local_info, nullptr, scope);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));

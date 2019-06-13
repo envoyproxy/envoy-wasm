@@ -14,7 +14,7 @@ envoy_cc_library(
     hdrs = ["v8.h"],
     defines = ["ENVOY_WASM_V8"],
     external_deps = [
-        "v8",
+        "wee8",
     ],
     deps = [
         "//include/envoy/server:wasm_interface",

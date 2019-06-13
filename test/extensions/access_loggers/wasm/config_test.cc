@@ -34,10 +34,14 @@ public:
   TestFactoryContext(Api::Api& api, Stats::Scope& scope) : api_(api), scope_(scope) {}
   Api::Api& api() override { return api_; }
   Stats::Scope& scope() override { return scope_; }
+  const envoy::api::v2::core::Metadata& listenerMetadata() const override {
+    return listener_metadata_;
+  }
 
 private:
   Api::Api& api_;
   Stats::Scope& scope_;
+  envoy::api::v2::core::Metadata listener_metadata_;
 };
 
 class WasmAccessLogConfigTest : public testing::TestWithParam<std::string> {};

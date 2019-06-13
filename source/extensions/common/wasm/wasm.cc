@@ -491,7 +491,10 @@ void grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word messa
   context->grpcSend(token, message, end_stream);
 }
 
-Word _emscripten_get_heap_sizeHandler(void*) { return std::numeric_limits<int32_t>::max(); }
+Word _emscripten_get_heap_sizeHandler(void* raw_context) {
+  auto context = WASM_CONTEXT(raw_context);
+  return context->wasmVm()->getMemorySize();
+}
 
 Word _emscripten_memcpy_bigHandler(void*, Word, Word, Word) {
   throw WasmException("emscripten emscripten_memcpy_big");
@@ -501,7 +504,11 @@ Word _emscripten_resize_heapHandler(void*, Word) {
   throw WasmException("emscripten emscripten_resize_heap");
 }
 
-Word abortOnCannotGrowMemoryHandler(void*) {
+Word abortOnCannotGrowMemoryAbi00Handler(void*) {
+  throw WasmException("emscripten abortOnCannotGrowMemory");
+}
+
+Word abortOnCannotGrowMemoryAbi02Handler(void*, Word) {
   throw WasmException("emscripten abortOnCannotGrowMemory");
 }
 
@@ -537,15 +544,52 @@ Word ___syscall54Handler(void*, Word, Word) { throw WasmException("emscripten sy
 
 Word ___syscall140Handler(void*, Word, Word) { throw WasmException("emscripten syscall140"); }
 
-Word ___syscall146Handler(void*, Word, Word) { throw WasmException("emscripten syscall146"); }
+// Implementation of writev() syscall that redirects stdout/stderr to Envoy logs.
+// ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
+Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+
+  // Read syscall args.
+  auto memslice = context->wasmVm()->getMemory(syscall_args_ptr, 3 * sizeof(uint32_t));
+  const uint32_t* syscall_args = reinterpret_cast<const uint32_t*>(memslice.data());
+
+  spdlog::level::level_enum log_level;
+  switch (syscall_args[0] /* fd */) {
+  case 1 /* stdout */:
+    log_level = spdlog::level::info;
+    break;
+  case 2 /* stderr */:
+    log_level = spdlog::level::err;
+    break;
+  default:
+    throw WasmException("emscripten syscall146 (writev)");
+  }
+
+  std::string s;
+  for (size_t i = 0; i < syscall_args[2] /* iovcnt */; i++) {
+    memslice = context->wasmVm()->getMemory(syscall_args[1] /* iov */ + i * 2 * sizeof(uint32_t),
+                                            2 * sizeof(uint32_t));
+    const uint32_t* iovec = reinterpret_cast<const uint32_t*>(memslice.data());
+    if (iovec[1] /* size */) {
+      memslice = context->wasmVm()->getMemory(iovec[0] /* data */, iovec[1] /* size */);
+      s.append(memslice.data(), memslice.size());
+    }
+  }
+
+  size_t written = s.size();
+  if (written) {
+    // Remove trailing newline from the logs, if any.
+    if (s[written - 1] == '\n') {
+      s.erase(written - 1);
+    }
+    context->scriptLog(log_level, s);
+  }
+  return written;
+}
 
 void ___setErrNoHandler(void*, Word) { throw WasmException("emscripten setErrNo"); }
 
-// NB: pthread_equal is required to return 0 by the protobuf libarary.
-Word _pthread_equalHandler(void*, Word,
-                           Word) { /* throw WasmException("emscripten pthread_equal"); */
-  return 0;
-}
+Word _pthread_equalHandler(void*, Word left, Word right) { return left == right; }
 // NB: pthread_mutex_destroy is required to return 0 by the protobuf libarary.
 Word _pthread_mutex_destroyHandler(void*, Word) { return 0; }
 Word _pthread_cond_waitHandler(void*, Word, Word) {
@@ -927,6 +971,17 @@ const StreamInfo::StreamInfo* Context::getConstStreamInfo(MetadataType type) con
       return access_log_stream_info_;
     }
     break;
+  case MetadataType::Cluster:
+    if (decoder_callbacks_) {
+      return &decoder_callbacks_->streamInfo();
+    }
+    if (encoder_callbacks_) {
+      return &encoder_callbacks_->streamInfo();
+    }
+    if (access_log_stream_info_) {
+      return access_log_stream_info_;
+    }
+    break;
   default:
     break;
   }
@@ -948,13 +1003,52 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
   case MetadataType::ResponseRoute:
     return getRouteMetadataStructProto(encoder_callbacks_);
   case MetadataType::Node:
+    if (name == ".") {
+      temporary_metadata_.Clear();
+      (*temporary_metadata_.mutable_fields())["id"].set_string_value(
+          wasm_->local_info_.node().id());
+      (*temporary_metadata_.mutable_fields())["cluster"].set_string_value(
+          wasm_->local_info_.node().cluster());
+      (*temporary_metadata_.mutable_fields())["locality.region"].set_string_value(
+          wasm_->local_info_.node().locality().region());
+      (*temporary_metadata_.mutable_fields())["locality.zone"].set_string_value(
+          wasm_->local_info_.node().locality().zone());
+      (*temporary_metadata_.mutable_fields())["locality.sub_zone"].set_string_value(
+          wasm_->local_info_.node().locality().sub_zone());
+      (*temporary_metadata_.mutable_fields())["build_version"].set_string_value(
+          wasm_->local_info_.node().build_version());
+      return &temporary_metadata_;
+    }
     return &wasm_->local_info_.node().metadata();
-  default: {
-    auto streamInfo = getConstStreamInfo(type);
-    if (!streamInfo) {
+  case MetadataType::Listener:
+    if (wasm_->listener_metadata_) {
+      return getStructProtoFromMetadata(*wasm_->listener_metadata_, name);
+    }
+    return nullptr;
+  case MetadataType::Cluster: {
+    std::string cluster_name;
+    auto stream_info = getConstStreamInfo(type);
+    if (!stream_info) {
       return nullptr;
     }
-    return getStructProtoFromMetadata(streamInfo->dynamicMetadata(), name);
+    auto host = stream_info->upstreamHost();
+    if (!host) {
+      return nullptr;
+    }
+    cluster_name = host->cluster().name();
+    if (name == ".") {
+      temporary_metadata_.Clear();
+      (*temporary_metadata_.mutable_fields())["cluster_name"].set_string_value(cluster_name);
+      return &temporary_metadata_;
+    }
+    return getStructProtoFromMetadata(host->cluster().metadata(), name);
+  }
+  default: {
+    auto stream_info = getConstStreamInfo(type);
+    if (!stream_info) {
+      return nullptr;
+    }
+    return getStructProtoFromMetadata(stream_info->dynamicMetadata(), name);
   }
   }
 }
@@ -1017,7 +1111,8 @@ void Context::setMetadataStruct(MetadataType type, absl::string_view name,
     return;
   }
   ProtobufWkt::Struct proto_struct;
-  if (proto_struct.ParseFromArray(serialized_proto_struct.data(), serialized_proto_struct.size())) {
+  if (!proto_struct.ParseFromArray(serialized_proto_struct.data(),
+                                   serialized_proto_struct.size())) {
     return;
   }
   streamInfo->setDynamicMetadata(std::string(name), proto_struct);
@@ -1280,25 +1375,34 @@ uint64_t Context::getMetric(uint32_t metric_id) {
 Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
            Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+           const envoy::api::v2::core::Metadata* listener_metadata,
            Stats::ScopeSharedPtr owned_scope)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
-      local_info_(local_info), owned_scope_(owned_scope), time_source_(dispatcher.timeSource()),
-      initial_configuration_(initial_configuration) {
+      local_info_(local_info), listener_metadata_(listener_metadata), owned_scope_(owned_scope),
+      time_source_(dispatcher.timeSource()), initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
 }
 
 void Wasm::registerCallbacks() {
-#define _REGISTER(_fn)                                                                             \
+#define _REGISTER_ABI(_fn, _abi)                                                                   \
   wasm_vm_->registerCallback(                                                                      \
-      "envoy", #_fn, &_fn##Handler,                                                                \
-      &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
-                                   _fn##Handler>::convertFunctionWordToUint32);
+      "envoy", #_fn, &_fn##_abi##Handler,                                                          \
+      &ConvertFunctionWordToUint32<decltype(_fn##_abi##Handler),                                   \
+                                   _fn##_abi##Handler>::convertFunctionWordToUint32)
+#define _REGISTER(_fn) _REGISTER_ABI(_fn, )
+
   if (is_emscripten_) {
+    if (emscripten_abi_major_version_ > 0 || emscripten_abi_minor_version_ > 1) {
+      // abi 0.2 - abortOnCannotGrowMemory() changed singature to (param i32) (result i32).
+      _REGISTER_ABI(abortOnCannotGrowMemory, Abi02);
+    } else {
+      _REGISTER_ABI(abortOnCannotGrowMemory, Abi00);
+    }
+
     _REGISTER(_emscripten_memcpy_big);
     _REGISTER(_emscripten_get_heap_size);
     _REGISTER(_emscripten_resize_heap);
-    _REGISTER(abortOnCannotGrowMemory);
     _REGISTER(abort);
     _REGISTER(_abort);
     _REGISTER(_llvm_trap);
@@ -1325,6 +1429,7 @@ void Wasm::registerCallbacks() {
     _REGISTER(setTempRet0);
   }
 #undef _REGISTER
+#undef _REGISTER_ABI
 
   // Calls with the "_proxy_" prefix.
 #define _REGISTER_PROXY(_fn)                                                                       \
@@ -1379,12 +1484,16 @@ void Wasm::registerCallbacks() {
 
 void Wasm::establishEnvironment() {
   if (is_emscripten_) {
-    emscripten_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
-    emscripten_dynamictop_ = wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(128 * 64 * 1024));
+    wasm_vm_->setMemoryLayout(emscripten_stack_base_, emscripten_dynamic_base_,
+                              emscripten_dynamictop_ptr_);
+
+    global_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
+    global_dynamictop_ =
+        wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(emscripten_dynamictop_ptr_));
 
     wasm_vm_->makeModule("global");
-    emscripten_NaN_ = wasm_vm_->makeGlobal("global", "NaN", std::nan("0"));
-    emscripten_Infinity_ =
+    global_NaN_ = wasm_vm_->makeGlobal("global", "NaN", std::nan("0"));
+    global_Infinity_ =
         wasm_vm_->makeGlobal("global", "Infinity", std::numeric_limits<double>::infinity());
   }
 }
@@ -1428,7 +1537,8 @@ void Wasm::getFunctions() {
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), scope_(wasm.scope_), local_info_(wasm.local_info_),
-      owned_scope_(wasm.owned_scope_), time_source_(dispatcher.timeSource()) {
+      listener_metadata_(wasm.listener_metadata_), owned_scope_(wasm.owned_scope_),
+      time_source_(dispatcher.timeSource()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   general_context_ = createContext();
   getFunctions();
@@ -1445,25 +1555,37 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
     is_emscripten_ = true;
     auto start = reinterpret_cast<const uint8_t*>(metadata.data());
     auto end = reinterpret_cast<const uint8_t*>(metadata.data() + metadata.size());
-    start = decodeVarint(start, end, &emscripten_major_version_);
-    start = decodeVarint(start, end, &emscripten_minor_version_);
+    start = decodeVarint(start, end, &emscripten_metadata_major_version_);
+    start = decodeVarint(start, end, &emscripten_metadata_minor_version_);
     start = decodeVarint(start, end, &emscripten_abi_major_version_);
     start = decodeVarint(start, end, &emscripten_abi_minor_version_);
     start = decodeVarint(start, end, &emscripten_memory_size_);
-    decodeVarint(start, end, &emscripten_table_size_);
+    start = decodeVarint(start, end, &emscripten_table_size_);
+    if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 0) {
+      // metadata 0.1 - added: global_base, dynamic_base, dynamictop_ptr and tempdouble_ptr.
+      start = decodeVarint(start, end, &emscripten_global_base_);
+      start = decodeVarint(start, end, &emscripten_dynamic_base_);
+      start = decodeVarint(start, end, &emscripten_dynamictop_ptr_);
+      decodeVarint(start, end, &emscripten_tempdouble_ptr_);
+    } else {
+      // Workaround for Emscripten versions without heap (dynamic) base in metadata.
+      emscripten_stack_base_ = 64 * 64 * 1024;      // 4MB
+      emscripten_dynamic_base_ = 128 * 64 * 1024;   // 8MB
+      emscripten_dynamictop_ptr_ = 128 * 64 * 1024; // 8MB
+    }
   }
   registerCallbacks();
   establishEnvironment();
   wasm_vm_->link(name, is_emscripten_);
   general_context_ = createContext();
+  getFunctions();
   wasm_vm_->start(general_context_.get());
   if (is_emscripten_) {
-    ASSERT(std::isnan(emscripten_NaN_->get()));
-    ASSERT(std::isinf(emscripten_Infinity_->get()));
+    ASSERT(std::isnan(global_NaN_->get()));
+    ASSERT(std::isinf(global_Infinity_->get()));
   }
   code_ = code;
   allow_precompiled_ = allow_precompiled;
-  getFunctions();
   return true;
 }
 
@@ -1512,7 +1634,7 @@ void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap*
   access_log_request_headers_ = request_headers;
   // ? request_trailers  ?
   access_log_response_headers_ = response_headers;
-  access_log_response_headers_ = response_trailers;
+  access_log_response_trailers_ = response_trailers;
   access_log_stream_info_ = &stream_info;
 
   onLog();
@@ -1520,7 +1642,7 @@ void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap*
   access_log_request_headers_ = nullptr;
   // ? request_trailers  ?
   access_log_response_headers_ = nullptr;
-  access_log_response_headers_ = nullptr;
+  access_log_response_trailers_ = nullptr;
   access_log_stream_info_ = nullptr;
 
   onDelete();
@@ -1769,9 +1891,11 @@ std::shared_ptr<Wasm> createWasm(absl::string_view id,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
                                  const LocalInfo::LocalInfo& local_info,
+                                 const envoy::api::v2::core::Metadata* listener_metadata,
                                  Stats::ScopeSharedPtr scope_ptr) {
-  auto wasm = std::make_shared<Wasm>(vm_config.vm(), id, vm_config.initial_configuration(),
-                                     cluster_manager, dispatcher, scope, local_info, scope_ptr);
+  auto wasm =
+      std::make_shared<Wasm>(vm_config.vm(), id, vm_config.initial_configuration(), cluster_manager,
+                             dispatcher, scope, local_info, listener_metadata, scope_ptr);
   const auto& code = Config::DataSource::read(vm_config.code(), true, api);
   const auto& path = Config::DataSource::getPath(vm_config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
@@ -1793,7 +1917,8 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
   } else {
     wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->vm(), base_wasm.id(),
                                   base_wasm.initial_configuration(), base_wasm.clusterManager(),
-                                  dispatcher, base_wasm.scope(), base_wasm.localInfo());
+                                  dispatcher, base_wasm.scope(), base_wasm.localInfo(),
+                                  base_wasm.listenerMetadata(), nullptr /* owned scope */);
     if (!wasm->initialize(base_wasm.code(), base_wasm.id(), base_wasm.allow_precompiled())) {
       throw WasmException("Failed to initialize WASM code");
     }
