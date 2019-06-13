@@ -1890,7 +1890,9 @@ std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
   } else
 #endif
   {
-    return nullptr;
+    throw WasmException(fmt::format(
+        "Failed to create WASM VM using {} runtime. Envoy was compiled without support for it.",
+        wasm_vm));
   }
 }
 
