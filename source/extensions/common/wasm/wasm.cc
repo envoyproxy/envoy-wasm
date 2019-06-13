@@ -27,8 +27,13 @@
 #include "common/tracing/http_tracer_impl.h"
 
 #include "extensions/common/wasm/null/null.h"
+
+#ifdef ENVOY_WASM_V8
 #include "extensions/common/wasm/v8/v8.h"
+#endif
+#ifdef ENVOY_WASM_WAVM
 #include "extensions/common/wasm/wavm/wavm.h"
+#endif
 #include "extensions/common/wasm/well_known_names.h"
 
 #include "absl/container/flat_hash_map.h"
@@ -1863,14 +1868,31 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
 }
 
 std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
-  if (wasm_vm == WasmVmNames::get().Null) {
-    return Null::createVm();
-  } else if (wasm_vm == WasmVmNames::get().v8) {
+  if (wasm_vm.empty()) {
+#if defined(ENVOY_WASM_V8) && !defined(ENVOY_WASM_WAVM)
     return V8::createVm();
-  } else if (wasm_vm == WasmVmNames::get().Wavm) {
+#elif defined(ENVOY_WASM_WAVM) && !defined(ENVOY_WASM_V8)
     return Wavm::createVm();
-  } else {
-    return nullptr;
+#else
+    throw WasmException("Failed to create WASM VM with unspecified runtime.");
+#endif
+  } else if (wasm_vm == WasmVmNames::get().Null) {
+    return Null::createVm();
+  } else
+#ifdef ENVOY_WASM_V8
+      if (wasm_vm == WasmVmNames::get().v8) {
+    return V8::createVm();
+  } else
+#endif
+#ifdef ENVOY_WASM_WAVM
+      if (wasm_vm == WasmVmNames::get().Wavm) {
+    return Wavm::createVm();
+  } else
+#endif
+  {
+    throw WasmException(fmt::format(
+        "Failed to create WASM VM using {} runtime. Envoy was compiled without support for it.",
+        wasm_vm));
   }
 }
 

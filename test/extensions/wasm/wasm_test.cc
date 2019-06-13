@@ -34,12 +34,29 @@ public:
 
 class WasmTest : public testing::TestWithParam<std::string> {};
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing::Values("wavm", "v8"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
+                         testing::Values(
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                             "v8", "wavm"
+#elif defined(ENVOY_WASM_V8)
+                             "v8"
+#elif defined(ENVOY_WASM_WAVM)
+                             "wavm"
+#endif
+                             ));
 
 class WasmTestMatrix : public testing::TestWithParam<std::tuple<std::string, std::string>> {};
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
-                         testing::Combine(testing::Values("wavm", "v8"),
+                         testing::Combine(testing::Values(
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                                              "v8", "wavm"
+#elif defined(ENVOY_WASM_V8)
+                                              "v8"
+#elif defined(ENVOY_WASM_WAVM)
+                                              "wavm"
+#endif
+                                              ),
                                           testing::Values("cpp", "rust")));
 
 TEST_P(WasmTestMatrix, Logging) {
@@ -94,6 +111,7 @@ TEST_P(WasmTest, BadSignature) {
 }
 
 // TODO(PiotrSikora): catch llvm_trap in v8.
+#ifdef ENVOY_WASM_WAVM
 TEST(WasmTestWavmOnly, Segv) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
@@ -115,6 +133,7 @@ TEST(WasmTestWavmOnly, Segv) {
   EXPECT_THROW_WITH_MESSAGE(wasm->start(), Extensions::Common::Wasm::WasmException,
                             "emscripten llvm_trap");
 }
+#endif
 
 TEST_P(WasmTest, DivByZero) {
   Stats::IsolatedStoreImpl stats_store;

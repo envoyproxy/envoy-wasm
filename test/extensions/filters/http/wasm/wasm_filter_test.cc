@@ -104,7 +104,18 @@ public:
   envoy::api::v2::core::Metadata listener_metadata_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest, testing::Values("wavm", "v8"));
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
+
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest,
+                         testing::Values(
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                             "v8", "wavm"
+#elif defined(ENVOY_WASM_V8)
+                             "v8"
+#elif defined(ENVOY_WASM_WAVM)
+                             "wavm"
+#endif
+                             ));
 
 // Bad code in initial config.
 TEST_P(WasmHttpFilterTest, BadCode) {
@@ -310,6 +321,8 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   StreamInfo::MockStreamInfo log_stream_info;
   filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
 }
+
+#endif
 
 // Null VM Plugin, headers only.
 TEST_F(WasmHttpFilterTest, NullVmPluginRequestHeadersOnly) {

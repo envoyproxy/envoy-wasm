@@ -320,7 +320,8 @@ def envoy_cc_library(
         linkstamp = None,
         tags = [],
         deps = [],
-        strip_include_prefix = None):
+        strip_include_prefix = None,
+        **kargs):
     if tcmalloc_dep:
         deps += tcmalloc_external_deps(repository)
 
@@ -348,6 +349,7 @@ def envoy_cc_library(
             "//conditions:default": linkstamp,
         }),
         strip_include_prefix = strip_include_prefix,
+        **kargs
     )
 
 # Envoy C++ binary targets should be specified with this function.
@@ -712,4 +714,26 @@ def envoy_select_boringssl(if_fips, default = None):
     return select({
         "@envoy//bazel:boringssl_fips": if_fips,
         "//conditions:default": default or [],
+    })
+
+def envoy_select_wasm(xs):
+    return select({
+        "@envoy//bazel:wasm_all": xs,
+        "@envoy//bazel:wasm_v8": xs,
+        "@envoy//bazel:wasm_wavm": xs,
+        "//conditions:default": [],
+    })
+
+def envoy_select_wasm_v8(xs):
+    return select({
+        "@envoy//bazel:wasm_all": xs,
+        "@envoy//bazel:wasm_v8": xs,
+        "//conditions:default": [],
+    })
+
+def envoy_select_wasm_wavm(xs):
+    return select({
+        "@envoy//bazel:wasm_all": xs,
+        "@envoy//bazel:wasm_wavm": xs,
+        "//conditions:default": [],
     })

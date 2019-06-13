@@ -12,6 +12,7 @@ envoy_cc_library(
     name = "v8_lib",
     srcs = ["v8.cc"],
     hdrs = ["v8.h"],
+    defines = ["ENVOY_WASM_V8"],
     external_deps = [
         "wee8",
     ],
