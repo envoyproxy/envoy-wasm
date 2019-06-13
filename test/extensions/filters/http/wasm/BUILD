@@ -14,7 +14,7 @@ envoy_package()
 
 envoy_extension_cc_test(
     name = "wasm_filter_test",
-    srcs = envoy_select_wasm(["wasm_filter_test.cc"]),
+    srcs = ["wasm_filter_test.cc"],
     data = [
         "//test/extensions/filters/http/wasm/test_data:modules",
     ],

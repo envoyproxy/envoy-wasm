@@ -104,6 +104,8 @@ public:
   envoy::api::v2::core::Metadata listener_metadata_;
 };
 
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
+
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest,
                          testing::Values(
 #if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
@@ -319,6 +321,8 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   StreamInfo::MockStreamInfo log_stream_info;
   filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
 }
+
+#endif
 
 // Null VM Plugin, headers only.
 TEST_F(WasmHttpFilterTest, NullVmPluginRequestHeadersOnly) {
