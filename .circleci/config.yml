@@ -52,16 +52,6 @@ jobs:
            path: /build/envoy/generated
            destination: /
 
-   clang_tidy:
-     executor: ubuntu-build
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - run:
-           command:
-             ci/do_circle_ci.sh bazel.clang_tidy
-           no_output_timeout: 60m
-
    format:
      executor: ubuntu-build
      resource_class: small
@@ -72,7 +62,7 @@ jobs:
        - run: ci/do_circle_ci.sh check_format
        - run: ci/do_circle_ci.sh check_repositories
        - run: ci/do_circle_ci.sh check_spelling
-       # TODO(PiotrSikora): reenable once fixed.
+       # TODO(PiotrSikora): re-enable once fixed.
        # - run: ci/do_circle_ci.sh check_spelling_pedantic
 
 workflows:
@@ -83,4 +73,3 @@ workflows:
       - asan
       - coverage
       - format
-      - clang_tidy
