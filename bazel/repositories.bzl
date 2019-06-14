@@ -273,6 +273,8 @@ def _com_github_gcovr_gcovr():
     _repository_impl(
         name = "com_github_gcovr_gcovr",
         build_file = "@envoy//bazel/external:gcovr.BUILD",
+        patch_args = ["-p1"],
+        patches = ["@envoy//bazel/external:gcovr.patch"],
     )
     native.bind(
         name = "gcovr",
