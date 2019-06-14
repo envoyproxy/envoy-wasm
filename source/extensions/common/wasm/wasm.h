@@ -37,6 +37,7 @@ struct Word {
   Word(uint64_t w) : u64(w) {}              // Implicit conversion into Word.
   operator uint64_t() const { return u64; } // Implicit conversion into uint64_t.
   // Note: no implicit conversion to uint32_t as it is lossy.
+  uint32_t u32() const { return static_cast<uint32_t>(u64); }
   uint64_t u64;
 };
 
@@ -184,6 +185,12 @@ void getSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word v
                           Word value_size_ptr, Word cas_ptr);
 Word setSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
                           Word value_size, Word cas);
+Word registerSharedQueueHandler(void* raw_context, Word queue_name_ptr, Word queue_name_size);
+Word resolveSharedQueueHandler(void* raw_context, Word vm_id_ptr, Word vm_id_size,
+                               Word queue_name_ptr, Word queue_name_size);
+Word dequeueSharedQueueHandler(void* raw_context, Word token, Word data_ptr_ptr,
+                               Word data_size_ptr);
+Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Word data_size);
 void addHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                               Word value_ptr, Word value_size);
 void getHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
@@ -214,6 +221,7 @@ void grpcCancelHandler(void* raw_context, Word token);
 void grpcCloseHandler(void* raw_context, Word token);
 void grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word message_size,
                      Word end_stream);
+
 void setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_milliseconds);
 uint64_t getCurrentTimeNanosecondsHandler(void* raw_context);
 
@@ -265,6 +273,7 @@ class Context : public Http::StreamFilter,
                 public Logger::Loggable<Logger::Id::wasm>,
                 public std::enable_shared_from_this<Context> {
 public:
+  Context();                                      // Testing.
   explicit Context(Wasm* wasm);                   // General Context.
   Context(Wasm* wasm, absl::string_view root_id); // Root Context.
   Context(Wasm* wasm, uint32_t root_context_id);  // Stream/Filter context.
@@ -305,6 +314,7 @@ public:
   // Async Response Downcalls on any Context.
   virtual void onHttpCallResponse(uint32_t token, const Pairs& response_headers,
                                   absl::string_view response_body, const Pairs& response_trailers);
+  virtual void onQueueReady(uint32_t token);
   // General stream downcall when the stream has ended.
   virtual void onDone();
   // General stream downcall for logging. Occurs after onDone().
@@ -385,6 +395,12 @@ public:
   virtual std::pair<std::string, uint32_t> getSharedData(absl::string_view key);
   virtual bool setSharedData(absl::string_view key, absl::string_view value, uint32_t cas);
 
+  // Shared Queue
+  virtual uint32_t registerSharedQueue(absl::string_view queue_name);
+  virtual uint32_t resolveSharedQueue(absl::string_view vm_id, absl::string_view queue_name);
+  virtual std::pair<std::string, bool> dequeueSharedQueue(uint32_t token);
+  virtual bool enqueueSharedQueue(uint32_t token, absl::string_view value);
+
   // Header/Trailer/Metadata Maps
   virtual void addHeaderMapValue(HeaderMapType type, absl::string_view key,
                                  absl::string_view value);
@@ -464,10 +480,10 @@ protected:
   Http::HeaderMap* getMap(HeaderMapType type);
   const Http::HeaderMap* getConstMap(HeaderMapType type);
 
-  Wasm* const wasm_;
-  const uint32_t id_;
-  const uint32_t root_context_id_; // 0 for roots and the vm context.
-  const std::string root_id_;      // set only in roots.
+  Wasm* wasm_;
+  uint32_t id_;
+  uint32_t root_context_id_;  // 0 for roots and the general context.
+  const std::string root_id_; // set only in roots.
   bool destroyed_ = false;
 
   uint32_t next_http_call_token_ = 1;
@@ -549,6 +565,7 @@ public:
 
   void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
   void tickHandler(uint32_t root_context_id);
+  void queueReady(uint32_t root_context_id, uint32_t token);
 
   uint32_t allocContextId();
 
@@ -675,6 +692,8 @@ private:
   WasmContextCall1Void onGrpcCreateInitialMetadata_;
   WasmContextCall1Void onGrpcReceiveInitialMetadata_;
   WasmContextCall1Void onGrpcReceiveTrailingMetadata_;
+
+  WasmContextCall1Void onQueueReady_;
 
   WasmContextCall0Void onDone_;
   WasmContextCall0Void onLog_;
@@ -818,9 +837,21 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view r
                                             absl::string_view configuration,
                                             Event::Dispatcher& dispatcher);
 
+std::shared_ptr<Wasm>
+createWasmForTesting(absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+                     absl::string_view root_id, // e.g. filter instance id
+                     Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
+                     Api::Api& api, Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+                     const envoy::api::v2::core::Metadata* listener_metadata,
+                     Stats::ScopeSharedPtr scope_ptr,
+                     std::unique_ptr<Context> root_context_for_testing);
+
 // Get an existing ThreadLocal VM matching 'vm_id'.
 std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_view root_id,
                                          absl::string_view configuration);
+std::shared_ptr<Wasm> getThreadLocalWasmOrNull(absl::string_view vm_id);
+
+uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_name);
 
 class WasmException : public EnvoyException {
 public:
@@ -831,6 +862,8 @@ class WasmVmException : public EnvoyException {
 public:
   using EnvoyException::EnvoyException;
 };
+
+inline Context::Context() : wasm_(nullptr), id_(0), root_context_id_(0), root_id_("") {}
 
 inline Context::Context(Wasm* wasm) : wasm_(wasm), id_(0), root_context_id_(0), root_id_("") {
   wasm_->contexts_[id_] = this;

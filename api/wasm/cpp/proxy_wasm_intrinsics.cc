@@ -191,3 +191,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcClose(uint32_t context_id, uint
     uint32_t status_code, uint32_t status_message_ptr, uint32_t status_message_size) {
   getContextBase(context_id)->onGrpcClose(token, static_cast<GrpcStatus>(status_code), std::make_unique<WasmData>(reinterpret_cast<char*>(status_message_ptr), status_message_size));
 }
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onQueueReady(uint32_t context_id, uint32_t token) {
+  getRootContext(context_id)->onQueueReady(token);
+}

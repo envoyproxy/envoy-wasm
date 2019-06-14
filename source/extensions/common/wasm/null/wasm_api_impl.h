@@ -80,6 +80,28 @@ inline bool proxy_setSharedData(const char* key_ptr, size_t key_size, const char
                               WS(value_size), WS(cas));
 }
 
+// SharedQueue
+// Note: Registering the same queue_name will overwrite the old registration while preseving any
+// pending data. Consequently it should typically be followed by a call to proxy_dequeueSharedQueue.
+// Returns unique token for the queue.
+inline uint32_t proxy_registerSharedQueue(const char* queue_name_ptr, size_t queue_name_size) {
+  return registerSharedQueueHandler(current_context_, WR(queue_name_ptr), WS(queue_name_size));
+}
+// Returns unique token for the queue.
+inline uint32_t proxy_resolveSharedQueue(const char* vm_id_ptr, size_t vm_id_size,
+                                         const char* queue_name_ptr, size_t queue_name_size) {
+  return resolveSharedQueueHandler(current_context_, WR(vm_id_ptr), WS(vm_id_size),
+                                   WR(queue_name_ptr), WS(queue_name_size));
+}
+// Returns true on end-of-stream (no more data available).
+inline bool proxy_dequeueSharedQueue(uint32_t token, const char** data_ptr, size_t* data_size) {
+  return dequeueSharedQueueHandler(current_context_, WS(token), WR(data_ptr), WR(data_size));
+}
+// Returns false if the queue was not found and the data was not enqueued.
+inline bool proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size) {
+  return enqueueSharedQueueHandler(current_context_, WS(token), WR(data_ptr), WS(data_size));
+}
+
 // Headers/Trailers/Metadata Maps
 inline void proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size,
                                     const char* value_ptr, size_t value_size) {
