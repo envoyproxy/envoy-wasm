@@ -52,7 +52,6 @@ public:
       : Envoy::Extensions::Common::Wasm::Context(wasm, root_context_id) {}
 
   void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
-    std::cerr << std::string(message) << "\n";
     scriptLog_(level, message);
   }
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
