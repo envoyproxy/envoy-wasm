@@ -24,7 +24,7 @@ public:
   void onDelete() override;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
-                                               ROOT_FACTORY(ExampleRootContext));
+                                                      ROOT_FACTORY(ExampleRootContext));
 
 void ExampleRootContext::onStart() { logTrace("onStart"); }
 
