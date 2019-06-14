@@ -72,7 +72,8 @@ jobs:
        - run: ci/do_circle_ci.sh check_format
        - run: ci/do_circle_ci.sh check_repositories
        - run: ci/do_circle_ci.sh check_spelling
-       - run: ci/do_circle_ci.sh check_spelling_pedantic
+       # TODO(PiotrSikora): reenable once fixed.
+       # - run: ci/do_circle_ci.sh check_spelling_pedantic
 
 workflows:
   version: 2
