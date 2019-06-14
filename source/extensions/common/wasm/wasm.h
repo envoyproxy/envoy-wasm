@@ -319,7 +319,7 @@ public:
   virtual void onDone();
   // General stream downcall for logging. Occurs after onDone().
   virtual void onLog();
-  // General stream downcall when no futher stream calls will occur.
+  // General stream downcall when no further stream calls will occur.
   virtual void onDelete();
 
   //
@@ -643,7 +643,7 @@ private:
   uint32_t nextHistogramMetricId() { return next_histogram_metric_id_ += kMetricIdIncrement; }
 
   void registerCallbacks();    // Register functions called out from WASM.
-  void establishEnvironment(); // Language specific enviroments.
+  void establishEnvironment(); // Language specific environments.
   void getFunctions();         // Get functions call into WASM.
 
   Upstream::ClusterManager& cluster_manager_;
@@ -656,7 +656,7 @@ private:
   uint32_t next_context_id_ = 0;
   std::unique_ptr<WasmVm> wasm_vm_;
   std::shared_ptr<Context> vm_context_; // Context unrelated to any specific root or stream
-                                        // (e.g. for global contructors).
+                                        // (e.g. for global constructors).
   absl::flat_hash_map<std::string, std::unique_ptr<Context>> root_contexts_;
   absl::flat_hash_map<uint32_t, Context*> contexts_;                    // Contains all contexts.
   std::unordered_map<uint32_t, std::chrono::milliseconds> tick_period_; // per root_id.
