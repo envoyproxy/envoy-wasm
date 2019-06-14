@@ -45,7 +45,7 @@ jobs:
        - checkout
        - run:
            command:
-             ci/do_circle_ci.sh bazel.coverage
+             ci/do_circle_ci.sh bazel.coverage ${BAZEL_TEST_TARGETS}
            no_output_timeout: 60m
        - store_artifacts:
            path: /build/envoy/generated
