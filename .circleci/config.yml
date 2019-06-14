@@ -89,7 +89,6 @@ workflows:
     jobs:
       - release
       - asan
-      - tsan
       - coverage
       - format
       - clang_tidy
