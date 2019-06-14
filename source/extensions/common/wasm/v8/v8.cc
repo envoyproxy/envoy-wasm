@@ -27,9 +27,6 @@ namespace Envoy {
 namespace Extensions {
 namespace Common {
 namespace Wasm {
-
-extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
-
 namespace V8 {
 
 wasm::Engine* engine() {
@@ -521,7 +518,7 @@ void V8::callModuleFunction(Context* context, absl::string_view functionName,
                             const wasm::Func* func, const wasm::Val args[], wasm::Val results[]) {
   ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", functionName);
 
-  current_context_ = context;
+  SaveRestoreContext _saved_context(context);
   auto trap = func->call(args, results);
   if (trap) {
     throw WasmVmException(
@@ -645,7 +642,7 @@ void V8::getModuleFunctionImpl(absl::string_view functionName,
   }
   *function = [func, functionName](Context* context, Args... args) -> void {
     ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", functionName);
-    current_context_ = context;
+    SaveRestoreContext _saved_context(context);
     wasm::Val params[] = {makeVal(args)...};
     auto trap = func->call(params, nullptr);
     if (trap) {
@@ -672,7 +669,7 @@ void V8::getModuleFunctionImpl(absl::string_view functionName,
   }
   *function = [func, functionName](Context* context, Args... args) -> R {
     ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", functionName);
-    current_context_ = context;
+    SaveRestoreContext _saved_context(context);
     wasm::Val params[] = {makeVal(args)...};
     wasm::Val results[1];
     auto trap = func->call(params, results);

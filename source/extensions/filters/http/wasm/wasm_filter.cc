@@ -16,28 +16,29 @@ namespace Wasm {
 
 FilterConfig::FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& config,
                            Server::Configuration::FactoryContext& context)
-    : tls_slot_(context.threadLocal().allocateSlot()) {
-  auto id = config.id();
+    : root_id_(config.root_id()), tls_slot_(context.threadLocal().allocateSlot()) {
+  auto vm_id = config.vm_id();
+  auto root_id = config.root_id();
   auto configuration = std::make_shared<std::string>(config.configuration());
   if (config.has_vm_config()) {
     // Create a base WASM to verify that the code loads before setting/cloning the for the
     // individual threads.
-    auto base_wasm = Common::Wasm::createWasm(id, config.vm_config(), context.clusterManager(),
-                                              context.dispatcher(), context.api(), context.scope(),
-                                              context.localInfo(), &context.listenerMetadata(),
-                                              nullptr /* owned_scope */);
+    auto base_wasm = Common::Wasm::createWasm(
+        vm_id, config.vm_config(), root_id, context.clusterManager(), context.dispatcher(),
+        context.api(), context.scope(), context.localInfo(), &context.listenerMetadata(),
+        nullptr /* owned_scope */);
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
-    tls_slot_->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {
-      auto result =
-          Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, *configuration, dispatcher);
+    tls_slot_->set([base_wasm, root_id, configuration](Event::Dispatcher& dispatcher) {
+      auto result = Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, root_id,
+                                                                    *configuration, dispatcher);
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
     });
   } else {
-    if (id.empty()) {
+    if (vm_id.empty()) {
       throw Common::Wasm::WasmVmException("No WASM VM Id or vm_config specified");
     }
-    tls_slot_->set([id, configuration](Event::Dispatcher&) {
-      auto result = Extensions::Common::Wasm::getThreadLocalWasm(id, *configuration);
+    tls_slot_->set([vm_id, root_id, configuration](Event::Dispatcher&) {
+      auto result = Extensions::Common::Wasm::getThreadLocalWasm(vm_id, root_id, *configuration);
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
     });
   }

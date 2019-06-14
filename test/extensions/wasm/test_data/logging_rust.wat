@@ -145,21 +145,22 @@
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   
-  (func $_proxy_onConfigure (type $0)
+  (func $_proxy_onConfigure (type $3)
     (param $0 i32)
     (param $1 i32)
-    (local $2 i32)
+    (param $2 i32)
     (local $3 i32)
+    (local $4 i32)
     global.get $12
     i32.const 80
     i32.sub
-    local.tee $2
+    local.tee $3
     global.set $12
+    local.get $3
     local.get $2
-    local.get $1
     i32.store offset=4
-    local.get $2
-    local.get $0
+    local.get $3
+    local.get $1
     i32.store
     block $block
       i32.const 0
@@ -167,101 +168,101 @@
       i32.const 2
       i32.lt_u
       br_if $block
-      local.get $2
+      local.get $3
       i32.const 1
       i32.store offset=12
-      local.get $2
-      local.get $2
+      local.get $3
+      local.get $3
       i32.store offset=8
       i32.const 0
       i32.load offset=1053084
-      local.set $0
-      i32.const 0
-      i32.load offset=1053080
       local.set $1
       i32.const 0
+      i32.load offset=1053080
+      local.set $2
+      i32.const 0
       i32.load offset=1055132
-      local.set $3
-      local.get $2
+      local.set $4
+      local.get $3
       i32.const 72
       i32.add
       i32.const 10
       i32.store
-      local.get $2
+      local.get $3
       i32.const 64
       i32.add
       i64.const 4294967306
       i64.store
-      local.get $2
+      local.get $3
       i32.const 56
       i32.add
       i32.const 12
       i32.store
-      local.get $2
+      local.get $3
       i32.const 48
       i32.add
       i32.const 1
       i32.store
-      local.get $2
+      local.get $3
       i32.const 40
       i32.add
       i32.const 1
       i32.store
-      local.get $2
+      local.get $3
       i32.const 36
       i32.add
       i32.const 1048700
       i32.store
-      local.get $2
+      local.get $3
       i32.const 32
       i32.add
       i32.const 1
       i32.store
-      local.get $2
+      local.get $3
       i32.const 24
       i32.add
       i32.const 12
       i32.store
-      local.get $2
+      local.get $3
       i32.const 1048593
       i32.store offset=60
-      local.get $2
+      local.get $3
       i32.const 1048581
       i32.store offset=52
-      local.get $2
+      local.get $3
       i32.const 44
       i32.add
-      local.get $2
+      local.get $3
       i32.const 8
       i32.add
       i32.store
-      local.get $2
+      local.get $3
       i32.const 1052928
       i32.store offset=28
-      local.get $2
+      local.get $3
       i32.const 1048581
       i32.store offset=20
-      local.get $2
+      local.get $3
       i32.const 2
       i32.store offset=16
-      local.get $1
+      local.get $2
       i32.const 1048872
-      local.get $3
+      local.get $4
       i32.const 2
       i32.eq
-      local.tee $3
+      local.tee $4
       select
-      local.get $2
+      local.get $3
       i32.const 16
       i32.add
-      local.get $0
+      local.get $1
       i32.const 1053112
-      local.get $3
+      local.get $4
       select
       i32.load offset=16
       call_indirect $10 (type $0)
     end ;; $block
-    local.get $2
+    local.get $3
     i32.const 80
     i32.add
     global.set $12
@@ -279,16 +280,19 @@
     call $core::fmt::Formatter::pad::hfe31e8860a6945ec
     )
   
-  (func $_proxy_onStart (type $4)
-    (local $0 i32)
-    (local $1 i32)
-    (local $2 i32)
+  (func $_proxy_onStart (type $3)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
     (local $3 i32)
     (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    (local $7 i32)
     global.get $12
     i32.const 64
     i32.sub
-    local.tee $0
+    local.tee $3
     global.set $12
     block $block
       block $block_0
@@ -301,7 +305,7 @@
               i32.ge_u
               br_if $block_3
               i32.const 4
-              local.set $1
+              local.set $4
               i32.const 0
               i32.load offset=1055128
               i32.const 4
@@ -311,79 +315,79 @@
             end ;; $block_3
             i32.const 0
             i32.load offset=1053084
-            local.set $1
+            local.set $4
             i32.const 0
             i32.load offset=1053080
-            local.set $2
+            local.set $5
             i32.const 0
             i32.load offset=1055132
-            local.set $3
-            local.get $0
+            local.set $6
+            local.get $3
             i32.const 56
             i32.add
             i32.const 16
             i32.store
-            local.get $0
+            local.get $3
             i32.const 48
             i32.add
             i64.const 4294967306
             i64.store
-            local.get $0
+            local.get $3
             i32.const 40
             i32.add
             i32.const 12
             i32.store
-            local.get $0
+            local.get $3
             i32.const 32
             i32.add
             i32.const 0
             i32.store
-            local.get $0
+            local.get $3
             i32.const 28
             i32.add
             i32.const 1049000
             i32.store
-            local.get $0
+            local.get $3
             i32.const 16
             i32.add
             i64.const 1
             i64.store
-            local.get $0
+            local.get $3
             i32.const 8
             i32.add
             i32.const 12
             i32.store
-            local.get $0
+            local.get $3
             i32.const 1048593
             i32.store offset=44
-            local.get $0
+            local.get $3
             i32.const 1048581
             i32.store offset=36
-            local.get $0
+            local.get $3
             i32.const 1052936
             i32.store offset=12
-            local.get $0
+            local.get $3
             i32.const 1048581
             i32.store offset=4
-            local.get $0
+            local.get $3
             i32.const 5
             i32.store
-            local.get $2
+            local.get $5
             i32.const 1048872
-            local.get $3
+            local.get $6
             i32.const 2
             i32.eq
-            local.tee $3
+            local.tee $6
             select
-            local.get $0
-            local.get $1
-            i32.const 1053112
             local.get $3
+            local.get $4
+            i32.const 1053112
+            local.get $6
             select
             i32.load offset=16
             call_indirect $10 (type $0)
             i32.const 4
-            local.set $1
+            local.set $4
             i32.const 0
             i32.load offset=1055128
             i32.const 4
@@ -392,180 +396,181 @@
           end ;; $block_2
           i32.const 0
           i32.load offset=1053084
-          local.set $2
+          local.set $5
           i32.const 0
           i32.load offset=1053080
-          local.set $3
+          local.set $6
           i32.const 0
           i32.load offset=1055132
-          local.set $4
-          local.get $0
+          local.set $7
+          local.get $3
           i32.const 56
           i32.add
           i32.const 17
           i32.store
-          local.get $0
+          local.get $3
           i32.const 48
           i32.add
           i64.const 4294967306
           i64.store
-          local.get $0
+          local.get $3
           i32.const 40
           i32.add
           i32.const 12
           i32.store
-          local.get $0
+          local.get $3
           i32.const 32
           i32.add
           i32.const 0
           i32.store
-          local.get $0
+          local.get $3
           i32.const 28
           i32.add
           i32.const 1049000
           i32.store
-          local.get $0
+          local.get $3
           i32.const 16
           i32.add
           i64.const 1
           i64.store
-          local.get $0
+          local.get $3
           i32.const 8
           i32.add
           i32.const 12
           i32.store
-          local.get $0
+          local.get $3
           i32.const 1048593
           i32.store offset=44
-          local.get $0
+          local.get $3
           i32.const 1048581
           i32.store offset=36
-          local.get $0
+          local.get $3
           i32.const 1052944
           i32.store offset=12
-          local.get $0
+          local.get $3
           i32.const 1048581
           i32.store offset=4
-          local.get $0
-          local.get $1
-          i32.store
           local.get $3
-          i32.const 1048872
           local.get $4
+          i32.store
+          local.get $6
+          i32.const 1048872
+          local.get $7
           i32.const 2
           i32.eq
-          local.tee $1
+          local.tee $4
           select
-          local.get $0
-          local.get $2
+          local.get $3
+          local.get $5
           i32.const 1053112
-          local.get $1
+          local.get $4
           select
           i32.load offset=16
           call_indirect $10 (type $0)
           i32.const 0
-          local.set $1
+          local.set $4
           i32.const 0
           i32.load offset=1055128
           br_if $block_0
           br $block
         end ;; $block_1
         i32.const 0
-        local.set $1
+        local.set $4
         i32.const 0
         i32.load offset=1055128
         i32.eqz
         br_if $block
       end ;; $block_0
-      local.get $1
+      local.get $4
       i32.load offset=1053084
-      local.set $2
-      local.get $1
+      local.set $5
+      local.get $4
       i32.load offset=1053080
-      local.set $3
-      local.get $1
+      local.set $6
+      local.get $4
       i32.load offset=1055132
-      local.set $4
-      local.get $0
+      local.set $7
+      local.get $3
       i32.const 56
       i32.add
       i32.const 18
       i32.store
-      local.get $0
+      local.get $3
       i32.const 48
       i32.add
       i64.const 4294967306
       i64.store
-      local.get $0
+      local.get $3
       i32.const 40
       i32.add
       i32.const 12
       i32.store
-      local.get $0
+      local.get $3
       i32.const 32
       i32.add
-      local.get $1
+      local.get $4
       i32.store
-      local.get $0
+      local.get $3
       i32.const 28
       i32.add
       i32.const 1049000
       i32.store
-      local.get $0
+      local.get $3
       i32.const 16
       i32.add
       i64.const 1
       i64.store
-      local.get $0
+      local.get $3
       i32.const 8
       i32.add
       i32.const 12
       i32.store
-      local.get $0
+      local.get $3
       i32.const 1048593
       i32.store offset=44
-      local.get $0
+      local.get $3
       i32.const 1048581
       i32.store offset=36
-      local.get $0
+      local.get $3
       i32.const 1052952
       i32.store offset=12
-      local.get $0
+      local.get $3
       i32.const 1048581
       i32.store offset=4
-      local.get $0
+      local.get $3
       i32.const 1
       i32.store
-      local.get $3
+      local.get $6
       i32.const 1048872
-      local.get $4
+      local.get $7
       i32.const 2
       i32.eq
-      local.tee $1
+      local.tee $4
       select
-      local.get $0
-      local.get $2
+      local.get $3
+      local.get $5
       i32.const 1053112
-      local.get $1
+      local.get $4
       select
       i32.load offset=16
       call_indirect $10 (type $0)
     end ;; $block
-    local.get $0
+    local.get $3
     i32.const 64
     i32.add
     global.set $12
     )
   
-  (func $_proxy_onTick (type $4)
-    (local $0 i32)
+  (func $_proxy_onTick (type $5)
+    (param $0 i32)
     (local $1 i32)
     (local $2 i32)
     (local $3 i32)
+    (local $4 i32)
     global.get $12
     i32.const 64
     i32.sub
-    local.tee $0
+    local.tee $1
     global.set $12
     block $block
       i32.const 0
@@ -575,79 +580,79 @@
       br_if $block
       i32.const 0
       i32.load offset=1053084
-      local.set $1
-      i32.const 0
-      i32.load offset=1053080
       local.set $2
       i32.const 0
-      i32.load offset=1055132
+      i32.load offset=1053080
       local.set $3
-      local.get $0
+      i32.const 0
+      i32.load offset=1055132
+      local.set $4
+      local.get $1
       i32.const 56
       i32.add
       i32.const 24
       i32.store
-      local.get $0
+      local.get $1
       i32.const 48
       i32.add
       i64.const 4294967306
       i64.store
-      local.get $0
+      local.get $1
       i32.const 40
       i32.add
       i32.const 12
       i32.store
-      local.get $0
+      local.get $1
       i32.const 32
       i32.add
       i32.const 0
       i32.store
-      local.get $0
+      local.get $1
       i32.const 28
       i32.add
       i32.const 1049000
       i32.store
-      local.get $0
+      local.get $1
       i32.const 16
       i32.add
       i64.const 1
       i64.store
-      local.get $0
+      local.get $1
       i32.const 8
       i32.add
       i32.const 12
       i32.store
-      local.get $0
+      local.get $1
       i32.const 1048593
       i32.store offset=44
-      local.get $0
+      local.get $1
       i32.const 1048581
       i32.store offset=36
-      local.get $0
+      local.get $1
       i32.const 1052960
       i32.store offset=12
-      local.get $0
+      local.get $1
       i32.const 1048581
       i32.store offset=4
-      local.get $0
+      local.get $1
       i32.const 3
       i32.store
-      local.get $2
-      i32.const 1048872
       local.get $3
+      i32.const 1048872
+      local.get $4
       i32.const 2
       i32.eq
-      local.tee $3
+      local.tee $4
       select
-      local.get $0
       local.get $1
+      local.get $2
       i32.const 1053112
-      local.get $3
+      local.get $4
       select
       i32.load offset=16
       call_indirect $10 (type $0)
     end ;; $block
-    local.get $0
+    local.get $1
     i32.const 64
     i32.add
     global.set $12

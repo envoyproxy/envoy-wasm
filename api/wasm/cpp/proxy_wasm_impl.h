@@ -11,6 +11,8 @@
 //
 // High Level C++ API.
 //
+class ContextBase;
+class RootContext;
 class Context;
 
 class ProxyException : std::runtime_error {
@@ -151,7 +153,7 @@ public:
   virtual void onFailure(GrpcStatus status, std::unique_ptr<WasmData> error_message) = 0;
 
 private:
-  friend class Context;
+  friend class ContextBase;
 
   Context* const context_;
   uint32_t token_;
@@ -188,7 +190,7 @@ public:
   virtual void onRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message) = 0;
 
 protected:
-  friend class Context;
+  friend class ContextBase;
 
   void doRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message);
 
@@ -221,39 +223,13 @@ private:
   }
 };
 
-// Context for a stream.  The distinguished context id == 0 is used for non-stream calls.
-class Context {
+// Behavior supported by all contexts.
+class ContextBase {
 public:
-  explicit Context(uint32_t id) : id_(id) {}
-  virtual ~Context() {}
+  explicit ContextBase(uint32_t id) : id_(id) {}
+  virtual ~ContextBase() {}
 
   uint32_t id() { return id_; }
-
-  static std::unique_ptr<Context> New(uint32_t id); // For subclassing.
-
-  // Called once when the filter loads and on configuration changes.
-  virtual void onConfigure(std::unique_ptr<WasmData> /* configuration */) {}
-  // Called once when the filter loads.
-  virtual void onStart() {}
-
-  // Called on individual requests/response streams.
-  virtual void onCreate() {}
-  virtual FilterHeadersStatus onRequestHeaders() { return FilterHeadersStatus::Continue; }
-  virtual FilterMetadataStatus onRequestMetadata() { return FilterMetadataStatus::Continue; }
-  virtual FilterDataStatus onRequestBody(size_t /* body_buffer_length */, bool /* end_of_stream */) {
-    return FilterDataStatus::Continue;
-  }
-  virtual FilterTrailersStatus onRequestTrailers() { return FilterTrailersStatus::Continue; }
-  virtual FilterHeadersStatus onResponseHeaders() { return FilterHeadersStatus::Continue; }
-  virtual FilterMetadataStatus onResponseMetadata() { return FilterMetadataStatus::Continue; }
-  virtual FilterDataStatus onResponseBody(size_t /* body_buffer_length */, bool /* end_of_stream */) {
-    return FilterDataStatus::Continue;
-  }
-  virtual FilterTrailersStatus onResponseTrailers() { return FilterTrailersStatus::Continue; }
-  virtual void onDone() {}
-  virtual void onLog() {}
-  virtual void onDelete() {}
-  virtual void onTick() {}
 
   // Low level HTTP/gRPC interface.
   virtual void onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
@@ -264,6 +240,9 @@ public:
   virtual void onGrpcReceiveTrailingMetadata(uint32_t token);
   virtual void onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message);
   virtual void onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message);
+
+  virtual RootContext* asRoot() { return nullptr; }
+  virtual Context* asContext() { return nullptr; }
 
   // Default high level HTTP/gRPC interface.  NB: overriding the low level interface will disable this interface.
   using HttpCallCallback = std::function<void(std::unique_ptr<WasmData> header_pairs,
@@ -294,6 +273,70 @@ public:
   void grpcStreamHandler(StringView service, StringView service_name,
       StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler);
 
+private:
+  friend class GrpcCallHandlerBase;
+  friend class GrpcStreamHandlerBase;
+
+  uint32_t id_;
+  std::unordered_map<uint32_t, HttpCallCallback> http_calls_;
+  std::unordered_map<uint32_t, GrpcSimpleCallCallback> simple_grpc_calls_;
+  std::unordered_map<uint32_t, std::unique_ptr<GrpcCallHandlerBase>> grpc_calls_;
+  std::unordered_map<uint32_t, std::unique_ptr<GrpcStreamHandlerBase>> grpc_streams_;
+};
+
+// A context unique for each root_id for a use-case (e.g. filter) compiled into module.
+class RootContext : public ContextBase {
+public:
+  RootContext(uint32_t id, StringView root_id) : ContextBase(id), root_id_(root_id) {}
+  ~RootContext() {}
+
+  StringView root_id() { return root_id_; }
+
+  RootContext* asRoot() override { return this; }
+  Context* asContext() override { return nullptr; }
+
+  // Called once when the VM loads and once when each hook loads and whenever configuration changes.
+  virtual void onConfigure(std::unique_ptr<WasmData> /* configuration */) {}
+  // Called when each hook loads.
+  virtual void onStart() {}
+  // Called when the timer goes off.
+  virtual void onTick() {}
+
+private:
+  const std::string root_id_;
+};
+
+RootContext* getRoot(StringView root_id);
+
+// Context for a stream.  The distinguished context id == 0 is used for non-stream calls.
+class Context : public ContextBase {
+public:
+  Context(uint32_t id, RootContext* root) : ContextBase(id), root_(root) {}
+  virtual ~Context() {}
+
+  RootContext* root() { return root_; }
+
+  RootContext* asRoot() override { return nullptr; }
+  Context* asContext() override { return this; }
+
+  // Called on individual requests/response streams.
+  virtual void onCreate() {}
+  virtual FilterHeadersStatus onRequestHeaders() { return FilterHeadersStatus::Continue; }
+  virtual FilterMetadataStatus onRequestMetadata() { return FilterMetadataStatus::Continue; }
+  virtual FilterDataStatus onRequestBody(size_t /* body_buffer_length */, bool /* end_of_stream */) {
+    return FilterDataStatus::Continue;
+  }
+  virtual FilterTrailersStatus onRequestTrailers() { return FilterTrailersStatus::Continue; }
+  virtual FilterHeadersStatus onResponseHeaders() { return FilterHeadersStatus::Continue; }
+  virtual FilterMetadataStatus onResponseMetadata() { return FilterMetadataStatus::Continue; }
+  virtual FilterDataStatus onResponseBody(size_t /* body_buffer_length */, bool /* end_of_stream */) {
+    return FilterDataStatus::Continue;
+  }
+  virtual FilterTrailersStatus onResponseTrailers() { return FilterTrailersStatus::Continue; }
+  virtual void onDone() {}  // Called when the stream has completed.
+  virtual void onLog() {}  // Called after onDone when logging is requested.
+  virtual void onDelete() {}  // Called to indicate that no more calls will come and this context is being deleted.
+
   // Metadata
   bool isImmutable(MetadataType type);
   virtual bool isProactivelyCachable(MetadataType type);  // Cache all keys on any read.
@@ -322,17 +365,27 @@ public:
   google::protobuf::Struct getResponseMetadataStruct(StringView name);
 
 private:
-  friend class GrpcCallHandlerBase;
-  friend class GrpcStreamHandlerBase;
-
-  uint32_t id_;
+  RootContext* root_{};
   std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Value, PairHash> value_cache_;
   std::unordered_map<std::tuple<EnumType, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
   std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Struct, PairHash> struct_cache_;
-  std::unordered_map<uint32_t, HttpCallCallback> http_calls_;
-  std::unordered_map<uint32_t, GrpcSimpleCallCallback> simple_grpc_calls_;
-  std::unordered_map<uint32_t, std::unique_ptr<GrpcCallHandlerBase>> grpc_calls_;
-  std::unordered_map<uint32_t, std::unique_ptr<GrpcStreamHandlerBase>> grpc_streams_;
+};
+
+using RootFactory = std::function<std::unique_ptr<RootContext>(uint32_t id, StringView root_id)>;
+using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootContext* root)>;
+
+// Create a factory from a class name.
+#define ROOT_FACTORY(_c) [](uint32_t id, StringView root_id) -> std::unique_ptr<RootContext> { \
+  return std::make_unique<_c>(id, root_id); \
+}
+#define CONTEXT_FACTORY(_c) [](uint32_t id, RootContext* root) -> std::unique_ptr<Context> { \
+  return std::make_unique<_c>(id, root); \
+}
+
+// Register Context factory.
+// e.g. static RegisterContextFactory register_MyContext(CONTEXT_FACTORY(MyContext));
+struct RegisterContextFactory {
+  explicit RegisterContextFactory(ContextFactory context_factory, RootFactory root_factory = nullptr, StringView root_id = "");
 };
 
 inline bool Context::isImmutable(MetadataType type) {
@@ -1110,7 +1163,7 @@ inline void grpcSend(uint32_t token, StringView message, bool end_stream) {
   return proxy_grpcSend(token, message.data(), message.size(), end_stream ? 1 : 0);
 }
 
-inline void Context::httpCall(StringView uri, const HeaderStringPairs& request_headers,
+inline void ContextBase::httpCall(StringView uri, const HeaderStringPairs& request_headers,
     StringView request_body, const HeaderStringPairs& request_trailers,
     uint32_t timeout_milliseconds, HttpCallCallback callback) {
   auto token = makeHttpCall(uri, request_headers, request_body, request_trailers, timeout_milliseconds);
@@ -1121,7 +1174,7 @@ inline void Context::httpCall(StringView uri, const HeaderStringPairs& request_h
   }
 }
 
-inline void Context::onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
+inline void ContextBase::onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
     std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs) {
   auto it = http_calls_.find(token);
   if (it != http_calls_.end()) {
@@ -1130,7 +1183,7 @@ inline void Context::onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData
   }
 }
 
-inline void Context::grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
+inline void ContextBase::grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
     const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds, Context::GrpcSimpleCallCallback callback) {
   auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
   if (token) {
@@ -1170,7 +1223,7 @@ inline void GrpcStreamHandlerBase::send(StringView message, bool end_of_stream) 
   }
 }
 
-inline void Context::onGrpcCreateInitialMetadata(uint32_t token) {
+inline void ContextBase::onGrpcCreateInitialMetadata(uint32_t token) {
   {
     auto it = grpc_calls_.find(token);
     if (it != grpc_calls_.end()) {
@@ -1187,7 +1240,7 @@ inline void Context::onGrpcCreateInitialMetadata(uint32_t token) {
   }
 }
 
-inline void Context::onGrpcReceiveInitialMetadata(uint32_t token) {
+inline void ContextBase::onGrpcReceiveInitialMetadata(uint32_t token) {
   {
     auto it = grpc_streams_.find(token);
     if (it != grpc_streams_.end()) {
@@ -1197,7 +1250,7 @@ inline void Context::onGrpcReceiveInitialMetadata(uint32_t token) {
   }
 }
 
-inline void Context::onGrpcReceiveTrailingMetadata(uint32_t token) {
+inline void ContextBase::onGrpcReceiveTrailingMetadata(uint32_t token) {
   {
     auto it = grpc_streams_.find(token);
     if (it != grpc_streams_.end()) {
@@ -1207,7 +1260,7 @@ inline void Context::onGrpcReceiveTrailingMetadata(uint32_t token) {
   }
 }
 
-inline void Context::onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message) {
+inline void ContextBase::onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message) {
   {
     auto it = simple_grpc_calls_.find(token);
     if (it != simple_grpc_calls_.end()) {
@@ -1248,7 +1301,7 @@ inline void GrpcStreamHandlerBase::doRemoteClose(GrpcStatus status, std::unique_
   }
 }
 
-inline void Context::onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message) {
+inline void ContextBase::onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message) {
   {
     auto it = simple_grpc_calls_.find(token);
     if (it != simple_grpc_calls_.end()) {
@@ -1274,7 +1327,7 @@ inline void Context::onGrpcClose(uint32_t token, GrpcStatus status, std::unique_
   }
 }
 
-inline void Context::grpcCallHandler(StringView service, StringView service_name,
+inline void ContextBase::grpcCallHandler(StringView service, StringView service_name,
     StringView method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
     std::unique_ptr<GrpcCallHandlerBase> handler) {
   auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
@@ -1286,7 +1339,7 @@ inline void Context::grpcCallHandler(StringView service, StringView service_name
   }
 }
 
-inline void Context::grpcStreamHandler(StringView service, StringView service_name,
+inline void ContextBase::grpcStreamHandler(StringView service, StringView service_name,
     StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler) {
   auto token = grpcStream(service, service_name, method_name);
   if (token) {

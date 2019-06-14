@@ -11,11 +11,14 @@
 /*
    API Calls into the VM.
 
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(char* configuration, int size);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart();
-   extern "C" EMSCRIPTEN_KEEPALIVE int main();  // only called if proxy_onStart() is not available.
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick();
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onCreate(uint32_t context_id);
+
+   // Non-stream calls.
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t root_id_ptr, uint32_t root_id_size);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(uint32_t root_context_id, uint32_t configuration_ptr, uint32_t configuration_size);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick(uint32_t root_context_id);
+
+   // Stream calls.
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onCreate(uint32_t context_id, root_context_id);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestHeaders(uint32_t context_id);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestBody(uint32_t context_id,  uint32_t body_buffer_length, uint32_t end_of_stream);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestTrailers(uint32_t context_id);
@@ -49,8 +52,10 @@
 // Logging
 extern "C" void proxy_log(LogLevel level, const char* logMessage, size_t messageSize);
 
-// Timer
+// Timer (must be called from a root context, e.g. onStart, onTick).
 extern "C" void proxy_setTickPeriodMilliseconds(uint32_t millisecond);
+
+// Time
 extern "C" uint64_t proxy_getCurrentTimeNanoseconds();
 
 // Stream Info

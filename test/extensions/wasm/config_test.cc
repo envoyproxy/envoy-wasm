@@ -88,7 +88,6 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
   config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
-  config.set_id("test_id");
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   testing::NiceMock<ThreadLocal::MockInstance> tls;

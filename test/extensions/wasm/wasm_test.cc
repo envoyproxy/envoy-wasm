@@ -83,11 +83,11 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("test tick logging")));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  // NB: Must be done after initialize has created the context.
-  wasm->setGeneralContext(std::move(context));
-  wasm->configure("configure-test");
-  wasm->start();
-  wasm->tickHandler();
+  wasm->setContext(context.get());
+  auto root_context = context.get();
+  wasm->startForTesting(std::move(context));
+  wasm->configure(root_context, "configure-test");
+  wasm->tickHandler(root_context->id());
 }
 
 TEST_P(WasmTest, BadSignature) {
@@ -104,7 +104,6 @@ TEST_P(WasmTest, BadSignature) {
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_THROW_WITH_MESSAGE(wasm->initialize(code, "<test>", false),
                             Extensions::Common::Wasm::WasmVmException,
                             "Bad function signature for: _proxy_onConfigure");
@@ -129,9 +128,8 @@ TEST(WasmTestWavmOnly, Segv) {
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("before badptr")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  wasm->setGeneralContext(std::move(context));
-  EXPECT_THROW_WITH_MESSAGE(wasm->start(), Extensions::Common::Wasm::WasmException,
-                            "emscripten llvm_trap");
+  EXPECT_THROW_WITH_MESSAGE(wasm->startForTesting(std::move(context)),
+                            Extensions::Common::Wasm::WasmException, "emscripten llvm_trap");
 }
 #endif
 
@@ -154,9 +152,8 @@ TEST_P(WasmTest, DivByZero) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("divide by zero: 0")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("after div by zero")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  wasm->setGeneralContext(std::move(context));
-  wasm->wasmVm()->start(wasm->generalContext());
-  wasm->generalContext()->onLog();
+  wasm->setContext(context.get());
+  context->onLog();
 }
 
 TEST_P(WasmTest, EmscriptenVersion) {
@@ -201,8 +198,7 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("NaN nan")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("inf inf")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  wasm->setGeneralContext(std::move(context));
-  wasm->start();
+  wasm->startForTesting(std::move(context));
 }
 
 // The asm2wasm.wasm file uses operations which would require the asm2wasm Emscripten module *if*
@@ -228,8 +224,7 @@ TEST_P(WasmTest, Asm2Wasm) {
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("out 0 0 0")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  wasm->setGeneralContext(std::move(context));
-  wasm->start();
+  wasm->startForTesting(std::move(context));
 }
 
 TEST_P(WasmTest, Stats) {
@@ -257,9 +252,7 @@ TEST_P(WasmTest, Stats) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("get histogram = 0")));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  // NB: Must be done after initialize has created the context.
-  wasm->setGeneralContext(std::move(context));
-  wasm->start();
+  wasm->startForTesting(std::move(context));
 }
 
 TEST_P(WasmTest, StatsHigherLevel) {
@@ -291,9 +284,8 @@ TEST_P(WasmTest, StatsHigherLevel) {
                                         "histogram_bool_tag.true.test_histogram"))));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  // NB: Must be done after initialize has created the context.
-  wasm->setGeneralContext(std::move(context));
-  wasm->tickHandler();
+  wasm->setContext(context.get());
+  wasm->tickHandler(context->id());
 }
 
 TEST_P(WasmTest, StatsHighLevel) {
@@ -326,9 +318,8 @@ TEST_P(WasmTest, StatsHighLevel) {
           spdlog::level::err,
           Eq(std::string("h_id = int_tag.7.string_tag.test_tag.bool_tag.true.test_histogram"))));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  // NB: Must be done after initialize has created the context.
-  wasm->setGeneralContext(std::move(context));
-  wasm->generalContext()->onLog();
+  wasm->setContext(context.get());
+  context->onLog();
 }
 
 } // namespace Wasm

@@ -116,7 +116,10 @@
     end ;; $if
     )
   
-  (func $_proxy_onStart (type $0)
+  (func $_proxy_onStart (type $9)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
     call $_missing
     )
   

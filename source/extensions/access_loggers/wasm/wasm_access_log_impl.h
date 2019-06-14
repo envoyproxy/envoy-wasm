@@ -14,8 +14,9 @@ namespace Wasm {
 
 class WasmAccessLog : public AccessLog::Instance {
 public:
-  WasmAccessLog(ThreadLocal::SlotPtr tls_slot, AccessLog::FilterPtr filter)
-      : tls_slot_(std::move(tls_slot)), filter_(std::move(filter)) {}
+  WasmAccessLog(absl::string_view root_id, ThreadLocal::SlotPtr tls_slot,
+                AccessLog::FilterPtr filter)
+      : root_id_(root_id), tls_slot_(std::move(tls_slot)), filter_(std::move(filter)) {}
   void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
            const Http::HeaderMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override {
@@ -25,11 +26,12 @@ public:
         return;
       }
     }
-    tls_slot_->getTyped<Common::Wasm::Wasm>().log(request_headers, response_headers,
+    tls_slot_->getTyped<Common::Wasm::Wasm>().log(root_id_, request_headers, response_headers,
                                                   response_trailers, stream_info);
   }
 
 private:
+  std::string root_id_;
   ThreadLocal::SlotPtr tls_slot_;
   AccessLog::FilterPtr filter_;
 };
