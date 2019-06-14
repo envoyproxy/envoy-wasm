@@ -25,7 +25,7 @@ jobs:
    asan:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM isn't ASan-clean
+       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, ASan detects leaks in WAVM library.
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
@@ -38,7 +38,7 @@ jobs:
    coverage:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=enabled" # v8 + WAVM
+       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, LSan detects leaks in WAVM library.
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
