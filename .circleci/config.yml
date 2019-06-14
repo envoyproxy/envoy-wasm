@@ -9,24 +9,15 @@ executors:
     working_directory: /source
 
 jobs:
-   release:
+   dev:
      executor: ubuntu-build
      environment:
-       BAZEL_REMOTE_CACHE: https://storage.googleapis.com/envoy-circleci-bazel-cache/
        BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=enabled" # v8 + WAVM
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
-       - run:
-           command:
-             ci/do_circle_ci.sh bazel.release ${BAZEL_TEST_TARGETS}
-           no_output_timeout: 60m
-       - persist_to_workspace:
-           root: .
-           paths:
-             - build_release
-             - build_release_stripped
+       - run: ci/do_circle_ci.sh bazel.dev ${BAZEL_TEST_TARGETS}
        - store_artifacts:
            path: /build/envoy/generated
            destination: /
@@ -87,7 +78,7 @@ workflows:
   version: 2
   all:
     jobs:
-      - release
+      - dev
       - asan
       - coverage
       - format
