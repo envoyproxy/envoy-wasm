@@ -155,7 +155,7 @@ private:
   uint32_t nextQueueToken() {
     while (true) {
       uint32_t token = next_queue_token++;
-      if (!token) {
+      if (token == 0) {
         continue; // 0 is an illegal token.
       }
       if (queue_token_set.find(token) == queue_token_set.end()) {
@@ -765,11 +765,8 @@ bool Context::setSharedData(absl::string_view key, absl::string_view value, uint
 // Shared Queue
 
 uint32_t Context::registerSharedQueue(absl::string_view queue_name) {
-  auto root_context_id = id(); // Assume that Context is a root context.
-  if (root_context_id_ != 0) { // Root contexts have root_context_id_ == 0.
-    // Convert context from stream context to root_context.
-    root_context_id = root_context_id_;
-  }
+  // Get the id of the root context if this is a stream context.
+  auto root_context_id = !isRootContext() ? root_context_id_ : id_;
   return global_shared_data.registerQueue(wasm_->id(), queue_name, root_context_id,
                                           wasm_->dispatcher_);
 }
