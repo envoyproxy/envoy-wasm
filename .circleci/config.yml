@@ -72,7 +72,7 @@ jobs:
        BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=enabled" # v8 + WAVM.
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
      steps:
-       - run: sudo ntpdate -vu time.apple.com
+       - run: sudo sntp -sS time.apple.com
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
        - run: ci/mac_ci_setup.sh
