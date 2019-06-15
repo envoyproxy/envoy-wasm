@@ -9,15 +9,21 @@ executors:
     working_directory: /source
 
 jobs:
-   dev:
+   release:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults.
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
-       - run: ci/do_circle_ci.sh bazel.debug ${BAZEL_TEST_TARGETS}
+       - run:
+           environment:
+             BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=enabled" # v8 + WAVM (build only).
+           command: ci/do_circle_ci.sh bazel.release.server_only
+       - run:
+           environment:
+             BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults in tests.
+           command: ci/do_circle_ci.sh bazel.release ${BAZEL_TEST_TARGETS}
        - store_artifacts:
            path: /build/envoy/generated
            destination: /
@@ -69,7 +75,7 @@ workflows:
   version: 2
   all:
     jobs:
-      - dev
+      - release
       - asan
       - coverage
       - format
