@@ -235,9 +235,9 @@ REPOSITORY_LOCATIONS = dict(
     # I'd love to name this `com_github_google_subpar`, but something in the Subpar
     # code assumes its repository name is just `subpar`.
     subpar = dict(
-        sha256 = "eddbfc920e9cd565500370114316757848b672deba06dc2336acfa81b4ac0e6d",
-        strip_prefix = "subpar-1.3.0",
-        urls = ["https://github.com/google/subpar/archive/1.3.0.tar.gz"],
+        sha256 = "b80297a1b8d38027a86836dbadc22f55dc3ecad56728175381aa6330705ac10f",
+        strip_prefix = "subpar-2.0.0",
+        urls = ["https://github.com/google/subpar/archive/2.0.0.tar.gz"],
     ),
     org_llvm_llvm = dict(
         sha256 = "b6d6c324f9c71494c0ccaf3dac1f16236d970002b42bb24a6c9e1634f7d0f4e2",

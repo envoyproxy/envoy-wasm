@@ -309,7 +309,7 @@ public:
   virtual void onDone();
   // General stream downcall for logging. Occurs after onDone().
   virtual void onLog();
-  // General stream downcall when no futher stream calls will occur.
+  // General stream downcall when no further stream calls will occur.
   virtual void onDelete();
 
   //
@@ -626,7 +626,7 @@ private:
   uint32_t nextHistogramMetricId() { return next_histogram_metric_id_ += kMetricIdIncrement; }
 
   void registerCallbacks();    // Register functions called out from WASM.
-  void establishEnvironment(); // Language specific enviroments.
+  void establishEnvironment(); // Language specific environments.
   void getFunctions();         // Get functions call into WASM.
 
   Upstream::ClusterManager& cluster_manager_;

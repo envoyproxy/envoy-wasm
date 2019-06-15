@@ -1401,7 +1401,7 @@ void Wasm::registerCallbacks() {
 
   if (is_emscripten_) {
     if (emscripten_abi_major_version_ > 0 || emscripten_abi_minor_version_ > 1) {
-      // abi 0.2 - abortOnCannotGrowMemory() changed singature to (param i32) (result i32).
+      // abi 0.2 - abortOnCannotGrowMemory() changed signature to (param i32) (result i32).
       _REGISTER_ABI(abortOnCannotGrowMemory, Abi02);
     } else {
       _REGISTER_ABI(abortOnCannotGrowMemory, Abi00);

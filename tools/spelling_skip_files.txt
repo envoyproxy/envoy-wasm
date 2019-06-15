@@ -1,1 +1,2 @@
 OWNERS.md
+test/extensions/filters/http/wasm/test_data/metadata_cpp.wat
