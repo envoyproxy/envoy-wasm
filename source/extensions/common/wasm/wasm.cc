@@ -765,10 +765,9 @@ bool Context::setSharedData(absl::string_view key, absl::string_view value, uint
 // Shared Queue
 
 uint32_t Context::registerSharedQueue(absl::string_view queue_name) {
-  // Get the id of the root context if this is a stream context.
-  auto root_context_id = !isRootContext() ? root_context_id_ : id_;
-  return global_shared_data.registerQueue(wasm_->id(), queue_name, root_context_id,
-                                          wasm_->dispatcher_);
+  // Get the id of the root context if this is a stream context because onQueueReady is on the root.
+  return global_shared_data.registerQueue(
+      wasm_->id(), queue_name, isRootContext() ? id_ : root_context_id_, wasm_->dispatcher_);
 }
 
 uint32_t Context::resolveSharedQueue(absl::string_view vm_id, absl::string_view queue_name) {
