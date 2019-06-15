@@ -7,7 +7,7 @@ namespace Wasm {
 namespace Null {
 namespace Plugin {
 namespace ExamplePlugin {
-NullVmPluginRootRegistry context_registry_;
+NullVmPluginRootRegistry* context_registry_{};
 } // namespace ExamplePlugin
 
 /**
@@ -20,7 +20,7 @@ public:
   const std::string name() const override { return "null_vm_plugin"; }
   std::unique_ptr<NullVmPlugin> create() const override {
     return std::make_unique<NullVmPlugin>(
-        &Envoy::Extensions::Common::Wasm::Null::Plugin::ExamplePlugin::context_registry_);
+        Envoy::Extensions::Common::Wasm::Null::Plugin::ExamplePlugin::context_registry_);
   }
 };
 

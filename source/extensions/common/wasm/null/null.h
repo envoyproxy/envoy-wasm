@@ -121,12 +121,15 @@ public:
 };
 
 #define NULL_PLUGIN_ROOT_REGISTRY                                                                  \
-  extern NullVmPluginRootRegistry context_registry_;                                               \
+  extern NullVmPluginRootRegistry* context_registry_;                                              \
   struct RegisterContextFactory {                                                                  \
     explicit RegisterContextFactory(ContextFactory context_factory,                                \
                                     RootFactory root_factory = nullptr, StringView root_id = "") { \
-      context_registry_.context_factories[std::string(root_id)] = context_factory;                 \
-      context_registry_.root_factories[std::string(root_id)] = root_factory;                       \
+      if (!context_registry_) {                                                                    \
+        context_registry_ = new NullVmPluginRootRegistry;                                          \
+      }                                                                                            \
+      context_registry_->context_factories[std::string(root_id)] = context_factory;                \
+      context_registry_->root_factories[std::string(root_id)] = root_factory;                      \
     }                                                                                              \
   };
 
