@@ -52,7 +52,6 @@ public:
       : Envoy::Extensions::Common::Wasm::Context(wasm, root_context_id) {}
 
   void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
-    std::cerr << std::string(message) << "\n";
     scriptLog_(level, message);
   }
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
@@ -63,7 +62,6 @@ public:
   TestRoot() {}
 
   void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
-    std::cerr << std::string(message) << "\n";
     scriptLog_(level, message);
   }
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
@@ -354,7 +352,7 @@ TEST_F(WasmHttpFilterTest, NullVmPluginRequestHeadersOnly) {
   filter_->onDestroy();
 }
 
-TEST_P(WasmHttpFilterTest, Shared) {
+TEST_P(WasmHttpFilterTest, SharedData) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/shared_cpp.wasm")));
   setupFilter();
@@ -370,7 +368,7 @@ TEST_P(WasmHttpFilterTest, Shared) {
   filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
-TEST_P(WasmHttpFilterTest, Queue) {
+TEST_P(WasmHttpFilterTest, SharedQueue) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/queue_cpp.wasm")));
   setupFilter();
