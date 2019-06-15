@@ -56,6 +56,7 @@ public:
   void onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size);
   void onConfigure(uint64_t root_context_id, uint64_t ptr, uint64_t size);
   void onTick(uint64_t root_context_id);
+  void onQueueReady(uint64_t root_context_id, uint64_t token);
 
   void onCreate(uint64_t context_id, uint64_t root_context_id);
 

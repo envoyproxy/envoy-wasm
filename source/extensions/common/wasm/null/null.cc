@@ -216,6 +216,12 @@ void NullVm::getFunction(absl::string_view functionName, WasmCall2Void* f) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcReceiveTrailingMetadata(context_id.u64, token.u64);
     };
+  } else if (functionName == "_proxy_onQueueReady") {
+    auto plugin = plugin_.get();
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token) {
+      SaveRestoreContext saved_context(context);
+      plugin->onQueueReady(context_id.u64, token.u64);
+    };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", functionName));
   }
@@ -513,6 +519,10 @@ void NullVmPlugin::onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t to
 
 void NullVmPlugin::onGrpcReceiveTrailingMetadata(uint64_t context_id, uint64_t token) {
   getContextBase(context_id)->onGrpcReceiveTrailingMetadata(token);
+}
+
+void NullVmPlugin::onQueueReady(uint64_t context_id, uint64_t token) {
+  getRootContext(context_id)->onQueueReady(token);
 }
 
 void NullVmPlugin::onLog(uint64_t context_id) { getContext(context_id)->onLog(); }

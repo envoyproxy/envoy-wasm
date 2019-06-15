@@ -53,9 +53,9 @@ namespace {
 
 class SharedData {
 public:
-  std::pair<std::string, uint32_t> get(absl::string_view id, const absl::string_view key) {
+  std::pair<std::string, uint32_t> get(absl::string_view vm_id, const absl::string_view key) {
     absl::ReaderMutexLock l(&mutex);
-    auto map = data.find(id);
+    auto map = data.find(vm_id);
     if (map == data.end())
       return {"", 0};
     auto it = map->second.find(key);
@@ -65,12 +65,12 @@ public:
     return {"", 0};
   }
 
-  bool set(absl::string_view id, absl::string_view key, absl::string_view value, uint32_t cas) {
+  bool set(absl::string_view vm_id, absl::string_view key, absl::string_view value, uint32_t cas) {
     absl::WriterMutexLock l(&mutex);
     absl::flat_hash_map<std::string, std::pair<std::string, uint32_t>>* map;
-    auto map_it = data.find(id);
+    auto map_it = data.find(vm_id);
     if (map_it == data.end()) {
-      map = &data[id];
+      map = &data[vm_id];
     } else {
       map = &map_it->second;
     }
@@ -85,6 +85,64 @@ public:
     return true;
   }
 
+  uint32_t registerQueue(absl::string_view vm_id, absl::string_view queue_name, uint32_t context_id,
+                         Event::Dispatcher& dispatcher) {
+    absl::WriterMutexLock l(&mutex);
+    auto key = std::make_pair(std::string(vm_id), std::string(queue_name));
+    auto it = queue_tokens.insert(std::make_pair(key, static_cast<uint32_t>(0)));
+    if (it.second) {
+      it.first->second = nextQueueToken();
+      queue_token_set.insert(it.first->second);
+    }
+    uint32_t token = it.first->second;
+    auto& q = queues[token];
+    q.vm_id = std::string(vm_id);
+    q.context_id = context_id;
+    q.dispatcher = &dispatcher;
+    // Preserve any existing data.
+    return token;
+  }
+
+  uint32_t resolveQueue(absl::string_view vm_id, absl::string_view queue_name) {
+    absl::WriterMutexLock l(&mutex);
+    auto key = std::make_pair(std::string(vm_id), std::string(queue_name));
+    auto it = queue_tokens.find(key);
+    if (it != queue_tokens.end()) {
+      return it->second;
+    }
+    return 0; // N.B. zero indicates that the queue was not found.
+  }
+
+  // Returns: data, eos.
+  std::pair<std::string, bool> dequeue(uint32_t token) {
+    absl::ReaderMutexLock l(&mutex);
+    auto it = queues.find(token);
+    if (it == queues.end() || it->second.queue.empty()) {
+      return {"", true};
+    }
+    auto data = it->second.queue.front();
+    it->second.queue.pop_front();
+    return {std::move(data), it->second.queue.empty()};
+  }
+
+  bool enqueue(uint32_t token, absl::string_view value) {
+    absl::WriterMutexLock l(&mutex);
+    auto it = queues.find(token);
+    if (it == queues.end()) {
+      return false;
+    }
+    it->second.queue.push_back(std::string(value));
+    auto vm_id = it->second.vm_id;
+    auto context_id = it->second.context_id;
+    it->second.dispatcher->post([vm_id, context_id, token] {
+      auto wasm = getThreadLocalWasmOrNull(vm_id);
+      if (wasm) {
+        wasm->queueReady(context_id, token);
+      }
+    });
+    return true;
+  }
+
   uint32_t nextCas() {
     auto result = cas;
     cas++;
@@ -94,11 +152,39 @@ public:
   }
 
 private:
+  uint32_t nextQueueToken() {
+    while (true) {
+      uint32_t token = next_queue_token++;
+      if (token == 0) {
+        continue; // 0 is an illegal token.
+      }
+      if (queue_token_set.find(token) == queue_token_set.end()) {
+        return token;
+      }
+    }
+  }
+
+  struct Queue {
+    std::string vm_id;
+    uint32_t context_id;
+    Event::Dispatcher* dispatcher;
+    std::deque<std::string> queue;
+  };
+
   absl::Mutex mutex;
   uint32_t cas = 1;
+  uint32_t next_queue_token = 1;
   absl::node_hash_map<std::string,
                       absl::flat_hash_map<std::string, std::pair<std::string, uint32_t>>>
       data;
+  absl::node_hash_map<uint32_t, Queue> queues;
+  struct pair_hash {
+    template <class T1, class T2> std::size_t operator()(const std::pair<T1, T2>& pair) const {
+      return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+    }
+  };
+  absl::flat_hash_map<std::pair<std::string, std::string>, uint32_t, pair_hash> queue_tokens;
+  absl::flat_hash_set<uint32_t> queue_token_set;
 };
 
 SharedData global_shared_data;
@@ -240,6 +326,12 @@ const uint8_t* decodeVarint(const uint8_t* pos, const uint8_t* end, uint32_t* ou
 
 } // namespace
 
+// Test support.
+
+uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_name) {
+  return global_shared_data.resolveQueue(vm_id, queue_name);
+}
+
 //
 // HTTP Handlers
 //
@@ -331,6 +423,36 @@ Word setSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word v
   auto key = context->wasmVm()->getMemory(key_ptr, key_size);
   auto value = context->wasmVm()->getMemory(value_ptr, value_size);
   auto ok = context->setSharedData(key, value, cas);
+  return Word(static_cast<uint64_t>(ok));
+}
+
+Word registerSharedQueueHandler(void* raw_context, Word queue_name_ptr, Word queue_name_size) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto queue_name = context->wasmVm()->getMemory(queue_name_ptr, queue_name_size);
+  return Word(context->registerSharedQueue(queue_name));
+}
+
+Word dequeueSharedQueueHandler(void* raw_context, Word token, Word data_ptr_ptr,
+                               Word data_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto result = context->dequeueSharedQueue(token.u32());
+  context->wasm()->copyToPointerSize(result.first, data_ptr_ptr, data_size_ptr);
+  return Word(static_cast<uint64_t>(result.second));
+}
+
+Word resolveSharedQueueHandler(void* raw_context, Word vm_id_ptr, Word vm_id_size,
+                               Word queue_name_ptr, Word queue_name_size) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto vm_id = context->wasmVm()->getMemory(vm_id_ptr, vm_id_size);
+  auto queue_name = context->wasmVm()->getMemory(queue_name_ptr, queue_name_size);
+  auto token = context->resolveSharedQueue(vm_id, queue_name);
+  return Word(static_cast<uint64_t>(token));
+}
+
+Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Word data_size) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto data = context->wasmVm()->getMemory(data_ptr, data_size);
+  auto ok = context->enqueueSharedQueue(token.u32(), data);
   return Word(static_cast<uint64_t>(ok));
 }
 
@@ -638,6 +760,26 @@ std::pair<std::string, uint32_t> Context::getSharedData(absl::string_view key) {
 
 bool Context::setSharedData(absl::string_view key, absl::string_view value, uint32_t cas) {
   return global_shared_data.set(wasm_->id(), key, value, cas);
+}
+
+// Shared Queue
+
+uint32_t Context::registerSharedQueue(absl::string_view queue_name) {
+  // Get the id of the root context if this is a stream context because onQueueReady is on the root.
+  return global_shared_data.registerQueue(
+      wasm_->id(), queue_name, isRootContext() ? id_ : root_context_id_, wasm_->dispatcher_);
+}
+
+uint32_t Context::resolveSharedQueue(absl::string_view vm_id, absl::string_view queue_name) {
+  return global_shared_data.resolveQueue(vm_id, queue_name);
+}
+
+std::pair<std::string, bool> Context::dequeueSharedQueue(uint32_t token) {
+  return global_shared_data.dequeue(token);
+}
+
+bool Context::enqueueSharedQueue(uint32_t token, absl::string_view value) {
+  return global_shared_data.enqueue(token, value);
 }
 
 // Header/Trailer/Metadata Maps.
@@ -1277,6 +1419,12 @@ void Context::onHttpCallResponse(uint32_t token, const Pairs& response_headers,
                              trailers_ptr, trailers_size);
 }
 
+void Context::onQueueReady(uint32_t token) {
+  if (wasm_->onQueueReady_) {
+    wasm_->onQueueReady_(this, id_, token);
+  }
+}
+
 void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metadata) {
   if (!wasm_->onGrpcCreateInitialMetadata_) {
     return;
@@ -1461,6 +1609,11 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(getSharedData);
   _REGISTER_PROXY(setSharedData);
 
+  _REGISTER_PROXY(registerSharedQueue);
+  _REGISTER_PROXY(resolveSharedQueue);
+  _REGISTER_PROXY(dequeueSharedQueue);
+  _REGISTER_PROXY(enqueueSharedQueue);
+
   _REGISTER_PROXY(getHeaderMapValue);
   _REGISTER_PROXY(addHeaderMapValue);
   _REGISTER_PROXY(replaceHeaderMapValue);
@@ -1531,6 +1684,7 @@ void Wasm::getFunctions() {
   _GET_PROXY(onGrpcCreateInitialMetadata);
   _GET_PROXY(onGrpcReceiveInitialMetadata);
   _GET_PROXY(onGrpcReceiveTrailingMetadata);
+  _GET_PROXY(onQueueReady);
   _GET_PROXY(onDone);
   _GET_PROXY(onLog);
   _GET_PROXY(onDelete);
@@ -1618,6 +1772,12 @@ Context* Wasm::start(absl::string_view root_id) {
 
 void Wasm::startForTesting(std::unique_ptr<Context> context) {
   auto context_ptr = context.get();
+  if (!context->wasm_) {
+    // Initialization was delayed till the Wasm object was created.
+    context->wasm_ = this;
+    context->id_ = allocContextId();
+    contexts_[context->id_] = context.get();
+  }
   root_contexts_[""] = std::move(context);
   context_ptr->onStart("");
 }
@@ -1655,6 +1815,14 @@ uint32_t Wasm::allocContextId() {
     if (contexts_.find(id) == contexts_.end())
       return id;
   }
+}
+
+void Wasm::queueReady(uint32_t root_context_id, uint32_t token) {
+  auto it = contexts_.find(root_context_id);
+  if (it == contexts_.end() || !it->second->isRootContext()) {
+    return;
+  }
+  it->second->onQueueReady(token);
 }
 
 void Wasm::log(absl::string_view root_id, const Http::HeaderMap* request_headers,
@@ -1945,14 +2113,14 @@ std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
   }
 }
 
-std::shared_ptr<Wasm> createWasm(absl::string_view vm_id,
-                                 const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 absl::string_view root_id, // e.g. filter instance id
-                                 Upstream::ClusterManager& cluster_manager,
-                                 Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
-                                 const LocalInfo::LocalInfo& local_info,
-                                 const envoy::api::v2::core::Metadata* listener_metadata,
-                                 Stats::ScopeSharedPtr scope_ptr) {
+static std::shared_ptr<Wasm>
+createWasmInternal(absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+                   absl::string_view root_id, // e.g. filter instance id
+                   Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
+                   Api::Api& api, Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+                   const envoy::api::v2::core::Metadata* listener_metadata,
+                   Stats::ScopeSharedPtr scope_ptr,
+                   std::unique_ptr<Context> root_context_for_testing) {
   auto wasm = std::make_shared<Wasm>(vm_config.vm(), vm_id, vm_config.initial_configuration(),
                                      cluster_manager, dispatcher, scope, local_info,
                                      listener_metadata, scope_ptr);
@@ -1965,9 +2133,40 @@ std::shared_ptr<Wasm> createWasm(absl::string_view vm_id,
   if (!wasm->initialize(code, vm_id, vm_config.allow_precompiled())) {
     throw WasmException(fmt::format("Failed to initialize WASM code from {}", path));
   }
-  auto root_context = wasm->start(root_id);
-  wasm->configure(root_context, vm_config.initial_configuration());
+  Context* context;
+  if (!root_context_for_testing) {
+    context = wasm->start(root_id);
+  } else {
+    context = root_context_for_testing.get();
+    wasm->startForTesting(std::move(root_context_for_testing));
+  }
+  wasm->configure(context, vm_config.initial_configuration());
   return wasm;
+}
+
+std::shared_ptr<Wasm> createWasm(absl::string_view vm_id,
+                                 const envoy::config::wasm::v2::VmConfig& vm_config,
+                                 absl::string_view root_id, // e.g. filter instance id
+                                 Upstream::ClusterManager& cluster_manager,
+                                 Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
+                                 const LocalInfo::LocalInfo& local_info,
+                                 const envoy::api::v2::core::Metadata* listener_metadata,
+                                 Stats::ScopeSharedPtr scope_ptr) {
+  return createWasmInternal(vm_id, vm_config, root_id, cluster_manager, dispatcher, api, scope,
+                            local_info, listener_metadata, scope_ptr, nullptr);
+}
+
+std::shared_ptr<Wasm>
+createWasmForTesting(absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+                     absl::string_view root_id, // e.g. filter instance id
+                     Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
+                     Api::Api& api, Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+                     const envoy::api::v2::core::Metadata* listener_metadata,
+                     Stats::ScopeSharedPtr scope_ptr,
+                     std::unique_ptr<Context> root_context_for_testing) {
+  return createWasmInternal(vm_id, vm_config, root_id, cluster_manager, dispatcher, api, scope,
+                            local_info, listener_metadata, scope_ptr,
+                            std::move(root_context_for_testing));
 }
 
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view root_id,
@@ -2005,6 +2204,14 @@ std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_v
   auto root_context = wasm->start(id);
   wasm->configure(root_context, configuration);
   return wasm;
+}
+
+std::shared_ptr<Wasm> getThreadLocalWasmOrNull(absl::string_view id) {
+  auto it = local_wasms.find(id);
+  if (it == local_wasms.end()) {
+    return nullptr;
+  }
+  return it->second;
 }
 
 } // namespace Wasm

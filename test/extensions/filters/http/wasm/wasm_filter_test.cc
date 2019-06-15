@@ -57,35 +57,50 @@ public:
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
+class TestRoot : public Envoy::Extensions::Common::Wasm::Context {
+public:
+  TestRoot() {}
+
+  void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
+    scriptLog_(level, message);
+  }
+  MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
+};
+
 class WasmHttpFilterTest : public testing::TestWithParam<std::string> {
 public:
   WasmHttpFilterTest() {}
   ~WasmHttpFilterTest() {}
 
   void setupConfig(const std::string& code) {
+    root_context_ = new TestRoot();
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
+    proto_config.set_vm_id("vm_id");
     proto_config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
     proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
-    wasm_ = Extensions::Common::Wasm::createWasm(
+    wasm_ = Extensions::Common::Wasm::createWasmForTesting(
         proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, local_info_, &listener_metadata_, nullptr);
+        dispatcher_, *api, *scope_, local_info_, &listener_metadata_, nullptr,
+        std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
   void setupNullConfig(const std::string& name) {
+    root_context_ = new TestRoot();
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
+    proto_config.set_vm_id("vm_id");
     proto_config.mutable_vm_config()->set_vm("envoy.wasm.vm.null");
     proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(name);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
-    wasm_ = Extensions::Common::Wasm::createWasm(
+    wasm_ = Extensions::Common::Wasm::createWasmForTesting(
         proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, local_info_, &listener_metadata_, nullptr);
+        dispatcher_, *api, *scope_, local_info_, &listener_metadata_, nullptr,
+        std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
   void setupFilter() {
-    wasm_->start("");
     filter_ = std::make_unique<TestFilter>(wasm_.get(), wasm_->getRootContext("")->id());
     filter_->setDecoderFilterCallbacks(decoder_callbacks_);
     filter_->setEncoderFilterCallbacks(encoder_callbacks_);
@@ -105,6 +120,7 @@ public:
   NiceMock<Envoy::StreamInfo::MockStreamInfo> request_stream_info_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
   envoy::api::v2::core::Metadata listener_metadata_;
+  TestRoot* root_context_ = nullptr;
 };
 
 #if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
@@ -334,6 +350,40 @@ TEST_F(WasmHttpFilterTest, NullVmPluginRequestHeadersOnly) {
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm"));
   filter_->onDestroy();
+}
+
+TEST_P(WasmHttpFilterTest, SharedData) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/shared_cpp.wasm")));
+  setupFilter();
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info, Eq(absl::string_view("set 1 1 0"))));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::debug, Eq(absl::string_view("get 1 shared_data_value1"))));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::warn, Eq(absl::string_view("get 2 shared_data_value2"))));
+
+  Http::TestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  StreamInfo::MockStreamInfo log_stream_info;
+  filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
+}
+
+TEST_P(WasmHttpFilterTest, SharedQueue) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/queue_cpp.wasm")));
+  setupFilter();
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::warn, Eq(absl::string_view("onRequestHeaders 1"))));
+  EXPECT_CALL(*root_context_,
+              scriptLog_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))));
+  EXPECT_CALL(*root_context_,
+              scriptLog_(spdlog::level::debug, Eq(absl::string_view("data data1 1"))));
+
+  EXPECT_CALL(dispatcher_, post(_)).WillOnce(Return());
+  Http::TestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  auto token = Common::Wasm::resolveQueueForTest("vm_id", "my_shared_queue");
+  wasm_->queueReady(root_context_->id(), token);
 }
 
 } // namespace Wasm

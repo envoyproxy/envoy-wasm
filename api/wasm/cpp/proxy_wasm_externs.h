@@ -16,6 +16,7 @@
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t root_id_ptr, uint32_t root_id_size);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(uint32_t root_context_id, uint32_t configuration_ptr, uint32_t configuration_size);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick(uint32_t root_context_id);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onQueueReady(uint32_t root_context_id, uint32_t token);
 
    // Stream calls.
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onCreate(uint32_t context_id, root_context_id);
@@ -84,6 +85,16 @@ extern "C" void proxy_getSharedData(const char* key_ptr, size_t key_size, const 
 //  return true.
 extern "C" bool proxy_setSharedData(const char* key_ptr, size_t key_size, const char* value_ptr,
                                     size_t value_size, uint32_t cas);
+
+// SharedQueue
+// Note: Registering the same queue_name will overwrite the old registration while preseving any pending data.
+// Consequently it should typically be followed by a call to proxy_dequeueSharedQueue.
+extern "C" uint32_t proxy_registerSharedQueue(const char* queue_name_ptr, size_t queue_name_size);
+extern "C" uint32_t proxy_resolveSharedQueue(const char* vm_id, size_t vm_id_size, const char* queue_name_ptr, size_t queue_name_size);
+// Returns true on end-of-stream (no more data available).
+extern "C" bool proxy_dequeueSharedQueue(uint32_t token, const char** data_ptr, size_t* data_size);
+// Returns false if the queue was not found and the data was not enqueued.
+extern "C" bool proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size);
 
 // Headers/Trailers/Metadata Maps
 extern "C" void proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);

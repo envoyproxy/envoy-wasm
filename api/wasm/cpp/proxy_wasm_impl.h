@@ -301,6 +301,8 @@ public:
   virtual void onStart() {}
   // Called when the timer goes off.
   virtual void onTick() {}
+  // Called when data arrives on a SharedQueue.
+  virtual void onQueueReady(uint32_t /* token */) {}
 
 private:
   const std::string root_id_;
@@ -625,7 +627,7 @@ inline google::protobuf::Struct Context::getResponseMetadataStruct(StringView na
 inline void continueRequest() { proxy_continueRequest(); }
 inline void continueResponse() { proxy_continueResponse(); }
 
-// Shared
+// SharedData
 inline WasmDataPtr getSharedData(StringView key, uint32_t* cas = nullptr) {
   uint32_t dummy_cas;
   const char* value_ptr = nullptr;
@@ -638,6 +640,27 @@ inline WasmDataPtr getSharedData(StringView key, uint32_t* cas = nullptr) {
 
 inline bool setSharedData(StringView key, StringView value, uint32_t cas = 0) {
   return proxy_setSharedData(key.data(), key.size(), value.data(), value.size(), cas);
+}
+
+// SharedQueue
+inline uint32_t registerSharedQueue(StringView queue_name) {
+  return proxy_registerSharedQueue(queue_name.data(), queue_name.size());
+}
+
+inline uint32_t resolveSharedQueue(StringView vm_id, StringView queue_name) {
+  return proxy_resolveSharedQueue(vm_id.data(), vm_id.size(), queue_name.data(), queue_name.size());
+}
+
+inline bool enqueueSharedQueue(uint32_t token, StringView data) {
+  return proxy_enqueueSharedQueue(token, data.data(), data.size());
+}
+
+inline bool dequeueSharedQueue(uint32_t token, WasmDataPtr* data) {
+  const char* data_ptr = nullptr;
+  size_t data_size = 0;
+  auto eos = proxy_dequeueSharedQueue(token, &data_ptr, &data_size);
+  *data = std::make_unique<WasmData>(data_ptr, data_size);
+  return eos;
 }
 
 // Headers/Trailers
