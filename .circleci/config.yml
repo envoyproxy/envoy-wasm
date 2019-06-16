@@ -75,8 +75,15 @@ jobs:
        - run: sudo sntp -sS time.apple.com
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
+       - restore_cache:
+           keys:
+             - macos-{{ checksum "bazel/repository_locations.bzl" }}
        - run: ci/mac_ci_setup.sh
        - run: ci/mac_ci_steps.sh ${BAZEL_TEST_TARGETS}
+       - save_cache:
+           key: macos-{{ checksum "bazel/repository_locations.bzl" }}
+           paths:
+             - /Users/distiller/.cache/bazel
 
 workflows:
   version: 2
