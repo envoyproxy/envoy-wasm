@@ -77,13 +77,13 @@ jobs:
        - checkout
        - restore_cache:
            keys:
-             - macos-cache-{{ checksum "bazel/repository_locations.bzl" }}
+             - macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
        - run: ci/mac_ci_setup.sh
        - run: ci/mac_ci_steps.sh ${BAZEL_TEST_TARGETS}
        - save_cache:
-           key: macos-cache-{{ checksum "bazel/repository_locations.bzl" }}
+           key: macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
            paths:
-             - /var/tmp/_bazel_distiller/
+             - /private/var/tmp/_bazel_distiller/
 
 workflows:
   version: 2
