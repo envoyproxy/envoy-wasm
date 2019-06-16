@@ -62,4 +62,4 @@ build:libc++ --action_env=PATH
 build:libc++ --define force_libcpp=enabled
 
 # Test options
-build --test_env=HEAPCHECK=normal --test_env=PPROF_PATH
+test --test_env=HEAPCHECK=normal --test_env=PPROF_PATH
