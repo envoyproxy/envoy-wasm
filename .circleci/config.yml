@@ -71,6 +71,26 @@ jobs:
        # TODO(PiotrSikora): re-enable once fixed.
        # - run: ci/do_circle_ci.sh check_spelling_pedantic
 
+   macos:
+     macos:
+       xcode: "10.2.1"
+     environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults in tests.
+       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
+     steps:
+       - run: sudo sntp -sS time.apple.com
+       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+       - checkout
+       - restore_cache:
+           keys:
+             - macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
+       - run: ci/mac_ci_setup.sh
+       - run: ci/mac_ci_steps.sh ${BAZEL_TEST_TARGETS}
+       - save_cache:
+           key: macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
+           paths:
+             - /private/var/tmp/_bazel_distiller/
+
 workflows:
   version: 2
   all:
@@ -79,3 +99,4 @@ workflows:
       - asan
       - coverage
       - format
+      - macos
