@@ -8,7 +8,7 @@ namespace HttpFilters {
 
 /**
  * Well-known http filter names.
-  NOTE: New filters should use the well known name: envoy.filters.http.name.
+ * NOTE: New filters should use the well known name: envoy.filters.http.name.
  */
 class HttpFilterNameValues {
 public:
@@ -54,6 +54,8 @@ public:
   const std::string HeaderToMetadata = "envoy.filters.http.header_to_metadata";
   // Tap filter
   const std::string Tap = "envoy.filters.http.tap";
+  // Original Src Filter
+  const std::string OriginalSrc = "envoy.filters.http.original_src";
   // Wasm filter
   const std::string Wasm = "envoy.wasm";
 
@@ -67,7 +69,7 @@ public:
                        ExtAuthorization}) {}
 };
 
-typedef ConstSingleton<HttpFilterNameValues> HttpFilterNames;
+using HttpFilterNames = ConstSingleton<HttpFilterNameValues>;
 
 } // namespace HttpFilters
 } // namespace Extensions

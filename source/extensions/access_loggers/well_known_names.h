@@ -22,7 +22,7 @@ public:
   const std::string Wasm = "envoy.wasm_access_log";
 };
 
-typedef ConstSingleton<AccessLogNameValues> AccessLogNames;
+using AccessLogNames = ConstSingleton<AccessLogNameValues>;
 
 } // namespace AccessLoggers
 } // namespace Extensions

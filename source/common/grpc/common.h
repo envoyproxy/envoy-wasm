@@ -9,11 +9,11 @@
 #include "envoy/http/header_map.h"
 #include "envoy/http/message.h"
 
+#include "common/common/hash.h"
 #include "common/grpc/status.h"
 #include "common/protobuf/protobuf.h"
 
 #include "absl/types/optional.h"
-#include "grpcpp/grpcpp.h"
 
 namespace Envoy {
 namespace Grpc {
@@ -76,50 +76,6 @@ public:
   static void toGrpcTimeout(const std::chrono::milliseconds& timeout, Http::HeaderString& value);
 
   /**
-   * Charge a success/failure stat to a cluster/service/method.
-   * @param cluster supplies the target cluster.
-   * @param protocol supplies the downstream protocol in use, either gRPC or gRPC-Web.
-   * @param grpc_service supplies the service name.
-   * @param grpc_method supplies the method name.
-   * @param grpc_status supplies the gRPC status.
-   */
-  static void chargeStat(const Upstream::ClusterInfo& cluster, const std::string& protocol,
-                         const std::string& grpc_service, const std::string& grpc_method,
-                         const Http::HeaderEntry* grpc_status);
-
-  /**
-   * Charge a success/failure stat to a cluster/service/method.
-   * @param cluster supplies the target cluster.
-   * @param protocol supplies the downstream protocol in use, either "grpc" or "grpc-web".
-   * @param grpc_service supplies the service name.
-   * @param grpc_method supplies the method name.
-   * @param success supplies whether the call succeeded.
-   */
-  static void chargeStat(const Upstream::ClusterInfo& cluster, const std::string& protocol,
-                         const std::string& grpc_service, const std::string& grpc_method,
-                         bool success);
-
-  /**
-   * Charge a success/failure stat to a cluster/service/method.
-   * @param cluster supplies the target cluster.
-   * @param grpc_service supplies the service name.
-   * @param grpc_method supplies the method name.
-   * @param success supplies whether the call succeeded.
-   */
-  static void chargeStat(const Upstream::ClusterInfo& cluster, const std::string& grpc_service,
-                         const std::string& grpc_method, bool success);
-
-  /**
-   * Resolve the gRPC service and method from the HTTP2 :path header.
-   * @param path supplies the :path header.
-   * @param service supplies the output pointer of the gRPC service.
-   * @param method supplies the output pointer of the gRPC method.
-   * @return bool true if both gRPC serve and method have been resolved successfully.
-   */
-  static bool resolveServiceAndMethod(const Http::HeaderEntry* path, std::string* service,
-                                      std::string* method);
-
-  /**
    * Serialize protobuf message with gRPC frame header.
    */
   static Buffer::InstancePtr serializeToGrpcFrame(const Protobuf::Message& message);
@@ -155,25 +111,18 @@ public:
   static std::string typeUrl(const std::string& qualified_name);
 
   /**
-   * BUild grpc::ByteBuffer which aliases the data in a Buffer::InstancePtr.
-   * @param bufferInstance source data container.
-   * @return byteBuffer target container aliased to the data in Buffer::Instance and owning the
-   * Buffer::Instance.
-   */
-  static grpc::ByteBuffer makeByteBuffer(Buffer::InstancePtr bufferInstance);
-
-  /**
-   * BUild Buffer::Instance which aliases the data in a grpc::ByteBuffer.
-   * @param byteBuffer source data container.
-   * @param Buffer::InstancePtr target container aliased to the data in grpc::ByteBuffer.
-   */
-  static Buffer::InstancePtr makeBufferInstance(const grpc::ByteBuffer& byteBuffer);
-
-  /**
    * Prepend a gRPC frame header to a Buffer::Instance containing a single gRPC frame.
    * @param buffer containing the frame data which will be modified.
    */
   static void prependGrpcFrameHeader(Buffer::Instance& buffer);
+
+  /**
+   * Parse a Buffer::Instance into a Protobuf::Message.
+   * @param buffer containing the data to be parsed.
+   * @param proto the parsed proto.
+   * @return bool true if the parse was successful.
+   */
+  static bool parseBufferInstance(Buffer::InstancePtr&& buffer, Protobuf::Message& proto);
 
 private:
   static void checkForHeaderOnlyError(Http::Message& http_response);

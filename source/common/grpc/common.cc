@@ -8,6 +8,7 @@
 #include <string>
 
 #include "common/buffer/buffer_impl.h"
+#include "common/buffer/zero_copy_input_stream_impl.h"
 #include "common/common/assert.h"
 #include "common/common/empty_string.h"
 #include "common/common/enum_to_int.h"
@@ -48,39 +49,6 @@ bool Common::isGrpcResponseHeader(const Http::HeaderMap& headers, bool end_strea
   return hasGrpcContentType(headers);
 }
 
-void Common::chargeStat(const Upstream::ClusterInfo& cluster, const std::string& protocol,
-                        const std::string& grpc_service, const std::string& grpc_method,
-                        const Http::HeaderEntry* grpc_status) {
-  if (!grpc_status) {
-    return;
-  }
-  cluster.statsScope()
-      .counter(fmt::format("{}.{}.{}.{}", protocol, grpc_service, grpc_method,
-                           grpc_status->value().getStringView()))
-      .inc();
-  uint64_t grpc_status_code;
-  const bool success = absl::SimpleAtoi(grpc_status->value().getStringView(), &grpc_status_code) &&
-                       grpc_status_code == 0;
-  chargeStat(cluster, protocol, grpc_service, grpc_method, success);
-}
-
-void Common::chargeStat(const Upstream::ClusterInfo& cluster, const std::string& protocol,
-                        const std::string& grpc_service, const std::string& grpc_method,
-                        bool success) {
-  cluster.statsScope()
-      .counter(fmt::format("{}.{}.{}.{}", protocol, grpc_service, grpc_method,
-                           success ? "success" : "failure"))
-      .inc();
-  cluster.statsScope()
-      .counter(fmt::format("{}.{}.{}.total", protocol, grpc_service, grpc_method))
-      .inc();
-}
-
-void Common::chargeStat(const Upstream::ClusterInfo& cluster, const std::string& grpc_service,
-                        const std::string& grpc_method, bool success) {
-  chargeStat(cluster, "grpc", grpc_service, grpc_method, success);
-}
-
 absl::optional<Status::GrpcStatus> Common::getGrpcStatus(const Http::HeaderMap& trailers) {
   const Http::HeaderEntry* grpc_status_header = trailers.GrpcStatus();
 
@@ -98,20 +66,6 @@ absl::optional<Status::GrpcStatus> Common::getGrpcStatus(const Http::HeaderMap& 
 std::string Common::getGrpcMessage(const Http::HeaderMap& trailers) {
   const auto entry = trailers.GrpcMessage();
   return entry ? std::string(entry->value().getStringView()) : EMPTY_STRING;
-}
-
-bool Common::resolveServiceAndMethod(const Http::HeaderEntry* path, std::string* service,
-                                     std::string* method) {
-  if (path == nullptr) {
-    return false;
-  }
-  const auto parts = StringUtil::splitToken(path->value().getStringView(), "/");
-  if (parts.size() != 2) {
-    return false;
-  }
-  service->assign(parts[0].data(), parts[0].size());
-  method->assign(parts[1].data(), parts[1].size());
-  return true;
 }
 
 Buffer::InstancePtr Common::serializeToGrpcFrame(const Protobuf::Message& message) {
@@ -286,97 +240,17 @@ std::string Common::typeUrl(const std::string& qualified_name) {
   return typeUrlPrefix() + "/" + qualified_name;
 }
 
-struct BufferInstanceContainer {
-  BufferInstanceContainer(int ref_count, Buffer::InstancePtr buffer)
-      : ref_count_(ref_count), buffer_(std::move(buffer)) {}
-  std::atomic<int> ref_count_;
-  Buffer::InstancePtr buffer_;
-};
-
-static void derefBufferInstanceContainer(void* container_ptr) {
-  auto container = reinterpret_cast<BufferInstanceContainer*>(container_ptr);
-  container->ref_count_--;
-  if (container->ref_count_ <= 0) {
-    delete container;
-  }
-}
-
-grpc::ByteBuffer Common::makeByteBuffer(Buffer::InstancePtr bufferInstance) {
-  if (!bufferInstance) {
-    return {};
-  }
-  Buffer::RawSlice oneRawSlice;
-  // NB: we need to pass in >= 1 in order to get the real "n" (see Buffer::Instance for details).
-  int nSlices = bufferInstance->getRawSlices(&oneRawSlice, 1);
-  if (nSlices <= 0) {
-    return {};
-  }
-  auto container = new BufferInstanceContainer{nSlices, std::move(bufferInstance)};
-  if (nSlices == 1) {
-    grpc::Slice oneSlice(oneRawSlice.mem_, oneRawSlice.len_, &derefBufferInstanceContainer,
-                         container);
-    return {&oneSlice, 1};
-  }
-  STACK_ARRAY(manyRawSlices, Buffer::RawSlice, nSlices);
-  bufferInstance->getRawSlices(manyRawSlices.begin(), nSlices);
-  std::vector<grpc::Slice> slices;
-  slices.reserve(nSlices);
-  for (int i = 0; i < nSlices; i++) {
-    slices.emplace_back(manyRawSlices[i].mem_, manyRawSlices[i].len_, &derefBufferInstanceContainer,
-                        container);
-  }
-  return {&slices[0], slices.size()};
-}
-
-struct ByteBufferContainer {
-  ByteBufferContainer(int ref_count) : ref_count_(ref_count) {}
-  ~ByteBufferContainer() { ::free(fragments); }
-  std::atomic<int> ref_count_;
-  Buffer::BufferFragmentImpl* fragments = nullptr;
-  std::vector<grpc::Slice> slices_;
-};
-
-Buffer::InstancePtr Common::makeBufferInstance(const grpc::ByteBuffer& byteBuffer) {
-  auto buffer = std::make_unique<Buffer::OwnedImpl>();
-  if (byteBuffer.Length() == 0) {
-    return buffer;
-  }
-  // NB: ByteBuffer::Dump moves the data out of the ByteBuffer so we need to ensure that the
-  // lifetime of the Slice(s) exceeds our Buffer::Instance.
-  std::vector<grpc::Slice> slices;
-  byteBuffer.Dump(&slices);
-  if (slices.size() == 0) {
-    return buffer;
-  }
-  auto container = new ByteBufferContainer(static_cast<int>(slices.size()));
-  std::function<void(const void*, size_t, const Buffer::BufferFragmentImpl*)> releaser =
-      [container](const void*, size_t, const Buffer::BufferFragmentImpl*) {
-        container->ref_count_--;
-        if (container->ref_count_ <= 0) {
-          delete container;
-        }
-      };
-  // NB: addBufferFragment takes a pointer alias to the BufferFragmentImpl which is passed in so we
-  // need to ensure that the lifetime of those objects exceeds that of the Buffer::Instance.
-  container->fragments = static_cast<Buffer::BufferFragmentImpl*>(
-      ::malloc(sizeof(Buffer::BufferFragmentImpl) * slices.size()));
-  for (size_t i = 0; i < slices.size(); i++) {
-    new (&container->fragments[i])
-        Buffer::BufferFragmentImpl(slices[i].begin(), slices[i].size(), releaser);
-  }
-  for (size_t i = 0; i < slices.size(); i++) {
-    buffer->addBufferFragment(container->fragments[i]);
-  }
-  container->slices_ = std::move(slices);
-  return buffer;
-}
-
 void Common::prependGrpcFrameHeader(Buffer::Instance& buffer) {
   std::array<char, 5> header;
   header[0] = 0; // flags
   const uint32_t nsize = htonl(buffer.length());
   std::memcpy(&header[1], reinterpret_cast<const void*>(&nsize), sizeof(uint32_t));
   buffer.prepend(absl::string_view(&header[0], 5));
+}
+
+bool Common::parseBufferInstance(Buffer::InstancePtr&& buffer, Protobuf::Message& proto) {
+  Buffer::ZeroCopyInputStreamImpl stream(std::move(buffer));
+  return proto.ParseFromZeroCopyStream(&stream);
 }
 
 } // namespace Grpc

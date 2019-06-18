@@ -67,6 +67,17 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "debug_config_lib",
+    srcs = ["debug_config.cc"],
+    hdrs = ["debug_config.h"],
+    deps = [
+        "//include/envoy/http:header_map_interface",
+        "//include/envoy/stream_info:filter_state_interface",
+        "//source/common/common:macros",
+    ],
+)
+
+envoy_cc_library(
     name = "route_config_update_impl_lib",
     srcs = ["route_config_update_receiver_impl.cc"],
     hdrs = ["route_config_update_receiver_impl.h"],
@@ -97,7 +108,6 @@ envoy_cc_library(
         "//source/common/common:assert_lib",
         "//source/common/common:minimal_logger_lib",
         "//source/common/config:rds_json_lib",
-        "//source/common/config:subscription_factory_lib",
         "//source/common/config:utility_lib",
         "//source/common/init:target_lib",
         "//source/common/protobuf:utility_lib",
@@ -137,6 +147,45 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "scoped_config_manager_lib",
+    srcs = ["scoped_config_manager.cc"],
+    hdrs = ["scoped_config_manager.h"],
+    deps = [
+        "@envoy_api//envoy/api/v2:srds_cc",
+    ],
+)
+
+envoy_cc_library(
+    name = "scoped_config_lib",
+    srcs = ["scoped_config_impl.cc"],
+    hdrs = ["scoped_config_impl.h"],
+    deps = [
+        ":config_lib",
+        ":scoped_config_manager_lib",
+        "//include/envoy/router:scopes_interface",
+        "//include/envoy/thread_local:thread_local_interface",
+        "@envoy_api//envoy/api/v2:srds_cc",
+        "@envoy_api//envoy/config/filter/network/http_connection_manager/v2:http_connection_manager_cc",
+    ],
+)
+
+envoy_cc_library(
+    name = "scoped_rds_lib",
+    srcs = ["scoped_rds.cc"],
+    hdrs = ["scoped_rds.h"],
+    deps = [
+        ":scoped_config_lib",
+        "//include/envoy/config:subscription_interface",
+        "//include/envoy/stats:stats_interface",
+        "//source/common/common:assert_lib",
+        "//source/common/common:minimal_logger_lib",
+        "//source/common/config:config_provider_lib",
+        "@envoy_api//envoy/admin/v2alpha:config_dump_cc",
+        "@envoy_api//envoy/api/v2:srds_cc",
+    ],
+)
+
+envoy_cc_library(
     name = "retry_state_lib",
     srcs = ["retry_state_impl.cc"],
     hdrs = ["retry_state_impl.h"],
@@ -164,6 +213,7 @@ envoy_cc_library(
     hdrs = ["router.h"],
     deps = [
         ":config_lib",
+        ":debug_config_lib",
         ":header_parser_lib",
         ":retry_state_lib",
         "//include/envoy/event:dispatcher_interface",

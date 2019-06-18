@@ -59,7 +59,7 @@ TEST_P(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   )EOF"));
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  MessageUtil::loadFromJson(json, proto_config);
+  TestUtility::loadFromJson(json, proto_config);
   WasmFilterConfig factory;
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
@@ -77,7 +77,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   )EOF"));
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  MessageUtil::loadFromYaml(yaml, proto_config);
+  TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
@@ -99,7 +99,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
   )EOF");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  MessageUtil::loadFromYaml(yaml, proto_config);
+  TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
@@ -117,7 +117,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   )EOF");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  MessageUtil::loadFromYaml(yaml, proto_config);
+  TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,

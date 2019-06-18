@@ -20,8 +20,10 @@ namespace Envoy {
 namespace Logger {
 
 // clang-format off
+// TODO: find out a way for extensions to register new logger IDs
 #define ALL_LOGGER_IDS(FUNCTION) \
   FUNCTION(admin)                \
+  FUNCTION(aws)                  \
   FUNCTION(assert)               \
   FUNCTION(backtrace)            \
   FUNCTION(client)               \
@@ -55,6 +57,7 @@ namespace Logger {
   FUNCTION(thrift)               \
   FUNCTION(tracing)              \
   FUNCTION(upstream)             \
+  FUNCTION(udp)                  \
   FUNCTION(wasm)
 
 enum class Id {
@@ -100,7 +103,7 @@ private:
 };
 
 class DelegatingLogSink;
-typedef std::shared_ptr<DelegatingLogSink> DelegatingLogSinkPtr;
+using DelegatingLogSinkPtr = std::shared_ptr<DelegatingLogSink>;
 
 /**
  * Captures a logging sink that can be delegated to for a bounded amount of time.

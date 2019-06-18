@@ -12,6 +12,7 @@
 #include "common/common/linked_object.h"
 #include "common/common/thread.h"
 #include "common/common/thread_annotations.h"
+#include "common/grpc/typed_async_client.h"
 #include "common/tracing/http_tracer_impl.h"
 
 #include "grpcpp/generic/generic_stub.h"
@@ -113,7 +114,7 @@ struct GoogleAsyncClientStats {
 // Interface to allow the gRPC stub to be mocked out by tests.
 class GoogleStub {
 public:
-  virtual ~GoogleStub() {}
+  virtual ~GoogleStub() = default;
 
   // See grpc::PrepareCall().
   virtual std::unique_ptr<grpc::GenericClientAsyncReaderWriter>
@@ -138,7 +139,7 @@ private:
 // Interface to allow the gRPC stub creation to be mocked out by tests.
 class GoogleStubFactory {
 public:
-  virtual ~GoogleStubFactory() {}
+  virtual ~GoogleStubFactory() = default;
 
   // Create a stub from a given channel.
   virtual std::shared_ptr<GoogleStub> createStub(std::shared_ptr<grpc::Channel> channel) PURE;
@@ -152,7 +153,7 @@ public:
 };
 
 // Google gRPC C++ client library implementation of Grpc::AsyncClient.
-class GoogleAsyncClientImpl final : public AsyncClient, Logger::Loggable<Logger::Id::grpc> {
+class GoogleAsyncClientImpl final : public RawAsyncClient, Logger::Loggable<Logger::Id::grpc> {
 public:
   GoogleAsyncClientImpl(Event::Dispatcher& dispatcher, GoogleAsyncClientThreadLocal& tls,
                         GoogleStubFactory& stub_factory, Stats::ScopeSharedPtr scope,
@@ -160,16 +161,12 @@ public:
   ~GoogleAsyncClientImpl() override;
 
   // Grpc::AsyncClient
-  AsyncRequest* send(const Protobuf::MethodDescriptor& service_method,
-                     const Protobuf::Message& request, AsyncRequestCallbacks& callbacks,
-                     Tracing::Span& parent_span,
-                     const absl::optional<std::chrono::milliseconds>& timeout) override;
   AsyncRequest* sendRaw(absl::string_view service_full_name, absl::string_view method_name,
-                        Buffer::InstancePtr request, RawAsyncRequestCallbacks& callbacks,
+                        Buffer::InstancePtr&& request, RawAsyncRequestCallbacks& callbacks,
                         Tracing::Span& parent_span,
                         const absl::optional<std::chrono::milliseconds>& timeout) override;
-  AsyncStream* startRaw(absl::string_view service_full_name, absl::string_view method_name,
-                        RawAsyncStreamCallbacks& callbacks) override;
+  RawAsyncStream* startRaw(absl::string_view service_full_name, absl::string_view method_name,
+                           RawAsyncStreamCallbacks& callbacks) override;
 
   TimeSource& timeSource() { return dispatcher_.timeSource(); }
 
@@ -194,15 +191,11 @@ private:
   friend class GoogleAsyncStreamImpl;
 };
 
-class GoogleAsyncStreamImpl : public AsyncStream,
+class GoogleAsyncStreamImpl : public RawAsyncStream,
                               public Event::DeferredDeletable,
                               Logger::Loggable<Logger::Id::grpc>,
                               LinkedObject<GoogleAsyncStreamImpl> {
 public:
-  GoogleAsyncStreamImpl(GoogleAsyncClientImpl& parent,
-                        const Protobuf::MethodDescriptor& service_method,
-                        AsyncStreamCallbacks& callbacks,
-                        const absl::optional<std::chrono::milliseconds>& timeout);
   GoogleAsyncStreamImpl(GoogleAsyncClientImpl& parent, absl::string_view service_full_name,
                         absl::string_view method_name, RawAsyncStreamCallbacks& callbacks,
                         const absl::optional<std::chrono::milliseconds>& timeout);
@@ -210,9 +203,8 @@ public:
 
   virtual void initialize(bool buffer_body_for_retry);
 
-  // Grpc::AsyncStream
-  void sendMessage(const Protobuf::Message& request, bool end_stream) override;
-  void sendRawMessage(Buffer::InstancePtr request, bool end_stream) override;
+  // Grpc::RawAsyncStream
+  void sendMessageRaw(Buffer::InstancePtr&& request, bool end_stream) override;
   void closeStream() override;
   void resetStream() override;
 
@@ -305,11 +297,6 @@ class GoogleAsyncRequestImpl : public AsyncRequest,
                                public GoogleAsyncStreamImpl,
                                RawAsyncStreamCallbacks {
 public:
-  GoogleAsyncRequestImpl(GoogleAsyncClientImpl& parent,
-                         const Protobuf::MethodDescriptor& service_method,
-                         const Protobuf::Message& request, AsyncRequestCallbacks& callbacks,
-                         Tracing::Span& parent_span,
-                         const absl::optional<std::chrono::milliseconds>& timeout);
   GoogleAsyncRequestImpl(GoogleAsyncClientImpl& parent, absl::string_view service_full_name,
                          absl::string_view method_name, Buffer::InstancePtr request,
                          RawAsyncRequestCallbacks& callbacks, Tracing::Span& parent_span,
@@ -321,12 +308,11 @@ public:
   void cancel() override;
 
 private:
-  // Grpc::AsyncStreamCallbacks
+  // Grpc::RawAsyncStreamCallbacks
   void onCreateInitialMetadata(Http::HeaderMap& metadata) override;
   void onReceiveInitialMetadata(Http::HeaderMapPtr&&) override;
-  bool onReceiveRawMessage(Buffer::InstancePtr response) override;
+  bool onReceiveMessageRaw(Buffer::InstancePtr&& response) override;
   void onReceiveTrailingMetadata(Http::HeaderMapPtr&&) override;
-  ProtobufTypes::MessagePtr createEmptyResponse() override;
   void onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) override;
 
   Buffer::InstancePtr request_;

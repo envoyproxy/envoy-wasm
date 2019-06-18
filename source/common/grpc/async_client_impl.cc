@@ -22,16 +22,8 @@ AsyncClientImpl::~AsyncClientImpl() {
   }
 }
 
-AsyncRequest* AsyncClientImpl::send(const Protobuf::MethodDescriptor& service_method,
-                                    const Protobuf::Message& request,
-                                    AsyncRequestCallbacks& callbacks, Tracing::Span& parent_span,
-                                    const absl::optional<std::chrono::milliseconds>& timeout) {
-  return sendRaw(service_method.service()->full_name(), service_method.name(),
-                 Common::serializeToGrpcFrame(request), callbacks, parent_span, timeout);
-}
-
 AsyncRequest* AsyncClientImpl::sendRaw(absl::string_view service_full_name,
-                                       absl::string_view method_name, Buffer::InstancePtr request,
+                                       absl::string_view method_name, Buffer::InstancePtr&& request,
                                        RawAsyncRequestCallbacks& callbacks,
                                        Tracing::Span& parent_span,
                                        const absl::optional<std::chrono::milliseconds>& timeout) {
@@ -48,9 +40,9 @@ AsyncRequest* AsyncClientImpl::sendRaw(absl::string_view service_full_name,
   return async_request;
 }
 
-AsyncStream* AsyncClientImpl::startRaw(absl::string_view service_full_name,
-                                       absl::string_view method_name,
-                                       RawAsyncStreamCallbacks& callbacks) {
+RawAsyncStream* AsyncClientImpl::startRaw(absl::string_view service_full_name,
+                                          absl::string_view method_name,
+                                          RawAsyncStreamCallbacks& callbacks) {
   const absl::optional<std::chrono::milliseconds> no_timeout;
   auto grpc_stream = std::make_unique<AsyncStreamImpl>(*this, service_full_name, method_name,
                                                        callbacks, no_timeout);
@@ -64,12 +56,6 @@ AsyncStream* AsyncClientImpl::startRaw(absl::string_view service_full_name,
   return active_streams_.front().get();
 }
 
-AsyncStreamImpl::AsyncStreamImpl(AsyncClientImpl& parent,
-                                 const Protobuf::MethodDescriptor& service_method,
-                                 AsyncStreamCallbacks& callbacks,
-                                 const absl::optional<std::chrono::milliseconds>& timeout)
-    : AsyncStreamImpl(parent, service_method.service()->full_name(), service_method.name(),
-                      callbacks, timeout) {}
 AsyncStreamImpl::AsyncStreamImpl(AsyncClientImpl& parent, absl::string_view service_full_name,
                                  absl::string_view method_name, RawAsyncStreamCallbacks& callbacks,
                                  const absl::optional<std::chrono::milliseconds>& timeout)
@@ -149,14 +135,14 @@ void AsyncStreamImpl::onData(Buffer::Instance& data, bool end_stream) {
       streamError(Status::GrpcStatus::Internal);
       return;
     }
-    if (!callbacks_.onReceiveRawMessage(frame.data_ ? std::move(frame.data_)
+    if (!callbacks_.onReceiveMessageRaw(frame.data_ ? std::move(frame.data_)
                                                     : std::make_unique<Buffer::OwnedImpl>())) {
       streamError(Status::GrpcStatus::Internal);
       return;
     }
   }
 
-  if (!http_reset_ && end_stream) {
+  if (end_stream) {
     streamError(Status::GrpcStatus::Unknown);
   }
 }
@@ -190,11 +176,12 @@ void AsyncStreamImpl::onReset() {
 }
 
 void AsyncStreamImpl::sendMessage(const Protobuf::Message& request, bool end_stream) {
-  sendRawMessage(Common::serializeToGrpcFrame(request), end_stream);
+  stream_->sendData(*Common::serializeToGrpcFrame(request), end_stream);
 }
 
-void AsyncStreamImpl::sendRawMessage(Buffer::InstancePtr request, bool end_stream) {
-  stream_->sendData(*request, end_stream);
+void AsyncStreamImpl::sendMessageRaw(Buffer::InstancePtr&& buffer, bool end_stream) {
+  Common::prependGrpcFrameHeader(*buffer);
+  stream_->sendData(*buffer, end_stream);
 }
 
 void AsyncStreamImpl::closeStream() {
@@ -219,7 +206,7 @@ void AsyncStreamImpl::cleanup() {
 }
 
 AsyncRequestImpl::AsyncRequestImpl(AsyncClientImpl& parent, absl::string_view service_full_name,
-                                   absl::string_view method_name, Buffer::InstancePtr request,
+                                   absl::string_view method_name, Buffer::InstancePtr&& request,
                                    RawAsyncRequestCallbacks& callbacks, Tracing::Span& parent_span,
                                    const absl::optional<std::chrono::milliseconds>& timeout)
     : AsyncStreamImpl(parent, service_full_name, method_name, *this, timeout),
@@ -232,30 +219,18 @@ AsyncRequestImpl::AsyncRequestImpl(AsyncClientImpl& parent, absl::string_view se
   current_span_->setTag(Tracing::Tags::get().Component, Tracing::Tags::get().Proxy);
 }
 
-AsyncRequestImpl::AsyncRequestImpl(AsyncClientImpl& parent,
-                                   const Protobuf::MethodDescriptor& service_method,
-                                   const Protobuf::Message& request,
-                                   AsyncRequestCallbacks& callbacks, Tracing::Span& parent_span,
-                                   const absl::optional<std::chrono::milliseconds>& timeout)
-    : AsyncRequestImpl(parent, service_method.service()->full_name(), service_method.name(),
-                       Common::serializeToGrpcFrame(request), callbacks, parent_span, timeout) {}
-
 void AsyncRequestImpl::initialize(bool buffer_body_for_retry) {
   AsyncStreamImpl::initialize(buffer_body_for_retry);
   if (this->hasResetStream()) {
     return;
   }
-  this->sendRawMessage(std::move(request_), true);
+  this->sendMessageRaw(std::move(request_), true);
 }
 
 void AsyncRequestImpl::cancel() {
   current_span_->setTag(Tracing::Tags::get().Status, Tracing::Tags::get().Canceled);
   current_span_->finishSpan();
   this->resetStream();
-}
-
-ProtobufTypes::MessagePtr AsyncRequestImpl::createEmptyResponse() {
-  return callbacks_.createEmptyResponse();
 }
 
 void AsyncRequestImpl::onCreateInitialMetadata(Http::HeaderMap& metadata) {
@@ -265,7 +240,7 @@ void AsyncRequestImpl::onCreateInitialMetadata(Http::HeaderMap& metadata) {
 
 void AsyncRequestImpl::onReceiveInitialMetadata(Http::HeaderMapPtr&&) {}
 
-bool AsyncRequestImpl::onReceiveRawMessage(Buffer::InstancePtr response) {
+bool AsyncRequestImpl::onReceiveMessageRaw(Buffer::InstancePtr&& response) {
   response_ = std::move(response);
   return true;
 }

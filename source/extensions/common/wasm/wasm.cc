@@ -1460,8 +1460,11 @@ uint32_t Context::defineMetric(MetricType type, absl::string_view name) {
     return id;
   } else if (type == MetricType::Gauge) {
     auto id = wasm_->nextGaugeMetricId();
-    wasm_->gauges_.emplace(id, &wasm_->scope_.gauge(std::string(
-                                   name))); // This is inefficient, but it is the Scope API.
+    wasm_->gauges_.emplace(
+        id,
+        &wasm_->scope_.gauge(
+            std::string(name),
+            Stats::Gauge::ImportMode::Accumulate)); // This is inefficient, but it is the Scope API.
     return id;
   } else if (type == MetricType::Histogram) {
     auto id = wasm_->nextHistogramMetricId();
@@ -2028,7 +2031,7 @@ void Context::grpcSend(uint32_t token, absl::string_view message, bool end_strea
   }
   auto it = grpc_stream_.find(token);
   if (it != grpc_stream_.end() && it->second.stream) {
-    it->second.stream->sendRawMessage(
+    it->second.stream->sendMessageRaw(
         Buffer::InstancePtr(new Buffer::OwnedImpl(message.data(), message.size())), end_stream);
   }
 }
@@ -2065,7 +2068,7 @@ void Context::grpcCancel(uint32_t token) {
   }
 }
 
-void GrpcCallClientHandler::onSuccessRaw(Buffer::InstancePtr response, Tracing::Span&) {
+void GrpcCallClientHandler::onSuccessRaw(Buffer::InstancePtr&& response, Tracing::Span&) {
   context->onGrpcReceive(token, std::move(response));
 }
 
@@ -2074,7 +2077,7 @@ void GrpcCallClientHandler::onFailure(Grpc::Status::GrpcStatus status, const std
   context->onGrpcClose(token, status, message);
 }
 
-bool GrpcStreamClientHandler::onReceiveRawMessage(Buffer::InstancePtr response) {
+bool GrpcStreamClientHandler::onReceiveMessageRaw(Buffer::InstancePtr&& response) {
   context->onGrpcReceive(token, std::move(response));
   return true;
 }

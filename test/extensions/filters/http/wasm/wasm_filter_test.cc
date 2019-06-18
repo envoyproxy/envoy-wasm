@@ -206,7 +206,7 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);
   Http::AsyncClient::Callbacks* callbacks = nullptr;
-  EXPECT_CALL(cluster_manager_, get("cluster"));
+  EXPECT_CALL(cluster_manager_, get(Eq("cluster")));
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster"));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
@@ -247,23 +247,23 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
   auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
   auto async_client = std::make_unique<Grpc::MockAsyncClient>();
   Tracing::Span* parent_span{};
-  EXPECT_CALL(*async_client, sendRaw_(_, _, _, _, _, _))
+  EXPECT_CALL(*async_client, sendRaw(_, _, _, _, _, _))
       .WillOnce(Invoke(
           [&](absl::string_view service_full_name, absl::string_view method_name,
-              Buffer::Instance& message, Grpc::RawAsyncRequestCallbacks& cb, Tracing::Span& span,
+              Buffer::InstancePtr& message, Grpc::RawAsyncRequestCallbacks& cb, Tracing::Span& span,
               const absl::optional<std::chrono::milliseconds>& timeout) -> Grpc::AsyncRequest* {
             EXPECT_EQ(service_full_name, "service");
             EXPECT_EQ(method_name, "method");
             ProtobufWkt::Value value;
             EXPECT_TRUE(
-                value.ParseFromArray(message.linearize(message.length()), message.length()));
+                value.ParseFromArray(message->linearize(message->length()), message->length()));
             EXPECT_EQ(value.string_value(), "request");
             callbacks = &cb;
             parent_span = &span;
             EXPECT_EQ(timeout->count(), 1000);
             return &request;
           }));
-  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::AsyncClientPtr {
+  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
     return std::move(async_client);
   }));
   EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())

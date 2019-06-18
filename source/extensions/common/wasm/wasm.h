@@ -242,13 +242,13 @@ struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
 struct GrpcCallClientHandler : public Grpc::RawAsyncRequestCallbacks {
   // Grpc::AsyncRequestCallbacks
   void onCreateInitialMetadata(Http::HeaderMap& metadata) override;
-  void onSuccessRaw(Buffer::InstancePtr response, Tracing::Span& span) override;
+  void onSuccessRaw(Buffer::InstancePtr&& response, Tracing::Span& span) override;
   void onFailure(Grpc::Status::GrpcStatus status, const std::string& message,
                  Tracing::Span& span) override;
 
   Context* context;
   uint32_t token;
-  Grpc::AsyncClientPtr client;
+  Grpc::RawAsyncClientPtr client;
   Grpc::AsyncRequest* request;
 };
 
@@ -256,14 +256,14 @@ struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
   // Grpc::AsyncStreamCallbacks
   void onCreateInitialMetadata(Http::HeaderMap& metadata) override;
   void onReceiveInitialMetadata(Http::HeaderMapPtr&& metadata) override;
-  bool onReceiveRawMessage(Buffer::InstancePtr message) override;
+  bool onReceiveMessageRaw(Buffer::InstancePtr&& response) override;
   void onReceiveTrailingMetadata(Http::HeaderMapPtr&& metadata) override;
   void onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) override;
 
   Context* context;
   uint32_t token;
-  Grpc::AsyncClientPtr client;
-  Grpc::AsyncStream* stream;
+  Grpc::RawAsyncClientPtr client;
+  Grpc::RawAsyncStream* stream;
 };
 
 // A context which will be the target of callbacks for a particular session
