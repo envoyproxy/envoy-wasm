@@ -73,10 +73,12 @@ jobs:
 
    macos:
      macos:
-       xcode: "10.2.1"
+       xcode: "11.0.0"
      environment:
        BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults in tests.
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
+       CC: clang
+       CXX: clang++
      steps:
        - run: sudo sntp -sS time.apple.com
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
