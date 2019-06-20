@@ -623,16 +623,6 @@ inline google::protobuf::Struct Context::getResponseMetadataStruct(StringView na
   return getMetadataStruct(MetadataType::Response, name);
 }
 
-// Set timer with given tick interval in milliseconds.
-void setTickPeriodMilliseconds(uint32_t millisecond) {
-  proxy_setTickPeriodMilliseconds(millisecond);
-}
-
-// Get current timestamp in nanosecond precision.
-uint64_t getCurrentTimeNanoseconds() {
-  return proxy_getCurrentTimeNanoseconds();
-}
-
 // Continue
 inline void continueRequest() { proxy_continueRequest(); }
 inline void continueResponse() { proxy_continueResponse(); }
