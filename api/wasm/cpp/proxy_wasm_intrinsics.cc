@@ -66,7 +66,7 @@ static RootContext* ensureRootContext(uint32_t context_id, std::unique_ptr<WasmD
 
 static ContextBase* getContextBase(uint32_t context_id) {
   auto it = context_map.find(context_id);
-  if (it == context_map.end() || !it->second->asContext()) {
+  if (it == context_map.end() || !(it->second->asContext() || it->second->asRoot())) {
     throw ProxyException("no base context context_id: " + std::to_string(context_id));
   }
   return it->second.get();
