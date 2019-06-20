@@ -396,7 +396,7 @@ Plugin::RootContext* NullVmPlugin::ensureRootContext(uint64_t context_id,
 
 Plugin::ContextBase* NullVmPlugin::getContextBase(uint64_t context_id) {
   auto it = context_map_.find(context_id);
-  if (it == context_map_.end() || !it->second->asContext()) {
+  if (it == context_map_.end() || !(it->second->asContext() || it->second->asRoot())) {
     throw WasmException("no base context context_id: " + std::to_string(context_id));
   }
   return it->second.get();
