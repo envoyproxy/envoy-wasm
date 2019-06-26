@@ -86,9 +86,12 @@ The `./ci/run_envoy_docker.sh './ci/do_ci.sh <TARGET>'` targets are:
 * `bazel.debug.server_only` &mdash; build Envoy static binary under `-c dbg`.
 * `bazel.dev` &mdash; build Envoy static binary and run tests under `-c fastbuild` with clang.
 * `bazel.dev <test>` &mdash; build Envoy static binary and run a specified test or test dir under `-c fastbuild` with clang.
-* `bazel.release` &mdash; build Envoy static binary and run tests under `-c opt` with gcc.
-* `bazel.release <test>` &mdash; build Envoy static binary and run a specified test or test dir under `-c opt` with gcc.
-* `bazel.release.server_only` &mdash; build Envoy static binary under `-c opt` with gcc.
+* `bazel.release` &mdash; build Envoy static binary and run tests under `-c opt` with clang.
+* `bazel.release <test>` &mdash; build Envoy static binary and run a specified test or test dir under `-c opt` with clang.
+* `bazel.release.server_only` &mdash; build Envoy static binary under `-c opt` with clang.
+* `bazel.sizeopt` &mdash; build Envoy static binary and run tests under `-c opt --config=sizeopt` with clang.
+* `bazel.sizeopt <test>` &mdash; build Envoy static binary and run a specified test or test dir under `-c opt --config=sizeopt` with clang.
+* `bazel.sizeopt.server_only` &mdash; build Envoy static binary under `-c opt --config=sizeopt` with clang.
 * `bazel.coverage` &mdash; build and run tests under `-c dbg` with gcc, generating coverage information in `$ENVOY_DOCKER_BUILD_DIR/envoy/generated/coverage/coverage.html`.
 * `bazel.coverage <test>` &mdash; build and run a specified test or test dir under `-c dbg` with gcc, generating coverage information in `$ENVOY_DOCKER_BUILD_DIR/envoy/generated/coverage/coverage.html`.
 * `bazel.coverity` &mdash; build Envoy static binary and run Coverity Scan static analysis.

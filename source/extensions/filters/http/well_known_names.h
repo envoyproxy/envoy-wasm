@@ -56,6 +56,8 @@ public:
   const std::string Tap = "envoy.filters.http.tap";
   // Original Src Filter
   const std::string OriginalSrc = "envoy.filters.http.original_src";
+  // Dynamic forward proxy filter
+  const std::string DynamicForwardProxy = "envoy.filters.http.dynamic_forward_proxy";
   // Wasm filter
   const std::string Wasm = "envoy.wasm";
 
