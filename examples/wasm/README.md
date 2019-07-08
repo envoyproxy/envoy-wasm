@@ -65,9 +65,13 @@ Curl output should include our headers:
 ```
 
 # Build WASM Binary
+
 ## prerequisite
+
+1. Download and install [protobuf](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md).
+1. Download and install [WAVM](https://github.com/WAVM/WAVM).
 1. [Download and install `emscripten`](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions)
-2. Activate emsdk archived version 1.38.25 (Note: by 02/11/2019 the latest build is broken for envoy-wasm)
+1. Activate emsdk archived version 1.38.25 (Note: by 02/11/2019 the latest build is broken for envoy-wasm)
 
 ```
 # in emsdk directory
@@ -77,7 +81,7 @@ source emsdk_env.sh
 # verify
 em++ -v 2>&1 |grep Emscripten  ## should output 1.38.25
 ```
-3. Build wasm filter in envoy directory 
+1. Build wasm filter in envoy directory 
 
 ```shell
 envoy/examples/wasm$ source <path/to/emsdk>/emsdk_env.sh  # Only needed if in another shell session
