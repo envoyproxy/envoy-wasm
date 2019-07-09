@@ -2,8 +2,8 @@
 
 In this example, we show how a Webassembly(WASM) filter can be used with the Envoy
 proxy. The Envoy proxy [configuration](./envoy.yaml) includes a Webassembly filter
-<!--TODO(bianpengyuan): change to the url of Wasm filter once the doc is ready.-->
 as documented [here](https://www.envoyproxy.io/docs/envoy/latest/).
+<!--TODO(bianpengyuan): change to the url of Wasm filter once the doc is ready.-->
 
 
 
@@ -12,7 +12,6 @@ as documented [here](https://www.envoyproxy.io/docs/envoy/latest/).
 1. `docker-compose build`
 1. `docker-compose up`
 1. `curl -v localhost:18000`
-
 
 Curl output should include our headers:
 
@@ -46,26 +45,26 @@ Now you want to make changes to the C++ filter, regenerate to WASM binary code.
 
 ### prerequisite
 
-1. Download and install [protobuf](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md).
-1. Download and install [WAVM](https://github.com/WAVM/WAVM).
+1. Download and install [`protobuf`](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md).
+1. Download and install [`WAVM`](https://github.com/WAVM/WAVM).
 1. Download and install [`emscripten`](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions)
 1. Activate emsdk archived version 1.38.25 (Note: by 02/11/2019 the latest build is broken for envoy-wasm)
 
-		```shell
+    ```shell
     # in emsdk directory
-		./emsdk install sdk-1.38.25-64bit
-		./emsdk activate sdk-1.38.25-64bit
-		source emsdk_env.sh
+    ./emsdk install sdk-1.38.25-64bit
+    ./emsdk activate sdk-1.38.25-64bit
+    source emsdk_env.sh
     # verify, should output 1.38.25
-		em++ -v 2>&1 |grep Emscripten
-		```
+    em++ -v 2>&1 |grep Emscripten
+    ```
 
 1. Build WASM filter in envoy directory.
 
-		```shell
-		envoy/examples/wasm$ source <path/to/emsdk>/emsdk_env.sh  # Only needed if in another shell session
-		envoy/examples/wasm$ touch envoy_filter_http_wasm_example.cc && make
-		```
+    ```shell
+    envoy/examples/wasm$ source <path/to/emsdk>/emsdk_env.sh  # Only needed if in another shell session
+    envoy/examples/wasm$ touch envoy_filter_http_wasm_example.cc && make
+    ```
 
 ## Build the Envoy WASM Image
 
@@ -75,5 +74,3 @@ For Envoy WASM runtime developers, if you want to make changes, please
 
 1. Follow [instructions](https://github.com/envoyproxy/envoy-wasm/blob/master/WASM.md).
 1. Modify `docker-compose.yaml` to mount your own Envoy.
-
-
