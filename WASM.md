@@ -21,3 +21,26 @@ proof of concept because:
     - evaulate boost::fiber, GNU Pth, getcontext(), setcontext(), swapcontext().
   - Add support for shared global state.
   - Intercept logging messages from WAVM and send to Envoy logs.
+
+# Build the Envoy
+
+To build Envoy with WASM enabled, pass `--define wasm=<vm-name>` when
+running `bazel build`.
+
+
+```shell
+bazel build  --define wasm=wavm  //source/exe:envoy-static
+```
+
+The available VM name options are
+
+1. wavm
+1. v8
+1. null? (Avaialbe or not?)
+
+
+To build Envoy via Docker image, pass `--define wasm=<vm-name>` as `BAZEL_EXTRA_BUILD_OPTIONS`
+
+```shell
+BAZEL_EXTRA_BUILD_OPTIONS='--define wasm=wavm' ./ci/run_envoy_docker.sh './ci/do_ci.sh bazel.dev'
+```
