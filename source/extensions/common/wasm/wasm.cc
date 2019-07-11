@@ -618,8 +618,10 @@ Word _emscripten_get_heap_sizeHandler(void* raw_context) {
   return context->wasmVm()->getMemorySize();
 }
 
-Word _emscripten_memcpy_bigHandler(void*, Word, Word, Word) {
-  throw WasmException("emscripten emscripten_memcpy_big");
+Word _emscripten_memcpy_bigHandler(void* raw_context, Word dst, Word src, Word size) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->wasmVm()->setMemory(dst, size, context->wasmVm()->getMemory(src, size).data());
+  return dst;
 }
 
 Word _emscripten_resize_heapHandler(void*, Word) {
