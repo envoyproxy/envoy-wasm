@@ -1,6 +1,6 @@
-# Envoy Webassembly Filter
+# Envoy WebAssembly Filter
 
-In this example, we show how a Webassembly(WASM) filter can be used with the Envoy
+In this example, we show how a WebAssembly(WASM) filter can be used with the Envoy
 proxy. The Envoy proxy [configuration](./envoy.yaml) includes a Webassembly filter
 as documented [here](https://www.envoyproxy.io/docs/envoy/latest/).
 <!--TODO(bianpengyuan): change to the url of Wasm filter once the doc is ready.-->
@@ -39,9 +39,9 @@ example body
 * Connection #0 to host localhost left intact
 ```
 
-## Build WASM Binary
+## Build WASM Module
 
-Now you want to make changes to the C++ filter, regenerate to WASM binary code.
+Now you want to make changes to the C++ filter, regenerate to WASM module.
 
 ### prerequisite
 

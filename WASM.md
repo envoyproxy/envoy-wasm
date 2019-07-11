@@ -34,13 +34,13 @@ bazel build  --define wasm=wavm  //source/exe:envoy-static
 
 The available VM name options are
 
-1. wavm
-1. v8
-1. null? (Avaialbe or not?)
+1. `enabled`, enabling all WebAssmebly runtime implementation.
+1. `wavm`, enabling WAVM.
+1. `v8`, enabling v8.
 
 
-To build Envoy via Docker image, pass `--define wasm=<vm-name>` as `BAZEL_EXTRA_BUILD_OPTIONS`
+To build Envoy via Docker image, pass `--define=wasm=<vm-name>` as `BAZEL_BUILD_EXTRA_OPTIONS`
 
 ```shell
-BAZEL_EXTRA_BUILD_OPTIONS='--define wasm=wavm' ./ci/run_envoy_docker.sh './ci/do_ci.sh bazel.dev'
+./ci/run_envoy_docker.sh 'BAZEL_BUILD_EXTRA_OPTIONS=--define=wasm=enabled ./ci/do_ci.sh bazel.dev'
 ```
