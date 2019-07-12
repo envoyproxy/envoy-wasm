@@ -250,7 +250,8 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
   EXPECT_CALL(*async_client, sendRaw(_, _, _, _, _, _))
       .WillOnce(Invoke(
           [&](absl::string_view service_full_name, absl::string_view method_name,
-              Buffer::InstancePtr& message, Grpc::RawAsyncRequestCallbacks& cb, Tracing::Span& span,
+              Buffer::InstancePtr&& message, Grpc::RawAsyncRequestCallbacks& cb,
+              Tracing::Span& span,
               const absl::optional<std::chrono::milliseconds>& timeout) -> Grpc::AsyncRequest* {
             EXPECT_EQ(service_full_name, "service");
             EXPECT_EQ(method_name, "method");
