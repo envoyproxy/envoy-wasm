@@ -765,7 +765,7 @@ public:
   // Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).
   virtual bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) PURE;
   // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
-  virtual bool setMemory(uint64_t pointer, uint64_t size, void* data) PURE;
+  virtual bool setMemory(uint64_t pointer, uint64_t size, const void* data) PURE;
   // Set a Word in the VM, returns true on success, false if the pointer is invalid.
   virtual bool setWord(uint64_t pointer, uint64_t data) PURE;
   // Make a new intrinsic module (e.g. for Emscripten support).

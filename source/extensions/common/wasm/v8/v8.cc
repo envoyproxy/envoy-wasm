@@ -69,7 +69,7 @@ public:
   uint64_t getMemorySize() override;
   absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
-  bool setMemory(uint64_t pointer, uint64_t size, void* data) override;
+  bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool setWord(uint64_t pointer, uint64_t word) override;
 
 #define _REGISTER_HOST_GLOBAL(_type)                                                               \
@@ -548,7 +548,7 @@ bool V8::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
   return true;
 }
 
-bool V8::setMemory(uint64_t pointer, uint64_t size, void* data) {
+bool V8::setMemory(uint64_t pointer, uint64_t size, const void* data) {
   ENVOY_LOG(trace, "[wasm] setMemory({}, {})", pointer, size);
   ASSERT(memory_ != nullptr);
   RELEASE_ASSERT(pointer + size <= memory_->data_size(), "");

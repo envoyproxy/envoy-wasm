@@ -47,7 +47,7 @@ struct NullVm : public WasmVm {
   uint64_t getMemorySize() override;
   absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
-  bool setMemory(uint64_t pointer, uint64_t size, void* data) override;
+  bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool setWord(uint64_t pointer, uint64_t data) override;
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name) override;
@@ -136,7 +136,7 @@ bool NullVm::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
   return true;
 }
 
-bool NullVm::setMemory(uint64_t pointer, uint64_t size, void* data) {
+bool NullVm::setMemory(uint64_t pointer, uint64_t size, const void* data) {
   auto p = reinterpret_cast<char*>(pointer);
   memcpy(p, data, size);
   return true;
