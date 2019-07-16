@@ -417,7 +417,7 @@ public:
   virtual void removeHeaderMapValue(HeaderMapType type, absl::string_view key);
   virtual void replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
                                      absl::string_view value);
-  
+
   virtual uint32_t getHeaderMapSize(HeaderMapType type);
 
   // Body Buffer

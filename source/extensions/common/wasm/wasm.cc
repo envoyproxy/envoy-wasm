@@ -938,7 +938,11 @@ void Context::replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
 }
 
 uint32_t Context::getHeaderMapSize(HeaderMapType type) {
-  return getMap(type)->byteSize();
+  auto map = getMap(type);
+  if (!map) {
+    return 0;
+  }
+  return map->byteSize();
 }
 
 // Body Buffer
