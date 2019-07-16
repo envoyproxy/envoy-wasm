@@ -105,6 +105,7 @@ public:
   _REGISTER_HOST_FUNCTION(WasmCallback_ZWl);
   _REGISTER_HOST_FUNCTION(WasmCallback_ZWm);
   _REGISTER_HOST_FUNCTION(WasmCallback_m);
+  _REGISTER_HOST_FUNCTION(WasmCallback_jW);
   _REGISTER_HOST_FUNCTION(WasmCallback_mW);
 #undef _REGISTER_HOST_FUNCTION
 

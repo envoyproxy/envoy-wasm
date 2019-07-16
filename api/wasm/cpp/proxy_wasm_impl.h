@@ -418,6 +418,14 @@ inline WasmDataPtr getProtocol(StreamType type) {
   return std::make_unique<WasmData>(ptr, size);
 }
 
+inline uint32_t getDestinationPort(StreamType type) {
+  return proxy_getDestinationPort(type);
+}
+
+inline uint32_t getResponseCode(StreamType type) {
+  return proxy_getResponseCode(type);
+}
+
 // Metadata
 inline WasmDataPtr getMetadata(MetadataType type, StringView key) {
   const char* value_ptr = nullptr;
@@ -697,6 +705,10 @@ inline void setHeaderMapPairs(HeaderMapType type, const HeaderStringPairs &pairs
   proxy_setHeaderMapPairs(type, ptr, size);
 }
 
+inline uint32_t getHeaderMapSize(HeaderMapType type) {
+  return proxy_getHeaderMapSize(type);
+}
+
 inline void addRequestHeader(StringView key, StringView value) {
   addHeaderMapValue(HeaderMapType::RequestHeaders, key, value);
 }
@@ -714,6 +726,9 @@ inline WasmDataPtr getRequestHeaderPairs() {
 }
 inline void setRequestHeaderPairs(const HeaderStringPairs &pairs) {
   return setHeaderMapPairs(HeaderMapType::RequestHeaders, pairs);
+}
+inline size_t getRequestHeaderSize() {
+  return getHeaderMapSize(HeaderMapType::RequestHeaders);
 }
 
 inline void addRequestTrailer(StringView key, StringView value) {
@@ -734,6 +749,9 @@ inline WasmDataPtr getRequestTrailerPairs() {
 inline void setRequestTrailerPairs(const HeaderStringPairs &pairs) {
   return setHeaderMapPairs(HeaderMapType::RequestTrailers, pairs);
 }
+inline size_t getRequestTrailerSize() {
+  return getHeaderMapSize(HeaderMapType::RequestTrailers);
+}
 
 inline void addResponseHeader(StringView key, StringView value) {
   addHeaderMapValue(HeaderMapType::ResponseHeaders, key, value);
@@ -753,6 +771,9 @@ inline WasmDataPtr getResponseHeaderPairs() {
 inline void setResponseHeaderPairs(const HeaderStringPairs &pairs) {
   return setHeaderMapPairs(HeaderMapType::ResponseHeaders, pairs);
 }
+inline size_t getResponseHeaderSize() {
+  return getHeaderMapSize(HeaderMapType::ResponseHeaders);
+}
 
 inline void addResponseTrailer(StringView key, StringView value) {
   addHeaderMapValue(HeaderMapType::ResponseTrailers, key, value);
@@ -771,6 +792,9 @@ inline WasmDataPtr getResponseTrailerPairs() {
 }
 inline void setResponseTrailerPairs(const HeaderStringPairs &pairs) {
   return setHeaderMapPairs(HeaderMapType::ResponseTrailers, pairs);
+}
+inline size_t getResponseTrailerSize() {
+  return getHeaderMapSize(HeaderMapType::ResponseTrailers);
 }
 
 // Body

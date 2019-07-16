@@ -350,6 +350,20 @@ void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word v
                                      value_ptr_ptr, value_size_ptr);
 }
 
+uint32_t getDestinationPortHandler(void* raw_context, Word type) {
+  if (type > static_cast<int>(StreamType::MAX))
+    return 0;
+  auto context = WASM_CONTEXT(raw_context);
+  return context->getDestinationPort(static_cast<StreamType>(type.u64));
+}
+
+uint32_t getResponseCodeHandler(void* raw_context, Word type) {
+  if (type > static_cast<int>(StreamType::MAX))
+    return 500;
+  auto context = WASM_CONTEXT(raw_context);
+  return context->getResponseCode(static_cast<StreamType>(type.u64));
+}
+
 // Metadata
 void getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr) {
@@ -525,6 +539,14 @@ void setHeaderMapPairsHandler(void* raw_context, Word type, Word ptr, Word size)
   auto context = WASM_CONTEXT(raw_context);
   context->setHeaderMapPairs(static_cast<HeaderMapType>(type.u64),
                              toPairs(context->wasmVm()->getMemory(ptr, size)));
+}
+
+uint32_t getHeaderMapSizeHandler(void* raw_context, Word type) {
+  if (type > static_cast<uint64_t>(HeaderMapType::MAX)) {
+    return 0;
+  }
+  auto context = WASM_CONTEXT(raw_context);
+  return context->getHeaderMapSize(static_cast<HeaderMapType>(type.u64));
 }
 
 // Body Buffer
@@ -931,6 +953,14 @@ void Context::replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
     map->addCopy(lower_key, std::string(value));
 }
 
+uint32_t Context::getHeaderMapSize(HeaderMapType type) {
+  auto map = getMap(type);
+  if (!map) {
+    return 0;
+  }
+  return map->byteSize();
+}
+
 // Body Buffer
 
 absl::string_view Context::getRequestBodyBufferBytes(uint32_t start, uint32_t length) {
@@ -1160,6 +1190,28 @@ std::string Context::getProtocol(StreamType type) {
     return "";
   }
   return Http::Utility::getProtocolString(streamInfo->protocol().value());
+}
+
+uint32_t Context::getDestinationPort(StreamType type) {
+  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
+  if (!streamInfo)
+    return 0;
+  auto address = streamInfo->upstreamHost()->address();
+  if (!address) {
+    return 0;
+  }
+  auto ip = address->ip();
+  if (!ip) {
+    return 0;
+  }
+  return ip->port();
+}
+
+uint32_t Context::getResponseCode(StreamType type) {
+  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
+  if (!streamInfo)
+    return 500;
+  return streamInfo->responseCode().value_or(500);
 }
 
 const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
@@ -1628,6 +1680,8 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(log);
 
   _REGISTER_PROXY(getProtocol);
+  _REGISTER_PROXY(getDestinationPort);
+  _REGISTER_PROXY(getResponseCode);
 
   _REGISTER_PROXY(getMetadata);
   _REGISTER_PROXY(setMetadata);
@@ -1653,6 +1707,7 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(removeHeaderMapValue);
   _REGISTER_PROXY(getHeaderMapPairs);
   _REGISTER_PROXY(setHeaderMapPairs);
+  _REGISTER_PROXY(getHeaderMapSize);
 
   _REGISTER_PROXY(getRequestBodyBufferBytes);
   _REGISTER_PROXY(getResponseBodyBufferBytes);
