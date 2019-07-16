@@ -56,8 +56,9 @@ public:
   std::pair<std::string, uint32_t> get(absl::string_view vm_id, const absl::string_view key) {
     absl::ReaderMutexLock l(&mutex);
     auto map = data.find(vm_id);
-    if (map == data.end())
+    if (map == data.end()) {
       return {"", 0};
+    }
     auto it = map->second.find(key);
     if (it != map->second.end()) {
       return it->second;
@@ -76,8 +77,9 @@ public:
     }
     auto it = map->find(key);
     if (it != map->end()) {
-      if (cas && cas != it->second.second)
+      if (cas && cas != it->second.second) {
         return false;
+      }
       it->second = std::make_pair(std::string(value), nextCas());
     } else {
       map->emplace(key, std::make_pair(std::string(value), nextCas()));
@@ -146,8 +148,9 @@ public:
   uint32_t nextCas() {
     auto result = cas;
     cas++;
-    if (!cas)
+    if (!cas) { // 0 is not a valid CAS value.
       cas++;
+    }
     return result;
   }
 
@@ -231,8 +234,9 @@ Pairs toPairs(absl::string_view buffer) {
     return {};
   auto size = *reinterpret_cast<const uint32_t*>(b);
   b += sizeof(uint32_t);
-  if (sizeof(uint32_t) + size * 2 * sizeof(uint32_t) > buffer.size())
+  if (sizeof(uint32_t) + size * 2 * sizeof(uint32_t) > buffer.size()) {
     return {};
+  }
   result.resize(size);
   for (uint32_t i = 0; i < size; i++) {
     result[i].first = absl::string_view(nullptr, *reinterpret_cast<const uint32_t*>(b));
@@ -338,8 +342,9 @@ uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_na
 
 // StreamInfo
 void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word value_size_ptr) {
-  if (type > static_cast<int>(StreamType::MAX))
+  if (type > static_cast<int>(StreamType::MAX)) {
     return;
+  }
   auto context = WASM_CONTEXT(raw_context);
   context->wasm()->copyToPointerSize(context->getProtocol(static_cast<StreamType>(type.u64)),
                                      value_ptr_ptr, value_size_ptr);
@@ -348,8 +353,9 @@ void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word v
 // Metadata
 void getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr) {
-  if (type > static_cast<int>(MetadataType::MAX))
+  if (type > static_cast<int>(MetadataType::MAX)) {
     return;
+  }
   auto context = WASM_CONTEXT(raw_context);
   context->wasm()->copyToPointerSize(
       context->getMetadata(static_cast<MetadataType>(type.u64),
@@ -359,8 +365,9 @@ void getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_siz
 
 void setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
                         Word value_size) {
-  if (type > static_cast<int>(MetadataType::MAX))
+  if (type > static_cast<int>(MetadataType::MAX)) {
     return;
+  }
   auto context = WASM_CONTEXT(raw_context);
   context->setMetadata(static_cast<MetadataType>(type.u64),
                        context->wasmVm()->getMemory(key_ptr, key_size),
@@ -368,8 +375,9 @@ void setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_siz
 }
 
 void getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
-  if (type > static_cast<int>(MetadataType::MAX))
+  if (type > static_cast<int>(MetadataType::MAX)) {
     return;
+  }
   auto context = WASM_CONTEXT(raw_context);
   getPairs(context, context->getMetadataPairs(static_cast<MetadataType>(type.u64)), ptr_ptr,
            size_ptr);
@@ -377,8 +385,9 @@ void getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word si
 
 void getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr_ptr, Word value_size_ptr) {
-  if (type > static_cast<int>(MetadataType::MAX))
+  if (type > static_cast<int>(MetadataType::MAX)) {
     return;
+  }
   auto context = WASM_CONTEXT(raw_context);
   context->wasm()->copyToPointerSize(
       context->getMetadataStruct(static_cast<MetadataType>(type.u64),
@@ -388,8 +397,9 @@ void getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
 
 void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr, Word value_size) {
-  if (type > static_cast<int>(MetadataType::MAX))
+  if (type > static_cast<int>(MetadataType::MAX)) {
     return;
+  }
   auto context = WASM_CONTEXT(raw_context);
   context->setMetadataStruct(static_cast<MetadataType>(type.u64),
                              context->wasmVm()->getMemory(name_ptr, name_size),
@@ -837,26 +847,30 @@ const Http::HeaderMap* Context::getConstMap(HeaderMapType type) {
 void Context::addHeaderMapValue(HeaderMapType type, absl::string_view key,
                                 absl::string_view value) {
   auto map = getMap(type);
-  if (!map)
+  if (!map) {
     return;
+  }
   const Http::LowerCaseString lower_key(std::move(std::string(key)));
   map->addCopy(lower_key, std::string(value));
 }
 
 absl::string_view Context::getHeaderMapValue(HeaderMapType type, absl::string_view key) {
   auto map = getConstMap(type);
-  if (!map)
+  if (!map) {
     return "";
+  }
   const Http::LowerCaseString lower_key(std::move(std::string(key)));
   auto entry = map->get(lower_key);
-  if (!entry)
+  if (!entry) {
     return "";
+  }
   return entry->value().getStringView();
 }
 
 Pairs headerMapToPairs(const Http::HeaderMap* map) {
-  if (!map)
+  if (!map) {
     return {};
+  }
   Pairs pairs;
   pairs.reserve(map->size());
   map->iterate(
@@ -874,8 +888,9 @@ Pairs Context::getHeaderMapPairs(HeaderMapType type) { return headerMapToPairs(g
 
 void Context::setHeaderMapPairs(HeaderMapType type, const Pairs& pairs) {
   auto map = getMap(type);
-  if (!map)
+  if (!map) {
     return;
+  }
   std::vector<std::string> keys;
   map->iterate(
       [](const Http::HeaderEntry& header, void* keys) -> Http::HeaderMap::Iterate {
@@ -896,8 +911,9 @@ void Context::setHeaderMapPairs(HeaderMapType type, const Pairs& pairs) {
 
 void Context::removeHeaderMapValue(HeaderMapType type, absl::string_view key) {
   auto map = getMap(type);
-  if (!map)
+  if (!map) {
     return;
+  }
   const Http::LowerCaseString lower_key(std::move(std::string(key)));
   map->remove(lower_key);
 }
@@ -918,19 +934,23 @@ void Context::replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
 // Body Buffer
 
 absl::string_view Context::getRequestBodyBufferBytes(uint32_t start, uint32_t length) {
-  if (!requestBodyBuffer_)
+  if (!requestBodyBuffer_) {
     return "";
-  if (requestBodyBuffer_->length() < static_cast<uint64_t>((start + length)))
+  }
+  if (requestBodyBuffer_->length() < static_cast<uint64_t>((start + length))) {
     return "";
+  }
   return absl::string_view(
       static_cast<char*>(requestBodyBuffer_->linearize(start + length)) + start, length);
 }
 
 absl::string_view Context::getResponseBodyBufferBytes(uint32_t start, uint32_t length) {
-  if (!responseBodyBuffer_)
+  if (!responseBodyBuffer_) {
     return "";
-  if (responseBodyBuffer_->length() < static_cast<uint64_t>((start + length)))
+  }
+  if (responseBodyBuffer_->length() < static_cast<uint64_t>((start + length))) {
     return "";
+  }
   return absl::string_view(
       static_cast<char*>(responseBodyBuffer_->linearize(start + length)) + start, length);
 }
@@ -939,11 +959,13 @@ absl::string_view Context::getResponseBodyBufferBytes(uint32_t start, uint32_t l
 uint32_t Context::httpCall(absl::string_view cluster, const Pairs& request_headers,
                            absl::string_view request_body, const Pairs& request_trailers,
                            int timeout_milliseconds) {
-  if (timeout_milliseconds < 0)
+  if (timeout_milliseconds < 0) {
     return 0;
+  }
   auto cluster_string = std::string(cluster);
-  if (clusterManager().get(cluster_string) == nullptr)
+  if (clusterManager().get(cluster_string) == nullptr) {
     return 0;
+  }
 
   Http::MessagePtr message(new Http::RequestMessageImpl(buildHeaderMapFromPairs(request_headers)));
 
@@ -1134,8 +1156,9 @@ const StreamInfo::StreamInfo* Context::getConstStreamInfo(MetadataType type) con
 
 std::string Context::getProtocol(StreamType type) {
   auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
-  if (!streamInfo)
+  if (!streamInfo) {
     return "";
+  }
   return Http::Utility::getProtocolString(streamInfo->protocol().value());
 }
 
@@ -1391,8 +1414,9 @@ Http::FilterDataStatus Context::onResponseBody(int body_buffer_length, bool end_
 }
 
 Http::FilterTrailersStatus Context::onResponseTrailers() {
-  if (!wasm_->onResponseTrailers_)
+  if (!wasm_->onResponseTrailers_) {
     return Http::FilterTrailersStatus::Continue;
+  }
   if (wasm_->onResponseTrailers_(this, id_) == 0) {
     return Http::FilterTrailersStatus::Continue;
   }
@@ -1400,8 +1424,9 @@ Http::FilterTrailersStatus Context::onResponseTrailers() {
 }
 
 Http::FilterMetadataStatus Context::onResponseMetadata() {
-  if (!wasm_->onResponseMetadata_)
+  if (!wasm_->onResponseMetadata_) {
     return Http::FilterMetadataStatus::Continue;
+  }
   if (wasm_->onResponseMetadata_(this, id_) == 0) {
     return Http::FilterMetadataStatus::Continue;
   }
@@ -1410,8 +1435,9 @@ Http::FilterMetadataStatus Context::onResponseMetadata() {
 
 void Context::onHttpCallResponse(uint32_t token, const Pairs& response_headers,
                                  absl::string_view response_body, const Pairs& response_trailers) {
-  if (!wasm_->onHttpCallResponse_)
+  if (!wasm_->onHttpCallResponse_) {
     return;
+  }
   uint64_t headers_ptr, headers_size, trailers_ptr, trailers_size;
   exportPairs(this, response_headers, &headers_ptr, &headers_size);
   exportPairs(this, response_trailers, &trailers_ptr, &trailers_size);
@@ -1482,16 +1508,18 @@ void Context::incrementMetric(uint32_t metric_id, int64_t offset) {
   if (type == MetricType::Counter) {
     auto it = wasm_->counters_.find(metric_id);
     if (it != wasm_->counters_.end()) {
-      if (offset > 0)
+      if (offset > 0) {
         it->second->add(offset);
+      }
     }
   } else if (type == MetricType::Gauge) {
     auto it = wasm_->gauges_.find(metric_id);
     if (it != wasm_->gauges_.end()) {
-      if (offset > 0)
+      if (offset > 0) {
         it->second->add(offset);
-      else
+      } else {
         it->second->sub(-offset);
+      }
     }
   }
 }
@@ -1711,11 +1739,13 @@ Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
 }
 
 bool Wasm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
-  if (!wasm_vm_)
+  if (!wasm_vm_) {
     return false;
+  }
   auto ok = wasm_vm_->load(code, allow_precompiled);
-  if (!ok)
+  if (!ok) {
     return false;
+  }
   auto metadata = wasm_vm_->getUserSection("emscripten_metadata");
   if (!metadata.empty()) {
     is_emscripten_ = true;
@@ -1817,8 +1847,9 @@ uint32_t Wasm::allocContextId() {
   while (true) {
     auto id = next_context_id_++;
     // Prevent reuse.
-    if (contexts_.find(id) == contexts_.end())
+    if (contexts_.find(id) == contexts_.end()) {
       return id;
+    }
   }
 }
 
@@ -1871,25 +1902,29 @@ void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap*
 }
 
 void Context::onDestroy() {
-  if (destroyed_)
+  if (destroyed_) {
     return;
+  }
   destroyed_ = true;
   onDone();
 }
 
 void Context::onDone() {
-  if (wasm_->onDone_)
+  if (wasm_->onDone_) {
     wasm_->onDone_(this, id_);
+  }
 }
 
 void Context::onLog() {
-  if (wasm_->onLog_)
+  if (wasm_->onLog_) {
     wasm_->onLog_(this, id_);
+  }
 }
 
 void Context::onDelete() {
-  if (wasm_->onDelete_)
+  if (wasm_->onDelete_) {
     wasm_->onDelete_(this, id_);
+  }
 }
 
 Http::FilterHeadersStatus Context::decodeHeaders(Http::HeaderMap& headers, bool end_stream) {
@@ -2194,8 +2229,9 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view r
     wasm->configure(root_context, base_wasm.initial_configuration());
   }
   wasm->configure(root_context, configuration);
-  if (!wasm->id().empty())
+  if (!wasm->id().empty()) {
     local_wasms[wasm->id()] = wasm;
+  }
   return wasm;
 }
 
