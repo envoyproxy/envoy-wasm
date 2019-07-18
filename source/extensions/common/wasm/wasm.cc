@@ -420,7 +420,7 @@ void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
                              context->wasmVm()->getMemory(value_ptr, value_size));
 }
 
-// Continue
+// Continue/Reply/Route
 void continueRequestHandler(void* raw_context) {
   auto context = WASM_CONTEXT(raw_context);
   context->continueRequest();
@@ -429,6 +429,36 @@ void continueRequestHandler(void* raw_context) {
 void continueResponseHandler(void* raw_context) {
   auto context = WASM_CONTEXT(raw_context);
   context->continueResponse();
+}
+
+void sendLocalReplyHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
+                           Word response_code_details_size, Word body_ptr, Word body_size,
+                           Word additional_response_header_pairs_ptr,
+                           Word additional_response_header_pairs_size, Word grpc_code) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto details =
+      context->wasmVm()->getMemory(response_code_details_ptr, response_code_details_size);
+  auto body = context->wasmVm()->getMemory(body_ptr, body_size);
+  auto additional_headers = toPairs(context->wasmVm()->getMemory(
+      additional_response_header_pairs_ptr, additional_response_header_pairs_size));
+  std::function<void(Http::HeaderMap & headers)> modify_headers =
+      [additional_headers](Http::HeaderMap& headers) {
+        for (auto& p : additional_headers) {
+          const Http::LowerCaseString lower_key(std::move(std::string(p.first)));
+          headers.addCopy(lower_key, std::string(p.second));
+        }
+      };
+  auto grpc_status = static_cast<Grpc::Status::GrpcStatus>(grpc_code.u64);
+  auto grpc_status_opt = (grpc_status != Grpc::Status::GrpcStatus::InvalidCode)
+                             ? absl::optional<Grpc::Status::GrpcStatus>(grpc_status)
+                             : absl::optional<Grpc::Status::GrpcStatus>();
+  context->sendLocalReply(static_cast<Envoy::Http::Code>(response_code.u64), body, modify_headers,
+                          grpc_status_opt, details);
+}
+
+void clearRouteCacheHandler(void* raw_context) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->clearRouteCache();
 }
 
 // SharedData
@@ -686,6 +716,10 @@ Word ___call_mainHandler(void*, Word, Word) { throw WasmException("emscripten ca
 
 Word ___cxa_allocate_exceptionHandler(void*, Word) {
   throw WasmException("emscripten cxa_allocate_exception");
+}
+
+Word ___cxa_uncaught_exceptionHandler(void*) {
+  throw WasmException("emscripten cxa_uncaught_exception");
 }
 
 Word ___clock_gettimeHandler(void*, Word, Word) { throw WasmException("emscripten clock_gettime"); }
@@ -1650,6 +1684,7 @@ void Wasm::registerCallbacks() {
     _REGISTER(___cxa_throw);
     _REGISTER(___cxa_pure_virtual);
     _REGISTER(___cxa_allocate_exception);
+    _REGISTER(___cxa_uncaught_exception);
     _REGISTER(___call_main);
     _REGISTER(___clock_gettime);
     _REGISTER(___lock);
@@ -1692,6 +1727,8 @@ void Wasm::registerCallbacks() {
 
   _REGISTER_PROXY(continueRequest);
   _REGISTER_PROXY(continueResponse);
+  _REGISTER_PROXY(sendLocalReply);
+  _REGISTER_PROXY(clearRouteCache);
 
   _REGISTER_PROXY(getSharedData);
   _REGISTER_PROXY(setSharedData);
