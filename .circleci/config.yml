@@ -4,7 +4,7 @@ executors:
   ubuntu-build:
     description: "A regular build executor based on ubuntu image"
     docker:
-      - image: piotrsikora/envoy:f81e02649420e4ba9f3b5b61074948d9bf741f83
+      - image: piotrsikora/envoy:fd859807d5f64e7bc0af5742056d8be1dfba8e1f
     resource_class: xlarge
     working_directory: /source
 
