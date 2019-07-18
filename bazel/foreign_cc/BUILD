@@ -52,10 +52,6 @@ envoy_cmake_external(
         "CARES_SHARED": "no",
         "CARES_STATIC": "on",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        # Disable ranlib because it is not handled by bazel, and therefore
-        # doesn't respect custom toolchains such as the Android NDK,
-        # see https://github.com/bazelbuild/rules_foreign_cc/issues/252
-        "CMAKE_RANLIB": "",
     },
     copy_pdb = True,
     lib_source = "@com_github_c_ares_c_ares//:all",
@@ -95,10 +91,6 @@ envoy_cmake_external(
         "EVENT__DISABLE_TESTS": "on",
         "EVENT__LIBRARY_TYPE": "STATIC",
         "CMAKE_BUILD_TYPE": "Release",
-        # Disable ranlib because it is not handled by bazel, and therefore
-        # doesn't respect custom toolchains such as the Android NDK,
-        # see https://github.com/bazelbuild/rules_foreign_cc/issues/252
-        "CMAKE_RANLIB": "",
         # Force _GNU_SOURCE on for Android builds. This would be contained in
         # a 'select' but the downstream macro uses a select on all of these
         # options, and they cannot be nested.
@@ -142,6 +134,9 @@ envoy_cmake_external(
         "LLVM_ENABLE_ZLIB": "off",
         "LLVM_TARGETS_TO_BUILD": "X86",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        # Workaround for the issue with statically linked libstdc++
+        # using -l:libstdc++.a.
+        "CMAKE_CXX_FLAGS": "-lstdc++",
     },
     env_vars = {
         # Workaround for the -DDEBUG flag added in fastbuild on macOS,
@@ -223,10 +218,6 @@ envoy_cmake_external(
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_INSTALL_LIBDIR": "lib",
         "CMAKE_CXX_COMPILER_FORCED": "on",
-        # Disable ranlib because it is not handled by bazel, and therefore
-        # doesn't respect custom toolchains such as the Android NDK,
-        # see https://github.com/bazelbuild/rules_foreign_cc/issues/252
-        "CMAKE_RANLIB": "",
     },
     cmake_files_dir = "$BUILD_TMPDIR/lib/CMakeFiles",
     copy_pdb = True,
@@ -246,6 +237,9 @@ envoy_cmake_external(
         "WAVM_ENABLE_STATIC_LINKING": "on",
         "WAVM_ENABLE_RELEASE_ASSERTS": "on",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        # Workaround for the issue with statically linked libstdc++
+        # using -l:libstdc++.a.
+        "CMAKE_CXX_FLAGS": "-lstdc++ -Wno-unused-command-line-argument",
     },
     env_vars = {
         # Workaround for the -DDEBUG flag added in fastbuild on macOS,
@@ -271,10 +265,6 @@ envoy_cmake_external(
         "YAML_CPP_BUILD_TOOLS": "off",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_CXX_COMPILER_FORCED": "on",
-        # Disable ranlib because it is not handled by bazel, and therefore
-        # doesn't respect custom toolchains such as the Android NDK,
-        # see https://github.com/bazelbuild/rules_foreign_cc/issues/252
-        "CMAKE_RANLIB": "",
     },
     lib_source = "@com_github_jbeder_yaml_cpp//:all",
     static_libraries = select({
@@ -289,10 +279,6 @@ envoy_cmake_external(
     name = "zlib",
     cache_entries = {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        # Disable ranlib because it is not handled by bazel, and therefore
-        # doesn't respect custom toolchains such as the Android NDK,
-        # see https://github.com/bazelbuild/rules_foreign_cc/issues/252
-        "CMAKE_RANLIB": "",
     },
     copy_pdb = True,
     lib_source = "@net_zlib//:all",
