@@ -12,7 +12,6 @@ mergeInto(LibraryManager.library, {
     proxy_setMetadataStruct: function () {},
     proxy_continueRequest: function () {},
     proxy_continueResponse: function () {},
-    proxy_clearRouteCache: function () {},
     proxy_addHeaderMapValue: function () {},
     proxy_getHeaderMapValue: function () {},
     proxy_getHeaderMapPairs: function () {},
