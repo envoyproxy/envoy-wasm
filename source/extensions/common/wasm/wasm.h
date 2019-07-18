@@ -185,10 +185,10 @@ void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
                               Word value_ptr, Word value_size);
 void continueRequestHandler(void* raw_context);
 void continueResponseHandler(void* raw_context);
-void sendLocalReplyHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
-                           Word response_code_details_size, Word body_ptr, Word body_size,
-                           Word additional_response_header_pairs_ptr,
-                           Word additional_response_header_pairs_size, Word grpc_status);
+void sendLocalResponseHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
+                              Word response_code_details_size, Word body_ptr, Word body_size,
+                              Word additional_response_header_pairs_ptr,
+                              Word additional_response_header_pairs_size, Word grpc_status);
 void clearRouteCacheHandler(void* raw_context);
 void getSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr_ptr,
                           Word value_size_ptr, Word cas_ptr);
@@ -402,10 +402,10 @@ public:
     if (encoder_callbacks_)
       encoder_callbacks_->continueEncoding();
   }
-  virtual void sendLocalReply(Http::Code response_code, absl::string_view body_text,
-                              std::function<void(Http::HeaderMap& headers)> modify_headers,
-                              const absl::optional<Grpc::Status::GrpcStatus> grpc_status,
-                              absl::string_view details) {
+  virtual void sendLocalResponse(Http::Code response_code, absl::string_view body_text,
+                                 std::function<void(Http::HeaderMap& headers)> modify_headers,
+                                 const absl::optional<Grpc::Status::GrpcStatus> grpc_status,
+                                 absl::string_view details) {
     if (decoder_callbacks_)
       decoder_callbacks_->sendLocalReply(response_code, body_text, modify_headers, grpc_status,
                                          details);

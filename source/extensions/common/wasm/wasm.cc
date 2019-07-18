@@ -431,10 +431,10 @@ void continueResponseHandler(void* raw_context) {
   context->continueResponse();
 }
 
-void sendLocalReplyHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
-                           Word response_code_details_size, Word body_ptr, Word body_size,
-                           Word additional_response_header_pairs_ptr,
-                           Word additional_response_header_pairs_size, Word grpc_code) {
+void sendLocalResponseHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
+                              Word response_code_details_size, Word body_ptr, Word body_size,
+                              Word additional_response_header_pairs_ptr,
+                              Word additional_response_header_pairs_size, Word grpc_code) {
   auto context = WASM_CONTEXT(raw_context);
   auto details =
       context->wasmVm()->getMemory(response_code_details_ptr, response_code_details_size);
@@ -452,7 +452,7 @@ void sendLocalReplyHandler(void* raw_context, Word response_code, Word response_
   auto grpc_status_opt = (grpc_status != Grpc::Status::GrpcStatus::InvalidCode)
                              ? absl::optional<Grpc::Status::GrpcStatus>(grpc_status)
                              : absl::optional<Grpc::Status::GrpcStatus>();
-  context->sendLocalReply(static_cast<Envoy::Http::Code>(response_code.u64), body, modify_headers,
+  context->sendLocalResponse(static_cast<Envoy::Http::Code>(response_code.u64), body, modify_headers,
                           grpc_status_opt, details);
 }
 
@@ -1727,7 +1727,7 @@ void Wasm::registerCallbacks() {
 
   _REGISTER_PROXY(continueRequest);
   _REGISTER_PROXY(continueResponse);
-  _REGISTER_PROXY(sendLocalReply);
+  _REGISTER_PROXY(sendLocalResponse);
   _REGISTER_PROXY(clearRouteCache);
 
   _REGISTER_PROXY(getSharedData);

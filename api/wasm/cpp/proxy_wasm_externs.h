@@ -79,7 +79,7 @@ extern "C" void proxy_setMetadataStruct(MetadataType type, const char* name_ptr,
 // Continue/Reply/Route
 extern "C" void proxy_continueRequest();
 extern "C" void proxy_continueResponse();
-extern "C" void proxy_sendLocalReply(uint32_t response_code,
+extern "C" void proxy_sendLocalResponse(uint32_t response_code,
     const char* response_code_details_ptr, size_t response_code_details_size,
     const char* body_ptr, size_t body_size,
     const char* additional_response_header_pairs_ptr, size_t additional_response_header_pairs_size,
