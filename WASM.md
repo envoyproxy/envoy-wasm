@@ -47,7 +47,7 @@ sudo make install
 
 git clone git@github.com:WAVM/WAVM.git  
 cd WAVM  
-cmake .  
+cmake "."  
 make  
 sudo make install  
 
