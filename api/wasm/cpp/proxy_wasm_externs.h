@@ -76,9 +76,15 @@ extern "C" void proxy_getMetadataStruct(MetadataType type, const char* name_ptr,
 extern "C" void proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
                                         const char* value_ptr, size_t value_size);
 
-// Continue
+// Continue/Reply/Route
 extern "C" void proxy_continueRequest();
 extern "C" void proxy_continueResponse();
+extern "C" void proxy_sendLocalResponse(uint32_t response_code,
+    const char* response_code_details_ptr, size_t response_code_details_size,
+    const char* body_ptr, size_t body_size,
+    const char* additional_response_header_pairs_ptr, size_t additional_response_header_pairs_size,
+    uint32_t grpc_status);
+extern "C" void proxy_clearRouteCache();
 
 // SharedData
 extern "C" void proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,

@@ -72,6 +72,7 @@ struct NullVm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback3Void);
   _REGISTER_CALLBACK(WasmCallback4Void);
   _REGISTER_CALLBACK(WasmCallback5Void);
+  _REGISTER_CALLBACK(WasmCallback8Void);
   _REGISTER_CALLBACK(WasmCallback0Int);
   _REGISTER_CALLBACK(WasmCallback1Int);
   _REGISTER_CALLBACK(WasmCallback2Int);

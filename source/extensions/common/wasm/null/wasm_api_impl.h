@@ -73,6 +73,18 @@ inline void proxy_setMetadataStruct(MetadataType type, const char* name_ptr, siz
 // Continue
 inline void proxy_continueRequest() { continueRequestHandler(current_context_); }
 inline void proxy_continueResponse() { continueResponseHandler(current_context_); }
+inline void proxy_sendLocalResponse(uint32_t response_code, const char* response_code_details_ptr,
+                                    size_t response_code_details_size, const char* body_ptr,
+                                    size_t body_size,
+                                    const char* additional_response_header_pairs_ptr,
+                                    size_t additional_response_header_pairs_size,
+                                    uint32_t grpc_status) {
+  sendLocalResponseHandler(current_context_, WS(response_code), WR(response_code_details_ptr),
+                           WS(response_code_details_size), WR(body_ptr), WS(body_size),
+                           WR(additional_response_header_pairs_ptr),
+                           WS(additional_response_header_pairs_size), WS(grpc_status));
+}
+inline void proxy_clearRouteCache() { clearRouteCacheHandler(current_context_); }
 
 // SharedData
 inline void proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,

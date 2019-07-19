@@ -420,7 +420,7 @@ void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
                              context->wasmVm()->getMemory(value_ptr, value_size));
 }
 
-// Continue
+// Continue/Reply/Route
 void continueRequestHandler(void* raw_context) {
   auto context = WASM_CONTEXT(raw_context);
   context->continueRequest();
@@ -429,6 +429,35 @@ void continueRequestHandler(void* raw_context) {
 void continueResponseHandler(void* raw_context) {
   auto context = WASM_CONTEXT(raw_context);
   context->continueResponse();
+}
+
+void sendLocalResponseHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
+                              Word response_code_details_size, Word body_ptr, Word body_size,
+                              Word additional_response_header_pairs_ptr,
+                              Word additional_response_header_pairs_size, Word grpc_code) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto details =
+      context->wasmVm()->getMemory(response_code_details_ptr, response_code_details_size);
+  auto body = context->wasmVm()->getMemory(body_ptr, body_size);
+  auto additional_headers = toPairs(context->wasmVm()->getMemory(
+      additional_response_header_pairs_ptr, additional_response_header_pairs_size));
+  auto modify_headers = [additional_headers](Http::HeaderMap& headers) {
+    for (auto& p : additional_headers) {
+      const Http::LowerCaseString lower_key(std::move(std::string(p.first)));
+      headers.addCopy(lower_key, std::string(p.second));
+    }
+  };
+  auto grpc_status = static_cast<Grpc::Status::GrpcStatus>(grpc_code.u64);
+  auto grpc_status_opt = (grpc_status != Grpc::Status::GrpcStatus::InvalidCode)
+                             ? absl::optional<Grpc::Status::GrpcStatus>(grpc_status)
+                             : absl::optional<Grpc::Status::GrpcStatus>();
+  context->sendLocalResponse(static_cast<Envoy::Http::Code>(response_code.u64), body,
+                             modify_headers, grpc_status_opt, details);
+}
+
+void clearRouteCacheHandler(void* raw_context) {
+  auto context = WASM_CONTEXT(raw_context);
+  context->clearRouteCache();
 }
 
 // SharedData
@@ -1697,6 +1726,8 @@ void Wasm::registerCallbacks() {
 
   _REGISTER_PROXY(continueRequest);
   _REGISTER_PROXY(continueResponse);
+  _REGISTER_PROXY(sendLocalResponse);
+  _REGISTER_PROXY(clearRouteCache);
 
   _REGISTER_PROXY(getSharedData);
   _REGISTER_PROXY(setSharedData);

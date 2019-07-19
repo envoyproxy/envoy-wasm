@@ -259,7 +259,7 @@ public:
       std::function<void(Response&& response)> success_callback,
       std::function<void(GrpcStatus status, StringView error_message)> failure_callback) {
     auto callback = [success_callback, failure_callback](GrpcStatus status, std::unique_ptr<WasmData> message) {
-      if (status == GrpcStatus::OK) {
+      if (status == GrpcStatus::Ok) {
         success_callback(message->proto<Response>());
       } else {
         failure_callback(status, message->view());
@@ -631,9 +631,19 @@ inline google::protobuf::Struct Context::getResponseMetadataStruct(StringView na
   return getMetadataStruct(MetadataType::Response, name);
 }
 
-// Continue
+// Continue/Respond/Route
 inline void continueRequest() { proxy_continueRequest(); }
 inline void continueResponse() { proxy_continueResponse(); }
+inline void sendLocalResponse(uint32_t response_code, StringView response_code_details, StringView body,
+    const HeaderStringPairs& additional_response_headers, GrpcStatus grpc_status = GrpcStatus::InvalidCode) {
+  const char* ptr = nullptr;
+  size_t size = 0;
+  exportPairs(additional_response_headers, &ptr, &size);
+  proxy_sendLocalResponse(response_code, response_code_details.data(), response_code_details.size(),
+      body.data(), body.size(), ptr, size, static_cast<uint32_t>(grpc_status));
+}
+inline void clearRouteCache() { proxy_clearRouteCache(); }
+
 
 // SharedData
 inline WasmDataPtr getSharedData(StringView key, uint32_t* cas = nullptr) {
@@ -1311,7 +1321,7 @@ inline void ContextBase::onGrpcReceive(uint32_t token, std::unique_ptr<WasmData>
   {
     auto it = simple_grpc_calls_.find(token);
     if (it != simple_grpc_calls_.end()) {
-      it->second(GrpcStatus::OK, std::move(message));
+      it->second(GrpcStatus::Ok, std::move(message));
       simple_grpc_calls_.erase(token);
       return;
     }
