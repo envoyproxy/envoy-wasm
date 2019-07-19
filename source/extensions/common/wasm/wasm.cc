@@ -2004,7 +2004,7 @@ Http::FilterTrailersStatus Context::decodeTrailers(Http::HeaderMap& trailers) {
   return result;
 }
 
-Http::FilterMetadataStatus Context::decodeMetadata(Http::MetadataMap&& response_metadata) {
+Http::FilterMetadataStatus Context::decodeMetadata(Http::MetadataMap& response_metadata) {
   response_metadata_ = &response_metadata;
   auto result = onRequestMetadata();
   response_metadata_ = nullptr;
