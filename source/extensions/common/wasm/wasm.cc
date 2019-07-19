@@ -452,8 +452,8 @@ void sendLocalResponseHandler(void* raw_context, Word response_code, Word respon
   auto grpc_status_opt = (grpc_status != Grpc::Status::GrpcStatus::InvalidCode)
                              ? absl::optional<Grpc::Status::GrpcStatus>(grpc_status)
                              : absl::optional<Grpc::Status::GrpcStatus>();
-  context->sendLocalResponse(static_cast<Envoy::Http::Code>(response_code.u64), body, modify_headers,
-                          grpc_status_opt, details);
+  context->sendLocalResponse(static_cast<Envoy::Http::Code>(response_code.u64), body,
+                             modify_headers, grpc_status_opt, details);
 }
 
 void clearRouteCacheHandler(void* raw_context) {
