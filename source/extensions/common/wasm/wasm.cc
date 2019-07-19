@@ -441,13 +441,12 @@ void sendLocalResponseHandler(void* raw_context, Word response_code, Word respon
   auto body = context->wasmVm()->getMemory(body_ptr, body_size);
   auto additional_headers = toPairs(context->wasmVm()->getMemory(
       additional_response_header_pairs_ptr, additional_response_header_pairs_size));
-  std::function<void(Http::HeaderMap & headers)> modify_headers =
-      [additional_headers](Http::HeaderMap& headers) {
-        for (auto& p : additional_headers) {
-          const Http::LowerCaseString lower_key(std::move(std::string(p.first)));
-          headers.addCopy(lower_key, std::string(p.second));
-        }
-      };
+  auto modify_headers = [additional_headers](Http::HeaderMap& headers) {
+    for (auto& p : additional_headers) {
+      const Http::LowerCaseString lower_key(std::move(std::string(p.first)));
+      headers.addCopy(lower_key, std::string(p.second));
+    }
+  };
   auto grpc_status = static_cast<Grpc::Status::GrpcStatus>(grpc_code.u64);
   auto grpc_status_opt = (grpc_status != Grpc::Status::GrpcStatus::InvalidCode)
                              ? absl::optional<Grpc::Status::GrpcStatus>(grpc_status)

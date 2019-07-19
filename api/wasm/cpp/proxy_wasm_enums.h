@@ -33,7 +33,7 @@ enum class HeaderMapType : EnumType {
   GrpcReceiveInitialMetadata = 5,  // Immutable
   GrpcReceiveTrailingMetadata = 6,  // Immutable
 };
-enum GrpcStatus : EnumType {
+enum class GrpcStatus : EnumType {
   Ok = 0,
   Canceled = 1,
   Unknown = 2,

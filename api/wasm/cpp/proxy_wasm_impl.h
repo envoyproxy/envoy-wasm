@@ -635,12 +635,12 @@ inline google::protobuf::Struct Context::getResponseMetadataStruct(StringView na
 inline void continueRequest() { proxy_continueRequest(); }
 inline void continueResponse() { proxy_continueResponse(); }
 inline void sendLocalResponse(uint32_t response_code, StringView response_code_details, StringView body,
-    const HeaderStringPairs& additional_response_headers, uint32_t grpc_status = GrpcStatus::InvalidCode) {
+    const HeaderStringPairs& additional_response_headers, GrpcStatus grpc_status = GrpcStatus::InvalidCode) {
   const char* ptr = nullptr;
   size_t size = 0;
   exportPairs(additional_response_headers, &ptr, &size);
   proxy_sendLocalResponse(response_code, response_code_details.data(), response_code_details.size(),
-      body.data(), body.size(), ptr, size, grpc_status);
+      body.data(), body.size(), ptr, size, static_cast<uint32_t>(grpc_status));
 }
 inline void clearRouteCache() { proxy_clearRouteCache(); }
 
