@@ -1,8 +1,10 @@
 WebAssembly Extension Support
 
-# Dependencies
+# Build Dependencies
 
-## apt-get install libglib2.0-dev (on Debian/Ubuntu).
+## Install glib2.0 if required (on Debian/Ubuntu)
+
+apt-get install libglib2.0-dev
 
 ## emscripten
 
@@ -23,9 +25,7 @@ However 1.38.25 is known to work.
 export CC=clang
 export CXX=clang++
 
-## tools
-
-sudo apt-get install autoconf automake libtool curl make g++ unzip
+Note: ensure that you have clang in your path (e.g. /usr/lib/llvm-7/bin).
 
 ## protobuf v3.6.1
 
@@ -39,7 +39,9 @@ make
 make check
 sudo make install
 
-## WAVM binaries
+# Dependencies for regenerating test modules
+
+## WAVM binaries if you want to rebuild the c++ WebAssembly tests
 
 git clone git@github.com:WAVM/WAVM.git
 cd WAVM
