@@ -28,9 +28,7 @@ Http::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
 /**
  * Static registration for the Wasm filter. @see RegisterFactory.
  */
-static Registry::RegisterFactory<WasmFilterConfig,
-                                 Server::Configuration::NamedHttpFilterConfigFactory>
-    register_;
+REGISTER_FACTORY(WasmFilterConfig, Server::Configuration::NamedHttpFilterConfigFactory);
 
 } // namespace Wasm
 } // namespace HttpFilters

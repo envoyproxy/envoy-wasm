@@ -294,10 +294,9 @@ void BaseIntegrationTest::createUpstreams() {
 }
 
 void BaseIntegrationTest::createEnvoy() {
-  std::vector<uint32_t> ports;
   for (auto& upstream : fake_upstreams_) {
     if (upstream->localAddress()->ip()) {
-      ports.push_back(upstream->localAddress()->ip()->port());
+      ports_.push_back(upstream->localAddress()->ip()->port());
     }
   }
 
@@ -314,7 +313,7 @@ void BaseIntegrationTest::createEnvoy() {
   // Note that finalize assumes that every fake_upstream_ must correspond to a bootstrap config
   // static entry. So, if you want to manually create a fake upstream without specifying it in the
   // config, you will need to do so *after* initialize() (which calls this function) is done.
-  config_helper_.finalize(ports);
+  config_helper_.finalize(ports_);
 
   envoy::config::bootstrap::v2::Bootstrap bootstrap = config_helper_.bootstrap();
   if (use_lds_) {
