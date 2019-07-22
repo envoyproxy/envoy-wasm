@@ -58,7 +58,6 @@ proto_library(
         "//envoy/config/filter/http/squash/v2:squash",
         "//envoy/config/filter/http/tap/v2alpha:tap",
         "//envoy/config/filter/http/transcoder/v2:transcoder",
-        "//envoy/config/filter/http/wasm/v2:wasm",
         "//envoy/config/filter/listener/original_src/v2alpha1:original_src",
         "//envoy/config/filter/network/client_ssl_auth/v2:client_ssl_auth",
         "//envoy/config/filter/network/dubbo_proxy/v2alpha1:dubbo_proxy",
