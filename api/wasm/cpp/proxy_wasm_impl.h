@@ -15,10 +15,14 @@ class ContextBase;
 class RootContext;
 class Context;
 
+// Note: exceptions are currently not supported.
+#define WASM_EXCEPTIONS 0
+#if WASM_EXCEPTIONS
 class ProxyException : std::runtime_error {
 public:
   ProxyException(const std::string& message) : std::runtime_error(message) {}
 };
+#endif
 
 inline void logTrace(const std::string& logMessage) {
   proxy_log(LogLevel::trace, logMessage.c_str(), logMessage.size());
@@ -248,11 +252,13 @@ public:
   using HttpCallCallback = std::function<void(std::unique_ptr<WasmData> header_pairs,
       std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs)>;
   using GrpcSimpleCallCallback = std::function<void(GrpcStatus status, std::unique_ptr<WasmData> message)>;
-  void httpCall(StringView uri, const HeaderStringPairs& request_headers,
+  // Returns false on setup error.
+  bool httpCall(StringView uri, const HeaderStringPairs& request_headers,
       StringView request_body, const HeaderStringPairs& request_trailers,
       uint32_t timeout_milliseconds, HttpCallCallback callback);
   // NB: the message is the response if status == OK and an error message otherwise.
-  void grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
+  // Returns false on setup error.
+  bool grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
       const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds, GrpcSimpleCallCallback callback);
   template<typename Response> void grpcSimpleCall(StringView service, StringView service_name,
       StringView method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
@@ -267,10 +273,12 @@ public:
     };
     grpcSimpleCall(service, service_name, method_name, request, timeout_milliseconds, callback);
   }
-  void grpcCallHandler(StringView service, StringView service_name,
+  // Returns false on setup error.
+  bool grpcCallHandler(StringView service, StringView service_name,
       StringView method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
       std::unique_ptr<GrpcCallHandlerBase> handler);
-  void grpcStreamHandler(StringView service, StringView service_name,
+  // Returns false on setup error.
+  bool grpcStreamHandler(StringView service, StringView service_name,
       StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler);
 
 private:
@@ -953,14 +961,24 @@ inline std::string MetricBase::prefixWithFields(const std::vector<std::string>& 
 
 inline uint32_t MetricBase::resolveWithFields(const std::vector<std::string>& fields) {
   if (fields.size() != tags.size()) {
+#if WASM_EXCEPTIONS
     throw ProxyException("metric fields.size() != tags.size()");
+#else
+    logError("metric fields.size() != tags.size()");
+    abort();
+#endif
   }
   return resolveFullName(prefixWithFields(fields) + name);
 }
 
 inline void MetricBase::partiallyResolveWithFields(const std::vector<std::string>& fields) {
   if (fields.size() >= tags.size()) {
+#if WASM_EXCEPTIONS
     throw ProxyException("metric fields.size() >= tags.size()");
+#else
+    logError("metric fields.size() >= tags.size()");
+    abort();
+#endif
   }
   prefix = prefixWithFields(fields);
   tags.erase(tags.begin(), tags.begin()+(fields.size()));
@@ -1220,15 +1238,15 @@ inline void grpcSend(uint32_t token, StringView message, bool end_stream) {
   return proxy_grpcSend(token, message.data(), message.size(), end_stream ? 1 : 0);
 }
 
-inline void ContextBase::httpCall(StringView uri, const HeaderStringPairs& request_headers,
+inline bool ContextBase::httpCall(StringView uri, const HeaderStringPairs& request_headers,
     StringView request_body, const HeaderStringPairs& request_trailers,
     uint32_t timeout_milliseconds, HttpCallCallback callback) {
   auto token = makeHttpCall(uri, request_headers, request_body, request_trailers, timeout_milliseconds);
   if (token) {
     http_calls_[token] = std::move(callback);
-  } else {
-    throw ProxyException("httpCall failed");
+    return true;
   }
+  return false;
 }
 
 inline void ContextBase::onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
@@ -1240,14 +1258,14 @@ inline void ContextBase::onHttpCallResponse(uint32_t token, std::unique_ptr<Wasm
   }
 }
 
-inline void ContextBase::grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
+inline bool ContextBase::grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
     const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds, Context::GrpcSimpleCallCallback callback) {
   auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
   if (token) {
     simple_grpc_calls_[token] = std::move(callback);
-  } else {
-    throw ProxyException("grpcCall failed");
+    return true;
   }
+  return false;
 }
 
 inline void GrpcCallHandlerBase::cancel() {
@@ -1384,25 +1402,25 @@ inline void ContextBase::onGrpcClose(uint32_t token, GrpcStatus status, std::uni
   }
 }
 
-inline void ContextBase::grpcCallHandler(StringView service, StringView service_name,
+inline bool ContextBase::grpcCallHandler(StringView service, StringView service_name,
     StringView method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
     std::unique_ptr<GrpcCallHandlerBase> handler) {
   auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
   if (token) {
     handler->token_ = token;
     grpc_calls_[token] = std::move(handler);
-  } else {
-    throw ProxyException("grpcCall failed");
+    return true;
   }
+  return false;
 }
 
-inline void ContextBase::grpcStreamHandler(StringView service, StringView service_name,
+inline bool ContextBase::grpcStreamHandler(StringView service, StringView service_name,
     StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler) {
   auto token = grpcStream(service, service_name, method_name);
   if (token) {
     handler->token_ = token;
     grpc_streams_[token] = std::move(handler);
-  } else {
-    throw ProxyException("grpcStream failed");
+    return true;
   }
+  return false;
 }
