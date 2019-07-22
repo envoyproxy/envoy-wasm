@@ -2,7 +2,9 @@ WebAssembly Extension Support
 
 # Build Dependencies
 
-## Install glib2.0 if required (on Debian/Ubuntu)
+## glib2.0
+
+Note: this may be required on Debian/Ubuntu.
 
 apt-get install libglib2.0-dev
 
