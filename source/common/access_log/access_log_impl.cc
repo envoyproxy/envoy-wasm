@@ -114,9 +114,9 @@ RuntimeFilter::RuntimeFilter(const envoy::config::filter::accesslog::v2::Runtime
       percent_(config.percent_sampled()),
       use_independent_randomness_(config.use_independent_randomness()) {}
 
-bool RuntimeFilter::evaluate(const StreamInfo::StreamInfo&, const Http::HeaderMap& request_header,
+bool RuntimeFilter::evaluate(const StreamInfo::StreamInfo&, const Http::HeaderMap& request_headers,
                              const Http::HeaderMap&, const Http::HeaderMap&) {
-  const Http::HeaderEntry* uuid = request_header.RequestId();
+  const Http::HeaderEntry* uuid = request_headers.RequestId();
   uint64_t random_value;
   // TODO(dnoe): Migrate uuidModBy to take string_view (#6580)
   if (use_independent_randomness_ || uuid == nullptr ||
@@ -267,7 +267,8 @@ AccessLogFactory::fromProto(const envoy::config::filter::accesslog::v2::AccessLo
   auto& factory =
       Config::Utility::getAndCheckFactory<Server::Configuration::AccessLogInstanceFactory>(
           config.name());
-  ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(config, factory);
+  ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
+      config, context.messageValidationVisitor(), factory);
 
   return factory.createAccessLogInstance(*message, std::move(filter), context);
 }

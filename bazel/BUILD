@@ -86,6 +86,20 @@ config_setting(
 )
 
 config_setting(
+    name = "clang_build",
+    flag_values = {
+        "@bazel_tools//tools/cpp:compiler": "clang",
+    },
+)
+
+config_setting(
+    name = "gcc_build",
+    flag_values = {
+        "@bazel_tools//tools/cpp:compiler": "gcc",
+    },
+)
+
+config_setting(
     name = "disable_tcmalloc",
     values = {"define": "tcmalloc=disabled"},
 )
@@ -101,8 +115,22 @@ config_setting(
 )
 
 config_setting(
+    name = "disable_object_dump_on_signal_trace",
+    values = {"define": "object_dump_on_signal_trace=disabled"},
+)
+
+config_setting(
     name = "disable_hot_restart",
     values = {"define": "hot_restart=disabled"},
+)
+
+# Used to avoid conflicting selects https://github.com/bazelbuild/bazel/issues/8323
+alias(
+    name = "disable_hot_restart_or_apple",
+    actual = select({
+        ":apple": ":apple",
+        "//conditions:default": ":disable_hot_restart",
+    }),
 )
 
 config_setting(
@@ -150,8 +178,28 @@ config_setting(
 )
 
 config_setting(
+    name = "boringssl_disabled",
+    values = {"define": "boringssl=disabled"},
+)
+
+config_setting(
     name = "enable_quiche",
     values = {"define": "quiche=enabled"},
+)
+
+config_setting(
+    name = "wasm_all",
+    values = {"define": "wasm=enabled"},
+)
+
+config_setting(
+    name = "wasm_v8",
+    values = {"define": "wasm=v8"},
+)
+
+config_setting(
+    name = "wasm_wavm",
+    values = {"define": "wasm=wavm"},
 )
 
 # Alias pointing to the selected version of BoringSSL:
@@ -162,6 +210,16 @@ alias(
     actual = select({
         "//bazel:boringssl_fips": "@boringssl_fips//:ssl",
         "//conditions:default": "@boringssl//:ssl",
+    }),
+)
+
+# Alias pointing to a platform-specific version of wee8.
+alias(
+    name = "wee8",
+    actual = select({
+        ":darwin": "@wee8_macos//:wee8",
+        ":darwin_x86_64": "@wee8_macos//:wee8",
+        "//conditions:default": "@wee8_linux//:wee8",
     }),
 )
 
@@ -245,8 +303,36 @@ alias(
             ":ios_i386": ":ios_i386",
             ":ios_x86_64": ":ios_x86_64",
             # If we're not on an apple platform return a value that will never match in the select() statement calling this
-            # since it would have already been matched above
+            # since it would have already been matched above.
             "//conditions:default": ":darwin",
+        },
+    ),
+)
+
+alias(
+    name = "linux",
+    actual = select(
+        {
+            ":linux_x86_64": ":linux_x86_64",
+            ":linux_aarch64": ":linux_aarch64",
+            ":linux_ppc": ":linux_ppc",
+            # If we're not on an linux platform return a value that will never match in the select() statement calling this
+            # since it would have already been matched above.
+            "//conditions:default": ":linux_x86_64",
+        },
+    ),
+)
+
+alias(
+    name = "x86",
+    actual = select(
+        {
+            ":darwin_x86_64": ":darwin_x86_64",
+            ":ios_x86_64": "ios_x86_64",
+            "linux_x86_64": "linux_x86_64",
+            "windows_x86_64": "windows_x86_64",
+            # If we're not on an x86 platform return a value that will never match in the select() statement calling this since it would have already been matched above.
+            "//conditions:default": ":darwin_x86_64",
         },
     ),
 )

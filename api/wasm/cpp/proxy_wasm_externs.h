@@ -11,11 +11,15 @@
 /*
    API Calls into the VM.
 
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(char* configuration, int size);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart();
-   extern "C" EMSCRIPTEN_KEEPALIVE int main();  // only called if proxy_onStart() is not available.
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick();
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onCreate(uint32_t context_id);
+
+   // Non-stream calls.
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t root_id_ptr, uint32_t root_id_size);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(uint32_t root_context_id, uint32_t configuration_ptr, uint32_t configuration_size);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick(uint32_t root_context_id);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onQueueReady(uint32_t root_context_id, uint32_t token);
+
+   // Stream calls.
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onCreate(uint32_t context_id, root_context_id);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestHeaders(uint32_t context_id);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestBody(uint32_t context_id,  uint32_t body_buffer_length, uint32_t end_of_stream);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestTrailers(uint32_t context_id);
@@ -49,12 +53,16 @@
 // Logging
 extern "C" void proxy_log(LogLevel level, const char* logMessage, size_t messageSize);
 
-// Timer
+// Timer (must be called from a root context, e.g. onStart, onTick).
 extern "C" void proxy_setTickPeriodMilliseconds(uint32_t millisecond);
+
+// Time
 extern "C" uint64_t proxy_getCurrentTimeNanoseconds();
 
 // Stream Info
 extern "C" void proxy_getProtocol(StreamType type, const char** value_ptr, size_t* value_size);
+extern "C" uint32_t proxy_getDestinationPort(StreamType type);
+extern "C" uint32_t proxy_getResponseCode(StreamType type);
 
 // Metadata
 extern "C" void proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
@@ -68,9 +76,15 @@ extern "C" void proxy_getMetadataStruct(MetadataType type, const char* name_ptr,
 extern "C" void proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
                                         const char* value_ptr, size_t value_size);
 
-// Continue
+// Continue/Reply/Route
 extern "C" void proxy_continueRequest();
 extern "C" void proxy_continueResponse();
+extern "C" void proxy_sendLocalResponse(uint32_t response_code,
+    const char* response_code_details_ptr, size_t response_code_details_size,
+    const char* body_ptr, size_t body_size,
+    const char* additional_response_header_pairs_ptr, size_t additional_response_header_pairs_size,
+    uint32_t grpc_status);
+extern "C" void proxy_clearRouteCache();
 
 // SharedData
 extern "C" void proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,
@@ -80,6 +94,16 @@ extern "C" void proxy_getSharedData(const char* key_ptr, size_t key_size, const 
 extern "C" bool proxy_setSharedData(const char* key_ptr, size_t key_size, const char* value_ptr,
                                     size_t value_size, uint32_t cas);
 
+// SharedQueue
+// Note: Registering the same queue_name will overwrite the old registration while preseving any pending data.
+// Consequently it should typically be followed by a call to proxy_dequeueSharedQueue.
+extern "C" uint32_t proxy_registerSharedQueue(const char* queue_name_ptr, size_t queue_name_size);
+extern "C" uint32_t proxy_resolveSharedQueue(const char* vm_id, size_t vm_id_size, const char* queue_name_ptr, size_t queue_name_size);
+// Returns true on end-of-stream (no more data available).
+extern "C" bool proxy_dequeueSharedQueue(uint32_t token, const char** data_ptr, size_t* data_size);
+// Returns false if the queue was not found and the data was not enqueued.
+extern "C" bool proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size);
+
 // Headers/Trailers/Metadata Maps
 extern "C" void proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
 extern "C" void proxy_getHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char** value_ptr, size_t* value_size);
@@ -87,6 +111,7 @@ extern "C" void proxy_getHeaderMapPairs(HeaderMapType type, const char** ptr, si
 extern "C" void proxy_setHeaderMapPairs(HeaderMapType type, const char* ptr, size_t size);
 extern "C" void proxy_replaceHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
 extern "C" void proxy_removeHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size);
+extern "C" uint32_t proxy_getHeaderMapSize(HeaderMapType type);
 
 // Body
 extern "C" void proxy_getRequestBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr,

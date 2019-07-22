@@ -6,6 +6,7 @@
 #include <string>
 
 #include "common/common/assert.h"
+#include "common/common/dump_state_utils.h"
 #include "common/common/empty_string.h"
 #include "common/common/utility.h"
 #include "common/singleton/const_singleton.h"
@@ -54,7 +55,7 @@ HeaderString::HeaderString(const std::string& ref_value) : type_(Type::Reference
   ASSERT(valid());
 }
 
-HeaderString::HeaderString(HeaderString&& move_value) {
+HeaderString::HeaderString(HeaderString&& move_value) noexcept {
   type_ = move_value.type_;
   string_length_ = move_value.string_length_;
   switch (move_value.type_) {
@@ -73,9 +74,8 @@ HeaderString::HeaderString(HeaderString&& move_value) {
   }
   case Type::Inline: {
     buffer_.dynamic_ = inline_buffer_;
-    memcpy(inline_buffer_, move_value.inline_buffer_, string_length_ + 1);
+    memcpy(inline_buffer_, move_value.inline_buffer_, string_length_);
     move_value.string_length_ = 0;
-    move_value.inline_buffer_[0] = 0;
     break;
   }
   }
@@ -113,7 +113,7 @@ void HeaderString::append(const char* data, uint32_t size) {
   }
 
   case Type::Inline: {
-    const uint64_t new_capacity = static_cast<uint64_t>(size) + 1 + string_length_;
+    const uint64_t new_capacity = static_cast<uint64_t>(size) + string_length_;
     if (new_capacity <= sizeof(inline_buffer_)) {
       // Already inline and the new value fits in inline storage.
       break;
@@ -133,7 +133,7 @@ void HeaderString::append(const char* data, uint32_t size) {
       dynamic_capacity_ = new_capacity;
       type_ = Type::Dynamic;
     } else {
-      if (size + 1 + string_length_ > dynamic_capacity_) {
+      if (size + string_length_ > dynamic_capacity_) {
         const uint64_t new_capacity = newCapacity(string_length_, size);
         validateCapacity(new_capacity);
 
@@ -148,7 +148,6 @@ void HeaderString::append(const char* data, uint32_t size) {
 
   memcpy(buffer_.dynamic_ + string_length_, data, size);
   string_length_ += size;
-  buffer_.dynamic_[string_length_] = 0;
   ASSERT(valid());
 }
 
@@ -158,7 +157,6 @@ void HeaderString::clear() {
     break;
   }
   case Type::Inline: {
-    inline_buffer_[0] = 0;
     FALLTHRU;
   }
   case Type::Dynamic: {
@@ -178,7 +176,7 @@ void HeaderString::setCopy(const char* data, uint32_t size) {
   }
 
   case Type::Inline: {
-    if (size + 1 <= sizeof(inline_buffer_)) {
+    if (size <= sizeof(inline_buffer_)) {
       // Already inline and the new value fits in inline storage.
       break;
     }
@@ -195,7 +193,7 @@ void HeaderString::setCopy(const char* data, uint32_t size) {
       RELEASE_ASSERT(buffer_.dynamic_ != nullptr, "");
       type_ = Type::Dynamic;
     } else {
-      if (size + 1 > dynamic_capacity_) {
+      if (size > dynamic_capacity_) {
         // Need to reallocate. Use free/malloc to avoid the copy since we are about to overwrite.
         dynamic_capacity_ = size * 2;
         validateCapacity(dynamic_capacity_);
@@ -208,7 +206,6 @@ void HeaderString::setCopy(const char* data, uint32_t size) {
   }
 
   memcpy(buffer_.dynamic_, data, size);
-  buffer_.dynamic_[size] = 0;
   string_length_ = size;
   ASSERT(valid());
 }
@@ -556,6 +553,20 @@ void HeaderMapImpl::removePrefix(const LowerCaseString& prefix) {
     }
     return to_remove;
   });
+}
+
+void HeaderMapImpl::dumpState(std::ostream& os, int indent_level) const {
+  using IterateData = std::pair<std::ostream*, const char*>;
+  const char* spaces = spacesForLevel(indent_level);
+  IterateData iterate_data = std::make_pair(&os, spaces);
+  iterate(
+      [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+        auto* data = static_cast<IterateData*>(context);
+        *data->first << data->second << "'" << header.key().getStringView() << "', '"
+                     << header.value().getStringView() << "'\n";
+        return HeaderMap::Iterate::Continue;
+      },
+      &iterate_data);
 }
 
 HeaderMapImpl::HeaderEntryImpl& HeaderMapImpl::maybeCreateInline(HeaderEntryImpl** entry,

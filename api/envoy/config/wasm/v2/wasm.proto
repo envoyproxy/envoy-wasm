@@ -27,14 +27,16 @@ message VmConfig {
 // <envoy_api_msg_config.wasm.v2.WasmConfig>`. This opaque configuration will be used to
 // create a Wasm Service.
 message WasmConfig {
-  // A unique ID so that multiple filters/services can call into the same VM.
-  string id = 1;
+  // A unique ID for a set of filters/services in a VM which will share Context(s).
+  string root_id = 1;
+  // A unique ID for a VM so that multiple filters/services can share the same VM.
+  string vm_id = 2;
   // Configuration for starting a new VM (optionally associated with the given 'id').
-  VmConfig vm_config = 2;
+  VmConfig vm_config = 3;
   // Wasm service configuration string e.g. a serialized protobuf which will be the
   // argument to the VM configure() call.
-  string configuration = 3;
+  string configuration = 4;
   // If true, create a single VM rather than creating one VM per silo. Such a singleton can
   // not be used with filters.
-  bool singleton = 4;
+  bool singleton = 5;
 }

@@ -93,7 +93,7 @@ public:
     for (uint32_t index : p1_dragon_upstreams.endpoints_) {
       addEndpoint(*dragon_p1, index, num_endpoints);
     }
-    eds_helper_.setEds({cluster_load_assignment}, *test_server_);
+    eds_helper_.setEdsAndWait({cluster_load_assignment}, *test_server_);
   }
 
   void createUpstreams() override {
@@ -173,14 +173,14 @@ public:
       return;
     }
 
-    const auto local_cluster_stats = local_loadstats_request.cluster_stats(0);
+    const auto& local_cluster_stats = local_loadstats_request.cluster_stats(0);
     auto* cluster_stats = loadstats_request.mutable_cluster_stats(0);
 
     cluster_stats->set_total_dropped_requests(cluster_stats->total_dropped_requests() +
                                               local_cluster_stats.total_dropped_requests());
 
     for (int i = 0; i < local_cluster_stats.upstream_locality_stats_size(); ++i) {
-      auto local_upstream_locality_stats = local_cluster_stats.upstream_locality_stats(i);
+      const auto& local_upstream_locality_stats = local_cluster_stats.upstream_locality_stats(i);
       bool copied = false;
       for (int j = 0; j < cluster_stats->upstream_locality_stats_size(); ++j) {
         auto* upstream_locality_stats = cluster_stats->mutable_upstream_locality_stats(j);
@@ -191,21 +191,38 @@ public:
           upstream_locality_stats->set_total_successful_requests(
               upstream_locality_stats->total_successful_requests() +
               local_upstream_locality_stats.total_successful_requests());
-          upstream_locality_stats->set_total_requests_in_progress(
-              upstream_locality_stats->total_requests_in_progress() +
-              local_upstream_locality_stats.total_requests_in_progress());
           upstream_locality_stats->set_total_error_requests(
               upstream_locality_stats->total_error_requests() +
               local_upstream_locality_stats.total_error_requests());
           upstream_locality_stats->set_total_issued_requests(
               upstream_locality_stats->total_issued_requests() +
               local_upstream_locality_stats.total_issued_requests());
+          // Unlike most stats, current requests in progress replaces old requests in progress.
           break;
         }
       }
       if (!copied) {
         auto* upstream_locality_stats = cluster_stats->add_upstream_locality_stats();
         upstream_locality_stats->CopyFrom(local_upstream_locality_stats);
+      }
+    }
+
+    // Unfortunately because we don't issue an update when total_requests_in_progress goes from
+    // non-zero to zero, we have to go through and zero it out for any locality stats we didn't see.
+    for (int i = 0; i < cluster_stats->upstream_locality_stats_size(); ++i) {
+      auto upstream_locality_stats = cluster_stats->mutable_upstream_locality_stats(i);
+      bool found = false;
+      for (int j = 0; j < local_cluster_stats.upstream_locality_stats_size(); ++j) {
+        auto& local_upstream_locality_stats = local_cluster_stats.upstream_locality_stats(j);
+        if (TestUtility::protoEqual(upstream_locality_stats->locality(),
+                                    local_upstream_locality_stats.locality()) &&
+            upstream_locality_stats->priority() == local_upstream_locality_stats.priority()) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        upstream_locality_stats->set_total_requests_in_progress(0);
       }
     }
   }
@@ -257,7 +274,7 @@ public:
       EXPECT_EQ("application/grpc",
                 loadstats_stream_->headers().ContentType()->value().getStringView());
     } while (!TestUtility::assertRepeatedPtrFieldEqual(expected_cluster_stats,
-                                                       loadstats_request.cluster_stats()));
+                                                       loadstats_request.cluster_stats(), true));
   }
 
   void waitForUpstreamResponse(uint32_t endpoint_index, uint32_t response_code = 200) {
@@ -462,8 +479,8 @@ TEST_P(LoadStatsIntegrationTest, LocalityWeighted) {
 
   waitForLoadStatsStream();
   waitForLoadStatsRequest({});
-  loadstats_stream_->startGrpcStream();
 
+  loadstats_stream_->startGrpcStream();
   requestLoadStatsResponse({"cluster_0"});
 
   // Simple 33%/67% split between dragon/winter localities.

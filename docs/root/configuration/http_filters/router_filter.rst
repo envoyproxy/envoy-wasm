@@ -79,6 +79,9 @@ gateway-error
   This policy is similar to the *5xx* policy but will only retry requests that result in a 502, 503,
   or 504.
 
+reset
+  Envoy will attempt a retry if the upstream server does not respond at all (disconnect/reset/read timeout.)
+
 connect-failure
   Envoy will attempt a retry if a request is failed because of a connection failure to the upstream
   server (connect timeout, etc.). (Included in *5xx*)
@@ -216,6 +219,18 @@ requests. This timeout must be <= the global route timeout (see
 :ref:`config_http_filters_router_x-envoy-upstream-rq-timeout-ms`) or it is ignored. This allows a
 caller to set a tight per try timeout to allow for retries while maintaining a reasonable overall
 timeout.
+
+x-envoy-hedge-on-per-try-timeout
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Setting this header on egress requests will cause Envoy to use a request
+hedging strategy in the case of a per try timeout. This overrides the value set
+in the :ref:`route configuration
+<envoy_api_field_route.HedgePolicy.hedge_on_per_try_timeout>`. This means that a retry
+will be issued without resetting the original request, leaving multiple upstream requests
+in flight.
+
+The value of the header should be "true" or "false", and is ignored if invalid.
 
 .. _config_http_filters_router_x-envoy-immediate-health-check-fail:
 

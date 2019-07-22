@@ -1,8 +1,7 @@
 #include "server/server.h"
 
-#include <signal.h>
-
 #include <atomic>
+#include <csignal>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -23,10 +22,10 @@
 #include "common/api/api_impl.h"
 #include "common/api/os_sys_calls_impl.h"
 #include "common/buffer/buffer_impl.h"
+#include "common/common/enum_to_int.h"
 #include "common/common/mutex_tracer_impl.h"
 #include "common/common/utility.h"
 #include "common/common/version.h"
-#include "common/config/bootstrap_json.h"
 #include "common/config/resources.h"
 #include "common/config/utility.h"
 #include "common/http/codes.h"
@@ -44,6 +43,7 @@
 #include "server/connection_handler_impl.h"
 #include "server/guarddog_impl.h"
 #include "server/listener_hooks.h"
+#include "server/ssl_context_manager.h"
 #include "server/wasm_config_impl.h"
 
 namespace Envoy {
@@ -56,13 +56,14 @@ InstanceImpl::InstanceImpl(const Options& options, Event::TimeSystem& time_syste
                            ComponentFactory& component_factory,
                            Runtime::RandomGeneratorPtr&& random_generator,
                            ThreadLocal::Instance& tls, Thread::ThreadFactory& thread_factory,
-                           Filesystem::Instance& file_system)
-    : secret_manager_(std::make_unique<Secret::SecretManagerImpl>()), shutdown_(false),
-      options_(options), time_source_(time_system), restarter_(restarter),
+                           Filesystem::Instance& file_system,
+                           std::unique_ptr<ProcessContext> process_context)
+    : secret_manager_(std::make_unique<Secret::SecretManagerImpl>()), workers_started_(false),
+      shutdown_(false), options_(options), time_source_(time_system), restarter_(restarter),
       start_time_(time(nullptr)), original_start_time_(start_time_), stats_store_(store),
       thread_local_(tls), api_(new Api::Impl(thread_factory, store, time_system, file_system)),
       dispatcher_(api_->allocateDispatcher()),
-      singleton_manager_(new Singleton::ManagerImpl(api_->threadFactory().currentThreadId())),
+      singleton_manager_(new Singleton::ManagerImpl(api_->threadFactory())),
       handler_(new ConnectionHandlerImpl(ENVOY_LOGGER(), *dispatcher_)),
       random_generator_(std::move(random_generator)), listener_component_factory_(*this),
       worker_factory_(thread_local_, *api_, hooks),
@@ -72,7 +73,8 @@ InstanceImpl::InstanceImpl(const Options& options, Event::TimeSystem& time_syste
       terminated_(false),
       mutex_tracer_(options.mutexTracingEnabled() ? &Envoy::MutexTracerImpl::getOrCreateTracer()
                                                   : nullptr),
-      main_thread_id_(std::this_thread::get_id()) {
+      grpc_context_(store.symbolTable()), http_context_(store.symbolTable()),
+      process_context_(std::move(process_context)), main_thread_id_(std::this_thread::get_id()) {
   try {
     if (!options.logPath().empty()) {
       try {
@@ -130,51 +132,84 @@ void InstanceImpl::drainListeners() {
   drain_manager_->startDrainSequence(nullptr);
 }
 
-void InstanceImpl::failHealthcheck(bool fail) {
-  // We keep liveness state in shared memory so the parent process sees the same state.
-  server_stats_->live_.set(!fail);
+void InstanceImpl::failHealthcheck(bool fail) { server_stats_->live_.set(!fail); }
+
+MetricSnapshotImpl::MetricSnapshotImpl(Stats::Store& store) {
+  snapped_counters_ = store.counters();
+  counters_.reserve(snapped_counters_.size());
+  for (const auto& counter : snapped_counters_) {
+    counters_.push_back({counter->latch(), *counter});
+  }
+
+  snapped_gauges_ = store.gauges();
+  gauges_.reserve(snapped_gauges_.size());
+  for (const auto& gauge : snapped_gauges_) {
+    ASSERT(gauge->importMode() != Stats::Gauge::ImportMode::Uninitialized);
+    gauges_.push_back(*gauge);
+  }
+
+  snapped_histograms_ = store.histograms();
+  histograms_.reserve(snapped_histograms_.size());
+  for (const auto& histogram : snapped_histograms_) {
+    histograms_.push_back(*histogram);
+  }
 }
 
 void InstanceUtil::flushMetricsToSinks(const std::list<Stats::SinkPtr>& sinks,
-                                       Stats::Source& source) {
+                                       Stats::Store& store) {
+  // Create a snapshot and flush to all sinks.
+  // NOTE: Even if there are no sinks, creating the snapshot has the important property that it
+  //       latches all counters on a periodic basis. The hot restart code assumes this is being
+  //       done so this should not be removed.
+  MetricSnapshotImpl snapshot(store);
   for (const auto& sink : sinks) {
-    sink->flush(source);
+    sink->flush(snapshot);
   }
-  // TODO(mrice32): this reset should be called by the StoreRoot on stat construction/destruction so
-  // that it doesn't need to be reset when the set of stats isn't changing.
-  source.clearCache();
 }
 
 void InstanceImpl::flushStats() {
   ENVOY_LOG(debug, "flushing stats");
-  // A shutdown initiated before this callback may prevent this from being called as per
-  // the semantics documented in ThreadLocal's runOnAllThreads method.
-  stats_store_.mergeHistograms([this]() -> void {
-    // mergeParentStatsIfAny() does nothing and returns a struct of 0s if there is no parent.
-    HotRestart::ServerStatsFromParent parent_stats = restarter_.mergeParentStatsIfAny(stats_store_);
+  // If Envoy is not fully initialized, workers will not be started and mergeHistograms
+  // completion callback is not called immediately. As a result of this server stats will
+  // not be updated and flushed to stat sinks. So skip mergeHistograms call if workers are
+  // not started yet.
+  if (initManager().state() == Init::Manager::State::Initialized) {
+    // A shutdown initiated before this callback may prevent this from being called as per
+    // the semantics documented in ThreadLocal's runOnAllThreads method.
+    stats_store_.mergeHistograms([this]() -> void { flushStatsInternal(); });
+  } else {
+    ENVOY_LOG(debug, "Envoy is not fully initialized, skipping histogram merge and flushing stats");
+    flushStatsInternal();
+  }
+}
 
-    server_stats_->uptime_.set(time(nullptr) - original_start_time_);
-    server_stats_->memory_allocated_.set(Memory::Stats::totalCurrentlyAllocated() +
-                                         parent_stats.parent_memory_allocated_);
-    server_stats_->memory_heap_size_.set(Memory::Stats::totalCurrentlyReserved());
-    server_stats_->parent_connections_.set(parent_stats.parent_connections_);
-    server_stats_->total_connections_.set(listener_manager_->numConnections() +
-                                          parent_stats.parent_connections_);
-    server_stats_->days_until_first_cert_expiring_.set(
-        sslContextManager().daysUntilFirstCertExpires());
-    InstanceUtil::flushMetricsToSinks(config_.statsSinks(), stats_store_.source());
-    // TODO(ramaraochavali): consider adding different flush interval for histograms.
-    if (stat_flush_timer_ != nullptr) {
-      stat_flush_timer_->enableTimer(config_.statsFlushInterval());
-    }
-  });
+void InstanceImpl::flushStatsInternal() {
+  // mergeParentStatsIfAny() does nothing and returns a struct of 0s if there is no parent.
+  HotRestart::ServerStatsFromParent parent_stats = restarter_.mergeParentStatsIfAny(stats_store_);
+
+  server_stats_->uptime_.set(time(nullptr) - original_start_time_);
+  server_stats_->memory_allocated_.set(Memory::Stats::totalCurrentlyAllocated() +
+                                       parent_stats.parent_memory_allocated_);
+  server_stats_->memory_heap_size_.set(Memory::Stats::totalCurrentlyReserved());
+  server_stats_->parent_connections_.set(parent_stats.parent_connections_);
+  server_stats_->total_connections_.set(listener_manager_->numConnections() +
+                                        parent_stats.parent_connections_);
+  server_stats_->days_until_first_cert_expiring_.set(
+      sslContextManager().daysUntilFirstCertExpires());
+  server_stats_->state_.set(
+      enumToInt(Utility::serverState(initManager().state(), !healthCheckFailed())));
+  InstanceUtil::flushMetricsToSinks(config_.statsSinks(), stats_store_);
+  // TODO(ramaraochavali): consider adding different flush interval for histograms.
+  if (stat_flush_timer_ != nullptr) {
+    stat_flush_timer_->enableTimer(config_.statsFlushInterval());
+  }
 }
 
 bool InstanceImpl::healthCheckFailed() { return server_stats_->live_.value() == 0; }
 
-InstanceUtil::BootstrapVersion
-InstanceUtil::loadBootstrapConfig(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
-                                  const Options& options, Api::Api& api) {
+InstanceUtil::BootstrapVersion InstanceUtil::loadBootstrapConfig(
+    envoy::config::bootstrap::v2::Bootstrap& bootstrap, const Options& options,
+    ProtobufMessage::ValidationVisitor& validation_visitor, Api::Api& api) {
   const std::string& config_path = options.configPath();
   const std::string& config_yaml = options.configYaml();
 
@@ -186,11 +221,11 @@ InstanceUtil::loadBootstrapConfig(envoy::config::bootstrap::v2::Bootstrap& boots
   }
 
   if (!config_path.empty()) {
-    MessageUtil::loadFromFile(config_path, bootstrap, api);
+    MessageUtil::loadFromFile(config_path, bootstrap, validation_visitor, api);
   }
   if (!config_yaml.empty()) {
     envoy::config::bootstrap::v2::Bootstrap bootstrap_override;
-    MessageUtil::loadFromYaml(config_yaml, bootstrap_override);
+    MessageUtil::loadFromYaml(config_yaml, bootstrap_override, validation_visitor);
     bootstrap.MergeFrom(bootstrap_override);
   }
   MessageUtil::validate(bootstrap);
@@ -235,8 +270,15 @@ void InstanceImpl::initialize(const Options& options,
             Buffer::OwnedImpl().usesOldImpl() ? "old (libevent)" : "new");
 
   // Handle configuration that needs to take place prior to the main configuration load.
-  InstanceUtil::loadBootstrapConfig(bootstrap_, options, *api_);
+  InstanceUtil::loadBootstrapConfig(bootstrap_, options, messageValidationVisitor(), *api_);
   bootstrap_config_update_time_ = time_source_.systemTime();
+
+  // Immediate after the bootstrap has been loaded, override the header prefix, if configured to
+  // do so. This must be set before any other code block references the HeaderValues ConstSingleton.
+  if (!bootstrap_.header_prefix().empty()) {
+    // setPrefix has a release assert verifying that setPrefix() is not called after prefix()
+    ThreadSafeSingleton<Http::PrefixValue>::get().setPrefix(bootstrap_.header_prefix().c_str());
+  }
 
   // Needs to happen as early as possible in the instantiation to preempt the objects that require
   // stats.
@@ -246,8 +288,11 @@ void InstanceImpl::initialize(const Options& options,
   const std::string server_stats_prefix = "server.";
   server_stats_ = std::make_unique<ServerStats>(
       ServerStats{ALL_SERVER_STATS(POOL_COUNTER_PREFIX(stats_store_, server_stats_prefix),
-                                   POOL_GAUGE_PREFIX(stats_store_, server_stats_prefix))});
+                                   POOL_GAUGE_PREFIX(stats_store_, server_stats_prefix),
+                                   POOL_HISTOGRAM_PREFIX(stats_store_, server_stats_prefix))});
 
+  initialization_timer_ =
+      std::make_unique<Stats::Timespan>(server_stats_->initialization_time_ms_, timeSource());
   server_stats_->concurrency_.set(options_.concurrency());
   server_stats_->hot_restart_epoch_.set(options_.restartEpoch());
 
@@ -280,6 +325,7 @@ void InstanceImpl::initialize(const Options& options,
     ENVOY_LOG(info, "admin address: {}", initial_config.admin().address()->asString());
     admin_->startHttpListener(initial_config.admin().accessLogPath(), options.adminAddressPath(),
                               initial_config.admin().address(),
+                              initial_config.admin().socketOptions(),
                               stats_store_.createScope("listener.admin."));
   } else {
     ENVOY_LOG(warn, "No admin address given, so no admin HTTP server started.");
@@ -294,7 +340,8 @@ void InstanceImpl::initialize(const Options& options,
 
   // Initialize the overload manager early so other modules can register for actions.
   overload_manager_ = std::make_unique<OverloadManagerImpl>(
-      *dispatcher_, stats_store_, thread_local_, bootstrap_.overload_manager(), *api_);
+      *dispatcher_, stats_store_, thread_local_, bootstrap_.overload_manager(),
+      messageValidationVisitor(), *api_);
 
   heap_shrinker_ =
       std::make_unique<Memory::HeapShrinker>(*dispatcher_, *overload_manager_, stats_store_);
@@ -322,13 +369,12 @@ void InstanceImpl::initialize(const Options& options,
   hooks.onRuntimeCreated();
 
   // Once we have runtime we can initialize the SSL context manager.
-  ssl_context_manager_ =
-      std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_source_);
+  ssl_context_manager_ = createContextManager(Ssl::ContextManagerFactory::name(), time_source_);
 
   cluster_manager_factory_ = std::make_unique<Upstream::ProdClusterManagerFactory>(
       *admin_, Runtime::LoaderSingleton::get(), stats_store_, thread_local_, *random_generator_,
-      dns_resolver_, *ssl_context_manager_, *dispatcher_, *local_info_, *secret_manager_, *api_,
-      http_context_, access_log_manager_, *singleton_manager_);
+      dns_resolver_, *ssl_context_manager_, *dispatcher_, *local_info_, *secret_manager_,
+      messageValidationVisitor(), *api_, http_context_, access_log_manager_, *singleton_manager_);
 
   // Optional Wasm services. These must be initialied afer threading but before the main
   // configuration which many reference wasm vms.
@@ -363,6 +409,10 @@ void InstanceImpl::initialize(const Options& options,
     listener_manager_->createLdsApi(bootstrap_.dynamic_resources().lds_config());
   }
 
+  // We have to defer RTDS initialization until after the cluster manager is
+  // instantiated (which in turn relies on runtime...).
+  Runtime::LoaderSingleton::get().initialize(clusterManager());
+
   if (bootstrap_.has_hds_config()) {
     const auto& hds_config = bootstrap_.hds_config();
     async_client_manager_ = std::make_unique<Grpc::AsyncClientManagerImpl>(
@@ -374,7 +424,8 @@ void InstanceImpl::initialize(const Options& options,
             ->create(),
         *dispatcher_, Runtime::LoaderSingleton::get(), stats_store_, *ssl_context_manager_,
         *random_generator_, info_factory_, access_log_manager_, *config_.clusterManager(),
-        *local_info_, *admin_, *singleton_manager_, thread_local_, *api_);
+        *local_info_, *admin_, *singleton_manager_, thread_local_, messageValidationVisitor(),
+        *api_);
   }
 
   for (Stats::SinkPtr& sink : config_.statsSinks()) {
@@ -393,7 +444,8 @@ void InstanceImpl::initialize(const Options& options,
 
 void InstanceImpl::startWorkers() {
   listener_manager_->startWorkers(*guard_dog_);
-
+  initialization_timer_->complete();
+  workers_started_ = true;
   // At this point we are ready to take traffic and all listening ports are up. Notify our parent
   // if applicable that they can stop listening and drain.
   restarter_.drainParentListeners();
@@ -402,25 +454,11 @@ void InstanceImpl::startWorkers() {
 
 Runtime::LoaderPtr InstanceUtil::createRuntime(Instance& server,
                                                Server::Configuration::Initial& config) {
-  if (!config.baseRuntime().fields().empty()) {
-    ENVOY_LOG(info, "non-empty base runtime layer specified in bootstrap");
-  }
-  if (config.diskRuntime()) {
-    ENVOY_LOG(info, "disk runtime symlink: {}", config.diskRuntime()->symlinkRoot());
-    ENVOY_LOG(info, "disk runtime subdirectory: {}", config.diskRuntime()->subdirectory());
-
-    std::string override_subdirectory =
-        config.diskRuntime()->overrideSubdirectory() + "/" + server.localInfo().clusterName();
-    ENVOY_LOG(info, "disk runtime override subdirectory: {}", override_subdirectory);
-
-    return std::make_unique<Runtime::DiskBackedLoaderImpl>(
-        server.dispatcher(), server.threadLocal(), config.baseRuntime(),
-        config.diskRuntime()->symlinkRoot(), config.diskRuntime()->subdirectory(),
-        override_subdirectory, server.stats(), server.random(), server.api());
-  } else {
-    return std::make_unique<Runtime::LoaderImpl>(config.baseRuntime(), server.random(),
-                                                 server.stats(), server.threadLocal());
-  }
+  ENVOY_LOG(info, "runtime: {}", MessageUtil::getYamlStringFromMessage(config.runtime()));
+  return std::make_unique<Runtime::LoaderImpl>(
+      server.dispatcher(), server.threadLocal(), config.runtime(), server.localInfo(),
+      server.initManager(), server.stats(), server.random(), server.messageValidationVisitor(),
+      server.api());
 }
 
 void InstanceImpl::loadServerFlags(const absl::optional<std::string>& flags_path) {
@@ -559,9 +597,6 @@ void InstanceImpl::shutdown() {
 
 void InstanceImpl::shutdownAdmin() {
   ENVOY_LOG(warn, "shutting down admin due to child startup");
-  // TODO(mattklein123): Since histograms are not shared between processes, this will also stop
-  //                     histogram flushing. In the future we can consider whether we want to
-  //                     somehow keep flushing histograms from the old process.
   stat_flush_timer_.reset();
   handler_->stopListeners();
   admin_->closeSocket();
@@ -571,13 +606,18 @@ void InstanceImpl::shutdownAdmin() {
   restarter_.sendParentTerminateRequest();
 }
 
-void InstanceImpl::registerCallback(Stage stage, StageCallback callback) {
-  stage_callbacks_[stage].push_back(callback);
+ServerLifecycleNotifier::HandlePtr InstanceImpl::registerCallback(Stage stage,
+                                                                  StageCallback callback) {
+  auto& callbacks = stage_callbacks_[stage];
+  return std::make_unique<LifecycleCallbackHandle<StageCallback>>(callbacks, callback);
 }
 
-void InstanceImpl::registerCallback(Stage stage, StageCallbackWithCompletion callback) {
+ServerLifecycleNotifier::HandlePtr
+InstanceImpl::registerCallback(Stage stage, StageCallbackWithCompletion callback) {
   ASSERT(stage == Stage::ShutdownExit);
-  stage_completable_callbacks_[stage].push_back(callback);
+  auto& callbacks = stage_completable_callbacks_[stage];
+  return std::make_unique<LifecycleCallbackHandle<StageCallbackWithCompletion>>(callbacks,
+                                                                                callback);
 }
 
 void InstanceImpl::notifyCallbacksForStage(Stage stage, Event::PostCb completion_cb) {
@@ -589,23 +629,27 @@ void InstanceImpl::notifyCallbacksForStage(Stage stage, Event::PostCb completion
     }
   }
 
-  auto it2 = stage_completable_callbacks_.find(stage);
-  if (it2 != stage_completable_callbacks_.end()) {
-    ASSERT(!it2->second.empty());
-    // Wrap completion_cb so that it only gets invoked when all callbacks for this stage
-    // have finished their work.
-    auto completion_cb_count = std::make_shared<int>(it2->second.size());
-    Event::PostCb wrapped_cb = [this, completion_cb, completion_cb_count] {
-      ASSERT(std::this_thread::get_id() == main_thread_id_);
-      if (--*completion_cb_count == 0) {
-        completion_cb();
+  // Wrap completion_cb so that it only gets invoked when all callbacks for this stage
+  // have finished their work.
+  std::shared_ptr<Event::PostCb> cb_guard(new Event::PostCb([] {}),
+                                          [this, completion_cb](Event::PostCb* cb) {
+                                            ASSERT(std::this_thread::get_id() == main_thread_id_);
+                                            completion_cb();
+                                            delete cb;
+                                          });
+
+  // Registrations which take a completion callback are typically implemented by executing a
+  // callback on all worker threads using Slot::runOnAllThreads which will hang indefinitely if
+  // worker threads have not been started so we need to skip notifications if envoy is shutdown
+  // early before workers have started.
+  if (workers_started_) {
+    auto it2 = stage_completable_callbacks_.find(stage);
+    if (it2 != stage_completable_callbacks_.end()) {
+      ENVOY_LOG(info, "Notifying {} callback(s) with completion.", it2->second.size());
+      for (const StageCallbackWithCompletion& callback : it2->second) {
+        callback([cb_guard] { (*cb_guard)(); });
       }
-    };
-    for (const StageCallbackWithCompletion& callback : it2->second) {
-      callback(wrapped_cb);
     }
-  } else {
-    completion_cb();
   }
 }
 

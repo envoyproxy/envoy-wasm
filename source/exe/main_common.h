@@ -17,7 +17,7 @@
 #include "server/server.h"
 
 #ifdef ENVOY_HANDLE_SIGNALS
-#include "exe/signal_action.h"
+#include "common/signal/signal_action.h"
 #include "exe/terminate_handler.h"
 #endif
 
@@ -38,7 +38,8 @@ public:
   MainCommonBase(const OptionsImpl& options, Event::TimeSystem& time_system,
                  ListenerHooks& listener_hooks, Server::ComponentFactory& component_factory,
                  std::unique_ptr<Runtime::RandomGenerator>&& random_generator,
-                 Thread::ThreadFactory& thread_factory, Filesystem::Instance& file_system);
+                 Thread::ThreadFactory& thread_factory, Filesystem::Instance& file_system,
+                 std::unique_ptr<ProcessContext> process_context);
 
   bool run();
 
@@ -70,7 +71,7 @@ protected:
   Server::ComponentFactory& component_factory_;
   Thread::ThreadFactory& thread_factory_;
   Filesystem::Instance& file_system_;
-  Stats::HeapStatDataAllocator stats_allocator_;
+  Stats::AllocatorImpl stats_allocator_;
 
   std::unique_ptr<ThreadLocal::InstanceImpl> tls_;
   std::unique_ptr<Server::HotRestart> restarter_;

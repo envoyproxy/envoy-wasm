@@ -1,3 +1,5 @@
+.. _xds_protocol:
+
 xDS REST and gRPC protocol
 ==========================
 
@@ -29,6 +31,8 @@ updates beyond stats counters and logs. The last valid configuration for
 an xDS API will continue to apply if an configuration update rejection
 occurs.
 
+.. _xds_protocol_streaming_grpc_subscriptions:
+
 Streaming gRPC subscriptions
 ----------------------------
 
@@ -41,8 +45,8 @@ can be specified independently for each xDS API, pointing at an upstream
 cluster corresponding to a management server. This will initiate an
 independent bidirectional gRPC stream for each xDS resource type,
 potentially to distinct management servers. API delivery is eventually
-consistent. See :ref:`Aggregated Discovery Service` below for
-situations in which explicit control of sequencing is required.
+consistent. See <Aggregated Discovery Service>`
+below for situations in which explicit control of sequencing is required.
 
 Type URLs
 ^^^^^^^^^
@@ -56,6 +60,7 @@ correspondence between an xDS API and a resource type. That is:
 -  CDS: :ref:`envoy.api.v2.Cluster <envoy_api_msg_Cluster>`
 -  EDS: :ref:`envoy.api.v2.ClusterLoadAssignment <envoy_api_msg_ClusterLoadAssignment>`
 -  SDS: :ref:`envoy.api.v2.Auth.Secret <envoy_api_msg_Auth.Secret>`
+-  RTDS: :ref:`envoy.service.discovery.v2.Runtime <envoy_api_msg_service.discovery.v2.Runtime>`
 
 The concept of `type URLs <https://developers.google.com/protocol-buffers/docs/proto3#any>`_ appears below, and takes the form
 `type.googleapis.com/<resource type>`, e.g.
@@ -130,7 +135,10 @@ versioning across resource types. When ADS is not used, even each
 resource of a given resource type may have a distinct version, since the
 Envoy API allows distinct EDS/RDS resources to point at different :ref:`ConfigSources <envoy_api_msg_core.ConfigSource>`.
 
-.. _Resource Updates:
+.. xds_protocol_resource_update:
+
+Resource Update
+~~~~~~~~~~~~~~~
 
 When to send an update
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -152,8 +160,8 @@ Resource hints
 ^^^^^^^^^^^^^^
 
 The :ref:`resource_names <envoy_api_field_DiscoveryRequest.resource_names>` specified in the :ref:`DiscoveryRequest <envoy_api_msg_DiscoveryRequest>` are a hint.
-Some resource types, e.g. `Clusters` and `Listeners` will
-specify an empty :ref:`resource_names <envoy_api_field_DiscoveryRequest.resource_names>` list, since Envoy is interested in
+Some resource types, e.g. `Clusters` and `Listeners` may
+specify an empty :ref:`resource_names <envoy_api_field_DiscoveryRequest.resource_names>` list, since a client such as Envoy is interested in
 learning about all the :ref:`Clusters (CDS) <envoy_api_msg_Cluster>` and :ref:`Listeners (LDS) <envoy_api_msg_Listener>`
 that the management server(s) know about corresponding to its node
 identification. Other resource types, e.g. :ref:`RouteConfiguration (RDS) <envoy_api_msg_RouteConfiguration>`
@@ -161,10 +169,11 @@ and :ref:`ClusterLoadAssignment (EDS) <envoy_api_msg_ClusterLoadAssignment>`, fo
 CDS/LDS updates and Envoy is able to explicitly enumerate these
 resources.
 
-LDS/CDS resource hints will always be empty and it is expected that the
-management server will provide the complete state of the LDS/CDS
-resources in each response. An absent `Listener` or `Cluster` will
-be deleted.
+Envoy will always set the LDS/CDS resource hints to empty and it is expected that the management
+server will provide the complete state of the LDS/CDS resources in each response. An absent
+`Listener` or `Cluster` will be deleted. Other xDS clients may specify explicit LDS/CDS resources as
+resource hints, for example if they only have a singleton listener and already know its name from
+some out-of-band configuration.
 
 For EDS/RDS, the management server does not need to supply every
 requested resource and may also supply additional, unrequested
@@ -172,7 +181,7 @@ resources. :ref:`resource_names <envoy_api_field_DiscoveryRequest.resource_names
 any superfluous resources. When a requested resource is missing in a RDS
 or EDS update, Envoy will retain the last known value for this resource
 except in the case where the `Cluster` or `Listener` is being
-warmed. See :ref:`Resource warming` section below on
+warmed. See <Resource Warming> section below on
 the expectations during warming. The management server may be able to
 infer all the required EDS/RDS resources from the :ref:`node <envoy_api_msg_Core.Node>`
 identification in the :ref:`DiscoveryRequest <envoy_api_msg_DiscoveryRequest>`, in which case this hint may
@@ -241,7 +250,7 @@ An implication of the above resource update sequencing is that Envoy
 does not expect a :ref:`DiscoveryResponse <envoy_api_msg_DiscoveryResponse>` for every :ref:`DiscoveryRequests <envoy_api_msg_DiscoveryRequest>`
 it issues.
 
-.. _Resource Warming:
+.. _xds_protocol_resource_warming:
 
 Resource warming
 ~~~~~~~~~~~~~~~~
@@ -259,6 +268,8 @@ is expected to provide the EDS/RDS updates during warming. If management
 server does not provide EDS/RDS responses, Envoy will not initialize
 itself during the initialization phase and the updates sent via CDS/LDS
 will not take effect until EDS/RDS responses are supplied.
+
+.. _xds_protocol_eventual_consistency_considerations:
 
 Eventual consistency considerations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -296,10 +307,10 @@ adding/removing/updating clusters. On the other hand, routes are not
 warmed, i.e., the management plane must ensure that clusters referenced
 by a route are in place, before pushing the updates for a route.
 
-.. _Aggregated Discovery Service:
+.. _xds_protocol_ads:
 
-Aggregated Discovery Service (ADS)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Aggregated Discovery Service
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It's challenging to provide the above guarantees on sequencing to avoid
 traffic drop when management servers are distributed. ADS allow a single
@@ -421,6 +432,8 @@ those resources in the response; due to implementation details hidden
 from the server, the client may have "forgotten" those resources despite
 apparently remaining subscribed.
 
+.. _xds_protocol_unsubscribe:
+
 Unsubscribing from Resources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -449,8 +462,8 @@ messages. ADS is not available for REST-JSON polling.
 
 When the poll period is set to a small value, with the intention of long
 polling, then there is also a requirement to avoid sending a
-:ref:`DiscoveryResponse <envoy_api_msg_DiscoveryResponse>` :ref:`unless a change to the underlying resources has
-occurred <Resource Updates>`.
+:ref:`DiscoveryResponse <envoy_api_msg_DiscoveryResponse>` unless a change to the underlying resources has
+occurred <Resource Update>.
 
 .. |Multiple EDS requests on the same stream| image:: diagrams/eds-same-stream.svg
 .. |Multiple EDS requests on distinct streams| image:: diagrams/eds-distinct-stream.svg

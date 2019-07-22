@@ -36,7 +36,7 @@ CodecClient::CodecClient(Type type, Network::ClientConnectionPtr&& connection,
   connection_->noDelay(true);
 }
 
-CodecClient::~CodecClient() {}
+CodecClient::~CodecClient() = default;
 
 void CodecClient::close() { connection_->close(Network::ConnectionCloseType::NoFlush); }
 
@@ -136,11 +136,12 @@ void CodecClient::onData(Buffer::Instance& data) {
 
 CodecClientProd::CodecClientProd(Type type, Network::ClientConnectionPtr&& connection,
                                  Upstream::HostDescriptionConstSharedPtr host,
-                                 Event::Dispatcher& dispatcher)
+                                 Event::Dispatcher& dispatcher, bool strict_header_validation)
     : CodecClient(type, std::move(connection), host, dispatcher) {
   switch (type) {
   case Type::HTTP1: {
-    codec_ = std::make_unique<Http1::ClientConnectionImpl>(*connection_, *this);
+    codec_ = std::make_unique<Http1::ClientConnectionImpl>(*connection_, *this,
+                                                           strict_header_validation);
     break;
   }
   case Type::HTTP2: {

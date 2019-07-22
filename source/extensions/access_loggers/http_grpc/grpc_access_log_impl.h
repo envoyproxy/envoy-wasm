@@ -3,7 +3,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "envoy/access_log/access_log.h"
 #include "envoy/config/accesslog/v2/als.pb.h"
 #include "envoy/config/filter/accesslog/v2/accesslog.pb.h"
 #include "envoy/grpc/async_client.h"
@@ -12,6 +11,10 @@
 #include "envoy/service/accesslog/v2/als.pb.h"
 #include "envoy/singleton/instance.h"
 #include "envoy/thread_local/thread_local.h"
+
+#include "common/grpc/typed_async_client.h"
+
+#include "extensions/access_loggers/common/access_log_base.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -26,7 +29,7 @@ namespace HttpGrpc {
  */
 class GrpcAccessLogStreamer {
 public:
-  virtual ~GrpcAccessLogStreamer() {}
+  virtual ~GrpcAccessLogStreamer() = default;
 
   /**
    * Send an access log.
@@ -37,7 +40,7 @@ public:
                     const std::string& log_name) PURE;
 };
 
-typedef std::shared_ptr<GrpcAccessLogStreamer> GrpcAccessLogStreamerSharedPtr;
+using GrpcAccessLogStreamerSharedPtr = std::shared_ptr<GrpcAccessLogStreamer>;
 
 /**
  * Production implementation of GrpcAccessLogStreamer that supports per-thread and per-log
@@ -67,19 +70,19 @@ private:
     const LocalInfo::LocalInfo& local_info_;
   };
 
-  typedef std::shared_ptr<SharedState> SharedStateSharedPtr;
+  using SharedStateSharedPtr = std::shared_ptr<SharedState>;
 
   struct ThreadLocalStreamer;
 
   /**
    * Per-thread stream state.
    */
-  struct ThreadLocalStream : public Grpc::TypedAsyncStreamCallbacks<
-                                 envoy::service::accesslog::v2::StreamAccessLogsResponse> {
+  struct ThreadLocalStream
+      : public Grpc::AsyncStreamCallbacks<envoy::service::accesslog::v2::StreamAccessLogsResponse> {
     ThreadLocalStream(ThreadLocalStreamer& parent, const std::string& log_name)
         : parent_(parent), log_name_(log_name) {}
 
-    // Grpc::TypedAsyncStreamCallbacks
+    // Grpc::AsyncStreamCallbacks
     void onCreateInitialMetadata(Http::HeaderMap&) override {}
     void onReceiveInitialMetadata(Http::HeaderMapPtr&&) override {}
     void onReceiveMessage(
@@ -89,7 +92,7 @@ private:
 
     ThreadLocalStreamer& parent_;
     const std::string log_name_;
-    Grpc::AsyncStream* stream_{};
+    Grpc::AsyncStream<envoy::service::accesslog::v2::StreamAccessLogsMessage> stream_{};
   };
 
   /**
@@ -100,7 +103,9 @@ private:
     void send(envoy::service::accesslog::v2::StreamAccessLogsMessage& message,
               const std::string& log_name);
 
-    Grpc::AsyncClientPtr client_;
+    Grpc::AsyncClient<envoy::service::accesslog::v2::StreamAccessLogsMessage,
+                      envoy::service::accesslog::v2::StreamAccessLogsResponse>
+        client_;
     std::unordered_map<std::string, ThreadLocalStream> stream_map_;
     SharedStateSharedPtr shared_state_;
   };
@@ -111,7 +116,7 @@ private:
 /**
  * Access log Instance that streams HTTP logs over gRPC.
  */
-class HttpGrpcAccessLog : public AccessLog::Instance {
+class HttpGrpcAccessLog : public Common::ImplBase {
 public:
   HttpGrpcAccessLog(AccessLog::FilterPtr&& filter,
                     const envoy::config::accesslog::v2::HttpGrpcAccessLogConfig& config,
@@ -121,13 +126,12 @@ public:
       envoy::data::accesslog::v2::AccessLogCommon& common_access_log,
       const StreamInfo::StreamInfo& stream_info);
 
-  // AccessLog::Instance
-  void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
-           const Http::HeaderMap* response_trailers,
-           const StreamInfo::StreamInfo& stream_info) override;
-
 private:
-  AccessLog::FilterPtr filter_;
+  // Common::ImplBase
+  void emitLog(const Http::HeaderMap& request_headers, const Http::HeaderMap& response_headers,
+               const Http::HeaderMap& response_trailers,
+               const StreamInfo::StreamInfo& stream_info) override;
+
   const envoy::config::accesslog::v2::HttpGrpcAccessLogConfig config_;
   GrpcAccessLogStreamerSharedPtr grpc_access_log_streamer_;
   std::vector<Http::LowerCaseString> request_headers_to_log_;

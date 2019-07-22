@@ -146,15 +146,11 @@ ConnectionPool::Cancellable* ConnPoolImpl::newStream(Http::StreamDecoder& respon
 void ConnPoolImpl::onConnectionEvent(ActiveClient& client, Network::ConnectionEvent event) {
   if (event == Network::ConnectionEvent::RemoteClose ||
       event == Network::ConnectionEvent::LocalClose) {
-
     ENVOY_CONN_LOG(debug, "client disconnected", *client.client_);
+
+    Envoy::Upstream::reportUpstreamCxDestroy(host_, event);
     if (client.closed_with_active_rq_) {
-      host_->cluster().stats().upstream_cx_destroy_with_active_rq_.inc();
-      if (event == Network::ConnectionEvent::RemoteClose) {
-        host_->cluster().stats().upstream_cx_destroy_remote_with_active_rq_.inc();
-      } else {
-        host_->cluster().stats().upstream_cx_destroy_local_with_active_rq_.inc();
-      }
+      Envoy::Upstream::reportUpstreamCxDestroyActiveRequest(host_, event);
     }
 
     if (client.connect_timer_) {
@@ -308,7 +304,7 @@ ConnPoolImpl::ActiveClient::~ActiveClient() {
 
 CodecClientPtr ProdConnPoolImpl::createCodecClient(Upstream::Host::CreateConnectionData& data) {
   CodecClientPtr codec{new CodecClientProd(CodecClient::Type::HTTP2, std::move(data.connection_),
-                                           data.host_description_, dispatcher_)};
+                                           data.host_description_, dispatcher_, false)};
   return codec;
 }
 

@@ -8,7 +8,7 @@
 float gNan = std::nan("1");
 float gInfinity = INFINITY;
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart() {
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t) {
   logInfo(std::string("NaN ") + std::to_string(gNan));
   // For some reason these return "inf nan":
   // logWarn("inf " + std::to_string(gInfinity));

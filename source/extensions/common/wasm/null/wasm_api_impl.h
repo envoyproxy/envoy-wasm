@@ -9,6 +9,12 @@ extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
 
 namespace Null {
 namespace Plugin {
+class RootContext;
+}
+
+Plugin::RootContext* nullVmGetRoot(absl::string_view root_id);
+
+namespace Plugin {
 
 #define WS(_x) Word(static_cast<uint64_t>(_x))
 #define WR(_x) Word(reinterpret_cast<uint64_t>(_x))
@@ -29,6 +35,14 @@ inline uint64_t proxy_getCurrentTimeNanoseconds() {
 // Stream Info
 inline void proxy_getProtocol(StreamType type, const char** value_ptr, size_t* value_size) {
   getProtocolHandler(current_context_, WS(type), WR(value_ptr), WR(value_size));
+}
+
+inline uint32_t proxy_getDestinationPort(StreamType type) {
+  return getDestinationPortHandler(current_context_, WS(type));
+}
+
+inline uint32_t proxy_getResponseCode(StreamType type) {
+  return getResponseCodeHandler(current_context_, WS(type));
 }
 
 // Metadata
@@ -59,6 +73,18 @@ inline void proxy_setMetadataStruct(MetadataType type, const char* name_ptr, siz
 // Continue
 inline void proxy_continueRequest() { continueRequestHandler(current_context_); }
 inline void proxy_continueResponse() { continueResponseHandler(current_context_); }
+inline void proxy_sendLocalResponse(uint32_t response_code, const char* response_code_details_ptr,
+                                    size_t response_code_details_size, const char* body_ptr,
+                                    size_t body_size,
+                                    const char* additional_response_header_pairs_ptr,
+                                    size_t additional_response_header_pairs_size,
+                                    uint32_t grpc_status) {
+  sendLocalResponseHandler(current_context_, WS(response_code), WR(response_code_details_ptr),
+                           WS(response_code_details_size), WR(body_ptr), WS(body_size),
+                           WR(additional_response_header_pairs_ptr),
+                           WS(additional_response_header_pairs_size), WS(grpc_status));
+}
+inline void proxy_clearRouteCache() { clearRouteCacheHandler(current_context_); }
 
 // SharedData
 inline void proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,
@@ -72,6 +98,28 @@ inline bool proxy_setSharedData(const char* key_ptr, size_t key_size, const char
                                 size_t value_size, uint64_t cas) {
   return setSharedDataHandler(current_context_, WR(key_ptr), WS(key_size), WR(value_ptr),
                               WS(value_size), WS(cas));
+}
+
+// SharedQueue
+// Note: Registering the same queue_name will overwrite the old registration while preseving any
+// pending data. Consequently it should typically be followed by a call to proxy_dequeueSharedQueue.
+// Returns unique token for the queue.
+inline uint32_t proxy_registerSharedQueue(const char* queue_name_ptr, size_t queue_name_size) {
+  return registerSharedQueueHandler(current_context_, WR(queue_name_ptr), WS(queue_name_size));
+}
+// Returns unique token for the queue.
+inline uint32_t proxy_resolveSharedQueue(const char* vm_id_ptr, size_t vm_id_size,
+                                         const char* queue_name_ptr, size_t queue_name_size) {
+  return resolveSharedQueueHandler(current_context_, WR(vm_id_ptr), WS(vm_id_size),
+                                   WR(queue_name_ptr), WS(queue_name_size));
+}
+// Returns true on end-of-stream (no more data available).
+inline bool proxy_dequeueSharedQueue(uint32_t token, const char** data_ptr, size_t* data_size) {
+  return dequeueSharedQueueHandler(current_context_, WS(token), WR(data_ptr), WR(data_size));
+}
+// Returns false if the queue was not found and the data was not enqueued.
+inline bool proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size) {
+  return enqueueSharedQueueHandler(current_context_, WS(token), WR(data_ptr), WS(data_size));
 }
 
 // Headers/Trailers/Metadata Maps
@@ -98,6 +146,9 @@ inline void proxy_replaceHeaderMapValue(HeaderMapType type, const char* key_ptr,
 }
 inline void proxy_removeHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size) {
   removeHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr), WS(key_size));
+}
+inline uint32_t proxy_getHeaderMapSize(HeaderMapType type) {
+  return getHeaderMapSizeHandler(current_context_, WS(type));
 }
 
 // Body
@@ -162,6 +213,8 @@ inline uint64_t proxy_getMetric(uint32_t metric_id) {
 
 #undef WS
 #undef WR
+
+inline RootContext* getRoot(StringView root_id) { return nullVmGetRoot(root_id); }
 
 } // namespace Plugin
 } // namespace Null

@@ -7,6 +7,7 @@
 #include "envoy/stream_info/stream_info.h"
 
 #include "common/common/assert.h"
+#include "common/common/dump_state_utils.h"
 #include "common/stream_info/filter_state_impl.h"
 
 namespace Envoy {
@@ -128,6 +129,12 @@ struct StreamInfoImpl : public StreamInfo {
 
   Upstream::HostDescriptionConstSharedPtr upstreamHost() const override { return upstream_host_; }
 
+  void setRouteName(absl::string_view route_name) override {
+    route_name_ = std::string(route_name);
+  }
+
+  const std::string& getRouteName() const override { return route_name_; }
+
   void setUpstreamLocalAddress(
       const Network::Address::InstanceConstSharedPtr& upstream_local_address) override {
     upstream_local_address_ = upstream_local_address;
@@ -202,6 +209,13 @@ struct StreamInfoImpl : public StreamInfo {
     return upstream_transport_failure_reason_;
   }
 
+  void dumpState(std::ostream& os, int indent_level = 0) const {
+    const char* spaces = spacesForLevel(indent_level);
+    os << spaces << "StreamInfoImpl " << this << DUMP_OPTIONAL_MEMBER(protocol_)
+       << DUMP_OPTIONAL_MEMBER(response_code_) << DUMP_OPTIONAL_MEMBER(response_code_details_)
+       << DUMP_MEMBER(health_check_request_) << DUMP_MEMBER(route_name_) << "\n";
+  }
+
   TimeSource& time_source_;
   const SystemTime start_time_;
   const MonotonicTime start_time_monotonic_;
@@ -220,6 +234,7 @@ struct StreamInfoImpl : public StreamInfo {
   const Router::RouteEntry* route_entry_{};
   envoy::api::v2::core::Metadata metadata_{};
   FilterStateImpl filter_state_{};
+  std::string route_name_;
 
 private:
   uint64_t bytes_received_{};
@@ -228,7 +243,7 @@ private:
   Network::Address::InstanceConstSharedPtr downstream_local_address_;
   Network::Address::InstanceConstSharedPtr downstream_direct_remote_address_;
   Network::Address::InstanceConstSharedPtr downstream_remote_address_;
-  const Ssl::ConnectionInfo* downstream_ssl_info_;
+  const Ssl::ConnectionInfo* downstream_ssl_info_{};
   std::string requested_server_name_;
   UpstreamTiming upstream_timing_;
   std::string upstream_transport_failure_reason_;

@@ -13,11 +13,13 @@ import "envoy/config/wasm/v2/wasm.proto";
 // Wasm :ref:`configuration overview <config_http_filters_wasm>`.
 
 message Wasm {
-  // A unique ID so that multiple filters/services can call into the same VM.
-  string id = 1;
+  // A unique ID for a set of filters/services in a VM which will share Context(s).
+  string root_id = 1;
+  // A unique ID for a VM so that multiple filters/services can call into the same VM.
+  string vm_id = 2;
   // Configuration for starting a new VM (optionally associated with the given 'id').
-  envoy.config.wasm.v2.VmConfig vm_config = 2;
+  envoy.config.wasm.v2.VmConfig vm_config = 3;
   // Wasm service configuration string e.g. a serialized protobuf which will be the
   // argument to the VM configure() call.
-  string configuration = 3;
+  string configuration = 4;
 }

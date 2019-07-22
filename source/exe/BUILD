@@ -15,7 +15,7 @@ load(
     "envoy_all_extensions",
     "envoy_windows_extensions",
 )
-load("//bazel:repositories.bzl", "PPC_SKIP_TARGETS")
+load("//bazel:repositories.bzl", "NOBORINGSSL_SKIP_TARGETS", "PPC_SKIP_TARGETS")
 
 envoy_package()
 
@@ -33,8 +33,6 @@ envoy_cc_binary(
 envoy_cc_library(
     name = "envoy_common_lib",
     deps = [
-        "//source/common/compressor:compressor_lib",
-        "//source/common/decompressor:decompressor_lib",
         "//source/common/event:libevent_lib",
         "//source/common/network:utility_lib",
         "//source/common/stats:stats_lib",
@@ -46,6 +44,7 @@ envoy_cc_library(
     ] + select({
         "//bazel:windows_x86_64": envoy_windows_extensions(),
         "//bazel:linux_ppc": envoy_all_extensions(PPC_SKIP_TARGETS),
+        "//bazel:boringssl_disabled": envoy_all_extensions(NOBORINGSSL_SKIP_TARGETS),
         "//conditions:default": envoy_all_extensions(),
     }),
 )
@@ -78,7 +77,7 @@ envoy_cc_library(
     ] + select({
         "//bazel:disable_signal_trace": [],
         "//conditions:default": [
-            ":sigaction_lib",
+            "//source/common/signal:sigaction_lib",
             ":terminate_handler_lib",
         ],
     }) + envoy_cc_platform_dep("platform_impl_lib"),
@@ -115,18 +114,6 @@ envoy_cc_win32_library(
         "//source/common/common:assert_lib",
         "//source/common/common:thread_lib",
         "//source/common/filesystem:filesystem_lib",
-    ],
-)
-
-envoy_cc_library(
-    name = "sigaction_lib",
-    srcs = ["signal_action.cc"],
-    hdrs = ["signal_action.h"],
-    tags = ["backtrace"],
-    deps = [
-        "//source/common/common:assert_lib",
-        "//source/common/common:non_copyable",
-        "//source/server:backtrace_lib",
     ],
 )
 

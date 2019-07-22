@@ -37,7 +37,7 @@ public:
   autoCreateCodec(Network::Connection& connection, const Buffer::Instance& data,
                   ServerConnectionCallbacks& callbacks, Stats::Scope& scope,
                   const Http1Settings& http1_settings, const Http2Settings& http2_settings,
-                  const uint32_t max_request_headers_kb);
+                  const uint32_t max_request_headers_kb, bool strict_header_validation);
 
   /**
    * Mutates request headers in various ways. This functionality is broken out because of its
@@ -53,8 +53,7 @@ public:
   static Network::Address::InstanceConstSharedPtr
   mutateRequestHeaders(HeaderMap& request_headers, Network::Connection& connection,
                        ConnectionManagerConfig& config, const Router::Config& route_config,
-                       Runtime::RandomGenerator& random, Runtime::Loader& runtime,
-                       const LocalInfo::LocalInfo& local_info);
+                       Runtime::RandomGenerator& random, const LocalInfo::LocalInfo& local_info);
 
   static void mutateResponseHeaders(HeaderMap& response_headers, const HeaderMap* request_headers,
                                     const std::string& via);
@@ -64,13 +63,14 @@ public:
   // Return false if error happens during the sanitization.
   static bool maybeNormalizePath(HeaderMap& request_headers, const ConnectionManagerConfig& config);
 
-private:
   /**
    * Mutate request headers if request needs to be traced.
    */
   static void mutateTracingRequestHeader(HeaderMap& request_headers, Runtime::Loader& runtime,
-                                         ConnectionManagerConfig& config);
+                                         ConnectionManagerConfig& config,
+                                         const Router::Route* route);
 
+private:
   static void mutateXfccRequestHeader(HeaderMap& request_headers, Network::Connection& connection,
                                       ConnectionManagerConfig& config);
 };

@@ -7,16 +7,13 @@
 
 class ExampleContext : public Context {
 public:
-  explicit ExampleContext(uint32_t id) : Context(id) {}
+  explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
   FilterHeadersStatus onRequestHeadersSimple();
   FilterHeadersStatus onRequestHeadersStream();
   FilterHeadersStatus onRequestHeaders() override;
 };
-
-std::unique_ptr<Context> NewContext(uint32_t id) {
-  return std::unique_ptr<Context>(new ExampleContext(id));
-}
+static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
 class MyGrpcCallHandler : public GrpcCallHandler<google::protobuf::Value> {
 public:

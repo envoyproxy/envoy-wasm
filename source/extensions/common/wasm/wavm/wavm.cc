@@ -60,8 +60,6 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
-
 // Forward declarations.
 template <typename R, typename... Args>
 void getFunctionWavm(WasmVm* vm, absl::string_view functionName,
@@ -95,15 +93,6 @@ struct WasmUntaggedValue : public WAVM::IR::UntaggedValue {
 using Context = Common::Wasm::Context; // Shadowing WAVM::Runtime::Context.
 
 const Logger::Id wasmId = Logger::Id::wasm;
-
-struct SaveRestoreContext {
-  explicit SaveRestoreContext(Context* context) {
-    saved_context = current_context_;
-    current_context_ = context;
-  }
-  ~SaveRestoreContext() { current_context_ = saved_context; }
-  Context* saved_context;
-};
 
 #define CALL_WITH_CONTEXT(_x, _context)                                                            \
   do {                                                                                             \
@@ -242,7 +231,7 @@ struct Wavm : public WasmVm {
   uint64_t getMemorySize() override;
   absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
-  bool setMemory(uint64_t pointer, uint64_t size, void* data) override;
+  bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool setWord(uint64_t pointer, uint64_t data) override;
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name) override;
@@ -275,6 +264,7 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback3Void);
   _REGISTER_CALLBACK(WasmCallback4Void);
   _REGISTER_CALLBACK(WasmCallback5Void);
+  _REGISTER_CALLBACK(WasmCallback8Void);
   _REGISTER_CALLBACK(WasmCallback0Int);
   _REGISTER_CALLBACK(WasmCallback1Int);
   _REGISTER_CALLBACK(WasmCallback2Int);
@@ -288,6 +278,7 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback_ZWl);
   _REGISTER_CALLBACK(WasmCallback_ZWm);
   _REGISTER_CALLBACK(WasmCallback_m);
+  _REGISTER_CALLBACK(WasmCallback_jW);
   _REGISTER_CALLBACK(WasmCallback_mW);
 #undef _REGISTER_CALLBACK
 
@@ -465,7 +456,7 @@ bool Wavm::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
   return true;
 }
 
-bool Wavm::setMemory(uint64_t pointer, uint64_t size, void* data) {
+bool Wavm::setMemory(uint64_t pointer, uint64_t size, const void* data) {
   auto p = reinterpret_cast<char*>(
       WAVM::Runtime::memoryArrayPtr<U8>(memory_, pointer, static_cast<U64>(size)));
   if (p) {

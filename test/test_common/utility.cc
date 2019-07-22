@@ -20,8 +20,13 @@
 #include <string>
 #include <vector>
 
+#include "envoy/api/v2/cds.pb.h"
+#include "envoy/api/v2/lds.pb.h"
+#include "envoy/api/v2/rds.pb.h"
+#include "envoy/api/v2/route/route.pb.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/http/codec.h"
+#include "envoy/service/discovery/v2/rtds.pb.h"
 
 #include "common/api/api_impl.h"
 #include "common/common/empty_string.h"
@@ -30,7 +35,7 @@
 #include "common/common/stack_array.h"
 #include "common/common/thread_impl.h"
 #include "common/common/utility.h"
-#include "common/config/bootstrap_json.h"
+#include "common/config/resources.h"
 #include "common/json/json_loader.h"
 #include "common/network/address_impl.h"
 #include "common/network/utility.h"
@@ -148,11 +153,40 @@ Stats::GaugeSharedPtr TestUtility::findGauge(Stats::Store& store, const std::str
   return findByName(store.gauges(), name);
 }
 
-std::list<Network::Address::InstanceConstSharedPtr>
-TestUtility::makeDnsResponse(const std::list<std::string>& addresses) {
-  std::list<Network::Address::InstanceConstSharedPtr> ret;
+void TestUtility::waitForCounterEq(Stats::Store& store, const std::string& name, uint64_t value,
+                                   Event::TestTimeSystem& time_system) {
+  while (findCounter(store, name) == nullptr || findCounter(store, name)->value() != value) {
+    time_system.sleep(std::chrono::milliseconds(10));
+  }
+}
+
+void TestUtility::waitForCounterGe(Stats::Store& store, const std::string& name, uint64_t value,
+                                   Event::TestTimeSystem& time_system) {
+  while (findCounter(store, name) == nullptr || findCounter(store, name)->value() < value) {
+    time_system.sleep(std::chrono::milliseconds(10));
+  }
+}
+
+void TestUtility::waitForGaugeGe(Stats::Store& store, const std::string& name, uint64_t value,
+                                 Event::TestTimeSystem& time_system) {
+  while (findGauge(store, name) == nullptr || findGauge(store, name)->value() < value) {
+    time_system.sleep(std::chrono::milliseconds(10));
+  }
+}
+
+void TestUtility::waitForGaugeEq(Stats::Store& store, const std::string& name, uint64_t value,
+                                 Event::TestTimeSystem& time_system) {
+  while (findGauge(store, name) == nullptr || findGauge(store, name)->value() != value) {
+    time_system.sleep(std::chrono::milliseconds(10));
+  }
+}
+
+std::list<Network::DnsResponse>
+TestUtility::makeDnsResponse(const std::list<std::string>& addresses, std::chrono::seconds ttl) {
+  std::list<Network::DnsResponse> ret;
   for (const auto& address : addresses) {
-    ret.emplace_back(Network::Utility::parseInternetAddress(address));
+
+    ret.emplace_back(Network::DnsResponse(Network::Utility::parseInternetAddress(address), ttl));
   }
   return ret;
 }
@@ -174,12 +208,27 @@ std::vector<std::string> TestUtility::listFiles(const std::string& path, bool re
   return file_names;
 }
 
-envoy::config::bootstrap::v2::Bootstrap
-TestUtility::parseBootstrapFromJson(const std::string& json_string) {
-  envoy::config::bootstrap::v2::Bootstrap bootstrap;
-  auto json_object_ptr = Json::Factory::loadFromString(json_string);
-  Config::BootstrapJson::translateBootstrap(*json_object_ptr, bootstrap);
-  return bootstrap;
+std::string TestUtility::xdsResourceName(const ProtobufWkt::Any& resource) {
+  if (resource.type_url() == Config::TypeUrl::get().Listener) {
+    return TestUtility::anyConvert<envoy::api::v2::Listener>(resource).name();
+  }
+  if (resource.type_url() == Config::TypeUrl::get().RouteConfiguration) {
+    return TestUtility::anyConvert<envoy::api::v2::RouteConfiguration>(resource).name();
+  }
+  if (resource.type_url() == Config::TypeUrl::get().Cluster) {
+    return TestUtility::anyConvert<envoy::api::v2::Cluster>(resource).name();
+  }
+  if (resource.type_url() == Config::TypeUrl::get().ClusterLoadAssignment) {
+    return TestUtility::anyConvert<envoy::api::v2::ClusterLoadAssignment>(resource).cluster_name();
+  }
+  if (resource.type_url() == Config::TypeUrl::get().VirtualHost) {
+    return TestUtility::anyConvert<envoy::api::v2::route::VirtualHost>(resource).name();
+  }
+  if (resource.type_url() == Config::TypeUrl::get().Runtime) {
+    return TestUtility::anyConvert<envoy::service::discovery::v2::Runtime>(resource).name();
+  }
+  throw EnvoyException(
+      fmt::format("xdsResourceName does not know about type URL {}", resource.type_url()));
 }
 
 std::string TestUtility::addLeftAndRightPadding(absl::string_view to_pad, int desired_length) {
@@ -267,7 +316,7 @@ std::string TestUtility::convertTime(const std::string& input, const std::string
 }
 
 // static
-bool TestUtility::gaugesZeroed(const std::vector<Stats::GaugeSharedPtr> gauges) {
+bool TestUtility::gaugesZeroed(const std::vector<Stats::GaugeSharedPtr>& gauges) {
   // Returns true if all gauges are 0 except the circuit_breaker remaining resource
   // gauges which default to the resource max.
   std::regex omitted(".*circuit_breakers\\..*\\.remaining.*");
@@ -337,11 +386,10 @@ const uint32_t Http2Settings::DEFAULT_INITIAL_STREAM_WINDOW_SIZE;
 const uint32_t Http2Settings::DEFAULT_INITIAL_CONNECTION_WINDOW_SIZE;
 const uint32_t Http2Settings::MIN_INITIAL_STREAM_WINDOW_SIZE;
 
-TestHeaderMapImpl::TestHeaderMapImpl() : HeaderMapImpl() {}
+TestHeaderMapImpl::TestHeaderMapImpl() = default;
 
 TestHeaderMapImpl::TestHeaderMapImpl(
-    const std::initializer_list<std::pair<std::string, std::string>>& values)
-    : HeaderMapImpl() {
+    const std::initializer_list<std::pair<std::string, std::string>>& values) {
   for (auto& value : values) {
     addCopy(value.first, value.second);
   }

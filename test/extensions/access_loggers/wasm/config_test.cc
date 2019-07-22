@@ -22,13 +22,6 @@ namespace Extensions {
 namespace AccessLoggers {
 namespace Wasm {
 
-class TestContext : public Common::Wasm::Context {
-public:
-  TestContext(Common::Wasm::Wasm* wasm) : Common::Wasm::Context(wasm) {}
-  ~TestContext() override {}
-  MOCK_METHOD2(scriptLog, void(spdlog::level::level_enum level, absl::string_view message));
-};
-
 class TestFactoryContext : public NiceMock<Server::Configuration::MockFactoryContext> {
 public:
   TestFactoryContext(Api::Api& api, Stats::Scope& scope) : api_(api), scope_(scope) {}
@@ -46,7 +39,16 @@ private:
 
 class WasmAccessLogConfigTest : public testing::TestWithParam<std::string> {};
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmAccessLogConfigTest, testing::Values("wavm", "v8"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmAccessLogConfigTest,
+                         testing::Values(
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                             "v8", "wavm"
+#elif defined(ENVOY_WASM_V8)
+                             "v8"
+#elif defined(ENVOY_WASM_WAVM)
+                             "wavm"
+#endif
+                             ));
 
 TEST_P(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
   auto factory =

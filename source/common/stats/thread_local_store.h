@@ -9,9 +9,10 @@
 #include "envoy/thread_local/thread_local.h"
 
 #include "common/common/hash.h"
-#include "common/stats/heap_stat_data.h"
+#include "common/stats/allocator_impl.h"
 #include "common/stats/histogram_impl.h"
-#include "common/stats/source_impl.h"
+#include "common/stats/null_counter.h"
+#include "common/stats/null_gauge.h"
 #include "common/stats/symbol_table_impl.h"
 #include "common/stats/utility.h"
 
@@ -27,9 +28,9 @@ namespace Stats {
  * histograms, one to collect the values and other as backup that is used for merge process. The
  * swap happens during the merge process.
  */
-class ThreadLocalHistogramImpl : public Histogram, public MetricImpl {
+class ThreadLocalHistogramImpl : public HistogramImplHelper {
 public:
-  ThreadLocalHistogramImpl(StatName name, absl::string_view tag_extracted_name,
+  ThreadLocalHistogramImpl(StatName name, const std::string& tag_extracted_name,
                            const std::vector<Tag>& tags, SymbolTable& symbol_table);
   ~ThreadLocalHistogramImpl() override;
 
@@ -47,38 +48,34 @@ public:
 
   // Stats::Histogram
   void recordValue(uint64_t value) override;
-  bool used() const override { return flags_ & Flags::Used; }
+  bool used() const override { return used_; }
 
   // Stats::Metric
-  StatName statName() const override { return name_.statName(); }
   SymbolTable& symbolTable() override { return symbol_table_; }
-  const SymbolTable& symbolTable() const override { return symbol_table_; }
 
 private:
   uint64_t otherHistogramIndex() const { return 1 - current_active_; }
   uint64_t current_active_;
   histogram_t* histograms_[2];
-  std::atomic<uint16_t> flags_;
+  std::atomic<bool> used_;
   std::thread::id created_thread_id_;
-  StatNameStorage name_;
   SymbolTable& symbol_table_;
 };
 
-using TlsHistogramSharedPtr = std::shared_ptr<ThreadLocalHistogramImpl>;
+using TlsHistogramSharedPtr = RefcountPtr<ThreadLocalHistogramImpl>;
 
 class TlsScope;
 
 /**
  * Log Linear Histogram implementation that is stored in the main thread.
  */
-class ParentHistogramImpl : public ParentHistogram, public MetricImpl {
+class ParentHistogramImpl : public MetricImpl<ParentHistogram> {
 public:
   ParentHistogramImpl(StatName name, Store& parent, TlsScope& tlsScope,
                       absl::string_view tag_extracted_name, const std::vector<Tag>& tags);
   ~ParentHistogramImpl() override;
 
   void addTlsHistogram(const TlsHistogramSharedPtr& hist_ptr);
-  bool used() const override;
   void recordValue(uint64_t value) override;
 
   /**
@@ -97,9 +94,13 @@ public:
   const std::string bucketSummary() const override;
 
   // Stats::Metric
-  StatName statName() const override { return name_.statName(); }
   SymbolTable& symbolTable() override { return parent_.symbolTable(); }
-  const SymbolTable& symbolTable() const override { return parent_.symbolTable(); }
+  bool used() const override;
+
+  // RefcountInterface
+  void incRefCount() override { refcount_helper_.incRefCount(); }
+  bool decRefCount() override { return refcount_helper_.decRefCount(); }
+  uint32_t use_count() const override { return refcount_helper_.use_count(); }
 
 private:
   bool usedLockHeld() const EXCLUSIVE_LOCKS_REQUIRED(merge_lock_);
@@ -113,17 +114,17 @@ private:
   mutable Thread::MutexBasicLockable merge_lock_;
   std::list<TlsHistogramSharedPtr> tls_histograms_ GUARDED_BY(merge_lock_);
   bool merged_;
-  StatNameStorage name_;
+  RefcountHelper refcount_helper_;
 };
 
-using ParentHistogramImplSharedPtr = std::shared_ptr<ParentHistogramImpl>;
+using ParentHistogramImplSharedPtr = RefcountPtr<ParentHistogramImpl>;
 
 /**
  * Class used to create ThreadLocalHistogram in the scope.
  */
 class TlsScope : public Scope {
 public:
-  virtual ~TlsScope() {}
+  ~TlsScope() override = default;
 
   // TODO(ramaraochavali): Allow direct TLS access for the advanced consumers.
   /**
@@ -139,7 +140,7 @@ public:
  */
 class ThreadLocalStoreImpl : Logger::Loggable<Logger::Id::stats>, public StoreRoot {
 public:
-  ThreadLocalStoreImpl(StatDataAllocator& alloc);
+  ThreadLocalStoreImpl(Allocator& alloc);
   ~ThreadLocalStoreImpl() override;
 
   // Stats::Scope
@@ -151,19 +152,54 @@ public:
   void deliverHistogramToSinks(const Histogram& histogram, uint64_t value) override {
     return default_scope_->deliverHistogramToSinks(histogram, value);
   }
-  Gauge& gaugeFromStatName(StatName name) override {
-    return default_scope_->gaugeFromStatName(name);
+  Gauge& gaugeFromStatName(StatName name, Gauge::ImportMode import_mode) override {
+    return default_scope_->gaugeFromStatName(name, import_mode);
   }
-  Gauge& gauge(const std::string& name) override { return default_scope_->gauge(name); }
+  Gauge& gauge(const std::string& name, Gauge::ImportMode import_mode) override {
+    return default_scope_->gauge(name, import_mode);
+  }
   Histogram& histogramFromStatName(StatName name) override {
     return default_scope_->histogramFromStatName(name);
   }
   Histogram& histogram(const std::string& name) override { return default_scope_->histogram(name); }
   NullGaugeImpl& nullGauge(const std::string&) override { return null_gauge_; }
-  const SymbolTable& symbolTable() const override { return alloc_.symbolTable(); }
+  const SymbolTable& constSymbolTable() const override { return alloc_.constSymbolTable(); }
   SymbolTable& symbolTable() override { return alloc_.symbolTable(); }
   const TagProducer& tagProducer() const { return *tag_producer_; }
-
+  absl::optional<std::reference_wrapper<const Counter>> findCounter(StatName name) const override {
+    absl::optional<std::reference_wrapper<const Counter>> found_counter;
+    Thread::LockGuard lock(lock_);
+    for (ScopeImpl* scope : scopes_) {
+      found_counter = scope->findCounter(name);
+      if (found_counter.has_value()) {
+        return found_counter;
+      }
+    }
+    return absl::nullopt;
+  }
+  absl::optional<std::reference_wrapper<const Gauge>> findGauge(StatName name) const override {
+    absl::optional<std::reference_wrapper<const Gauge>> found_gauge;
+    Thread::LockGuard lock(lock_);
+    for (ScopeImpl* scope : scopes_) {
+      found_gauge = scope->findGauge(name);
+      if (found_gauge.has_value()) {
+        return found_gauge;
+      }
+    }
+    return absl::nullopt;
+  }
+  absl::optional<std::reference_wrapper<const Histogram>>
+  findHistogram(StatName name) const override {
+    absl::optional<std::reference_wrapper<const Histogram>> found_histogram;
+    Thread::LockGuard lock(lock_);
+    for (ScopeImpl* scope : scopes_) {
+      found_histogram = scope->findHistogram(name);
+      if (found_histogram.has_value()) {
+        return found_histogram;
+      }
+    }
+    return absl::nullopt;
+  }
   // Stats::Store
   std::vector<CounterSharedPtr> counters() const override;
   std::vector<GaugeSharedPtr> gauges() const override;
@@ -178,10 +214,7 @@ public:
   void initializeThreading(Event::Dispatcher& main_thread_dispatcher,
                            ThreadLocal::Instance& tls) override;
   void shutdownThreading() override;
-
   void mergeHistograms(PostMergeCb mergeCb) override;
-
-  Source& source() override { return source_; }
 
 private:
   template <class Stat> using StatMap = StatNameHashMap<Stat>;
@@ -215,22 +248,22 @@ private:
     // Stats::Scope
     Counter& counterFromStatName(StatName name) override;
     void deliverHistogramToSinks(const Histogram& histogram, uint64_t value) override;
-    Gauge& gaugeFromStatName(StatName name) override;
+    Gauge& gaugeFromStatName(StatName name, Gauge::ImportMode import_mode) override;
     Histogram& histogramFromStatName(StatName name) override;
     Histogram& tlsHistogram(StatName name, ParentHistogramImpl& parent) override;
     ScopePtr createScope(const std::string& name) override {
       return parent_.createScope(symbolTable().toString(prefix_.statName()) + "." + name);
     }
-    const SymbolTable& symbolTable() const override { return parent_.symbolTable(); }
+    const SymbolTable& constSymbolTable() const override { return parent_.constSymbolTable(); }
     SymbolTable& symbolTable() override { return parent_.symbolTable(); }
 
     Counter& counter(const std::string& name) override {
       StatNameManagedStorage storage(name, symbolTable());
       return counterFromStatName(storage.statName());
     }
-    Gauge& gauge(const std::string& name) override {
+    Gauge& gauge(const std::string& name, Gauge::ImportMode import_mode) override {
       StatNameManagedStorage storage(name, symbolTable());
-      return gaugeFromStatName(storage.statName());
+      return gaugeFromStatName(storage.statName(), import_mode);
     }
     Histogram& histogram(const std::string& name) override {
       StatNameManagedStorage storage(name, symbolTable());
@@ -239,10 +272,17 @@ private:
 
     NullGaugeImpl& nullGauge(const std::string&) override { return parent_.null_gauge_; }
 
+    // NOTE: The find methods assume that `name` is fully-qualified.
+    // Implementations will not add the scope prefix.
+    absl::optional<std::reference_wrapper<const Counter>> findCounter(StatName name) const override;
+    absl::optional<std::reference_wrapper<const Gauge>> findGauge(StatName name) const override;
+    absl::optional<std::reference_wrapper<const Histogram>>
+    findHistogram(StatName name) const override;
+
     template <class StatType>
-    using MakeStatFn = std::function<std::shared_ptr<StatType>(StatDataAllocator&, StatName name,
-                                                               absl::string_view tag_extracted_name,
-                                                               const std::vector<Tag>& tags)>;
+    using MakeStatFn = std::function<RefcountPtr<StatType>(Allocator&, StatName name,
+                                                           absl::string_view tag_extracted_name,
+                                                           const std::vector<Tag>& tags)>;
 
     /**
      * Makes a stat either by looking it up in the central cache,
@@ -256,11 +296,24 @@ private:
      *     used if non-empty, or filled in if empty (and non-null).
      */
     template <class StatType>
-    StatType& safeMakeStat(StatName name, StatMap<std::shared_ptr<StatType>>& central_cache_map,
+    StatType& safeMakeStat(StatName name, StatMap<RefcountPtr<StatType>>& central_cache_map,
                            StatNameStorageSet& central_rejected_stats,
                            MakeStatFn<StatType> make_stat,
-                           StatMap<std::shared_ptr<StatType>>* tls_cache,
+                           StatMap<RefcountPtr<StatType>>* tls_cache,
                            StatNameHashSet* tls_rejected_stats, StatType& null_stat);
+
+    /**
+     * Looks up an existing stat, populating the local cache if necessary. Does
+     * not check the TLS or rejects, and does not create a stat if it does not
+     * exist.
+     *
+     * @param name the full name of the stat (not tag extracted).
+     * @param central_cache_map a map from name to the desired object in the central cache.
+     * @return a reference to the stat, if it exists.
+     */
+    template <class StatType>
+    absl::optional<std::reference_wrapper<const StatType>>
+    findStatLockHeld(StatName name, StatMap<RefcountPtr<StatType>>& central_cache_map) const;
 
     void extractTagsAndTruncate(StatName& name,
                                 std::unique_ptr<StatNameManagedStorage>& truncated_name_storage,
@@ -271,7 +324,7 @@ private:
     const uint64_t scope_id_;
     ThreadLocalStoreImpl& parent_;
     StatNameStorage prefix_;
-    CentralCacheEntry central_cache_;
+    mutable CentralCacheEntry central_cache_;
   };
 
   struct TlsCache : public ThreadLocal::ThreadLocalObject {
@@ -296,7 +349,7 @@ private:
   bool checkAndRememberRejection(StatName name, StatNameStorageSet& central_rejected_stats,
                                  StatNameHashSet* tls_rejected_stats);
 
-  StatDataAllocator& alloc_;
+  Allocator& alloc_;
   Event::Dispatcher* main_thread_dispatcher_{};
   ThreadLocal::SlotPtr tls_;
   mutable Thread::MutexBasicLockable lock_;
@@ -308,8 +361,7 @@ private:
   std::atomic<bool> threading_ever_initialized_{};
   std::atomic<bool> shutting_down_{};
   std::atomic<bool> merge_in_progress_{};
-  HeapStatDataAllocator heap_allocator_;
-  SourceImpl source_;
+  AllocatorImpl heap_allocator_;
 
   NullCounterImpl null_counter_;
   NullGaugeImpl null_gauge_;

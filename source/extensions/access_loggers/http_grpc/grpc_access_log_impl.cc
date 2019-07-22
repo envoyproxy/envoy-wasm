@@ -3,7 +3,6 @@
 #include "envoy/upstream/upstream.h"
 
 #include "common/common/assert.h"
-#include "common/http/header_map_impl.h"
 #include "common/network/utility.h"
 #include "common/stream_info/utility.h"
 
@@ -11,6 +10,27 @@ namespace Envoy {
 namespace Extensions {
 namespace AccessLoggers {
 namespace HttpGrpc {
+
+namespace {
+
+using namespace envoy::data::accesslog::v2;
+
+// Helper function to convert from a BoringSSL textual representation of the
+// TLS version to the corresponding enum value used in gRPC access logs.
+TLSProperties_TLSVersion tlsVersionStringToEnum(const std::string& tls_version) {
+  if (tls_version == "TLSv1") {
+    return TLSProperties_TLSVersion_TLSv1;
+  } else if (tls_version == "TLSv1.1") {
+    return TLSProperties_TLSVersion_TLSv1_1;
+  } else if (tls_version == "TLSv1.2") {
+    return TLSProperties_TLSVersion_TLSv1_2;
+  } else if (tls_version == "TLSv1.3") {
+    return TLSProperties_TLSVersion_TLSv1_3;
+  }
+
+  return TLSProperties_TLSVersion_VERSION_UNSPECIFIED;
+}
+}; // namespace
 
 GrpcAccessLogStreamerImpl::GrpcAccessLogStreamerImpl(Grpc::AsyncClientFactoryPtr&& factory,
                                                      ThreadLocal::SlotAllocator& tls,
@@ -68,7 +88,7 @@ HttpGrpcAccessLog::HttpGrpcAccessLog(
     AccessLog::FilterPtr&& filter,
     const envoy::config::accesslog::v2::HttpGrpcAccessLogConfig& config,
     GrpcAccessLogStreamerSharedPtr grpc_access_log_streamer)
-    : filter_(std::move(filter)), config_(config),
+    : Common::ImplBase(std::move(filter)), config_(config),
       grpc_access_log_streamer_(grpc_access_log_streamer) {
   for (const auto& header : config_.additional_request_headers_to_log()) {
     request_headers_to_log_.emplace_back(header);
@@ -87,7 +107,7 @@ void HttpGrpcAccessLog::responseFlagsToAccessLogResponseFlags(
     envoy::data::accesslog::v2::AccessLogCommon& common_access_log,
     const StreamInfo::StreamInfo& stream_info) {
 
-  static_assert(StreamInfo::ResponseFlag::LastFlag == 0x10000,
+  static_assert(StreamInfo::ResponseFlag::LastFlag == 0x20000,
                 "A flag has been added. Fix this code.");
 
   if (stream_info.hasResponseFlag(StreamInfo::ResponseFlag::FailedLocalHealthCheck)) {
@@ -159,29 +179,16 @@ void HttpGrpcAccessLog::responseFlagsToAccessLogResponseFlags(
   if (stream_info.hasResponseFlag(StreamInfo::ResponseFlag::StreamIdleTimeout)) {
     common_access_log.mutable_response_flags()->set_stream_idle_timeout(true);
   }
+
+  if (stream_info.hasResponseFlag(StreamInfo::ResponseFlag::InvalidEnvoyRequestHeaders)) {
+    common_access_log.mutable_response_flags()->set_invalid_envoy_request_headers(true);
+  }
 }
 
-void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
-                            const Http::HeaderMap* response_headers,
-                            const Http::HeaderMap* response_trailers,
-                            const StreamInfo::StreamInfo& stream_info) {
-  static Http::HeaderMapImpl empty_headers;
-  if (!request_headers) {
-    request_headers = &empty_headers;
-  }
-  if (!response_headers) {
-    response_headers = &empty_headers;
-  }
-  if (!response_trailers) {
-    response_trailers = &empty_headers;
-  }
-
-  if (filter_) {
-    if (!filter_->evaluate(stream_info, *request_headers, *response_headers, *response_trailers)) {
-      return;
-    }
-  }
-
+void HttpGrpcAccessLog::emitLog(const Http::HeaderMap& request_headers,
+                                const Http::HeaderMap& response_headers,
+                                const Http::HeaderMap& response_trailers,
+                                const StreamInfo::StreamInfo& stream_info) {
   envoy::service::accesslog::v2::StreamAccessLogsMessage message;
   auto* log_entry = message.mutable_http_logs()->add_log_entry();
 
@@ -201,25 +208,30 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
   }
   if (stream_info.downstreamSslConnection() != nullptr) {
     auto* tls_properties = common_properties->mutable_tls_properties();
+    const auto* downstream_ssl_connection = stream_info.downstreamSslConnection();
 
     tls_properties->set_tls_sni_hostname(stream_info.requestedServerName());
 
     auto* local_properties = tls_properties->mutable_local_certificate_properties();
-    for (const auto& uri_san : stream_info.downstreamSslConnection()->uriSanLocalCertificate()) {
+    for (const auto& uri_san : downstream_ssl_connection->uriSanLocalCertificate()) {
       auto* local_san = local_properties->add_subject_alt_name();
       local_san->set_uri(uri_san);
     }
-    local_properties->set_subject(stream_info.downstreamSslConnection()->subjectLocalCertificate());
+    local_properties->set_subject(downstream_ssl_connection->subjectLocalCertificate());
 
     auto* peer_properties = tls_properties->mutable_peer_certificate_properties();
-    for (const auto& uri_san : stream_info.downstreamSslConnection()->uriSanPeerCertificate()) {
+    for (const auto& uri_san : downstream_ssl_connection->uriSanPeerCertificate()) {
       auto* peer_san = peer_properties->add_subject_alt_name();
       peer_san->set_uri(uri_san);
     }
 
-    peer_properties->set_subject(stream_info.downstreamSslConnection()->subjectPeerCertificate());
+    peer_properties->set_subject(downstream_ssl_connection->subjectPeerCertificate());
+    tls_properties->set_tls_session_id(downstream_ssl_connection->sessionId());
+    tls_properties->set_tls_version(
+        tlsVersionStringToEnum(downstream_ssl_connection->tlsVersion()));
 
-    // TODO(snowp): Populate remaining tls_properties fields.
+    auto* local_tls_cipher_suite = tls_properties->mutable_tls_cipher_suite();
+    local_tls_cipher_suite->set_value(downstream_ssl_connection->ciphersuiteId());
   }
   common_properties->mutable_start_time()->MergeFrom(
       Protobuf::util::TimeUtil::NanosecondsToTimestamp(
@@ -275,6 +287,11 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
         *common_properties->mutable_upstream_remote_address());
     common_properties->set_upstream_cluster(stream_info.upstreamHost()->cluster().name());
   }
+
+  if (!stream_info.getRouteName().empty()) {
+    common_properties->set_route_name(stream_info.getRouteName());
+  }
+
   if (stream_info.upstreamLocalAddress() != nullptr) {
     Network::Utility::addressToProtobufAddress(
         *stream_info.upstreamLocalAddress(), *common_properties->mutable_upstream_local_address());
@@ -305,50 +322,49 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
   // HTTP request properties.
   // TODO(mattklein123): Populate port field.
   auto* request_properties = log_entry->mutable_request();
-  if (request_headers->Scheme() != nullptr) {
-    request_properties->set_scheme(std::string(request_headers->Scheme()->value().getStringView()));
+  if (request_headers.Scheme() != nullptr) {
+    request_properties->set_scheme(std::string(request_headers.Scheme()->value().getStringView()));
   }
-  if (request_headers->Host() != nullptr) {
-    request_properties->set_authority(
-        std::string(request_headers->Host()->value().getStringView()));
+  if (request_headers.Host() != nullptr) {
+    request_properties->set_authority(std::string(request_headers.Host()->value().getStringView()));
   }
-  if (request_headers->Path() != nullptr) {
-    request_properties->set_path(std::string(request_headers->Path()->value().getStringView()));
+  if (request_headers.Path() != nullptr) {
+    request_properties->set_path(std::string(request_headers.Path()->value().getStringView()));
   }
-  if (request_headers->UserAgent() != nullptr) {
+  if (request_headers.UserAgent() != nullptr) {
     request_properties->set_user_agent(
-        std::string(request_headers->UserAgent()->value().getStringView()));
+        std::string(request_headers.UserAgent()->value().getStringView()));
   }
-  if (request_headers->Referer() != nullptr) {
+  if (request_headers.Referer() != nullptr) {
     request_properties->set_referer(
-        std::string(request_headers->Referer()->value().getStringView()));
+        std::string(request_headers.Referer()->value().getStringView()));
   }
-  if (request_headers->ForwardedFor() != nullptr) {
+  if (request_headers.ForwardedFor() != nullptr) {
     request_properties->set_forwarded_for(
-        std::string(request_headers->ForwardedFor()->value().getStringView()));
+        std::string(request_headers.ForwardedFor()->value().getStringView()));
   }
-  if (request_headers->RequestId() != nullptr) {
+  if (request_headers.RequestId() != nullptr) {
     request_properties->set_request_id(
-        std::string(request_headers->RequestId()->value().getStringView()));
+        std::string(request_headers.RequestId()->value().getStringView()));
   }
-  if (request_headers->EnvoyOriginalPath() != nullptr) {
+  if (request_headers.EnvoyOriginalPath() != nullptr) {
     request_properties->set_original_path(
-        std::string(request_headers->EnvoyOriginalPath()->value().getStringView()));
+        std::string(request_headers.EnvoyOriginalPath()->value().getStringView()));
   }
-  request_properties->set_request_headers_bytes(request_headers->byteSize());
+  request_properties->set_request_headers_bytes(request_headers.byteSize());
   request_properties->set_request_body_bytes(stream_info.bytesReceived());
-  if (request_headers->Method() != nullptr) {
+  if (request_headers.Method() != nullptr) {
     envoy::api::v2::core::RequestMethod method =
         envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED;
     envoy::api::v2::core::RequestMethod_Parse(
-        std::string(request_headers->Method()->value().getStringView()), &method);
+        std::string(request_headers.Method()->value().getStringView()), &method);
     request_properties->set_request_method(method);
   }
   if (!request_headers_to_log_.empty()) {
     auto* logged_headers = request_properties->mutable_request_headers();
 
     for (const auto& header : request_headers_to_log_) {
-      const Http::HeaderEntry* entry = request_headers->get(header);
+      const Http::HeaderEntry* entry = request_headers.get(header);
       if (entry != nullptr) {
         logged_headers->insert({header.get(), std::string(entry->value().getStringView())});
       }
@@ -363,13 +379,13 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
   if (stream_info.responseCodeDetails()) {
     response_properties->set_response_code_details(stream_info.responseCodeDetails().value());
   }
-  response_properties->set_response_headers_bytes(response_headers->byteSize());
+  response_properties->set_response_headers_bytes(response_headers.byteSize());
   response_properties->set_response_body_bytes(stream_info.bytesSent());
   if (!response_headers_to_log_.empty()) {
     auto* logged_headers = response_properties->mutable_response_headers();
 
     for (const auto& header : response_headers_to_log_) {
-      const Http::HeaderEntry* entry = response_headers->get(header);
+      const Http::HeaderEntry* entry = response_headers.get(header);
       if (entry != nullptr) {
         logged_headers->insert({header.get(), std::string(entry->value().getStringView())});
       }
@@ -380,7 +396,7 @@ void HttpGrpcAccessLog::log(const Http::HeaderMap* request_headers,
     auto* logged_headers = response_properties->mutable_response_trailers();
 
     for (const auto& header : response_trailers_to_log_) {
-      const Http::HeaderEntry* entry = response_trailers->get(header);
+      const Http::HeaderEntry* entry = response_trailers.get(header);
       if (entry != nullptr) {
         logged_headers->insert({header.get(), std::string(entry->value().getStringView())});
       }

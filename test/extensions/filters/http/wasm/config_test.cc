@@ -34,7 +34,16 @@ protected:
   envoy::api::v2::core::Metadata listener_metadata_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest, testing::Values("wavm", "v8"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest,
+                         testing::Values(
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                             "v8", "wavm"
+#elif defined(ENVOY_WASM_V8)
+                             "v8"
+#elif defined(ENVOY_WASM_WAVM)
+                             "wavm"
+#endif
+                             ));
 
 TEST_P(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   const std::string json = TestEnvironment::substitute(absl::StrCat(R"EOF(
@@ -50,7 +59,7 @@ TEST_P(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   )EOF"));
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  MessageUtil::loadFromJson(json, proto_config);
+  TestUtility::loadFromJson(json, proto_config);
   WasmFilterConfig factory;
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
@@ -68,7 +77,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   )EOF"));
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  MessageUtil::loadFromYaml(yaml, proto_config);
+  TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
@@ -90,7 +99,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
   )EOF");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  MessageUtil::loadFromYaml(yaml, proto_config);
+  TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   Http::MockFilterChainFactoryCallbacks filter_callback;
@@ -108,7 +117,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   )EOF");
 
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
-  MessageUtil::loadFromYaml(yaml, proto_config);
+  TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,

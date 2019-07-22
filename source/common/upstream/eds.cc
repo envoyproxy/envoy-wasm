@@ -3,7 +3,6 @@
 #include "envoy/api/v2/eds.pb.validate.h"
 
 #include "common/common/utility.h"
-#include "common/config/subscription_factory.h"
 
 namespace Envoy {
 namespace Upstream {
@@ -17,22 +16,20 @@ EdsClusterImpl::EdsClusterImpl(
       cm_(factory_context.clusterManager()), local_info_(factory_context.localInfo()),
       cluster_name_(cluster.eds_cluster_config().service_name().empty()
                         ? cluster.name()
-                        : cluster.eds_cluster_config().service_name()) {
-  Config::Utility::checkLocalInfo("eds", local_info_);
+                        : cluster.eds_cluster_config().service_name()),
+      validation_visitor_(factory_context.messageValidationVisitor()) {
   Event::Dispatcher& dispatcher = factory_context.dispatcher();
-  Runtime::RandomGenerator& random = factory_context.random();
-  Upstream::ClusterManager& cm = factory_context.clusterManager();
   assignment_timeout_ = dispatcher.createTimer([this]() -> void { onAssignmentTimeout(); });
   const auto& eds_config = cluster.eds_cluster_config().eds_config();
-  subscription_ = Config::SubscriptionFactory::subscriptionFromConfigSource(
-      eds_config, local_info_, dispatcher, cm, random, info_->statsScope(),
-      "envoy.api.v2.EndpointDiscoveryService.FetchEndpoints",
-      "envoy.api.v2.EndpointDiscoveryService.StreamEndpoints",
-      Grpc::Common::typeUrl(envoy::api::v2::ClusterLoadAssignment().GetDescriptor()->full_name()),
-      factory_context.api());
+  subscription_ =
+      factory_context.clusterManager().subscriptionFactory().subscriptionFromConfigSource(
+          eds_config,
+          Grpc::Common::typeUrl(
+              envoy::api::v2::ClusterLoadAssignment().GetDescriptor()->full_name()),
+          info_->statsScope(), *this);
 }
 
-void EdsClusterImpl::startPreInit() { subscription_->start({cluster_name_}, *this); }
+void EdsClusterImpl::startPreInit() { subscription_->start({cluster_name_}); }
 
 void EdsClusterImpl::BatchUpdateHelper::batchUpdate(PrioritySet::HostUpdateCb& host_update_cb) {
   std::unordered_map<std::string, HostSharedPtr> updated_hosts;
@@ -101,20 +98,13 @@ void EdsClusterImpl::BatchUpdateHelper::batchUpdate(PrioritySet::HostUpdateCb& h
 
 void EdsClusterImpl::onConfigUpdate(const Protobuf::RepeatedPtrField<ProtobufWkt::Any>& resources,
                                     const std::string&) {
-  if (resources.empty()) {
-    ENVOY_LOG(debug, "Missing ClusterLoadAssignment for {} in onConfigUpdate()", cluster_name_);
-    info_->stats().update_empty_.inc();
-    onPreInitComplete();
+  if (!validateUpdateSize(resources.size())) {
     return;
   }
-  if (resources.size() != 1) {
-    throw EnvoyException(fmt::format("Unexpected EDS resource length: {}", resources.size()));
-  }
-  auto cluster_load_assignment =
-      MessageUtil::anyConvert<envoy::api::v2::ClusterLoadAssignment>(resources[0]);
+  auto cluster_load_assignment = MessageUtil::anyConvert<envoy::api::v2::ClusterLoadAssignment>(
+      resources[0], validation_visitor_);
   MessageUtil::validate(cluster_load_assignment);
-  // TODO(PiotrSikora): Remove this hack once fixed internally.
-  if (!(cluster_load_assignment.cluster_name() == cluster_name_)) {
+  if (cluster_load_assignment.cluster_name() != cluster_name_) {
     throw EnvoyException(fmt::format("Unexpected EDS cluster (expecting {}): {}", cluster_name_,
                                      cluster_load_assignment.cluster_name()));
   }
@@ -134,6 +124,31 @@ void EdsClusterImpl::onConfigUpdate(const Protobuf::RepeatedPtrField<ProtobufWkt
 
   BatchUpdateHelper helper(*this, cluster_load_assignment);
   priority_set_.batchHostUpdate(helper);
+}
+
+void EdsClusterImpl::onConfigUpdate(
+    const Protobuf::RepeatedPtrField<envoy::api::v2::Resource>& resources,
+    const Protobuf::RepeatedPtrField<std::string>&, const std::string&) {
+  if (!validateUpdateSize(resources.size())) {
+    return;
+  }
+  Protobuf::RepeatedPtrField<ProtobufWkt::Any> unwrapped_resource;
+  *unwrapped_resource.Add() = resources[0].resource();
+  onConfigUpdate(unwrapped_resource, resources[0].version());
+}
+
+bool EdsClusterImpl::validateUpdateSize(int num_resources) {
+  if (num_resources == 0) {
+    ENVOY_LOG(debug, "Missing ClusterLoadAssignment for {} in onConfigUpdate()", cluster_name_);
+    info_->stats().update_empty_.inc();
+    onPreInitComplete();
+    return false;
+  }
+  if (num_resources != 1) {
+    throw EnvoyException(fmt::format("Unexpected EDS resource length: {}", num_resources));
+    // (would be a return false here)
+  }
+  return true;
 }
 
 void EdsClusterImpl::onAssignmentTimeout() {
@@ -242,7 +257,8 @@ void EdsClusterImpl::onConfigUpdateFailed(const EnvoyException* e) {
   onPreInitComplete();
 }
 
-ClusterImplBaseSharedPtr EdsClusterFactory::createClusterImpl(
+std::pair<ClusterImplBaseSharedPtr, ThreadAwareLoadBalancerPtr>
+EdsClusterFactory::createClusterImpl(
     const envoy::api::v2::Cluster& cluster, ClusterFactoryContext& context,
     Server::Configuration::TransportSocketFactoryContext& socket_factory_context,
     Stats::ScopePtr&& stats_scope) {
@@ -250,8 +266,10 @@ ClusterImplBaseSharedPtr EdsClusterFactory::createClusterImpl(
     throw EnvoyException("cannot create an EDS cluster without an EDS config");
   }
 
-  return std::make_unique<EdsClusterImpl>(cluster, context.runtime(), socket_factory_context,
-                                          std::move(stats_scope), context.addedViaApi());
+  return std::make_pair(
+      std::make_shared<EdsClusterImpl>(cluster, context.runtime(), socket_factory_context,
+                                       std::move(stats_scope), context.addedViaApi()),
+      nullptr);
 }
 
 /**

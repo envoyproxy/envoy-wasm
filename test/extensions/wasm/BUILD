@@ -3,6 +3,7 @@ licenses(["notice"])  # Apache 2
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_package",
+    "envoy_select_wasm",
 )
 load(
     "//test/extensions:extensions_build_system.bzl",
@@ -13,7 +14,7 @@ envoy_package()
 
 envoy_extension_cc_test(
     name = "wasm_test",
-    srcs = ["wasm_test.cc"],
+    srcs = envoy_select_wasm(["wasm_test.cc"]),
     data = [
         "//test/extensions/wasm/test_data:modules",
     ],

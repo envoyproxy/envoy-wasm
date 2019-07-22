@@ -23,8 +23,9 @@ envoy_cc_library(
         "-Wno-non-virtual-dtor",
         "-Wno-old-style-cast",
     ],
+    defines = ["ENVOY_WASM_WAVM"],
     external_deps = [
-        "wavm_with_llvm",
+        "wavm",
     ],
     deps = [
         "//external:abseil_node_hash_map",

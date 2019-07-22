@@ -33,25 +33,26 @@ enum class HeaderMapType : EnumType {
   GrpcReceiveInitialMetadata = 5,  // Immutable
   GrpcReceiveTrailingMetadata = 6,  // Immutable
 };
-enum GrpcStatus : EnumType {
-  OK = 0,
-  CANCELLED = 1,
-  UNKNOWN = 2,
-  INVALID_ARGUMENT = 3,
-  DEADLINE_EXCEEDED = 4,
-  NOT_FOUND = 5,
-  ALREADY_EXISTS = 6,
-  PERMISSION_DENIED = 7,
-  UNAUTHENTICATED = 16,
-  RESOURCE_EXHAUSTED = 8,
-  FAILED_PRECONDITION = 9,
-  ABORTED = 10,
-  OUT_OF_RANGE = 11,
-  UNIMPLEMENTED = 12,
-  INTERNAL = 13,
-  UNAVAILABLE = 14,
-  DATA_LOSS = 15,
-  DO_NOT_USE = 0xFFFFFFFF 
+enum class GrpcStatus : EnumType {
+  Ok = 0,
+  Canceled = 1,
+  Unknown = 2,
+  InvalidArgument = 3,
+  DeadlineExceeded = 4,
+  NotFound = 5,
+  AlreadyExists = 6,
+  PermissionDenied = 7,
+  ResourceExhausted = 8,
+  FailedPrecondition = 9,
+  Aborted = 10,
+  OutOfRange = 11,
+  Unimplemented = 12,
+  Internal = 13,
+  Unavailable = 14,
+  DataLoss = 15,
+  Unauthenticated = 16,
+  MaximumValid = Unauthenticated,
+  InvalidCode = -1
 };
 enum class MetricType : EnumType {
   Counter = 0,

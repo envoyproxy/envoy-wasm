@@ -34,12 +34,29 @@ public:
 
 class WasmTest : public testing::TestWithParam<std::string> {};
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing::Values("wavm", "v8"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
+                         testing::Values(
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                             "v8", "wavm"
+#elif defined(ENVOY_WASM_V8)
+                             "v8"
+#elif defined(ENVOY_WASM_WAVM)
+                             "wavm"
+#endif
+                             ));
 
 class WasmTestMatrix : public testing::TestWithParam<std::tuple<std::string, std::string>> {};
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
-                         testing::Combine(testing::Values("wavm", "v8"),
+                         testing::Combine(testing::Values(
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                                              "v8", "wavm"
+#elif defined(ENVOY_WASM_V8)
+                                              "v8"
+#elif defined(ENVOY_WASM_WAVM)
+                                              "wavm"
+#endif
+                                              ),
                                           testing::Values("cpp", "rust")));
 
 TEST_P(WasmTestMatrix, Logging) {
@@ -66,11 +83,11 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("test tick logging")));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  // NB: Must be done after initialize has created the context.
-  wasm->setGeneralContext(std::move(context));
-  wasm->configure("configure-test");
-  wasm->start();
-  wasm->tickHandler();
+  wasm->setContext(context.get());
+  auto root_context = context.get();
+  wasm->startForTesting(std::move(context));
+  wasm->configure(root_context, "configure-test");
+  wasm->tickHandler(root_context->id());
 }
 
 TEST_P(WasmTest, BadSignature) {
@@ -87,13 +104,13 @@ TEST_P(WasmTest, BadSignature) {
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_THROW_WITH_MESSAGE(wasm->initialize(code, "<test>", false),
                             Extensions::Common::Wasm::WasmVmException,
                             "Bad function signature for: _proxy_onConfigure");
 }
 
 // TODO(PiotrSikora): catch llvm_trap in v8.
+#ifdef ENVOY_WASM_WAVM
 TEST(WasmTestWavmOnly, Segv) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
@@ -111,10 +128,10 @@ TEST(WasmTestWavmOnly, Segv) {
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("before badptr")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  wasm->setGeneralContext(std::move(context));
-  EXPECT_THROW_WITH_MESSAGE(wasm->start(), Extensions::Common::Wasm::WasmException,
-                            "emscripten llvm_trap");
+  EXPECT_THROW_WITH_MESSAGE(wasm->startForTesting(std::move(context)),
+                            Extensions::Common::Wasm::WasmException, "emscripten llvm_trap");
 }
+#endif
 
 TEST_P(WasmTest, DivByZero) {
   Stats::IsolatedStoreImpl stats_store;
@@ -135,9 +152,8 @@ TEST_P(WasmTest, DivByZero) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("divide by zero: 0")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("after div by zero")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  wasm->setGeneralContext(std::move(context));
-  wasm->wasmVm()->start(wasm->generalContext());
-  wasm->generalContext()->onLog();
+  wasm->setContext(context.get());
+  context->onLog();
 }
 
 TEST_P(WasmTest, EmscriptenVersion) {
@@ -159,9 +175,10 @@ TEST_P(WasmTest, EmscriptenVersion) {
   uint32_t major = 9, minor = 9, abi_major = 9, abi_minor = 9;
   EXPECT_TRUE(wasm->getEmscriptenVersion(&major, &minor, &abi_major, &abi_minor));
   EXPECT_EQ(major, 0);
-  EXPECT_EQ(minor, 0);
+  EXPECT_LE(minor, 1);
+  // Up to (at least) emsdk 1.38.39.
   EXPECT_EQ(abi_major, 0);
-  EXPECT_EQ(abi_minor, 1);
+  EXPECT_LE(abi_minor, 3);
 }
 
 TEST_P(WasmTest, IntrinsicGlobals) {
@@ -182,8 +199,7 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("NaN nan")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("inf inf")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  wasm->setGeneralContext(std::move(context));
-  wasm->start();
+  wasm->startForTesting(std::move(context));
 }
 
 // The asm2wasm.wasm file uses operations which would require the asm2wasm Emscripten module *if*
@@ -209,8 +225,7 @@ TEST_P(WasmTest, Asm2Wasm) {
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("out 0 0 0")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  wasm->setGeneralContext(std::move(context));
-  wasm->start();
+  wasm->startForTesting(std::move(context));
 }
 
 TEST_P(WasmTest, Stats) {
@@ -238,9 +253,7 @@ TEST_P(WasmTest, Stats) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("get histogram = 0")));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  // NB: Must be done after initialize has created the context.
-  wasm->setGeneralContext(std::move(context));
-  wasm->start();
+  wasm->startForTesting(std::move(context));
 }
 
 TEST_P(WasmTest, StatsHigherLevel) {
@@ -272,9 +285,8 @@ TEST_P(WasmTest, StatsHigherLevel) {
                                         "histogram_bool_tag.true.test_histogram"))));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  // NB: Must be done after initialize has created the context.
-  wasm->setGeneralContext(std::move(context));
-  wasm->tickHandler();
+  wasm->setContext(context.get());
+  wasm->tickHandler(context->id());
 }
 
 TEST_P(WasmTest, StatsHighLevel) {
@@ -307,9 +319,8 @@ TEST_P(WasmTest, StatsHighLevel) {
           spdlog::level::err,
           Eq(std::string("h_id = int_tag.7.string_tag.test_tag.bool_tag.true.test_histogram"))));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
-  // NB: Must be done after initialize has created the context.
-  wasm->setGeneralContext(std::move(context));
-  wasm->generalContext()->onLog();
+  wasm->setContext(context.get());
+  context->onLog();
 }
 
 } // namespace Wasm

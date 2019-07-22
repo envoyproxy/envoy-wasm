@@ -103,7 +103,7 @@ uint64_t GzipFilterConfig::windowBitsUint(Protobuf::uint32 window_bits) {
 }
 
 GzipFilter::GzipFilter(const GzipFilterConfigSharedPtr& config)
-    : skip_compression_{true}, compressed_data_(), compressor_(), config_(config) {}
+    : skip_compression_{true}, config_(config) {}
 
 Http::FilterHeadersStatus GzipFilter::decodeHeaders(Http::HeaderMap& headers, bool) {
   if (config_->runtime().snapshot().featureEnabled("gzip.filter_enabled", 100) &&
@@ -144,6 +144,16 @@ Http::FilterDataStatus GzipFilter::encodeData(Buffer::Instance& data, bool end_s
     config_->stats().total_compressed_bytes_.add(data.length());
   }
   return Http::FilterDataStatus::Continue;
+}
+
+Http::FilterTrailersStatus GzipFilter::encodeTrailers(Http::HeaderMap&) {
+  if (!skip_compression_) {
+    Buffer::OwnedImpl empty_buffer;
+    compressor_.compress(empty_buffer, Compressor::State::Finish);
+    config_->stats().total_compressed_bytes_.add(empty_buffer.length());
+    encoder_callbacks_->addEncodedData(empty_buffer, true);
+  }
+  return Http::FilterTrailersStatus::Continue;
 }
 
 bool GzipFilter::hasCacheControlNoTransform(Http::HeaderMap& headers) const {
