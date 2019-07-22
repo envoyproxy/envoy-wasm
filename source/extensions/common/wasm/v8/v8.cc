@@ -92,6 +92,7 @@ public:
   _REGISTER_HOST_FUNCTION(WasmCallback3Void);
   _REGISTER_HOST_FUNCTION(WasmCallback4Void);
   _REGISTER_HOST_FUNCTION(WasmCallback5Void);
+  _REGISTER_HOST_FUNCTION(WasmCallback8Void);
   _REGISTER_HOST_FUNCTION(WasmCallback0Int);
   _REGISTER_HOST_FUNCTION(WasmCallback1Int);
   _REGISTER_HOST_FUNCTION(WasmCallback2Int);
