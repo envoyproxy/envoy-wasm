@@ -148,7 +148,7 @@ public:
 
   void cancel();
 
-  virtual void onCreateInitialMetadata() = 0;
+  virtual void onCreateInitialMetadata() {}
   virtual void onSuccess(std::unique_ptr<WasmData> message) = 0;
   virtual void onFailure(GrpcStatus status, std::unique_ptr<WasmData> error_message) = 0;
 
@@ -183,9 +183,9 @@ public:
   void close(); // NB: callbacks can still occur: reset() to prevent further callbacks.
   void reset();
 
-  virtual void onCreateInitialMetadata() = 0;
-  virtual void onReceiveInitialMetadata() = 0;
-  virtual void onReceiveTrailingMetadata() = 0;
+  virtual void onCreateInitialMetadata() {}
+  virtual void onReceiveInitialMetadata() {}
+  virtual void onReceiveTrailingMetadata() {}
   virtual void onReceive(std::unique_ptr<WasmData> message) = 0;
   virtual void onRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message) = 0;
 
@@ -244,6 +244,13 @@ public:
   virtual RootContext* asRoot() { return nullptr; }
   virtual Context* asContext() { return nullptr; }
 
+  // Metadata
+  virtual bool isRootCachable(MetadataType type);  // Cache in the root.
+  virtual bool isProactivelyCachable(MetadataType type);  // Cache all keys on any read.
+  google::protobuf::Value nodeMetadataValue(StringView key);
+  google::protobuf::Struct nodeMetadataStruct();
+  google::protobuf::Value namedMetadataValue(MetadataType type, StringView name, StringView key);
+
   // Default high level HTTP/gRPC interface.  NB: overriding the low level interface will disable this interface.
   using HttpCallCallback = std::function<void(std::unique_ptr<WasmData> header_pairs,
       std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs)>;
@@ -272,6 +279,14 @@ public:
       std::unique_ptr<GrpcCallHandlerBase> handler);
   void grpcStreamHandler(StringView service, StringView service_name,
       StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler);
+
+protected:
+  google::protobuf::Value metadataValue(MetadataType type, StringView key);
+  google::protobuf::Struct metadataStruct(MetadataType type, StringView name = "");
+
+  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Value, PairHash> value_cache_;
+  std::unordered_map<std::tuple<EnumType, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
+  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Struct, PairHash> struct_cache_;
 
 private:
   friend class GrpcCallHandlerBase;
@@ -341,22 +356,16 @@ public:
 
   // Metadata
   bool isImmutable(MetadataType type);
-  virtual bool isProactivelyCachable(MetadataType type);  // Cache all keys on any read.
   // Caching Metadata calls.  Note: "name" refers to the metadata namespace.
-  google::protobuf::Value metadataValue(MetadataType type, StringView key);
   google::protobuf::Value requestRouteMetadataValue(StringView key);
   google::protobuf::Value responseRouteMetadataValue(StringView key);
   google::protobuf::Value logMetadataValue(StringView key);
   google::protobuf::Value requestMetadataValue(StringView key);
   google::protobuf::Value responseMetadataValue(StringView key);
-  google::protobuf::Value nodeMetadataValue(StringView key);
-  google::protobuf::Value namedMetadataValue(MetadataType type, StringView name, StringView key);
   google::protobuf::Value requestMetadataValue(StringView name, StringView key);
   google::protobuf::Value responseMetadataValue(StringView name, StringView key);
-  google::protobuf::Struct metadataStruct(MetadataType type, StringView name = "");
   google::protobuf::Struct requestRouteMetadataStruct();
   google::protobuf::Struct responseRouteMetadataStruct();
-  google::protobuf::Struct nodeMetadataStruct();
   google::protobuf::Struct logMetadataStruct(StringView name = "");
   google::protobuf::Struct requestMetadataStruct(StringView name = "");
   google::protobuf::Struct responseMetadataStruct(StringView name = "");
@@ -368,9 +377,6 @@ public:
 
 private:
   RootContext* root_{};
-  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Value, PairHash> value_cache_;
-  std::unordered_map<std::tuple<EnumType, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
-  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Struct, PairHash> struct_cache_;
 };
 
 using RootFactory = std::function<std::unique_ptr<RootContext>(uint32_t id, StringView root_id)>;
@@ -390,6 +396,15 @@ struct RegisterContextFactory {
   explicit RegisterContextFactory(ContextFactory context_factory, RootFactory root_factory = nullptr, StringView root_id = "");
 };
 
+inline bool ContextBase::isRootCachable(MetadataType type) {
+  switch (type) {
+    case MetadataType::Node:
+      return true;
+    default:
+      return false;
+  }
+}
+
 inline bool Context::isImmutable(MetadataType type) {
   switch (type) {
     case MetadataType::Request:
@@ -401,7 +416,7 @@ inline bool Context::isImmutable(MetadataType type) {
 }
 
 // Override in subclasses to proactively cache certain types of metadata.
-inline bool Context::isProactivelyCachable(MetadataType type) {
+inline bool ContextBase::isProactivelyCachable(MetadataType type) {
   switch (type) {
     case MetadataType::Node:
       return true;
@@ -501,7 +516,20 @@ inline void setMetadataStruct(MetadataType type, StringView name,
   proxy_setMetadataStruct(type, name.data(), name.size(), output.data(), output.size());
 }
 
-inline google::protobuf::Value Context::metadataValue(MetadataType type, StringView key) {
+inline google::protobuf::Value ContextBase::nodeMetadataValue(StringView key) {
+  return metadataValue(MetadataType::Node, key);
+}
+
+inline google::protobuf::Struct ContextBase::nodeMetadataStruct() {
+  return metadataStruct(MetadataType::Node);
+}
+
+inline google::protobuf::Value ContextBase::metadataValue(MetadataType type, StringView key) {
+  if (isRootCachable(type)) {
+    if (auto context = asContext()) {
+      return context->root()->metadataValue(type, key);
+    }
+  }
   auto cache_key = std::make_pair(static_cast<EnumType>(type), std::string(key));
   auto it = value_cache_.find(cache_key);
   if (it != value_cache_.end()) {
@@ -528,6 +556,47 @@ inline google::protobuf::Value Context::metadataValue(MetadataType type, StringV
   }
 }
 
+inline google::protobuf::Struct ContextBase::metadataStruct(MetadataType type, StringView name) {
+  if (isRootCachable(type)) {
+    if (auto context = asContext()) {
+      return context->root()->metadataStruct(type, name);
+    }
+  }
+  auto cache_key = std::make_pair(static_cast<EnumType>(type),  std::string(name));
+  auto it = struct_cache_.find(cache_key);
+  if (it != struct_cache_.end()) {
+    return it->second;
+  }
+  auto s = getMetadataStruct(MetadataType::Request, name);
+  struct_cache_[cache_key] = s;
+  return s;
+}
+
+inline google::protobuf::Value ContextBase::namedMetadataValue(MetadataType type, StringView name, StringView key) {
+  if (isRootCachable(type)) {
+    if (auto context = asContext()) {
+      return context->root()->namedMetadataValue(type, name, key);
+    }
+  }
+  auto n = std::string(name);
+  auto cache_key = std::make_tuple(static_cast<EnumType>(type),  n, std::string(key));
+  auto it = name_value_cache_.find(cache_key);
+  if (it != name_value_cache_.end()) {
+    return it->second;
+  }
+  auto s = metadataStruct(type, name);
+  for (auto &f : s.fields()) {
+    auto k = std::make_tuple(static_cast<EnumType>(type), n, f.first);
+    name_value_cache_[k] =  f.second;
+  }
+  struct_cache_[std::make_pair(static_cast<EnumType>(type), n)] = std::move(s);
+  it = name_value_cache_.find(cache_key);
+  if (it != name_value_cache_.end()) {
+    return it->second;
+  }
+  return {};
+}
+
 inline google::protobuf::Value Context::requestRouteMetadataValue(StringView key) {
   return metadataValue(MetadataType::RequestRoute, key);
 }
@@ -548,30 +617,6 @@ inline google::protobuf::Value Context::responseMetadataValue(StringView key) {
   return metadataValue(MetadataType::Response, key);
 }
 
-inline google::protobuf::Value Context::nodeMetadataValue(StringView key) {
-  return metadataValue(MetadataType::Node, key);
-}
-
-inline google::protobuf::Value Context::namedMetadataValue(MetadataType type, StringView name, StringView key) {
-  auto n = std::string(name);
-  auto cache_key = std::make_tuple(static_cast<EnumType>(type),  n, std::string(key));
-  auto it = name_value_cache_.find(cache_key);
-  if (it != name_value_cache_.end()) {
-    return it->second;
-  }
-  auto s = metadataStruct(type, name);
-  for (auto &f : s.fields()) {
-    auto k = std::make_tuple(static_cast<EnumType>(type), n, f.first);
-    name_value_cache_[k] =  f.second;
-  }
-  struct_cache_[std::make_pair(static_cast<EnumType>(type), n)] = std::move(s);
-  it = name_value_cache_.find(cache_key);
-  if (it != name_value_cache_.end()) {
-    return it->second;
-  }
-  return {};
-}
-
 inline google::protobuf::Value Context::requestMetadataValue(StringView name, StringView key) {
   return namedMetadataValue(MetadataType::Request, name, key);
 }
@@ -580,27 +625,12 @@ inline google::protobuf::Value Context::responseMetadataValue(StringView name, S
   return namedMetadataValue(MetadataType::Response, name, key);
 }
 
-inline google::protobuf::Struct Context::metadataStruct(MetadataType type, StringView name) {
-  auto cache_key = std::make_pair(static_cast<EnumType>(type),  std::string(name));
-  auto it = struct_cache_.find(cache_key);
-  if (it != struct_cache_.end()) {
-    return it->second;
-  }
-  auto s = getMetadataStruct(MetadataType::Request, name);
-  struct_cache_[cache_key] = s;
-  return s;
-}
-
 inline google::protobuf::Struct Context::requestRouteMetadataStruct() {
   return metadataStruct(MetadataType::RequestRoute);
 }
 
 inline google::protobuf::Struct Context::responseRouteMetadataStruct() {
   return metadataStruct(MetadataType::ResponseRoute);
-}
-
-inline google::protobuf::Struct Context::nodeMetadataStruct() {
-  return metadataStruct(MetadataType::Node);
 }
 
 inline google::protobuf::Struct Context::logMetadataStruct(StringView name) {
