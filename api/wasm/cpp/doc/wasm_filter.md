@@ -45,7 +45,7 @@ has the same lifetime as the VM/runtime instance and acts as a target
 for any interactions which happen at initial setup. It is also used for
 interactions that outlive a request.
 
-At request time, a context with incremental id from 1 is created for
+At request time, a context with incremental is created for
 each stream. Stream context has the same lifetime as the stream itself
 and acts as a target for interactions that are local to that stream.
 
