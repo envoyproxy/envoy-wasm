@@ -13,12 +13,21 @@ public:
   void onLog() override;
   void onDone() override;
 };
-static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
+class ExampleRootContext : public RootContext {
+public:
+  explicit ExampleRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
+  void onTick() override;
+};
+static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext), ROOT_FACTORY(ExampleRootContext));
+
+void ExampleRootContext::onTick() {
+  auto metadataString = nodeMetadataValue("wasm_node_get_key").string_value();
+  logDebug(std::string("onTick ") + metadataString);
+}
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
   auto metadataString = getMetadataStringValue(MetadataType::Request, "wasm_request_get_key");
   setMetadataStringValue(MetadataType::Request, "wasm_request_set_key", "wasm_request_set_value");
-  logDebug(std::string("onRequestHeaders ") + std::to_string(id()) + " " + metadataString);
   auto path = getRequestHeader(":path");
   logInfo(std::string("header path ") + path->toString());
   addRequestHeader("newheader", "newheadervalue");

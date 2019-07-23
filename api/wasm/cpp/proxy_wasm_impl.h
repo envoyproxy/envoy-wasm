@@ -541,7 +541,7 @@ inline google::protobuf::Value ContextBase::metadataValue(MetadataType type, Str
       google::protobuf::Value value;
       if (value.ParseFromArray(p.second.data(), p.second.size())) {
         auto k = std::make_pair(static_cast<EnumType>(type), std::string(p.first));
-        value_cache_[cache_key] = value;
+        value_cache_[k] = value;
       }
     }
     auto it = value_cache_.find(cache_key);
