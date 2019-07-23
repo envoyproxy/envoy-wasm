@@ -299,11 +299,11 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   node_val.set_string_value("wasm_node_get_value");
   (*node_data.mutable_metadata()->mutable_fields())["wasm_node_get_key"] = node_val;
   EXPECT_CALL(local_info_, node()).WillOnce(ReturnRef(node_data));
-  EXPECT_CALL(*root_context_,
-              scriptLog_(spdlog::level::debug, Eq(absl::string_view("onTick wasm_node_get_value"))));
+  EXPECT_CALL(*root_context_, scriptLog_(spdlog::level::debug,
+                                         Eq(absl::string_view("onTick wasm_node_get_value"))));
 
-   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::err,
-         Eq(absl::string_view("onRequestBody wasm_node_get_value"))));
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::err,
+                                   Eq(absl::string_view("onRequestBody wasm_node_get_value"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info, Eq(absl::string_view("header path /"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn, Eq(absl::string_view("onLog 2 /"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
