@@ -1100,6 +1100,9 @@ struct SimpleHistogram {
 template <typename... Tags> struct Counter : public MetricBase {
   static Counter<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
 
+  Counter<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors) :
+    Counter<Tags...>(std::string(name), std::vector<MetricTag>({ToMetricTag(descriptors)...})) {}
+
   SimpleCounter resolve(Tags... f) {
     std::vector<std::string> fields{ToString(f)...};
     return SimpleCounter(resolveWithFields(fields));
@@ -1142,6 +1145,9 @@ inline Counter<Tags...>* Counter<Tags...>::New(StringView name,
 template <typename... Tags> struct Gauge : public MetricBase {
   static Gauge<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
 
+  Gauge<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors) :
+    Gauge<Tags...>(std::string(name), std::vector<MetricTag>({ToMetricTag(descriptors)...})) {}
+
   SimpleGauge resolve(Tags... f) {
     std::vector<std::string> fields{ToString(f)...};
     return SimpleGauge(resolveWithFields(fields));
@@ -1181,6 +1187,9 @@ inline Gauge<Tags...>* Gauge<Tags...>::New(StringView name,
 
 template <typename... Tags> struct Histogram : public MetricBase {
   static Histogram<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+
+  Histogram<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors) :
+    Histogram<Tags...>(std::string(name), std::vector<MetricTag>({ToMetricTag(descriptors)...})) {}
 
   SimpleHistogram resolve(Tags... f) {
     std::vector<std::string> fields{ToString(f)...};
