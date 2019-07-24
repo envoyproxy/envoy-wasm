@@ -44,6 +44,8 @@ extensions/filters/common/original_src @snowp @klarose
 /*/extensions/filters/http/dynamic_forward_proxy @mattklein123 @alyssawilk
 # omit_canary_hosts retry predicate
 /*/extensions/retry/host/omit_canary_hosts @sriduth @snowp
+# http inspector
+/*/extensions/filters/listener/http_inspector @crazyxy @PiotrSikora @lizan
 # WebAssembly extensions
 /*/extensions/access_loggers/wasm @jplevyak @PiotrSikora
 /*/extensions/common/wasm @jplevyak @PiotrSikora

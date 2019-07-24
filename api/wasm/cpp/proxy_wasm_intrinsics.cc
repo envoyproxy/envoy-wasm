@@ -28,7 +28,8 @@ static Context* ensureContext(uint32_t context_id, uint32_t root_context_id) {
     }
     auto factory = context_factories->find(root_id);
     if (factory == context_factories->end()) {
-      throw ProxyException("no context factory for root_id: " + root_id);
+      logError("no context factory for root_id: " + root_id);
+      return nullptr;
     } else {
       e.first->second = factory->second(context_id, root);
     }
@@ -67,7 +68,7 @@ static RootContext* ensureRootContext(uint32_t context_id, std::unique_ptr<WasmD
 static ContextBase* getContextBase(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end() || !(it->second->asContext() || it->second->asRoot())) {
-    throw ProxyException("no base context context_id: " + std::to_string(context_id));
+    return nullptr;
   }
   return it->second.get();
 }
@@ -75,7 +76,7 @@ static ContextBase* getContextBase(uint32_t context_id) {
 static Context* getContext(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end() || !it->second->asContext()) {
-    throw ProxyException("no context context_id: " + std::to_string(context_id));
+    return nullptr;
   }
   return it->second->asContext();
 }
@@ -83,7 +84,7 @@ static Context* getContext(uint32_t context_id) {
 static RootContext* getRootContext(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end() || !it->second->asRoot()) {
-    throw ProxyException("no root context_id: " + std::to_string(context_id));
+    return nullptr;
   }
   return it->second->asRoot();
 }
