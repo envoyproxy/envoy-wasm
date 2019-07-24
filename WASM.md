@@ -1,23 +1,70 @@
-Proof of Concept WebAssembly Support.
+WebAssembly Extension Support
 
-# WebAssembly VM
+# Build Dependencies
 
-The WebAssembly VM is https://github.com/WAVM/WAVM. This VM was chosen for the
-proof of concept because:
+## glib2.0
 
-  - It is OSS with a permissive license.
-  - It compiles with LLVM for high performance.
-  - It can attach pre-compiled code to the WASM files (e.g. during distribution
-      from a central controller) for faster startup and reduced load on a pool
-      of proxies.
+Note: this may be required on Debian/Ubuntu.
 
-# TODO
+apt-get install libglib2.0-dev
 
-  - Check if the thread is running in the VM in the WAVM Runtime signal handlers and
-    if not call the underlying signal handler from Envoy or add the WAVM signal handler
-    as a pre-check to the Envoy signal handler with the same check.
-  - Add support to WAVM for multple stacks for coroutines/streams with thread shared state.
-    - evaluate async emscripten: https://github.com/kripken/emscripten/wiki/Asyncify
-    - evaulate boost::fiber, GNU Pth, getcontext(), setcontext(), swapcontext().
-  - Add support for shared global state.
-  - Intercept logging messages from WAVM and send to Envoy logs.
+## emscripten
+
+git clone https://github.com/emscripten-core/emsdk.git  
+cd emsdk  
+./emsdk install sdk-1.38.25-64bit  
+./emsdk activate sdk-1.38.25-64bit  
+
+. ./emsdk\_env.sh  
+
+It is possible later versions will work, e.g.
+
+./emsdk install latest  
+./emsdk activate latest  
+
+However 1.38.25 is known to work.
+
+## clang-7 or clang-8
+
+export CC=clang  
+export CXX=clang++  
+
+Note: ensure that you have clang in your path (e.g. /usr/lib/llvm-7/bin).
+
+## protobuf v3.6.1
+
+git clone https://github.com/protocolbuffers/protobuf  
+cd protobuf  
+git checkout v3.6.1  
+git submodule update --init --recursive  
+./autogen.sh  
+./configure  
+make  
+make check  
+sudo make install  
+
+# Dependencies for regenerating test modules
+
+## WAVM binaries if you want to rebuild the c++ WebAssembly tests
+
+git clone git@github.com:WAVM/WAVM.git  
+cd WAVM  
+cmake "."  
+make  
+sudo make install  
+
+Note: ensure /usr/local/bin is in your path
+
+## rust if you want to use it or rebuild the rust WebAssembly tests
+
+curl https://sh.rustup.rs -sSf | sh
+
+# Building
+
+Building with WebAssembly support requires enabling one or more WebAssembly runtime via the "wasm" define:
+
+bazel build --define wasm=enabled --explain=~/bazel.log //source/exe:envoy-static
+
+The options are "wavm", "v8" and "enable" (for both wavm and v8).
+
+This option must be provided for all build/test targets.
