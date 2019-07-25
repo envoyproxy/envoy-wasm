@@ -37,4 +37,5 @@ mergeInto(LibraryManager.library, {
     proxy_grpcSend : function () {},
     proxy_grpcClose : function () {},
     proxy_grpcCancel : function () {},
+    proxy_sendLocalResponse : function () {},
 });
