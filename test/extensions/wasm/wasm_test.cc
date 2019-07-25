@@ -317,6 +317,9 @@ TEST_P(WasmTest, StatsHighLevel) {
               scriptLog_(spdlog::level::err,
                          Eq("h_id = int_tag.7.string_tag.test_tag.bool_tag.true.test_histogram")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("stack_c = 1")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("stack_g = 2")));
+  // Get is not supported on histograms.
+  // EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("stack_h = 3")));
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->setContext(context.get());
   context->onLog();
