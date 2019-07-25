@@ -155,6 +155,8 @@ PROTO_RST="
   /envoy/type/matcher/value/envoy/type/matcher/value.proto.rst
   /envoy/type/matcher/number/envoy/type/matcher/number.proto.rst
   /envoy/type/matcher/string/envoy/type/matcher/string.proto.rst
+  /envoy/config/filter/http/wasm/v2/wasm/envoy/config/filter/http/wasm/v2/wasm.proto.rst
+  /envoy/config/wasm/v2/wasm/envoy/config/wasm/v2/wasm.proto.rst
 "
 
 # Dump all the generated RST so they can be added to PROTO_RST easily.
