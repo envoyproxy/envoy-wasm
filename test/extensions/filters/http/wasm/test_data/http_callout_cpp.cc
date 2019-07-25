@@ -14,7 +14,6 @@ static RegisterContextFactory
     register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
-  try {
     WasmDataPtr data = getRequestHeader("x-callout-url");
 
     if (!data) {
@@ -37,13 +36,6 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
              {{"trail", "cow"}},
              1000,
              callback);
-  } catch (const std::exception &ex) {
-    logError("Caught exception: " + std::string{ex.what()});
-  } catch (const std::string &ex) {
-    logError("Caught exception: " + ex);
-  } catch (...) {
-    logError("Caught exception");
-  }
 
   return FilterHeadersStatus::StopIteration;
 }

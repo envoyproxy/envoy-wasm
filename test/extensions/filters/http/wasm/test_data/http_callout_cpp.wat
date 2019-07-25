@@ -255,27 +255,25 @@
     "\00\00\00\a7\00\00\00\ad\00\00\00\b3\00\00\00\b5\00\00\00\bf\00\00\00\c1\00\00\00\c5\00\00\00\c7\00\00\00\d3\00\00\00\01\00\00\00\0b\00\00\00\0d\00\00\00\11\00\00\00\13\00\00\00\17\00\00\00\1d"
     "\00\00\00\1f\00\00\00%\00\00\00)\00\00\00+\00\00\00/\00\00\005\00\00\00;\00\00\00=\00\00\00C\00\00\00G\00\00\00I\00\00\00O\00\00\00S\00\00\00Y\00\00\00a\00\00\00e"
     "\00\00\00g\00\00\00k\00\00\00m\00\00\00q\00\00\00y\00\00\00\7f\00\00\00\83\00\00\00\89\00\00\00\8b\00\00\00\8f\00\00\00\95\00\00\00\97\00\00\00\9d\00\00\00\a3\00\00\00\a7\00\00\00\a9"
-    "\00\00\00\ad\00\00\00\b3\00\00\00\b5\00\00\00\bb\00\00\00\bf\00\00\00\c1\00\00\00\c5\00\00\00\c7\00\00\00\d1\00\00\00\d4!\00\00\c7\"\00\00h\"\00\00\88\"\00\00\00\00\00\00\01\00\00\00\e0"
-    "\18\00\00\00\00\00\00\d4!\00\00X#\00\00\fc!\00\00O#\00\00\00\19\00\00\00\00\00\00\fc!\00\00>#\00\00\08\19\00\00\00\00\00\00\d4!\00\00\df#\00\00\fc!\00\00f#\00\00("
-    "\19\00\00\00\00\00\00\d4!\00\00A$\00\00\d4!\00\00\df$\00\00\fc!\00\00F$\00\00H\19\00\00\00\00\00\00\d4!\00\00G%\00\00\d4!\00\00s%\00\00\fc!\00\0050\00\000"
+    "\00\00\00\ad\00\00\00\b3\00\00\00\b5\00\00\00\bb\00\00\00\bf\00\00\00\c1\00\00\00\c5\00\00\00\c7\00\00\00\d1\00\00\00\d4!\00\00\f3\"\00\00\fc!\00\00\ea\"\00\00\e0\18\00\00\00\00\00\00\fc"
+    "!\00\00\d9\"\00\00\e8\18\00\00\00\00\00\00\d4!\00\00z#\00\00\fc!\00\00\01#\00\00\08\19\00\00\00\00\00\00\d4!\00\00\dc#\00\00\d4!\00\00z$\00\00\fc!\00\00\e1#\00\00("
+    "\19\00\00\00\00\00\00\d4!\00\00\e2$\00\00\d4!\00\00\0e%\00\00h\"\00\00\10&\00\00\00\00\00\00\01\00\00\00h\19\00\00\00\00\00\00\d4!\00\00O&\00\00\fc!\00\0050\00\000"
     "\1a\00\00\00\00\00\00\fc!\00\00\17/\00\00\90\19\00\00\00\00\00\00\fc!\00\00\d4(\00\00\a0\19\00\00\00\00\00\00\fc!\00\00\04)\00\00\b0\19\00\00\00\00\00\00\fc!\00\00\ca)\00\000"
     "\1a\00\00\00\00\00\00\fc!\00\00\e4.\00\000\1a\00\00\00\00\00\00h\"\00\00\a2-\00\00\00\00\00\00\01\00\00\00\e8\19\00\00\00\00\00\00\d4!\00\00\0f.\00\00\fc!\00\00\fe.\00\000"
-    "\1a\00\00\00\00\00\00\fc!\00\00h0\00\00\00\19\00\00\00\00\00\00\fc!\00\00\970\00\00p\1a\00\00\00\00\00\00\ff\ff\ff\ff\ff\ff\ff\ff")
+    "\1a\00\00\00\00\00\00\fc!\00\00h0\00\00\e0\18\00\00\00\00\00\00\fc!\00\00\970\00\00p\1a\00\00\00\00\00\00\ff\ff\ff\ff\ff\ff\ff\ff")
   (data $59 $31 (i32.const 6704)
     "\d4!\00\00\9b5\00\00\fc!\00\00l9\00\00X\1a\00\00\00\00\00\00\fc!\00\00(:\00\00X\1a\00\00\00\00\00\00\d4!\00\00\f4:\00\00\fc!\00\00m;\00\00p\1a\00\00\00\00\00\00"
     "\d4!\00\00,<\00\00\fc!\00\00\8c<\00\00\88\1a\00\00\00\00\00\00\fc!\00\009<\00\00\98\1a\00\00\00\00\00\00\d4!\00\00Z<\00\00\fc!\00\00g<\00\00x\1a\00\00\00\00\00\00"
     "\fc!\00\00n=\00\00p\1a\00\00\00\00\00\00\fc!\00\00~=\00\00\b0\1a\00\00\00\00\00\00\fc!\00\00\b3=\00\00\88\1a\00\00\00\00\00\00\fc!\00\00\8f=\00\00\d0\1a\00\00\00\00\00\00"
     "\fc!\00\00\d5=\00\00\88\1a\00\00\00\00\00\00L\"\00\00\fd=\00\00L\"\00\00\ff=\00\00\fc!\00\00\01>\00\00x\1a")
   (data $60 $31 (i32.const 6948)
-    "\18\19\00\00\01\00\00\00\02\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\03\00\00\00\04\00\00\00\01\00\00\00\05\00\00\00"
-    "\06\00\00\00\07\00\00\00\02\00\00\00\08\00\00\00\04\00\00\00\05\00\00\00\06\00\00\00\01\00\00\00\00\00\00\00\08\19\00\00\01\00\00\00\07\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00"
+    "\f8\18\00\00\01\00\00\00\02\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\03\00\00\00\04\00\00\00\01\00\00\00\05\00\00\00"
+    "\06\00\00\00\07\00\00\00\02\00\00\00\08\00\00\00\04\00\00\00\05\00\00\00\06\00\00\00\01\00\00\00\00\00\00\00\e8\18\00\00\01\00\00\00\07\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00"
     "\01\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\09\00\00\00\04\00\00\00\01\00\00\00\05\00\00\00\06\00\00\00\07\00\00\00\02\00\00\00\08\00\00\00\04\00\00\00\05\00\00\00\06\00\00\00"
-    "\01")
-  (data $61 $31 (i32.const 7149)
-    "\19\00\00\08\00\00\00\09\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\01\00\00\00\01\00\00\00\n\00\00\00\0b\00\00\00\00\00\00\000\19\00\00\n\00\00\00\0b\00\00\00\0c\00\00\00\04"
-    "\00\00\00\0c\00\00\00\0d\00\00\00\02\00\00\00\02\00\00\00\0d\00\00\00\00\00\00\00P\19\00\00\0e\00\00\00\0f\00\00\00\0e\00\00\00\05\00\00\00\10\00\00\00\11\00\00\00\03\00\00\00\03\00\00\00\0f"
-    "\00\00\00\ff\ff\ff\ff\00\00\00\00\01")
-  (data $62 $31 (i32.const 7300)
+    "\01\00\00\00\00\00\00\00\e0\18\00\00\08\00\00\00\09\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\01\00\00\00\01\00\00\00\n\00\00\00\0b\00\00\00\00\00\00\00\10\19\00\00\n\00\00\00"
+    "\0b\00\00\00\0c\00\00\00\04\00\00\00\0c\00\00\00\0d\00\00\00\02\00\00\00\02\00\00\00\0d\00\00\00\00\00\00\000\19\00\00\0e\00\00\00\0f\00\00\00\0e\00\00\00\05\00\00\00\10\00\00\00\11\00\00\00"
+    "\03\00\00\00\03\00\00\00\0f\00\00\00\ff\ff\ff\ff\00\00\00\00\01")
+  (data $61 $31 (i32.const 7300)
     "\90\19\00\00\12\00\00\00\13\00\00\00\06\00\00\00\10\00\00\00\04\00\00\00\11\00\00\00\12\00\00\00\14\00\00\00\13\00\00\00\07\00\00\00\08\00\00\00\05\00\00\00\14\00\00\00\09\00\00\00\06\00\00\00"
     "\15\00\00\00\03\00\00\00\16\00\00\00\17\00\00\00\18\00\00\00\00\00\00\00\f0\19\00\00\15\00\00\00\16\00\00\00\n\00\00\00\19\00\00\00\07\00\00\00\1a\00\00\00\1b\00\00\00\17\00\00\00\1c\00\00\00"
     "\07\00\00\00\0b\00\00\00\08\00\00\00\1d\00\00\00\0c\00\00\00\06\00\00\00\1e\00\00\00\04\00\00\00\16\00\00\00\00\00\00\00p\19\00\00\18\00\00\00\19\00\00\00\0d\00\00\00\1f\00\00\00\09\00\00\00"
@@ -284,58 +282,58 @@
     "\16\00\00\00%\00\00\00&\00\00\00\00\00\00\00\c0\19\00\00\1c\00\00\00\1d\00\00\00\10\00\00\00'\00\00\00\0b\00\00\00(\00\00\00)\00\00\00\1e\00\00\00*\00\00\00\07\00\00\00\11\00\00\00"
     "\0c\00\00\00+\00\00\00\12\00\00\00\06\00\00\00,\00\00\00\04\00\00\00\16\00\00\00\00\00\00\00\b0\19\00\00\12\00\00\00\1f\00\00\00\06\00\00\00\10\00\00\00\04\00\00\00\11\00\00\00\12\00\00\00"
     "\14\00\00\00\13\00\00\00\07\00\00\00\08\00\00\00\05\00\00\00\14\00\00\00\09\00\00\00\06\00\00\00\15\00\00\00\03\00\00\00\16\00\00\00\17\00\00\00\18")
-  (data $63 $31 (i32.const 7805)
+  (data $62 $31 (i32.const 7805)
     "\1a\00\00 \00\00\00!\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\01\00\00\00\01\00\00\00-\00\00\00.\00\00\00\13\00\00\00\"\00\00\00#\00\00\00\14\00\00\00\00\00\00\00\10"
     "\1a\00\00$\00\00\00%\00\00\00/\00\00\00\00\00\00\008\1a\00\00&\00\00\00'\00\00\00\05\00\00\00\15\00\00\00\01\00\00\00\06\00\00\000\00\00\00\00\00\00\00H\1a\00\00&\00\00\00("
     "\00\00\00\07\00\00\00\16\00\00\00\02\00\00\00\06\00\00\000")
-  (data $64 $31 (i32.const 7961)
+  (data $63 $31 (i32.const 7961)
     "\01\00\00\00\09\00\00\00\00\00\00\08\00\00\00\01\00\00\00    \00\00\00\00\10\04\00\00\1cF\00\00!F\00\00\10\0d\00\00H\1f\00\00\05")
-  (data $65 $31 (i32.const 8020)
+  (data $64 $31 (i32.const 8020)
     "1")
-  (data $66 $31 (i32.const 8044)
+  (data $65 $31 (i32.const 8044)
     "\08\00\00\00\09\00\00\00+F")
-  (data $67 $31 (i32.const 8068)
+  (data $66 $31 (i32.const 8068)
     "\02")
-  (data $68 $31 (i32.const 8083)
+  (data $67 $31 (i32.const 8083)
     "\ff\ff\ff\ff\ff")
-  (data $69 $31 (i32.const 8132)
+  (data $68 $31 (i32.const 8132)
     "\05")
-  (data $70 $31 (i32.const 8144)
+  (data $69 $31 (i32.const 8144)
     "1")
-  (data $71 $31 (i32.const 8168)
+  (data $70 $31 (i32.const 8168)
     "\n\00\00\00\09\00\00\008>\00\00\00\04")
-  (data $72 $31 (i32.const 8192)
+  (data $71 $31 (i32.const 8192)
     "\01")
-  (data $73 $31 (i32.const 8207)
+  (data $72 $31 (i32.const 8207)
     "\n\ff\ff\ff\ff")
-  (data $74 $31 (i32.const 8256)
+  (data $73 $31 (i32.const 8256)
     "\c4\1f")
-  (data $75 $31 (i32.const 8448)
+  (data $74 $31 (i32.const 8448)
     "\b0C")
-  (data $76 $31 (i32.const 8540)
+  (data $75 $31 (i32.const 8540)
     "\0b")
-  (data $77 $31 (i32.const 8579)
+  (data $76 $31 (i32.const 8579)
     "\ff\ff\ff\ff\ff")
-  (data $78 $31 (i32.const 8632)
+  (data $77 $31 (i32.const 8632)
     "`\1a\00\00)\00\00\00*\00\00\002\00\00\00\02\00\00\00\00\00\00\00x\1a\00\00+\00\00\00,\00\00\00-\00\00\00.\00\00\00\0c\00\00\00\01\00\00\00\02\00\00\00\04\00\00\00\00\00\00\00"
     "\a0\1a\00\00+\00\00\00/\00\00\00-\00\00\00.\00\00\00\0c\00\00\00\02\00\00\00\03\00\00\00\05\00\00\00\00\00\00\00\b0\1a\00\000\00\00\001\00\00\003\00\00\00\00\00\00\00\c0\1a\00\00"
     "0\00\00\002\00\00\003\00\00\00\00\00\00\00\f0\1a\00\00+\00\00\003\00\00\00-\00\00\00.\00\00\00\0d\00\00\00\00\00\00\00\10\1b\00\00+\00\00\004\00\00\00-\00\00\00.\00\00\00"
-    "\0c\00\00\00\03\00\00\00\04\00\00\00\06\00\00\00NSt3__212basic_stringIcNS_11char_traitsIcEENS_9a"
-    "llocatorIcEEEE\00NSt3__221__basic_string_commonILb1EEE\00x-callout-u"
-    "rl\00Forwarding to: \00:method\00:path\00:authority\00foo\00hello world\00trai"
-    "l\00cow\0014ExampleContext\007Context\0011ContextBase\00NSt3__210__functio"
-    "n6__funcI3$_0NS_9allocatorIS2_EEFNS_10unique_ptrI7ContextNS_14de"
-    "fault_deleteIS6_EEEEjP11RootContextEEE\00NSt3__210__function6__bas"
-    "eIFNS_10unique_ptrI7ContextNS_14default_deleteIS3_EEEEjP11RootCo"
-    "ntextEEE\003$_0\00NSt3__210__function6__funcIZN14ExampleContext16onR"
-    "equestHeadersEvE3$_1NS_9allocatorIS3_EEFvNS_10unique_ptrI8WasmDa"
-    "taNS_14default_deleteIS7_EEEESA_SA_EEE\00NSt3__210__function6__bas"
-    "eIFvNS_10unique_ptrI8WasmDataNS_14default_deleteIS3_EEEES6_S6_EE"
-    "E\00Got response\00ZN14ExampleContext16onRequestHeadersEvE3$_1\00N6goo"
-    "gle8protobuf8internal29InternalMetadataWithArenaBaseINSt3__212ba"
-    "sic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEENS1_29Inter"
-    "nalMetadataWithArenaLiteEE9ContainerE\00/usr/local/include/google/"
-    "protobuf/arenastring.h\00CHECK failed: initial_value != NULL: \00/ho"
+    "\0c\00\00\00\03\00\00\00\04\00\00\00\06\00\00\00x-callout-url\00Forwarding to: \00:method\00:path\00:aut"
+    "hority\00foo\00hello world\00trail\00cow\0014ExampleContext\007Context\0011Con"
+    "textBase\00NSt3__210__function6__funcI3$_0NS_9allocatorIS2_EEFNS_1"
+    "0unique_ptrI7ContextNS_14default_deleteIS6_EEEEjP11RootContextEE"
+    "E\00NSt3__210__function6__baseIFNS_10unique_ptrI7ContextNS_14defau"
+    "lt_deleteIS3_EEEEjP11RootContextEEE\003$_0\00NSt3__210__function6__f"
+    "uncIZN14ExampleContext16onRequestHeadersEvE3$_1NS_9allocatorIS3_"
+    "EEFvNS_10unique_ptrI8WasmDataNS_14default_deleteIS7_EEEESA_SA_EE"
+    "E\00NSt3__210__function6__baseIFvNS_10unique_ptrI8WasmDataNS_14def"
+    "ault_deleteIS3_EEEES6_S6_EEE\00Got response\00ZN14ExampleContext16on"
+    "RequestHeadersEvE3$_1\00N6google8protobuf8internal29InternalMetada"
+    "taWithArenaBaseINSt3__212basic_stringIcNS3_11char_traitsIcEENS3_"
+    "9allocatorIcEEEENS1_29InternalMetadataWithArenaLiteEE9ContainerE"
+    "\00/usr/local/include/google/protobuf/arenastring.h\00CHECK failed: "
+    "initial_value != NULL: \00NSt3__212basic_stringIcNS_11char_traitsI"
+    "cEENS_9allocatorIcEEEE\00NSt3__221__basic_string_commonILb1EEE\00/ho"
     "me/jblatt/src/istio.io/envoy/api/wasm/cpp/struct_lite.pb.cc\00/usr"
     "/local/include/google/protobuf/repeated_field.h\00CHECK failed: (i"
     "ndex) >= (0): \00CHECK failed: (index) < (current_size_): \00/usr/lo"
@@ -552,7 +550,7 @@
     i32.const 0
     i32.store
     i32.const 0
-    i32.const 8941
+    i32.const 8840
     i32.const 13
     local.get $7
     local.get $2
@@ -708,15 +706,15 @@
     i32.const 7
     i32.store8 offset=11
     local.get $4
-    i32.const 8971
+    i32.const 8870
     i32.load align=1
     i32.store align=1
     local.get $4
-    i32.const 8975
+    i32.const 8874
     i32.load16_s align=1
     i32.store16 offset=4 align=1
     local.get $4
-    i32.const 8977
+    i32.const 8876
     i32.load8_s
     i32.store8 offset=6
     local.get $4
@@ -753,11 +751,11 @@
     i32.const 5
     i32.store8 offset=11
     local.get $1
-    i32.const 8979
+    i32.const 8878
     i32.load align=1
     i32.store align=1
     local.get $1
-    i32.const 8983
+    i32.const 8882
     i32.load8_s
     i32.store8 offset=4
     local.get $1
@@ -788,11 +786,11 @@
     i32.const 10
     i32.store8 offset=11
     local.get $1
-    i32.const 8985
+    i32.const 8884
     i64.load align=1
     i64.store align=1
     local.get $1
-    i32.const 8993
+    i32.const 8892
     i32.load16_s align=1
     i32.store16 offset=8 align=1
     local.get $1
@@ -810,11 +808,11 @@
     i32.const 3
     i32.store8 offset=11
     local.get $1
-    i32.const 8996
+    i32.const 8895
     i32.load16_s align=1
     i32.store16 align=1
     local.get $1
-    i32.const 8998
+    i32.const 8897
     i32.load8_s
     i32.store8 offset=2
     local.get $1
@@ -914,11 +912,11 @@
     i32.const 5
     i32.store8 offset=11
     local.get $8
-    i32.const 9012
+    i32.const 8911
     i32.load align=1
     i32.store align=1
     local.get $8
-    i32.const 9016
+    i32.const 8915
     i32.load8_s
     i32.store8 offset=4
     local.get $8
@@ -934,11 +932,11 @@
     i32.const 3
     i32.store8 offset=11
     local.get $5
-    i32.const 9018
+    i32.const 8917
     i32.load16_s align=1
     i32.store16 align=1
     local.get $5
-    i32.const 9020
+    i32.const 8919
     i32.load8_s
     i32.store8 offset=2
     local.get $5
@@ -1001,7 +999,7 @@
     local.get $17
     i64.store
     local.get $10
-    i32.const 9000
+    i32.const 8899
     i32.store
     local.get $10
     i32.const 11
@@ -6183,7 +6181,7 @@
     i32.const 0
     local.get $1
     i32.load offset=4
-    i32.const 9281
+    i32.const 9180
     i32.eq
     select
     )
@@ -6191,7 +6189,7 @@
   (func $__ZNKSt3__210__function6__funcI3__0NS_9allocatorIS2_EEFNS_10unique_ptrI7ContextNS_14default_deleteIS6_EEEEjP11RootContextEE11target_typeEv (type $4)
     (param $0 i32)
     (result i32)
-    i32.const 6464
+    i32.const 6432
     )
   
   (func $__ZNKSt3__210__function6__funcIZN14ExampleContext16onRequestHeadersEvE3__1NS_9allocatorIS3_EEFvNS_10unique_ptrI8WasmDataNS_14default_deleteIS7_EEEESA_SA_EE7__cloneEv (type $4)
@@ -6241,11 +6239,11 @@
     i32.const 16
     call $__Znwm
     local.tee $0
-    i32.const 9530
+    i32.const 9429
     i64.load align=1
     i64.store align=1
     local.get $0
-    i32.const 9538
+    i32.const 9437
     i32.load align=1
     i32.store offset=8 align=1
     local.get $0
@@ -6295,7 +6293,7 @@
     i32.const 0
     local.get $1
     i32.load offset=4
-    i32.const 9543
+    i32.const 9442
     i32.eq
     select
     )
@@ -6303,7 +6301,7 @@
   (func $__ZNKSt3__210__function6__funcIZN14ExampleContext16onRequestHeadersEvE3__1NS_9allocatorIS3_EEFvNS_10unique_ptrI8WasmDataNS_14default_deleteIS7_EEEESA_SA_EE11target_typeEv (type $4)
     (param $0 i32)
     (result i32)
-    i32.const 6496
+    i32.const 6464
     )
   
   (func $__GLOBAL__sub_I_http_callout_cpp_cc (type $8)
@@ -6474,7 +6472,7 @@
       i32.load offset=60
       if $if_1
         local.get $2
-        i32.const 6504
+        i32.const 6472
         i32.const 16
         call $__ZNK6google8protobuf5Arena17OnArenaAllocationEPKSt9type_infom
       end ;; $if_1
@@ -6541,11 +6539,11 @@
     if $if
       local.get $3
       i32.const 3
-      i32.const 9758
+      i32.const 9657
       i32.const 370
       call $__ZN6google8protobuf8internal10LogMessageC2ENS0_8LogLevelEPKci
       local.get $3
-      i32.const 9807
+      i32.const 9706
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal11LogFinisheraSERNS1_10LogMessageE
       local.get $3
@@ -6570,7 +6568,7 @@
     i32.load offset=60
     if $if_1
       local.get $1
-      i32.const 6376
+      i32.const 6480
       i32.const 16
       call $__ZNK6google8protobuf5Arena17OnArenaAllocationEPKSt9type_infom
     end ;; $if_1
@@ -63588,8 +63586,8 @@
     (result i32)
     local.get $0
     i32.const 0
-    i32.const 8955
-    i32.const 8955
+    i32.const 8854
+    i32.const 8854
     call $__ZNSt3__211char_traitsIcE6lengthEPKc
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKcm
     )
