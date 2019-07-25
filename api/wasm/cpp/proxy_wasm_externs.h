@@ -61,6 +61,8 @@ extern "C" uint64_t proxy_getCurrentTimeNanoseconds();
 
 // Stream Info
 extern "C" void proxy_getProtocol(StreamType type, const char** value_ptr, size_t* value_size);
+extern "C" uint32_t proxy_getDestinationPort(StreamType type);
+extern "C" uint32_t proxy_getResponseCode(StreamType type);
 
 // Metadata
 extern "C" void proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
@@ -74,9 +76,15 @@ extern "C" void proxy_getMetadataStruct(MetadataType type, const char* name_ptr,
 extern "C" void proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
                                         const char* value_ptr, size_t value_size);
 
-// Continue
+// Continue/Reply/Route
 extern "C" void proxy_continueRequest();
 extern "C" void proxy_continueResponse();
+extern "C" void proxy_sendLocalResponse(uint32_t response_code,
+    const char* response_code_details_ptr, size_t response_code_details_size,
+    const char* body_ptr, size_t body_size,
+    const char* additional_response_header_pairs_ptr, size_t additional_response_header_pairs_size,
+    uint32_t grpc_status);
+extern "C" void proxy_clearRouteCache();
 
 // SharedData
 extern "C" void proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,
@@ -103,6 +111,7 @@ extern "C" void proxy_getHeaderMapPairs(HeaderMapType type, const char** ptr, si
 extern "C" void proxy_setHeaderMapPairs(HeaderMapType type, const char* ptr, size_t size);
 extern "C" void proxy_replaceHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
 extern "C" void proxy_removeHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size);
+extern "C" uint32_t proxy_getHeaderMapSize(HeaderMapType type);
 
 // Body
 extern "C" void proxy_getRequestBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr,

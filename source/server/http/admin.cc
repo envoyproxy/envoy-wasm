@@ -311,10 +311,22 @@ void AdminImpl::addOutlierInfo(const std::string& cluster_name,
                                const Upstream::Outlier::Detector* outlier_detector,
                                Buffer::Instance& response) {
   if (outlier_detector) {
-    response.add(fmt::format("{}::outlier::success_rate_average::{}\n", cluster_name,
-                             outlier_detector->successRateAverage()));
-    response.add(fmt::format("{}::outlier::success_rate_ejection_threshold::{}\n", cluster_name,
-                             outlier_detector->successRateEjectionThreshold()));
+    response.add(fmt::format(
+        "{}::outlier::success_rate_average::{}\n", cluster_name,
+        outlier_detector->successRateAverage(
+            Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::ExternalOrigin)));
+    response.add(fmt::format(
+        "{}::outlier::success_rate_ejection_threshold::{}\n", cluster_name,
+        outlier_detector->successRateEjectionThreshold(
+            Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::ExternalOrigin)));
+    response.add(fmt::format(
+        "{}::outlier::local_origin_success_rate_average::{}\n", cluster_name,
+        outlier_detector->successRateAverage(
+            Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::LocalOrigin)));
+    response.add(fmt::format(
+        "{}::outlier::local_origin_success_rate_ejection_threshold::{}\n", cluster_name,
+        outlier_detector->successRateEjectionThreshold(
+            Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::LocalOrigin)));
   }
 }
 
@@ -341,9 +353,19 @@ void AdminImpl::writeClustersAsJson(Buffer::Instance& response) {
     cluster_status.set_name(cluster_info->name());
 
     const Upstream::Outlier::Detector* outlier_detector = cluster.outlierDetector();
-    if (outlier_detector != nullptr && outlier_detector->successRateEjectionThreshold() > 0.0) {
+    if (outlier_detector != nullptr &&
+        outlier_detector->successRateEjectionThreshold(
+            Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::ExternalOrigin) > 0.0) {
       cluster_status.mutable_success_rate_ejection_threshold()->set_value(
-          outlier_detector->successRateEjectionThreshold());
+          outlier_detector->successRateEjectionThreshold(
+              Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::ExternalOrigin));
+    }
+    if (outlier_detector != nullptr &&
+        outlier_detector->successRateEjectionThreshold(
+            Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::LocalOrigin) > 0.0) {
+      cluster_status.mutable_local_origin_success_rate_ejection_threshold()->set_value(
+          outlier_detector->successRateEjectionThreshold(
+              Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::LocalOrigin));
     }
 
     cluster_status.set_added_via_api(cluster_info->addedViaApi());
@@ -396,7 +418,8 @@ void AdminImpl::writeClustersAsJson(Buffer::Instance& response) {
         HEALTH_FLAG_ENUM_VALUES(SET_HEALTH_FLAG)
 #undef SET_HEALTH_FLAG
 
-        double success_rate = host->outlierDetector().successRate();
+        double success_rate = host->outlierDetector().successRate(
+            Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::ExternalOrigin);
         if (success_rate >= 0.0) {
           host_status.mutable_success_rate()->set_value(success_rate);
         }
@@ -404,6 +427,11 @@ void AdminImpl::writeClustersAsJson(Buffer::Instance& response) {
         host_status.set_weight(host->weight());
 
         host_status.set_priority(host->priority());
+        success_rate = host->outlierDetector().successRate(
+            Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::LocalOrigin);
+        if (success_rate >= 0.0) {
+          host_status.mutable_local_origin_success_rate()->set_value(success_rate);
+        }
       }
     }
   }
@@ -456,11 +484,18 @@ void AdminImpl::writeClustersAsText(Buffer::Instance& response) {
                                  host->address()->asString(), host->locality().sub_zone()));
         response.add(fmt::format("{}::{}::canary::{}\n", cluster.second.get().info()->name(),
                                  host->address()->asString(), host->canary()));
-        response.add(fmt::format("{}::{}::success_rate::{}\n", cluster.second.get().info()->name(),
-                                 host->address()->asString(),
-                                 host->outlierDetector().successRate()));
         response.add(fmt::format("{}::{}::priority::{}\n", cluster.second.get().info()->name(),
                                  host->address()->asString(), host->priority()));
+        response.add(fmt::format(
+            "{}::{}::success_rate::{}\n", cluster.second.get().info()->name(),
+            host->address()->asString(),
+            host->outlierDetector().successRate(
+                Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::ExternalOrigin)));
+        response.add(fmt::format(
+            "{}::{}::local_origin_success_rate::{}\n", cluster.second.get().info()->name(),
+            host->address()->asString(),
+            host->outlierDetector().successRate(
+                Upstream::Outlier::DetectorHostMonitor::SuccessRateMonitorType::LocalOrigin)));
       }
     }
   }
@@ -721,13 +756,13 @@ Http::Code AdminImpl::handlerStats(absl::string_view url, Http::HeaderMap& respo
 
   std::map<std::string, uint64_t> all_stats;
   for (const Stats::CounterSharedPtr& counter : server_.stats().counters()) {
-    if (shouldShowMetric(counter, used_only, regex)) {
+    if (shouldShowMetric(*counter, used_only, regex)) {
       all_stats.emplace(counter->name(), counter->value());
     }
   }
 
   for (const Stats::GaugeSharedPtr& gauge : server_.stats().gauges()) {
-    if (shouldShowMetric(gauge, used_only, regex)) {
+    if (shouldShowMetric(*gauge, used_only, regex)) {
       ASSERT(gauge->importMode() != Stats::Gauge::ImportMode::Uninitialized);
       all_stats.emplace(gauge->name(), gauge->value());
     }
@@ -755,7 +790,7 @@ Http::Code AdminImpl::handlerStats(absl::string_view url, Http::HeaderMap& respo
     // implemented this can be switched back to a normal map.
     std::multimap<std::string, std::string> all_histograms;
     for (const Stats::ParentHistogramSharedPtr& histogram : server_.stats().histograms()) {
-      if (shouldShowMetric(histogram, used_only, regex)) {
+      if (shouldShowMetric(*histogram, used_only, regex)) {
         all_histograms.emplace(histogram->name(), histogram->quantileSummary());
       }
     }
@@ -790,6 +825,7 @@ std::string PrometheusStatsFormatter::sanitizeName(const std::string& name) {
 
 std::string PrometheusStatsFormatter::formattedTags(const std::vector<Stats::Tag>& tags) {
   std::vector<std::string> buf;
+  buf.reserve(tags.size());
   for (const Stats::Tag& tag : tags) {
     buf.push_back(fmt::format("{}=\"{}\"", sanitizeName(tag.name_), tag.value_));
   }
@@ -810,7 +846,7 @@ uint64_t PrometheusStatsFormatter::statsAsPrometheus(
     const bool used_only, const absl::optional<std::regex>& regex) {
   std::unordered_set<std::string> metric_type_tracker;
   for (const auto& counter : counters) {
-    if (!shouldShowMetric(counter, used_only, regex)) {
+    if (!shouldShowMetric(*counter, used_only, regex)) {
       continue;
     }
 
@@ -824,7 +860,7 @@ uint64_t PrometheusStatsFormatter::statsAsPrometheus(
   }
 
   for (const auto& gauge : gauges) {
-    if (!shouldShowMetric(gauge, used_only, regex)) {
+    if (!shouldShowMetric(*gauge, used_only, regex)) {
       continue;
     }
 
@@ -838,7 +874,7 @@ uint64_t PrometheusStatsFormatter::statsAsPrometheus(
   }
 
   for (const auto& histogram : histograms) {
-    if (!shouldShowMetric(histogram, used_only, regex)) {
+    if (!shouldShowMetric(*histogram, used_only, regex)) {
       continue;
     }
 
@@ -906,7 +942,7 @@ AdminImpl::statsAsJson(const std::map<std::string, uint64_t>& all_stats,
   rapidjson::Value histogram_array(rapidjson::kArrayType);
 
   for (const Stats::ParentHistogramSharedPtr& histogram : all_histograms) {
-    if (shouldShowMetric(histogram, used_only, regex)) {
+    if (shouldShowMetric(*histogram, used_only, regex)) {
       if (!found_used_histogram) {
         // It is not possible for the supported quantiles to differ across histograms, so it is ok
         // to send them once.
@@ -1068,35 +1104,6 @@ Http::Code AdminImpl::handlerRuntime(absl::string_view url, Http::HeaderMap& res
   return Http::Code::OK;
 }
 
-std::string AdminImpl::runtimeAsJson(
-    const std::vector<std::pair<std::string, Runtime::Snapshot::Entry>>& entries) {
-  rapidjson::Document document;
-  document.SetObject();
-  rapidjson::Value entries_array(rapidjson::kArrayType);
-  rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
-  for (const auto& entry : entries) {
-    Value entry_obj;
-    entry_obj.SetObject();
-
-    entry_obj.AddMember("name", {entry.first.c_str(), allocator}, allocator);
-
-    Value entry_value;
-    if (entry.second.uint_value_) {
-      entry_value.SetUint64(entry.second.uint_value_.value());
-    } else {
-      entry_value.SetString(entry.second.raw_string_value_.c_str(), allocator);
-    }
-    entry_obj.AddMember("value", entry_value, allocator);
-
-    entries_array.PushBack(entry_obj, allocator);
-  }
-  document.AddMember("runtime", entries_array, allocator);
-  rapidjson::StringBuffer strbuf;
-  rapidjson::PrettyWriter<StringBuffer> writer(strbuf);
-  document.Accept(writer);
-  return strbuf.GetString();
-}
-
 bool AdminImpl::isFormUrlEncoded(const Http::HeaderEntry* content_type) const {
   if (content_type == nullptr) {
     return false;
@@ -1160,13 +1167,14 @@ AdminImpl::NullRouteConfigProvider::NullRouteConfigProvider(TimeSource& time_sou
 void AdminImpl::startHttpListener(const std::string& access_log_path,
                                   const std::string& address_out_path,
                                   Network::Address::InstanceConstSharedPtr address,
+                                  const Network::Socket::OptionsSharedPtr& socket_options,
                                   Stats::ScopePtr&& listener_scope) {
   // TODO(mattklein123): Allow admin to use normal access logger extension loading and avoid the
   // hard dependency here.
   access_logs_.emplace_back(new Extensions::AccessLoggers::File::FileAccessLog(
       access_log_path, {}, AccessLog::AccessLogFormatUtils::defaultAccessLogFormatter(),
       server_.accessLogManager()));
-  socket_ = std::make_unique<Network::TcpListenSocket>(address, nullptr, true);
+  socket_ = std::make_unique<Network::TcpListenSocket>(address, socket_options, true);
   listener_ = std::make_unique<AdminListener>(*this, std::move(listener_scope));
   if (!address_out_path.empty()) {
     std::ofstream address_out_file(address_out_path);
@@ -1234,10 +1242,11 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
 
 Http::ServerConnectionPtr AdminImpl::createCodec(Network::Connection& connection,
                                                  const Buffer::Instance& data,
-                                                 Http::ServerConnectionCallbacks& callbacks) {
+                                                 Http::ServerConnectionCallbacks& callbacks,
+                                                 const bool strict_header_validation) {
   return Http::ConnectionManagerUtility::autoCreateCodec(
       connection, data, callbacks, server_.stats(), Http::Http1Settings(), Http::Http2Settings(),
-      maxRequestHeadersKb());
+      maxRequestHeadersKb(), strict_header_validation);
 }
 
 bool AdminImpl::createNetworkFilterChain(Network::Connection& connection,

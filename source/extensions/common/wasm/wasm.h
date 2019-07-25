@@ -123,6 +123,7 @@ using WasmCallback4Void = void (*)(void*, Word, Word, Word, Word);
 using WasmCallback5Void = void (*)(void*, Word, Word, Word, Word, Word);
 using WasmCallback6Void = void (*)(void*, Word, Word, Word, Word, Word, Word);
 using WasmCallback7Void = void (*)(void*, Word, Word, Word, Word, Word, Word, Word);
+using WasmCallback8Void = void (*)(void*, Word, Word, Word, Word, Word, Word, Word, Word);
 using WasmCallback0Int = Word (*)(void*);
 using WasmCallback1Int = Word (*)(void*, Word);
 using WasmCallback2Int = Word (*)(void*, Word, Word);
@@ -142,6 +143,7 @@ using WasmCallback_ZWl = void (*)(void*, Word, int64_t);
 using WasmCallback_ZWm = void (*)(void*, Word, uint64_t);
 using WasmCallback_m = uint64_t (*)(void*);
 using WasmCallback_mW = uint64_t (*)(void*, Word);
+using WasmCallback_jW = uint32_t (*)(void*, Word);
 
 // Sadly we don't have enum class inheritance in c++-14.
 enum class StreamType : uint32_t { Request = 0, Response = 1, MAX = 1 };
@@ -170,6 +172,8 @@ enum class HeaderMapType : uint32_t {
 // Handlers for functions exported from envoy to wasm.
 void logHandler(void* raw_context, Word level, Word address, Word size);
 void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word value_size_ptr);
+uint32_t getDestinationPortHandler(void* raw_context, Word type);
+uint32_t getResponseCodeHandler(void* raw_context, Word type);
 void getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr);
 void setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
@@ -181,6 +185,11 @@ void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
                               Word value_ptr, Word value_size);
 void continueRequestHandler(void* raw_context);
 void continueResponseHandler(void* raw_context);
+void sendLocalResponseHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
+                              Word response_code_details_size, Word body_ptr, Word body_size,
+                              Word additional_response_header_pairs_ptr,
+                              Word additional_response_header_pairs_size, Word grpc_status);
+void clearRouteCacheHandler(void* raw_context);
 void getSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr_ptr,
                           Word value_size_ptr, Word cas_ptr);
 Word setSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
@@ -200,6 +209,7 @@ void replaceHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Wo
 void removeHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size);
 void getHeaderMapPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr);
 void setHeaderMapPairsHandler(void* raw_context, Word type, Word ptr, Word size);
+uint32_t getHeaderMapSizeHandler(void* raw_context, Word type);
 void getRequestBodyBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
                                       Word size_ptr);
 void getResponseBodyBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
@@ -348,8 +358,7 @@ public:
   Http::FilterHeadersStatus decodeHeaders(Http::HeaderMap& headers, bool end_stream) override;
   Http::FilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) override;
   Http::FilterTrailersStatus decodeTrailers(Http::HeaderMap& trailers) override;
-  // Note: this is not yet implementated in envoy.
-  Http::FilterMetadataStatus decodeMetadata(Http::MetadataMap&& metadata_map) /* override */;
+  Http::FilterMetadataStatus decodeMetadata(Http::MetadataMap& metadata_map) override;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks& callbacks) override;
 
   //
@@ -367,6 +376,8 @@ public:
   //
   // StreamInfo
   virtual std::string getProtocol(StreamType type);
+  virtual uint32_t getDestinationPort(StreamType type);
+  virtual uint32_t getResponseCode(StreamType type);
 
   // Metadata
   // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the
@@ -390,6 +401,18 @@ public:
     if (encoder_callbacks_)
       encoder_callbacks_->continueEncoding();
   }
+  virtual void sendLocalResponse(Http::Code response_code, absl::string_view body_text,
+                                 std::function<void(Http::HeaderMap& headers)> modify_headers,
+                                 const absl::optional<Grpc::Status::GrpcStatus> grpc_status,
+                                 absl::string_view details) {
+    if (decoder_callbacks_)
+      decoder_callbacks_->sendLocalReply(response_code, body_text, modify_headers, grpc_status,
+                                         details);
+  }
+  virtual void clearRouteCache() {
+    if (decoder_callbacks_)
+      decoder_callbacks_->clearRouteCache();
+  }
 
   // Shared Data
   virtual std::pair<std::string, uint32_t> getSharedData(absl::string_view key);
@@ -411,6 +434,8 @@ public:
   virtual void removeHeaderMapValue(HeaderMapType type, absl::string_view key);
   virtual void replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
                                      absl::string_view value);
+
+  virtual uint32_t getHeaderMapSize(HeaderMapType type);
 
   // Body Buffer
   virtual absl::string_view getRequestBodyBufferBytes(uint32_t start, uint32_t length);
@@ -765,7 +790,7 @@ public:
   // Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).
   virtual bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) PURE;
   // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
-  virtual bool setMemory(uint64_t pointer, uint64_t size, void* data) PURE;
+  virtual bool setMemory(uint64_t pointer, uint64_t size, const void* data) PURE;
   // Set a Word in the VM, returns true on success, false if the pointer is invalid.
   virtual bool setWord(uint64_t pointer, uint64_t data) PURE;
   // Make a new intrinsic module (e.g. for Emscripten support).
@@ -795,6 +820,7 @@ public:
   REGISTER_CALLBACK(WasmCallback3Void);
   REGISTER_CALLBACK(WasmCallback4Void);
   REGISTER_CALLBACK(WasmCallback5Void);
+  REGISTER_CALLBACK(WasmCallback8Void);
   REGISTER_CALLBACK(WasmCallback0Int);
   REGISTER_CALLBACK(WasmCallback1Int);
   REGISTER_CALLBACK(WasmCallback2Int);
@@ -809,6 +835,7 @@ public:
   REGISTER_CALLBACK(WasmCallback_ZWm);
   REGISTER_CALLBACK(WasmCallback_m);
   REGISTER_CALLBACK(WasmCallback_mW);
+  REGISTER_CALLBACK(WasmCallback_jW);
 #undef REGISTER_CALLBACK
 
   // Register typed value exported by the host environment.

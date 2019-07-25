@@ -37,6 +37,14 @@ inline void proxy_getProtocol(StreamType type, const char** value_ptr, size_t* v
   getProtocolHandler(current_context_, WS(type), WR(value_ptr), WR(value_size));
 }
 
+inline uint32_t proxy_getDestinationPort(StreamType type) {
+  return getDestinationPortHandler(current_context_, WS(type));
+}
+
+inline uint32_t proxy_getResponseCode(StreamType type) {
+  return getResponseCodeHandler(current_context_, WS(type));
+}
+
 // Metadata
 inline void proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
                               const char** value_ptr_ptr, size_t* value_size_ptr) {
@@ -65,6 +73,18 @@ inline void proxy_setMetadataStruct(MetadataType type, const char* name_ptr, siz
 // Continue
 inline void proxy_continueRequest() { continueRequestHandler(current_context_); }
 inline void proxy_continueResponse() { continueResponseHandler(current_context_); }
+inline void proxy_sendLocalResponse(uint32_t response_code, const char* response_code_details_ptr,
+                                    size_t response_code_details_size, const char* body_ptr,
+                                    size_t body_size,
+                                    const char* additional_response_header_pairs_ptr,
+                                    size_t additional_response_header_pairs_size,
+                                    uint32_t grpc_status) {
+  sendLocalResponseHandler(current_context_, WS(response_code), WR(response_code_details_ptr),
+                           WS(response_code_details_size), WR(body_ptr), WS(body_size),
+                           WR(additional_response_header_pairs_ptr),
+                           WS(additional_response_header_pairs_size), WS(grpc_status));
+}
+inline void proxy_clearRouteCache() { clearRouteCacheHandler(current_context_); }
 
 // SharedData
 inline void proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,
@@ -126,6 +146,9 @@ inline void proxy_replaceHeaderMapValue(HeaderMapType type, const char* key_ptr,
 }
 inline void proxy_removeHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size) {
   removeHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr), WS(key_size));
+}
+inline uint32_t proxy_getHeaderMapSize(HeaderMapType type) {
+  return getHeaderMapSizeHandler(current_context_, WS(type));
 }
 
 // Body
