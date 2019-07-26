@@ -1076,25 +1076,25 @@ template <typename T> struct MetricTagDescriptor {
   StringView name;
 };
 
-template <typename T> inline MetricTag ToMetricTag(const MetricTagDescriptor<T>&) { return {}; }
+template <typename T> inline MetricTag toMetricTag(const MetricTagDescriptor<T>&) { return {}; }
 
-template <> inline MetricTag ToMetricTag(const MetricTagDescriptor<const char*>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<const char*>& d) {
   return {std::string(d.name), MetricTag::TagType::String};
 }
 
-template <> inline MetricTag ToMetricTag(const MetricTagDescriptor<std::string>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<std::string>& d) {
   return {std::string(d.name), MetricTag::TagType::String};
 }
 
-template <> inline MetricTag ToMetricTag(const MetricTagDescriptor<StringView>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<StringView>& d) {
   return {std::string(d.name), MetricTag::TagType::String};
 }
 
-template <> inline MetricTag ToMetricTag(const MetricTagDescriptor<int>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<int>& d) {
   return {std::string(d.name), MetricTag::TagType::Int};
 }
 
-template <> inline MetricTag ToMetricTag(const MetricTagDescriptor<bool>& d) {
+template <> inline MetricTag toMetricTag(const MetricTagDescriptor<bool>& d) {
   return {std::string(d.name), MetricTag::TagType::Bool};
 }
 
@@ -1129,6 +1129,9 @@ struct SimpleHistogram {
 
 template <typename... Tags> struct Counter : public MetricBase {
   static Counter<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+
+  Counter<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors) :
+    Counter<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleCounter resolve(Tags... f) {
     std::vector<std::string> fields{ToString(f)...};
@@ -1166,11 +1169,14 @@ template <typename... Tags>
 inline Counter<Tags...>* Counter<Tags...>::New(StringView name,
                                                MetricTagDescriptor<Tags>... descriptors) {
   return new Counter<Tags...>(std::string(name),
-                              std::vector<MetricTag>({ToMetricTag(descriptors)...}));
+                              std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
 template <typename... Tags> struct Gauge : public MetricBase {
   static Gauge<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+
+  Gauge<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors) :
+    Gauge<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleGauge resolve(Tags... f) {
     std::vector<std::string> fields{ToString(f)...};
@@ -1206,11 +1212,14 @@ template <typename... Tags>
 inline Gauge<Tags...>* Gauge<Tags...>::New(StringView name,
                                            MetricTagDescriptor<Tags>... descriptors) {
   return new Gauge<Tags...>(std::string(name),
-                            std::vector<MetricTag>({ToMetricTag(descriptors)...}));
+                            std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
 template <typename... Tags> struct Histogram : public MetricBase {
   static Histogram<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
+
+  Histogram<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors) :
+    Histogram<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleHistogram resolve(Tags... f) {
     std::vector<std::string> fields{ToString(f)...};
@@ -1240,7 +1249,7 @@ template <typename... Tags>
 inline Histogram<Tags...>* Histogram<Tags...>::New(StringView name,
                                                    MetricTagDescriptor<Tags>... descriptors) {
   return new Histogram<Tags...>(std::string(name),
-                                std::vector<MetricTag>({ToMetricTag(descriptors)...}));
+                                std::vector<MetricTag>({toMetricTag(descriptors)...}));
 }
 
 inline uint32_t grpcCall(StringView service, StringView service_name, StringView method_name,

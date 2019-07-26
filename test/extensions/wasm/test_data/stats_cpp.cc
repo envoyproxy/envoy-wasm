@@ -72,4 +72,15 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t /* context_zero */) {
   auto complete_h = base_h->resolveAndExtend<std::string, bool>(7, "string_tag", "bool_tag");
   auto simple_h = complete_h->resolve("test_tag", true);
   logError(std::string("h_id = ") + complete_h->nameFromIdSlow(simple_h.metric_id));
+
+  Counter<std::string, int, bool> stack_c("test_counter", "string_tag", "int_tag", "bool_tag");
+  stack_c.increment(1, "test_tag_stack", 7, true);
+  logError(std::string("stack_c = ") + std::to_string(stack_c.get("test_tag_stack", 7, true)));
+
+  Gauge<std::string, std::string> stack_g("test_gauge", "string_tag1", "string_tag2");
+  stack_g.record(2, "stack_test_tag1", "test_tag2");
+  logError(std::string("stack_g = ") + std::to_string(stack_g.get("stack_test_tag1", "test_tag2")));
+
+  Histogram<int, std::string, bool> stack_h("test_histogram", "int_tag", "string_tag", "bool_tag");
+  stack_h.record(3, 7, "stack_test_tag", true);
 }
