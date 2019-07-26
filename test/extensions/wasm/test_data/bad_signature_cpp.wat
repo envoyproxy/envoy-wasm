@@ -249,11 +249,12 @@
     global.set $17
     )
   
-  (func $_proxy_onStart (type $8)
+  (func $_proxy_onStart (type $3)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
-    (local $3 i32)
+    (param $3 i32)
+    (param $4 i32)
     global.get $17
     local.set $0
     global.get $17

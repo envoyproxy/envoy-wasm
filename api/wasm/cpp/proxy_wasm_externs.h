@@ -13,7 +13,8 @@
 
 
    // Non-stream calls.
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t root_id_ptr, uint32_t root_id_size);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t root_id_ptr, uint32_t root_id_size,
+     uint32_t vm_configuration_ptr, uint32_t vm_configuration_size);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(uint32_t root_context_id, uint32_t configuration_ptr, uint32_t configuration_size);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick(uint32_t root_context_id);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onQueueReady(uint32_t root_context_id, uint32_t token);

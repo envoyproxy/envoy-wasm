@@ -303,7 +303,7 @@ public:
   //
   // VM level downcalls into the WASM code on Context(id == 0).
   //
-  virtual void onStart(absl::string_view root_id);
+  virtual void onStart(absl::string_view root_id, absl::string_view vm_configuration);
   virtual void onConfigure(absl::string_view configuration);
 
   //
@@ -558,7 +558,7 @@ class Wasm : public Envoy::Server::Wasm,
              public Logger::Loggable<Logger::Id::wasm>,
              public std::enable_shared_from_this<Wasm> {
 public:
-  Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
+  Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_configuration,
        Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
        Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
        const envoy::api::v2::core::Metadata* listener_metadata,
@@ -568,7 +568,8 @@ public:
 
   bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
   void configure(Context* root_context, absl::string_view configuration);
-  Context* start(absl::string_view root_id); // returns the root Context.
+  Context* start(absl::string_view root_id,
+                 absl::string_view vm_configuration); // returns the root Context.
 
   const std::string& context_id_filter_state_data_name() {
     return context_id_filter_state_data_name_;
@@ -595,10 +596,10 @@ public:
   uint32_t allocContextId();
 
   const std::string& code() const { return code_; }
-  const std::string& initial_configuration() const { return initial_configuration_; }
+  const std::string& vm_configuration() const { return vm_configuration_; }
   bool allow_precompiled() const { return allow_precompiled_; }
-  void setInitialConfiguration(const std::string& initial_configuration) {
-    initial_configuration_ = initial_configuration;
+  void setInitialConfiguration(const std::string& vm_configuration) {
+    vm_configuration_ = vm_configuration;
   }
 
   //
@@ -694,7 +695,7 @@ private:
   WasmCall1Void free_;
 
   // Calls into the VM.
-  WasmContextCall2Void onStart_;
+  WasmContextCall4Void onStart_;
   WasmContextCall2Void onConfigure_;
   WasmContextCall0Void onTick_;
 
@@ -726,7 +727,7 @@ private:
 
   // Used by the base_wasm to enable non-clonable thread local Wasm(s) to be constructed.
   std::string code_;
-  std::string initial_configuration_;
+  std::string vm_configuration_;
   bool allow_precompiled_ = false;
 
   bool is_emscripten_ = false;

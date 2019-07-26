@@ -15,7 +15,7 @@ class ExampleRootContext : public RootContext {
 public:
   explicit ExampleRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
 
-  void onStart() override;
+  void onStart(WasmDataPtr) override;
   void onQueueReady(uint32_t token) override;
 };
 
@@ -28,7 +28,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
   return FilterHeadersStatus::Continue;
 }
 
-void ExampleRootContext::onStart() {
+void ExampleRootContext::onStart(WasmDataPtr) {
   registerSharedQueue("my_shared_queue");
 }
 

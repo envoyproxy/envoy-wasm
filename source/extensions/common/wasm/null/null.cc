@@ -236,13 +236,6 @@ void NullVm::getFunction(absl::string_view functionName, WasmCall3Void* f) {
       SaveRestoreContext saved_context(context);
       plugin->onConfigure(context_id.u64, ptr.u64, size.u64);
     };
-  } else if (functionName == "_proxy_onStart") {
-    auto plugin = plugin_.get();
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_id_ptr,
-                  Word root_id_size) {
-      SaveRestoreContext saved_context(context);
-      plugin->onStart(context_id.u64, root_id_ptr.u64, root_id_size.u64);
-    };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", functionName));
   }
@@ -269,6 +262,14 @@ void NullVm::getFunction(absl::string_view functionName, WasmCall5Void* f) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcClose(context_id.u64, token.u64, status_code.u64, status_message_ptr.u64,
                           status_message_size.u64);
+    };
+  } else if (functionName == "_proxy_onStart") {
+    auto plugin = plugin_.get();
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_id_ptr,
+                  Word root_id_size, Word vm_configuration_ptr, Word vm_configuration_size) {
+      SaveRestoreContext saved_context(context);
+      plugin->onStart(context_id.u64, root_id_ptr.u64, root_id_size.u64, vm_configuration_ptr.u64,
+                      vm_configuration_size.u64);
     };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", functionName));
@@ -428,10 +429,12 @@ Plugin::RootContext* NullVmPlugin::getRoot(absl::string_view root_id) {
   return it->second;
 }
 
-void NullVmPlugin::onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size) {
+void NullVmPlugin::onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size,
+                           uint64_t vm_configuration_ptr, uint64_t vm_configuration_size) {
   ensureRootContext(root_context_id,
                     std::make_unique<WasmData>(reinterpret_cast<char*>(root_id_ptr), root_id_size))
-      ->onStart();
+      ->onStart(std::make_unique<WasmData>(reinterpret_cast<char*>(vm_configuration_ptr),
+                                           vm_configuration_size));
 }
 
 void NullVmPlugin::onConfigure(uint64_t root_context_id, uint64_t ptr, uint64_t size) {
