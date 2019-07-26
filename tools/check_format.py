@@ -586,7 +586,7 @@ def checkSourceLine(line, file_path, reportError):
   if isInSubdir(file_path, 'source') and file_path.endswith('.cc') and \
      not whitelistedForStatFromString(file_path) and \
      ('.counter(' in line or '.gauge(' in line or '.histogram(' in line):
-    reportError("Don't lookup stats by name at runtime; used StatName saved during construction")
+    reportError("Don't lookup stats by name at runtime; use StatName saved during construction")
 
 
 def checkBuildLine(line, file_path, reportError):
