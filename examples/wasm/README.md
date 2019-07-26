@@ -48,14 +48,14 @@ Now you want to make changes to the C++ filter, regenerate to WASM module.
 1. Download and install [`protobuf`](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md).
 1. Download and install [`WAVM`](https://github.com/WAVM/WAVM).
 1. Download and install [`emscripten`](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions)
-1. Activate emsdk archived version 1.38.25 (Note: by 02/11/2019 the latest build is broken for envoy-wasm)
+1. Activate emsdk archived version 1.38.39 (Note: by 07/26/2019 the latest known working version is 1.38.39).
 
     ```shell
     # in emsdk directory
-    ./emsdk install sdk-1.38.25-64bit
-    ./emsdk activate sdk-1.38.25-64bit
+    ./emsdk install sdk-1.38.39-64bit
+    ./emsdk activate sdk-1.38.39-64bit
     source emsdk_env.sh
-    # verify, should output 1.38.25
+    # verify, should output 1.38.39
     em++ -v 2>&1 |grep Emscripten
     ```
 
