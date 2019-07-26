@@ -59,3 +59,11 @@ enum class MetricType : EnumType {
   Gauge = 1,
   Histogram = 2,
 };
+enum class MetadataResult : EnumType {
+  Ok = 0,
+  StructNotFound = 1,
+  FieldNotFound = 2,
+  SerializationFailure = 3,
+  BadType = 4,
+  ParseFailure = 5,
+};

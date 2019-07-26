@@ -251,9 +251,9 @@ public:
   // Metadata
   virtual bool isRootCachable(MetadataType type);  // Cache in the root.
   virtual bool isProactivelyCachable(MetadataType type);  // Cache all keys on any read.
-  google::protobuf::Value nodeMetadataValue(StringView key);
-  google::protobuf::Struct nodeMetadataStruct();
-  google::protobuf::Value namedMetadataValue(MetadataType type, StringView name, StringView key);
+  MetadataResult nodeMetadataValue(StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult nodeMetadataStruct(google::protobuf::Struct* struct_ptr);
+  MetadataResult namedMetadataValue(MetadataType type, StringView name, StringView key,  google::protobuf::Value* value_ptr);
 
   // Default high level HTTP/gRPC interface.  NB: overriding the low level interface will disable this interface.
   using HttpCallCallback = std::function<void(std::unique_ptr<WasmData> header_pairs,
@@ -289,8 +289,11 @@ public:
       StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler);
 
 protected:
-  google::protobuf::Value metadataValue(MetadataType type, StringView key);
-  google::protobuf::Struct metadataStruct(MetadataType type, StringView name = "");
+  MetadataResult metadataValue(MetadataType type, StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult metadataStruct(MetadataType type, StringView name, google::protobuf::Struct* struct_ptr);
+  MetadataResult metadataStruct(MetadataType type, google::protobuf::Struct* struct_ptr) {
+    return metadataStruct(type, "", struct_ptr);
+  }
 
   std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Value, PairHash> value_cache_;
   std::unordered_map<std::tuple<EnumType, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
@@ -365,23 +368,26 @@ public:
   // Metadata
   bool isImmutable(MetadataType type);
   // Caching Metadata calls.  Note: "name" refers to the metadata namespace.
-  google::protobuf::Value requestRouteMetadataValue(StringView key);
-  google::protobuf::Value responseRouteMetadataValue(StringView key);
-  google::protobuf::Value logMetadataValue(StringView key);
-  google::protobuf::Value requestMetadataValue(StringView key);
-  google::protobuf::Value responseMetadataValue(StringView key);
-  google::protobuf::Value requestMetadataValue(StringView name, StringView key);
-  google::protobuf::Value responseMetadataValue(StringView name, StringView key);
-  google::protobuf::Struct requestRouteMetadataStruct();
-  google::protobuf::Struct responseRouteMetadataStruct();
-  google::protobuf::Struct logMetadataStruct(StringView name = "");
-  google::protobuf::Struct requestMetadataStruct(StringView name = "");
-  google::protobuf::Struct responseMetadataStruct(StringView name = "");
+  MetadataResult requestRouteMetadataValue(StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult responseRouteMetadataValue(StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult logMetadataValue(StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult requestMetadataValue(StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult responseMetadataValue(StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult requestMetadataValue(StringView name, StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult responseMetadataValue(StringView name, StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult requestRouteMetadataStruct(google::protobuf::Struct* struct_ptr);
+  MetadataResult responseRouteMetadataStruct(google::protobuf::Struct* struct_ptr);
+  MetadataResult logMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr);
+  MetadataResult requestMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr);
+  MetadataResult responseMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr);
+  MetadataResult logMetadataStruct(google::protobuf::Struct* struct_ptr) { return logMetadataStruct("", struct_ptr); }
+  MetadataResult requestMetadataStruct(google::protobuf::Struct* struct_ptr) { return requestMetadataStruct("", struct_ptr); }
+  MetadataResult responseMetadataStruct(google::protobuf::Struct* struct_ptr) { return responseMetadataStruct("", struct_ptr); }
   // Uncached Metadata calls.
-  google::protobuf::Value getRequestMetadataValue(StringView key);
-  google::protobuf::Value getResponseMetadataValue(StringView key);
-  google::protobuf::Struct getRequestMetadataStruct(StringView name);
-  google::protobuf::Struct getResponseMetadataStruct(StringView name);
+  MetadataResult getRequestMetadataValue(StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult getResponseMetadataValue(StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult getRequestMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr);
+  MetadataResult getResponseMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr);
 
 private:
   RootContext* root_{};
@@ -457,94 +463,106 @@ inline WasmDataPtr getMetadata(MetadataType type, StringView key) {
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-inline google::protobuf::Value getMetadataValue(MetadataType type, StringView key) {
+inline MetadataResult getMetadataValue(MetadataType type, StringView key, google::protobuf::Value* result_ptr) {
   const char* value_ptr = nullptr;
   size_t value_size = 0;
-  proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size);
+  MetadataResult result = static_cast<MetadataResult>(proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size));
+  if (result != MetadataResult::Ok) {
+    result_ptr->Clear();
+    return result;
+  }
   if (!value_size) {
-    return {};
+    result_ptr->Clear();
+    return MetadataResult::Ok;
   }
+  if (!result_ptr->ParseFromArray(value_ptr, value_size)) {
+    result_ptr->Clear();
+    return MetadataResult::ParseFailure;
+  }
+  return MetadataResult::Ok;
+}
+
+inline MetadataResult getMetadataStringValue(MetadataType type, StringView key, std::string* string_ptr) {
   google::protobuf::Value value;
-  if (!value.ParseFromArray(value_ptr, value_size)) {
-    return {};
-  }
-  return value;
+  auto result = getMetadataValue(type, key, &value);
+  *string_ptr = value.string_value();
+  return result;
 }
 
-inline std::string getMetadataStringValue(MetadataType type, StringView key) {
-  return getMetadataValue(type, key).string_value();
+inline MetadataResult setMetadata(MetadataType type, StringView key, StringView value) {
+  return static_cast<MetadataResult>(proxy_setMetadata(type, key.data(), key.size(), value.data(), value.size()));
 }
 
-inline void setMetadata(MetadataType type, StringView key, StringView value) {
-  proxy_setMetadata(type, key.data(), key.size(), value.data(), value.size());
-}
-
-inline void setMetadataValue(MetadataType type, StringView key,
-                             const google::protobuf::Value& value) {
+inline MetadataResult setMetadataValue(MetadataType type, StringView key,
+                                       const google::protobuf::Value& value) {
   std::string output;
   if (!value.SerializeToString(&output)) {
-    return;
+    return MetadataResult::SerializationFailure;
   }
-  proxy_setMetadata(type, key.data(), key.size(), output.data(), output.size());
+  return static_cast<MetadataResult>(proxy_setMetadata(type, key.data(), key.size(), output.data(), output.size()));
 }
 
-inline void setMetadataStringValue(MetadataType type, StringView key, StringView s) {
+inline MetadataResult setMetadataStringValue(MetadataType type, StringView key, StringView s) {
   google::protobuf::Value value;
   value.set_string_value(s.data(), s.size());
-  setMetadataValue(type, key, value);
+  return setMetadataValue(type, key, value);
 }
 
-inline WasmDataPtr getMetadataValuePairs(MetadataType type) {
+inline MetadataResult getMetadataValuePairs(MetadataType type, WasmDataPtr* pairs_ptr) {
   const char* value_ptr = nullptr;
   size_t value_size = 0;
-  proxy_getMetadataPairs(type, &value_ptr, &value_size);
-  return std::make_unique<WasmData>(value_ptr, value_size);
+  auto result = static_cast<MetadataResult>(proxy_getMetadataPairs(type, &value_ptr, &value_size));
+  if (result != MetadataResult::Ok) {
+    pairs_ptr->reset();
+    return result;
+  }
+  *pairs_ptr =  std::make_unique<WasmData>(value_ptr, value_size);
+  return MetadataResult::Ok;
 }
 
-inline google::protobuf::Struct getMetadataStruct(MetadataType type, StringView name) {
+inline MetadataResult getMetadataStruct(MetadataType type, StringView name, google::protobuf::Struct* struct_ptr) {
   const char* value_ptr = nullptr;
   size_t value_size = 0;
-  proxy_getMetadataStruct(type, name.data(), name.size(), &value_ptr, &value_size);
-  if (!value_size) {
-    return {};
+  auto result = static_cast<MetadataResult>(proxy_getMetadataStruct(type, name.data(), name.size(), &value_ptr, &value_size));
+  if (result != MetadataResult::Ok || !value_size) {
+    struct_ptr->Clear();
+    return result;
   }
   google::protobuf::Struct s;
   if (!s.ParseFromArray(value_ptr, value_size)) {
-    return {};
+    return MetadataResult::ParseFailure;
   }
-  return s;
+  *struct_ptr = s;
+  return MetadataResult::Ok;
 }
 
-inline void setMetadataStruct(MetadataType type, StringView name,
-                             const google::protobuf::Struct& s) {
+inline MetadataResult setMetadataStruct(MetadataType type, StringView name,
+                                        const google::protobuf::Struct& s) {
   std::string output;
   if (!s.SerializeToString(&output)) {
-    return;
+    return MetadataResult::SerializationFailure;
   }
-  proxy_setMetadataStruct(type, name.data(), name.size(), output.data(), output.size());
+  return static_cast<MetadataResult>(proxy_setMetadataStruct(type, name.data(), name.size(), output.data(), output.size()));
 }
 
-inline google::protobuf::Value ContextBase::nodeMetadataValue(StringView key) {
-  return metadataValue(MetadataType::Node, key);
-}
-
-inline google::protobuf::Struct ContextBase::nodeMetadataStruct() {
-  return metadataStruct(MetadataType::Node);
-}
-
-inline google::protobuf::Value ContextBase::metadataValue(MetadataType type, StringView key) {
+inline MetadataResult ContextBase::metadataValue(MetadataType type, StringView key, google::protobuf::Value* value_ptr) {
   if (isRootCachable(type)) {
     if (auto context = asContext()) {
-      return context->root()->metadataValue(type, key);
+      return context->root()->metadataValue(type, key, value_ptr);
     }
   }
   auto cache_key = std::make_pair(static_cast<EnumType>(type), std::string(key));
   auto it = value_cache_.find(cache_key);
   if (it != value_cache_.end()) {
-    return it->second;
+    *value_ptr = it->second;
+    return MetadataResult::Ok;
   }
   if (isProactivelyCachable(type)) {
-    auto values = getMetadataValuePairs(type);
+    WasmDataPtr values;
+    auto result = getMetadataValuePairs(type, &values);
+    if (result != MetadataResult::Ok) {
+      return result;
+    }
     for (auto &p : values->pairs()) {
       google::protobuf::Value value;
       if (value.ParseFromArray(p.second.data(), p.second.size())) {
@@ -554,45 +572,86 @@ inline google::protobuf::Value ContextBase::metadataValue(MetadataType type, Str
     }
     auto it = value_cache_.find(cache_key);
     if (it != value_cache_.end()) {
-      return it->second;
+      *value_ptr = it->second;
+      return MetadataResult::Ok;
     }
-    return {};
+    return MetadataResult::FieldNotFound;
   } else {
-    auto value = getMetadataValue(type, key);
-    value_cache_[cache_key] = value;
-    return value;
+    auto result = getMetadataValue(type, key, value_ptr);
+    if (result != MetadataResult::Ok) {
+      value_ptr->Clear();
+      return result;
+    }
+    value_cache_[cache_key] = *value_ptr;
+    return MetadataResult::Ok;
   }
 }
 
-inline google::protobuf::Struct ContextBase::metadataStruct(MetadataType type, StringView name) {
+inline MetadataResult Context::requestRouteMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+  return metadataValue(MetadataType::RequestRoute, key, value_ptr);
+}
+
+inline MetadataResult Context::responseRouteMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+  return metadataValue(MetadataType::ResponseRoute, key, value_ptr);
+}
+
+inline MetadataResult Context::logMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+  return metadataValue(MetadataType::Log, key, value_ptr);
+}
+
+inline MetadataResult Context::requestMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+  return metadataValue(MetadataType::Request, key, value_ptr);
+}
+
+inline MetadataResult Context::responseMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+  return metadataValue(MetadataType::Response, key, value_ptr);
+}
+
+inline MetadataResult ContextBase::nodeMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+  return metadataValue(MetadataType::Node, key, value_ptr);
+}
+
+inline MetadataResult ContextBase::metadataStruct(MetadataType type, StringView name, google::protobuf::Struct* struct_ptr) {
   if (isRootCachable(type)) {
     if (auto context = asContext()) {
-      return context->root()->metadataStruct(type, name);
+      return context->root()->metadataStruct(type, name, struct_ptr);
     }
   }
   auto cache_key = std::make_pair(static_cast<EnumType>(type),  std::string(name));
   auto it = struct_cache_.find(cache_key);
   if (it != struct_cache_.end()) {
-    return it->second;
+    *struct_ptr = it->second;
+    return MetadataResult::Ok;
   }
-  auto s = getMetadataStruct(MetadataType::Request, name);
-  struct_cache_[cache_key] = s;
-  return s;
+  auto result = getMetadataStruct(MetadataType::Request, name, struct_ptr);
+  if (result != MetadataResult::Ok) {
+    struct_ptr->Clear();
+    return result;
+  }
+  struct_cache_[cache_key] = *struct_ptr;
+  return MetadataResult::Ok;
 }
 
-inline google::protobuf::Value ContextBase::namedMetadataValue(MetadataType type, StringView name, StringView key) {
+inline MetadataResult ContextBase::namedMetadataValue(
+    MetadataType type, StringView name, StringView key, google::protobuf::Value* value_ptr) {
   if (isRootCachable(type)) {
     if (auto context = asContext()) {
-      return context->root()->namedMetadataValue(type, name, key);
+      return context->root()->namedMetadataValue(type, name, key, value_ptr);
     }
   }
   auto n = std::string(name);
   auto cache_key = std::make_tuple(static_cast<EnumType>(type),  n, std::string(key));
   auto it = name_value_cache_.find(cache_key);
   if (it != name_value_cache_.end()) {
-    return it->second;
+    *value_ptr = it->second;
+    return MetadataResult::Ok;
   }
-  auto s = metadataStruct(type, name);
+  google::protobuf::Struct s;
+  auto result = metadataStruct(type, name, &s);
+  if (result != MetadataResult::Ok) {
+    value_ptr->Clear();
+    return result;
+  }
   for (auto &f : s.fields()) {
     auto k = std::make_tuple(static_cast<EnumType>(type), n, f.first);
     name_value_cache_[k] =  f.second;
@@ -600,73 +659,58 @@ inline google::protobuf::Value ContextBase::namedMetadataValue(MetadataType type
   struct_cache_[std::make_pair(static_cast<EnumType>(type), n)] = std::move(s);
   it = name_value_cache_.find(cache_key);
   if (it != name_value_cache_.end()) {
-    return it->second;
+    *value_ptr = it->second;
+    return MetadataResult::Ok;
   }
-  return {};
+  return MetadataResult::FieldNotFound;
 }
 
-inline google::protobuf::Value Context::requestRouteMetadataValue(StringView key) {
-  return metadataValue(MetadataType::RequestRoute, key);
+inline MetadataResult Context::requestMetadataValue(StringView name, StringView key, google::protobuf::Value* value_ptr) {
+  return namedMetadataValue(MetadataType::Request, name, key, value_ptr);
 }
 
-inline google::protobuf::Value Context::responseRouteMetadataValue(StringView key) {
-  return metadataValue(MetadataType::ResponseRoute, key);
+inline MetadataResult Context::responseMetadataValue(StringView name, StringView key, google::protobuf::Value* value_ptr) {
+  return namedMetadataValue(MetadataType::Response, name, key, value_ptr);
 }
 
-inline google::protobuf::Value Context::logMetadataValue(StringView key) {
-  return metadataValue(MetadataType::Log, key);
+inline MetadataResult Context::requestRouteMetadataStruct(google::protobuf::Struct* struct_ptr) {
+  return metadataStruct(MetadataType::RequestRoute, struct_ptr);
 }
 
-inline google::protobuf::Value Context::requestMetadataValue(StringView key) {
-  return metadataValue(MetadataType::Request, key);
+inline MetadataResult Context::responseRouteMetadataStruct(google::protobuf::Struct* struct_ptr) {
+  return metadataStruct(MetadataType::ResponseRoute, struct_ptr);
 }
 
-inline google::protobuf::Value Context::responseMetadataValue(StringView key) {
-  return metadataValue(MetadataType::Response, key);
+inline MetadataResult ContextBase::nodeMetadataStruct(google::protobuf::Struct* struct_ptr) {
+  return metadataStruct(MetadataType::Node, struct_ptr);
 }
 
-inline google::protobuf::Value Context::requestMetadataValue(StringView name, StringView key) {
-  return namedMetadataValue(MetadataType::Request, name, key);
+inline MetadataResult Context::logMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+  return metadataStruct(MetadataType::Log, name, struct_ptr);
 }
 
-inline google::protobuf::Value Context::responseMetadataValue(StringView name, StringView key) {
-  return namedMetadataValue(MetadataType::Response, name, key);
+inline MetadataResult Context::requestMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+  return metadataStruct(MetadataType::Request, name, struct_ptr);
 }
 
-inline google::protobuf::Struct Context::requestRouteMetadataStruct() {
-  return metadataStruct(MetadataType::RequestRoute);
+inline MetadataResult Context::responseMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+  return metadataStruct(MetadataType::Response, name, struct_ptr);
 }
 
-inline google::protobuf::Struct Context::responseRouteMetadataStruct() {
-  return metadataStruct(MetadataType::ResponseRoute);
+inline MetadataResult Context::getRequestMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+  return getMetadataValue(MetadataType::Request, key, value_ptr);
 }
 
-inline google::protobuf::Struct Context::logMetadataStruct(StringView name) {
-  return metadataStruct(MetadataType::Log, name);
+inline MetadataResult Context::getResponseMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+  return getMetadataValue(MetadataType::Response, key, value_ptr);
 }
 
-inline google::protobuf::Struct Context::requestMetadataStruct(StringView name) {
-  return metadataStruct(MetadataType::Request, name);
+inline MetadataResult Context::getRequestMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+  return getMetadataStruct(MetadataType::Request, name, struct_ptr);
 }
 
-inline google::protobuf::Struct Context::responseMetadataStruct(StringView name) {
-  return metadataStruct(MetadataType::Response, name);
-}
-
-inline google::protobuf::Value Context::getRequestMetadataValue(StringView key) {
-  return getMetadataValue(MetadataType::Request, key);
-}
-
-inline google::protobuf::Value Context::getResponseMetadataValue(StringView key) {
-  return getMetadataValue(MetadataType::Response, key);
-}
-
-inline google::protobuf::Struct Context::getRequestMetadataStruct(StringView name) {
-  return getMetadataStruct(MetadataType::Request, name);
-}
-
-inline google::protobuf::Struct Context::getResponseMetadataStruct(StringView name) {
-  return getMetadataStruct(MetadataType::Response, name);
+inline MetadataResult Context::getResponseMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+  return getMetadataStruct(MetadataType::Response, name, struct_ptr);
 }
 
 // Continue/Respond/Route
