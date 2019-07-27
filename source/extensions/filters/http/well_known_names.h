@@ -58,6 +58,8 @@ public:
   const std::string OriginalSrc = "envoy.filters.http.original_src";
   // Dynamic forward proxy filter
   const std::string DynamicForwardProxy = "envoy.filters.http.dynamic_forward_proxy";
+  // Wasm filter
+  const std::string Wasm = "envoy.wasm";
 
   // Converts names from v1 to v2
   const Config::V1Converter v1_converter_;

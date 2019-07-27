@@ -7,9 +7,9 @@ ARCH="$(uname -m)"
 # Setup basic requirements and install them.
 apt-get update
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y wget software-properties-common make cmake git python python-pip python3 python3-pip \
-  unzip bc libtool ninja-build automake zip time golang gdb strace wireshark tshark tcpdump lcov \
-  apt-transport-https
+apt-get install -y wget software-properties-common make git python python-pip python3 python3-pip \
+  unzip bc libtool automake zip time golang gdb strace wireshark tshark tcpdump lcov \
+  apt-transport-https libglib2.0-dev
 # clang 8.
 case $ARCH in
     'ppc64le' )

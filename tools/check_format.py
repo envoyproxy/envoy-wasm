@@ -17,7 +17,8 @@ import traceback
 EXCLUDED_PREFIXES = ("./generated/", "./thirdparty/", "./build", "./.git/", "./bazel-", "./.cache",
                      "./source/extensions/extensions_build_config.bzl",
                      "./bazel/toolchains/configs/", "./tools/testdata/check_format/",
-                     "./tools/pyformat/")
+                     "./tools/pyformat/", "./api/wasm/",
+                     "./test/extensions/filters/http/wasm/test_data")
 SUFFIXES = ("BUILD", "WORKSPACE", ".bzl", ".cc", ".h", ".java", ".m", ".md", ".mm", ".proto",
             ".rst")
 DOCS_SUFFIX = (".md", ".rst")
@@ -48,7 +49,8 @@ REAL_TIME_WHITELIST = ("./source/common/common/utility.h",
 # https://github.com/envoyproxy/envoy/pull/7573 and others.
 #
 # TODO(#4196): Eliminate this list completely and then merge #4980.
-STAT_FROM_STRING_WHITELIST = ("./source/extensions/filters/http/ext_authz/ext_authz.cc",
+STAT_FROM_STRING_WHITELIST = ("./source/extensions/common/wasm/wasm.cc",
+                              "./source/extensions/filters/http/ext_authz/ext_authz.cc",
                               "./source/extensions/filters/http/fault/fault_filter.cc",
                               "./source/extensions/filters/http/ip_tagging/ip_tagging_filter.cc",
                               "./source/extensions/filters/network/mongo_proxy/proxy.cc",

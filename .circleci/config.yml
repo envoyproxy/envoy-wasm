@@ -4,8 +4,7 @@ executors:
   ubuntu-build:
     description: "A regular build executor based on ubuntu image"
     docker:
-      # NOTE: Update bazel/toolchains/rbe_toolchains_config.bzl with sha256 digest to match the image here.
-      - image: envoyproxy/envoy-build:8246167b9d238797cbc6c03dccc9e3921c37617d
+      - image: piotrsikora/envoy:6e3ec2851a72eaf5be6050d6196ba9128090a58d
     resource_class: xlarge
     working_directory: /source
 
@@ -13,102 +12,51 @@ jobs:
    release:
      executor: ubuntu-build
      environment:
-       BAZEL_REMOTE_CACHE: https://storage.googleapis.com/envoy-circleci-bazel-cache/
+       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
        - run:
-           command:
-             ci/do_circle_ci.sh bazel.release
-           no_output_timeout: 60m
-       - persist_to_workspace:
-           root: .
-           paths:
-             - build_release
-             - build_release_stripped
-       - store_artifacts:
-           path: /build/envoy/generated
-           destination: /
-   docker:
-     docker:
-       - image: docker
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - attach_workspace:
-           at: .
-       - setup_remote_docker
-       - run: ci/docker_build.sh
-       - run: ci/docker_push.sh
-       - run: ci/docker_tag.sh
-   asan:
-     executor: ubuntu-build
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - run: echo $CIRCLE_SHA1
-       - run: echo $CIRCLE_PR_NUMBER
-       - run: curl https://api.github.com/repos/envoyproxy/envoy/pulls/$CIRCLE_PR_NUMBER/commits
-       - checkout
-       - run: ci/do_circle_ci.sh bazel.asan
+           environment:
+             BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=enabled" # v8 + WAVM (build only).
+           command: ci/do_circle_ci.sh bazel.release.server_only
+       - run:
+           environment:
+             BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults in tests.
+           command: ci/do_circle_ci.sh bazel.release ${BAZEL_TEST_TARGETS}
        - store_artifacts:
            path: /build/envoy/generated
            destination: /
 
-   compile_time_options:
+   asan:
      executor: ubuntu-build
+     environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, ASan detects leaks in WAVM library.
+       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
-       - run: ci/do_circle_ci.sh bazel.compile_time_options
+       - run: ci/do_circle_ci.sh bazel.asan ${BAZEL_TEST_TARGETS}
        - store_artifacts:
            path: /build/envoy/generated
            destination: /
-   api:
-     executor: ubuntu-build
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - run: ci/do_circle_ci.sh bazel.api
-       - add_ssh_keys:
-           fingerprints:
-             - "fb:f3:fe:be:1c:b2:ec:b6:25:f9:7b:a6:87:54:02:8c"
-       - run: ci/api_mirror.sh
-       - store_artifacts:
-           path: /build/envoy/generated
-           destination: /
-   filter_example_mirror:
-     executor: ubuntu-build
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - add_ssh_keys:
-           fingerprints:
-             - "f6:f9:df:90:9c:4b:5f:9c:f4:69:fd:42:94:ff:88:24"
-       - run: ci/filter_example_mirror.sh
 
    coverage:
      executor: ubuntu-build
+     environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, LSan detects leaks in WAVM library.
+       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
+       VALIDATE_COVERAGE: 0
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
        - run:
            command:
-             ci/do_circle_ci.sh bazel.coverage
+             ci/do_circle_ci.sh bazel.coverage ${BAZEL_TEST_TARGETS}
            no_output_timeout: 60m
-       - run: ci/coverage_publish.sh
        - store_artifacts:
            path: /build/envoy/generated
            destination: /
-
-   clang_tidy:
-     executor: ubuntu-build
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - run:
-           command:
-             ci/do_circle_ci.sh bazel.clang_tidy
-           no_output_timeout: 60m
 
    format:
      executor: ubuntu-build
@@ -120,54 +68,35 @@ jobs:
        - run: ci/do_circle_ci.sh check_format
        - run: ci/do_circle_ci.sh check_repositories
        - run: ci/do_circle_ci.sh check_spelling
-       - run: ci/do_circle_ci.sh check_spelling_pedantic
-   build_image:
-     docker:
-       - image: circleci/python:3.7
-         environment:
-           # See comment in do_circle_ci.sh for why we do this.
-           NUM_CPUS: 8
-     resource_class: xlarge
+       # TODO(PiotrSikora): re-enable once fixed.
+       # - run: ci/do_circle_ci.sh check_spelling_pedantic
+
+   macos:
+     macos:
+       xcode: "10.2.1"
+     environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults in tests.
+       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/..."
      steps:
+       - run: sudo sntp -sS time.apple.com
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
-       - setup_remote_docker
-       - run: ci/build_container/docker_push.sh
-   docs:
-     executor: ubuntu-build
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - run: ci/do_circle_ci.sh docs
-       - add_ssh_keys:
-           fingerprints:
-             - "44:c7:a1:9e:f4:9e:a5:33:11:f1:0e:79:e1:55:c9:04"
-       - run: docs/publish.sh
-       - store_artifacts:
-           path: generated/docs
+       - restore_cache:
+           keys:
+             - macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
+       - run: ci/mac_ci_setup.sh
+       - run: ci/mac_ci_steps.sh ${BAZEL_TEST_TARGETS}
+       - save_cache:
+           key: macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
+           paths:
+             - /private/var/tmp/_bazel_distiller/
 
 workflows:
   version: 2
   all:
     jobs:
-      - release:
-          filters:
-            tags:
-              only: /^v.*/
-      - docker:
-          requires: [release]
-          filters:
-            tags:
-              only: /^v.*/
+      - release
       - asan
-      - compile_time_options
-      - api
-      - filter_example_mirror
       - coverage
       - format
-      - clang_tidy
-      - build_image
-      - docs:
-          filters:
-            tags:
-              only: /^v.*/
+      - macos

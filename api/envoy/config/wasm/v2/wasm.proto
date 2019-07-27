@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+// [#protodoc-title: Metrics service]
+
+package envoy.config.wasm.v2;
+
+option java_outer_classname = "WasmProto";
+option java_multiple_files = true;
+option java_package = "io.envoyproxy.envoy.config.wasm.v2";
+
+import "envoy/api/v2/core/base.proto";
+
+import "validate/validate.proto";
+
+message VmConfig {
+  // The Wasm VM type (see source/extensions/commmon/wasm/well_known_names.h).
+  string vm = 1;
+  // The Wasm code that Envoy will execute.
+  envoy.api.v2.core.DataSource code = 2;
+  // The Wasm configuration string used on initialization of a new VM.
+  string initial_configuration = 3;
+  // Allow the wasm_file to include pre-compiled code.
+  bool allow_precompiled = 4;
+}
+
+// Wasm is configured as a built-in *envoy.wasm_service* :ref:`WasmConig
+// <envoy_api_msg_config.wasm.v2.WasmConfig>`. This opaque configuration will be used to
+// create a Wasm Service.
+message WasmConfig {
+  // A unique ID for a set of filters/services in a VM which will share Context(s).
+  string root_id = 1;
+  // A unique ID for a VM so that multiple filters/services can share the same VM.
+  string vm_id = 2;
+  // Configuration for starting a new VM (optionally associated with the given 'id').
+  VmConfig vm_config = 3;
+  // Wasm service configuration string e.g. a serialized protobuf which will be the
+  // argument to the VM configure() call.
+  string configuration = 4;
+  // If true, create a single VM rather than creating one VM per silo. Such a singleton can
+  // not be used with filters.
+  bool singleton = 5;
+}
