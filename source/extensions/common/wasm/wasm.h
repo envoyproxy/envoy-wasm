@@ -678,7 +678,7 @@ private:
   const envoy::api::v2::core::Metadata* listener_metadata_{};
   std::string id_;
   std::string context_id_filter_state_data_name_;
-  uint32_t next_context_id_ = 0;
+  uint32_t next_context_id_ = 1; // 0 is reserved for the VM context.
   std::unique_ptr<WasmVm> wasm_vm_;
   std::shared_ptr<Context> vm_context_; // Context unrelated to any specific root or stream
                                         // (e.g. for global constructors).
