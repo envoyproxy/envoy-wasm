@@ -1371,24 +1371,31 @@ void Context::setMetadataStruct(MetadataType type, absl::string_view name,
 }
 
 void Context::scriptLog(spdlog::level::level_enum level, absl::string_view message) {
+  std::string id;
+  if (!wasm()->id().empty()) {
+    id = id + " " + std::string(wasm()->id());
+  }
+  if (!root_id().empty()) {
+    id = id + " " + std::string(root_id());
+  }
   switch (level) {
   case spdlog::level::trace:
-    ENVOY_LOG(trace, "wasm log: {}", message);
+    ENVOY_LOG(trace, "wasm log{}: {}", id, message);
     return;
   case spdlog::level::debug:
-    ENVOY_LOG(debug, "wasm log: {}", message);
+    ENVOY_LOG(debug, "wasm log{}: {}", id, message);
     return;
   case spdlog::level::info:
-    ENVOY_LOG(info, "wasm log: {}", message);
+    ENVOY_LOG(info, "wasm log{}: {}", id, message);
     return;
   case spdlog::level::warn:
-    ENVOY_LOG(warn, "wasm log: {}", message);
+    ENVOY_LOG(warn, "wasm log{}: {}", id, message);
     return;
   case spdlog::level::err:
-    ENVOY_LOG(error, "wasm log: {}", message);
+    ENVOY_LOG(error, "wasm log{}: {}", id, message);
     return;
   case spdlog::level::critical:
-    ENVOY_LOG(critical, "wasm log: {}", message);
+    ENVOY_LOG(critical, "wasm log{}: {}", id, message);
     return;
   case spdlog::level::off:
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
@@ -1655,6 +1662,7 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
       time_source_(dispatcher.timeSource()), initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
+  std::cerr << "id = " << id_ << "\n";
 }
 
 void Wasm::registerCallbacks() {
@@ -1822,7 +1830,7 @@ void Wasm::getFunctions() {
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), scope_(wasm.scope_), local_info_(wasm.local_info_),
-      listener_metadata_(wasm.listener_metadata_), owned_scope_(wasm.owned_scope_),
+      listener_metadata_(wasm.listener_metadata_), id_(wasm.id_), owned_scope_(wasm.owned_scope_),
       time_source_(dispatcher.timeSource()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   vm_context_ = std::make_shared<Context>(this);

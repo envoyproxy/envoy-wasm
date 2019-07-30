@@ -570,9 +570,6 @@ public:
   void configure(Context* root_context, absl::string_view configuration);
   Context* start(absl::string_view root_id); // returns the root Context.
 
-  const std::string& context_id_filter_state_data_name() {
-    return context_id_filter_state_data_name_;
-  }
   absl::string_view id() const { return id_; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
   Context* vmContext() const { return vm_context_.get(); }
@@ -677,7 +674,6 @@ private:
   const LocalInfo::LocalInfo& local_info_;
   const envoy::api::v2::core::Metadata* listener_metadata_{};
   std::string id_;
-  std::string context_id_filter_state_data_name_;
   uint32_t next_context_id_ = 1; // 0 is reserved for the VM context.
   std::unique_ptr<WasmVm> wasm_vm_;
   std::shared_ptr<Context> vm_context_; // Context unrelated to any specific root or stream
