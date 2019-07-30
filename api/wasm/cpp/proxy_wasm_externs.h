@@ -143,3 +143,6 @@ extern "C" void proxy_incrementMetric(uint32_t metric_id, int64_t offset);
 extern "C" void proxy_recordMetric(uint32_t metric_id, uint64_t value);
 extern "C" uint64_t proxy_getMetric(uint32_t metric_id);
 
+// System
+// Returns 0 on success.
+extern "C" uint32_t proxy_setEffectiveContext(uint32_t effective_context_id);
