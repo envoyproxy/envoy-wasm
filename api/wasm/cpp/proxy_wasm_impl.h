@@ -1183,7 +1183,7 @@ template <typename... Tags> struct Counter : public MetricBase {
   }
 
   template<typename... AdditionalTags>
-  Counter<AdditionalTags...>* resolveAndExtend(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
+  Counter<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
     std::vector<std::string> fields{ToString(f)...};
     auto new_counter = Counter<AdditionalTags...>::New(name, fieldnames...);
     new_counter->prefix = prefixWithFields(fields);
@@ -1228,7 +1228,7 @@ template <typename... Tags> struct Gauge : public MetricBase {
   }
 
   template<typename... AdditionalTags>
-  Gauge<AdditionalTags...>* resolveAndExtend(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
+  Gauge<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
     std::vector<std::string> fields{ToString(f)...};
     auto new_gauge = Gauge<AdditionalTags...>::New(name, fieldnames...);
     new_gauge->prefix = prefixWithFields(fields);
@@ -1271,7 +1271,7 @@ template <typename... Tags> struct Histogram : public MetricBase {
   }
 
   template<typename... AdditionalTags>
-  Histogram<AdditionalTags...>* resolveAndExtend(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
+  Histogram<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
     std::vector<std::string> fields{ToString(f)...};
     auto new_histogram = Histogram<AdditionalTags...>::New(name, fieldnames...);
     new_histogram->prefix = prefixWithFields(fields);
