@@ -4537,7 +4537,7 @@
     local.get $0
     local.get $4
     local.get $2
-    call $__ZN7CounterIJiEE16resolveAndExtendIJNSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbEEEPS_IJDpT_EEiDp19MetricTagDescriptorIS9_E
+    call $__ZN7CounterIJiEE16extendAndResolveIJNSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbEEEPS_IJDpT_EEiDp19MetricTagDescriptorIS9_E
     local.set $0
     local.get $14
     i64.const 0
@@ -8317,7 +8317,7 @@
     local.get $6
     )
   
-  (func $__ZN7CounterIJiEE16resolveAndExtendIJNSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbEEEPS_IJDpT_EEiDp19MetricTagDescriptorIS9_E (type $0)
+  (func $__ZN7CounterIJiEE16extendAndResolveIJNSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbEEEPS_IJDpT_EEiDp19MetricTagDescriptorIS9_E (type $0)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
