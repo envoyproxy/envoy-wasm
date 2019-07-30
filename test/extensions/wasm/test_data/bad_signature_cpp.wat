@@ -21,10 +21,10 @@
   (import "env" "_emscripten_resize_heap" (func $_emscripten_resize_heap (param i32) (result i32)))
   (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32)))
   (import "env" "abortOnCannotGrowMemory" (func $abortOnCannotGrowMemory (param i32) (result i32)))
-  (import "env" "table" (table $13 23 23 funcref))
-  (import "env" "memory" (memory $14 256 256))
   (import "env" "__table_base" (global $15 i32))
   (import "env" "DYNAMICTOP_PTR" (global $16 i32))
+  (import "env" "memory" (memory $14 256 256))
+  (import "env" "table" (table $13 23 23 funcref))
   (export "__GLOBAL__sub_I_status_cc" (func $__GLOBAL__sub_I_status_cc))
   (export "__ZSt18uncaught_exceptionv" (func $__ZSt18uncaught_exceptionv))
   (export "___cxa_can_catch" (func $___cxa_can_catch))
@@ -51,14 +51,14 @@
   (export "stackSave" (func $stackSave))
   (global $17  (mut i32) (i32.const 3232))
   (global $18  (mut i32) (i32.const 5246112))
-  (elem $13 (global.get $15)
+  (elem $19 $13 (global.get $15)
     $b0 $__ZNK10__cxxabiv117__class_type_info9can_catchEPKNS_16__shim_type_infoERPv $b1 $b2 $__ZN10__cxxabiv116__shim_type_infoD2Ev $__ZN10__cxxabiv117__class_type_infoD0Ev $__ZN10__cxxabiv116__shim_type_infoD2Ev $__ZN10__cxxabiv116__shim_type_infoD2Ev
     $__ZN10__cxxabiv117__class_type_infoD0Ev $b2 $b2 $b3 $__ZNK10__cxxabiv117__class_type_info27has_unambiguous_public_baseEPNS_19__dynamic_cast_infoEPvi $__ZNK10__cxxabiv120__si_class_type_info27has_unambiguous_public_baseEPNS_19__dynamic_cast_infoEPvi $b3 $b4
     $__ZNK10__cxxabiv117__class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $__ZNK10__cxxabiv120__si_class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $b4 $b5 $__ZNK10__cxxabiv117__class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $__ZNK10__cxxabiv120__si_class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $b5)
-  (data $14 (i32.const 1024)
+  (data $20 $14 (i32.const 1024)
     "\88\04\00\00)\05\00\00\10\04\00\00\00\00\00\00\88\04\00\00\d6\04\00\00 \04\00\00\00\00\00\00`\04\00\00\f7\04\00\00\88\04\00\00\04\05\00\00\00\04\00\00\00\00\00\00\88\04\00\00o\05\00\00"
     "\10\04\00\00\00\00\00\00\88\04\00\00K\05\00\008\04")
-  (data $14 (i32.const 1117)
+  (data $21 $14 (i32.const 1117)
     "\04\00\00\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00\00\00\00\00(\04\00\00\01\00\00\00\05\00\00\00\03\00\00\00\04\00\00\00\01\00\00\00\02"
     "\00\00\00\02\00\00\00\02\00\00\00warn \00test debug\00 logging\00test info\00test tick\00N10__cx"
     "xabiv116__shim_type_infoE\00St9type_info\00N10__cxxabiv120__si_class"

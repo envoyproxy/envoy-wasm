@@ -48,10 +48,10 @@
   (import "env" "_pthread_equal" (func $_pthread_equal (param i32 i32) (result i32)))
   (import "env" "abortOnCannotGrowMemory" (func $abortOnCannotGrowMemory (param i32) (result i32)))
   (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
-  (import "env" "table" (table $26 231 231 funcref))
-  (import "env" "memory" (memory $27 256 256))
   (import "env" "__table_base" (global $28 i32))
   (import "env" "DYNAMICTOP_PTR" (global $29 i32))
+  (import "env" "memory" (memory $27 256 256))
+  (import "env" "table" (table $26 231 231 funcref))
   (export "__ZSt18uncaught_exceptionv" (func $__ZSt18uncaught_exceptionv))
   (export "___cxa_can_catch" (func $___cxa_can_catch))
   (export "___cxa_is_pointer_type" (func $___cxa_is_pointer_type))
@@ -106,7 +106,7 @@
   (export "stackSave" (func $stackSave))
   (global $30  (mut i32) (i32.const 17024))
   (global $31  (mut i32) (i32.const 5259904))
-  (elem $26 (global.get $28)
+  (elem $32 $26 (global.get $28)
     $b0 $__ZN7Context6asRootEv $__ZN7Context9asContextEv $__ZN14ExampleContext16onRequestHeadersEv $__ZN7Context6asRootEv $__ZN7Context6asRootEv $__ZN7Context6asRootEv $__ZN7Context6asRootEv
     $__ZN7Context6asRootEv $__ZN7Context6asRootEv $__ZN7Context6asRootEv $__ZNKSt3__210__function6__funcI3__0NS_9allocatorIS2_EEFNS_10unique_ptrI7ContextNS_14default_deleteIS6_EEEEjP11RootContextEE7__cloneEv $__ZNKSt3__210__function6__funcI3__0NS_9allocatorIS2_EEFNS_10unique_ptrI7ContextNS_14default_deleteIS6_EEEEjP11RootContextEE11target_typeEv $__ZNK6google8protobuf8internal12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseENS0_11MessageLiteENSt3__212basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9ELSE_11ELi0EE3NewEv $__ZNK6google8protobuf8internal12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseENS0_11MessageLiteENSt3__212basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9ELSE_11ELi0EE8GetArenaEv $__ZNK6google8protobuf11MessageLite20GetMaybeArenaPointerEv
     $__ZNK6google8protobuf9ListValue13IsInitializedEv $__ZNK6google8protobuf8internal12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseENS0_11MessageLiteENSt3__212basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9ELSE_11ELi0EE12ByteSizeLongEv $__ZNK6google8protobuf8internal12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseENS0_11MessageLiteENSt3__212basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9ELSE_11ELi0EE13GetCachedSizeEv $__ZN7Context6asRootEv $__ZNK6google8protobuf9ListValue20GetMaybeArenaPointerEv $__ZNK6google8protobuf8internal12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseENS0_11MessageLiteENSt3__212basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9ELSE_11ELi0EE5valueEv $__ZNK6google8protobuf5Value3NewEv $__ZNK6google8protobuf9ListValue8GetArenaEv
@@ -136,14 +136,14 @@
     $b9 $__ZN11ContextBase13onGrpcReceiveEjNSt3__210unique_ptrI8WasmDataNS0_14default_deleteIS2_EEEE $b10 $__ZN11ContextBase11onGrpcCloseEj10GrpcStatusNSt3__210unique_ptrI8WasmDataNS1_14default_deleteIS3_EEEE $__ZNSt3__210__function6__funcI3__0NS_9allocatorIS2_EEFNS_10unique_ptrI7ContextNS_14default_deleteIS6_EEEEjP11RootContextEEclEOjOSB_ $__ZNK10__cxxabiv117__class_type_info27has_unambiguous_public_baseEPNS_19__dynamic_cast_infoEPvi $__ZNK10__cxxabiv120__si_class_type_info27has_unambiguous_public_baseEPNS_19__dynamic_cast_infoEPvi $__ZNK10__cxxabiv121__vmi_class_type_info27has_unambiguous_public_baseEPNS_19__dynamic_cast_infoEPvi
     $b10 $b10 $b11 $__ZN11ContextBase18onHttpCallResponseEjNSt3__210unique_ptrI8WasmDataNS0_14default_deleteIS2_EEEES5_S5_ $__ZNK10__cxxabiv117__class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $__ZNK10__cxxabiv120__si_class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $__ZNK10__cxxabiv121__vmi_class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $b11
     $b11 $b11 $b12 $__ZNK10__cxxabiv117__class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $__ZNK10__cxxabiv120__si_class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $__ZNK10__cxxabiv121__vmi_class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $b13)
-  (data $27 (i32.const 1024)
+  (data $33 $27 (i32.const 1024)
     "#+\00\00(+\00\000+\00\006+")
-  (data $27 (i32.const 1168)
+  (data $34 $27 (i32.const 1168)
     "\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0"
     "\f0\f0\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\02\03\03\03\03\03\03\03\03\03\03\03\03\07\03\03\04\05\05\05\06\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0"
     "\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0"
     "\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0")
-  (data $27 (i32.const 1488)
+  (data $35 $27 (i32.const 1488)
     "\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0"
     "\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0"
     "\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0"
@@ -173,37 +173,37 @@
     "\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0"
     "\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2\f2"
     "\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0")
-  (data $27 (i32.const 3472)
+  (data $36 $27 (i32.const 3472)
     "\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01"
     "\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01"
     "\11\00\n\00\11\11\11\00\00\00\00\05\00\00\00\00\00\00\09\00\00\00\00\0b")
-  (data $27 (i32.const 3632)
+  (data $37 $27 (i32.const 3632)
     "\11\00\0f\n\11\11\11\03\n\07\00\01\13\09\0b\0b\00\00\09\06\0b\00\00\0b\00\06\11\00\00\00\11\11\11")
-  (data $27 (i32.const 3681)
+  (data $38 $27 (i32.const 3681)
     "\0b")
-  (data $27 (i32.const 3690)
+  (data $39 $27 (i32.const 3690)
     "\11\00\n\n\11\11\11\00\n\00\00\02\00\09\0b\00\00\00\09\00\0b\00\00\0b")
-  (data $27 (i32.const 3739)
+  (data $40 $27 (i32.const 3739)
     "\0c")
-  (data $27 (i32.const 3751)
+  (data $41 $27 (i32.const 3751)
     "\0c\00\00\00\00\0c\00\00\00\00\09\0c\00\00\00\00\00\0c\00\00\0c")
-  (data $27 (i32.const 3797)
+  (data $42 $27 (i32.const 3797)
     "\0e")
-  (data $27 (i32.const 3809)
+  (data $43 $27 (i32.const 3809)
     "\0d\00\00\00\04\0d\00\00\00\00\09\0e\00\00\00\00\00\0e\00\00\0e")
-  (data $27 (i32.const 3855)
+  (data $44 $27 (i32.const 3855)
     "\10")
-  (data $27 (i32.const 3867)
+  (data $45 $27 (i32.const 3867)
     "\0f\00\00\00\00\0f\00\00\00\00\09\10\00\00\00\00\00\10\00\00\10\00\00\12\00\00\00\12\12\12")
-  (data $27 (i32.const 3922)
+  (data $46 $27 (i32.const 3922)
     "\12\00\00\00\12\12\12\00\00\00\00\00\00\09")
-  (data $27 (i32.const 3971)
+  (data $47 $27 (i32.const 3971)
     "\0b")
-  (data $27 (i32.const 3983)
+  (data $48 $27 (i32.const 3983)
     "\n\00\00\00\00\n\00\00\00\00\09\0b\00\00\00\00\00\0b\00\00\0b")
-  (data $27 (i32.const 4029)
+  (data $49 $27 (i32.const 4029)
     "\0c")
-  (data $27 (i32.const 4041)
+  (data $50 $27 (i32.const 4041)
     "\0c\00\00\00\00\0c\00\00\00\00\09\0c\00\00\00\00\00\0c\00\00\0c\00\000123456789ABCDEF\00\00\00\00\02\00\00\00\03\00\00\00\05\00\00\00\07\00\00\00\0b\00\00\00\0d"
     "\00\00\00\11\00\00\00\13\00\00\00\17\00\00\00\1d\00\00\00\1f\00\00\00%\00\00\00)\00\00\00+\00\00\00/\00\00\005\00\00\00;\00\00\00=\00\00\00C\00\00\00G\00\00\00I\00\00\00O"
     "\00\00\00S\00\00\00Y\00\00\00a\00\00\00e\00\00\00g\00\00\00k\00\00\00m\00\00\00q\00\00\00\7f\00\00\00\83\00\00\00\89\00\00\00\8b\00\00\00\95\00\00\00\97\00\00\00\9d\00\00\00\a3"
@@ -216,40 +216,40 @@
     "\12\00\00\00\00\00\00\94\1a\00\00\8b \00\00 \12\00\00\00\00\00\00\94\1a\00\00Q!\00\00\a0\12\00\00\00\00\00\00\94\1a\00\00k&\00\00\a0\12\00\00\00\00\00\00\00\1b\00\00)%\00\00\00"
     "\00\00\00\01\00\00\00X\12\00\00\00\00\00\00l\1a\00\00\96%\00\00\94\1a\00\00\85&\00\00\a0\12\00\00\00\00\00\00\94\1a\00\00\ef'\00\00p\11\00\00\00\00\00\00\94\1a\00\00\1e(\00\00\90"
     "\14\00\00\00\00\00\00\ff\ff\ff\ff\ff\ff\ff\ff")
-  (data $27 (i32.const 4768)
+  (data $51 $27 (i32.const 4768)
     "l\1a\00\00\1f-\00\00\94\1a\00\00\f00\00\00\c8\12\00\00\00\00\00\00\94\1a\00\00\ac1\00\00\c8\12\00\00\00\00\00\00l\1a\00\00x2\00\00\05")
-  (data $27 (i32.const 4828)
+  (data $52 $27 (i32.const 4828)
     "/")
-  (data $27 (i32.const 4852)
+  (data $53 $27 (i32.const 4852)
     "\08\00\00\00\01\00\00\00\ab=")
-  (data $27 (i32.const 4876)
+  (data $54 $27 (i32.const 4876)
     "\02")
-  (data $27 (i32.const 4891)
+  (data $55 $27 (i32.const 4891)
     "\ff\ff\ff\ff\ff")
-  (data $27 (i32.const 4960)
+  (data $56 $27 (i32.const 4960)
     "\05")
-  (data $27 (i32.const 4972)
+  (data $57 $27 (i32.const 4972)
     "/")
-  (data $27 (i32.const 4996)
+  (data $58 $27 (i32.const 4996)
     "\09\00\00\00\01\00\00\00\b85\00\00\00\04")
-  (data $27 (i32.const 5020)
+  (data $59 $27 (i32.const 5020)
     "\01")
-  (data $27 (i32.const 5035)
+  (data $60 $27 (i32.const 5035)
     "\n\ff\ff\ff\ff")
-  (data $27 (i32.const 5140)
+  (data $61 $27 (i32.const 5140)
     "\n")
-  (data $27 (i32.const 5179)
+  (data $62 $27 (i32.const 5179)
     "\ff\ff\ff\ff\ff")
-  (data $27 (i32.const 5248)
+  (data $63 $27 (i32.const 5248)
     "\94\1a\00\00\f12\00\00\90\14\00\00\00\00\00\00l\1a\00\00\b33\00\00\94\1a\00\00\134\00\00\a8\14\00\00\00\00\00\00\94\1a\00\00\c03\00\00\b8\14\00\00\00\00\00\00l\1a\00\00\e13\00\00"
     "\94\1a\00\00\ee3\00\00\98\14\00\00\00\00\00\00\94\1a\00\00\f54\00\00\90\14\00\00\00\00\00\00\94\1a\00\00\055\00\00\d0\14\00\00\00\00\00\00\94\1a\00\00:5\00\00\a8\14\00\00\00\00\00\00"
     "\94\1a\00\00\165\00\00\f0\14\00\00\00\00\00\00\94\1a\00\00\\5\00\00\a8\14\00\00\00\00\00\00\e4\1a\00\00\845\00\00\e4\1a\00\00\865\00\00\94\1a\00\00\885\00\00\98\14")
-  (data $27 (i32.const 5444)
+  (data $64 $27 (i32.const 5444)
     "\88\11\00\00\01\00\00\00\02\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\03\00\00\00\04\00\00\00"
     "\01\00\00\00\05\00\00\00\06\00\00\00\07\00\00\00\02\00\00\00\08\00\00\00\04\00\00\00\05\00\00\00\06\00\00\00\00\00\00\00p\11\00\00\01\00\00\00\07\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00"
     "\03\00\00\00\01\00\00\00\01\00\00\00\09\00\00\00\n\00\00\00\01\00\00\00\02\00\00\00\00\00\00\00\a0\11\00\00\08\00\00\00\09\00\00\00\0b\00\00\00\04\00\00\00\n\00\00\00\0b\00\00\00\02\00\00\00"
     "\03\00\00\00\0c\00\00\00\ff\ff\ff\ff\00\00\00\00\01")
-  (data $27 (i32.const 5665)
+  (data $65 $27 (i32.const 5665)
     "\12\00\00\0c\00\00\00\0d\00\00\00\05\00\00\00\0d\00\00\00\04\00\00\00\0e\00\00\00\0f\00\00\00\0e\00\00\00\10\00\00\00\06\00\00\00\07\00\00\00\05\00\00\00\11\00\00\00\08\00\00\00\06\00\00\00\12"
     "\00\00\00\03\00\00\00\13\00\00\00\14\00\00\00\15\00\00\00\00\00\00\00`\12\00\00\0f\00\00\00\10\00\00\00\09\00\00\00\16\00\00\00\07\00\00\00\17\00\00\00\18\00\00\00\11\00\00\00\19\00\00\00\06"
     "\00\00\00\n\00\00\00\08\00\00\00\1a\00\00\00\0b\00\00\00\06\00\00\00\1b\00\00\00\04\00\00\00\13\00\00\00\00\00\00\00\e0\11\00\00\12\00\00\00\13\00\00\00\0c\00\00\00\1c\00\00\00\09\00\00\00\1d"
@@ -262,11 +262,11 @@
     "\11\00\00\01\00\00\00\1e\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00\02\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00,\00\00\00\04\00\00\00\01"
     "\00\00\00\05\00\00\00\06\00\00\00\07\00\00\00\02\00\00\00\08\00\00\00\04\00\00\00\1f\00\00\00\06\00\00\00\00\00\00\00\80\12\00\00 \00\00\00!\00\00\00-\00\00\00\00\00\00\00\a8\12\00\00\""
     "\00\00\00#\00\00\00\05\00\00\00\14\00\00\00\01\00\00\00\06\00\00\00.\00\00\00\00\00\00\00\b8\12\00\00\"\00\00\00$\00\00\00\07\00\00\00\15\00\00\00\02\00\00\00\06\00\00\00.")
-  (data $27 (i32.const 6437)
+  (data $66 $27 (i32.const 6437)
     "\01\00\00\00\09\00\00\00\00\00\00\08\00\00\00\01\00\00\00    \00\00\00\00\10\04\00\00\9c=\00\00\a1=\00\00\10\0d\00\00\d0\12\00\00`\13")
-  (data $27 (i32.const 6676)
+  (data $67 $27 (i32.const 6676)
     ",;")
-  (data $27 (i32.const 6736)
+  (data $68 $27 (i32.const 6736)
     "\80\14\00\00%\00\00\00&\00\00\000\00\00\00\02\00\00\00\00\00\00\00\98\14\00\00'\00\00\00(\00\00\00)\00\00\00*\00\00\00\0b\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\00\00\00\00"
     "\c0\14\00\00'\00\00\00+\00\00\00)\00\00\00*\00\00\00\0b\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00\00\00\00\00\d0\14\00\00,\00\00\00-\00\00\001\00\00\00\00\00\00\00\e0\14\00\00"
     ",\00\00\00.\00\00\001\00\00\00\00\00\00\00\10\15\00\00'\00\00\00/\00\00\00)\00\00\00*\00\00\00\0c\00\00\00\00\00\00\000\15\00\00'\00\00\000\00\00\00)\00\00\00*\00\00\00"
