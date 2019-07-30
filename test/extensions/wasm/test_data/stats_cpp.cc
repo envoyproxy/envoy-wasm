@@ -69,7 +69,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t /* context_zero */) {
 
   h->record(3, 7, "test_tag", true);
   auto base_h = Counter<int>::New("test_histogram", "int_tag");
-  auto complete_h = base_h->resolveAndExtend<std::string, bool>(7, "string_tag", "bool_tag");
+  auto complete_h = base_h->extendAndResolve<std::string, bool>(7, "string_tag", "bool_tag");
   auto simple_h = complete_h->resolve("test_tag", true);
   logError(std::string("h_id = ") + complete_h->nameFromIdSlow(simple_h.metric_id));
 
