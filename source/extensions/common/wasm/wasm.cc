@@ -47,7 +47,11 @@ namespace Wasm {
 
 // Any currently executing Wasm call context.
 thread_local Context* current_context_ = nullptr;
-#define WASM_CONTEXT(_c) (static_cast<Context*>((void)_c, current_context_))
+#define WASM_CONTEXT(_c)                                                                           \
+  (ContextOrEffectiveContext(static_cast<Context*>((void)_c, current_context_)))
+// The id of the context which should be used for calls out of the VM in place of current_context_
+// above.
+thread_local uint32_t effective_context_id_ = 0; // 0 indicates no effective context id.
 
 namespace {
 
@@ -328,6 +332,18 @@ const uint8_t* decodeVarint(const uint8_t* pos, const uint8_t* end, uint32_t* ou
   return pos;
 }
 
+Context* ContextOrEffectiveContext(Context* context) {
+  if (effective_context_id_ == 0) {
+    return context;
+  }
+  auto effective_context = context->wasm()->getContext(effective_context_id_);
+  if (effective_context) {
+    return effective_context;
+  }
+  // The effective_context_id_ no longer exists, revert to the true context.
+  return context;
+}
+
 } // namespace
 
 // Test support.
@@ -458,6 +474,17 @@ void sendLocalResponseHandler(void* raw_context, Word response_code, Word respon
                              : absl::optional<Grpc::Status::GrpcStatus>();
   context->sendLocalResponse(static_cast<Envoy::Http::Code>(response_code.u64), body,
                              modify_headers, grpc_status_opt, details);
+}
+
+Word setEffectiveContextHandler(void* raw_context, Word context_id) {
+  auto context = WASM_CONTEXT(raw_context);
+  uint32_t cid = static_cast<uint32_t>(context_id.u64);
+  auto c = context->wasm()->getContext(cid);
+  if (!c) {
+    return 1; // Error.
+  }
+  effective_context_id_ = cid;
+  return 0; // Ok.
 }
 
 void clearRouteCacheHandler(void* raw_context) {
@@ -601,7 +628,7 @@ void getResponseBodyBufferBytesHandler(void* raw_context, Word start, Word lengt
 Word httpCallHandler(void* raw_context, Word uri_ptr, Word uri_size, Word header_pairs_ptr,
                      Word header_pairs_size, Word body_ptr, Word body_size, Word trailer_pairs_ptr,
                      Word trailer_pairs_size, Word timeout_milliseconds) {
-  auto context = WASM_CONTEXT(raw_context);
+  auto context = WASM_CONTEXT(raw_context)->root_context();
   auto uri = context->wasmVm()->getMemory(uri_ptr, uri_size);
   auto headers = toPairs(context->wasmVm()->getMemory(header_pairs_ptr, header_pairs_size));
   auto body = context->wasmVm()->getMemory(body_ptr, body_size);
@@ -635,7 +662,7 @@ uint64_t getMetricHandler(void* raw_context, Word metric_id) {
 Word grpcCallHandler(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
                      Word service_name_size, Word method_name_ptr, Word method_name_size,
                      Word request_ptr, Word request_size, Word timeout_milliseconds) {
-  auto context = WASM_CONTEXT(raw_context);
+  auto context = WASM_CONTEXT(raw_context)->root_context();
   auto service = context->wasmVm()->getMemory(service_ptr, service_size);
   auto service_name = context->wasmVm()->getMemory(service_name_ptr, service_name_size);
   auto method_name = context->wasmVm()->getMemory(method_name_ptr, method_name_size);
@@ -651,7 +678,7 @@ Word grpcCallHandler(void* raw_context, Word service_ptr, Word service_size, Wor
 Word grpcStreamHandler(void* raw_context, Word service_ptr, Word service_size,
                        Word service_name_ptr, Word service_name_size, Word method_name_ptr,
                        Word method_name_size) {
-  auto context = WASM_CONTEXT(raw_context);
+  auto context = WASM_CONTEXT(raw_context)->root_context();
   auto service = context->wasmVm()->getMemory(service_ptr, service_size);
   auto service_name = context->wasmVm()->getMemory(service_name_ptr, service_name_size);
   auto method_name = context->wasmVm()->getMemory(method_name_ptr, method_name_size);
@@ -663,18 +690,18 @@ Word grpcStreamHandler(void* raw_context, Word service_ptr, Word service_size,
 }
 
 void grpcCancelHandler(void* raw_context, Word token) {
-  auto context = WASM_CONTEXT(raw_context);
+  auto context = WASM_CONTEXT(raw_context)->root_context();
   context->grpcCancel(token);
 }
 
 void grpcCloseHandler(void* raw_context, Word token) {
-  auto context = WASM_CONTEXT(raw_context);
+  auto context = WASM_CONTEXT(raw_context)->root_context();
   context->grpcClose(token);
 }
 
 void grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word message_size,
                      Word end_stream) {
-  auto context = WASM_CONTEXT(raw_context);
+  auto context = WASM_CONTEXT(raw_context)->root_context();
   auto message = context->wasmVm()->getMemory(message_ptr, message_size);
   context->grpcSend(token, message, end_stream);
 }
@@ -1779,6 +1806,8 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(incrementMetric);
   _REGISTER_PROXY(recordMetric);
   _REGISTER_PROXY(getMetric);
+
+  _REGISTER_PROXY(setEffectiveContext);
 #undef _REGISTER_PROXY
 }
 

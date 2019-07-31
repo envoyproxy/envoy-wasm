@@ -212,6 +212,10 @@ inline uint64_t proxy_getMetric(uint32_t metric_id) {
   return getMetricHandler(current_context_, WS(metric_id));
 }
 
+inline uint64_t proxy_setEffectiveContext(uint64_t context_id) {
+  return setEffectiveContextHandler(current_context_, WS(context_id));
+}
+
 #undef WS
 #undef WR
 

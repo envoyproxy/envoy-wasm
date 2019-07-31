@@ -147,8 +147,10 @@ using HeaderStringPairs = std::vector<std::pair<std::string, std::string>>;
 
 class GrpcCallHandlerBase {
 public:
-  GrpcCallHandlerBase(Context* context) : context_(context) {}
+  GrpcCallHandlerBase() {}
   virtual ~GrpcCallHandlerBase() {}
+
+  RootContext* context() { return context_; }
 
   void cancel();
 
@@ -157,16 +159,16 @@ public:
   virtual void onFailure(GrpcStatus status, std::unique_ptr<WasmData> error_message) = 0;
 
 private:
-  friend class ContextBase;
+  friend class RootContext;
 
-  Context* const context_;
+  RootContext* context_{nullptr};
   uint32_t token_;
 };
 
 template<typename Message>
 class GrpcCallHandler : public GrpcCallHandlerBase {
 public:
-  GrpcCallHandler(Context* context) : GrpcCallHandlerBase(context) {}
+  GrpcCallHandler() : GrpcCallHandlerBase() {}
   virtual ~GrpcCallHandler() {}
 
   virtual void onSuccess(Message&& response) = 0;
@@ -179,8 +181,10 @@ private:
 
 class GrpcStreamHandlerBase {
 public:
-  GrpcStreamHandlerBase(Context* context) : context_(context) {}
+  GrpcStreamHandlerBase() {}
   virtual ~GrpcStreamHandlerBase() {}
+
+  RootContext* context() { return context_; }
 
   // NB: with end_of_stream == true, callbacks can still occur: reset() to prevent further callbacks.
   void send(StringView message, bool end_of_stream);
@@ -194,20 +198,20 @@ public:
   virtual void onRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message) = 0;
 
 protected:
-  friend class ContextBase;
+  friend class RootContext;
 
   void doRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message);
 
-  bool local_close_ = false;
-  bool remote_close_ = false;
-  Context* const context_;
+  bool local_close_{false};
+  bool remote_close_{false};
+  RootContext*  context_{nullptr};
   uint32_t token_;
 };
 
 template<typename Request, typename Response>
 class GrpcStreamHandler : public GrpcStreamHandlerBase {
 public:
-  GrpcStreamHandler(Context* context) : GrpcStreamHandlerBase(context) {}
+  GrpcStreamHandler() : GrpcStreamHandlerBase() {}
   virtual ~GrpcStreamHandler() {}
 
   void send(const Request& message, bool end_of_stream) {
@@ -235,15 +239,8 @@ public:
 
   uint32_t id() { return id_; }
 
-  // Low level HTTP/gRPC interface.
-  virtual void onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
-                                  std::unique_ptr<WasmData> body,
-                                  std::unique_ptr<WasmData> trailer_pairs);
-  virtual void onGrpcCreateInitialMetadata(uint32_t token);
-  virtual void onGrpcReceiveInitialMetadata(uint32_t token);
-  virtual void onGrpcReceiveTrailingMetadata(uint32_t token);
-  virtual void onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message);
-  virtual void onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message);
+  // Make this context the effective context for calls out of the VM.
+  bool setEffectiveContext();
 
   virtual RootContext* asRoot() { return nullptr; }
   virtual Context* asContext() { return nullptr; }
@@ -255,10 +252,56 @@ public:
   MetadataResult nodeMetadataStruct(google::protobuf::Struct* struct_ptr);
   MetadataResult namedMetadataValue(MetadataType type, StringView name, StringView key,  google::protobuf::Value* value_ptr);
 
-  // Default high level HTTP/gRPC interface.  NB: overriding the low level interface will disable this interface.
   using HttpCallCallback = std::function<void(std::unique_ptr<WasmData> header_pairs,
       std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs)>;
   using GrpcSimpleCallCallback = std::function<void(GrpcStatus status, std::unique_ptr<WasmData> message)>;
+
+protected:
+  MetadataResult metadataValue(MetadataType type, StringView key, google::protobuf::Value* value_ptr);
+  MetadataResult metadataStruct(MetadataType type, StringView name, google::protobuf::Struct* struct_ptr);
+  MetadataResult metadataStruct(MetadataType type, google::protobuf::Struct* struct_ptr) {
+    return metadataStruct(type, "", struct_ptr);
+  }
+
+  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Value, PairHash> value_cache_;
+  std::unordered_map<std::tuple<EnumType, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
+  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Struct, PairHash> struct_cache_;
+
+private:
+  uint32_t id_;
+};
+
+// A context unique for each root_id for a use-case (e.g. filter) compiled into module.
+class RootContext : public ContextBase {
+public:
+  RootContext(uint32_t id, StringView root_id) : ContextBase(id), root_id_(root_id) {}
+  ~RootContext() {}
+
+  StringView root_id() { return root_id_; }
+
+  RootContext* asRoot() override { return this; }
+  Context* asContext() override { return nullptr; }
+
+  // Called once when the VM loads and once when each hook loads and whenever configuration changes.
+  virtual void onConfigure(std::unique_ptr<WasmData> /* configuration */) {}
+  // Called when each hook loads.
+  virtual void onStart() {}
+  // Called when the timer goes off.
+  virtual void onTick() {}
+  // Called when data arrives on a SharedQueue.
+  virtual void onQueueReady(uint32_t /* token */) {}
+
+  // Low level HTTP/gRPC interface.
+  virtual void onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
+                                  std::unique_ptr<WasmData> body,
+                                  std::unique_ptr<WasmData> trailer_pairs);
+  virtual void onGrpcCreateInitialMetadata(uint32_t token);
+  virtual void onGrpcReceiveInitialMetadata(uint32_t token);
+  virtual void onGrpcReceiveTrailingMetadata(uint32_t token);
+  virtual void onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message);
+  virtual void onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message);
+
+  // Default high level HTTP/gRPC interface.  NB: overriding the low level interface will disable this interface.
   // Returns false on setup error.
   bool httpCall(StringView uri, const HeaderStringPairs& request_headers,
       StringView request_body, const HeaderStringPairs& request_trailers,
@@ -288,50 +331,15 @@ public:
   bool grpcStreamHandler(StringView service, StringView service_name,
       StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler);
 
-protected:
-  MetadataResult metadataValue(MetadataType type, StringView key, google::protobuf::Value* value_ptr);
-  MetadataResult metadataStruct(MetadataType type, StringView name, google::protobuf::Struct* struct_ptr);
-  MetadataResult metadataStruct(MetadataType type, google::protobuf::Struct* struct_ptr) {
-    return metadataStruct(type, "", struct_ptr);
-  }
-
-  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Value, PairHash> value_cache_;
-  std::unordered_map<std::tuple<EnumType, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
-  std::unordered_map<std::pair<EnumType, std::string>, google::protobuf::Struct, PairHash> struct_cache_;
-
 private:
   friend class GrpcCallHandlerBase;
   friend class GrpcStreamHandlerBase;
 
-  uint32_t id_;
+  const std::string root_id_;
   std::unordered_map<uint32_t, HttpCallCallback> http_calls_;
   std::unordered_map<uint32_t, GrpcSimpleCallCallback> simple_grpc_calls_;
   std::unordered_map<uint32_t, std::unique_ptr<GrpcCallHandlerBase>> grpc_calls_;
   std::unordered_map<uint32_t, std::unique_ptr<GrpcStreamHandlerBase>> grpc_streams_;
-};
-
-// A context unique for each root_id for a use-case (e.g. filter) compiled into module.
-class RootContext : public ContextBase {
-public:
-  RootContext(uint32_t id, StringView root_id) : ContextBase(id), root_id_(root_id) {}
-  ~RootContext() {}
-
-  StringView root_id() { return root_id_; }
-
-  RootContext* asRoot() override { return this; }
-  Context* asContext() override { return nullptr; }
-
-  // Called once when the VM loads and once when each hook loads and whenever configuration changes.
-  virtual void onConfigure(std::unique_ptr<WasmData> /* configuration */) {}
-  // Called when each hook loads.
-  virtual void onStart() {}
-  // Called when the timer goes off.
-  virtual void onTick() {}
-  // Called when data arrives on a SharedQueue.
-  virtual void onQueueReady(uint32_t /* token */) {}
-
-private:
-  const std::string root_id_;
 };
 
 RootContext* getRoot(StringView root_id);
@@ -392,6 +400,9 @@ public:
 private:
   RootContext* root_{};
 };
+
+// Returns nullptr if the Context no longer exists (i.e. the stream has been destroyed).
+Context* getContext(uint32_t context_id);
 
 using RootFactory = std::function<std::unique_ptr<RootContext>(uint32_t id, StringView root_id)>;
 using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootContext* root)>;
@@ -1321,7 +1332,7 @@ inline void grpcSend(uint32_t token, StringView message, bool end_stream) {
   return proxy_grpcSend(token, message.data(), message.size(), end_stream ? 1 : 0);
 }
 
-inline bool ContextBase::httpCall(StringView uri, const HeaderStringPairs& request_headers,
+inline bool RootContext::httpCall(StringView uri, const HeaderStringPairs& request_headers,
     StringView request_body, const HeaderStringPairs& request_trailers,
     uint32_t timeout_milliseconds, HttpCallCallback callback) {
   auto token = makeHttpCall(uri, request_headers, request_body, request_trailers, timeout_milliseconds);
@@ -1332,7 +1343,7 @@ inline bool ContextBase::httpCall(StringView uri, const HeaderStringPairs& reque
   return false;
 }
 
-inline void ContextBase::onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
+inline void RootContext::onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
     std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs) {
   auto it = http_calls_.find(token);
   if (it != http_calls_.end()) {
@@ -1341,11 +1352,11 @@ inline void ContextBase::onHttpCallResponse(uint32_t token, std::unique_ptr<Wasm
   }
 }
 
-inline bool ContextBase::grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
+inline bool RootContext::grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
     const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds, Context::GrpcSimpleCallCallback callback) {
   auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
   if (token) {
-    simple_grpc_calls_[token] = std::move(callback);
+    asRoot()->simple_grpc_calls_[token] = std::move(callback);
     return true;
   }
   return false;
@@ -1381,7 +1392,7 @@ inline void GrpcStreamHandlerBase::send(StringView message, bool end_of_stream) 
   }
 }
 
-inline void ContextBase::onGrpcCreateInitialMetadata(uint32_t token) {
+inline void RootContext::onGrpcCreateInitialMetadata(uint32_t token) {
   {
     auto it = grpc_calls_.find(token);
     if (it != grpc_calls_.end()) {
@@ -1398,7 +1409,7 @@ inline void ContextBase::onGrpcCreateInitialMetadata(uint32_t token) {
   }
 }
 
-inline void ContextBase::onGrpcReceiveInitialMetadata(uint32_t token) {
+inline void RootContext::onGrpcReceiveInitialMetadata(uint32_t token) {
   {
     auto it = grpc_streams_.find(token);
     if (it != grpc_streams_.end()) {
@@ -1408,7 +1419,7 @@ inline void ContextBase::onGrpcReceiveInitialMetadata(uint32_t token) {
   }
 }
 
-inline void ContextBase::onGrpcReceiveTrailingMetadata(uint32_t token) {
+inline void RootContext::onGrpcReceiveTrailingMetadata(uint32_t token) {
   {
     auto it = grpc_streams_.find(token);
     if (it != grpc_streams_.end()) {
@@ -1418,7 +1429,7 @@ inline void ContextBase::onGrpcReceiveTrailingMetadata(uint32_t token) {
   }
 }
 
-inline void ContextBase::onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message) {
+inline void RootContext::onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message) {
   {
     auto it = simple_grpc_calls_.find(token);
     if (it != simple_grpc_calls_.end()) {
@@ -1459,7 +1470,7 @@ inline void GrpcStreamHandlerBase::doRemoteClose(GrpcStatus status, std::unique_
   }
 }
 
-inline void ContextBase::onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message) {
+inline void RootContext::onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message) {
   {
     auto it = simple_grpc_calls_.find(token);
     if (it != simple_grpc_calls_.end()) {
@@ -1485,25 +1496,32 @@ inline void ContextBase::onGrpcClose(uint32_t token, GrpcStatus status, std::uni
   }
 }
 
-inline bool ContextBase::grpcCallHandler(StringView service, StringView service_name,
+inline bool RootContext::grpcCallHandler(StringView service, StringView service_name,
     StringView method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
     std::unique_ptr<GrpcCallHandlerBase> handler) {
   auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
   if (token) {
     handler->token_ = token;
+    handler->context_ = this;
     grpc_calls_[token] = std::move(handler);
     return true;
   }
   return false;
 }
 
-inline bool ContextBase::grpcStreamHandler(StringView service, StringView service_name,
+inline bool RootContext::grpcStreamHandler(StringView service, StringView service_name,
     StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler) {
   auto token = grpcStream(service, service_name, method_name);
   if (token) {
     handler->token_ = token;
+    handler->context_ = this;
     grpc_streams_[token] = std::move(handler);
     return true;
   }
   return false;
 }
+
+inline bool ContextBase::setEffectiveContext() {
+  return proxy_setEffectiveContext(id_) == 0;
+}
+

@@ -17,7 +17,7 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
 
 class MyGrpcCallHandler : public GrpcCallHandler<google::protobuf::Value> {
 public:
-  MyGrpcCallHandler(ExampleContext* context) : GrpcCallHandler<google::protobuf::Value>(context) {}
+  MyGrpcCallHandler() : GrpcCallHandler<google::protobuf::Value>() {}
   void onCreateInitialMetadata() override {}
   void onSuccess(google::protobuf::Value&& response) override { logDebug(response.string_value()); }
   void onFailure(GrpcStatus status, std::unique_ptr<WasmData> error_message) override {
@@ -30,8 +30,7 @@ public:
 class MyGrpcStreamHandler
     : public GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value> {
 public:
-  MyGrpcStreamHandler(ExampleContext* context)
-      : GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value>(context) {}
+  MyGrpcStreamHandler() : GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value>() {}
   void onCreateInitialMetadata() override {
     google::protobuf::Value value;
     value.set_string_value("request");
@@ -62,8 +61,8 @@ FilterHeadersStatus ExampleContext::onRequestHeadersSimple() {
   grpc_service.SerializeToString(&grpc_service_string);
   google::protobuf::Value value;
   value.set_string_value("request");
-  grpcSimpleCall(grpc_service_string, "service", "method", value, 1000, success_callback,
-                 failure_callback);
+  root()->grpcSimpleCall(grpc_service_string, "service", "method", value, 1000, success_callback,
+                         failure_callback);
   return FilterHeadersStatus::StopIteration;
 }
 
@@ -73,8 +72,8 @@ FilterHeadersStatus ExampleContext::onRequestHeadersStream() {
   grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
   std::string grpc_service_string;
   grpc_service.SerializeToString(&grpc_service_string);
-  grpcStreamHandler(grpc_service_string, "service", "method",
-                    std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler(this)));
+  root()->grpcStreamHandler(grpc_service_string, "service", "method",
+                            std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler()));
   return FilterHeadersStatus::StopIteration;
 }
 
@@ -85,7 +84,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
   grpc_service.SerializeToString(&grpc_service_string);
   google::protobuf::Value value;
   value.set_string_value("request");
-  grpcCallHandler(grpc_service_string, "service", "method", value, 1000,
-                  std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler(this)));
+  root()->grpcCallHandler(grpc_service_string, "service", "method", value, 1000,
+                          std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler()));
   return FilterHeadersStatus::StopIteration;
 }

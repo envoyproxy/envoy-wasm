@@ -73,7 +73,7 @@ static ContextBase* getContextBase(uint32_t context_id) {
   return it->second.get();
 }
 
-static Context* getContext(uint32_t context_id) {
+Context* getContext(uint32_t context_id) {
   auto it = context_map.find(context_id);
   if (it == context_map.end() || !it->second->asContext()) {
     return nullptr;
@@ -164,7 +164,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void
 proxy_onHttpCallResponse(uint32_t context_id, uint32_t token, uint32_t header_pairs_ptr,
                          uint32_t header_pairs_size, uint32_t body_ptr, uint32_t body_size,
                          uint32_t trailer_pairs_ptr, uint32_t trailer_pairs_size) {
-  getContextBase(context_id)->onHttpCallResponse(
+  getRootContext(context_id)->onHttpCallResponse(
       token,
       std::make_unique<WasmData>(reinterpret_cast<char*>(header_pairs_ptr), header_pairs_size),
       std::make_unique<WasmData>(reinterpret_cast<char*>(body_ptr), body_size),
@@ -172,25 +172,25 @@ proxy_onHttpCallResponse(uint32_t context_id, uint32_t token, uint32_t header_pa
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcCreateInitialMetadata(uint32_t context_id, uint32_t token) {
-  getContextBase(context_id)->onGrpcCreateInitialMetadata(token);
+  getRootContext(context_id)->onGrpcCreateInitialMetadata(token);
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcReceiveInitialMetadata(uint32_t context_id, uint32_t token) {
-  getContextBase(context_id)->onGrpcReceiveInitialMetadata(token);
+  getRootContext(context_id)->onGrpcReceiveInitialMetadata(token);
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcReceiveTrailingMetadata(uint32_t context_id, uint32_t token) {
-  getContextBase(context_id)->onGrpcReceiveTrailingMetadata(token);
+  getRootContext(context_id)->onGrpcReceiveTrailingMetadata(token);
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcReceive(uint32_t context_id, uint32_t token,
     uint32_t response_ptr, uint32_t response_size) {
-  getContextBase(context_id)->onGrpcReceive(token, std::make_unique<WasmData>(reinterpret_cast<char*>(response_ptr), response_size));
+  getRootContext(context_id)->onGrpcReceive(token, std::make_unique<WasmData>(reinterpret_cast<char*>(response_ptr), response_size));
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onGrpcClose(uint32_t context_id, uint32_t token,
     uint32_t status_code, uint32_t status_message_ptr, uint32_t status_message_size) {
-  getContextBase(context_id)->onGrpcClose(token, static_cast<GrpcStatus>(status_code), std::make_unique<WasmData>(reinterpret_cast<char*>(status_message_ptr), status_message_size));
+  getRootContext(context_id)->onGrpcClose(token, static_cast<GrpcStatus>(status_code), std::make_unique<WasmData>(reinterpret_cast<char*>(status_message_ptr), status_message_size));
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onQueueReady(uint32_t context_id, uint32_t token) {

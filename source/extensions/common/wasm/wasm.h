@@ -243,6 +243,8 @@ void grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word messa
 void setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_milliseconds);
 uint64_t getCurrentTimeNanosecondsHandler(void* raw_context);
 
+Word setEffectiveContextHandler(void* raw_context, Word context_id);
+
 inline MetadataType StreamType2MetadataType(StreamType type) {
   return static_cast<MetadataType>(type);
 }
@@ -304,6 +306,7 @@ public:
   absl::string_view root_id();
   bool isVmContext() { return id_ == 0; }
   bool isRootContext() { return root_context_id_ == 0; }
+  Context* root_context() { return root_context_; }
 
   const StreamInfo::StreamInfo* getConstStreamInfo(MetadataType type) const;
   StreamInfo::StreamInfo* getStreamInfo(MetadataType type) const;
@@ -516,8 +519,9 @@ protected:
 
   Wasm* wasm_;
   uint32_t id_;
-  uint32_t root_context_id_;  // 0 for roots and the general context.
-  const std::string root_id_; // set only in roots.
+  uint32_t root_context_id_;       // 0 for roots and the general context.
+  Context* root_context_{nullptr}; // set in all contexts.
+  const std::string root_id_;      // set only in roots.
   bool destroyed_ = false;
 
   uint32_t next_http_call_token_ = 1;
@@ -899,19 +903,23 @@ public:
   using EnvoyException::EnvoyException;
 };
 
-inline Context::Context() : wasm_(nullptr), id_(0), root_context_id_(0), root_id_("") {}
+inline Context::Context()
+    : wasm_(nullptr), id_(0), root_context_id_(0), root_context_(this), root_id_("") {}
 
-inline Context::Context(Wasm* wasm) : wasm_(wasm), id_(0), root_context_id_(0), root_id_("") {
+inline Context::Context(Wasm* wasm)
+    : wasm_(wasm), id_(0), root_context_id_(0), root_context_(this), root_id_("") {
   wasm_->contexts_[id_] = this;
 }
 
 inline Context::Context(Wasm* wasm, uint32_t root_context_id)
     : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(root_context_id), root_id_("") {
   wasm_->contexts_[id_] = this;
+  root_context_ = wasm_->contexts_[root_context_id_];
 }
 
 inline Context::Context(Wasm* wasm, absl::string_view root_id)
-    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(0), root_id_(root_id) {
+    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(0), root_context_(this),
+      root_id_(root_id) {
   wasm_->contexts_[id_] = this;
 }
 
@@ -1045,14 +1053,21 @@ inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t sta
 }
 
 extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
+extern thread_local uint32_t effective_context_id_;
 
 struct SaveRestoreContext {
   explicit SaveRestoreContext(Context* context) {
     saved_context = current_context_;
+    saved_effective_context_id_ = effective_context_id_;
     current_context_ = context;
+    effective_context_id_ = 0; // No effective context id.
   }
-  ~SaveRestoreContext() { current_context_ = saved_context; }
+  ~SaveRestoreContext() {
+    current_context_ = saved_context;
+    effective_context_id_ = saved_effective_context_id_;
+  }
   Context* saved_context;
+  uint32_t saved_effective_context_id_;
 };
 
 } // namespace Wasm
