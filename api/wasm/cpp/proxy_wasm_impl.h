@@ -203,7 +203,7 @@ protected:
   void doRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message);
 
   bool local_close_{false};
-  bool remote_close_{ false};
+  bool remote_close_{false};
   RootContext*  context_{nullptr};
   uint32_t token_;
 };
