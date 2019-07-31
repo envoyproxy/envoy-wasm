@@ -46,28 +46,29 @@ inline uint32_t proxy_getResponseCode(StreamType type) {
 }
 
 // Metadata
-inline void proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
-                              const char** value_ptr_ptr, size_t* value_size_ptr) {
-  getMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr_ptr),
-                     WR(value_size_ptr));
+inline uint64_t proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
+                                  const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return getMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size),
+                            WR(value_ptr_ptr), WR(value_size_ptr));
 }
-inline void proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
-                              const char* value_ptr, size_t value_size) {
-  setMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr),
-                     WS(value_size));
+inline uint64_t proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
+                                  const char* value_ptr, size_t value_size) {
+  return setMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr),
+                            WS(value_size));
 }
-inline void proxy_getMetadataPairs(MetadataType type, const char** value_ptr, size_t* value_size) {
-  getMetadataPairsHandler(current_context_, WS(type), WR(value_ptr), WR(value_size));
+inline uint64_t proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
+                                       size_t* value_size) {
+  return getMetadataPairsHandler(current_context_, WS(type), WR(value_ptr), WR(value_size));
 }
-inline void proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
-                                    const char** value_ptr_ptr, size_t* value_size_ptr) {
-  getMetadataStructHandler(current_context_, WS(type), WR(name_ptr), WS(name_size),
-                           WR(value_ptr_ptr), WR(value_size_ptr));
+inline uint64_t proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
+                                        const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return getMetadataStructHandler(current_context_, WS(type), WR(name_ptr), WS(name_size),
+                                  WR(value_ptr_ptr), WR(value_size_ptr));
 }
-inline void proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
-                                    const char* value_ptr, size_t value_size) {
-  setMetadataStructHandler(current_context_, WS(type), WR(name_ptr), WS(name_size), WR(value_ptr),
-                           WS(value_size));
+inline uint64_t proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
+                                        const char* value_ptr, size_t value_size) {
+  return setMetadataStructHandler(current_context_, WS(type), WR(name_ptr), WS(name_size),
+                                  WR(value_ptr), WS(value_size));
 }
 
 // Continue

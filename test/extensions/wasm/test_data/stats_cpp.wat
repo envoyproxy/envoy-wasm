@@ -39,10 +39,10 @@
   (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32)))
   (import "env" "_proxy_recordMetric" (func $_proxy_recordMetric (param i32 i64)))
   (import "env" "abortOnCannotGrowMemory" (func $abortOnCannotGrowMemory (param i32) (result i32)))
-  (import "env" "table" (table $25 39 39 funcref))
-  (import "env" "memory" (memory $26 256 256))
   (import "env" "__table_base" (global $27 i32))
   (import "env" "DYNAMICTOP_PTR" (global $28 i32))
+  (import "env" "memory" (memory $26 256 256))
+  (import "env" "table" (table $25 39 39 funcref))
   (export "__GLOBAL__sub_I_status_cc" (func $__GLOBAL__sub_I_status_cc))
   (export "__ZSt18uncaught_exceptionv" (func $__ZSt18uncaught_exceptionv))
   (export "___cxa_can_catch" (func $___cxa_can_catch))
@@ -71,41 +71,41 @@
   (export "stackSave" (func $stackSave))
   (global $29  (mut i32) (i32.const 5200))
   (global $30  (mut i32) (i32.const 5248080))
-  (elem $25 (global.get $27)
+  (elem $31 $25 (global.get $27)
     $b0 $__ZNKSt11logic_error4whatEv $b1 $_fmt_fp $b2 $_sn_write $__ZNK10__cxxabiv117__class_type_info9can_catchEPKNS_16__shim_type_infoERPv $b2
     $b3 $b4 $__ZN10__cxxabiv116__shim_type_infoD2Ev $__ZN10__cxxabiv117__class_type_infoD0Ev $__ZN10__cxxabiv116__shim_type_infoD2Ev $__ZN10__cxxabiv116__shim_type_infoD2Ev $__ZN10__cxxabiv117__class_type_infoD0Ev $__ZNSt11logic_errorD2Ev
     $__ZNSt11logic_errorD0Ev $__ZNSt11logic_errorD0Ev $b4 $b4 $b4 $b4 $b4 $b4
     $b4 $b5 $_pop_arg_long_double $b6 $__ZNK10__cxxabiv117__class_type_info27has_unambiguous_public_baseEPNS_19__dynamic_cast_infoEPvi $__ZNK10__cxxabiv120__si_class_type_info27has_unambiguous_public_baseEPNS_19__dynamic_cast_infoEPvi $b6 $b7
     $__ZNK10__cxxabiv117__class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $__ZNK10__cxxabiv120__si_class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $b7 $b8 $__ZNK10__cxxabiv117__class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $__ZNK10__cxxabiv120__si_class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $b8)
-  (data $26 (i32.const 1024)
+  (data $32 $26 (i32.const 1024)
     "\11\00\n\00\11\11\11\00\00\00\00\05\00\00\00\00\00\00\09\00\00\00\00\0b")
-  (data $26 (i32.const 1056)
+  (data $33 $26 (i32.const 1056)
     "\11\00\0f\n\11\11\11\03\n\07\00\01\13\09\0b\0b\00\00\09\06\0b\00\00\0b\00\06\11\00\00\00\11\11\11")
-  (data $26 (i32.const 1105)
+  (data $34 $26 (i32.const 1105)
     "\0b")
-  (data $26 (i32.const 1114)
+  (data $35 $26 (i32.const 1114)
     "\11\00\n\n\11\11\11\00\n\00\00\02\00\09\0b\00\00\00\09\00\0b\00\00\0b")
-  (data $26 (i32.const 1163)
+  (data $36 $26 (i32.const 1163)
     "\0c")
-  (data $26 (i32.const 1175)
+  (data $37 $26 (i32.const 1175)
     "\0c\00\00\00\00\0c\00\00\00\00\09\0c\00\00\00\00\00\0c\00\00\0c")
-  (data $26 (i32.const 1221)
+  (data $38 $26 (i32.const 1221)
     "\0e")
-  (data $26 (i32.const 1233)
+  (data $39 $26 (i32.const 1233)
     "\0d\00\00\00\04\0d\00\00\00\00\09\0e\00\00\00\00\00\0e\00\00\0e")
-  (data $26 (i32.const 1279)
+  (data $40 $26 (i32.const 1279)
     "\10")
-  (data $26 (i32.const 1291)
+  (data $41 $26 (i32.const 1291)
     "\0f\00\00\00\00\0f\00\00\00\00\09\10\00\00\00\00\00\10\00\00\10\00\00\12\00\00\00\12\12\12")
-  (data $26 (i32.const 1346)
+  (data $42 $26 (i32.const 1346)
     "\12\00\00\00\12\12\12\00\00\00\00\00\00\09")
-  (data $26 (i32.const 1395)
+  (data $43 $26 (i32.const 1395)
     "\0b")
-  (data $26 (i32.const 1407)
+  (data $44 $26 (i32.const 1407)
     "\n\00\00\00\00\n\00\00\00\00\09\0b\00\00\00\00\00\0b\00\00\0b")
-  (data $26 (i32.const 1453)
+  (data $45 $26 (i32.const 1453)
     "\0c")
-  (data $26 (i32.const 1465)
+  (data $46 $26 (i32.const 1465)
     "\0c\00\00\00\00\0c\00\00\00\00\09\0c\00\00\00\00\00\0c\00\00\0c\00\000123456789ABCDEF\00\00\00\00\02\00\00\00\03\00\00\00\05\00\00\00\07\00\00\00\0b\00\00\00\0d"
     "\00\00\00\11\00\00\00\13\00\00\00\17\00\00\00\1d\00\00\00\1f\00\00\00%\00\00\00)\00\00\00+\00\00\00/\00\00\005\00\00\00;\00\00\00=\00\00\00C\00\00\00G\00\00\00I\00\00\00O"
     "\00\00\00S\00\00\00Y\00\00\00a\00\00\00e\00\00\00g\00\00\00k\00\00\00m\00\00\00q\00\00\00\7f\00\00\00\83\00\00\00\89\00\00\00\8b\00\00\00\95\00\00\00\97\00\00\00\9d\00\00\00\a3"
@@ -113,16 +113,16 @@
     "\00\00\00\1f\00\00\00%\00\00\00)\00\00\00+\00\00\00/\00\00\005\00\00\00;\00\00\00=\00\00\00C\00\00\00G\00\00\00I\00\00\00O\00\00\00S\00\00\00Y\00\00\00a\00\00\00e"
     "\00\00\00g\00\00\00k\00\00\00m\00\00\00q\00\00\00y\00\00\00\7f\00\00\00\83\00\00\00\89\00\00\00\8b\00\00\00\8f\00\00\00\95\00\00\00\97\00\00\00\9d\00\00\00\a3\00\00\00\a7\00\00\00\a9"
     "\00\00\00\ad\00\00\00\b3\00\00\00\b5\00\00\00\bb\00\00\00\bf\00\00\00\c1\00\00\00\c5\00\00\00\c7\00\00\00\d1")
-  (data $26 (i32.const 1924)
+  (data $47 $26 (i32.const 1924)
     "\01")
-  (data $26 (i32.const 1963)
+  (data $48 $26 (i32.const 1963)
     "\ff\ff\ff\ff\ff")
-  (data $26 (i32.const 2032)
+  (data $49 $26 (i32.const 2032)
     "l\09\00\00\1d\0c\00\00\94\09\00\00}\0c\00\00\08\08\00\00\00\00\00\00\94\09\00\00*\0c\00\00\18\08\00\00\00\00\00\00l\09\00\00K\0c\00\00\94\09\00\00X\0c\00\00\f8\07\00\00\00\00\00\00"
     "\94\09\00\00\9f\0c\00\00\f0\07\00\00\00\00\00\00\94\09\00\00\af\0c\00\000\08\00\00\00\00\00\00\94\09\00\00\e4\0c\00\00\08\08\00\00\00\00\00\00\94\09\00\00\c0\0c\00\00P\08")
-  (data $26 (i32.const 2348)
+  (data $50 $26 (i32.const 2348)
     "h\0d")
-  (data $26 (i32.const 2408)
+  (data $51 $26 (i32.const 2408)
     "\f8\07\00\00\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00\02\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00\00\00\00\00 \08\00\00\01\00\00\00\05\00\00\00\03\00\00\00\04\00\00\00\02\00\00\00"
     "\02\00\00\00\02\00\00\00\02\00\00\00\00\00\00\000\08\00\00\06\00\00\00\07\00\00\00\01\00\00\00\00\00\00\00@\08\00\00\06\00\00\00\08\00\00\00\01\00\00\00test_counter"
     "\00test_gauges\00test_histogram\00get counter = \00get gauge = \00get hist"
@@ -4614,7 +4614,7 @@
     local.get $0
     local.get $4
     local.get $2
-    call $__ZN7CounterIJiEE16resolveAndExtendIJNSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbEEEPS_IJDpT_EEiDp19MetricTagDescriptorIS9_E
+    call $__ZN7CounterIJiEE16extendAndResolveIJNSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbEEEPS_IJDpT_EEiDp19MetricTagDescriptorIS9_E
     local.set $0
     local.get $1
     i64.const 0
@@ -8287,7 +8287,7 @@
     local.get $6
     )
   
-  (func $__ZN7CounterIJiEE16resolveAndExtendIJNSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbEEEPS_IJDpT_EEiDp19MetricTagDescriptorIS9_E (type $0)
+  (func $__ZN7CounterIJiEE16extendAndResolveIJNSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEEEEbEEEPS_IJDpT_EEiDp19MetricTagDescriptorIS9_E (type $0)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)

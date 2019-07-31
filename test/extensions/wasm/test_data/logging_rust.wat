@@ -26,12 +26,12 @@
   (global $14  (mut i32) (i32.const 1048576))
   (global $15  i32 (i32.const 1055076))
   (global $16  i32 (i32.const 1055076))
-  (elem $12 (i32.const 1)
+  (elem $17 $12 (i32.const 1)
     $<&T_as_core::fmt::Display>::fmt::h7b31b334e7b8b382 $core::fmt::ArgumentV1::show_usize::hf8ebfbd77fa8a93d $<log::SetLoggerError_as_core::fmt::Debug>::fmt::hab9915d856568df0 $<core::fmt::Error_as_core::fmt::Debug>::fmt::h886976dffb9dde73 $<&T_as_core::fmt::Display>::fmt::hdf3341d54242ca4a $core::fmt::num::imp::<impl_core::fmt::Display_for_u32>::fmt::h4f3293445fab7cb7 $<core::ops::range::Range<Idx>_as_core::fmt::Debug>::fmt::h6105e754ea0aeafb $<char_as_core::fmt::Debug>::fmt::h7a420490f85a5bf3
     $core::ptr::real_drop_in_place::h0013f08692be52e6 $<&mut_W_as_core::fmt::Write>::write_str::hf2482d9015e58e57 $<&mut_W_as_core::fmt::Write>::write_char::h16378c8711c26c01 $<&mut_W_as_core::fmt::Write>::write_fmt::h8b5befc9d6ef0a73 $core::ptr::real_drop_in_place::h5a9a7fbf25605767 $<proxy_wasm::Logger_as_log::Log>::enabled::h8a7702bb390b0ea2 $<proxy_wasm::Logger_as_log::Log>::log::h0a6214a4920b004c $<log::NopLogger_as_log::Log>::flush::h5e0800c275585e5e
     $<log::NopLogger_as_log::Log>::enabled::h498b43c893826962 $<log::NopLogger_as_log::Log>::log::h2ca6f3fe5cf690d4 $<T_as_core::any::Any>::type_id::h5fb1d47f0acdabcc $core::ptr::real_drop_in_place::h23040579a46f15a6 $<core::fmt::builders::PadAdapter_as_core::fmt::Write>::write_str::h7d69c319e62567ea $core::fmt::Write::write_char::he6255f3eabfceb48 $core::fmt::Write::write_fmt::hd43133c0fc77f05d $<&mut_W_as_core::fmt::Write>::write_str::h0573ddc37a895899
     $<&mut_W_as_core::fmt::Write>::write_char::hc454648cbae23e1c $<&mut_W_as_core::fmt::Write>::write_fmt::hc0aee806cb052974)
-  (data $13 (i32.const 1048576)
+  (data $18 $13 (i32.const 1048576)
     "warn \00\00\00\00\00\10\00\05\00\00\00logging_rustsrc/lib.rstest trace logging&\00\10\00\12\00\00\00"
     "test debug logging\00\00@\00\10\00\12\00\00\00test error logging\00\00\\\00\10\00\12\00\00\00test tic"
     "k logging\00\00\00x\00\10\00\11\00\00\00\09\00\00\00\04\00\00\00\04\00\00\00\n\00\00\00\0b\00\00\00\0c\00\00\00 \02\10\00\00\00\00\00\e1\00\10\00\02\00\00\00\cc\00\10\00"
@@ -126,7 +126,7 @@
     "` on a `None` valuesrc/libcore/option.rsbegin <= end ( <= ) when"
     " slicing ` is out of bounds of `    \14\00\00\00\0c\00\00\00\04\00\00\00\15\00\00\00\16\00\00\00\17\00\00\00,\n\00\00"
     "\09\00\00\00\04\00\00\00\04\00\00\00\18\00\00\00\19\00\00\00\1a\00\00\00(\n()Error")
-  (data $13 (i32.const 1054568)
+  (data $19 $13 (i32.const 1054568)
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
@@ -135,7 +135,7 @@
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
-  (data $13 (i32.const 1055044)
+  (data $20 $13 (i32.const 1055044)
     "p\17\10\00L\19\10\00\0d\00\00\00\00\00\00\00\01\00\00\00\11\00\00\00\12\00\00\00\10\00\00\00")
   
   (func $_proxy_onConfigure (type $3)
