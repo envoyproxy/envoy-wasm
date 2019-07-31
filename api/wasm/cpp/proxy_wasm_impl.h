@@ -285,7 +285,7 @@ public:
   // Called once when the VM loads and once when each hook loads and whenever configuration changes.
   virtual void onConfigure(std::unique_ptr<WasmData> /* configuration */) {}
   // Called when each hook loads.
-  virtual void onStart() {}
+  virtual void onStart(WasmDataPtr /* vm_configuration */) {}
   // Called when the timer goes off.
   virtual void onTick() {}
   // Called when data arrives on a SharedQueue.

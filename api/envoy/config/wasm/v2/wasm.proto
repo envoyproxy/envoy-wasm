@@ -18,7 +18,7 @@ message VmConfig {
   // The Wasm code that Envoy will execute.
   envoy.api.v2.core.DataSource code = 2;
   // The Wasm configuration string used on initialization of a new VM.
-  string initial_configuration = 3;
+  string configuration = 3;
   // Allow the wasm_file to include pre-compiled code.
   bool allow_precompiled = 4;
 }

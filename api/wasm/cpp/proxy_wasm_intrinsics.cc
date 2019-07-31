@@ -97,8 +97,10 @@ RootContext* getRoot(StringView root_id) {
   return nullptr;
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t root_id_ptr, uint32_t root_id_size) {
-  ensureRootContext(root_context_id, std::make_unique<WasmData>(reinterpret_cast<char*>(root_id_ptr), root_id_size))->onStart();
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t root_id_ptr, uint32_t root_id_size,
+    uint32_t vm_configuration_ptr, uint32_t vm_configuration_size) {
+  ensureRootContext(root_context_id, std::make_unique<WasmData>(reinterpret_cast<char*>(root_id_ptr), root_id_size))->onStart(
+    std::make_unique<WasmData>(reinterpret_cast<char*>(vm_configuration_ptr), vm_configuration_size));
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(uint32_t root_context_id, uint32_t ptr, uint32_t size) {

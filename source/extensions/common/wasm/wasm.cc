@@ -1444,10 +1444,11 @@ bool Context::isSsl() { return decoder_callbacks_->connection()->ssl() != nullpt
 //
 // Calls into the WASM code.
 //
-void Context::onStart(absl::string_view root_id) {
+void Context::onStart(absl::string_view root_id, absl::string_view vm_configuration) {
   if (wasm_->onStart_) {
     auto root_id_addr = wasm_->copyString(root_id);
-    wasm_->onStart_(this, id_, root_id_addr, root_id.size());
+    auto config_addr = wasm_->copyString(vm_configuration);
+    wasm_->onStart_(this, id_, root_id_addr, root_id.size(), config_addr, vm_configuration.size());
   }
 }
 
@@ -1688,14 +1689,14 @@ uint64_t Context::getMetric(uint32_t metric_id) {
   return 0;
 }
 
-Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
+Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_configuration,
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
            Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
            const envoy::api::v2::core::Metadata* listener_metadata,
            Stats::ScopeSharedPtr owned_scope)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
       local_info_(local_info), listener_metadata_(listener_metadata), owned_scope_(owned_scope),
-      time_source_(dispatcher.timeSource()), initial_configuration_(initial_configuration) {
+      time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
 }
@@ -1928,16 +1929,16 @@ void Wasm::configure(Context* root_context, absl::string_view configuration) {
   }
 }
 
-Context* Wasm::start(absl::string_view root_id) {
+Context* Wasm::start(absl::string_view root_id, absl::string_view vm_configuration) {
   auto it = root_contexts_.find(root_id);
   if (it != root_contexts_.end()) {
-    it->second->onStart(root_id);
+    it->second->onStart(root_id, vm_configuration);
     return it->second.get();
   }
   auto context = std::make_unique<Context>(this, root_id);
   auto context_ptr = context.get();
   root_contexts_[root_id] = std::move(context);
-  context_ptr->onStart(root_id);
+  context_ptr->onStart(root_id, vm_configuration);
   return context_ptr;
 };
 
@@ -1950,7 +1951,7 @@ void Wasm::startForTesting(std::unique_ptr<Context> context) {
     contexts_[context->id_] = context.get();
   }
   root_contexts_[""] = std::move(context);
-  context_ptr->onStart("");
+  context_ptr->onStart("", "");
 }
 
 void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {
@@ -2297,9 +2298,9 @@ createWasmInternal(absl::string_view vm_id, const envoy::config::wasm::v2::VmCon
                    const envoy::api::v2::core::Metadata* listener_metadata,
                    Stats::ScopeSharedPtr scope_ptr,
                    std::unique_ptr<Context> root_context_for_testing) {
-  auto wasm = std::make_shared<Wasm>(vm_config.vm(), vm_id, vm_config.initial_configuration(),
-                                     cluster_manager, dispatcher, scope, local_info,
-                                     listener_metadata, scope_ptr);
+  auto wasm =
+      std::make_shared<Wasm>(vm_config.vm(), vm_id, vm_config.configuration(), cluster_manager,
+                             dispatcher, scope, local_info, listener_metadata, scope_ptr);
   const auto& code = Config::DataSource::read(vm_config.code(), true, api);
   const auto& path = Config::DataSource::getPath(vm_config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
@@ -2311,12 +2312,11 @@ createWasmInternal(absl::string_view vm_id, const envoy::config::wasm::v2::VmCon
   }
   Context* context;
   if (!root_context_for_testing) {
-    context = wasm->start(root_id);
+    context = wasm->start(root_id, vm_config.configuration());
   } else {
     context = root_context_for_testing.get();
     wasm->startForTesting(std::move(root_context_for_testing));
   }
-  wasm->configure(context, vm_config.initial_configuration());
   return wasm;
 }
 
@@ -2352,17 +2352,16 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view r
   Context* root_context;
   if (base_wasm.wasmVm()->clonable()) {
     wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
-    root_context = wasm->start(root_id);
+    root_context = wasm->start(root_id, base_wasm.vm_configuration());
   } else {
     wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->vm(), base_wasm.id(),
-                                  base_wasm.initial_configuration(), base_wasm.clusterManager(),
+                                  base_wasm.vm_configuration(), base_wasm.clusterManager(),
                                   dispatcher, base_wasm.scope(), base_wasm.localInfo(),
                                   base_wasm.listenerMetadata(), nullptr /* owned scope */);
     if (!wasm->initialize(base_wasm.code(), base_wasm.id(), base_wasm.allow_precompiled())) {
       throw WasmException("Failed to initialize WASM code");
     }
-    root_context = wasm->start(root_id);
-    wasm->configure(root_context, base_wasm.initial_configuration());
+    root_context = wasm->start(root_id, base_wasm.vm_configuration());
   }
   wasm->configure(root_context, configuration);
   if (!wasm->id().empty()) {
@@ -2378,7 +2377,7 @@ std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_v
     throw WasmException(fmt::format("Failed to find WASM vm_id {}", vm_id));
   }
   auto wasm = it->second;
-  auto root_context = wasm->start(id);
+  auto root_context = wasm->start(id, wasm->vm_configuration());
   wasm->configure(root_context, configuration);
   return wasm;
 }

@@ -8,7 +8,7 @@ class ServiceContext : public RootContext {
  public:
   explicit ServiceContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
 
-  void onStart() override {
+  void onStart(WasmDataPtr /* vm_configuration */) override {
     callout_success_counter_ = defineMetric(MetricType::Counter, "test_callout_successes");
     callout_failure_counter_ = defineMetric(MetricType::Counter, "test_callout_failures");
   }
