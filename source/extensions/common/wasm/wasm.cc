@@ -365,59 +365,64 @@ uint32_t getResponseCodeHandler(void* raw_context, Word type) {
 }
 
 // Metadata
-void getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr) {
   if (type > static_cast<int>(MetadataType::MAX)) {
-    return;
+    return Word(static_cast<uint64_t>(MetadataResult::BadType));
   }
   auto context = WASM_CONTEXT(raw_context);
-  context->wasm()->copyToPointerSize(
-      context->getMetadata(static_cast<MetadataType>(type.u64),
-                           context->wasmVm()->getMemory(key_ptr, key_size)),
-      value_ptr_ptr, value_size_ptr);
+  std::string value;
+  auto result = context->getMetadata(static_cast<MetadataType>(type.u64),
+                                     context->wasmVm()->getMemory(key_ptr, key_size), &value);
+  context->wasm()->copyToPointerSize(value, value_ptr_ptr, value_size_ptr);
+  return Word(static_cast<uint64_t>(result));
 }
 
-void setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
+Word setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
                         Word value_size) {
   if (type > static_cast<int>(MetadataType::MAX)) {
-    return;
+    return Word(static_cast<uint64_t>(MetadataResult::BadType));
   }
   auto context = WASM_CONTEXT(raw_context);
-  context->setMetadata(static_cast<MetadataType>(type.u64),
-                       context->wasmVm()->getMemory(key_ptr, key_size),
-                       context->wasmVm()->getMemory(value_ptr, value_size));
+  return Word(static_cast<uint64_t>(context->setMetadata(
+      static_cast<MetadataType>(type.u64), context->wasmVm()->getMemory(key_ptr, key_size),
+      context->wasmVm()->getMemory(value_ptr, value_size))));
 }
 
-void getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
+Word getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
   if (type > static_cast<int>(MetadataType::MAX)) {
-    return;
+    return Word(static_cast<uint64_t>(MetadataResult::BadType));
   }
   auto context = WASM_CONTEXT(raw_context);
-  getPairs(context, context->getMetadataPairs(static_cast<MetadataType>(type.u64)), ptr_ptr,
-           size_ptr);
+  PairsWithStringValues pairs;
+  auto result = context->getMetadataPairs(static_cast<MetadataType>(type.u64), &pairs);
+  getPairs(context, pairs, ptr_ptr, size_ptr);
+  return Word(static_cast<uint64_t>(result));
 }
 
-void getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+Word getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr_ptr, Word value_size_ptr) {
   if (type > static_cast<int>(MetadataType::MAX)) {
-    return;
+    return Word(static_cast<uint64_t>(MetadataResult::BadType));
   }
   auto context = WASM_CONTEXT(raw_context);
-  context->wasm()->copyToPointerSize(
+  std::string value;
+  auto result =
       context->getMetadataStruct(static_cast<MetadataType>(type.u64),
-                                 context->wasmVm()->getMemory(name_ptr, name_size)),
-      value_ptr_ptr, value_size_ptr);
+                                 context->wasmVm()->getMemory(name_ptr, name_size), &value);
+  context->wasm()->copyToPointerSize(value, value_ptr_ptr, value_size_ptr);
+  return Word(static_cast<uint64_t>(result));
 }
 
-void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+Word setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr, Word value_size) {
   if (type > static_cast<int>(MetadataType::MAX)) {
-    return;
+    return Word(static_cast<uint64_t>(MetadataResult::BadType));
   }
   auto context = WASM_CONTEXT(raw_context);
-  context->setMetadataStruct(static_cast<MetadataType>(type.u64),
-                             context->wasmVm()->getMemory(name_ptr, name_size),
-                             context->wasmVm()->getMemory(value_ptr, value_size));
+  return Word(static_cast<uint64_t>(context->setMetadataStruct(
+      static_cast<MetadataType>(type.u64), context->wasmVm()->getMemory(name_ptr, name_size),
+      context->wasmVm()->getMemory(value_ptr, value_size))));
 }
 
 // Continue/Reply/Route
@@ -1305,69 +1310,80 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
   }
 }
 
-std::string Context::getMetadata(MetadataType type, absl::string_view key) {
+MetadataResult Context::getMetadata(MetadataType type, absl::string_view key,
+                                    std::string* result_ptr) {
   auto proto_struct = getMetadataStructProto(type);
   if (!proto_struct) {
-    return "";
+    return MetadataResult::StructNotFound;
   }
   auto it = proto_struct->fields().find(std::string(key));
   if (it == proto_struct->fields().end()) {
-    return "";
+    return MetadataResult::FieldNotFound;
   }
   std::string result;
-  it->second.SerializeToString(&result);
-  return result;
+  if (!it->second.SerializeToString(&result)) {
+    return MetadataResult::SerializationFailure;
+  }
+  *result_ptr = result;
+  return MetadataResult::Ok;
 }
 
-void Context::setMetadata(MetadataType type, absl::string_view key,
-                          absl::string_view serialized_proto_struct) {
+MetadataResult Context::setMetadata(MetadataType type, absl::string_view key,
+                                    absl::string_view serialized_proto_struct) {
   auto streamInfo = getStreamInfo(type);
   if (!streamInfo) {
-    return;
+    return MetadataResult::StructNotFound;
   }
   streamInfo->setDynamicMetadata(
       HttpFilters::HttpFilterNames::get().Wasm,
       MessageUtil::keyValueStruct(std::string(key), std::string(serialized_proto_struct)));
+  return MetadataResult::Ok;
 }
 
-PairsWithStringValues Context::getMetadataPairs(MetadataType type) {
+MetadataResult Context::getMetadataPairs(MetadataType type, PairsWithStringValues* result_ptr) {
   auto proto_struct = getMetadataStructProto(type);
   if (!proto_struct) {
-    return {};
+    return MetadataResult::StructNotFound;
   }
   PairsWithStringValues result;
   for (auto& p : proto_struct->fields()) {
     std::string value;
-    p.second.SerializeToString(&value);
+    if (!p.second.SerializeToString(&value)) {
+      return MetadataResult::SerializationFailure;
+    }
     result.emplace_back(p.first, std::move(value));
   }
-  return result;
+  *result_ptr = result;
+  return MetadataResult::Ok;
 }
 
-std::string Context::getMetadataStruct(MetadataType type, absl::string_view name) {
+MetadataResult Context::getMetadataStruct(MetadataType type, absl::string_view name,
+                                          std::string* result_ptr) {
   auto proto_struct = getMetadataStructProto(type, name);
   if (!proto_struct) {
-    return "";
+    return MetadataResult::StructNotFound;
   }
   std::string result;
-  if (proto_struct->SerializeToString(&result)) {
-    return result;
+  if (!proto_struct->SerializeToString(&result)) {
+    return MetadataResult::SerializationFailure;
   }
-  return "";
+  *result_ptr = result;
+  return MetadataResult::Ok;
 }
 
-void Context::setMetadataStruct(MetadataType type, absl::string_view name,
-                                absl::string_view serialized_proto_struct) {
+MetadataResult Context::setMetadataStruct(MetadataType type, absl::string_view name,
+                                          absl::string_view serialized_proto_struct) {
   auto streamInfo = getStreamInfo(type);
   if (!streamInfo) {
-    return;
+    return MetadataResult::StructNotFound;
   }
   ProtobufWkt::Struct proto_struct;
   if (!proto_struct.ParseFromArray(serialized_proto_struct.data(),
                                    serialized_proto_struct.size())) {
-    return;
+    return MetadataResult::ParseFailure;
   }
   streamInfo->setDynamicMetadata(std::string(name), proto_struct);
+  return MetadataResult::Ok;
 }
 
 void Context::scriptLog(spdlog::level::level_enum level, absl::string_view message) {

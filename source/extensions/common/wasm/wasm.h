@@ -145,9 +145,9 @@ using WasmCallback_m = uint64_t (*)(void*);
 using WasmCallback_mW = uint64_t (*)(void*, Word);
 using WasmCallback_jW = uint32_t (*)(void*, Word);
 
-// Sadly we don't have enum class inheritance in c++-14.
-enum class StreamType : uint32_t { Request = 0, Response = 1, MAX = 1 };
-enum class MetadataType : uint32_t {
+// These need to match those in api/wasm/cpp/proxy_wasm_enums.h
+enum class StreamType : int32_t { Request = 0, Response = 1, MAX = 1 };
+enum class MetadataType : int32_t {
   Request = 0,
   Response = 1,
   RequestRoute = 2,
@@ -158,7 +158,7 @@ enum class MetadataType : uint32_t {
   Cluster = 7,
   MAX = 7
 };
-enum class HeaderMapType : uint32_t {
+enum class HeaderMapType : int32_t {
   RequestHeaders = 0,
   RequestTrailers = 1,
   ResponseHeaders = 2,
@@ -168,20 +168,28 @@ enum class HeaderMapType : uint32_t {
   GrpcReceiveTrailingMetadata = 6,
   MAX = 6,
 };
+enum class MetadataResult : int32_t {
+  Ok = 0,
+  StructNotFound = 1,
+  FieldNotFound = 2,
+  SerializationFailure = 3,
+  BadType = 4,
+  ParseFailure = 5,
+};
 
 // Handlers for functions exported from envoy to wasm.
 void logHandler(void* raw_context, Word level, Word address, Word size);
 void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word value_size_ptr);
 uint32_t getDestinationPortHandler(void* raw_context, Word type);
 uint32_t getResponseCodeHandler(void* raw_context, Word type);
-void getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr);
-void setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
+Word setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
                         Word value_size);
-void getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr);
-void getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+Word getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr);
+Word getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr_ptr, Word value_size_ptr);
-void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+Word setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr, Word value_size);
 void continueRequestHandler(void* raw_context);
 void continueResponseHandler(void* raw_context);
@@ -382,15 +390,16 @@ public:
   // Metadata
   // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the
   // values are serialized ProtobufWkt::Struct Value
-  virtual std::string getMetadata(MetadataType type, absl::string_view key);
-  virtual void setMetadata(MetadataType type, absl::string_view key,
-                           absl::string_view serialized_proto_struct);
-  virtual PairsWithStringValues getMetadataPairs(MetadataType type);
+  virtual MetadataResult getMetadata(MetadataType type, absl::string_view key, std::string* result);
+  virtual MetadataResult setMetadata(MetadataType type, absl::string_view key,
+                                     absl::string_view serialized_proto_struct);
+  virtual MetadataResult getMetadataPairs(MetadataType type, PairsWithStringValues* result);
   // Name is ignored when the type is not MetadataType::Request/Response: the values are serialized
   // ProtobufWkt::Struct
-  virtual std::string getMetadataStruct(MetadataType type, absl::string_view name);
-  virtual void setMetadataStruct(MetadataType type, absl::string_view key,
-                                 absl::string_view serialized_proto_struct);
+  virtual MetadataResult getMetadataStruct(MetadataType type, absl::string_view name,
+                                           std::string* result);
+  virtual MetadataResult setMetadataStruct(MetadataType type, absl::string_view key,
+                                           absl::string_view serialized_proto_struct);
 
   // Continue
   virtual void continueRequest() {
