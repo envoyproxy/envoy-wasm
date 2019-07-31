@@ -273,7 +273,7 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
       .WillOnce(
           Invoke([&](const envoy::api::v2::core::GrpcService&, Stats::Scope&,
                      bool) -> Grpc::AsyncClientFactoryPtr { return std::move(client_factory); }));
-  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::debug, Eq("response")));
+  EXPECT_CALL(*root_context_, scriptLog_(spdlog::level::debug, Eq("response")));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter_->decodeHeaders(request_headers, false));

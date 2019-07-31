@@ -4,13 +4,6 @@
 #include "proxy_wasm_intrinsics.h"
 #include "proxy_wasm_intrinsics_lite.pb.h"
 
-class RequestContext : public Context {
- public:
-  explicit RequestContext(uint32_t id, RootContext *root) : Context(id, root) {}
-
-  FilterHeadersStatus onRequestHeaders() override;
-};
-
 class ServiceContext : public RootContext {
  public:
   explicit ServiceContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
@@ -33,38 +26,48 @@ class ServiceContext : public RootContext {
   uint32_t callout_failure_counter_;
 };
 
+class RequestContext : public Context {
+ public:
+  explicit RequestContext(uint32_t id, RootContext *root) : Context(id, root) {}
+
+  ServiceContext* serviceContext() { return static_cast<ServiceContext*>(root()); }
+
+  FilterHeadersStatus onRequestHeaders() override;
+};
+
 static RegisterContextFactory
     register_ExampleContext(CONTEXT_FACTORY(RequestContext), ROOT_FACTORY(ServiceContext));
 
 class CalloutResponseHandler : public GrpcCallHandler<google::protobuf::Value> {
  public:
-  CalloutResponseHandler(RequestContext *context)
-      : GrpcCallHandler<google::protobuf::Value>(context), context_(context) {}
+  CalloutResponseHandler(RequestContext* request_context, ServiceContext* service_context):
+    GrpcCallHandler<google::protobuf::Value>(), request_context_(request_context), service_context_(service_context) {}
+
   void onCreateInitialMetadata() override {}
   void onSuccess(google::protobuf::Value &&response) override {
+    request_context_->setEffectiveContext();
     logDebug(response.string_value());
 
-    serviceContext()->incrementCalloutSuccesses();
+    service_context_->incrementCalloutSuccesses();
 
     continueRequest();
   }
   void onFailure(GrpcStatus status,
                  std::unique_ptr<WasmData> error_message) override {
+    request_context_->setEffectiveContext();
     logInfo(std::string("failure ") + std::to_string(static_cast<int>(status)) +
             std::string(error_message->view()));
 
-    serviceContext()->incrementCalloutFailures();
+    service_context_->incrementCalloutFailures();
 
     // TODO wasm engine must support fail closed: expose abortRequest() or similar
     continueRequest();
   }
 
  private:
-  ServiceContext *serviceContext() {
-    return static_cast<ServiceContext *>(context_->root());
-  }
 
-  RequestContext *context_;
+  RequestContext* const request_context_;
+  ServiceContext* const service_context_;
 };
 
 FilterHeadersStatus RequestContext::onRequestHeaders() {
@@ -76,7 +79,7 @@ FilterHeadersStatus RequestContext::onRequestHeaders() {
   google::protobuf::Value value;
   value.set_string_value("request");
 
-  grpcCallHandler(grpc_service_string, "service", "method", value, 1000,
-                  std::unique_ptr<GrpcCallHandlerBase>(new CalloutResponseHandler(this)));
+  root()->grpcCallHandler(grpc_service_string, "service", "method", value, 1000,
+                  std::unique_ptr<GrpcCallHandlerBase>(new CalloutResponseHandler(this, serviceContext())));
   return FilterHeadersStatus::StopIteration;
 }
