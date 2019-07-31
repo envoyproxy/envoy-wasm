@@ -340,7 +340,7 @@ Context* ContextOrEffectiveContext(Context* context) {
   if (effective_context) {
     return effective_context;
   }
-  // The effective_ccontext_id_ no longer exists, revert to the true context.
+  // The effective_context_id_ no longer exists, revert to the true context.
   return context;
 }
 
