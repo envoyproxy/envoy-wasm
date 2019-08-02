@@ -32,19 +32,6 @@ inline uint64_t proxy_getCurrentTimeNanoseconds() {
   return getCurrentTimeNanosecondsHandler(current_context_);
 }
 
-// Stream Info
-inline void proxy_getProtocol(StreamType type, const char** value_ptr, size_t* value_size) {
-  getProtocolHandler(current_context_, WS(type), WR(value_ptr), WR(value_size));
-}
-
-inline uint32_t proxy_getDestinationPort(StreamType type) {
-  return getDestinationPortHandler(current_context_, WS(type));
-}
-
-inline uint32_t proxy_getResponseCode(StreamType type) {
-  return getResponseCodeHandler(current_context_, WS(type));
-}
-
 // Metadata
 inline uint64_t proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
                                   const char** value_ptr_ptr, size_t* value_size_ptr) {

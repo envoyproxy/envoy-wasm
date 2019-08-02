@@ -51,6 +51,10 @@ public:
   const char* data() { return data_; }
   StringView view() { return {data_, size_}; }
   std::string toString() { return std::string(view()); }
+  int32_t int32() { return *reinterpret_cast<const int32_t*>(data_); }
+  uint32_t uint32() { return *reinterpret_cast<const uint32_t*>(data_); }
+  int64_t int64() { return *reinterpret_cast<const int64_t*>(data_); }
+  uint64_t uint64() { return *reinterpret_cast<const uint64_t*>(data_); }
   std::vector<std::pair<StringView, StringView>> pairs();
   template<typename T> T proto() {
     T p;
@@ -450,28 +454,75 @@ inline bool ContextBase::isProactivelyCachable(MetadataType type) {
   }
 }
 
-// StreamInfo
-inline WasmDataPtr getProtocol(StreamType type) {
-  const char* ptr = nullptr;
-  size_t size = 0;
-  proxy_getProtocol(type, &ptr, &size);
-  return std::make_unique<WasmData>(ptr, size);
+// Expressions
+
+#define PROXY_EXPRESSION_GET_STRING(_expression, _string_ptr) do { \
+  const char* _value_ptr = nullptr; \
+  size_t _value_size = 0; \
+  auto _result = static_cast<MetadataResult>(proxy_getMetadata(MetadataType::Expression, _expression, sizeof(_expression)-1, &_value_ptr, &_value_size)); \
+  if (_result != MetadataResult::Ok) { \
+    _string_ptr->clear(); \
+    return _result; \
+  } \
+  _string_ptr->assign(_value_ptr, _value_size); \
+  return MetadataResult::Ok; \
+} while(0)
+
+#define PROXY_EXPRESSION_GET_UINT32(_expression, _uint32_ptr) do { \
+  const char* _value_ptr = nullptr; \
+  size_t _value_size = 0; \
+  auto _result = static_cast<MetadataResult>(proxy_getMetadata(MetadataType::Expression, _expression, sizeof(_expression)-1, &_value_ptr, &_value_size)); \
+  if (_result != MetadataResult::Ok) { \
+    *_uint32_ptr = 0; \
+    return _result; \
+  } \
+  *_uint32_ptr = *reinterpret_cast<const uint32_t*>(_value_ptr); \
+  return MetadataResult::Ok; \
+} while(0)
+
+inline MetadataResult getRequestProtocol(std::string *protocol_ptr) {
+  PROXY_EXPRESSION_GET_STRING("request.protocol", protocol_ptr);
 }
 
-inline uint32_t getDestinationPort(StreamType type) {
-  return proxy_getDestinationPort(type);
+inline MetadataResult getResponseProtocol(std::string *protocol_ptr) {
+  PROXY_EXPRESSION_GET_STRING("response.protocol", protocol_ptr);
 }
 
-inline uint32_t getResponseCode(StreamType type) {
-  return proxy_getResponseCode(type);
+inline MetadataResult getRequestDestinationPort(uint32_t* port) {
+  PROXY_EXPRESSION_GET_UINT32("request.destination_port", port);
+}
+
+inline MetadataResult getResponseDestinationPort(uint32_t* port) {
+  PROXY_EXPRESSION_GET_UINT32("response.destination_port", port);
+}
+
+inline MetadataResult getRequestResponseCode(uint32_t* response_code) {
+  PROXY_EXPRESSION_GET_UINT32("request.response_code", response_code);
+}
+
+inline MetadataResult getResponseResponseCode(uint32_t* response_code) {
+  PROXY_EXPRESSION_GET_UINT32("response.response_code", response_code);
+}
+
+inline MetadataResult getRequestTlsVersion(std::string *tls_version_ptr) {
+  PROXY_EXPRESSION_GET_STRING("request.tls_version", tls_version_ptr);
+}
+
+inline MetadataResult getResponseTlsVersion(std::string *tls_version_ptr) {
+  PROXY_EXPRESSION_GET_STRING("response.tls_version", tls_version_ptr);
 }
 
 // Metadata
-inline WasmDataPtr getMetadata(MetadataType type, StringView key) {
+inline MetadataResult getMetadata(MetadataType type, StringView key, WasmDataPtr *wasm_data) {
   const char* value_ptr = nullptr;
   size_t value_size = 0;
-  proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size);
-  return std::make_unique<WasmData>(value_ptr, value_size);
+  auto result = static_cast<MetadataResult>(proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size));
+  if (result != MetadataResult::Ok) {
+    wasm_data->reset();
+    return result;
+  }
+  *wasm_data = std::make_unique<WasmData>(value_ptr, value_size);
+  return MetadataResult::Ok;
 }
 
 inline MetadataResult getMetadataValue(MetadataType type, StringView key, google::protobuf::Value* result_ptr) {

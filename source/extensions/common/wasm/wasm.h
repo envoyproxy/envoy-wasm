@@ -156,7 +156,8 @@ enum class MetadataType : int32_t {
   Node = 5,
   Listener = 6,
   Cluster = 7,
-  MAX = 7
+  Expression = 8,
+  MAX = 8
 };
 enum class HeaderMapType : int32_t {
   RequestHeaders = 0,
@@ -175,13 +176,11 @@ enum class MetadataResult : int32_t {
   SerializationFailure = 3,
   BadType = 4,
   ParseFailure = 5,
+  BadExpression = 6,
 };
 
 // Handlers for functions exported from envoy to wasm.
 void logHandler(void* raw_context, Word level, Word address, Word size);
-void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word value_size_ptr);
-uint32_t getDestinationPortHandler(void* raw_context, Word type);
-uint32_t getResponseCodeHandler(void* raw_context, Word type);
 Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr);
 Word setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
@@ -389,6 +388,7 @@ public:
   virtual std::string getProtocol(StreamType type);
   virtual uint32_t getDestinationPort(StreamType type);
   virtual uint32_t getResponseCode(StreamType type);
+  virtual std::string getTlsVersion(StreamType type);
 
   // Metadata
   // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the
