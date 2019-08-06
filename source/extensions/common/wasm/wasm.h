@@ -182,6 +182,16 @@ void logHandler(void* raw_context, Word level, Word address, Word size);
 void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word value_size_ptr);
 uint32_t getDestinationPortHandler(void* raw_context, Word type);
 uint32_t getResponseCodeHandler(void* raw_context, Word type);
+Word resolveSelector0Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word value_ptr_ptr,
+                             Word value_size_ptr);
+Word resolveSelector1Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                             Word arg1_size, Word value_ptr_ptr, Word value_size_ptr);
+Word resolveSelector2Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                             Word arg1_size, Word arg2_ptr, Word arg2_size, Word value_ptr_ptr,
+                             Word value_size_ptr);
+Word resolveSelector3Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                             Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
+                             Word arg3_size, Word value_ptr_ptr, Word value_size_ptr);
 Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr);
 Word setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
@@ -389,6 +399,9 @@ public:
   virtual std::string getProtocol(StreamType type);
   virtual uint32_t getDestinationPort(StreamType type);
   virtual uint32_t getResponseCode(StreamType type);
+
+  // Generic resolver producing a serialized value
+  virtual absl::optional<std::string> resolve(std::initializer_list<absl::string_view> parts);
 
   // Metadata
   // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the

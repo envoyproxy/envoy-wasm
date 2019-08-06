@@ -45,6 +45,34 @@ inline uint32_t proxy_getResponseCode(StreamType type) {
   return getResponseCodeHandler(current_context_, WS(type));
 }
 
+// Generic selectors
+inline uint64_t proxy_resolveSelector0(const char* arg0_ptr, size_t arg0_size,
+                                       const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return resolveSelector0Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(value_ptr_ptr),
+                                 WR(value_size_ptr));
+}
+inline uint64_t proxy_resolveSelector1(const char* arg0_ptr, size_t arg0_size, const char* arg1_ptr,
+                                       size_t arg1_size, const char** value_ptr_ptr,
+                                       size_t* value_size_ptr) {
+  return resolveSelector1Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(arg1_ptr),
+                                 WS(arg1_size), WR(value_ptr_ptr), WR(value_size_ptr));
+}
+inline uint64_t proxy_resolveSelector2(const char* arg0_ptr, size_t arg0_size, const char* arg1_ptr,
+                                       size_t arg1_size, const char* arg2_ptr, size_t arg2_size,
+                                       const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return resolveSelector2Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(arg1_ptr),
+                                 WS(arg1_size), WR(arg2_ptr), WS(arg2_size), WR(value_ptr_ptr),
+                                 WR(value_size_ptr));
+}
+inline uint64_t proxy_resolveSelector3(const char* arg0_ptr, size_t arg0_size, const char* arg1_ptr,
+                                       size_t arg1_size, const char* arg2_ptr, size_t arg2_size,
+                                       const char* arg3_ptr, size_t arg3_size,
+                                       const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return resolveSelector3Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(arg1_ptr),
+                                 WS(arg1_size), WR(arg2_ptr), WS(arg2_size), WR(arg3_ptr),
+                                 WS(arg3_size), WR(value_ptr_ptr), WR(value_size_ptr));
+}
+
 // Metadata
 inline uint64_t proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
                                   const char** value_ptr_ptr, size_t* value_size_ptr) {

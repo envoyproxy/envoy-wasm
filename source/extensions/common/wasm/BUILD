@@ -39,6 +39,7 @@ envoy_cc_library(
     deps = [
         ":wasm_hdr",
         "//external:abseil_node_hash_map",
+        "//external:abseil_base",
         "//source/common/buffer:buffer_lib",
         "//source/common/common:enum_to_int",
         "//source/common/config:datasource_lib",
@@ -46,6 +47,10 @@ envoy_cc_library(
         "//source/common/http:utility_lib",
         "//source/common/tracing:http_tracer_lib",
         "//source/extensions/common/wasm/null:null_lib",
+        "//source/extensions/filters/common/expr:context_lib",
+        "@com_google_cel_cpp//eval/eval:field_access",
+        "@com_google_cel_cpp//eval/eval:field_backed_map_impl",
+        "@com_google_cel_cpp//eval/eval:field_backed_list_impl",
     ] + envoy_select_wasm_v8([
         "//source/extensions/common/wasm/v8:v8_lib",
     ]) + envoy_select_wasm_wavm([

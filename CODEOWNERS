@@ -50,3 +50,5 @@ extensions/filters/common/original_src @snowp @klarose
 /*/extensions/access_loggers/wasm @jplevyak @PiotrSikora
 /*/extensions/common/wasm @jplevyak @PiotrSikora
 /*/extensions/filters/http/wasm @jplevyak @PiotrSikora
+# attribute context
+/*/extensions/filters/common/expr @kyessenov @yangminzhu

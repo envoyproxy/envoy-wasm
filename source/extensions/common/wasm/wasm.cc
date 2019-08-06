@@ -27,6 +27,12 @@
 #include "common/tracing/http_tracer_impl.h"
 
 #include "extensions/common/wasm/null/null.h"
+#include "extensions/filters/common/expr/context.h"
+
+#include "absl/base/casts.h"
+#include "eval/eval/field_access.h"
+#include "eval/eval/field_backed_list_impl.h"
+#include "eval/eval/field_backed_map_impl.h"
 
 #ifdef ENVOY_WASM_V8
 #include "extensions/common/wasm/v8/v8.h"
@@ -378,6 +384,63 @@ uint32_t getResponseCodeHandler(void* raw_context, Word type) {
     return 500;
   auto context = WASM_CONTEXT(raw_context);
   return context->getResponseCode(static_cast<StreamType>(type.u64));
+}
+
+// Generic selectors
+Word resolveSelector0Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word value_ptr_ptr,
+                             Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
+  auto value = context->resolve({arg0});
+  if (value.has_value()) {
+    context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr);
+    return Word(static_cast<uint64_t>(MetadataResult::Ok));
+  }
+  return Word(static_cast<uint64_t>(MetadataResult::FieldNotFound));
+}
+
+Word resolveSelector1Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                             Word arg1_size, Word value_ptr_ptr, Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
+  auto arg1 = context->wasmVm()->getMemory(arg1_ptr, arg1_size);
+  auto value = context->resolve({arg0, arg1});
+  if (value.has_value()) {
+    context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr);
+    return Word(static_cast<uint64_t>(MetadataResult::Ok));
+  }
+  return Word(static_cast<uint64_t>(MetadataResult::FieldNotFound));
+}
+
+Word resolveSelector2Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                             Word arg1_size, Word arg2_ptr, Word arg2_size, Word value_ptr_ptr,
+                             Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
+  auto arg1 = context->wasmVm()->getMemory(arg1_ptr, arg1_size);
+  auto arg2 = context->wasmVm()->getMemory(arg2_ptr, arg2_size);
+  auto value = context->resolve({arg0, arg1, arg2});
+  if (value.has_value()) {
+    context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr);
+    return Word(static_cast<uint64_t>(MetadataResult::Ok));
+  }
+  return Word(static_cast<uint64_t>(MetadataResult::FieldNotFound));
+}
+
+Word resolveSelector3Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                             Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
+                             Word arg3_size, Word value_ptr_ptr, Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
+  auto arg1 = context->wasmVm()->getMemory(arg1_ptr, arg1_size);
+  auto arg2 = context->wasmVm()->getMemory(arg2_ptr, arg2_size);
+  auto arg3 = context->wasmVm()->getMemory(arg3_ptr, arg3_size);
+  auto value = context->resolve({arg0, arg1, arg2, arg3});
+  if (value.has_value()) {
+    context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr);
+    return Word(static_cast<uint64_t>(MetadataResult::Ok));
+  }
+  return Word(static_cast<uint64_t>(MetadataResult::FieldNotFound));
 }
 
 // Metadata
@@ -1277,6 +1340,136 @@ uint32_t Context::getResponseCode(StreamType type) {
   if (!streamInfo)
     return 500;
   return streamInfo->responseCode().value_or(500);
+}
+
+template <int N> struct marshall { char buf[N]; };
+
+absl::optional<std::string> serializeValue(Filters::Common::Expr::CelValue value) {
+  using Filters::Common::Expr::CelValue;
+  switch (value.type()) {
+  case CelValue::Type::kMessage:
+    if (value.MessageOrDie() != nullptr) {
+      std::string result;
+      value.MessageOrDie()->SerializeToString(&result);
+      return result;
+    }
+  case CelValue::Type::kString:
+    return std::string(value.StringOrDie().value());
+  case CelValue::Type::kBytes:
+    return std::string(value.BytesOrDie().value());
+  case CelValue::Type::kInt64: {
+    const size_t n = sizeof(int64_t);
+    marshall<n> out = absl::bit_cast<marshall<n>>(value.Int64OrDie());
+    return std::string(out.buf, n);
+  }
+  case CelValue::Type::kUint64: {
+    const size_t n = sizeof(uint64_t);
+    marshall<n> out = absl::bit_cast<marshall<n>>(value.Uint64OrDie());
+    return std::string(out.buf, n);
+  }
+  case CelValue::Type::kDouble: {
+    const size_t n = sizeof(double);
+    marshall<n> out = absl::bit_cast<marshall<n>>(value.DoubleOrDie());
+    return std::string(out.buf, n);
+  }
+  case CelValue::Type::kBool: {
+    const size_t n = sizeof(bool);
+    marshall<n> out = absl::bit_cast<marshall<n>>(value.BoolOrDie());
+    return std::string(out.buf, n);
+  }
+  case CelValue::Type::kDuration: {
+    const size_t n = sizeof(absl::Duration);
+    marshall<n> out = absl::bit_cast<marshall<n>>(value.DurationOrDie());
+    return std::string(out.buf, n);
+  }
+  case CelValue::Type::kTimestamp: {
+    const size_t n = sizeof(absl::Time);
+    marshall<n> out = absl::bit_cast<marshall<n>>(value.TimestampOrDie());
+    return std::string(out.buf, n);
+  }
+  default:
+    // TODO: lists and maps
+    break;
+  }
+
+  return {};
+}
+
+absl::optional<std::string> Context::resolve(std::initializer_list<absl::string_view> parts) {
+  using Filters::Common::Expr::CelValue;
+  using google::api::expr::runtime::FieldBackedListImpl;
+  using google::api::expr::runtime::FieldBackedMapImpl;
+  using Protobuf::Descriptor;
+  using Protobuf::FieldDescriptor;
+
+  if (decoder_callbacks_ == nullptr || request_headers_ == nullptr ||
+      access_log_request_headers_ == nullptr) {
+    return {};
+  }
+
+  bool first = true;
+  CelValue value;
+  Protobuf::Arena arena;
+  const StreamInfo::StreamInfo& info = decoder_callbacks_->streamInfo();
+  const Http::HeaderMap& headers =
+      request_headers_ == nullptr ? *access_log_request_headers_ : *request_headers_;
+  const Filters::Common::Expr::RequestWrapper request(headers, info);
+  const Filters::Common::Expr::ConnectionWrapper connection(info);
+
+  for (auto& part : parts) {
+    // top-level ident
+    if (first) {
+      first = false;
+      if (part == "metadata") {
+        value = CelValue::CreateMessage(&info.dynamicMetadata(), &arena);
+      } else if (part == "request") {
+        value = CelValue::CreateMap(&request);
+      } else if (part == "connection") {
+        value = CelValue::CreateMap(&connection);
+      } else if (part == "node") {
+        value = CelValue::CreateMessage(&wasm_->local_info_.node(), &arena);
+      } else {
+        return {};
+      }
+      continue;
+    }
+
+    if (value.IsMap()) {
+      auto& map = *value.MapOrDie();
+      auto field = map[CelValue::CreateString(part)];
+      if (field.has_value()) {
+        value = field.value();
+      } else {
+        return {};
+      }
+    } else if (value.IsMessage()) {
+      auto msg = value.MessageOrDie();
+      if (msg == nullptr) {
+        return {};
+      }
+      const Descriptor* desc = msg->GetDescriptor();
+      const FieldDescriptor* field_desc = desc->FindFieldByName(std::string(part));
+      if (field_desc == nullptr) {
+        return {};
+      } else if (field_desc->is_map()) {
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<FieldBackedMapImpl>(&arena, msg, field_desc, &arena));
+      } else if (field_desc->is_repeated()) {
+        value = CelValue::CreateList(
+            Protobuf::Arena::Create<FieldBackedListImpl>(&arena, msg, field_desc, &arena));
+      } else {
+        auto status =
+            google::api::expr::runtime::CreateValueFromSingleField(msg, field_desc, &arena, &value);
+        if (!status.ok()) {
+          return {};
+        }
+      }
+    } else {
+      return {};
+    }
+  }
+
+  return serializeValue(value);
 }
 
 const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
