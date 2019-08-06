@@ -8,7 +8,7 @@ class ExampleRootContext : public RootContext {
 public:
   explicit ExampleRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
 
-  void onStart() override;
+  void onStart(WasmDataPtr) override;
 };
 
 class ExampleContext : public Context {
@@ -26,7 +26,7 @@ public:
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
                                                       ROOT_FACTORY(ExampleRootContext));
 
-void ExampleRootContext::onStart() { logTrace("onStart"); }
+void ExampleRootContext::onStart(WasmDataPtr) { logTrace("onStart"); }
 
 void ExampleContext::onCreate() { logWarn(std::string("onCreate " + std::to_string(id()))); }
 

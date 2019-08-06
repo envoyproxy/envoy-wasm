@@ -18,7 +18,7 @@ using FilterDataStatus = Http::FilterDataStatus;
 using GrpcStatus = Envoy::Grpc::Status::GrpcStatus;
 using MetricType = Envoy::Extensions::Common::Wasm::Context::MetricType;
 using StringView = absl::string_view;
-using EnumType = uint32_t;
+using EnumType = int32_t;
 } // namespace Plugin
 } // namespace Null
 } // namespace Wasm
@@ -53,7 +53,8 @@ public:
   NullVmPlugin(const NullVmPlugin& other) : registry_(other.registry_) {}
 
   void start() {}
-  void onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size);
+  void onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size,
+               uint64_t vm_configuration_ptr, uint64_t vm_configuration_size);
   void onConfigure(uint64_t root_context_id, uint64_t ptr, uint64_t size);
   void onTick(uint64_t root_context_id);
   void onQueueReady(uint64_t root_context_id, uint64_t token);

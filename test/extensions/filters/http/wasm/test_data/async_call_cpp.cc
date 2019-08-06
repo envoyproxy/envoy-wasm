@@ -13,8 +13,10 @@ public:
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
-  auto callback = [](std::unique_ptr<WasmData> response_headers, std::unique_ptr<WasmData> body,
+  auto context_id = id();
+  auto callback = [context_id](std::unique_ptr<WasmData> response_headers, std::unique_ptr<WasmData> body,
                      std::unique_ptr<WasmData> response_trailers) {
+    getContext(context_id)->setEffectiveContext();
     for (auto& p : response_headers->pairs()) {
       logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
     }
@@ -23,7 +25,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
       logWarn(std::string(p.first) + std::string(" -> ") + std::string(p.second));
     }
   };
-  httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}}, "hello world",
+  root()->httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}}, "hello world",
            {{"trail", "cow"}}, 1000, callback);
   return FilterHeadersStatus::StopIteration;
 }

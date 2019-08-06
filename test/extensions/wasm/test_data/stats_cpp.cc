@@ -4,7 +4,8 @@
 #include "proxy_wasm_intrinsics.h"
 
 // Test the low level interface.
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t) {
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t, uint32_t,
+                                                   uint32_t) {
   auto c = defineMetric(MetricType::Counter, "test_counter");
   auto g = defineMetric(MetricType::Gauge, "test_gauges");
   auto h = defineMetric(MetricType::Histogram, "test_histogram");

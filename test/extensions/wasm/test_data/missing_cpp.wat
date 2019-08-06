@@ -101,10 +101,12 @@
     global.set $18
     )
   
-  (func $_proxy_onStart (type $9)
+  (func $_proxy_onStart (type $3)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
+    (param $3 i32)
+    (param $4 i32)
     call $_missing
     )
   

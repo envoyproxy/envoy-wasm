@@ -30,7 +30,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
                        std::unique_ptr<WasmData> response_trailers) {
       logInfo("Got response");
     };
-    httpCall(callout_url,
+    root()->httpCall(callout_url,
              {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}},
              "hello world",
              {{"trail", "cow"}},
