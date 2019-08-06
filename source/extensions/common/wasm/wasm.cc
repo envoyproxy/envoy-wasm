@@ -1662,7 +1662,6 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial
       time_source_(dispatcher.timeSource()), initial_configuration_(initial_configuration) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
-  std::cerr << "id = " << id_ << "\n";
 }
 
 void Wasm::registerCallbacks() {
