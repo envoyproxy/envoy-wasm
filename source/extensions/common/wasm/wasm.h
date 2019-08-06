@@ -524,7 +524,7 @@ protected:
   uint32_t root_context_id_;       // 0 for roots and the general context.
   Context* root_context_{nullptr}; // set in all contexts.
   const std::string root_id_;      // set only in roots.
-  const std::string log_prefix_;
+  std::string log_prefix_;
   bool destroyed_ = false;
 
   uint32_t next_http_call_token_ = 1;
@@ -904,8 +904,7 @@ public:
 };
 
 inline Context::Context()
-    : wasm_(nullptr), id_(0), root_context_id_(0), root_context_(this), root_id_(""),
-      log_prefix_(makeLogPrefix()) {}
+    : wasm_(nullptr), id_(0), root_context_id_(0), root_context_(this), root_id_("") {}
 
 inline Context::Context(Wasm* wasm)
     : wasm_(wasm), id_(0), root_context_id_(0), root_context_(this), root_id_(""),

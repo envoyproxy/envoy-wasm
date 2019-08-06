@@ -1959,6 +1959,7 @@ void Wasm::startForTesting(std::unique_ptr<Context> context) {
     // Initialization was delayed till the Wasm object was created.
     context->wasm_ = this;
     context->id_ = allocContextId();
+    context->makeLogPrefix();
     contexts_[context->id_] = context.get();
   }
   root_contexts_[""] = std::move(context);
