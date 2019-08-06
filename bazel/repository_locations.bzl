@@ -24,10 +24,10 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://commondatastorage.googleapis.com/chromium-boringssl-docs/fips/boringssl-66005f41fbc3529ffe8d007708756720529da20d.tar.xz"],
     ),
     com_google_absl = dict(
-        sha256 = "7ddf863ddced6fa5bf7304103f9c7aa619c20a2fcf84475512c8d3834b9d14fa",
-        strip_prefix = "abseil-cpp-61c9bf3e3e1c28a4aa6d7f1be4b37fd473bb5529",
-        # 2019-06-05
-        urls = ["https://github.com/abseil/abseil-cpp/archive/61c9bf3e3e1c28a4aa6d7f1be4b37fd473bb5529.tar.gz"],
+        sha256 = "3df5970908ed9a09ba51388d04661803a6af18c373866f442cede7f381e0b94a",
+        strip_prefix = "abseil-cpp-14550beb3b7b97195e483fb74b5efb906395c31e",
+        # 2019-07-31
+        urls = ["https://github.com/abseil/abseil-cpp/archive/14550beb3b7b97195e483fb74b5efb906395c31e.tar.gz"],
     ),
     com_github_apache_thrift = dict(
         sha256 = "7d59ac4fdcb2c58037ebd4a9da5f9a49e3e034bf75b3f26d9fe48ba3d8806e6b",
@@ -270,5 +270,15 @@ REPOSITORY_LOCATIONS = dict(
         # Static snapshot of https://quiche.googlesource.com/quiche/+archive/2a930469533c3b541443488a629fe25cd8ff53d0.tar.gz
         sha256 = "fcdebf54c89d839ffa7eefae166c8e4b551c765559db13ff15bff98047f344fb",
         urls = ["https://storage.googleapis.com/quiche-envoy-integration/2a930469533c3b541443488a629fe25cd8ff53d0.tar.gz"],
+    ),
+    com_google_cel_cpp = dict(
+        sha256 = "a0e6a6ccf25c1e57ba3c7a997edd9279f8e0b0112e0a3ac705a5568fa32792fc",
+        strip_prefix = "cel-cpp-d56f26adb53d0f41508a909d15e74d9ffb0e8a6c",
+        urls = ["https://github.com/google/cel-cpp/archive/d56f26adb53d0f41508a909d15e74d9ffb0e8a6c.tar.gz"],
+    ),
+    com_google_re2 = dict(
+        sha256 = "f31db9cd224d018a7e4fe88ef84aaa874b0b3ed91d4d98ee5a1531101d3fdc64",
+        strip_prefix = "re2-87e2ad45e7b18738e1551474f7ee5886ff572059",
+        urls = ["https://github.com/google/re2/archive/87e2ad45e7b18738e1551474f7ee5886ff572059.tar.gz"],
     ),
 )
