@@ -998,13 +998,18 @@ struct MetricTag {
 struct MetricBase {
   MetricBase(MetricType t, const std::string& n) : type(t), name(n) {}
   MetricBase(MetricType t, const std::string& n, std::vector<MetricTag> ts)
-      : type(t), name(n), tags(ts.begin(), ts.end()) {}
+      : type(t), name(n), tags(ts.begin(), ts.end()){}
+  MetricBase(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string  fs, std::string vs)
+      : type(t), name(n), tags(ts.begin(), ts.end()), field_separator(fs), value_separator(vs) {}
 
   MetricType type;
   std::string name;
   std::string prefix;
   std::vector<MetricTag> tags;
   std::unordered_map<std::string, uint32_t> metric_ids;
+
+  std::string field_separator = ".";  // used to separate two fields.
+  std::string value_separator = ".";  // used to separate a field from its value.
 
   std::string prefixWithFields(const std::vector<std::string>& fields);
   uint32_t resolveFullName(const std::string& n);
@@ -1016,6 +1021,7 @@ struct MetricBase {
 struct Metric : public MetricBase {
   Metric(MetricType t, const std::string& n) : MetricBase(t, n) {}
   Metric(MetricType t, const std::string& n, std::vector<MetricTag> ts) : MetricBase(t, n, ts) {}
+  Metric(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string field_separator, std::string value_separator) : MetricBase(t, n, ts, field_separator, value_separator) {}
 
   template <typename... Fields> void increment(int64_t offset, Fields... tags);
   template <typename... Fields> void record(uint64_t value, Fields... tags);
@@ -1037,9 +1043,9 @@ inline std::string MetricBase::prefixWithFields(const std::vector<std::string>& 
   n.append(prefix);
   for (size_t i = 0; i < fields.size(); i++) {
     n.append(tags[i].name);
-    n.append(".");
+    n.append(value_separator);
     n.append(fields[i]);
-    n.append(".");
+    n.append(field_separator);
   }
   return n;
 }
