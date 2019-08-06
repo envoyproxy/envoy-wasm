@@ -13,7 +13,8 @@
 
 
    // Non-stream calls.
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t root_id_ptr, uint32_t root_id_size);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t root_id_ptr, uint32_t root_id_size,
+     uint32_t vm_configuration_ptr, uint32_t vm_configuration_size);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(uint32_t root_context_id, uint32_t configuration_ptr, uint32_t configuration_size);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick(uint32_t root_context_id);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onQueueReady(uint32_t root_context_id, uint32_t token);
@@ -65,16 +66,16 @@ extern "C" uint32_t proxy_getDestinationPort(StreamType type);
 extern "C" uint32_t proxy_getResponseCode(StreamType type);
 
 // Metadata
-extern "C" void proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
-                                  const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" void proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
-                                  const char* value_ptr, size_t value_size);
-extern "C" void proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
-                                       size_t* value_size);
-extern "C" void proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
-                                        const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" void proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
-                                        const char* value_ptr, size_t value_size);
+extern "C" uint32_t proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
+                                      const char** value_ptr_ptr, size_t* value_size_ptr);
+extern "C" uint32_t proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
+                                      const char* value_ptr, size_t value_size);
+extern "C" uint32_t proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
+                                           size_t* value_size);
+extern "C" uint32_t proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
+                                            const char** value_ptr_ptr, size_t* value_size_ptr);
+extern "C" uint32_t proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
+                                            const char* value_ptr, size_t value_size);
 
 // Continue/Reply/Route
 extern "C" void proxy_continueRequest();
@@ -143,3 +144,6 @@ extern "C" void proxy_incrementMetric(uint32_t metric_id, int64_t offset);
 extern "C" void proxy_recordMetric(uint32_t metric_id, uint64_t value);
 extern "C" uint64_t proxy_getMetric(uint32_t metric_id);
 
+// System
+// Returns 0 on success.
+extern "C" uint32_t proxy_setEffectiveContext(uint32_t effective_context_id);

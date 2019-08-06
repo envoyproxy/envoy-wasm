@@ -8,7 +8,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onConfigure(uint32_t, int bad, char* 
   logWarn(std::string("warn " + std::string(configuration, size)));
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t) {
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t, uint32_t,
+                                                   uint32_t) {
   logDebug(std::string("test debug") + " logging");
   logInfo(std::string("test info") + " logging");
 }

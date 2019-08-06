@@ -4,34 +4,35 @@
   (type $2 (func (param i32 i32) (result i32)))
   (type $3 (func (param i32 i32 i32)))
   (type $4 (func))
-  (type $5 (func (param i32)))
-  (type $6 (func (param i32) (result i32)))
-  (type $7 (func (param i64 i32) (result i32)))
-  (type $8 (func (param i32) (result i64)))
-  (type $9 (func (param i32 i32 i32 i32 i32) (result i32)))
-  (type $10 (func (param i32 i32 i32 i32) (result i32)))
-  (type $11 (func (param i32 i32 i32 i32)))
+  (type $5 (func (param i32 i32 i32 i32 i32)))
+  (type $6 (func (param i32)))
+  (type $7 (func (param i32) (result i32)))
+  (type $8 (func (param i64 i32) (result i32)))
+  (type $9 (func (param i32) (result i64)))
+  (type $10 (func (param i32 i32 i32 i32 i32) (result i32)))
+  (type $11 (func (param i32 i32 i32 i32) (result i32)))
+  (type $12 (func (param i32 i32 i32 i32)))
   (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32)))
-  (export "memory" (memory $13))
-  (export "__heap_base" (global $15))
-  (export "__data_end" (global $16))
+  (export "memory" (memory $14))
+  (export "__heap_base" (global $16))
+  (export "__data_end" (global $17))
   (export "_proxy_onConfigure" (func $_proxy_onConfigure))
   (export "_proxy_onStart" (func $_proxy_onStart))
   (export "_proxy_onTick" (func $_proxy_onTick))
   (export "__post_instantiate" (func $__post_instantiate))
   (export "_malloc" (func $_malloc))
   (export "_free" (func $_free))
-  (memory $13  17)
-  (table $12  27 27 funcref)
-  (global $14  (mut i32) (i32.const 1048576))
-  (global $15  i32 (i32.const 1055076))
+  (memory $14  17)
+  (table $13  27 27 funcref)
+  (global $15  (mut i32) (i32.const 1048576))
   (global $16  i32 (i32.const 1055076))
-  (elem $17 $12 (i32.const 1)
+  (global $17  i32 (i32.const 1055076))
+  (elem $18 $13 (i32.const 1)
     $<&T_as_core::fmt::Display>::fmt::h7b31b334e7b8b382 $core::fmt::ArgumentV1::show_usize::hf8ebfbd77fa8a93d $<log::SetLoggerError_as_core::fmt::Debug>::fmt::hab9915d856568df0 $<core::fmt::Error_as_core::fmt::Debug>::fmt::h886976dffb9dde73 $<&T_as_core::fmt::Display>::fmt::hdf3341d54242ca4a $core::fmt::num::imp::<impl_core::fmt::Display_for_u32>::fmt::h4f3293445fab7cb7 $<core::ops::range::Range<Idx>_as_core::fmt::Debug>::fmt::h6105e754ea0aeafb $<char_as_core::fmt::Debug>::fmt::h7a420490f85a5bf3
     $core::ptr::real_drop_in_place::h0013f08692be52e6 $<&mut_W_as_core::fmt::Write>::write_str::hf2482d9015e58e57 $<&mut_W_as_core::fmt::Write>::write_char::h16378c8711c26c01 $<&mut_W_as_core::fmt::Write>::write_fmt::h8b5befc9d6ef0a73 $core::ptr::real_drop_in_place::h5a9a7fbf25605767 $<proxy_wasm::Logger_as_log::Log>::enabled::h8a7702bb390b0ea2 $<proxy_wasm::Logger_as_log::Log>::log::h0a6214a4920b004c $<log::NopLogger_as_log::Log>::flush::h5e0800c275585e5e
     $<log::NopLogger_as_log::Log>::enabled::h498b43c893826962 $<log::NopLogger_as_log::Log>::log::h2ca6f3fe5cf690d4 $<T_as_core::any::Any>::type_id::h5fb1d47f0acdabcc $core::ptr::real_drop_in_place::h23040579a46f15a6 $<core::fmt::builders::PadAdapter_as_core::fmt::Write>::write_str::h7d69c319e62567ea $core::fmt::Write::write_char::he6255f3eabfceb48 $core::fmt::Write::write_fmt::hd43133c0fc77f05d $<&mut_W_as_core::fmt::Write>::write_str::h0573ddc37a895899
     $<&mut_W_as_core::fmt::Write>::write_char::hc454648cbae23e1c $<&mut_W_as_core::fmt::Write>::write_fmt::hc0aee806cb052974)
-  (data $18 $13 (i32.const 1048576)
+  (data $19 $14 (i32.const 1048576)
     "warn \00\00\00\00\00\10\00\05\00\00\00logging_rustsrc/lib.rstest trace logging&\00\10\00\12\00\00\00"
     "test debug logging\00\00@\00\10\00\12\00\00\00test error logging\00\00\\\00\10\00\12\00\00\00test tic"
     "k logging\00\00\00x\00\10\00\11\00\00\00\09\00\00\00\04\00\00\00\04\00\00\00\n\00\00\00\0b\00\00\00\0c\00\00\00 \02\10\00\00\00\00\00\e1\00\10\00\02\00\00\00\cc\00\10\00"
@@ -126,7 +127,7 @@
     "` on a `None` valuesrc/libcore/option.rsbegin <= end ( <= ) when"
     " slicing ` is out of bounds of `    \14\00\00\00\0c\00\00\00\04\00\00\00\15\00\00\00\16\00\00\00\17\00\00\00,\n\00\00"
     "\09\00\00\00\04\00\00\00\04\00\00\00\18\00\00\00\19\00\00\00\1a\00\00\00(\n()Error")
-  (data $19 $13 (i32.const 1054568)
+  (data $20 $14 (i32.const 1054568)
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
@@ -135,7 +136,7 @@
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
     "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
-  (data $20 $13 (i32.const 1055044)
+  (data $21 $14 (i32.const 1055044)
     "p\17\10\00L\19\10\00\0d\00\00\00\00\00\00\00\01\00\00\00\11\00\00\00\12\00\00\00\10\00\00\00")
   
   (func $_proxy_onConfigure (type $3)
@@ -144,11 +145,11 @@
     (param $2 i32)
     (local $3 i32)
     (local $4 i32)
-    global.get $14
+    global.get $15
     i32.const 80
     i32.sub
     local.tee $3
-    global.set $14
+    global.set $15
     local.get $3
     local.get $2
     i32.store offset=4
@@ -243,12 +244,12 @@
       local.get $4
       select
       i32.load offset=16
-      call_indirect $12 (type $0)
+      call_indirect $13 (type $0)
     end ;; $block
     local.get $3
     i32.const 80
     i32.add
-    global.set $14
+    global.set $15
     )
   
   (func $<&T_as_core::fmt::Display>::fmt::h7b31b334e7b8b382 (type $2)
@@ -263,20 +264,22 @@
     call $core::fmt::Formatter::pad::hacaebd5abd28adf1
     )
   
-  (func $_proxy_onStart (type $3)
+  (func $_proxy_onStart (type $5)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
-    (local $3 i32)
-    (local $4 i32)
+    (param $3 i32)
+    (param $4 i32)
     (local $5 i32)
     (local $6 i32)
     (local $7 i32)
-    global.get $14
+    (local $8 i32)
+    (local $9 i32)
+    global.get $15
     i32.const 64
     i32.sub
-    local.tee $3
-    global.set $14
+    local.tee $5
+    global.set $15
     block $block
       block $block_0
         block $block_1
@@ -288,7 +291,7 @@
               i32.ge_u
               br_if $block_3
               i32.const 4
-              local.set $4
+              local.set $6
               i32.const 0
               i32.load offset=1054568
               i32.const 4
@@ -298,79 +301,79 @@
             end ;; $block_3
             i32.const 0
             i32.load offset=1055048
-            local.set $4
+            local.set $6
             i32.const 0
             i32.load offset=1055044
-            local.set $5
+            local.set $7
             i32.const 0
             i32.load offset=1054572
-            local.set $6
-            local.get $3
+            local.set $8
+            local.get $5
             i32.const 56
             i32.add
             i32.const 16
             i32.store
-            local.get $3
+            local.get $5
             i32.const 48
             i32.add
             i64.const 4294967306
             i64.store
-            local.get $3
+            local.get $5
             i32.const 40
             i32.add
             i32.const 12
             i32.store
-            local.get $3
+            local.get $5
             i32.const 32
             i32.add
             i32.const 0
             i32.store
-            local.get $3
+            local.get $5
             i32.const 28
             i32.add
             i32.const 1049120
             i32.store
-            local.get $3
+            local.get $5
             i32.const 16
             i32.add
             i64.const 1
             i64.store
-            local.get $3
+            local.get $5
             i32.const 8
             i32.add
             i32.const 12
             i32.store
-            local.get $3
+            local.get $5
             i32.const 1048604
             i32.store offset=44
-            local.get $3
+            local.get $5
             i32.const 1048592
             i32.store offset=36
-            local.get $3
+            local.get $5
             i32.const 1048632
             i32.store offset=12
-            local.get $3
+            local.get $5
             i32.const 1048592
             i32.store offset=4
-            local.get $3
+            local.get $5
             i32.const 5
             i32.store
-            local.get $5
+            local.get $7
             i32.const 1049000
-            local.get $6
+            local.get $8
             i32.const 2
             i32.eq
-            local.tee $6
+            local.tee $8
             select
-            local.get $3
-            local.get $4
-            i32.const 1049000
+            local.get $5
             local.get $6
+            i32.const 1049000
+            local.get $8
             select
             i32.load offset=16
-            call_indirect $12 (type $0)
+            call_indirect $13 (type $0)
             i32.const 4
-            local.set $4
+            local.set $6
             i32.const 0
             i32.load offset=1054568
             i32.const 4
@@ -379,182 +382,182 @@
           end ;; $block_2
           i32.const 0
           i32.load offset=1055048
-          local.set $5
+          local.set $7
           i32.const 0
           i32.load offset=1055044
-          local.set $6
+          local.set $8
           i32.const 0
           i32.load offset=1054572
-          local.set $7
-          local.get $3
+          local.set $9
+          local.get $5
           i32.const 56
           i32.add
           i32.const 17
           i32.store
-          local.get $3
+          local.get $5
           i32.const 48
           i32.add
           i64.const 4294967306
           i64.store
-          local.get $3
+          local.get $5
           i32.const 40
           i32.add
           i32.const 12
           i32.store
-          local.get $3
+          local.get $5
           i32.const 32
           i32.add
           i32.const 0
           i32.store
-          local.get $3
+          local.get $5
           i32.const 28
           i32.add
           i32.const 1049120
           i32.store
-          local.get $3
+          local.get $5
           i32.const 16
           i32.add
           i64.const 1
           i64.store
-          local.get $3
+          local.get $5
           i32.const 8
           i32.add
           i32.const 12
           i32.store
-          local.get $3
+          local.get $5
           i32.const 1048604
           i32.store offset=44
-          local.get $3
+          local.get $5
           i32.const 1048592
           i32.store offset=36
-          local.get $3
+          local.get $5
           i32.const 1048660
           i32.store offset=12
-          local.get $3
+          local.get $5
           i32.const 1048592
           i32.store offset=4
-          local.get $3
-          local.get $4
-          i32.store
+          local.get $5
           local.get $6
+          i32.store
+          local.get $8
           i32.const 1049000
-          local.get $7
+          local.get $9
           i32.const 2
           i32.eq
-          local.tee $4
+          local.tee $6
           select
-          local.get $3
           local.get $5
+          local.get $7
           i32.const 1049000
-          local.get $4
+          local.get $6
           select
           i32.load offset=16
-          call_indirect $12 (type $0)
+          call_indirect $13 (type $0)
           i32.const 0
-          local.set $4
+          local.set $6
           i32.const 0
           i32.load offset=1054568
           br_if $block_0
           br $block
         end ;; $block_1
         i32.const 0
-        local.set $4
+        local.set $6
         i32.const 0
         i32.load offset=1054568
         i32.eqz
         br_if $block
       end ;; $block_0
-      local.get $4
+      local.get $6
       i32.load offset=1055048
-      local.set $5
-      local.get $4
-      i32.load offset=1055044
-      local.set $6
-      local.get $4
-      i32.load offset=1054572
       local.set $7
-      local.get $3
+      local.get $6
+      i32.load offset=1055044
+      local.set $8
+      local.get $6
+      i32.load offset=1054572
+      local.set $9
+      local.get $5
       i32.const 56
       i32.add
       i32.const 18
       i32.store
-      local.get $3
+      local.get $5
       i32.const 48
       i32.add
       i64.const 4294967306
       i64.store
-      local.get $3
+      local.get $5
       i32.const 40
       i32.add
       i32.const 12
       i32.store
-      local.get $3
+      local.get $5
       i32.const 32
       i32.add
-      local.get $4
+      local.get $6
       i32.store
-      local.get $3
+      local.get $5
       i32.const 28
       i32.add
       i32.const 1049120
       i32.store
-      local.get $3
+      local.get $5
       i32.const 16
       i32.add
       i64.const 1
       i64.store
-      local.get $3
+      local.get $5
       i32.const 8
       i32.add
       i32.const 12
       i32.store
-      local.get $3
+      local.get $5
       i32.const 1048604
       i32.store offset=44
-      local.get $3
+      local.get $5
       i32.const 1048592
       i32.store offset=36
-      local.get $3
+      local.get $5
       i32.const 1048688
       i32.store offset=12
-      local.get $3
+      local.get $5
       i32.const 1048592
       i32.store offset=4
-      local.get $3
+      local.get $5
       i32.const 1
       i32.store
-      local.get $6
+      local.get $8
       i32.const 1049000
-      local.get $7
+      local.get $9
       i32.const 2
       i32.eq
-      local.tee $4
+      local.tee $6
       select
-      local.get $3
       local.get $5
+      local.get $7
       i32.const 1049000
-      local.get $4
+      local.get $6
       select
       i32.load offset=16
-      call_indirect $12 (type $0)
+      call_indirect $13 (type $0)
     end ;; $block
-    local.get $3
+    local.get $5
     i32.const 64
     i32.add
-    global.set $14
+    global.set $15
     )
   
-  (func $_proxy_onTick (type $5)
+  (func $_proxy_onTick (type $6)
     (param $0 i32)
     (local $1 i32)
     (local $2 i32)
     (local $3 i32)
     (local $4 i32)
-    global.get $14
+    global.get $15
     i32.const 64
     i32.sub
     local.tee $1
-    global.set $14
+    global.set $15
     block $block
       i32.const 0
       i32.load offset=1054568
@@ -633,12 +636,12 @@
       local.get $4
       select
       i32.load offset=16
-      call_indirect $12 (type $0)
+      call_indirect $13 (type $0)
     end ;; $block
     local.get $1
     i32.const 64
     i32.add
-    global.set $14
+    global.set $15
     )
   
   (func $<&mut_W_as_core::fmt::Write>::write_str::hf2482d9015e58e57 (type $1)
@@ -783,11 +786,11 @@
     (local $3 i32)
     (local $4 i32)
     (local $5 i32)
-    global.get $14
+    global.get $15
     i32.const 16
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $0
     i32.load
     local.set $0
@@ -1078,7 +1081,7 @@
         local.get $2
         i32.const 16
         i32.add
-        global.set $14
+        global.set $15
         i32.const 0
         return
       end ;; $block_0
@@ -1094,11 +1097,11 @@
     (param $1 i32)
     (result i32)
     (local $2 i32)
-    global.get $14
+    global.get $15
     i32.const 32
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $2
     local.get $0
     i32.load
@@ -1139,7 +1142,7 @@
     local.get $2
     i32.const 32
     i32.add
-    global.set $14
+    global.set $15
     local.get $1
     )
   
@@ -1158,11 +1161,11 @@
     (local $10 i32)
     (local $11 i32)
     (local $12 i32)
-    global.get $14
+    global.get $15
     i32.const 64
     i32.sub
     local.tee $3
-    global.set $14
+    global.set $15
     local.get $3
     i32.const 36
     i32.add
@@ -1245,7 +1248,7 @@
             i32.load offset=4
             local.get $1
             i32.load offset=12
-            call_indirect $12 (type $1)
+            call_indirect $13 (type $1)
             br_if $block_0
             local.get $8
             i32.const 8
@@ -1573,7 +1576,7 @@
                   i32.const 4
                   i32.add
                   i32.load
-                  call_indirect $12 (type $2)
+                  call_indirect $13 (type $2)
                   br_if $block_0
                   local.get $6
                   local.get $10
@@ -1614,7 +1617,7 @@
                   i32.add
                   i32.load
                   i32.load offset=12
-                  call_indirect $12 (type $1)
+                  call_indirect $13 (type $1)
                   i32.eqz
                   br_if $loop
                   br $block_0
@@ -1651,7 +1654,7 @@
           i32.load offset=4
           local.get $1
           i32.load offset=12
-          call_indirect $12 (type $1)
+          call_indirect $13 (type $1)
           br_if $block_0
           local.get $8
           i32.const 8
@@ -1677,7 +1680,7 @@
             i32.const 4
             i32.add
             i32.load
-            call_indirect $12 (type $2)
+            call_indirect $13 (type $2)
             br_if $block_0
             local.get $6
             local.get $10
@@ -1710,7 +1713,7 @@
             local.get $1
             i32.load
             i32.load offset=12
-            call_indirect $12 (type $1)
+            call_indirect $13 (type $1)
             i32.eqz
             br_if $loop_0
             br $block_0
@@ -1738,31 +1741,31 @@
         i32.add
         i32.load
         i32.load offset=12
-        call_indirect $12 (type $1)
+        call_indirect $13 (type $1)
         i32.eqz
         br_if $block
       end ;; $block_0
       local.get $3
       i32.const 64
       i32.add
-      global.set $14
+      global.set $15
       i32.const 1
       return
     end ;; $block
     local.get $3
     i32.const 64
     i32.add
-    global.set $14
+    global.set $15
     i32.const 0
     )
   
   (func $core::result::unwrap_failed::h7b72eb0c479e1bd5 (type $4)
     (local $0 i32)
-    global.get $14
+    global.get $15
     i32.const 64
     i32.sub
     local.tee $0
-    global.set $14
+    global.set $15
     local.get $0
     i32.const 43
     i32.store offset=12
@@ -1819,11 +1822,11 @@
     (local $3 i32)
     (local $4 i32)
     (local $5 i32)
-    global.get $14
+    global.get $15
     i32.const 80
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     i32.const 1
     local.set $3
     block $block
@@ -1837,7 +1840,7 @@
       local.tee $4
       i32.load
       i32.load offset=12
-      call_indirect $12 (type $1)
+      call_indirect $13 (type $1)
       br_if $block
       local.get $1
       i32.const 24
@@ -1861,7 +1864,7 @@
           i32.const 1054554
           i32.const 1
           local.get $4
-          call_indirect $12 (type $1)
+          call_indirect $13 (type $1)
           br_if $block
           local.get $1
           i32.const 1048996
@@ -1875,7 +1878,7 @@
         i32.const 1054552
         i32.const 2
         local.get $4
-        call_indirect $12 (type $1)
+        call_indirect $13 (type $1)
         br_if $block
         local.get $1
         i32.load
@@ -1954,13 +1957,13 @@
       i32.add
       i32.load
       i32.load offset=12
-      call_indirect $12 (type $1)
+      call_indirect $13 (type $1)
       local.set $3
     end ;; $block
     local.get $2
     i32.const 80
     i32.add
-    global.set $14
+    global.set $15
     local.get $3
     )
   
@@ -1969,11 +1972,11 @@
     (param $1 i32)
     (local $2 i32)
     (local $3 i64)
-    global.get $14
+    global.get $15
     i32.const 32
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $1
     i64.load align=4
     local.set $3
@@ -2002,11 +2005,11 @@
   
   (func $core::result::unwrap_failed::hc7f92e904dbe4728 (type $4)
     (local $0 i32)
-    global.get $14
+    global.get $15
     i32.const 64
     i32.sub
     local.tee $0
-    global.set $14
+    global.set $15
     local.get $0
     i32.const 55
     i32.store offset=12
@@ -2068,7 +2071,7 @@
     i32.add
     i32.load
     i32.load offset=12
-    call_indirect $12 (type $1)
+    call_indirect $13 (type $1)
     )
   
   (func $core::fmt::Formatter::pad::hacaebd5abd28adf1 (type $1)
@@ -2500,7 +2503,7 @@
                 i32.add
                 i32.load
                 i32.load offset=12
-                call_indirect $12 (type $1)
+                call_indirect $13 (type $1)
                 return
               end ;; $block_4
               local.get $0
@@ -2512,7 +2515,7 @@
               i32.add
               i32.load
               i32.load offset=12
-              call_indirect $12 (type $1)
+              call_indirect $13 (type $1)
               return
             end ;; $block_3
             local.get $9
@@ -2562,7 +2565,7 @@
             local.get $7
             i32.load
             i32.load offset=16
-            call_indirect $12 (type $2)
+            call_indirect $13 (type $2)
             i32.eqz
             br_if $loop_2
           end ;; $loop_2
@@ -2589,7 +2592,7 @@
         local.tee $6
         i32.load
         i32.load offset=12
-        call_indirect $12 (type $1)
+        call_indirect $13 (type $1)
         br_if $block
         local.get $10
         i32.load
@@ -2614,7 +2617,7 @@
             local.get $9
             local.get $6
             i32.load
-            call_indirect $12 (type $2)
+            call_indirect $13 (type $2)
             i32.eqz
             br_if $loop_3
           end ;; $loop_3
@@ -2633,7 +2636,7 @@
       i32.add
       i32.load
       i32.load offset=12
-      call_indirect $12 (type $1)
+      call_indirect $13 (type $1)
       local.set $3
     end ;; $block
     local.get $3
@@ -2646,11 +2649,11 @@
     (local $2 i32)
     (local $3 i32)
     (local $4 i32)
-    global.get $14
+    global.get $15
     i32.const 32
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $1
     i32.const 28
     i32.add
@@ -2695,7 +2698,7 @@
     local.get $2
     i32.const 32
     i32.add
-    global.set $14
+    global.set $15
     local.get $1
     )
   
@@ -2713,11 +2716,11 @@
     (local $3 i32)
     (local $4 i32)
     (local $5 i32)
-    global.get $14
+    global.get $15
     i32.const 64
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $1
     i32.load
     local.set $3
@@ -2850,7 +2853,7 @@
           local.get $2
           i32.const 64
           i32.add
-          global.set $14
+          global.set $15
           return
         end ;; $block_1
         call $core::result::unwrap_failed::hc7f92e904dbe4728
@@ -2864,23 +2867,23 @@
     unreachable
     )
   
-  (func $__rust_dealloc (type $5)
+  (func $__rust_dealloc (type $6)
     (param $0 i32)
     local.get $0
     call $__rdl_dealloc
     )
   
-  (func $core::panicking::panic::h62fdcfa056e70982 (type $5)
+  (func $core::panicking::panic::h62fdcfa056e70982 (type $6)
     (param $0 i32)
     (local $1 i32)
     (local $2 i64)
     (local $3 i64)
     (local $4 i64)
-    global.get $14
+    global.get $15
     i32.const 48
     i32.sub
     local.tee $1
-    global.set $14
+    global.set $15
     local.get $0
     i64.load offset=8 align=4
     local.set $2
@@ -2967,7 +2970,7 @@
     i32.store offset=1054568
     )
   
-  (func $_malloc (type $6)
+  (func $_malloc (type $7)
     (param $0 i32)
     (result i32)
     block $block
@@ -3004,7 +3007,7 @@
     unreachable
     )
   
-  (func $_free (type $5)
+  (func $_free (type $6)
     (param $0 i32)
     block $block
       local.get $0
@@ -3027,7 +3030,7 @@
     (param $1 i32)
     )
   
-  (func $<log::NopLogger_as_log::Log>::flush::h5e0800c275585e5e (type $5)
+  (func $<log::NopLogger_as_log::Log>::flush::h5e0800c275585e5e (type $6)
     (param $0 i32)
     )
   
@@ -3049,11 +3052,11 @@
     (local $13 i32)
     (local $14 i32)
     (local $15 i32)
-    global.get $14
+    global.get $15
     i32.const 48
     i32.sub
     local.tee $3
-    global.set $14
+    global.set $15
     block $block
       local.get $2
       i32.eqz
@@ -3099,7 +3102,7 @@
                   local.get $9
                   i32.load
                   i32.load offset=12
-                  call_indirect $12 (type $1)
+                  call_indirect $13 (type $1)
                   br_if $block_3
                 end ;; $block_4
                 local.get $4
@@ -3299,7 +3302,7 @@
                 local.get $11
                 local.get $14
                 i32.load offset=12
-                call_indirect $12 (type $1)
+                call_indirect $13 (type $1)
                 br_if $block_3
                 block $block_14
                   local.get $10
@@ -3331,14 +3334,14 @@
             local.get $3
             i32.const 48
             i32.add
-            global.set $14
+            global.set $15
             i32.const 1
             return
           end ;; $block_2
           local.get $3
           i32.const 48
           i32.add
-          global.set $14
+          global.set $15
           i32.const 0
           return
         end ;; $block_1
@@ -3359,11 +3362,11 @@
     local.get $3
     i32.const 48
     i32.add
-    global.set $14
+    global.set $15
     i32.const 0
     )
   
-  (func $std::panicking::rust_panic_with_hook::h3f88564dfeb012eb (type $5)
+  (func $std::panicking::rust_panic_with_hook::h3f88564dfeb012eb (type $6)
     (param $0 i32)
     (local $1 i32)
     (local $2 i32)
@@ -3421,14 +3424,14 @@
     unreachable
     )
   
-  (func $std::panicking::continue_panic_fmt::he2d0fc2a935878af (type $5)
+  (func $std::panicking::continue_panic_fmt::he2d0fc2a935878af (type $6)
     (param $0 i32)
     (local $1 i32)
-    global.get $14
+    global.get $15
     i32.const 16
     i32.sub
     local.tee $1
-    global.set $14
+    global.set $15
     local.get $0
     i32.load offset=8
     call $core::option::Option<T>::unwrap::hcab2ea581bad05cd
@@ -3448,7 +3451,7 @@
     unreachable
     )
   
-  (func $core::option::Option<T>::unwrap::hcab2ea581bad05cd (type $6)
+  (func $core::option::Option<T>::unwrap::hcab2ea581bad05cd (type $7)
     (param $0 i32)
     (result i32)
     block $block
@@ -3695,7 +3698,7 @@
     local.get $2
     )
   
-  (func $dlmalloc::dlmalloc::Dlmalloc::malloc::h7ef7d8a98d4afe8d (type $6)
+  (func $dlmalloc::dlmalloc::Dlmalloc::malloc::h7ef7d8a98d4afe8d (type $7)
     (param $0 i32)
     (result i32)
     (local $1 i32)
@@ -7453,13 +7456,13 @@
     i32.store offset=8
     )
   
-  (func $__rdl_dealloc (type $5)
+  (func $__rdl_dealloc (type $6)
     (param $0 i32)
     local.get $0
     call $dlmalloc::dlmalloc::Dlmalloc::free::he25d64d2cc54b15f
     )
   
-  (func $dlmalloc::dlmalloc::Dlmalloc::free::he25d64d2cc54b15f (type $5)
+  (func $dlmalloc::dlmalloc::Dlmalloc::free::he25d64d2cc54b15f (type $6)
     (param $0 i32)
     (local $1 i32)
     (local $2 i32)
@@ -9032,7 +9035,7 @@
     local.get $0
     )
   
-  (func $rust_begin_unwind (type $5)
+  (func $rust_begin_unwind (type $6)
     (param $0 i32)
     local.get $0
     call $std::panicking::continue_panic_fmt::he2d0fc2a935878af
@@ -9043,11 +9046,11 @@
     (param $0 i32)
     (param $1 i32)
     (local $2 i32)
-    global.get $14
+    global.get $15
     i32.const 48
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $2
     local.get $1
     i32.store offset=4
@@ -9109,11 +9112,11 @@
     (param $1 i32)
     (param $2 i32)
     (local $3 i32)
-    global.get $14
+    global.get $15
     i32.const 48
     i32.sub
     local.tee $3
-    global.set $14
+    global.set $15
     local.get $3
     local.get $2
     i32.store offset=4
@@ -9160,7 +9163,7 @@
     unreachable
     )
   
-  (func $core::fmt::num::imp::fmt_u64::h4648b2300e699242 (type $7)
+  (func $core::fmt::num::imp::fmt_u64::h4648b2300e699242 (type $8)
     (param $0 i64)
     (param $1 i32)
     (result i32)
@@ -9170,11 +9173,11 @@
     (local $5 i64)
     (local $6 i32)
     (local $7 i32)
-    global.get $14
+    global.get $15
     i32.const 48
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     i32.const 39
     local.set $3
     block $block
@@ -9338,21 +9341,21 @@
     local.get $2
     i32.const 48
     i32.add
-    global.set $14
+    global.set $15
     local.get $3
     )
   
-  (func $core::ptr::real_drop_in_place::h5a9a7fbf25605767 (type $5)
+  (func $core::ptr::real_drop_in_place::h5a9a7fbf25605767 (type $6)
     (param $0 i32)
     )
   
-  (func $<T_as_core::any::Any>::type_id::h5fb1d47f0acdabcc (type $8)
+  (func $<T_as_core::any::Any>::type_id::h5fb1d47f0acdabcc (type $9)
     (param $0 i32)
     (result i64)
     i64.const -670765639137414048
     )
   
-  (func $core::fmt::Formatter::pad_integral::h17dddcbb38d9710f (type $9)
+  (func $core::fmt::Formatter::pad_integral::h17dddcbb38d9710f (type $10)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -9513,7 +9516,7 @@
                               i32.add
                               i32.load
                               i32.load offset=12
-                              call_indirect $12 (type $1)
+                              call_indirect $13 (type $1)
                               return
                             end ;; $block_14
                             i32.const 1
@@ -9606,7 +9609,7 @@
                           local.get $5
                           i32.load
                           i32.load offset=16
-                          call_indirect $12 (type $2)
+                          call_indirect $13 (type $2)
                           i32.eqz
                           br_if $loop_0
                           br $block_7
@@ -9638,7 +9641,7 @@
                       local.tee $2
                       i32.load
                       i32.load offset=12
-                      call_indirect $12 (type $1)
+                      call_indirect $13 (type $1)
                       br_if $block
                       local.get $9
                       i32.load
@@ -9664,7 +9667,7 @@
                         local.get $10
                         local.get $2
                         i32.load
-                        call_indirect $12 (type $2)
+                        call_indirect $13 (type $2)
                         i32.eqz
                         br_if $loop_1
                         br $block
@@ -9716,7 +9719,7 @@
                   local.get $1
                   i32.load
                   i32.load offset=16
-                  call_indirect $12 (type $2)
+                  call_indirect $13 (type $2)
                   i32.eqz
                   br_if $loop_2
                 end ;; $loop_2
@@ -9745,7 +9748,7 @@
             local.tee $2
             i32.load
             i32.load offset=12
-            call_indirect $12 (type $1)
+            call_indirect $13 (type $1)
             br_if $block
             local.get $9
             i32.load
@@ -9771,7 +9774,7 @@
               local.get $10
               local.get $2
               i32.load
-              call_indirect $12 (type $2)
+              call_indirect $13 (type $2)
               i32.eqz
               br_if $loop_3
               br $block
@@ -9800,13 +9803,13 @@
       i32.add
       i32.load
       i32.load offset=12
-      call_indirect $12 (type $1)
+      call_indirect $13 (type $1)
       return
     end ;; $block
     local.get $8
     )
   
-  (func $core::fmt::Formatter::pad_integral::write_prefix::h80e5cb0c85711a72 (type $10)
+  (func $core::fmt::Formatter::pad_integral::write_prefix::h80e5cb0c85711a72 (type $11)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -9830,7 +9833,7 @@
           i32.add
           i32.load
           i32.load offset=16
-          call_indirect $12 (type $2)
+          call_indirect $13 (type $2)
           br_if $block_0
         end ;; $block_1
         local.get $2
@@ -9845,7 +9848,7 @@
         i32.add
         i32.load
         i32.load offset=12
-        call_indirect $12 (type $1)
+        call_indirect $13 (type $1)
         local.set $4
       end ;; $block_0
       local.get $4
@@ -9858,11 +9861,11 @@
     (param $0 i32)
     (param $1 i32)
     (local $2 i32)
-    global.get $14
+    global.get $15
     i32.const 48
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $2
     local.get $1
     i32.store offset=4
@@ -9909,7 +9912,7 @@
     unreachable
     )
   
-  (func $core::str::slice_error_fail::h3704ce74b976be71 (type $11)
+  (func $core::str::slice_error_fail::h3704ce74b976be71 (type $12)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -9920,11 +9923,11 @@
     (local $7 i32)
     (local $8 i32)
     (local $9 i32)
-    global.get $14
+    global.get $15
     i32.const 112
     i32.sub
     local.tee $4
-    global.set $14
+    global.set $15
     local.get $4
     local.get $3
     i32.store offset=12
@@ -10489,11 +10492,11 @@
     (local $2 i32)
     (local $3 i32)
     (local $4 i32)
-    global.get $14
+    global.get $15
     i32.const 32
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     block $block
       block $block_0
         local.get $0
@@ -10535,7 +10538,7 @@
       local.get $2
       i32.const 32
       i32.add
-      global.set $14
+      global.set $15
       i32.const 1
       return
     end ;; $block
@@ -10547,7 +10550,7 @@
     local.get $2
     i32.const 32
     i32.add
-    global.set $14
+    global.set $15
     local.get $1
     )
   
@@ -10591,7 +10594,7 @@
       i32.add
       i32.load
       i32.load offset=16
-      call_indirect $12 (type $2)
+      call_indirect $13 (type $2)
       br_if $block
       i32.const 2
       local.set $2
@@ -11450,7 +11453,7 @@
           local.get $14
           i32.load
           i32.load offset=16
-          call_indirect $12 (type $2)
+          call_indirect $13 (type $2)
           i32.eqz
           br_if $loop_4
         end ;; $loop_4
@@ -11467,7 +11470,7 @@
       i32.add
       i32.load
       i32.load offset=16
-      call_indirect $12 (type $2)
+      call_indirect $13 (type $2)
       local.set $2
     end ;; $block
     local.get $2
@@ -11480,11 +11483,11 @@
     (local $2 i32)
     (local $3 i32)
     (local $4 i32)
-    global.get $14
+    global.get $15
     i32.const 128
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     block $block
       block $block_0
         block $block_1
@@ -11507,7 +11510,7 @@
             local.get $2
             i32.const 128
             i32.add
-            global.set $14
+            global.set $15
             local.get $0
             return
           end ;; $block_2
@@ -11566,7 +11569,7 @@
           local.get $2
           i32.const 128
           i32.add
-          global.set $14
+          global.set $15
           local.get $0
           return
         end ;; $block_1
@@ -11625,7 +11628,7 @@
         local.get $2
         i32.const 128
         i32.add
-        global.set $14
+        global.set $15
         local.get $0
         return
       end ;; $block_0
@@ -11650,7 +11653,7 @@
     call $core::fmt::num::imp::fmt_u64::h4648b2300e699242
     )
   
-  (func $core::slice::memchr::memchr::h6bde110ce4c09380 (type $11)
+  (func $core::slice::memchr::memchr::h6bde110ce4c09380 (type $12)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -12056,7 +12059,7 @@
     unreachable
     )
   
-  (func $core::ptr::real_drop_in_place::h23040579a46f15a6 (type $5)
+  (func $core::ptr::real_drop_in_place::h23040579a46f15a6 (type $6)
     (param $0 i32)
     )
   
@@ -12065,11 +12068,11 @@
     (param $1 i32)
     (result i32)
     (local $2 i32)
-    global.get $14
+    global.get $15
     i32.const 16
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $2
     i32.const 0
     i32.store offset=12
@@ -12190,7 +12193,7 @@
     local.get $2
     i32.const 16
     i32.add
-    global.set $14
+    global.set $15
     local.get $1
     )
   
@@ -12199,11 +12202,11 @@
     (param $1 i32)
     (result i32)
     (local $2 i32)
-    global.get $14
+    global.get $15
     i32.const 32
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $2
     local.get $0
     i32.store offset=4
@@ -12243,11 +12246,11 @@
     local.get $2
     i32.const 32
     i32.add
-    global.set $14
+    global.set $15
     local.get $1
     )
   
-  (func $core::ptr::real_drop_in_place::h0013f08692be52e6 (type $5)
+  (func $core::ptr::real_drop_in_place::h0013f08692be52e6 (type $6)
     (param $0 i32)
     )
   
@@ -12268,11 +12271,11 @@
     (param $1 i32)
     (result i32)
     (local $2 i32)
-    global.get $14
+    global.get $15
     i32.const 16
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $0
     i32.load
     local.set $0
@@ -12396,7 +12399,7 @@
     local.get $2
     i32.const 16
     i32.add
-    global.set $14
+    global.set $15
     local.get $1
     )
   
@@ -12405,11 +12408,11 @@
     (param $1 i32)
     (result i32)
     (local $2 i32)
-    global.get $14
+    global.get $15
     i32.const 32
     i32.sub
     local.tee $2
-    global.set $14
+    global.set $15
     local.get $2
     local.get $0
     i32.load
@@ -12450,7 +12453,7 @@
     local.get $2
     i32.const 32
     i32.add
-    global.set $14
+    global.set $15
     local.get $1
     )
   

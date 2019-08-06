@@ -145,9 +145,9 @@ using WasmCallback_m = uint64_t (*)(void*);
 using WasmCallback_mW = uint64_t (*)(void*, Word);
 using WasmCallback_jW = uint32_t (*)(void*, Word);
 
-// Sadly we don't have enum class inheritance in c++-14.
-enum class StreamType : uint32_t { Request = 0, Response = 1, MAX = 1 };
-enum class MetadataType : uint32_t {
+// These need to match those in api/wasm/cpp/proxy_wasm_enums.h
+enum class StreamType : int32_t { Request = 0, Response = 1, MAX = 1 };
+enum class MetadataType : int32_t {
   Request = 0,
   Response = 1,
   RequestRoute = 2,
@@ -158,7 +158,7 @@ enum class MetadataType : uint32_t {
   Cluster = 7,
   MAX = 7
 };
-enum class HeaderMapType : uint32_t {
+enum class HeaderMapType : int32_t {
   RequestHeaders = 0,
   RequestTrailers = 1,
   ResponseHeaders = 2,
@@ -168,20 +168,28 @@ enum class HeaderMapType : uint32_t {
   GrpcReceiveTrailingMetadata = 6,
   MAX = 6,
 };
+enum class MetadataResult : int32_t {
+  Ok = 0,
+  StructNotFound = 1,
+  FieldNotFound = 2,
+  SerializationFailure = 3,
+  BadType = 4,
+  ParseFailure = 5,
+};
 
 // Handlers for functions exported from envoy to wasm.
 void logHandler(void* raw_context, Word level, Word address, Word size);
 void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word value_size_ptr);
 uint32_t getDestinationPortHandler(void* raw_context, Word type);
 uint32_t getResponseCodeHandler(void* raw_context, Word type);
-void getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
+Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr);
-void setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
+Word setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
                         Word value_size);
-void getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr);
-void getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+Word getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr);
+Word getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr_ptr, Word value_size_ptr);
-void setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
+Word setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr, Word value_size);
 void continueRequestHandler(void* raw_context);
 void continueResponseHandler(void* raw_context);
@@ -234,6 +242,8 @@ void grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word messa
 
 void setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_milliseconds);
 uint64_t getCurrentTimeNanosecondsHandler(void* raw_context);
+
+Word setEffectiveContextHandler(void* raw_context, Word context_id);
 
 inline MetadataType StreamType2MetadataType(StreamType type) {
   return static_cast<MetadataType>(type);
@@ -296,6 +306,7 @@ public:
   absl::string_view root_id();
   bool isVmContext() { return id_ == 0; }
   bool isRootContext() { return root_context_id_ == 0; }
+  Context* root_context() { return root_context_; }
 
   const StreamInfo::StreamInfo* getConstStreamInfo(MetadataType type) const;
   StreamInfo::StreamInfo* getStreamInfo(MetadataType type) const;
@@ -303,7 +314,7 @@ public:
   //
   // VM level downcalls into the WASM code on Context(id == 0).
   //
-  virtual void onStart(absl::string_view root_id);
+  virtual void onStart(absl::string_view root_id, absl::string_view vm_configuration);
   virtual void onConfigure(absl::string_view configuration);
 
   //
@@ -382,15 +393,16 @@ public:
   // Metadata
   // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the
   // values are serialized ProtobufWkt::Struct Value
-  virtual std::string getMetadata(MetadataType type, absl::string_view key);
-  virtual void setMetadata(MetadataType type, absl::string_view key,
-                           absl::string_view serialized_proto_struct);
-  virtual PairsWithStringValues getMetadataPairs(MetadataType type);
+  virtual MetadataResult getMetadata(MetadataType type, absl::string_view key, std::string* result);
+  virtual MetadataResult setMetadata(MetadataType type, absl::string_view key,
+                                     absl::string_view serialized_proto_struct);
+  virtual MetadataResult getMetadataPairs(MetadataType type, PairsWithStringValues* result);
   // Name is ignored when the type is not MetadataType::Request/Response: the values are serialized
   // ProtobufWkt::Struct
-  virtual std::string getMetadataStruct(MetadataType type, absl::string_view name);
-  virtual void setMetadataStruct(MetadataType type, absl::string_view key,
-                                 absl::string_view serialized_proto_struct);
+  virtual MetadataResult getMetadataStruct(MetadataType type, absl::string_view name,
+                                           std::string* result);
+  virtual MetadataResult setMetadataStruct(MetadataType type, absl::string_view key,
+                                           absl::string_view serialized_proto_struct);
 
   // Continue
   virtual void continueRequest() {
@@ -507,8 +519,9 @@ protected:
 
   Wasm* wasm_;
   uint32_t id_;
-  uint32_t root_context_id_;  // 0 for roots and the general context.
-  const std::string root_id_; // set only in roots.
+  uint32_t root_context_id_;       // 0 for roots and the general context.
+  Context* root_context_{nullptr}; // set in all contexts.
+  const std::string root_id_;      // set only in roots.
   bool destroyed_ = false;
 
   uint32_t next_http_call_token_ = 1;
@@ -558,7 +571,7 @@ class Wasm : public Envoy::Server::Wasm,
              public Logger::Loggable<Logger::Id::wasm>,
              public std::enable_shared_from_this<Wasm> {
 public:
-  Wasm(absl::string_view vm, absl::string_view id, absl::string_view initial_configuration,
+  Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_configuration,
        Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
        Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
        const envoy::api::v2::core::Metadata* listener_metadata,
@@ -568,7 +581,8 @@ public:
 
   bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
   void configure(Context* root_context, absl::string_view configuration);
-  Context* start(absl::string_view root_id); // returns the root Context.
+  Context* start(absl::string_view root_id,
+                 absl::string_view vm_configuration); // returns the root Context.
 
   absl::string_view id() const { return id_; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
@@ -592,10 +606,10 @@ public:
   uint32_t allocContextId();
 
   const std::string& code() const { return code_; }
-  const std::string& initial_configuration() const { return initial_configuration_; }
+  const std::string& vm_configuration() const { return vm_configuration_; }
   bool allow_precompiled() const { return allow_precompiled_; }
-  void setInitialConfiguration(const std::string& initial_configuration) {
-    initial_configuration_ = initial_configuration;
+  void setInitialConfiguration(const std::string& vm_configuration) {
+    vm_configuration_ = vm_configuration;
   }
 
   //
@@ -690,7 +704,7 @@ private:
   WasmCall1Void free_;
 
   // Calls into the VM.
-  WasmContextCall2Void onStart_;
+  WasmContextCall4Void onStart_;
   WasmContextCall2Void onConfigure_;
   WasmContextCall0Void onTick_;
 
@@ -722,7 +736,7 @@ private:
 
   // Used by the base_wasm to enable non-clonable thread local Wasm(s) to be constructed.
   std::string code_;
-  std::string initial_configuration_;
+  std::string vm_configuration_;
   bool allow_precompiled_ = false;
 
   bool is_emscripten_ = false;
@@ -886,19 +900,23 @@ public:
   using EnvoyException::EnvoyException;
 };
 
-inline Context::Context() : wasm_(nullptr), id_(0), root_context_id_(0), root_id_("") {}
+inline Context::Context()
+    : wasm_(nullptr), id_(0), root_context_id_(0), root_context_(this), root_id_("") {}
 
-inline Context::Context(Wasm* wasm) : wasm_(wasm), id_(0), root_context_id_(0), root_id_("") {
+inline Context::Context(Wasm* wasm)
+    : wasm_(wasm), id_(0), root_context_id_(0), root_context_(this), root_id_("") {
   wasm_->contexts_[id_] = this;
 }
 
 inline Context::Context(Wasm* wasm, uint32_t root_context_id)
     : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(root_context_id), root_id_("") {
   wasm_->contexts_[id_] = this;
+  root_context_ = wasm_->contexts_[root_context_id_];
 }
 
 inline Context::Context(Wasm* wasm, absl::string_view root_id)
-    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(0), root_id_(root_id) {
+    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(0), root_context_(this),
+      root_id_(root_id) {
   wasm_->contexts_[id_] = this;
 }
 
@@ -1032,14 +1050,21 @@ inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t sta
 }
 
 extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
+extern thread_local uint32_t effective_context_id_;
 
 struct SaveRestoreContext {
   explicit SaveRestoreContext(Context* context) {
     saved_context = current_context_;
+    saved_effective_context_id_ = effective_context_id_;
     current_context_ = context;
+    effective_context_id_ = 0; // No effective context id.
   }
-  ~SaveRestoreContext() { current_context_ = saved_context; }
+  ~SaveRestoreContext() {
+    current_context_ = saved_context;
+    effective_context_id_ = saved_effective_context_id_;
+  }
   Context* saved_context;
+  uint32_t saved_effective_context_id_;
 };
 
 } // namespace Wasm

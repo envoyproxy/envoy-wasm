@@ -236,13 +236,6 @@ void NullVm::getFunction(absl::string_view functionName, WasmCall3Void* f) {
       SaveRestoreContext saved_context(context);
       plugin->onConfigure(context_id.u64, ptr.u64, size.u64);
     };
-  } else if (functionName == "_proxy_onStart") {
-    auto plugin = plugin_.get();
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_id_ptr,
-                  Word root_id_size) {
-      SaveRestoreContext saved_context(context);
-      plugin->onStart(context_id.u64, root_id_ptr.u64, root_id_size.u64);
-    };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", functionName));
   }
@@ -269,6 +262,14 @@ void NullVm::getFunction(absl::string_view functionName, WasmCall5Void* f) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcClose(context_id.u64, token.u64, status_code.u64, status_message_ptr.u64,
                           status_message_size.u64);
+    };
+  } else if (functionName == "_proxy_onStart") {
+    auto plugin = plugin_.get();
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_id_ptr,
+                  Word root_id_size, Word vm_configuration_ptr, Word vm_configuration_size) {
+      SaveRestoreContext saved_context(context);
+      plugin->onStart(context_id.u64, root_id_ptr.u64, root_id_size.u64, vm_configuration_ptr.u64,
+                      vm_configuration_size.u64);
     };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", functionName));
@@ -428,10 +429,12 @@ Plugin::RootContext* NullVmPlugin::getRoot(absl::string_view root_id) {
   return it->second;
 }
 
-void NullVmPlugin::onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size) {
+void NullVmPlugin::onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size,
+                           uint64_t vm_configuration_ptr, uint64_t vm_configuration_size) {
   ensureRootContext(root_context_id,
                     std::make_unique<WasmData>(reinterpret_cast<char*>(root_id_ptr), root_id_size))
-      ->onStart();
+      ->onStart(std::make_unique<WasmData>(reinterpret_cast<char*>(vm_configuration_ptr),
+                                           vm_configuration_size));
 }
 
 void NullVmPlugin::onConfigure(uint64_t root_context_id, uint64_t ptr, uint64_t size) {
@@ -487,7 +490,7 @@ void NullVmPlugin::onHttpCallResponse(uint64_t context_id, uint64_t token,
                                       uint64_t header_pairs_ptr, uint64_t header_pairs_size,
                                       uint64_t body_ptr, uint64_t body_size,
                                       uint64_t trailer_pairs_ptr, uint64_t trailer_pairs_size) {
-  getContextBase(context_id)
+  getRootContext(context_id)
       ->onHttpCallResponse(
           token,
           std::make_unique<WasmData>(reinterpret_cast<char*>(header_pairs_ptr), header_pairs_size),
@@ -498,29 +501,29 @@ void NullVmPlugin::onHttpCallResponse(uint64_t context_id, uint64_t token,
 
 void NullVmPlugin::onGrpcReceive(uint64_t context_id, uint64_t token, uint64_t response_ptr,
                                  uint64_t response_size) {
-  getContextBase(context_id)
+  getRootContext(context_id)
       ->onGrpcReceive(
           token, std::make_unique<WasmData>(reinterpret_cast<char*>(response_ptr), response_size));
 }
 
 void NullVmPlugin::onGrpcClose(uint64_t context_id, uint64_t token, uint64_t status_code,
                                uint64_t status_message_ptr, uint64_t status_message_size) {
-  getContextBase(context_id)
+  getRootContext(context_id)
       ->onGrpcClose(token, static_cast<Plugin::GrpcStatus>(status_code),
                     std::make_unique<WasmData>(reinterpret_cast<char*>(status_message_ptr),
                                                status_message_size));
 }
 
 void NullVmPlugin::onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t token) {
-  getContextBase(context_id)->onGrpcCreateInitialMetadata(token);
+  getRootContext(context_id)->onGrpcCreateInitialMetadata(token);
 }
 
 void NullVmPlugin::onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t token) {
-  getContextBase(context_id)->onGrpcReceiveInitialMetadata(token);
+  getRootContext(context_id)->onGrpcReceiveInitialMetadata(token);
 }
 
 void NullVmPlugin::onGrpcReceiveTrailingMetadata(uint64_t context_id, uint64_t token) {
-  getContextBase(context_id)->onGrpcReceiveTrailingMetadata(token);
+  getRootContext(context_id)->onGrpcReceiveTrailingMetadata(token);
 }
 
 void NullVmPlugin::onQueueReady(uint64_t context_id, uint64_t token) {

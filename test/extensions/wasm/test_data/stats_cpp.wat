@@ -178,12 +178,12 @@
     global.set $30
     )
   
-  (func $_proxy_onStart (type $9)
+  (func $_proxy_onStart (type $6)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
-    (local $3 i32)
-    (local $4 i32)
+    (param $3 i32)
+    (param $4 i32)
     (local $5 i32)
     (local $6 i32)
     (local $7 i32)
@@ -205,7 +205,7 @@
     i32.const 2524
     i32.const 12
     call $_proxy_defineMetric
-    local.set $4
+    local.set $3
     i32.const 1
     i32.const 2537
     i32.const 11
@@ -216,7 +216,7 @@
     i32.const 14
     call $_proxy_defineMetric
     local.set $7
-    local.get $4
+    local.get $3
     i64.const 1
     call $_proxy_incrementMetric
     local.get $6
@@ -228,7 +228,7 @@
     local.get $2
     i32.const 16
     call $__Znwm
-    local.tee $3
+    local.tee $4
     i32.store
     local.get $2
     i32.const -2147483632
@@ -236,23 +236,23 @@
     local.get $2
     i32.const 14
     i32.store offset=4
-    local.get $3
+    local.get $4
     i32.const 2564
     i64.load align=1
     i64.store align=1
-    local.get $3
+    local.get $4
     i32.const 2572
     i32.load align=1
     i32.store offset=8 align=1
-    local.get $3
+    local.get $4
     i32.const 2576
     i32.load16_s align=1
     i32.store16 offset=12 align=1
-    local.get $3
+    local.get $4
     i32.const 0
     i32.store8 offset=14
     local.get $0
-    local.get $4
+    local.get $3
     call $_proxy_getMetric
     call $__ZNSt3__29to_stringEy
     local.get $1
@@ -262,30 +262,30 @@
     local.get $0
     local.get $0
     i32.load8_s offset=11
-    local.tee $3
+    local.tee $4
     i32.const 0
     i32.lt_s
     local.tee $5
     select
     local.get $0
     i32.load offset=4
-    local.get $3
+    local.get $4
     i32.const 255
     i32.and
     local.get $5
     select
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
-    local.tee $3
+    local.tee $4
     i64.load align=4
     i64.store align=4
     local.get $1
-    local.get $3
+    local.get $4
     i32.load offset=8
     i32.store offset=8
-    local.get $3
+    local.get $4
     i64.const 0
     i64.store align=4
-    local.get $3
+    local.get $4
     i32.const 0
     i32.store offset=8
     i32.const 0
@@ -294,14 +294,14 @@
     local.get $1
     local.get $1
     i32.load8_s offset=11
-    local.tee $3
+    local.tee $4
     i32.const 0
     i32.lt_s
     local.tee $5
     select
     local.get $1
     i32.load offset=4
-    local.get $3
+    local.get $4
     i32.const 255
     i32.and
     local.get $5
@@ -334,13 +334,13 @@
       i32.load
       call $_free
     end ;; $if_1
-    local.get $4
+    local.get $3
     i64.const 1
     call $_proxy_incrementMetric
     local.get $2
     i32.const 16
     call $__Znwm
-    local.tee $3
+    local.tee $4
     i32.store
     local.get $2
     i32.const -2147483632
@@ -348,23 +348,23 @@
     local.get $2
     i32.const 14
     i32.store offset=4
-    local.get $3
+    local.get $4
     i32.const 2564
     i64.load align=1
     i64.store align=1
-    local.get $3
+    local.get $4
     i32.const 2572
     i32.load align=1
     i32.store offset=8 align=1
-    local.get $3
+    local.get $4
     i32.const 2576
     i32.load16_s align=1
     i32.store16 offset=12 align=1
-    local.get $3
+    local.get $4
     i32.const 0
     i32.store8 offset=14
     local.get $0
-    local.get $4
+    local.get $3
     call $_proxy_getMetric
     call $__ZNSt3__29to_stringEy
     local.get $1
@@ -374,30 +374,30 @@
     local.get $0
     local.get $0
     i32.load8_s offset=11
-    local.tee $3
+    local.tee $4
     i32.const 0
     i32.lt_s
     local.tee $5
     select
     local.get $0
     i32.load offset=4
-    local.get $3
+    local.get $4
     i32.const 255
     i32.and
     local.get $5
     select
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
-    local.tee $3
+    local.tee $4
     i64.load align=4
     i64.store align=4
     local.get $1
-    local.get $3
+    local.get $4
     i32.load offset=8
     i32.store offset=8
-    local.get $3
+    local.get $4
     i64.const 0
     i64.store align=4
-    local.get $3
+    local.get $4
     i32.const 0
     i32.store offset=8
     i32.const 1
@@ -406,14 +406,14 @@
     local.get $1
     local.get $1
     i32.load8_s offset=11
-    local.tee $3
+    local.tee $4
     i32.const 0
     i32.lt_s
     local.tee $5
     select
     local.get $1
     i32.load offset=4
-    local.get $3
+    local.get $4
     i32.const 255
     i32.and
     local.get $5
@@ -446,13 +446,13 @@
       i32.load
       call $_free
     end ;; $if_4
-    local.get $4
+    local.get $3
     i64.const 3
     call $_proxy_recordMetric
     local.get $2
     i32.const 16
     call $__Znwm
-    local.tee $3
+    local.tee $4
     i32.store
     local.get $2
     i32.const -2147483632
@@ -460,23 +460,23 @@
     local.get $2
     i32.const 14
     i32.store offset=4
-    local.get $3
+    local.get $4
     i32.const 2564
     i64.load align=1
     i64.store align=1
-    local.get $3
+    local.get $4
     i32.const 2572
     i32.load align=1
     i32.store offset=8 align=1
-    local.get $3
+    local.get $4
     i32.const 2576
     i32.load16_s align=1
     i32.store16 offset=12 align=1
-    local.get $3
+    local.get $4
     i32.const 0
     i32.store8 offset=14
     local.get $0
-    local.get $4
+    local.get $3
     call $_proxy_getMetric
     call $__ZNSt3__29to_stringEy
     local.get $1
@@ -486,30 +486,30 @@
     local.get $0
     local.get $0
     i32.load8_s offset=11
-    local.tee $4
+    local.tee $3
     i32.const 0
     i32.lt_s
-    local.tee $3
+    local.tee $4
     select
     local.get $0
     i32.load offset=4
-    local.get $4
+    local.get $3
     i32.const 255
     i32.and
-    local.get $3
+    local.get $4
     select
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
-    local.tee $4
+    local.tee $3
     i64.load align=4
     i64.store align=4
     local.get $1
-    local.get $4
+    local.get $3
     i32.load offset=8
     i32.store offset=8
-    local.get $4
+    local.get $3
     i64.const 0
     i64.store align=4
-    local.get $4
+    local.get $3
     i32.const 0
     i32.store offset=8
     i32.const 2
@@ -518,17 +518,17 @@
     local.get $1
     local.get $1
     i32.load8_s offset=11
-    local.tee $4
+    local.tee $3
     i32.const 0
     i32.lt_s
-    local.tee $3
+    local.tee $4
     select
     local.get $1
     i32.load offset=4
-    local.get $4
+    local.get $3
     i32.const 255
     i32.and
-    local.get $3
+    local.get $4
     select
     call $_proxy_log
     local.get $1
@@ -561,7 +561,7 @@
     local.get $2
     i32.const 16
     call $__Znwm
-    local.tee $4
+    local.tee $3
     i32.store
     local.get $2
     i32.const -2147483632
@@ -569,15 +569,15 @@
     local.get $2
     i32.const 12
     i32.store offset=4
-    local.get $4
+    local.get $3
     i32.const 2579
     i64.load align=1
     i64.store align=1
-    local.get $4
+    local.get $3
     i32.const 2587
     i32.load align=1
     i32.store offset=8 align=1
-    local.get $4
+    local.get $3
     i32.const 0
     i32.store8 offset=12
     local.get $0
@@ -591,30 +591,30 @@
     local.get $0
     local.get $0
     i32.load8_s offset=11
-    local.tee $4
+    local.tee $3
     i32.const 0
     i32.lt_s
-    local.tee $3
+    local.tee $4
     select
     local.get $0
     i32.load offset=4
-    local.get $4
+    local.get $3
     i32.const 255
     i32.and
-    local.get $3
+    local.get $4
     select
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
-    local.tee $4
+    local.tee $3
     i64.load align=4
     i64.store align=4
     local.get $1
-    local.get $4
+    local.get $3
     i32.load offset=8
     i32.store offset=8
-    local.get $4
+    local.get $3
     i64.const 0
     i64.store align=4
-    local.get $4
+    local.get $3
     i32.const 0
     i32.store offset=8
     i32.const 3
@@ -623,17 +623,17 @@
     local.get $1
     local.get $1
     i32.load8_s offset=11
-    local.tee $4
+    local.tee $3
     i32.const 0
     i32.lt_s
-    local.tee $3
+    local.tee $4
     select
     local.get $1
     i32.load offset=4
-    local.get $4
+    local.get $3
     i32.const 255
     i32.and
-    local.get $3
+    local.get $4
     select
     call $_proxy_log
     local.get $1
@@ -666,7 +666,7 @@
     local.get $2
     i32.const 32
     call $__Znwm
-    local.tee $4
+    local.tee $3
     i32.store
     local.get $2
     i32.const -2147483616
@@ -674,15 +674,15 @@
     local.get $2
     i32.const 16
     i32.store offset=4
-    local.get $4
+    local.get $3
     i32.const 2592
     i64.load align=1
     i64.store align=1
-    local.get $4
+    local.get $3
     i32.const 2600
     i64.load align=1
     i64.store offset=8 align=1
-    local.get $4
+    local.get $3
     i32.const 0
     i32.store8 offset=16
     local.get $0
@@ -696,30 +696,30 @@
     local.get $0
     local.get $0
     i32.load8_s offset=11
-    local.tee $4
+    local.tee $3
     i32.const 0
     i32.lt_s
-    local.tee $3
+    local.tee $4
     select
     local.get $0
     i32.load offset=4
-    local.get $4
+    local.get $3
     i32.const 255
     i32.and
-    local.get $3
+    local.get $4
     select
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
-    local.tee $4
+    local.tee $3
     i64.load align=4
     i64.store align=4
     local.get $1
-    local.get $4
+    local.get $3
     i32.load offset=8
     i32.store offset=8
-    local.get $4
+    local.get $3
     i64.const 0
     i64.store align=4
-    local.get $4
+    local.get $3
     i32.const 0
     i32.store offset=8
     i32.const 4
@@ -728,17 +728,17 @@
     local.get $1
     local.get $1
     i32.load8_s offset=11
-    local.tee $4
+    local.tee $3
     i32.const 0
     i32.lt_s
-    local.tee $3
+    local.tee $4
     select
     local.get $1
     i32.load offset=4
-    local.get $4
+    local.get $3
     i32.const 255
     i32.and
-    local.get $3
+    local.get $4
     select
     call $_proxy_log
     local.get $1
