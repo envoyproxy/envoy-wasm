@@ -34,30 +34,57 @@ inline uint64_t proxy_getCurrentTimeNanoseconds() {
 
 // Generic selectors
 inline uint64_t proxy_getSelectorExpression0(const char* arg0_ptr, size_t arg0_size,
-                                       const char** value_ptr_ptr, size_t* value_size_ptr) {
-  return getSelectorExpression0Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(value_ptr_ptr),
-                                 WR(value_size_ptr));
+                                             const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return getSelectorExpression0Handler(current_context_, WR(arg0_ptr), WS(arg0_size),
+                                       WR(value_ptr_ptr), WR(value_size_ptr));
 }
-inline uint64_t proxy_getSelectorExpression1(const char* arg0_ptr, size_t arg0_size, const char* arg1_ptr,
-                                       size_t arg1_size, const char** value_ptr_ptr,
-                                       size_t* value_size_ptr) {
+inline uint64_t proxy_getSelectorExpression1(const char* arg0_ptr, size_t arg0_size,
+                                             const char* arg1_ptr, size_t arg1_size,
+                                             const char** value_ptr_ptr, size_t* value_size_ptr) {
   return getSelectorExpression1Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(arg1_ptr),
-                                 WS(arg1_size), WR(value_ptr_ptr), WR(value_size_ptr));
+                                       WS(arg1_size), WR(value_ptr_ptr), WR(value_size_ptr));
 }
-inline uint64_t proxy_getSelectorExpression2(const char* arg0_ptr, size_t arg0_size, const char* arg1_ptr,
-                                       size_t arg1_size, const char* arg2_ptr, size_t arg2_size,
-                                       const char** value_ptr_ptr, size_t* value_size_ptr) {
+inline uint64_t proxy_getSelectorExpression2(const char* arg0_ptr, size_t arg0_size,
+                                             const char* arg1_ptr, size_t arg1_size,
+                                             const char* arg2_ptr, size_t arg2_size,
+                                             const char** value_ptr_ptr, size_t* value_size_ptr) {
   return getSelectorExpression2Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(arg1_ptr),
-                                 WS(arg1_size), WR(arg2_ptr), WS(arg2_size), WR(value_ptr_ptr),
-                                 WR(value_size_ptr));
+                                       WS(arg1_size), WR(arg2_ptr), WS(arg2_size),
+                                       WR(value_ptr_ptr), WR(value_size_ptr));
 }
-inline uint64_t proxy_getSelectorExpression3(const char* arg0_ptr, size_t arg0_size, const char* arg1_ptr,
-                                       size_t arg1_size, const char* arg2_ptr, size_t arg2_size,
-                                       const char* arg3_ptr, size_t arg3_size,
-                                       const char** value_ptr_ptr, size_t* value_size_ptr) {
+inline uint64_t proxy_getSelectorExpression3(const char* arg0_ptr, size_t arg0_size,
+                                             const char* arg1_ptr, size_t arg1_size,
+                                             const char* arg2_ptr, size_t arg2_size,
+                                             const char* arg3_ptr, size_t arg3_size,
+                                             const char** value_ptr_ptr, size_t* value_size_ptr) {
   return getSelectorExpression3Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(arg1_ptr),
-                                 WS(arg1_size), WR(arg2_ptr), WS(arg2_size), WR(arg3_ptr),
-                                 WS(arg3_size), WR(value_ptr_ptr), WR(value_size_ptr));
+                                       WS(arg1_size), WR(arg2_ptr), WS(arg2_size), WR(arg3_ptr),
+                                       WS(arg3_size), WR(value_ptr_ptr), WR(value_size_ptr));
+}
+
+inline uint64_t proxy_getSelectorExpression4(const char* arg0_ptr, size_t arg0_size,
+                                             const char* arg1_ptr, size_t arg1_size,
+                                             const char* arg2_ptr, size_t arg2_size,
+                                             const char* arg3_ptr, size_t arg3_size,
+                                             const char* arg4_ptr, size_t arg4_size,
+                                             const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return getSelectorExpression4Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(arg1_ptr),
+                                       WS(arg1_size), WR(arg2_ptr), WS(arg2_size), WR(arg3_ptr),
+                                       WS(arg3_size), WR(arg4_ptr), WS(arg4_size),
+                                       WR(value_ptr_ptr), WR(value_size_ptr));
+}
+
+inline uint64_t proxy_getSelectorExpression5(const char* arg0_ptr, size_t arg0_size,
+                                             const char* arg1_ptr, size_t arg1_size,
+                                             const char* arg2_ptr, size_t arg2_size,
+                                             const char* arg3_ptr, size_t arg3_size,
+                                             const char* arg4_ptr, size_t arg4_size,
+                                             const char* arg5_ptr, size_t arg5_size,
+                                             const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return getSelectorExpression5Handler(current_context_, WR(arg0_ptr), WS(arg0_size), WR(arg1_ptr),
+                                       WS(arg1_size), WR(arg2_ptr), WS(arg2_size), WR(arg3_ptr),
+                                       WS(arg3_size), WR(arg4_ptr), WS(arg4_size), WR(arg5_ptr),
+                                       WS(arg5_size), WR(value_ptr_ptr), WR(value_size_ptr));
 }
 
 // Metadata

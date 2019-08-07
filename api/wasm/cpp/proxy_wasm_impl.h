@@ -522,6 +522,8 @@ inline WasmDataPtr resolve(std::initializer_list<absl::string_view> parts) {
   absl::string_view arg1;
   absl::string_view arg2;
   absl::string_view arg3;
+  absl::string_view arg4;
+  absl::string_view arg5;
 
   uint32_t index = 0;
   for (auto part : parts) {
@@ -538,6 +540,12 @@ inline WasmDataPtr resolve(std::initializer_list<absl::string_view> parts) {
     case 3:
       arg3 = part;
       break;
+    case 4:
+      arg4 = part;
+      break;
+    case 5:
+      arg5 = part;
+      break;
     default:
       return std::make_unique<WasmData>(value_ptr, value_size);
     }
@@ -546,16 +554,22 @@ inline WasmDataPtr resolve(std::initializer_list<absl::string_view> parts) {
 
   switch (index) {
     case 1:
-      proxy_resolveSelector0(arg0.data(), arg0.size(), &value_ptr, &value_size);
+      proxy_getSelectorExpression0(arg0.data(), arg0.size(), &value_ptr, &value_size);
       break;
     case 2:
-      proxy_resolveSelector1(arg0.data(), arg0.size(), arg1.data(), arg1.size(), &value_ptr, &value_size);
+      proxy_getSelectorExpression1(arg0.data(), arg0.size(), arg1.data(), arg1.size(), &value_ptr, &value_size);
       break;
     case 3:
-      proxy_resolveSelector2(arg0.data(), arg0.size(), arg1.data(), arg1.size(), arg2.data(), arg2.size(), &value_ptr, &value_size);
+      proxy_getSelectorExpression2(arg0.data(), arg0.size(), arg1.data(), arg1.size(), arg2.data(), arg2.size(), &value_ptr, &value_size);
       break;
     case 4:
-      proxy_resolveSelector3(arg0.data(), arg0.size(), arg1.data(), arg1.size(), arg2.data(), arg2.size(), arg3.data(), arg3.size(), &value_ptr, &value_size);
+      proxy_getSelectorExpression3(arg0.data(), arg0.size(), arg1.data(), arg1.size(), arg2.data(), arg2.size(), arg3.data(), arg3.size(), &value_ptr, &value_size);
+      break;
+    case 5:
+      proxy_getSelectorExpression4(arg0.data(), arg0.size(), arg1.data(), arg1.size(), arg2.data(), arg2.size(), arg3.data(), arg3.size(), arg4.data(), arg4.size(), &value_ptr, &value_size);
+      break;
+    case 6:
+      proxy_getSelectorExpression5(arg0.data(), arg0.size(), arg1.data(), arg1.size(), arg2.data(), arg2.size(), arg3.data(), arg3.size(), arg4.data(), arg4.size(), arg5.data(), arg5.size(), &value_ptr, &value_size);
       break;
     default:
       break;

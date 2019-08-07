@@ -73,19 +73,32 @@ extern "C" uint32_t proxy_setMetadataStruct(MetadataType type, const char* name_
                                             const char* value_ptr, size_t value_size);
 
 // Generic selectors
-extern "C" uint32_t proxy_resolveSelector0(const char* arg0_ptr, size_t arg0_size,
+extern "C" uint32_t proxy_getSelectorExpression0(const char* arg0_ptr, size_t arg0_size,
                                            const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" uint32_t proxy_resolveSelector1(const char* arg0_ptr, size_t arg0_size,
+extern "C" uint32_t proxy_getSelectorExpression1(const char* arg0_ptr, size_t arg0_size,
                                            const char* arg1_ptr, size_t arg1_size,
                                            const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" uint32_t proxy_resolveSelector2(const char* arg0_ptr, size_t arg0_size,
+extern "C" uint32_t proxy_getSelectorExpression2(const char* arg0_ptr, size_t arg0_size,
                                            const char* arg1_ptr, size_t arg1_size,
                                            const char* arg2_ptr, size_t arg2_size,
                                            const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" uint32_t proxy_resolveSelector3(const char* arg0_ptr, size_t arg0_size,
+extern "C" uint32_t proxy_getSelectorExpression3(const char* arg0_ptr, size_t arg0_size,
                                            const char* arg1_ptr, size_t arg1_size,
                                            const char* arg2_ptr, size_t arg2_size,
                                            const char* arg3_ptr, size_t arg3_size,
+                                           const char** value_ptr_ptr, size_t* value_size_ptr);
+extern "C" uint32_t proxy_getSelectorExpression4(const char* arg0_ptr, size_t arg0_size,
+                                           const char* arg1_ptr, size_t arg1_size,
+                                           const char* arg2_ptr, size_t arg2_size,
+                                           const char* arg3_ptr, size_t arg3_size,
+                                           const char* arg4_ptr, size_t arg4_size,
+                                           const char** value_ptr_ptr, size_t* value_size_ptr);
+extern "C" uint32_t proxy_getSelectorExpression5(const char* arg0_ptr, size_t arg0_size,
+                                           const char* arg1_ptr, size_t arg1_size,
+                                           const char* arg2_ptr, size_t arg2_size,
+                                           const char* arg3_ptr, size_t arg3_size,
+                                           const char* arg4_ptr, size_t arg4_size,
+                                           const char* arg5_ptr, size_t arg5_size,
                                            const char** value_ptr_ptr, size_t* value_size_ptr);
 
 // Continue/Reply/Route

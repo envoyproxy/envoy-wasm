@@ -181,16 +181,24 @@ enum class MetadataResult : int32_t {
 
 // Handlers for functions exported from envoy to wasm.
 void logHandler(void* raw_context, Word level, Word address, Word size);
-Word getSelectorExpression0Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word value_ptr_ptr,
-                             Word value_size_ptr);
+Word getSelectorExpression0Handler(void* raw_context, Word arg0_ptr, Word arg0_size,
+                                   Word value_ptr_ptr, Word value_size_ptr);
 Word getSelectorExpression1Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
-                             Word arg1_size, Word value_ptr_ptr, Word value_size_ptr);
+                                   Word arg1_size, Word value_ptr_ptr, Word value_size_ptr);
 Word getSelectorExpression2Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
-                             Word arg1_size, Word arg2_ptr, Word arg2_size, Word value_ptr_ptr,
-                             Word value_size_ptr);
+                                   Word arg1_size, Word arg2_ptr, Word arg2_size,
+                                   Word value_ptr_ptr, Word value_size_ptr);
 Word getSelectorExpression3Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
-                             Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
-                             Word arg3_size, Word value_ptr_ptr, Word value_size_ptr);
+                                   Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
+                                   Word arg3_size, Word value_ptr_ptr, Word value_size_ptr);
+Word getSelectorExpression4Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                                   Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
+                                   Word arg3_size, Word arg4_ptr, Word arg4_size,
+                                   Word value_ptr_ptr, Word value_size_ptr);
+Word getSelectorExpression5Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                                   Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
+                                   Word arg3_size, Word arg4_ptr, Word arg4_size, Word arg5_ptr,
+                                   Word arg5_size, Word value_ptr_ptr, Word value_size_ptr);
 Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr);
 Word setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,

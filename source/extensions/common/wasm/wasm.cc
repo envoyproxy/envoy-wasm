@@ -363,8 +363,8 @@ uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_na
 //
 
 // Generic selectors
-Word getSelectorExpression0Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word value_ptr_ptr,
-                             Word value_size_ptr) {
+Word getSelectorExpression0Handler(void* raw_context, Word arg0_ptr, Word arg0_size,
+                                   Word value_ptr_ptr, Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
   auto value = context->resolve({arg0});
@@ -376,7 +376,7 @@ Word getSelectorExpression0Handler(void* raw_context, Word arg0_ptr, Word arg0_s
 }
 
 Word getSelectorExpression1Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
-                             Word arg1_size, Word value_ptr_ptr, Word value_size_ptr) {
+                                   Word arg1_size, Word value_ptr_ptr, Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
   auto arg1 = context->wasmVm()->getMemory(arg1_ptr, arg1_size);
@@ -389,8 +389,8 @@ Word getSelectorExpression1Handler(void* raw_context, Word arg0_ptr, Word arg0_s
 }
 
 Word getSelectorExpression2Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
-                             Word arg1_size, Word arg2_ptr, Word arg2_size, Word value_ptr_ptr,
-                             Word value_size_ptr) {
+                                   Word arg1_size, Word arg2_ptr, Word arg2_size,
+                                   Word value_ptr_ptr, Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
   auto arg1 = context->wasmVm()->getMemory(arg1_ptr, arg1_size);
@@ -404,14 +404,51 @@ Word getSelectorExpression2Handler(void* raw_context, Word arg0_ptr, Word arg0_s
 }
 
 Word getSelectorExpression3Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
-                             Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
-                             Word arg3_size, Word value_ptr_ptr, Word value_size_ptr) {
+                                   Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
+                                   Word arg3_size, Word value_ptr_ptr, Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
   auto arg1 = context->wasmVm()->getMemory(arg1_ptr, arg1_size);
   auto arg2 = context->wasmVm()->getMemory(arg2_ptr, arg2_size);
   auto arg3 = context->wasmVm()->getMemory(arg3_ptr, arg3_size);
   auto value = context->resolve({arg0, arg1, arg2, arg3});
+  if (value.has_value()) {
+    context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr);
+    return Word(static_cast<uint64_t>(MetadataResult::Ok));
+  }
+  return Word(static_cast<uint64_t>(MetadataResult::FieldNotFound));
+}
+
+Word getSelectorExpression4Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                                   Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
+                                   Word arg3_size, Word arg4_ptr, Word arg4_size,
+                                   Word value_ptr_ptr, Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
+  auto arg1 = context->wasmVm()->getMemory(arg1_ptr, arg1_size);
+  auto arg2 = context->wasmVm()->getMemory(arg2_ptr, arg2_size);
+  auto arg3 = context->wasmVm()->getMemory(arg3_ptr, arg3_size);
+  auto arg4 = context->wasmVm()->getMemory(arg4_ptr, arg4_size);
+  auto value = context->resolve({arg0, arg1, arg2, arg3, arg4});
+  if (value.has_value()) {
+    context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr);
+    return Word(static_cast<uint64_t>(MetadataResult::Ok));
+  }
+  return Word(static_cast<uint64_t>(MetadataResult::FieldNotFound));
+}
+
+Word getSelectorExpression5Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+                                   Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
+                                   Word arg3_size, Word arg4_ptr, Word arg4_size, Word arg5_ptr,
+                                   Word arg5_size, Word value_ptr_ptr, Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
+  auto arg1 = context->wasmVm()->getMemory(arg1_ptr, arg1_size);
+  auto arg2 = context->wasmVm()->getMemory(arg2_ptr, arg2_size);
+  auto arg3 = context->wasmVm()->getMemory(arg3_ptr, arg3_size);
+  auto arg4 = context->wasmVm()->getMemory(arg4_ptr, arg4_size);
+  auto arg5 = context->wasmVm()->getMemory(arg5_ptr, arg5_size);
+  auto value = context->resolve({arg0, arg1, arg2, arg3, arg4, arg5});
   if (value.has_value()) {
     context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr);
     return Word(static_cast<uint64_t>(MetadataResult::Ok));
