@@ -6,6 +6,7 @@
 #else
 
 #include "extensions/common/wasm/null/null.h"
+#include "absl/base/casts.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -45,7 +46,18 @@ FilterDataStatus PluginContext::onRequestBody(size_t body_buffer_length, bool /*
 
 void PluginContext::onLog() {
   auto path = getRequestHeader(":path");
-  logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
+  if (path->view() == "/test_context") {
+    logWarn("request.headers.path: " + resolve({"request", "headers", "path"})->toString());
+    logWarn("node.metadata: " + resolve({"node", "metadata", "istio.io/metadata"})->toString());
+    logWarn(
+        "metadata: " +
+        resolve({"metadata", "filter_metadata", "envoy.wasm", "wasm_request_get_key"})->toString());
+    auto responseCode = resolve({"response", "code"});
+    int64_t code = absl::bit_cast<int64_t>(responseCode->data());
+    logWarn("response.code: " + absl::StrCat(code));
+  } else {
+    logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
+  }
 }
 
 void PluginContext::onDone() { logWarn("onDone " + std::to_string(id())); }

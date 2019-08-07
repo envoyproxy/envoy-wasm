@@ -466,6 +466,57 @@ inline uint32_t getResponseCode(StreamType type) {
   return proxy_getResponseCode(type);
 }
 
+// Generic resolver interface wrapper
+inline WasmDataPtr resolve(std::initializer_list<absl::string_view> parts) {
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+
+  absl::string_view arg0;
+  absl::string_view arg1;
+  absl::string_view arg2;
+  absl::string_view arg3;
+
+  uint32_t index = 0;
+  for (auto part : parts) {
+    switch (index) {
+    case 0:
+      arg0 = part;
+      break;
+    case 1:
+      arg1 = part;
+      break;
+    case 2:
+      arg2 = part;
+      break;
+    case 3:
+      arg3 = part;
+      break;
+    default:
+      return std::make_unique<WasmData>(value_ptr, value_size);
+    }
+    index++;
+  }
+
+  switch (index) {
+    case 1:
+      proxy_resolveSelector0(arg0.data(), arg0.size(), &value_ptr, &value_size);
+      break;
+    case 2:
+      proxy_resolveSelector1(arg0.data(), arg0.size(), arg1.data(), arg1.size(), &value_ptr, &value_size);
+      break;
+    case 3:
+      proxy_resolveSelector2(arg0.data(), arg0.size(), arg1.data(), arg1.size(), arg2.data(), arg2.size(), &value_ptr, &value_size);
+      break;
+    case 4:
+      proxy_resolveSelector3(arg0.data(), arg0.size(), arg1.data(), arg1.size(), arg2.data(), arg2.size(), arg3.data(), arg3.size(), &value_ptr, &value_size);
+      break;
+    default:
+      break;
+  }
+  
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
 // Metadata
 inline WasmDataPtr getMetadata(MetadataType type, StringView key) {
   const char* value_ptr = nullptr;

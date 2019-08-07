@@ -44,6 +44,7 @@ envoy_cc_library(
     copts = ["-DNULL_PLUGIN=1"],
     deps = [
         ":null_lib",
+        "//external:abseil_base",
         "//external:abseil_node_hash_map",
         "//source/common/common:assert_lib",
         "//source/common/common:c_smart_ptr_lib",
