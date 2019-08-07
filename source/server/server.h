@@ -13,6 +13,7 @@
 #include "envoy/server/instance.h"
 #include "envoy/server/process_context.h"
 #include "envoy/server/tracer_config.h"
+#include "envoy/server/wasm.h"
 #include "envoy/ssl/context_manager.h"
 #include "envoy/stats/stats_macros.h"
 #include "envoy/stats/timespan.h"
@@ -272,6 +273,7 @@ private:
   Upstream::ProdClusterInfoFactory info_factory_;
   Upstream::HdsDelegatePtr hds_delegate_;
   std::unique_ptr<OverloadManagerImpl> overload_manager_;
+  std::vector<std::shared_ptr<Wasm>> wasm_;
   Envoy::MutexTracer* mutex_tracer_;
   Grpc::ContextImpl grpc_context_;
   Http::ContextImpl http_context_;
