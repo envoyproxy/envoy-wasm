@@ -1416,22 +1416,22 @@ MetadataResult Context::setMetadataStruct(MetadataType type, absl::string_view n
 void Context::scriptLog(spdlog::level::level_enum level, absl::string_view message) {
   switch (level) {
   case spdlog::level::trace:
-    ENVOY_LOG(trace, "wasm log: {}", message);
+    ENVOY_LOG(trace, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::debug:
-    ENVOY_LOG(debug, "wasm log: {}", message);
+    ENVOY_LOG(debug, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::info:
-    ENVOY_LOG(info, "wasm log: {}", message);
+    ENVOY_LOG(info, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::warn:
-    ENVOY_LOG(warn, "wasm log: {}", message);
+    ENVOY_LOG(warn, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::err:
-    ENVOY_LOG(error, "wasm log: {}", message);
+    ENVOY_LOG(error, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::critical:
-    ENVOY_LOG(critical, "wasm log: {}", message);
+    ENVOY_LOG(critical, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::off:
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
@@ -1701,6 +1701,17 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_conf
   id_ = std::string(id);
 }
 
+std::string Context::makeLogPrefix() const {
+  std::string id;
+  if (!wasm()->id().empty()) {
+    id = id + " " + std::string(wasm()->id());
+  }
+  if (!root_id().empty()) {
+    id = id + " " + std::string(root_id());
+  }
+  return id;
+}
+
 void Wasm::registerCallbacks() {
 #define _REGISTER_ABI(_fn, _abi)                                                                   \
   wasm_vm_->registerCallback(                                                                      \
@@ -1868,7 +1879,7 @@ void Wasm::getFunctions() {
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), scope_(wasm.scope_), local_info_(wasm.local_info_),
-      listener_metadata_(wasm.listener_metadata_), owned_scope_(wasm.owned_scope_),
+      listener_metadata_(wasm.listener_metadata_), id_(wasm.id_), owned_scope_(wasm.owned_scope_),
       time_source_(dispatcher.timeSource()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   vm_context_ = std::make_shared<Context>(this);
@@ -1948,6 +1959,7 @@ void Wasm::startForTesting(std::unique_ptr<Context> context) {
     // Initialization was delayed till the Wasm object was created.
     context->wasm_ = this;
     context->id_ = allocContextId();
+    context->makeLogPrefix();
     contexts_[context->id_] = context.get();
   }
   root_contexts_[""] = std::move(context);

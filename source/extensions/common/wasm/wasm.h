@@ -303,7 +303,7 @@ public:
   WasmVm* wasmVm() const;
   Upstream::ClusterManager& clusterManager() const;
   uint32_t id() const { return id_; }
-  absl::string_view root_id();
+  absl::string_view root_id() const;
   bool isVmContext() { return id_ == 0; }
   bool isRootContext() { return root_context_id_ == 0; }
   Context* root_context() { return root_context_; }
@@ -517,11 +517,14 @@ protected:
   Http::HeaderMap* getMap(HeaderMapType type);
   const Http::HeaderMap* getConstMap(HeaderMapType type);
 
+  std::string makeLogPrefix() const;
+
   Wasm* wasm_;
   uint32_t id_;
   uint32_t root_context_id_;       // 0 for roots and the general context.
   Context* root_context_{nullptr}; // set in all contexts.
   const std::string root_id_;      // set only in roots.
+  std::string log_prefix_;
   bool destroyed_ = false;
 
   uint32_t next_http_call_token_ = 1;
@@ -584,9 +587,6 @@ public:
   Context* start(absl::string_view root_id,
                  absl::string_view vm_configuration); // returns the root Context.
 
-  const std::string& context_id_filter_state_data_name() {
-    return context_id_filter_state_data_name_;
-  }
   absl::string_view id() const { return id_; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
   Context* vmContext() const { return vm_context_.get(); }
@@ -691,7 +691,6 @@ private:
   const LocalInfo::LocalInfo& local_info_;
   const envoy::api::v2::core::Metadata* listener_metadata_{};
   std::string id_;
-  std::string context_id_filter_state_data_name_;
   uint32_t next_context_id_ = 1; // 0 is reserved for the VM context.
   std::unique_ptr<WasmVm> wasm_vm_;
   std::shared_ptr<Context> vm_context_; // Context unrelated to any specific root or stream
@@ -908,19 +907,21 @@ inline Context::Context()
     : wasm_(nullptr), id_(0), root_context_id_(0), root_context_(this), root_id_("") {}
 
 inline Context::Context(Wasm* wasm)
-    : wasm_(wasm), id_(0), root_context_id_(0), root_context_(this), root_id_("") {
+    : wasm_(wasm), id_(0), root_context_id_(0), root_context_(this), root_id_(""),
+      log_prefix_(makeLogPrefix()) {
   wasm_->contexts_[id_] = this;
 }
 
 inline Context::Context(Wasm* wasm, uint32_t root_context_id)
-    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(root_context_id), root_id_("") {
+    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(root_context_id), root_id_(""),
+      log_prefix_(makeLogPrefix()) {
   wasm_->contexts_[id_] = this;
   root_context_ = wasm_->contexts_[root_context_id_];
 }
 
 inline Context::Context(Wasm* wasm, absl::string_view root_id)
     : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(0), root_context_(this),
-      root_id_(root_id) {
+      root_id_(root_id), log_prefix_(makeLogPrefix()) {
   wasm_->contexts_[id_] = this;
 }
 
@@ -930,7 +931,7 @@ inline Context::~Context() {
     wasm_->contexts_.erase(id_);
 }
 
-inline absl::string_view Context::root_id() {
+inline absl::string_view Context::root_id() const {
   if (root_context_id_) {
     return wasm_->getContext(root_context_id_)->root_id_;
   } else {
