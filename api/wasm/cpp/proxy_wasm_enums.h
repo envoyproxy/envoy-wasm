@@ -15,15 +15,29 @@ enum class FilterDataStatus : EnumType {
   StopIterationAndWatermark = 2,
   StopIterationNoBuffer = 3
 };
-enum class StreamType : EnumType { Request = 0, Response = 1 };
 enum class MetadataType : EnumType {
   Request = 0,
   Response = 1,
   RequestRoute = 2,   // Immutable
   ResponseRoute = 3,  // Immutable
   Log = 4,            // Immutable
-  Node = 5            // Immutable
+  Node = 5,           // Immutable
+  Listener = 6,       // Immutable
+  Cluster = 7,        // Immutable
+  Expression = 8,     // The key is a string expression. Only proxy_getMetadata().
 };
+/*
+  Expression and their types:
+
+  request.protocol : string
+  response.protocol : string
+  request.destination_port : int32
+  response.destination_port : int32
+  request.response_code : int32
+  response.response_code : int32
+  upstream.tls_version : string
+  downstream.tsl_version : string
+ */
 enum class HeaderMapType : EnumType {
   RequestHeaders = 0,  // During the onLog callback these are immutable
   RequestTrailers = 1,  // During the onLog callback these are immutable
