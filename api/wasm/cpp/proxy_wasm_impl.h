@@ -1075,13 +1075,23 @@ inline void MetricBase::partiallyResolveWithFields(const std::vector<std::string
   tags.erase(tags.begin(), tags.begin()+(fields.size()));
 }
 
-template <typename T> inline std::string ToString(T t) { return std::to_string(t); }
+template <typename T> inline std::string toString(T t) { return std::to_string(t); }
 
-template <> inline std::string ToString(const char* t) { return std::string(t); }
+template <> inline std::string toString(StringView t) { return std::string(t); }
 
-template <> inline std::string ToString(std::string t) { return t; }
+template <> inline std::string toString(const char* t) { return std::string(t); }
 
-template <> inline std::string ToString(bool t) { return t ? "true" : "false"; }
+template <> inline std::string toString(std::string t) { return t; }
+
+template <> inline std::string toString(bool t) { return t ? "true" : "false"; }
+
+template <typename T> struct StringToStringView {
+  typedef T type;
+};
+
+template <> struct StringToStringView<std::string> {
+  typedef StringView type;
+};
 
 inline uint32_t MetricBase::resolveFullName(const std::string& n) {
   auto it = metric_ids.find(n);
@@ -1101,31 +1111,31 @@ inline std::string MetricBase::nameFromIdSlow(uint32_t id) {
 }
 
 template <typename... Fields> inline uint32_t Metric::resolve(Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   return resolveWithFields(fields);
 }
 
 template <typename... Fields> Metric Metric::partiallyResolve(Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   Metric partial_metric(*this);
   partial_metric.partiallyResolveWithFields(fields);
   return partial_metric;
 }
 
 template <typename... Fields> inline void Metric::increment(int64_t offset, Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   auto metric_id = resolveWithFields(fields);
   incrementMetric(metric_id, offset);
 }
 
 template <typename... Fields> inline void Metric::record(uint64_t value, Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   auto metric_id = resolveWithFields(fields);
   recordMetric(metric_id, value);
 }
 
 template <typename... Fields> inline uint64_t Metric::get(Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   auto metric_id = resolveWithFields(fields);
   return getMetric(metric_id);
 }
@@ -1195,20 +1205,20 @@ template <typename... Tags> struct Counter : public MetricBase {
     Counter<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleCounter resolve(Tags... f) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     return SimpleCounter(resolveWithFields(fields));
   }
 
   template<typename... AdditionalTags>
   Counter<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     auto new_counter = Counter<AdditionalTags...>::New(name, fieldnames...);
     new_counter->prefix = prefixWithFields(fields);
     return new_counter;
   }
 
   void increment(int64_t offset, Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     incrementMetric(metric_id, offset);
   }
@@ -1216,7 +1226,7 @@ template <typename... Tags> struct Counter : public MetricBase {
   void record(int64_t offset, Tags... tags) { increment(offset, tags...); }
 
   uint64_t get(Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     return getMetric(metric_id);
   }
@@ -1240,26 +1250,26 @@ template <typename... Tags> struct Gauge : public MetricBase {
     Gauge<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleGauge resolve(Tags... f) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     return SimpleGauge(resolveWithFields(fields));
   }
 
   template<typename... AdditionalTags>
   Gauge<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     auto new_gauge = Gauge<AdditionalTags...>::New(name, fieldnames...);
     new_gauge->prefix = prefixWithFields(fields);
     return new_gauge;
   }
 
-  void record(int64_t offset, Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+  void record(int64_t offset, typename StringToStringView<Tags>::type... tags) {
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     recordMetric(metric_id, offset);
   }
 
   uint64_t get(Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     return getMetric(metric_id);
   }
@@ -1283,20 +1293,20 @@ template <typename... Tags> struct Histogram : public MetricBase {
     Histogram<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleHistogram resolve(Tags... f) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     return SimpleHistogram(resolveWithFields(fields));
   }
 
   template<typename... AdditionalTags>
   Histogram<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     auto new_histogram = Histogram<AdditionalTags...>::New(name, fieldnames...);
     new_histogram->prefix = prefixWithFields(fields);
     return new_histogram;
   }
 
-  void record(int64_t offset, Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+  void record(int64_t offset, typename StringToStringView<Tags>::type... tags) {
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     recordMetric(metric_id, offset);
   }
