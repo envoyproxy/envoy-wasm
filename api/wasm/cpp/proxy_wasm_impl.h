@@ -49,6 +49,7 @@ public:
   WasmData(const char* data, size_t size) : data_(data), size_(size) {}
   ~WasmData() { ::free(const_cast<char*>(data_)); }
   const char* data() { return data_; }
+  size_t size() { return size_; }
   StringView view() { return {data_, size_}; }
   std::string toString() { return std::string(view()); }
   std::vector<std::pair<StringView, StringView>> pairs();
@@ -513,7 +514,7 @@ inline WasmDataPtr resolve(std::initializer_list<absl::string_view> parts) {
     default:
       break;
   }
-  
+
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 

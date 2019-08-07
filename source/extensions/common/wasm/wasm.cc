@@ -1402,8 +1402,8 @@ absl::optional<std::string> Context::resolve(std::initializer_list<absl::string_
   using Protobuf::Descriptor;
   using Protobuf::FieldDescriptor;
 
-  if (decoder_callbacks_ == nullptr || request_headers_ == nullptr ||
-      access_log_request_headers_ == nullptr) {
+  if (decoder_callbacks_ == nullptr ||
+      (request_headers_ == nullptr && access_log_request_headers_ == nullptr)) {
     return {};
   }
 
@@ -1415,6 +1415,7 @@ absl::optional<std::string> Context::resolve(std::initializer_list<absl::string_
       request_headers_ == nullptr ? *access_log_request_headers_ : *request_headers_;
   const Filters::Common::Expr::RequestWrapper request(headers, info);
   const Filters::Common::Expr::ConnectionWrapper connection(info);
+  const Filters::Common::Expr::ResponseWrapper response(info);
 
   for (auto& part : parts) {
     // top-level ident
@@ -1424,6 +1425,8 @@ absl::optional<std::string> Context::resolve(std::initializer_list<absl::string_
         value = CelValue::CreateMessage(&info.dynamicMetadata(), &arena);
       } else if (part == "request") {
         value = CelValue::CreateMap(&request);
+      } else if (part == "response") {
+        value = CelValue::CreateMap(&response);
       } else if (part == "connection") {
         value = CelValue::CreateMap(&connection);
       } else if (part == "node") {

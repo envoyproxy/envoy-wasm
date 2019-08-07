@@ -355,7 +355,7 @@ TEST_F(WasmHttpFilterTest, NullVmPluginRequestHeadersOnly) {
   filter_->onDestroy();
 }
 
-TEST_P(WasmHttpFilterTest, NullVmResolver) {
+TEST_F(WasmHttpFilterTest, NullVmResolver) {
   setupNullConfig("null_vm_plugin");
   setupFilter();
   envoy::api::v2::core::Node node_data;
@@ -376,8 +376,8 @@ TEST_P(WasmHttpFilterTest, NullVmResolver) {
               scriptLog_(spdlog::level::info, Eq(absl::string_view("header path /test_context"))));
 
   // test outputs should match inputs
-  EXPECT_CALL(*filter_,
-              scriptLog_(spdlog::level::warn, Eq(absl::string_view("request.headers.path: /"))));
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn,
+                                   Eq(absl::string_view("request.path: /test_context"))));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::warn, Eq(absl::string_view("node.metadata: sample_data"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn,
