@@ -52,6 +52,10 @@ public:
   size_t size() { return size_; }
   StringView view() { return {data_, size_}; }
   std::string toString() { return std::string(view()); }
+  int32_t int32() { return *reinterpret_cast<const int32_t*>(data_); }
+  uint32_t uint32() { return *reinterpret_cast<const uint32_t*>(data_); }
+  int64_t int64() { return *reinterpret_cast<const int64_t*>(data_); }
+  uint64_t uint64() { return *reinterpret_cast<const uint64_t*>(data_); }
   std::vector<std::pair<StringView, StringView>> pairs();
   template<typename T> T proto() {
     T p;
@@ -451,20 +455,62 @@ inline bool ContextBase::isProactivelyCachable(MetadataType type) {
   }
 }
 
-// StreamInfo
-inline WasmDataPtr getProtocol(StreamType type) {
-  const char* ptr = nullptr;
-  size_t size = 0;
-  proxy_getProtocol(type, &ptr, &size);
-  return std::make_unique<WasmData>(ptr, size);
+// Expressions
+
+#define PROXY_EXPRESSION_GET_STRING(_expression, _string_ptr) do { \
+  const char* _value_ptr = nullptr; \
+  size_t _value_size = 0; \
+  auto _result = static_cast<MetadataResult>(proxy_getMetadata(MetadataType::Expression, _expression, sizeof(_expression)-1, &_value_ptr, &_value_size)); \
+  if (_result != MetadataResult::Ok) { \
+    _string_ptr->clear(); \
+    return _result; \
+  } \
+  _string_ptr->assign(_value_ptr, _value_size); \
+  return MetadataResult::Ok; \
+} while(0)
+
+#define PROXY_EXPRESSION_GET_UINT32(_expression, _uint32_ptr) do { \
+  const char* _value_ptr = nullptr; \
+  size_t _value_size = 0; \
+  auto _result = static_cast<MetadataResult>(proxy_getMetadata(MetadataType::Expression, _expression, sizeof(_expression)-1, &_value_ptr, &_value_size)); \
+  if (_result != MetadataResult::Ok) { \
+    *_uint32_ptr = 0; \
+    return _result; \
+  } \
+  *_uint32_ptr = *reinterpret_cast<const uint32_t*>(_value_ptr); \
+  return MetadataResult::Ok; \
+} while(0)
+
+inline MetadataResult getRequestProtocol(std::string *protocol_ptr) {
+  PROXY_EXPRESSION_GET_STRING("request.protocol", protocol_ptr);
 }
 
-inline uint32_t getDestinationPort(StreamType type) {
-  return proxy_getDestinationPort(type);
+inline MetadataResult getResponseProtocol(std::string *protocol_ptr) {
+  PROXY_EXPRESSION_GET_STRING("response.protocol", protocol_ptr);
 }
 
-inline uint32_t getResponseCode(StreamType type) {
-  return proxy_getResponseCode(type);
+inline MetadataResult getRequestDestinationPort(uint32_t* port) {
+  PROXY_EXPRESSION_GET_UINT32("request.destination_port", port);
+}
+
+inline MetadataResult getResponseDestinationPort(uint32_t* port) {
+  PROXY_EXPRESSION_GET_UINT32("response.destination_port", port);
+}
+
+inline MetadataResult getRequestResponseCode(uint32_t* response_code) {
+  PROXY_EXPRESSION_GET_UINT32("request.response_code", response_code);
+}
+
+inline MetadataResult getResponseResponseCode(uint32_t* response_code) {
+  PROXY_EXPRESSION_GET_UINT32("response.response_code", response_code);
+}
+
+inline MetadataResult getRequestTlsVersion(std::string *tls_version_ptr) {
+  PROXY_EXPRESSION_GET_STRING("request.tls_version", tls_version_ptr);
+}
+
+inline MetadataResult getResponseTlsVersion(std::string *tls_version_ptr) {
+  PROXY_EXPRESSION_GET_STRING("response.tls_version", tls_version_ptr);
 }
 
 // Generic resolver interface wrapper
@@ -519,11 +565,16 @@ inline WasmDataPtr resolve(std::initializer_list<absl::string_view> parts) {
 }
 
 // Metadata
-inline WasmDataPtr getMetadata(MetadataType type, StringView key) {
+inline MetadataResult getMetadata(MetadataType type, StringView key, WasmDataPtr *wasm_data) {
   const char* value_ptr = nullptr;
   size_t value_size = 0;
-  proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size);
-  return std::make_unique<WasmData>(value_ptr, value_size);
+  auto result = static_cast<MetadataResult>(proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size));
+  if (result != MetadataResult::Ok) {
+    wasm_data->reset();
+    return result;
+  }
+  *wasm_data = std::make_unique<WasmData>(value_ptr, value_size);
+  return MetadataResult::Ok;
 }
 
 inline MetadataResult getMetadataValue(MetadataType type, StringView key, google::protobuf::Value* result_ptr) {
@@ -1050,13 +1101,18 @@ struct MetricTag {
 struct MetricBase {
   MetricBase(MetricType t, const std::string& n) : type(t), name(n) {}
   MetricBase(MetricType t, const std::string& n, std::vector<MetricTag> ts)
-      : type(t), name(n), tags(ts.begin(), ts.end()) {}
+      : type(t), name(n), tags(ts.begin(), ts.end()){}
+  MetricBase(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string  fs, std::string vs)
+      : type(t), name(n), tags(ts.begin(), ts.end()), field_separator(fs), value_separator(vs) {}
 
   MetricType type;
   std::string name;
   std::string prefix;
   std::vector<MetricTag> tags;
   std::unordered_map<std::string, uint32_t> metric_ids;
+
+  std::string field_separator = ".";  // used to separate two fields.
+  std::string value_separator = ".";  // used to separate a field from its value.
 
   std::string prefixWithFields(const std::vector<std::string>& fields);
   uint32_t resolveFullName(const std::string& n);
@@ -1068,6 +1124,7 @@ struct MetricBase {
 struct Metric : public MetricBase {
   Metric(MetricType t, const std::string& n) : MetricBase(t, n) {}
   Metric(MetricType t, const std::string& n, std::vector<MetricTag> ts) : MetricBase(t, n, ts) {}
+  Metric(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string field_separator, std::string value_separator) : MetricBase(t, n, ts, field_separator, value_separator) {}
 
   template <typename... Fields> void increment(int64_t offset, Fields... tags);
   template <typename... Fields> void record(uint64_t value, Fields... tags);
@@ -1089,9 +1146,9 @@ inline std::string MetricBase::prefixWithFields(const std::vector<std::string>& 
   n.append(prefix);
   for (size_t i = 0; i < fields.size(); i++) {
     n.append(tags[i].name);
-    n.append(".");
+    n.append(value_separator);
     n.append(fields[i]);
-    n.append(".");
+    n.append(field_separator);
   }
   return n;
 }
@@ -1121,13 +1178,23 @@ inline void MetricBase::partiallyResolveWithFields(const std::vector<std::string
   tags.erase(tags.begin(), tags.begin()+(fields.size()));
 }
 
-template <typename T> inline std::string ToString(T t) { return std::to_string(t); }
+template <typename T> inline std::string toString(T t) { return std::to_string(t); }
 
-template <> inline std::string ToString(const char* t) { return std::string(t); }
+template <> inline std::string toString(StringView t) { return std::string(t); }
 
-template <> inline std::string ToString(std::string t) { return t; }
+template <> inline std::string toString(const char* t) { return std::string(t); }
 
-template <> inline std::string ToString(bool t) { return t ? "true" : "false"; }
+template <> inline std::string toString(std::string t) { return t; }
+
+template <> inline std::string toString(bool t) { return t ? "true" : "false"; }
+
+template <typename T> struct StringToStringView {
+  typedef T type;
+};
+
+template <> struct StringToStringView<std::string> {
+  typedef StringView type;
+};
 
 inline uint32_t MetricBase::resolveFullName(const std::string& n) {
   auto it = metric_ids.find(n);
@@ -1147,31 +1214,31 @@ inline std::string MetricBase::nameFromIdSlow(uint32_t id) {
 }
 
 template <typename... Fields> inline uint32_t Metric::resolve(Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   return resolveWithFields(fields);
 }
 
 template <typename... Fields> Metric Metric::partiallyResolve(Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   Metric partial_metric(*this);
   partial_metric.partiallyResolveWithFields(fields);
   return partial_metric;
 }
 
 template <typename... Fields> inline void Metric::increment(int64_t offset, Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   auto metric_id = resolveWithFields(fields);
   incrementMetric(metric_id, offset);
 }
 
 template <typename... Fields> inline void Metric::record(uint64_t value, Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   auto metric_id = resolveWithFields(fields);
   recordMetric(metric_id, value);
 }
 
 template <typename... Fields> inline uint64_t Metric::get(Fields... f) {
-  std::vector<std::string> fields{ToString(f)...};
+  std::vector<std::string> fields{toString(f)...};
   auto metric_id = resolveWithFields(fields);
   return getMetric(metric_id);
 }
@@ -1241,20 +1308,20 @@ template <typename... Tags> struct Counter : public MetricBase {
     Counter<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleCounter resolve(Tags... f) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     return SimpleCounter(resolveWithFields(fields));
   }
 
   template<typename... AdditionalTags>
   Counter<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     auto new_counter = Counter<AdditionalTags...>::New(name, fieldnames...);
     new_counter->prefix = prefixWithFields(fields);
     return new_counter;
   }
 
   void increment(int64_t offset, Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     incrementMetric(metric_id, offset);
   }
@@ -1262,7 +1329,7 @@ template <typename... Tags> struct Counter : public MetricBase {
   void record(int64_t offset, Tags... tags) { increment(offset, tags...); }
 
   uint64_t get(Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     return getMetric(metric_id);
   }
@@ -1286,26 +1353,26 @@ template <typename... Tags> struct Gauge : public MetricBase {
     Gauge<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleGauge resolve(Tags... f) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     return SimpleGauge(resolveWithFields(fields));
   }
 
   template<typename... AdditionalTags>
   Gauge<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     auto new_gauge = Gauge<AdditionalTags...>::New(name, fieldnames...);
     new_gauge->prefix = prefixWithFields(fields);
     return new_gauge;
   }
 
-  void record(int64_t offset, Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+  void record(int64_t offset, typename StringToStringView<Tags>::type... tags) {
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     recordMetric(metric_id, offset);
   }
 
   uint64_t get(Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     return getMetric(metric_id);
   }
@@ -1329,20 +1396,20 @@ template <typename... Tags> struct Histogram : public MetricBase {
     Histogram<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleHistogram resolve(Tags... f) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     return SimpleHistogram(resolveWithFields(fields));
   }
 
   template<typename... AdditionalTags>
   Histogram<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
-    std::vector<std::string> fields{ToString(f)...};
+    std::vector<std::string> fields{toString(f)...};
     auto new_histogram = Histogram<AdditionalTags...>::New(name, fieldnames...);
     new_histogram->prefix = prefixWithFields(fields);
     return new_histogram;
   }
 
-  void record(int64_t offset, Tags... tags) {
-    std::vector<std::string> fields{ToString(tags)...};
+  void record(int64_t offset, typename StringToStringView<Tags>::type... tags) {
+    std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     recordMetric(metric_id, offset);
   }

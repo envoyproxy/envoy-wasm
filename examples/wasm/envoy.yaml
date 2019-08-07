@@ -25,6 +25,8 @@ static_resources:
           http_filters:
           - name: envoy.wasm
             config:
+              vm_id: "my_vm_id"
+              root_id: "my_root_id"
               vm_config:
                 vm: "envoy.wasm.vm.wavm"
                 code:

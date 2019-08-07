@@ -362,32 +362,8 @@ uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_na
 // HTTP Handlers
 //
 
-// StreamInfo
-void getProtocolHandler(void* raw_context, Word type, Word value_ptr_ptr, Word value_size_ptr) {
-  if (type > static_cast<int>(StreamType::MAX)) {
-    return;
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  context->wasm()->copyToPointerSize(context->getProtocol(static_cast<StreamType>(type.u64)),
-                                     value_ptr_ptr, value_size_ptr);
-}
-
-uint32_t getDestinationPortHandler(void* raw_context, Word type) {
-  if (type > static_cast<int>(StreamType::MAX))
-    return 0;
-  auto context = WASM_CONTEXT(raw_context);
-  return context->getDestinationPort(static_cast<StreamType>(type.u64));
-}
-
-uint32_t getResponseCodeHandler(void* raw_context, Word type) {
-  if (type > static_cast<int>(StreamType::MAX))
-    return 500;
-  auto context = WASM_CONTEXT(raw_context);
-  return context->getResponseCode(static_cast<StreamType>(type.u64));
-}
-
 // Generic selectors
-Word resolveSelector0Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word value_ptr_ptr,
+Word getSelectorExpression0Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word value_ptr_ptr,
                              Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
@@ -399,7 +375,7 @@ Word resolveSelector0Handler(void* raw_context, Word arg0_ptr, Word arg0_size, W
   return Word(static_cast<uint64_t>(MetadataResult::FieldNotFound));
 }
 
-Word resolveSelector1Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+Word getSelectorExpression1Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
                              Word arg1_size, Word value_ptr_ptr, Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto arg0 = context->wasmVm()->getMemory(arg0_ptr, arg0_size);
@@ -412,7 +388,7 @@ Word resolveSelector1Handler(void* raw_context, Word arg0_ptr, Word arg0_size, W
   return Word(static_cast<uint64_t>(MetadataResult::FieldNotFound));
 }
 
-Word resolveSelector2Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+Word getSelectorExpression2Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
                              Word arg1_size, Word arg2_ptr, Word arg2_size, Word value_ptr_ptr,
                              Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
@@ -427,7 +403,7 @@ Word resolveSelector2Handler(void* raw_context, Word arg0_ptr, Word arg0_size, W
   return Word(static_cast<uint64_t>(MetadataResult::FieldNotFound));
 }
 
-Word resolveSelector3Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
+Word getSelectorExpression3Handler(void* raw_context, Word arg0_ptr, Word arg0_size, Word arg1_ptr,
                              Word arg1_size, Word arg2_ptr, Word arg2_size, Word arg3_ptr,
                              Word arg3_size, Word value_ptr_ptr, Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
@@ -1314,7 +1290,7 @@ const StreamInfo::StreamInfo* Context::getConstStreamInfo(MetadataType type) con
 
 std::string Context::getProtocol(StreamType type) {
   auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
-  if (!streamInfo) {
+  if (!streamInfo || !streamInfo->protocol().has_value()) {
     return "";
   }
   return Http::Utility::getProtocolString(streamInfo->protocol().value());
@@ -1338,8 +1314,16 @@ uint32_t Context::getDestinationPort(StreamType type) {
 uint32_t Context::getResponseCode(StreamType type) {
   auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
   if (!streamInfo)
-    return 500;
-  return streamInfo->responseCode().value_or(500);
+    return 0;
+  return streamInfo->responseCode().value_or(0);
+}
+
+std::string Context::getTlsVersion(StreamType type) {
+  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
+  if (!streamInfo || !streamInfo->downstreamSslConnection()) {
+    return "";
+  }
+  return streamInfo->downstreamSslConnection()->tlsVersion();
 }
 
 template <int N> struct marshall { char buf[N]; };
@@ -1478,6 +1462,8 @@ absl::optional<std::string> Context::resolve(std::initializer_list<absl::string_
 const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
                                                            absl::string_view name) {
   switch (type) {
+  case MetadataType::Expression:
+    return nullptr;
   case MetadataType::RequestRoute:
     return getRouteMetadataStructProto(decoder_callbacks_);
   case MetadataType::ResponseRoute:
@@ -1535,6 +1521,90 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
 
 MetadataResult Context::getMetadata(MetadataType type, absl::string_view key,
                                     std::string* result_ptr) {
+  if (type == MetadataType::Expression) {
+    static absl::flat_hash_map<std::string, std::function<MetadataResult(Context*, std::string*)>>
+        handlers = {
+            {"request.protocol",
+             [](Context* context, std::string* result_ptr) -> MetadataResult {
+               auto protocol = context->getProtocol(StreamType::Request);
+               *result_ptr = protocol;
+               if (protocol.empty()) {
+                 return MetadataResult::FieldNotFound;
+               }
+               return MetadataResult::Ok;
+             }},
+            {"response.protocol",
+             [](Context* context, std::string* result_ptr) -> MetadataResult {
+               auto protocol = context->getProtocol(StreamType::Response);
+               *result_ptr = protocol;
+               if (protocol.empty()) {
+                 return MetadataResult::FieldNotFound;
+               }
+               return MetadataResult::Ok;
+             }},
+            {"request.destination_port",
+             [](Context* context, std::string* result_ptr) -> MetadataResult {
+               auto port = context->getDestinationPort(StreamType::Request);
+               result_ptr->assign(reinterpret_cast<const char*>(&port), sizeof(port));
+               if (!port) {
+                 return MetadataResult::FieldNotFound;
+               }
+               return MetadataResult::Ok;
+             }},
+            {"response.destination_port",
+             [](Context* context, std::string* result_ptr) -> MetadataResult {
+               auto port = context->getDestinationPort(StreamType::Response);
+               result_ptr->assign(reinterpret_cast<const char*>(&port), sizeof(port));
+               if (!port) {
+                 return MetadataResult::FieldNotFound;
+               }
+               return MetadataResult::Ok;
+             }},
+            {"request.response_code",
+             [](Context* context, std::string* result_ptr) -> MetadataResult {
+               auto response_code = context->getResponseCode(StreamType::Request);
+               result_ptr->assign(reinterpret_cast<const char*>(&response_code),
+                                  sizeof(response_code));
+               if (!response_code) {
+                 return MetadataResult::FieldNotFound;
+               }
+               return MetadataResult::Ok;
+             }},
+            {"response.response_code",
+             [](Context* context, std::string* result_ptr) -> MetadataResult {
+               auto response_code = context->getResponseCode(StreamType::Response);
+               result_ptr->assign(reinterpret_cast<const char*>(&response_code),
+                                  sizeof(response_code));
+               if (!response_code) {
+                 return MetadataResult::FieldNotFound;
+               }
+               return MetadataResult::Ok;
+             }},
+            {"request.tls_version",
+             [](Context* context, std::string* result_ptr) -> MetadataResult {
+               auto tls_version = context->getTlsVersion(StreamType::Request);
+               *result_ptr = tls_version;
+               if (tls_version.empty()) {
+                 return MetadataResult::FieldNotFound;
+               }
+               return MetadataResult::Ok;
+             }},
+            {"response.tls_version",
+             [](Context* context, std::string* result_ptr) -> MetadataResult {
+               auto tls_version = context->getTlsVersion(StreamType::Response);
+               *result_ptr = tls_version;
+               if (tls_version.empty()) {
+                 return MetadataResult::FieldNotFound;
+               }
+               return MetadataResult::Ok;
+             }},
+        };
+    auto it = handlers.find(key);
+    if (it == handlers.end()) {
+      return MetadataResult::BadExpression;
+    }
+    return it->second(this, result_ptr);
+  }
   auto proto_struct = getMetadataStructProto(type);
   if (!proto_struct) {
     return MetadataResult::StructNotFound;
@@ -1612,22 +1682,22 @@ MetadataResult Context::setMetadataStruct(MetadataType type, absl::string_view n
 void Context::scriptLog(spdlog::level::level_enum level, absl::string_view message) {
   switch (level) {
   case spdlog::level::trace:
-    ENVOY_LOG(trace, "wasm log: {}", message);
+    ENVOY_LOG(trace, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::debug:
-    ENVOY_LOG(debug, "wasm log: {}", message);
+    ENVOY_LOG(debug, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::info:
-    ENVOY_LOG(info, "wasm log: {}", message);
+    ENVOY_LOG(info, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::warn:
-    ENVOY_LOG(warn, "wasm log: {}", message);
+    ENVOY_LOG(warn, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::err:
-    ENVOY_LOG(error, "wasm log: {}", message);
+    ENVOY_LOG(error, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::critical:
-    ENVOY_LOG(critical, "wasm log: {}", message);
+    ENVOY_LOG(critical, "wasm log{}: {}", log_prefix_, message);
     return;
   case spdlog::level::off:
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
@@ -1897,6 +1967,17 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_conf
   id_ = std::string(id);
 }
 
+std::string Context::makeLogPrefix() const {
+  std::string id;
+  if (!wasm()->id().empty()) {
+    id = id + " " + std::string(wasm()->id());
+  }
+  if (!root_id().empty()) {
+    id = id + " " + std::string(root_id());
+  }
+  return id;
+}
+
 void Wasm::registerCallbacks() {
 #define _REGISTER_ABI(_fn, _abi)                                                                   \
   wasm_vm_->registerCallback(                                                                      \
@@ -1952,10 +2033,6 @@ void Wasm::registerCallbacks() {
       &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
                                    _fn##Handler>::convertFunctionWordToUint32);
   _REGISTER_PROXY(log);
-
-  _REGISTER_PROXY(getProtocol);
-  _REGISTER_PROXY(getDestinationPort);
-  _REGISTER_PROXY(getResponseCode);
 
   _REGISTER_PROXY(getMetadata);
   _REGISTER_PROXY(setMetadata);
@@ -2064,7 +2141,7 @@ void Wasm::getFunctions() {
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), scope_(wasm.scope_), local_info_(wasm.local_info_),
-      listener_metadata_(wasm.listener_metadata_), owned_scope_(wasm.owned_scope_),
+      listener_metadata_(wasm.listener_metadata_), id_(wasm.id_), owned_scope_(wasm.owned_scope_),
       time_source_(dispatcher.timeSource()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   vm_context_ = std::make_shared<Context>(this);
@@ -2144,6 +2221,7 @@ void Wasm::startForTesting(std::unique_ptr<Context> context) {
     // Initialization was delayed till the Wasm object was created.
     context->wasm_ = this;
     context->id_ = allocContextId();
+    context->makeLogPrefix();
     contexts_[context->id_] = context.get();
   }
   root_contexts_[""] = std::move(context);

@@ -60,11 +60,6 @@ extern "C" void proxy_setTickPeriodMilliseconds(uint32_t millisecond);
 // Time
 extern "C" uint64_t proxy_getCurrentTimeNanoseconds();
 
-// Stream Info
-extern "C" void proxy_getProtocol(StreamType type, const char** value_ptr, size_t* value_size);
-extern "C" uint32_t proxy_getDestinationPort(StreamType type);
-extern "C" uint32_t proxy_getResponseCode(StreamType type);
-
 // Metadata
 extern "C" uint32_t proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
                                       const char** value_ptr_ptr, size_t* value_size_ptr);
