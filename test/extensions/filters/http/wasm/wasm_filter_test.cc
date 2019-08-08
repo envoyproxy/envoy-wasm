@@ -351,7 +351,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
 #endif
 
 // Null VM Plugin, headers only.
-TEST_F(WasmHttpFilterTest, NullVmPluginRequestHeadersOnly) {
+TEST_F(WasmHttpFilterTest, NullPluginRequestHeadersOnly) {
   setupNullConfig("null_vm_plugin");
   setupFilter();
   EXPECT_CALL(*filter_,

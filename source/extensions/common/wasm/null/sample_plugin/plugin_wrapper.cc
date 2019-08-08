@@ -1,4 +1,4 @@
-#include "extensions/common/wasm/null/null.h"
+#include "extensions/common/wasm/null/null_plugin.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -7,19 +7,19 @@ namespace Wasm {
 namespace Null {
 namespace Plugin {
 namespace ExamplePlugin {
-NullVmPluginRootRegistry* context_registry_{};
+NullPluginRootRegistry* context_registry_{};
 } // namespace ExamplePlugin
 
 /**
  * Config registration for a Wasm filter plugin. @see NamedHttpFilterConfigFactory.
  */
-class PluginFactory : public NullVmPluginFactory {
+class PluginFactory : public NullPluginFactory {
 public:
   PluginFactory() {}
 
   const std::string name() const override { return "null_vm_plugin"; }
   std::unique_ptr<NullVmPlugin> create() const override {
-    return std::make_unique<NullVmPlugin>(
+    return std::make_unique<NullPlugin>(
         Envoy::Extensions::Common::Wasm::Null::Plugin::ExamplePlugin::context_registry_);
   }
 };
@@ -27,7 +27,7 @@ public:
 /**
  * Static registration for the null Wasm filter. @see RegisterFactory.
  */
-static Registry::RegisterFactory<PluginFactory, NullVmPluginFactory> register_;
+static Registry::RegisterFactory<PluginFactory, NullPluginFactory> register_;
 
 } // namespace Plugin
 } // namespace Null

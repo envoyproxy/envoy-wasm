@@ -1,26 +1,15 @@
 #include "extensions/common/wasm/v8/v8.h"
 
-#include <stdint.h>
-#include <stdio.h>
-
-#include <atomic>
-#include <fstream>
 #include <memory>
 #include <utility>
 #include <vector>
 
-#include "envoy/common/exception.h"
-#include "envoy/server/wasm.h"
-
 #include "common/common/assert.h"
-#include "common/common/logger.h"
 
-#include "extensions/common/wasm/wasm.h"
 #include "extensions/common/wasm/well_known_names.h"
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/match.h"
-#include "absl/types/span.h"
-#include "absl/utility/utility.h"
 #include "wasm-api/wasm.hh"
 
 namespace Envoy {
@@ -93,16 +82,16 @@ public:
   _REGISTER_HOST_FUNCTION(WasmCallback4Void);
   _REGISTER_HOST_FUNCTION(WasmCallback5Void);
   _REGISTER_HOST_FUNCTION(WasmCallback8Void);
-  _REGISTER_HOST_FUNCTION(WasmCallback0Int);
-  _REGISTER_HOST_FUNCTION(WasmCallback1Int);
-  _REGISTER_HOST_FUNCTION(WasmCallback2Int);
-  _REGISTER_HOST_FUNCTION(WasmCallback3Int);
-  _REGISTER_HOST_FUNCTION(WasmCallback4Int);
-  _REGISTER_HOST_FUNCTION(WasmCallback5Int);
-  _REGISTER_HOST_FUNCTION(WasmCallback6Int);
-  _REGISTER_HOST_FUNCTION(WasmCallback7Int);
-  _REGISTER_HOST_FUNCTION(WasmCallback8Int);
-  _REGISTER_HOST_FUNCTION(WasmCallback9Int);
+  _REGISTER_HOST_FUNCTION(WasmCallback0Word);
+  _REGISTER_HOST_FUNCTION(WasmCallback1Word);
+  _REGISTER_HOST_FUNCTION(WasmCallback2Word);
+  _REGISTER_HOST_FUNCTION(WasmCallback3Word);
+  _REGISTER_HOST_FUNCTION(WasmCallback4Word);
+  _REGISTER_HOST_FUNCTION(WasmCallback5Word);
+  _REGISTER_HOST_FUNCTION(WasmCallback6Word);
+  _REGISTER_HOST_FUNCTION(WasmCallback7Word);
+  _REGISTER_HOST_FUNCTION(WasmCallback8Word);
+  _REGISTER_HOST_FUNCTION(WasmCallback9Word);
   _REGISTER_HOST_FUNCTION(WasmCallback_ZWl);
   _REGISTER_HOST_FUNCTION(WasmCallback_ZWm);
   _REGISTER_HOST_FUNCTION(WasmCallback_m);
@@ -121,8 +110,8 @@ public:
   _GET_MODULE_FUNCTION(WasmCall4Void);
   _GET_MODULE_FUNCTION(WasmCall5Void);
   _GET_MODULE_FUNCTION(WasmCall8Void);
-  _GET_MODULE_FUNCTION(WasmCall1Int);
-  _GET_MODULE_FUNCTION(WasmCall3Int);
+  _GET_MODULE_FUNCTION(WasmCall1Word);
+  _GET_MODULE_FUNCTION(WasmCall3Word);
 #undef _GET_MODULE_FUNCTION
 
 private:
