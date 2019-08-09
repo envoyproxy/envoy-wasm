@@ -43,12 +43,12 @@ example body
 
 Now you want to make changes to the C++ filter, regenerate to WASM module.
 
-### prerequisite
+### Prerequisite
 
 1. Download and install [`protobuf`](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md).
-1. Download and install [`WAVM`](https://github.com/WAVM/WAVM).
-1. Download and install [`emscripten`](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions)
-1. Activate emsdk archived version 1.38.39 (Note: by 07/26/2019 the latest known working version is 1.38.39).
+2. Download and install [`WAVM`](https://github.com/WAVM/WAVM).
+3. Download and install [`emscripten`](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions)
+4. Activate emsdk archived version 1.38.39 (Note: by 07/26/2019 the latest known working version is 1.38.39).
 
     ```shell
     # in emsdk directory
@@ -59,7 +59,7 @@ Now you want to make changes to the C++ filter, regenerate to WASM module.
     em++ -v 2>&1 |grep Emscripten
     ```
 
-1. Build WASM filter in envoy directory.
+5. Build WASM filter in envoy directory.
 
     ```shell
     envoy/examples/wasm$ source <path/to/emsdk>/emsdk_env.sh  # Only needed if in another shell session
@@ -73,4 +73,4 @@ Now you want to make changes to the C++ filter, regenerate to WASM module.
 For Envoy WASM runtime developers, if you want to make changes, please
 
 1. Follow [instructions](https://github.com/envoyproxy/envoy-wasm/blob/master/WASM.md).
-1. Modify `docker-compose.yaml` to mount your own Envoy.
+2. Modify `docker-compose.yaml` to mount your own Envoy.
