@@ -135,7 +135,7 @@ struct ApiFilesystemConfig {
 /**
  * Test fixture for all integration tests.
  */
-class BaseIntegrationTest : Logger::Loggable<Logger::Id::testing> {
+class BaseIntegrationTest : protected Logger::Loggable<Logger::Id::testing> {
 public:
   using TestTimeSystemPtr = std::unique_ptr<Event::TestTimeSystem>;
   using InstanceConstSharedPtrFn = std::function<Network::Address::InstanceConstSharedPtr(int)>;
@@ -363,6 +363,7 @@ protected:
   bool tls_xds_upstream_{false};
   bool use_lds_{true}; // Use the integration framework's LDS set up.
   Grpc::SotwOrDelta sotw_or_delta_{Grpc::SotwOrDelta::Sotw};
+  std::vector<uint32_t> ports_;
 
 private:
   // The type for the Envoy-to-backend connection

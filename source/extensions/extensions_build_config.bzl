@@ -6,6 +6,7 @@ EXTENSIONS = {
 
     "envoy.access_loggers.file":                        "//source/extensions/access_loggers/file:config",
     "envoy.access_loggers.http_grpc":                   "//source/extensions/access_loggers/http_grpc:config",
+    "envoy.access_loggers.wasm":                        "//source/extensions/access_loggers/wasm:config",
 
     #
     # Clusters
@@ -18,6 +19,11 @@ EXTENSIONS = {
     #
 
     "envoy.grpc_credentials.file_based_metadata":       "//source/extensions/grpc_credentials/file_based_metadata:config",
+
+    #
+    # WASM
+    #
+    "envoy.wasm":                                      "//source/extensions/wasm:config",
 
     #
     # Health checkers
@@ -55,6 +61,7 @@ EXTENSIONS = {
     "envoy.filters.http.router":                        "//source/extensions/filters/http/router:config",
     "envoy.filters.http.squash":                        "//source/extensions/filters/http/squash:config",
     "envoy.filters.http.tap":                           "//source/extensions/filters/http/tap:config",
+    "envoy.filters.http.wasm":                          "//source/extensions/filters/http/wasm:config",
 
     #
     # Listener filters
