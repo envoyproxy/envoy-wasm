@@ -18,6 +18,7 @@
 #include "common/common/c_smart_ptr.h"
 #include "common/common/logger.h"
 #include "common/common/stack_array.h"
+#include "common/stats/symbol_table_impl.h"
 
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/http/well_known_names.h"
@@ -761,6 +762,8 @@ private:
   std::unique_ptr<Global<double>> global_Infinity_;
 
   // Stats/Metrics
+  Stats::StatNameSet stat_name_set_;
+  absl::flat_hash_map<std::string, Stats::StatName> stat_names_;
   uint32_t next_counter_metric_id_ = kMetricTypeCounter;
   uint32_t next_gauge_metric_id_ = kMetricTypeGauge;
   uint32_t next_histogram_metric_id_ = kMetricTypeHistogram;
