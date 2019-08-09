@@ -10,8 +10,8 @@ as documented [here](https://www.envoyproxy.io/docs/envoy/latest/).
 ## Quick Start
 
 1. `docker-compose build`
-1. `docker-compose up`
-1. `curl -v localhost:18000`
+2. `docker-compose up`
+3. `curl -v localhost:18000`
 
 Curl output should include our headers:
 
