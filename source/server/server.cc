@@ -388,8 +388,8 @@ void InstanceImpl::initialize(const Options& options,
     if (factory) {
       for (auto& config : bootstrap_.wasm_service()) {
         Stats::ScopeSharedPtr scope;
-        if (!config.stats_prefix().empty()) {
-          scope = Stats::ScopeSharedPtr(stats_store_.createScope(config.stats_prefix()));
+        if (!config.stat_prefix().empty()) {
+          scope = Stats::ScopeSharedPtr(stats_store_.createScope(config.stat_prefix()));
         }
         Configuration::WasmFactoryContextImpl wasm_factory_context(
             clusterManager(), *dispatcher_, thread_local_, api(), stats_store_, scope,
