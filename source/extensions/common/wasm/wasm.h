@@ -764,7 +764,7 @@ private:
   // Stats/Metrics
   // TODO(jplevyak): replace the use of Stats::StatNameSet with something more efficient.
   // By having a separate StatNameSet per Wasm we are duplicating all the strings but
-  // avoiding locks.  Consider lock-free hash tables or pre-registering stats.
+  // avoiding locks. Consider lock-free hash tables or pre-registering stats.
   Stats::StatNameSet stat_name_set_;
   absl::flat_hash_map<std::string, Stats::StatName> stat_names_;
   uint32_t next_counter_metric_id_ = kMetricTypeCounter;
