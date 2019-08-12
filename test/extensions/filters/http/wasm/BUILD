@@ -21,7 +21,7 @@ envoy_extension_cc_test(
     extension_name = "envoy.filters.http.wasm",
     deps = [
         "//source/common/stream_info:stream_info_lib",
-        "//source/extensions/common/wasm/null:plugin",
+        "//source/extensions/common/wasm/null/sample_plugin:plugin",
         "//source/extensions/filters/http/wasm:wasm_filter_lib",
         "//test/mocks/grpc:grpc_mocks",
         "//test/mocks/http:http_mocks",

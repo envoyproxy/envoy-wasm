@@ -9,6 +9,8 @@ services:
       - ./envoy.yaml:/etc/envoy.yaml
       - ./envoy_wasm_example.wasm:/etc/envoy_wasm_example.wasm
       - ./envoy_filter_http_wasm_example.wasm:/etc/envoy_filter_http_wasm_example.wasm
+      # Uncomment this line if you want to use your own Envoy with WASM enabled.
+      #- /tmp/envoy-docker-build/envoy/source/exe/envoy:/usr/local/bin/envoy
     networks:
       - envoymesh
     expose:
