@@ -20,7 +20,7 @@ envoy_cc_library(
         "//include/envoy/server:wasm_interface",
         "//include/envoy/thread_local:thread_local_interface",
         "//source/common/common:assert_lib",
-        "//source/extensions/common/wasm:wasm_vm_hdr",
+        "//source/extensions/common/wasm:wasm_vm_interface",
         "//source/extensions/common/wasm:well_known_names",
     ],
 )
