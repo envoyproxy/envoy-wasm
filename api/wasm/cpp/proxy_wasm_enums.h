@@ -83,7 +83,7 @@ enum class MetadataResult : EnumType {
   ParseFailure = 5,
 };
 enum class PluginDirection : EnumType {
-  Inbound = 0,
-  Outbound = 1,
-  NotApplicable = 2,
+  Unspecified = 0,
+  Inbound = 1,
+  Outbound = 2,
 };

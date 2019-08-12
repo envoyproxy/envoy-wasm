@@ -179,9 +179,9 @@ enum class MetadataResult : int32_t {
   BadExpression = 6,
 };
 enum class PluginDirection : int32_t {
-  Inbound = 0,
-  Outbound = 1,
-  NotApplicable = 2,
+  Unspecified = 0,
+  Inbound = 1,
+  Outbound = 2,
 };
 
 // Handlers for functions exported from envoy to wasm.
@@ -1080,8 +1080,16 @@ struct SaveRestoreContext {
 
 inline PluginDirection
 pluginDirectionFromTrafficDirection(envoy::api::v2::core::TrafficDirection direction) {
-  return direction == envoy::api::v2::core::TrafficDirection::INBOUND ? PluginDirection::Inbound
-                                                                      : PluginDirection::Outbound;
+  switch (direction) {
+    default:
+      ASSERT(!"Bad envoy::api::v2::core::TrafficDirection");
+    case envoy::api::v2::core::TrafficDirection::UNSPECIFIED:
+      return PluginDirection::Unspecified;
+    case envoy::api::v2::core::TrafficDirection::INBOUND:
+      return PluginDirection::Inbound;
+    case envoy::api::v2::core::TrafficDirection::OUTBOUND:
+      return PluginDirection::Outbound;
+  }
 }
 
 } // namespace Wasm
