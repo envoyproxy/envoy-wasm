@@ -19,9 +19,18 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "wasm_vm_interface",
+    hdrs = ["wasm_vm.h"],
+    deps = [
+        ":well_known_names",
+    ],
+)
+
+envoy_cc_library(
     name = "wasm_hdr",
     hdrs = ["wasm.h"],
     deps = [
+        ":wasm_vm_interface",
         ":well_known_names",
         "//include/envoy/http:codes_interface",
         "//include/envoy/http:filter_interface",

@@ -1,22 +1,14 @@
 #include "extensions/common/wasm/wavm/wavm.h"
 
-#include <stdint.h>
-#include <stdio.h>
-
-#include <atomic>
-#include <fstream>
+#include <iostream>
 #include <memory>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include "envoy/common/exception.h"
-#include "envoy/server/wasm.h"
-
 #include "common/common/assert.h"
 #include "common/common/logger.h"
 
-#include "extensions/common/wasm/wasm.h"
 #include "extensions/common/wasm/well_known_names.h"
 
 #include "WAVM/Emscripten/Emscripten.h"
@@ -249,8 +241,8 @@ struct Wavm : public WasmVm {
   _GET_FUNCTION(WasmCall4Void);
   _GET_FUNCTION(WasmCall5Void);
   _GET_FUNCTION(WasmCall8Void);
-  _GET_FUNCTION(WasmCall1Int);
-  _GET_FUNCTION(WasmCall3Int);
+  _GET_FUNCTION(WasmCall1Word);
+  _GET_FUNCTION(WasmCall3Word);
 #undef _GET_FUNCTION
 
 #define _REGISTER_CALLBACK(_type)                                                                  \
@@ -265,16 +257,16 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback4Void);
   _REGISTER_CALLBACK(WasmCallback5Void);
   _REGISTER_CALLBACK(WasmCallback8Void);
-  _REGISTER_CALLBACK(WasmCallback0Int);
-  _REGISTER_CALLBACK(WasmCallback1Int);
-  _REGISTER_CALLBACK(WasmCallback2Int);
-  _REGISTER_CALLBACK(WasmCallback3Int);
-  _REGISTER_CALLBACK(WasmCallback4Int);
-  _REGISTER_CALLBACK(WasmCallback5Int);
-  _REGISTER_CALLBACK(WasmCallback6Int);
-  _REGISTER_CALLBACK(WasmCallback7Int);
-  _REGISTER_CALLBACK(WasmCallback8Int);
-  _REGISTER_CALLBACK(WasmCallback9Int);
+  _REGISTER_CALLBACK(WasmCallback0Word);
+  _REGISTER_CALLBACK(WasmCallback1Word);
+  _REGISTER_CALLBACK(WasmCallback2Word);
+  _REGISTER_CALLBACK(WasmCallback3Word);
+  _REGISTER_CALLBACK(WasmCallback4Word);
+  _REGISTER_CALLBACK(WasmCallback5Word);
+  _REGISTER_CALLBACK(WasmCallback6Word);
+  _REGISTER_CALLBACK(WasmCallback7Word);
+  _REGISTER_CALLBACK(WasmCallback8Word);
+  _REGISTER_CALLBACK(WasmCallback9Word);
   _REGISTER_CALLBACK(WasmCallback_ZWl);
   _REGISTER_CALLBACK(WasmCallback_ZWm);
   _REGISTER_CALLBACK(WasmCallback_m);

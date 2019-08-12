@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "extensions/common/wasm/wasm.h"
+#include "extensions/common/wasm/wasm_vm.h"
 
 namespace Envoy {
 namespace Extensions {
