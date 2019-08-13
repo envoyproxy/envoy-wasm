@@ -853,14 +853,14 @@ inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t sta
 inline PluginDirection
 pluginDirectionFromTrafficDirection(envoy::api::v2::core::TrafficDirection direction) {
   switch (direction) {
-  default:
-    ASSERT(!"Bad envoy::api::v2::core::TrafficDirection");
   case envoy::api::v2::core::TrafficDirection::UNSPECIFIED:
     return PluginDirection::Unspecified;
   case envoy::api::v2::core::TrafficDirection::INBOUND:
     return PluginDirection::Inbound;
   case envoy::api::v2::core::TrafficDirection::OUTBOUND:
     return PluginDirection::Outbound;
+  default:
+    ASSERT(!"Bad envoy::api::v2::core::TrafficDirection");
   }
 }
 
