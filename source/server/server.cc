@@ -386,10 +386,14 @@ void InstanceImpl::initialize(const Options& options,
   if (bootstrap_.wasm_service_size() > 0) {
     auto factory = Registry::FactoryRegistry<Configuration::WasmFactory>::getFactory("envoy.wasm");
     if (factory) {
-      auto scope = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
-      Configuration::WasmFactoryContextImpl wasm_factory_context(
-          clusterManager(), *dispatcher_, thread_local_, api(), scope, *local_info_);
       for (auto& config : bootstrap_.wasm_service()) {
+        Stats::ScopeSharedPtr scope;
+        if (!config.stat_prefix().empty()) {
+          scope = Stats::ScopeSharedPtr(stats_store_.createScope(config.stat_prefix()));
+        }
+        Configuration::WasmFactoryContextImpl wasm_factory_context(
+            clusterManager(), *dispatcher_, thread_local_, api(), stats_store_, scope,
+            *local_info_);
         auto wasm = factory->createWasm(config, wasm_factory_context);
         if (wasm) {
           // If not nullptr, this is a singleton WASM service.

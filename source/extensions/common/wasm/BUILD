@@ -37,6 +37,7 @@ envoy_cc_library(
         "//include/envoy/server:wasm_interface",
         "//include/envoy/upstream:cluster_manager_interface",
         "//source/common/common:stack_array",
+        "//source/common/stats:symbol_table_lib",
         "//source/extensions/filters/http:well_known_names",
         "@envoy_api//envoy/config/filter/http/wasm/v2:wasm_cc",
     ],
