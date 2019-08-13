@@ -14,3 +14,4 @@ Extensions
   common/common
   cluster/cluster
   grpc_credential/grpc_credential
+  wasm/wasm

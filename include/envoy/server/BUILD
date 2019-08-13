@@ -255,3 +255,22 @@ envoy_cc_library(
         "@envoy_api//envoy/config/trace/v2:trace_cc",
     ],
 )
+
+envoy_cc_library(
+    name = "wasm_interface",
+    hdrs = ["wasm.h"],
+    deps = [
+        "//include/envoy/thread_local:thread_local_interface",
+        "//source/common/protobuf",
+    ],
+)
+
+envoy_cc_library(
+    name = "wasm_config_interface",
+    hdrs = ["wasm_config.h"],
+    deps = [
+        ":wasm_interface",
+        "//include/envoy/api:api_interface",
+        "//include/envoy/event:dispatcher_interface",
+    ],
+)

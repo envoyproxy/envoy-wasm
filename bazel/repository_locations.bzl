@@ -232,6 +232,30 @@ REPOSITORY_LOCATIONS = dict(
         sha256 = "105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a",
         urls = ["https://files.pythonhosted.org/packages/b3/b2/238e2590826bfdd113244a40d9d3eb26918bd798fc187e2360a8367068db/six-1.10.0.tar.gz"],
     ),
+    org_llvm_llvm = dict(
+        sha256 = "b6d6c324f9c71494c0ccaf3dac1f16236d970002b42bb24a6c9e1634f7d0f4e2",
+        strip_prefix = "llvm-6.0.1.src",
+        urls = ["http://releases.llvm.org/6.0.1/llvm-6.0.1.src.tar.xz"],
+    ),
+    com_github_wavm_wavm = dict(
+        sha256 = "1acb11681657a0f32bb8c3d78117c742318c139d43eae70c6d34bbd9d9638135",
+        strip_prefix = "WAVM-95dbf08c8695b8941e7020c557d8612f9d2af895",
+        urls = ["https://github.com/WAVM/WAVM/archive/95dbf08c8695b8941e7020c557d8612f9d2af895.tar.gz"],
+    ),
+    wee8_linux = dict(
+        # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
+        # and contains complete checkout of v8 with all dependencies necessary to build wee8 on Linux-x86_64.
+        # TODO(PiotrSikora): switch to local compiler and provide single platform-agnostic archive.
+        sha256 = "1caebced30cb9d3531be4720b70c9132c988b362160f7721bc01caeb572c0eb7",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.5.288.22-linux-x86_64.tar.gz"],
+    ),
+    wee8_macos = dict(
+        # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
+        # and contains complete checkout of v8 with all dependencies necessary to build wee8 on macOS-x86_64.
+        # TODO(PiotrSikora): switch to local compiler and provide single platform-agnostic archive.
+        sha256 = "f84e423417db0b03b96e853b7d92f69be7d4936a33d1e8e05848fb146925ff68",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.5.288.22-macos-x86_64.tar.gz"],
+    ),
     io_opencensus_cpp = dict(
         sha256 = "8d6016e47c2e19e7acbadb6f905b8c422748c64299d71101ac8f28151677e195",
         strip_prefix = "opencensus-cpp-cad0d03ff3474cf14389fc249e16847ab7b6895f",

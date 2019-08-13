@@ -16,6 +16,7 @@
 #include "envoy/event/timer.h"
 #include "envoy/network/dns.h"
 #include "envoy/server/options.h"
+#include "envoy/server/wasm_config.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "common/api/api_impl.h"
@@ -43,6 +44,7 @@
 #include "server/guarddog_impl.h"
 #include "server/listener_hooks.h"
 #include "server/ssl_context_manager.h"
+#include "server/wasm_config_impl.h"
 
 namespace Envoy {
 namespace Server {
@@ -261,6 +263,8 @@ void InstanceImpl::initialize(const Options& options,
   ENVOY_LOG(info, "  transport_sockets.upstream: {}",
             Registry::FactoryRegistry<
                 Configuration::UpstreamTransportSocketConfigFactory>::allFactoryNames());
+  ENVOY_LOG(info, "  wasm: {}",
+            Registry::FactoryRegistry<Configuration::WasmFactory>::allFactoryNames());
 
   // Enable the selected buffer implementation (old libevent evbuffer version or new native
   // version) early in the initialization, before any buffers can be created.
@@ -376,6 +380,30 @@ void InstanceImpl::initialize(const Options& options,
       *admin_, Runtime::LoaderSingleton::get(), stats_store_, thread_local_, *random_generator_,
       dns_resolver_, *ssl_context_manager_, *dispatcher_, *local_info_, *secret_manager_,
       messageValidationVisitor(), *api_, http_context_, access_log_manager_, *singleton_manager_);
+
+  // Optional Wasm services. These must be initialied afer threading but before the main
+  // configuration which many reference wasm vms.
+  if (bootstrap_.wasm_service_size() > 0) {
+    auto factory = Registry::FactoryRegistry<Configuration::WasmFactory>::getFactory("envoy.wasm");
+    if (factory) {
+      for (auto& config : bootstrap_.wasm_service()) {
+        Stats::ScopeSharedPtr scope;
+        if (!config.stat_prefix().empty()) {
+          scope = Stats::ScopeSharedPtr(stats_store_.createScope(config.stat_prefix()));
+        }
+        Configuration::WasmFactoryContextImpl wasm_factory_context(
+            clusterManager(), *dispatcher_, thread_local_, api(), stats_store_, scope,
+            *local_info_);
+        auto wasm = factory->createWasm(config, wasm_factory_context);
+        if (wasm) {
+          // If not nullptr, this is a singleton WASM service.
+          wasm_.emplace_back(std::move(wasm));
+        }
+      }
+    } else {
+      ENVOY_LOG(warn, "No wasm factory available, so no wasm service started.");
+    }
+  }
 
   // Now the configuration gets parsed. The configuration may start setting
   // thread local data per above. See MainImpl::initialize() for why ConfigImpl

@@ -51,3 +51,7 @@ extensions/filters/common/original_src @snowp @klarose
 /*/extensions/filters/http/adaptive_concurrency @tonya11en @mattklein123
 # http inspector
 /*/extensions/filters/listener/http_inspector @crazyxy @PiotrSikora @lizan
+# WebAssembly extensions
+/*/extensions/access_loggers/wasm @jplevyak @PiotrSikora
+/*/extensions/common/wasm @jplevyak @PiotrSikora
+/*/extensions/filters/http/wasm @jplevyak @PiotrSikora

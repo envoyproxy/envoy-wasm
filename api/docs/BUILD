@@ -82,6 +82,7 @@ proto_library(
         "//envoy/config/resource_monitor/injected_resource/v2alpha:injected_resource",
         "//envoy/config/trace/v2:trace",
         "//envoy/config/transport_socket/tap/v2alpha:tap",
+        "//envoy/config/wasm/v2:wasm",
         "//envoy/data/accesslog/v2:accesslog",
         "//envoy/data/cluster/v2alpha:outlier_detection_event",
         "//envoy/data/core/v2alpha:health_check_event",

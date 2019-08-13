@@ -188,6 +188,21 @@ config_setting(
     values = {"define": "quiche=enabled"},
 )
 
+config_setting(
+    name = "wasm_all",
+    values = {"define": "wasm=enabled"},
+)
+
+config_setting(
+    name = "wasm_v8",
+    values = {"define": "wasm=v8"},
+)
+
+config_setting(
+    name = "wasm_wavm",
+    values = {"define": "wasm=wavm"},
+)
+
 # Alias pointing to the selected version of BoringSSL:
 # - BoringSSL FIPS from @boringssl_fips//:ssl,
 # - non-FIPS BoringSSL from @boringssl//:ssl.
@@ -196,6 +211,16 @@ alias(
     actual = select({
         "//bazel:boringssl_fips": "@boringssl_fips//:ssl",
         "//conditions:default": "@boringssl//:ssl",
+    }),
+)
+
+# Alias pointing to a platform-specific version of wee8.
+alias(
+    name = "wee8",
+    actual = select({
+        ":darwin": "@wee8_macos//:wee8",
+        ":darwin_x86_64": "@wee8_macos//:wee8",
+        "//conditions:default": "@wee8_linux//:wee8",
     }),
 )
 

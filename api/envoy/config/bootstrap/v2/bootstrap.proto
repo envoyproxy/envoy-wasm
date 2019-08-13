@@ -21,6 +21,7 @@ import "envoy/api/v2/lds.proto";
 import "envoy/config/trace/v2/trace.proto";
 import "envoy/config/metrics/v2/stats.proto";
 import "envoy/config/overload/v2alpha/overload.proto";
+import "envoy/config/wasm/v2/wasm.proto";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
@@ -144,6 +145,9 @@ message Bootstrap {
   // changes to this string, especially in multi-layer Envoy deployments or deployments using
   // extensions which are not upstream.
   string header_prefix = 18;
+
+  // Configuration for an wasm service provider(s).
+  repeated envoy.config.wasm.v2.WasmConfig wasm_service = 19;
 }
 
 // Administration interface :ref:`operations documentation
