@@ -1971,7 +1971,8 @@ Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), scope_(wasm.scope_), direction_(wasm.direction_),
       local_info_(wasm.local_info_), listener_metadata_(wasm.listener_metadata_), id_(wasm.id_),
-      owned_scope_(wasm.owned_scope_), time_source_(dispatcher.timeSource()), stat_name_set_(scope_.symbolTable()) {
+      owned_scope_(wasm.owned_scope_), time_source_(dispatcher.timeSource()),
+      stat_name_set_(scope_.symbolTable()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
