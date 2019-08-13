@@ -17,6 +17,7 @@
 #include "common/common/assert.h"
 #include "common/common/logger.h"
 #include "common/common/stack_array.h"
+#include "common/stats/symbol_table_impl.h"
 
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
@@ -644,6 +645,11 @@ private:
   std::unique_ptr<Global<double>> global_Infinity_;
 
   // Stats/Metrics
+  // TODO(jplevyak): replace the use of Stats::StatNameSet with something more efficient.
+  // By having a separate StatNameSet per Wasm we are duplicating all the strings but
+  // avoiding locks. Consider lock-free hash tables or pre-registering stats.
+  Stats::StatNameSet stat_name_set_;
+  absl::flat_hash_map<std::string, Stats::StatName> stat_names_;
   uint32_t next_counter_metric_id_ = kMetricTypeCounter;
   uint32_t next_gauge_metric_id_ = kMetricTypeGauge;
   uint32_t next_histogram_metric_id_ = kMetricTypeHistogram;

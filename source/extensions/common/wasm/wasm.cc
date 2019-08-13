@@ -1700,23 +1700,21 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
 }
 
 uint32_t Context::defineMetric(MetricType type, absl::string_view name) {
+  auto stat_name = wasm_->stat_name_set_.getStatName(name);
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
-    wasm_->counters_.emplace(id, &wasm_->scope_.counter(std::string(
-                                     name))); // This is inefficient, but it is the Scope API.
+    auto c = &wasm_->scope_.counterFromStatName(stat_name);
+    wasm_->counters_.emplace(id, c);
     return id;
   } else if (type == MetricType::Gauge) {
     auto id = wasm_->nextGaugeMetricId();
-    wasm_->gauges_.emplace(
-        id,
-        &wasm_->scope_.gauge(
-            std::string(name),
-            Stats::Gauge::ImportMode::Accumulate)); // This is inefficient, but it is the Scope API.
+    auto g = &wasm_->scope_.gaugeFromStatName(stat_name, Stats::Gauge::ImportMode::Accumulate);
+    wasm_->gauges_.emplace(id, g);
     return id;
   } else if (type == MetricType::Histogram) {
     auto id = wasm_->nextHistogramMetricId();
-    wasm_->histograms_.emplace(id, &wasm_->scope_.histogram(std::string(
-                                       name))); // This is inefficient, but it is the Scope API.
+    auto h = &wasm_->scope_.histogramFromStatName(stat_name);
+    wasm_->histograms_.emplace(id, h);
     return id;
   }
   return 0;
@@ -1786,7 +1784,8 @@ Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_conf
            Stats::ScopeSharedPtr owned_scope)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
       local_info_(local_info), listener_metadata_(listener_metadata), owned_scope_(owned_scope),
-      time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration) {
+      time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
+      stat_name_set_(scope_.symbolTable()) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
 }
@@ -1966,7 +1965,7 @@ Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), scope_(wasm.scope_), local_info_(wasm.local_info_),
       listener_metadata_(wasm.listener_metadata_), id_(wasm.id_), owned_scope_(wasm.owned_scope_),
-      time_source_(dispatcher.timeSource()) {
+      time_source_(dispatcher.timeSource()), stat_name_set_(scope_.symbolTable()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
