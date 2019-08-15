@@ -8,7 +8,6 @@
 
 #include "common/common/assert.h"
 
-#include "extensions/common/wasm/null/null.h"
 #include "extensions/common/wasm/null/null_vm_plugin.h"
 #include "extensions/common/wasm/well_known_names.h"
 

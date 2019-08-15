@@ -28,6 +28,17 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "wasm_vm_lib",
+    srcs = ["wasm_vm.cc"],
+    deps = [
+        ":wasm_vm_interface",
+        "//source/common/common:assert_lib",
+        "//source/extensions/common/wasm/null:null_lib",
+    ],
+)
+
+# NB: Used to break the circular dependency between wasm_lib and null_plugin_lib.
+envoy_cc_library(
     name = "wasm_hdr",
     hdrs = ["wasm.h"],
     deps = [
@@ -49,6 +60,7 @@ envoy_cc_library(
     srcs = ["wasm.cc"],
     deps = [
         ":wasm_hdr",
+        ":wasm_vm_lib",
         "//external:abseil_node_hash_map",
         "//api/wasm/cpp:shared_lib",
         "//source/common/buffer:buffer_lib",
