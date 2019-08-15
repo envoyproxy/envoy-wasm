@@ -1599,10 +1599,10 @@ WasmResult Context::getMetadata(MetadataType type, absl::string_view key, std::s
                return WasmResult::Ok;
              }},
             {"plugin.direction",
-             [](Context* context, std::string* result_ptr) -> MetadataResult {
+             [](Context* context, std::string* result_ptr) -> WasmResult {
                auto direction = context->wasm_->direction_;
                result_ptr->assign(reinterpret_cast<const char*>(&direction), sizeof(direction));
-               return MetadataResult::Ok;
+               return WasmResult::Ok;
              }},
         };
     auto it = handlers.find(key);
