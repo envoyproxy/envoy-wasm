@@ -37,6 +37,7 @@ enum class MetadataType : EnumType {
   response.response_code : int32
   upstream.tls_version : string
   downstream.tsl_version : string
+  plugin.direction : int32 (enum PluginDirection)
  */
 enum class HeaderMapType : EnumType {
   RequestHeaders = 0,  // During the onLog callback these are immutable
@@ -80,4 +81,9 @@ enum class MetadataResult : EnumType {
   SerializationFailure = 3,
   BadType = 4,
   ParseFailure = 5,
+};
+enum class PluginDirection : EnumType {
+  Unspecified = 0,
+  Inbound = 1,
+  Outbound = 2,
 };

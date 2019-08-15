@@ -21,10 +21,10 @@ Server::WasmSharedPtr WasmFactory::createWasm(const envoy::config::wasm::v2::Was
   // Create a base WASM to verify that the code loads before setting/cloning the for the individual
   // threads.
   auto root_id = config.root_id();
-  auto base_wasm = Common::Wasm::createWasm(config.vm_id(), config.vm_config(), root_id,
-                                            context.clusterManager(), context.dispatcher(),
-                                            context.api(), context.scope(), context.localInfo(),
-                                            nullptr /* listener_metadata */, context.owned_scope());
+  auto base_wasm = Common::Wasm::createWasm(
+      config.vm_id(), config.vm_config(), root_id, context.clusterManager(), context.dispatcher(),
+      context.api(), context.scope(), Common::Wasm::PluginDirection::Unspecified,
+      context.localInfo(), nullptr /* listener_metadata */, context.owned_scope());
   if (config.singleton()) {
     // Return the WASM VM which will be stored as a singleton by the Server.
     auto root_context = base_wasm->start(root_id, config.vm_config().configuration());

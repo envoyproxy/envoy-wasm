@@ -1422,6 +1422,12 @@ MetadataResult Context::getMetadata(MetadataType type, absl::string_view key,
                }
                return MetadataResult::Ok;
              }},
+            {"plugin.direction",
+             [](Context* context, std::string* result_ptr) -> MetadataResult {
+               auto direction = context->wasm_->direction_;
+               result_ptr->assign(reinterpret_cast<const char*>(&direction), sizeof(direction));
+               return MetadataResult::Ok;
+             }},
         };
     auto it = handlers.find(key);
     if (it == handlers.end()) {
@@ -1779,13 +1785,13 @@ uint64_t Context::getMetric(uint32_t metric_id) {
 
 Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_configuration,
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-           Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+           Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
            const envoy::api::v2::core::Metadata* listener_metadata,
            Stats::ScopeSharedPtr owned_scope)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
-      local_info_(local_info), listener_metadata_(listener_metadata), owned_scope_(owned_scope),
-      time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(scope_.symbolTable()) {
+      direction_(direction), local_info_(local_info), listener_metadata_(listener_metadata),
+      owned_scope_(owned_scope), time_source_(dispatcher.timeSource()),
+      vm_configuration_(vm_configuration), stat_name_set_(scope_.symbolTable()) {
   wasm_vm_ = Common::Wasm::createWasmVm(vm);
   id_ = std::string(id);
 }
@@ -1963,9 +1969,10 @@ void Wasm::getFunctions() {
 
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
-      dispatcher_(dispatcher), scope_(wasm.scope_), local_info_(wasm.local_info_),
-      listener_metadata_(wasm.listener_metadata_), id_(wasm.id_), owned_scope_(wasm.owned_scope_),
-      time_source_(dispatcher.timeSource()), stat_name_set_(scope_.symbolTable()) {
+      dispatcher_(dispatcher), scope_(wasm.scope_), direction_(wasm.direction_),
+      local_info_(wasm.local_info_), listener_metadata_(wasm.listener_metadata_), id_(wasm.id_),
+      owned_scope_(wasm.owned_scope_), time_source_(dispatcher.timeSource()),
+      stat_name_set_(scope_.symbolTable()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
@@ -2387,17 +2394,16 @@ std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
   }
 }
 
-static std::shared_ptr<Wasm>
-createWasmInternal(absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
-                   absl::string_view root_id, // e.g. filter instance id
-                   Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-                   Api::Api& api, Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
-                   const envoy::api::v2::core::Metadata* listener_metadata,
-                   Stats::ScopeSharedPtr scope_ptr,
-                   std::unique_ptr<Context> root_context_for_testing) {
-  auto wasm =
-      std::make_shared<Wasm>(vm_config.vm(), vm_id, vm_config.configuration(), cluster_manager,
-                             dispatcher, scope, local_info, listener_metadata, scope_ptr);
+static std::shared_ptr<Wasm> createWasmInternal(
+    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+    absl::string_view root_id, // e.g. filter instance id
+    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+    Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
+    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
+    std::unique_ptr<Context> root_context_for_testing) {
+  auto wasm = std::make_shared<Wasm>(vm_config.vm(), vm_id, vm_config.configuration(),
+                                     cluster_manager, dispatcher, scope, direction, local_info,
+                                     listener_metadata, scope_ptr);
   const auto& code = Config::DataSource::read(vm_config.code(), true, api);
   const auto& path = Config::DataSource::getPath(vm_config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
@@ -2422,23 +2428,22 @@ std::shared_ptr<Wasm> createWasm(absl::string_view vm_id,
                                  absl::string_view root_id, // e.g. filter instance id
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
-                                 const LocalInfo::LocalInfo& local_info,
+                                 PluginDirection direction, const LocalInfo::LocalInfo& local_info,
                                  const envoy::api::v2::core::Metadata* listener_metadata,
                                  Stats::ScopeSharedPtr scope_ptr) {
   return createWasmInternal(vm_id, vm_config, root_id, cluster_manager, dispatcher, api, scope,
-                            local_info, listener_metadata, scope_ptr, nullptr);
+                            direction, local_info, listener_metadata, scope_ptr, nullptr);
 }
 
-std::shared_ptr<Wasm>
-createWasmForTesting(absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
-                     absl::string_view root_id, // e.g. filter instance id
-                     Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-                     Api::Api& api, Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
-                     const envoy::api::v2::core::Metadata* listener_metadata,
-                     Stats::ScopeSharedPtr scope_ptr,
-                     std::unique_ptr<Context> root_context_for_testing) {
+std::shared_ptr<Wasm> createWasmForTesting(
+    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+    absl::string_view root_id, // e.g. filter instance id
+    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+    Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
+    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
+    std::unique_ptr<Context> root_context_for_testing) {
   return createWasmInternal(vm_id, vm_config, root_id, cluster_manager, dispatcher, api, scope,
-                            local_info, listener_metadata, scope_ptr,
+                            direction, local_info, listener_metadata, scope_ptr,
                             std::move(root_context_for_testing));
 }
 
@@ -2451,10 +2456,10 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view r
     wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
     root_context = wasm->start(root_id, base_wasm.vm_configuration());
   } else {
-    wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->vm(), base_wasm.id(),
-                                  base_wasm.vm_configuration(), base_wasm.clusterManager(),
-                                  dispatcher, base_wasm.scope(), base_wasm.localInfo(),
-                                  base_wasm.listenerMetadata(), nullptr /* owned scope */);
+    wasm = std::make_shared<Wasm>(
+        base_wasm.wasmVm()->vm(), base_wasm.id(), base_wasm.vm_configuration(),
+        base_wasm.clusterManager(), dispatcher, base_wasm.scope(), base_wasm.direction(),
+        base_wasm.localInfo(), base_wasm.listenerMetadata(), nullptr /* owned scope */);
     if (!wasm->initialize(base_wasm.code(), base_wasm.id(), base_wasm.allow_precompiled())) {
       throw WasmException("Failed to initialize WASM code");
     }

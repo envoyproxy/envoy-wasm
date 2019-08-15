@@ -512,6 +512,10 @@ inline MetadataResult getResponseTlsVersion(std::string *tls_version_ptr) {
   PROXY_EXPRESSION_GET_STRING("response.tls_version", tls_version_ptr);
 }
 
+inline MetadataResult getPluginDirection(PluginDirection *direction_ptr) {
+  PROXY_EXPRESSION_GET_UINT32("plugin.direction", reinterpret_cast<EnumType*>(direction_ptr));
+}
+
 // Metadata
 inline MetadataResult getMetadata(MetadataType type, StringView key, WasmDataPtr *wasm_data) {
   const char* value_ptr = nullptr;

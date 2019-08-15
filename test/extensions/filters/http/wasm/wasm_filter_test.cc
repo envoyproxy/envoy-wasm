@@ -83,7 +83,8 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
         proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, local_info_, &listener_metadata_, nullptr,
+        dispatcher_, *api, *scope_, Envoy::Extensions::Common::Wasm::PluginDirection::Inbound,
+        local_info_, &listener_metadata_, nullptr,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
@@ -97,7 +98,8 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
         proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, local_info_, &listener_metadata_, nullptr,
+        dispatcher_, *api, *scope_, Envoy::Extensions::Common::Wasm::PluginDirection::Inbound,
+        local_info_, &listener_metadata_, nullptr,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
