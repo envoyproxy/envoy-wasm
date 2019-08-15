@@ -27,8 +27,10 @@ enum class MetadataType : int32_t {
   request.response_code : int32
   response.response_code : int32
   upstream.tls_version : string
-  downstream.tsl_version : string
+  downstream.tls_version : string
+  plugin.direction : int32 (enum PluginDirection)
  */
+
 enum class HeaderMapType : int32_t {
   RequestHeaders = 0,  // During the onLog callback these are immutable
   RequestTrailers = 1,  // During the onLog callback these are immutable
@@ -38,4 +40,10 @@ enum class HeaderMapType : int32_t {
   GrpcReceiveInitialMetadata = 5,  // Immutable
   GrpcReceiveTrailingMetadata = 6,  // Immutable
   MAX = 6,
+};
+
+enum class PluginDirection : int32_t {
+  Unspecified = 0,
+  Inbound = 1,
+  Outbound = 2,
 };

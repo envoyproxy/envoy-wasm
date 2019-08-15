@@ -436,7 +436,7 @@ class Wasm : public Envoy::Server::Wasm,
 public:
   Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_configuration,
        Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-       Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
+       Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
        const envoy::api::v2::core::Metadata* listener_metadata,
        Stats::ScopeSharedPtr owned_scope = nullptr);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
@@ -459,6 +459,7 @@ public:
   }
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
   Stats::Scope& scope() const { return scope_; }
+  PluginDirection direction() { return direction_; }
   const LocalInfo::LocalInfo& localInfo() { return local_info_; }
   const envoy::api::v2::core::Metadata* listenerMetadata() { return listener_metadata_; }
 
@@ -551,6 +552,7 @@ private:
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
   Stats::Scope& scope_; // Either an inherited scope or owned_scope_ below.
+  const PluginDirection direction_;
   const LocalInfo::LocalInfo& local_info_;
   const envoy::api::v2::core::Metadata* listener_metadata_{};
   std::string id_;
@@ -648,7 +650,7 @@ std::shared_ptr<Wasm> createWasm(absl::string_view vm_id,
                                  absl::string_view root_id,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
-                                 const LocalInfo::LocalInfo& local_info,
+                                 PluginDirection direction, const LocalInfo::LocalInfo& local_info,
                                  const envoy::api::v2::core::Metadata* listener_metadata,
                                  Stats::ScopeSharedPtr owned_scope);
 
@@ -657,14 +659,13 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view r
                                             absl::string_view configuration,
                                             Event::Dispatcher& dispatcher);
 
-std::shared_ptr<Wasm>
-createWasmForTesting(absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
-                     absl::string_view root_id, // e.g. filter instance id
-                     Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-                     Api::Api& api, Stats::Scope& scope, const LocalInfo::LocalInfo& local_info,
-                     const envoy::api::v2::core::Metadata* listener_metadata,
-                     Stats::ScopeSharedPtr scope_ptr,
-                     std::unique_ptr<Context> root_context_for_testing);
+std::shared_ptr<Wasm> createWasmForTesting(
+    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+    absl::string_view root_id, // e.g. filter instance id
+    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+    Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
+    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
+    std::unique_ptr<Context> root_context_for_testing);
 
 // Get an existing ThreadLocal VM matching 'vm_id'.
 std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_view root_id,
@@ -832,6 +833,21 @@ inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t sta
 
 template <typename T> inline bool Wasm::setDatatype(uint64_t ptr, const T& t) {
   return wasm_vm_->setMemory(ptr, sizeof(T), &t);
+}
+
+inline PluginDirection
+pluginDirectionFromTrafficDirection(envoy::api::v2::core::TrafficDirection direction) {
+  switch (direction) {
+  case envoy::api::v2::core::TrafficDirection::UNSPECIFIED:
+    return PluginDirection::Unspecified;
+  case envoy::api::v2::core::TrafficDirection::INBOUND:
+    return PluginDirection::Inbound;
+  case envoy::api::v2::core::TrafficDirection::OUTBOUND:
+    return PluginDirection::Outbound;
+  default:
+    ASSERT(!"Bad envoy::api::v2::core::TrafficDirection");
+    NOT_REACHED_GCOVR_EXCL_LINE;
+  }
 }
 
 } // namespace Wasm

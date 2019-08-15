@@ -577,6 +577,8 @@ std::chrono::milliseconds Server::listenerFiltersTimeout() const {
   return std::chrono::milliseconds(0);
 }
 
+bool Server::continueOnListenerFiltersTimeout() const { return false; }
+
 Stats::Scope& Server::listenerScope() { return stats_; }
 
 uint64_t Server::listenerTag() const { return 0; }

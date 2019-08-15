@@ -295,6 +295,8 @@ public:
 
   std::chrono::milliseconds listenerFiltersTimeout() const override;
 
+  bool continueOnListenerFiltersTimeout() const override;
+
   Stats::Scope& listenerScope() override;
 
   uint64_t listenerTag() const override;
