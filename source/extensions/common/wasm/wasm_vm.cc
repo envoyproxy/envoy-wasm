@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "extensions/common/wasm/null/null.h"
+
 #ifdef ENVOY_WASM_V8
 #include "extensions/common/wasm/v8/v8.h"
 #endif

@@ -65,8 +65,8 @@ envoy_cc_library(
     deps = [
         ":wasm_hdr",
         ":wasm_vm_lib",
-        "//external:abseil_node_hash_map",
         "//api/wasm/cpp:shared_lib",
+        "//external:abseil_node_hash_map",
         "//source/common/buffer:buffer_lib",
         "//source/common/common:enum_to_int",
         "//source/common/config:datasource_lib",
