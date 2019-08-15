@@ -45,12 +45,10 @@ namespace Common {
 namespace Wasm {
 
 // Any currently executing Wasm call context.
-thread_local Context* current_context_ = nullptr;
 #define WASM_CONTEXT(_c)                                                                           \
   (ContextOrEffectiveContext(static_cast<Context*>((void)_c, current_context_)))
 // The id of the context which should be used for calls out of the VM in place of current_context_
 // above.
-thread_local uint32_t effective_context_id_ = 0; // 0 indicates no effective context id.
 
 namespace {
 
@@ -2588,35 +2586,6 @@ bool GrpcStreamClientHandler::onReceiveMessageRaw(Buffer::InstancePtr&& response
 void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
                                             const std::string& message) {
   context->onGrpcClose(token, status, message);
-}
-
-std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
-  if (wasm_vm.empty()) {
-#if defined(ENVOY_WASM_V8) && !defined(ENVOY_WASM_WAVM)
-    return V8::createVm();
-#elif defined(ENVOY_WASM_WAVM) && !defined(ENVOY_WASM_V8)
-    return Wavm::createVm();
-#else
-    throw WasmException("Failed to create WASM VM with unspecified runtime.");
-#endif
-  } else if (wasm_vm == WasmVmNames::get().Null) {
-    return Null::createVm();
-  } else
-#ifdef ENVOY_WASM_V8
-      if (wasm_vm == WasmVmNames::get().v8) {
-    return V8::createVm();
-  } else
-#endif
-#ifdef ENVOY_WASM_WAVM
-      if (wasm_vm == WasmVmNames::get().Wavm) {
-    return Wavm::createVm();
-  } else
-#endif
-  {
-    throw WasmException(fmt::format(
-        "Failed to create WASM VM using {} runtime. Envoy was compiled without support for it.",
-        wasm_vm));
-  }
 }
 
 static std::shared_ptr<Wasm> createWasmInternal(
