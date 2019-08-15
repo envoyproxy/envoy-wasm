@@ -120,8 +120,8 @@
   (data $49 $27 (i32.const 1963)
     "\ff\ff\ff\ff\ff")
   (data $50 $27 (i32.const 2032)
-    "l\09\00\00\ac\0d\00\00\94\09\00\00\0c\0e\00\00\08\08\00\00\00\00\00\00\94\09\00\00\b9\0d\00\00\18\08\00\00\00\00\00\00l\09\00\00\da\0d\00\00\94\09\00\00\e7\0d\00\00\f8\07\00\00\00\00\00\00"
-    "\94\09\00\00.\0e\00\00\f0\07\00\00\00\00\00\00\94\09\00\00>\0e\00\000\08\00\00\00\00\00\00\94\09\00\00s\0e\00\00\08\08\00\00\00\00\00\00\94\09\00\00O\0e\00\00P\08")
+    "l\09\00\00\ad\0d\00\00\94\09\00\00\0d\0e\00\00\08\08\00\00\00\00\00\00\94\09\00\00\ba\0d\00\00\18\08\00\00\00\00\00\00l\09\00\00\db\0d\00\00\94\09\00\00\e8\0d\00\00\f8\07\00\00\00\00\00\00"
+    "\94\09\00\00/\0e\00\00\f0\07\00\00\00\00\00\00\94\09\00\00?\0e\00\000\08\00\00\00\00\00\00\94\09\00\00t\0e\00\00\08\08\00\00\00\00\00\00\94\09\00\00P\0e\00\00P\08")
   (data $51 $27 (i32.const 2348)
     "\f8\0e")
   (data $52 $27 (i32.const 2408)
@@ -138,14 +138,14 @@
     "t_tag\00bool_tag\00string_tag1\00string_tag2\00test_tag1\00test_tag2\00h_id "
     "= \00test_tag_stack\00stack_c = \00stack_test_tag1\00stack_g = \00stack_te"
     "st_tag\00allocator<T>::allocate(size_t n) 'n' exceeds maximum supp"
-    "orted size\00metric fields.size() != tags.size()\00_result== WasmRes"
-    "ult::Ok\00/home/jplev_google_com/envoy/api/wasm/cpp/proxy_wasm_api"
-    ".h\00resolveFullName\00true\00false\00get\00metric fields.size() >= tags.s"
-    "ize()\00-+   0X0x\00(null)\00-0X+0X 0X-0x+0x 0x\00inf\00INF\00nan\00NAN\00.\00%d\00%"
-    "llu\00St9exception\00N10__cxxabiv116__shim_type_infoE\00St9type_info\00N"
-    "10__cxxabiv120__si_class_type_infoE\00N10__cxxabiv117__class_type_"
-    "infoE\00St11logic_error\00St12length_error\00N10__cxxabiv119__pointer_"
-    "type_infoE\00N10__cxxabiv117__pbase_type_infoE")
+    "orted size\00metric fields.size() != tags.size()\00_result == WasmRe"
+    "sult::Ok\00/home/jplev_google_com/envoy/api/wasm/cpp/proxy_wasm_ap"
+    "i.h\00resolveFullName\00true\00false\00get\00metric fields.size() >= tags."
+    "size()\00-+   0X0x\00(null)\00-0X+0X 0X-0x+0x 0x\00inf\00INF\00nan\00NAN\00.\00%d\00"
+    "%llu\00St9exception\00N10__cxxabiv116__shim_type_infoE\00St9type_info\00"
+    "N10__cxxabiv120__si_class_type_infoE\00N10__cxxabiv117__class_type"
+    "_infoE\00St11logic_error\00St12length_error\00N10__cxxabiv119__pointer"
+    "_type_infoE\00N10__cxxabiv117__pbase_type_infoE")
   
   (func $stackAlloc (type $7)
     (param $0 i32)
@@ -2732,7 +2732,7 @@
     i32.const 4
     i32.store8 offset=11
     local.get $1
-    i32.const 3387
+    i32.const 3388
     i32.const 4
     call $_memcpy
     drop
@@ -3005,9 +3005,9 @@
     call $_proxy_getMetric
     if $if_3
       i32.const 3287
-      i32.const 3312
-      i32.const 1218
-      i32.const 3398
+      i32.const 3313
+      i32.const 1219
+      i32.const 3399
       call $___assert_fail
     end ;; $if_3
     local.get $1
@@ -3307,9 +3307,9 @@
     call $_proxy_getMetric
     if $if_0
       i32.const 3287
-      i32.const 3312
-      i32.const 1218
-      i32.const 3398
+      i32.const 3313
+      i32.const 1219
+      i32.const 3399
       call $___assert_fail
     end ;; $if_0
     local.get $2
@@ -3576,7 +3576,7 @@
     i32.const 4
     i32.store8 offset=11
     local.get $2
-    i32.const 3387
+    i32.const 3388
     i32.const 4
     call $_memcpy
     drop
@@ -6936,7 +6936,7 @@
     i32.const 4
     i32.store8 offset=11
     local.get $2
-    i32.const 3387
+    i32.const 3388
     i32.const 4
     call $_memcpy
     drop
@@ -7140,7 +7140,7 @@
     i32.const 4
     i32.store8 offset=11
     local.get $1
-    i32.const 3387
+    i32.const 3388
     i32.const 4
     call $_memcpy
     drop
@@ -7242,9 +7242,9 @@
     call $_proxy_getMetric
     if $if_3
       i32.const 3287
-      i32.const 3312
-      i32.const 1319
-      i32.const 3398
+      i32.const 3313
+      i32.const 1320
+      i32.const 3399
       call $___assert_fail
     end ;; $if_3
     local.get $2
@@ -7357,7 +7357,7 @@
     i32.const 4
     i32.store8 offset=11
     local.get $1
-    i32.const 3387
+    i32.const 3388
     i32.const 4
     call $_memcpy
     drop
@@ -7931,9 +7931,9 @@
     call $_proxy_getMetric
     if $if_3
       i32.const 3287
-      i32.const 3312
-      i32.const 1364
-      i32.const 3398
+      i32.const 3313
+      i32.const 1365
+      i32.const 3399
       call $___assert_fail
     end ;; $if_3
     local.get $3
@@ -8096,7 +8096,7 @@
     i32.const 4
     i32.store8 offset=11
     local.get $1
-    i32.const 3387
+    i32.const 3388
     i32.const 4
     call $_memcpy
     drop
@@ -8790,7 +8790,7 @@
     i32.const 4
     i32.store8 offset=11
     local.get $1
-    i32.const 3387
+    i32.const 3388
     i32.const 4
     call $_memcpy
     drop
@@ -10691,9 +10691,9 @@
       call $_proxy_defineMetric
       if $if_1
         i32.const 3287
-        i32.const 3312
-        i32.const 1176
-        i32.const 3371
+        i32.const 3313
+        i32.const 1177
+        i32.const 3372
         call $___assert_fail
       else
         local.get $6
@@ -12743,7 +12743,7 @@
     i32.ge_u
     if $if
       i32.const 5
-      i32.const 3402
+      i32.const 3403
       i32.const 35
       call $_proxy_log
       drop
@@ -15089,13 +15089,13 @@
       local.tee $1
       i64.reinterpret_f64
       local.set $25
-      i32.const 3455
+      i32.const 3456
       local.set $18
       i32.const 1
     else
-      i32.const 3458
-      i32.const 3461
-      i32.const 3456
+      i32.const 3459
+      i32.const 3462
+      i32.const 3457
       local.get $4
       i32.const 1
       i32.and
@@ -15118,8 +15118,8 @@
     i64.const 9218868437227405312
     i64.eq
     if $if_0 (result i32)
-      i32.const 3482
-      i32.const 3486
+      i32.const 3483
+      i32.const 3487
       local.get $5
       i32.const 32
       i32.and
@@ -15127,8 +15127,8 @@
       i32.ne
       local.tee $3
       select
-      i32.const 3474
-      i32.const 3478
+      i32.const 3475
+      i32.const 3479
       local.get $3
       select
       local.get $1
@@ -16476,7 +16476,7 @@
           i32.eqz
           if $if_54
             local.get $0
-            i32.const 3490
+            i32.const 3491
             i32.const 1
             call $_out_279
           end ;; $if_54
@@ -16635,7 +16635,7 @@
                     br $block_4
                   end ;; $if_61
                   local.get $0
-                  i32.const 3490
+                  i32.const 3491
                   i32.const 1
                   call $_out_279
                   local.get $6
@@ -17723,7 +17723,7 @@
                                           local.set $1
                                           i32.const 0
                                           local.set $12
-                                          i32.const 3438
+                                          i32.const 3439
                                           local.set $8
                                           br $block_14
                                         end ;; $block_25
@@ -17739,13 +17739,13 @@
                                           i64.sub
                                           local.tee $25
                                           i64.store
-                                          i32.const 3438
+                                          i32.const 3439
                                           local.set $8
                                           i32.const 1
                                         else
-                                          i32.const 3439
                                           i32.const 3440
-                                          i32.const 3438
+                                          i32.const 3441
+                                          i32.const 3439
                                           local.get $7
                                           i32.const 1
                                           i32.and
@@ -17769,7 +17769,7 @@
                                       local.set $25
                                       i32.const 0
                                       local.set $12
-                                      i32.const 3438
+                                      i32.const 3439
                                       local.set $8
                                       br $block_16
                                     end ;; $block_23
@@ -17785,7 +17785,7 @@
                                     local.set $5
                                     i32.const 0
                                     local.set $12
-                                    i32.const 3438
+                                    i32.const 3439
                                     local.set $8
                                     local.get $18
                                     local.set $1
@@ -17794,7 +17794,7 @@
                                   local.get $10
                                   i32.load
                                   local.tee $5
-                                  i32.const 3448
+                                  i32.const 3449
                                   local.get $5
                                   select
                                   local.tee $6
@@ -17814,7 +17814,7 @@
                                   local.set $5
                                   i32.const 0
                                   local.set $12
-                                  i32.const 3438
+                                  i32.const 3439
                                   local.set $8
                                   local.get $1
                                   local.get $6
@@ -17875,7 +17875,7 @@
                           local.set $5
                           i32.const 0
                           local.set $12
-                          i32.const 3438
+                          i32.const 3439
                           local.set $8
                           local.get $18
                           local.set $1
@@ -17903,11 +17903,11 @@
                         local.tee $8
                         select
                         local.set $12
-                        i32.const 3438
+                        i32.const 3439
                         local.get $6
                         i32.const 4
                         i32.shr_u
-                        i32.const 3438
+                        i32.const 3439
                         i32.add
                         local.get $8
                         select
@@ -27168,7 +27168,7 @@
         local.get $4
         i32.const 1
         i32.add
-        i32.const 3492
+        i32.const 3493
         local.get $5
         call $_snprintf
         local.tee $3
@@ -27304,7 +27304,7 @@
         local.get $4
         i32.const 1
         i32.add
-        i32.const 3495
+        i32.const 3496
         local.get $5
         call $_snprintf
         local.tee $3

@@ -43,39 +43,14 @@ struct NullVm : public WasmVm {
   void getFunction(absl::string_view functionName, _T* f) override {                               \
     plugin_->getFunction(functionName, f);                                                         \
   }
-  _FORWARD_GET_FUNCTION(WasmCall0Void);
-  _FORWARD_GET_FUNCTION(WasmCall1Void);
-  _FORWARD_GET_FUNCTION(WasmCall2Void);
-  _FORWARD_GET_FUNCTION(WasmCall3Void);
-  _FORWARD_GET_FUNCTION(WasmCall4Void);
-  _FORWARD_GET_FUNCTION(WasmCall5Void);
-  _FORWARD_GET_FUNCTION(WasmCall8Void);
-  _FORWARD_GET_FUNCTION(WasmCall0Word);
-  _FORWARD_GET_FUNCTION(WasmCall1Word);
-  _FORWARD_GET_FUNCTION(WasmCall3Word);
+  FOR_ALL_WASM_VM_EXPORTS(_FORWARD_GET_FUNCTION)
 #undef _FORWARD_GET_FUNCTION
 
   // These are noops for NullVm.
 #define _REGISTER_CALLBACK(_type)                                                                  \
   void registerCallback(absl::string_view, absl::string_view, _type,                               \
                         typename ConvertFunctionTypeWordToUint32<_type>::type) override{};
-  _REGISTER_CALLBACK(WasmCallback0Void);
-  _REGISTER_CALLBACK(WasmCallback1Void);
-  _REGISTER_CALLBACK(WasmCallback2Void);
-  _REGISTER_CALLBACK(WasmCallback3Void);
-  _REGISTER_CALLBACK(WasmCallback4Void);
-  _REGISTER_CALLBACK(WasmCallback0Word);
-  _REGISTER_CALLBACK(WasmCallback1Word);
-  _REGISTER_CALLBACK(WasmCallback2Word);
-  _REGISTER_CALLBACK(WasmCallback3Word);
-  _REGISTER_CALLBACK(WasmCallback4Word);
-  _REGISTER_CALLBACK(WasmCallback5Word);
-  _REGISTER_CALLBACK(WasmCallback6Word);
-  _REGISTER_CALLBACK(WasmCallback7Word);
-  _REGISTER_CALLBACK(WasmCallback8Word);
-  _REGISTER_CALLBACK(WasmCallback9Word);
-  _REGISTER_CALLBACK(WasmCallback_WWl);
-  _REGISTER_CALLBACK(WasmCallback_WWm);
+  FOR_ALL_WASM_VM_IMPORTS(_REGISTER_CALLBACK)
 #undef _REGISTER_CALLBACK
 
   // NullVm does not advertize code as emscripten so this will not get called.

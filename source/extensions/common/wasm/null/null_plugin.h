@@ -58,16 +58,9 @@ public:
 
   void start() override {}
 
-  void getFunction(absl::string_view functionName, WasmCall0Void* f) override;
-  void getFunction(absl::string_view functionName, WasmCall1Void* f) override;
-  void getFunction(absl::string_view functionName, WasmCall2Void* f) override;
-  void getFunction(absl::string_view functionName, WasmCall3Void* f) override;
-  void getFunction(absl::string_view functionName, WasmCall4Void* f) override;
-  void getFunction(absl::string_view functionName, WasmCall5Void* f) override;
-  void getFunction(absl::string_view functionName, WasmCall8Void* f) override;
-  void getFunction(absl::string_view functionName, WasmCall0Word* f) override;
-  void getFunction(absl::string_view functionName, WasmCall1Word* f) override;
-  void getFunction(absl::string_view functionName, WasmCall3Word* f) override;
+#define _DECLARE_OVERRIDE(_t) void getFunction(absl::string_view functionName, _t* f) override;
+  FOR_ALL_WASM_VM_EXPORTS(_DECLARE_OVERRIDE)
+#undef _DECLARE_OVERRIDE
 
   void onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size,
                uint64_t vm_configuration_ptr, uint64_t vm_configuration_size);

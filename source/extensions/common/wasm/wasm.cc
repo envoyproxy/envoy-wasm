@@ -418,7 +418,8 @@ Word setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_siz
   if (!key || !value) {
     return toWord(WasmResult::MemoryError);
   }
-  return toWord(context->setMetadata(static_cast<MetadataType>(type.u64), key.value(), value.value()));
+  return toWord(
+      context->setMetadata(static_cast<MetadataType>(type.u64), key.value(), value.value()));
 }
 
 Word getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
@@ -445,7 +446,8 @@ Word getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
   if (!name) {
     return toWord(WasmResult::MemoryError);
   }
-  auto result = context->getMetadataStruct(static_cast<MetadataType>(type.u64), name.value(), &value);
+  auto result =
+      context->getMetadataStruct(static_cast<MetadataType>(type.u64), name.value(), &value);
   if (result != WasmResult::Ok) {
     return toWord(result);
   }
@@ -466,8 +468,8 @@ Word setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
   if (!name || !value) {
     return toWord(WasmResult::MemoryError);
   }
-  return Word(static_cast<uint64_t>(context->setMetadataStruct(
-      static_cast<MetadataType>(type.u64), name.value(), value.value())));
+  return Word(static_cast<uint64_t>(context->setMetadataStruct(static_cast<MetadataType>(type.u64),
+                                                               name.value(), value.value())));
 }
 
 // Continue/Reply/Route
@@ -491,7 +493,8 @@ Word sendLocalResponseHandler(void* raw_context, Word response_code, Word respon
   auto details =
       context->wasmVm()->getMemory(response_code_details_ptr, response_code_details_size);
   auto body = context->wasmVm()->getMemory(body_ptr, body_size);
-  auto additional_response_header_pairs = context->wasmVm()->getMemory(additional_response_header_pairs_ptr, additional_response_header_pairs_size);
+  auto additional_response_header_pairs = context->wasmVm()->getMemory(
+      additional_response_header_pairs_ptr, additional_response_header_pairs_size);
   if (!details || !body || !additional_response_header_pairs) {
     return toWord(WasmResult::MemoryError);
   }
@@ -756,8 +759,8 @@ Word defineMetricHandler(void* raw_context, Word metric_type, Word name_ptr, Wor
     return toWord(WasmResult::MemoryError);
   }
   uint32_t metric_id = 0;
-  auto result =
-      context->defineMetric(static_cast<Context::MetricType>(metric_type.u64), name.value(), &metric_id);
+  auto result = context->defineMetric(static_cast<Context::MetricType>(metric_type.u64),
+                                      name.value(), &metric_id);
   if (result != WasmResult::Ok) {
     return toWord(result);
   }
@@ -805,8 +808,8 @@ Word grpcCallHandler(void* raw_context, Word service_ptr, Word service_size, Wor
   if (!service_proto.ParseFromArray(service.value().data(), service.value().size())) {
     return false;
   }
-  return context->grpcCall(service_proto, service_name.value(), method_name.value(), request.value(),
-                           std::chrono::milliseconds(timeout_milliseconds));
+  return context->grpcCall(service_proto, service_name.value(), method_name.value(),
+                           request.value(), std::chrono::milliseconds(timeout_milliseconds));
 }
 
 Word grpcStreamHandler(void* raw_context, Word service_ptr, Word service_size,

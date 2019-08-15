@@ -75,39 +75,14 @@ public:
                         typename ConvertFunctionTypeWordToUint32<_type>::type f) override {        \
     registerHostFunctionImpl(moduleName, functionName, f);                                         \
   };
-  _REGISTER_HOST_FUNCTION(WasmCallback0Void);
-  _REGISTER_HOST_FUNCTION(WasmCallback1Void);
-  _REGISTER_HOST_FUNCTION(WasmCallback2Void);
-  _REGISTER_HOST_FUNCTION(WasmCallback3Void);
-  _REGISTER_HOST_FUNCTION(WasmCallback4Void);
-  _REGISTER_HOST_FUNCTION(WasmCallback0Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback1Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback2Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback3Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback4Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback5Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback6Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback7Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback8Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback9Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback_WWl);
-  _REGISTER_HOST_FUNCTION(WasmCallback_WWm);
+  FOR_ALL_WASM_VM_IMPORTS(_REGISTER_HOST_FUNCTION)
 #undef _REGISTER_HOST_FUNCTION
 
 #define _GET_MODULE_FUNCTION(_type)                                                                \
   void getFunction(absl::string_view functionName, _type* f) override {                            \
     getModuleFunctionImpl(functionName, f);                                                        \
   };
-  _GET_MODULE_FUNCTION(WasmCall0Void);
-  _GET_MODULE_FUNCTION(WasmCall1Void);
-  _GET_MODULE_FUNCTION(WasmCall2Void);
-  _GET_MODULE_FUNCTION(WasmCall3Void);
-  _GET_MODULE_FUNCTION(WasmCall4Void);
-  _GET_MODULE_FUNCTION(WasmCall5Void);
-  _GET_MODULE_FUNCTION(WasmCall8Void);
-  _GET_MODULE_FUNCTION(WasmCall0Word);
-  _GET_MODULE_FUNCTION(WasmCall1Word);
-  _GET_MODULE_FUNCTION(WasmCall3Word);
+  FOR_ALL_WASM_VM_EXPORTS(_GET_MODULE_FUNCTION)
 #undef _GET_MODULE_FUNCTION
 
 private:

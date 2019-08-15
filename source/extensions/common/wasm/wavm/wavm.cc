@@ -97,17 +97,16 @@ const Logger::Id wasmId = Logger::Id::wasm;
                                           });                                                      \
   } while (0)
 
-#define CALL_WITH_CONTEXT_RETURN(_x, _context, _type, _member)                                     \
+#define CALL_WITH_CONTEXT_RETURN(_x, _context, _T, _member)                                        \
   do {                                                                                             \
     SaveRestoreContext _saved_context(static_cast<Context*>(_context));                            \
-    _type _return_value;                                                                           \
-    WAVM::Runtime::catchRuntimeExceptions(                                                         \
-        [&] { _return_value = static_cast<_type>(_x[0]._member); },                                \
-        [&](WAVM::Runtime::Exception* exception) {                                                 \
-          auto description = describeException(exception);                                         \
-          destroyException(exception);                                                             \
-          throw WasmException(description);                                                        \
-        });                                                                                        \
+    _T _return_value;                                                                              \
+    WAVM::Runtime::catchRuntimeExceptions([&] { _return_value = static_cast<_T>(_x[0]._member); }, \
+                                          [&](WAVM::Runtime::Exception* exception) {               \
+                                            auto description = describeException(exception);       \
+                                            destroyException(exception);                           \
+                                            throw WasmException(description);                      \
+                                          });                                                      \
     return _return_value;                                                                          \
   } while (0)
 
@@ -230,49 +229,24 @@ struct Wavm : public WasmVm {
 
   void getInstantiatedGlobals();
 
-#define _GET_FUNCTION(_type)                                                                       \
-  void getFunction(absl::string_view functionName, _type* f) override {                            \
+#define _GET_FUNCTION(_T)                                                                          \
+  void getFunction(absl::string_view functionName, _T* f) override {                               \
     getFunctionWavm(this, functionName, f);                                                        \
   };
-  _GET_FUNCTION(WasmCall0Void);
-  _GET_FUNCTION(WasmCall1Void);
-  _GET_FUNCTION(WasmCall2Void);
-  _GET_FUNCTION(WasmCall3Void);
-  _GET_FUNCTION(WasmCall4Void);
-  _GET_FUNCTION(WasmCall5Void);
-  _GET_FUNCTION(WasmCall8Void);
-  _GET_FUNCTION(WasmCall0Word);
-  _GET_FUNCTION(WasmCall1Word);
-  _GET_FUNCTION(WasmCall3Word);
+  FOR_ALL_WASM_VM_EXPORTS(_GET_FUNCTION)
 #undef _GET_FUNCTION
 
-#define _REGISTER_CALLBACK(_type)                                                                  \
-  void registerCallback(absl::string_view moduleName, absl::string_view functionName, _type,       \
-                        typename ConvertFunctionTypeWordToUint32<_type>::type f) override {        \
+#define _REGISTER_CALLBACK(_T)                                                                     \
+  void registerCallback(absl::string_view moduleName, absl::string_view functionName, _T,          \
+                        typename ConvertFunctionTypeWordToUint32<_T>::type f) override {           \
     registerCallbackWavm(this, moduleName, functionName, f);                                       \
   };
-  _REGISTER_CALLBACK(WasmCallback0Void);
-  _REGISTER_CALLBACK(WasmCallback1Void);
-  _REGISTER_CALLBACK(WasmCallback2Void);
-  _REGISTER_CALLBACK(WasmCallback3Void);
-  _REGISTER_CALLBACK(WasmCallback4Void);
-  _REGISTER_CALLBACK(WasmCallback0Word);
-  _REGISTER_CALLBACK(WasmCallback1Word);
-  _REGISTER_CALLBACK(WasmCallback2Word);
-  _REGISTER_CALLBACK(WasmCallback3Word);
-  _REGISTER_CALLBACK(WasmCallback4Word);
-  _REGISTER_CALLBACK(WasmCallback5Word);
-  _REGISTER_CALLBACK(WasmCallback6Word);
-  _REGISTER_CALLBACK(WasmCallback7Word);
-  _REGISTER_CALLBACK(WasmCallback8Word);
-  _REGISTER_CALLBACK(WasmCallback9Word);
-  _REGISTER_CALLBACK(WasmCallback_WWl);
-  _REGISTER_CALLBACK(WasmCallback_WWm);
+  FOR_ALL_WASM_VM_IMPORTS(_REGISTER_CALLBACK)
 #undef _REGISTER_CALLBACK
 
-#define _REGISTER_GLOBAL(_type)                                                                    \
-  std::unique_ptr<Global<_type>> makeGlobal(absl::string_view moduleName, absl::string_view name,  \
-                                            _type initialValue) override {                         \
+#define _REGISTER_GLOBAL(_T)                                                                       \
+  std::unique_ptr<Global<_T>> makeGlobal(absl::string_view moduleName, absl::string_view name,     \
+                                         _T initialValue) override {                               \
     return makeGlobalWavm(this, moduleName, name, initialValue);                                   \
   };
   _REGISTER_GLOBAL(Word);

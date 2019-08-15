@@ -26,7 +26,8 @@ public:
 
 #define CHECK_WASM_RESULT(_r) do { \
   auto _result = _r; \
-  assert(_result== WasmResult::Ok); \
+  (void) _result; /* unused */ \
+  assert(_result == WasmResult::Ok); \
 } while (0)
 
 inline WasmResult logTrace(StringView logMessage) {

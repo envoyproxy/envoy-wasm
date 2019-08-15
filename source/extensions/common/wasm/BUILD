@@ -21,7 +21,7 @@ envoy_cc_library(
 envoy_cc_library(
     name = "wasm_vm_interface",
     hdrs = ["wasm_vm.h"],
-    external_deps = ["abseil_optional"],  
+    external_deps = ["abseil_optional"],
     deps = [
         ":well_known_names",
     ],

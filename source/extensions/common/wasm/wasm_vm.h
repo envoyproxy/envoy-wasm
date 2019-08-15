@@ -2,11 +2,11 @@
 
 #include <memory>
 
-#include "absl/types/optional.h"
-
 #include "envoy/common/exception.h"
 
 #include "common/common/logger.h"
+
+#include "absl/types/optional.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -60,6 +60,9 @@ using WasmCall5Word = std::function<Word(Context*, Word, Word, Word, Word, Word)
 using WasmCall6Word = std::function<Word(Context*, Word, Word, Word, Word, Word, Word)>;
 using WasmCall7Word = std::function<Word(Context*, Word, Word, Word, Word, Word, Word, Word)>;
 using WasmCall8Word = std::function<Word(Context*, Word, Word, Word, Word, Word, Word, Word, Word)>;
+#define FOR_ALL_WASM_VM_EXPORTS(_f)                                                                \
+  _f(WasmCall0Void) _f(WasmCall1Void) _f(WasmCall2Void) _f(WasmCall3Void) _f(WasmCall4Void)        \
+      _f(WasmCall5Void) _f(WasmCall8Void) _f(WasmCall0Word) _f(WasmCall1Word) _f(WasmCall3Word)
 
 // Calls out of the WASM VM.
 // 1st arg is always a pointer to raw_context (void*).
@@ -83,6 +86,13 @@ using WasmCallback7Word = Word (*)(void*, Word, Word, Word, Word, Word, Word, Wo
 using WasmCallback8Word = Word (*)(void*, Word, Word, Word, Word, Word, Word, Word, Word, Word);
 using WasmCallback9Word = Word (*)(void*, Word, Word, Word, Word, Word, Word, Word, Word, Word,
                                    Word);
+#define FOR_ALL_WASM_VM_IMPORTS(_f)                                                                \
+  _f(WasmCallback0Void) _f(WasmCallback1Void) _f(WasmCallback2Void) _f(WasmCallback3Void)          \
+      _f(WasmCallback4Void) _f(WasmCallback0Word) _f(WasmCallback1Word) _f(WasmCallback2Word)      \
+          _f(WasmCallback3Word) _f(WasmCallback4Word) _f(WasmCallback5Word) _f(WasmCallback6Word)  \
+              _f(WasmCallback7Word) _f(WasmCallback8Word) _f(WasmCallback9Word)                    \
+                  _f(WasmCallback_WWl) _f(WasmCallback_WWm)
+
 // Using the standard g++/clang mangling algorithm:
 // https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling-builtin
 // Extended with W = Word
@@ -116,7 +126,8 @@ public:
 
   // Get size of the currently allocated memory in the VM.
   virtual uint64_t getMemorySize() PURE;
-  // Convert a block of memory in the VM to a string_view.  Returns 'false' in second if the pointer/size is invalid.
+  // Convert a block of memory in the VM to a string_view. Returns 'false' in second if the
+  // pointer/size is invalid.
   virtual absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) PURE;
   // Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).
   virtual bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) PURE;
@@ -131,39 +142,16 @@ public:
   virtual absl::string_view getUserSection(absl::string_view name) PURE;
 
   // Get typed function exported by the WASM module.
-  virtual void getFunction(absl::string_view functionName, WasmCall0Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall1Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall2Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall3Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall4Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall5Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall8Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall0Word* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall1Word* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall3Word* f) PURE;
+#define _GET_FUNCTION(_T) virtual void getFunction(absl::string_view functionName, _T* f) PURE;
+  FOR_ALL_WASM_VM_EXPORTS(_GET_FUNCTION)
+#undef _GET_FUNCTION
 
   // Register typed callbacks exported by the host environment.
-#define REGISTER_CALLBACK(_t)                                                                      \
+#define _REGISTER_CALLBACK(_T)                                                                     \
   virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,      \
-                                _t f, typename ConvertFunctionTypeWordToUint32<_t>::type) PURE;
-  REGISTER_CALLBACK(WasmCallback0Void);
-  REGISTER_CALLBACK(WasmCallback1Void);
-  REGISTER_CALLBACK(WasmCallback2Void);
-  REGISTER_CALLBACK(WasmCallback3Void);
-  REGISTER_CALLBACK(WasmCallback4Void);
-  REGISTER_CALLBACK(WasmCallback0Word);
-  REGISTER_CALLBACK(WasmCallback1Word);
-  REGISTER_CALLBACK(WasmCallback2Word);
-  REGISTER_CALLBACK(WasmCallback3Word);
-  REGISTER_CALLBACK(WasmCallback4Word);
-  REGISTER_CALLBACK(WasmCallback5Word);
-  REGISTER_CALLBACK(WasmCallback6Word);
-  REGISTER_CALLBACK(WasmCallback7Word);
-  REGISTER_CALLBACK(WasmCallback8Word);
-  REGISTER_CALLBACK(WasmCallback9Word);
-  REGISTER_CALLBACK(WasmCallback_WWl);
-  REGISTER_CALLBACK(WasmCallback_WWm);
-#undef REGISTER_CALLBACK
+                                _T f, typename ConvertFunctionTypeWordToUint32<_T>::type) PURE;
+  FOR_ALL_WASM_VM_IMPORTS(_REGISTER_CALLBACK)
+#undef _REGISTER_CALLBACK
 
   // Register typed value exported by the host environment.
   virtual std::unique_ptr<Global<Word>> makeGlobal(absl::string_view module_name,
