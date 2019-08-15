@@ -43,7 +43,7 @@
   (import "env" "_emscripten_memcpy_big" (func $_emscripten_memcpy_big (param i32 i32 i32) (result i32)))
   (import "env" "_emscripten_resize_heap" (func $_emscripten_resize_heap (param i32) (result i32)))
   (import "env" "_proxy_httpCall" (func $_proxy_httpCall (param i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)))
-  (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32)))
+  (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32) (result i32)))
   (import "env" "_proxy_setEffectiveContext" (func $_proxy_setEffectiveContext (param i32) (result i32)))
   (import "env" "_pthread_cond_wait" (func $_pthread_cond_wait (param i32 i32) (result i32)))
   (import "env" "_pthread_equal" (func $_pthread_equal (param i32 i32) (result i32)))
@@ -2785,54 +2785,61 @@
     (local $16 i32)
     (local $17 i32)
     (local $18 i32)
-    (local $19 i64)
+    (local $19 i32)
     (local $20 i64)
+    (local $21 i64)
     global.get $31
-    local.set $12
+    local.set $10
     global.get $31
-    i32.const 80
+    i32.const 96
     i32.add
     global.set $31
-    local.get $12
+    local.get $10
+    i32.const 84
+    i32.add
+    local.set $7
+    local.get $10
+    i32.const 72
+    i32.add
+    local.set $14
+    local.get $10
     i32.const 60
     i32.add
-    local.set $4
-    local.get $12
+    local.set $13
+    local.get $10
     i32.const 48
     i32.add
-    local.set $9
-    local.get $12
+    local.set $6
+    local.get $10
     i32.const 36
     i32.add
-    local.set $11
-    local.get $12
+    local.set $12
+    local.get $10
     i32.const 24
     i32.add
-    local.set $8
-    local.get $12
+    local.set $4
+    local.get $10
     i32.const 12
     i32.add
-    local.set $10
-    local.get $12
-    local.set $5
+    local.set $8
     local.get $0
     i32.load offset=4
     local.set $0
     local.get $1
     i32.load
-    local.set $15
+    local.set $16
     local.get $1
     i32.const 0
     i32.store
     local.get $2
     i32.load
-    local.set $14
+    local.set $15
     local.get $2
     i32.const 0
     i32.store
     local.get $3
     i32.load
-    local.set $16
+    local.set $17
     local.get $3
     i32.const 0
     i32.store
@@ -2843,16 +2850,16 @@
     i32.load
     call $_proxy_setEffectiveContext
     drop
-    local.get $4
+    local.get $7
     i32.const 0
     i32.store
-    local.get $4
+    local.get $7
     i32.const 0
     i32.store offset=4
-    local.get $4
+    local.get $7
     i32.const 0
     i32.store offset=8
-    local.get $15
+    local.get $16
     i32.load
     local.tee $1
     if $if
@@ -2863,27 +2870,27 @@
         local.set $0
         local.get $1
         i32.load
-        local.tee $17
+        local.tee $18
         if $if_0
-          local.get $4
-          local.get $17
+          local.get $7
+          local.get $18
           call $__ZNSt3__26vectorINS_4pairINS_17basic_string_viewIcNS_11char_traitsIcEEEES5_EENS_9allocatorIS6_EEE8__appendEm
-          local.get $17
+          local.get $18
           i32.const 0
           i32.le_s
           if $if_1
-            local.get $4
+            local.get $7
             i32.load
             local.set $0
             br $block
           end ;; $if_1
-          local.get $4
+          local.get $7
           i32.load
-          local.set $3
+          local.set $11
           i32.const 0
           local.set $1
           local.get $0
-          local.get $17
+          local.get $18
           i32.const 3
           i32.shl
           i32.add
@@ -2891,36 +2898,36 @@
           loop $loop
             local.get $0
             i32.load
-            local.set $6
+            local.set $9
             local.get $1
             i32.const 4
             i32.shl
-            local.get $3
+            local.get $11
             i32.add
             local.get $2
             i32.store
             local.get $1
             i32.const 4
             i32.shl
-            local.get $3
+            local.get $11
             i32.add
-            local.get $6
+            local.get $9
             i32.store offset=4
             local.get $0
             i32.load offset=4
-            local.set $3
+            local.set $11
             local.get $0
             i32.const 8
             i32.add
-            local.set $13
-            local.get $4
+            local.set $3
+            local.get $7
             i32.load
             local.tee $0
             local.get $1
             i32.const 4
             i32.shl
             i32.add
-            local.get $6
+            local.get $9
             i32.const 1
             i32.add
             local.get $2
@@ -2932,10 +2939,10 @@
             i32.shl
             local.get $0
             i32.add
-            local.get $3
+            local.get $11
             i32.store offset=12
             local.get $2
-            local.get $3
+            local.get $11
             i32.const 1
             i32.add
             i32.add
@@ -2944,12 +2951,12 @@
             i32.const 1
             i32.add
             local.tee $1
-            local.get $17
+            local.get $18
             i32.ne
             if $if_2
               local.get $0
-              local.set $3
-              local.get $13
+              local.set $11
+              local.get $3
               local.set $0
               br $loop
             end ;; $if_2
@@ -2963,14 +2970,14 @@
       i32.const 0
       local.set $0
     end ;; $if
-    local.get $4
+    local.get $7
     i32.load offset=4
-    local.tee $13
+    local.tee $11
     local.get $0
     i32.eq
     if $if_3
       local.get $0
-      local.set $7
+      local.set $5
     else
       block $block_0
         local.get $0
@@ -2979,45 +2986,45 @@
           loop $loop_0
             local.get $1
             i64.load align=4
-            local.tee $19
+            local.tee $20
             i64.const 32
             i64.shr_u
-            local.tee $20
+            local.tee $21
             i32.wrap_i64
-            local.set $6
-            local.get $8
+            local.set $9
+            local.get $6
             i64.const 0
             i64.store align=4
-            local.get $8
+            local.get $6
             i32.const 0
             i32.store offset=8
-            local.get $6
+            local.get $9
             i32.const -17
             i32.gt_u
             br_if $block_1
-            local.get $19
+            local.get $20
             i32.wrap_i64
             local.set $3
             block $block_2
               block $block_3
-                local.get $6
+                local.get $9
                 i32.const 11
                 i32.lt_u
                 if $if_4 (result i32)
-                  local.get $8
-                  local.get $20
-                  i64.store8 offset=11
                   local.get $6
+                  local.get $21
+                  i64.store8 offset=11
+                  local.get $9
                   if $if_5 (result i32)
-                    local.get $8
+                    local.get $6
                     local.set $0
                     br $block_3
                   else
-                    local.get $8
+                    local.get $6
                   end ;; $if_5
                 else
-                  local.get $8
                   local.get $6
+                  local.get $9
                   i32.const 16
                   i32.add
                   i32.const -16
@@ -3026,13 +3033,13 @@
                   call $__Znwm
                   local.tee $0
                   i32.store
-                  local.get $8
+                  local.get $6
                   local.get $2
                   i32.const -2147483648
                   i32.or
                   i32.store offset=8
-                  local.get $8
                   local.get $6
+                  local.get $9
                   i32.store offset=4
                   br $block_3
                 end ;; $if_4
@@ -3041,39 +3048,39 @@
               end ;; $block_3
               local.get $0
               local.get $3
-              local.get $6
+              local.get $9
               call $_memcpy
               drop
             end ;; $block_2
             local.get $0
-            local.get $6
+            local.get $9
             i32.add
             i32.const 0
             i32.store8
-            local.get $10
+            local.get $12
             i64.const 0
             i64.store align=4
-            local.get $10
+            local.get $12
             i32.const 0
             i32.store offset=8
-            local.get $10
+            local.get $12
             i32.const 4
             i32.store8 offset=11
-            local.get $10
+            local.get $12
             i32.const 540945696
             i32.store
-            local.get $10
+            local.get $12
             i32.const 0
             i32.store8 offset=4
-            local.get $11
-            local.get $8
-            local.get $10
+            local.get $13
+            local.get $6
+            local.get $12
             i32.const 4
             call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
             local.tee $0
             i64.load align=4
             i64.store align=4
-            local.get $11
+            local.get $13
             local.get $0
             i32.load offset=8
             i32.store offset=8
@@ -3085,45 +3092,45 @@
             i32.store offset=8
             local.get $1
             i64.load offset=8 align=4
-            local.tee $19
+            local.tee $20
             i64.const 32
             i64.shr_u
-            local.tee $20
+            local.tee $21
             i32.wrap_i64
-            local.set $6
-            local.get $5
+            local.set $9
+            local.get $4
             i64.const 0
             i64.store align=4
-            local.get $5
+            local.get $4
             i32.const 0
             i32.store offset=8
-            local.get $6
+            local.get $9
             i32.const -17
             i32.gt_u
             br_if $block_1
-            local.get $19
+            local.get $20
             i32.wrap_i64
             local.set $3
             block $block_4
               block $block_5
-                local.get $6
+                local.get $9
                 i32.const 11
                 i32.lt_u
                 if $if_6 (result i32)
-                  local.get $5
-                  local.get $20
+                  local.get $4
+                  local.get $21
                   i64.store8 offset=11
-                  local.get $6
+                  local.get $9
                   if $if_7 (result i32)
-                    local.get $5
+                    local.get $4
                     local.set $0
                     br $block_5
                   else
-                    local.get $5
+                    local.get $4
                   end ;; $if_7
                 else
-                  local.get $5
-                  local.get $6
+                  local.get $4
+                  local.get $9
                   i32.const 16
                   i32.add
                   i32.const -16
@@ -3132,13 +3139,13 @@
                   call $__Znwm
                   local.tee $0
                   i32.store
-                  local.get $5
+                  local.get $4
                   local.get $2
                   i32.const -2147483648
                   i32.or
                   i32.store offset=8
-                  local.get $5
-                  local.get $6
+                  local.get $4
+                  local.get $9
                   i32.store offset=4
                   br $block_5
                 end ;; $if_6
@@ -3147,28 +3154,28 @@
               end ;; $block_5
               local.get $0
               local.get $3
-              local.get $6
+              local.get $9
               call $_memcpy
               drop
             end ;; $block_4
             local.get $0
-            local.get $6
+            local.get $9
             i32.add
             i32.const 0
             i32.store8
-            local.get $9
-            local.get $11
-            local.get $5
+            local.get $14
+            local.get $13
+            local.get $4
             i32.load
-            local.get $5
-            local.get $5
+            local.get $4
+            local.get $4
             i32.load8_s offset=11
             local.tee $2
             i32.const 0
             i32.lt_s
             local.tee $0
             select
-            local.get $5
+            local.get $4
             i32.load offset=4
             local.get $2
             i32.const 255
@@ -3179,7 +3186,7 @@
             local.tee $0
             i64.load align=4
             i64.store align=4
-            local.get $9
+            local.get $14
             local.get $0
             i32.load offset=8
             i32.store offset=8
@@ -3190,17 +3197,17 @@
             i32.const 0
             i32.store offset=8
             i32.const 2
-            local.get $9
+            local.get $14
             i32.load
-            local.get $9
-            local.get $9
+            local.get $14
+            local.get $14
             i32.load8_s offset=11
             local.tee $2
             i32.const 0
             i32.lt_s
             local.tee $0
             select
-            local.get $9
+            local.get $14
             i32.load offset=4
             local.get $2
             i32.const 255
@@ -3208,48 +3215,49 @@
             local.get $0
             select
             call $_proxy_log
-            local.get $9
+            drop
+            local.get $14
             i32.load8_s offset=11
             i32.const 0
             i32.lt_s
             if $if_8
-              local.get $9
+              local.get $14
               i32.load
               call $_free
             end ;; $if_8
-            local.get $5
+            local.get $4
             i32.load8_s offset=11
             i32.const 0
             i32.lt_s
             if $if_9
-              local.get $5
+              local.get $4
               i32.load
               call $_free
             end ;; $if_9
-            local.get $11
+            local.get $13
             i32.load8_s offset=11
             i32.const 0
             i32.lt_s
             if $if_10
-              local.get $11
+              local.get $13
               i32.load
               call $_free
             end ;; $if_10
-            local.get $10
+            local.get $12
             i32.load8_s offset=11
             i32.const 0
             i32.lt_s
             if $if_11
-              local.get $10
+              local.get $12
               i32.load
               call $_free
             end ;; $if_11
-            local.get $8
+            local.get $6
             i32.load8_s offset=11
             i32.const 0
             i32.lt_s
             if $if_12
-              local.get $8
+              local.get $6
               i32.load
               call $_free
             end ;; $if_12
@@ -3257,36 +3265,36 @@
             i32.const 16
             i32.add
             local.tee $1
-            local.get $13
+            local.get $11
             i32.ne
             br_if $loop_0
           end ;; $loop_0
-          local.get $4
+          local.get $7
           i32.load
-          local.set $7
+          local.set $5
           br $block_0
         end ;; $block_1
         call $_abort
       end ;; $block_0
     end ;; $if_3
-    local.get $7
+    local.get $5
     if $if_13
-      local.get $4
       local.get $7
+      local.get $5
       i32.store offset=4
-      local.get $7
+      local.get $5
       call $_free
     end ;; $if_13
-    local.get $14
+    local.get $15
     i32.load
     local.set $2
-    local.get $14
+    local.get $15
     i32.load offset=4
     local.set $3
-    local.get $4
+    local.get $8
     i64.const 0
     i64.store align=4
-    local.get $4
+    local.get $8
     i32.const 0
     i32.store offset=8
     local.get $3
@@ -3301,7 +3309,7 @@
         i32.const 11
         i32.lt_u
         if $if_15 (result i32)
-          local.get $4
+          local.get $8
           i32.const 11
           i32.add
           local.tee $1
@@ -3309,14 +3317,14 @@
           i32.store8
           local.get $3
           if $if_16 (result i32)
-            local.get $4
+            local.get $8
             local.set $0
             br $block_7
           else
-            local.get $4
+            local.get $8
           end ;; $if_16
         else
-          local.get $4
+          local.get $8
           local.get $3
           i32.const 16
           i32.add
@@ -3326,15 +3334,15 @@
           call $__Znwm
           local.tee $0
           i32.store
-          local.get $4
+          local.get $8
           local.get $1
           i32.const -2147483648
           i32.or
           i32.store offset=8
-          local.get $4
+          local.get $8
           local.get $3
           i32.store offset=4
-          local.get $4
+          local.get $8
           i32.const 11
           i32.add
           local.set $1
@@ -3355,9 +3363,9 @@
     i32.const 0
     i32.store8
     i32.const 1
-    local.get $4
+    local.get $8
     i32.load
-    local.get $4
+    local.get $8
     local.get $1
     i32.load8_s
     local.tee $2
@@ -3365,7 +3373,7 @@
     i32.lt_s
     local.tee $0
     select
-    local.get $4
+    local.get $8
     i32.load offset=4
     local.get $2
     i32.const 255
@@ -3373,25 +3381,26 @@
     local.get $0
     select
     call $_proxy_log
+    drop
     local.get $1
     i32.load8_s
     i32.const 0
     i32.lt_s
     if $if_17
-      local.get $4
+      local.get $8
       i32.load
       call $_free
     end ;; $if_17
-    local.get $4
+    local.get $7
     i32.const 0
     i32.store
-    local.get $4
+    local.get $7
     i32.const 0
     i32.store offset=4
-    local.get $4
+    local.get $7
     i32.const 0
     i32.store offset=8
-    local.get $16
+    local.get $17
     i32.load
     local.tee $1
     if $if_18
@@ -3402,27 +3411,27 @@
         local.set $0
         local.get $1
         i32.load
-        local.tee $6
+        local.tee $8
         if $if_19
-          local.get $4
-          local.get $6
+          local.get $7
+          local.get $8
           call $__ZNSt3__26vectorINS_4pairINS_17basic_string_viewIcNS_11char_traitsIcEEEES5_EENS_9allocatorIS6_EEE8__appendEm
-          local.get $6
+          local.get $8
           i32.const 0
           i32.le_s
           if $if_20
-            local.get $4
+            local.get $7
             i32.load
             local.set $0
             br $block_8
           end ;; $if_20
-          local.get $4
+          local.get $7
           i32.load
-          local.set $3
+          local.set $11
           i32.const 0
           local.set $1
           local.get $0
-          local.get $6
+          local.get $8
           i32.const 3
           i32.shl
           i32.add
@@ -3430,36 +3439,36 @@
           loop $loop_1
             local.get $0
             i32.load
-            local.set $7
+            local.set $5
             local.get $1
             i32.const 4
             i32.shl
-            local.get $3
+            local.get $11
             i32.add
             local.get $2
             i32.store
             local.get $1
             i32.const 4
             i32.shl
-            local.get $3
+            local.get $11
             i32.add
-            local.get $7
+            local.get $5
             i32.store offset=4
             local.get $0
             i32.load offset=4
-            local.set $3
+            local.set $11
             local.get $0
             i32.const 8
             i32.add
-            local.set $13
-            local.get $4
+            local.set $3
+            local.get $7
             i32.load
             local.tee $0
             local.get $1
             i32.const 4
             i32.shl
             i32.add
-            local.get $7
+            local.get $5
             i32.const 1
             i32.add
             local.get $2
@@ -3471,10 +3480,10 @@
             i32.shl
             local.get $0
             i32.add
-            local.get $3
+            local.get $11
             i32.store offset=12
             local.get $2
-            local.get $3
+            local.get $11
             i32.const 1
             i32.add
             i32.add
@@ -3483,12 +3492,12 @@
             i32.const 1
             i32.add
             local.tee $1
-            local.get $6
+            local.get $8
             i32.ne
             if $if_21
               local.get $0
-              local.set $3
-              local.get $13
+              local.set $11
+              local.get $3
               local.set $0
               br $loop_1
             end ;; $if_21
@@ -3502,14 +3511,14 @@
       i32.const 0
       local.set $0
     end ;; $if_18
-    local.get $4
+    local.get $7
     i32.load offset=4
-    local.tee $13
+    local.tee $11
     local.get $0
     i32.eq
     if $if_22
       local.get $0
-      local.set $18
+      local.set $19
     else
       block $block_9
         local.get $0
@@ -3518,45 +3527,45 @@
           loop $loop_2
             local.get $1
             i64.load align=4
-            local.tee $19
+            local.tee $20
             i64.const 32
             i64.shr_u
-            local.tee $20
+            local.tee $21
             i32.wrap_i64
-            local.set $7
-            local.get $8
+            local.set $5
+            local.get $6
             i64.const 0
             i64.store align=4
-            local.get $8
+            local.get $6
             i32.const 0
             i32.store offset=8
-            local.get $7
+            local.get $5
             i32.const -17
             i32.gt_u
             br_if $block_10
-            local.get $19
+            local.get $20
             i32.wrap_i64
             local.set $3
             block $block_11
               block $block_12
-                local.get $7
+                local.get $5
                 i32.const 11
                 i32.lt_u
                 if $if_23 (result i32)
-                  local.get $8
-                  local.get $20
+                  local.get $6
+                  local.get $21
                   i64.store8 offset=11
-                  local.get $7
+                  local.get $5
                   if $if_24 (result i32)
-                    local.get $8
+                    local.get $6
                     local.set $0
                     br $block_12
                   else
-                    local.get $8
+                    local.get $6
                   end ;; $if_24
                 else
-                  local.get $8
-                  local.get $7
+                  local.get $6
+                  local.get $5
                   i32.const 16
                   i32.add
                   i32.const -16
@@ -3565,13 +3574,13 @@
                   call $__Znwm
                   local.tee $0
                   i32.store
-                  local.get $8
+                  local.get $6
                   local.get $2
                   i32.const -2147483648
                   i32.or
                   i32.store offset=8
-                  local.get $8
-                  local.get $7
+                  local.get $6
+                  local.get $5
                   i32.store offset=4
                   br $block_12
                 end ;; $if_23
@@ -3580,39 +3589,39 @@
               end ;; $block_12
               local.get $0
               local.get $3
-              local.get $7
+              local.get $5
               call $_memcpy
               drop
             end ;; $block_11
             local.get $0
-            local.get $7
+            local.get $5
             i32.add
             i32.const 0
             i32.store8
-            local.get $10
+            local.get $12
             i64.const 0
             i64.store align=4
-            local.get $10
+            local.get $12
             i32.const 0
             i32.store offset=8
-            local.get $10
+            local.get $12
             i32.const 4
             i32.store8 offset=11
-            local.get $10
+            local.get $12
             i32.const 540945696
             i32.store
-            local.get $10
+            local.get $12
             i32.const 0
             i32.store8 offset=4
-            local.get $11
-            local.get $8
-            local.get $10
+            local.get $13
+            local.get $6
+            local.get $12
             i32.const 4
             call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
             local.tee $0
             i64.load align=4
             i64.store align=4
-            local.get $11
+            local.get $13
             local.get $0
             i32.load offset=8
             i32.store offset=8
@@ -3624,45 +3633,45 @@
             i32.store offset=8
             local.get $1
             i64.load offset=8 align=4
-            local.tee $19
+            local.tee $20
             i64.const 32
             i64.shr_u
-            local.tee $20
+            local.tee $21
             i32.wrap_i64
-            local.set $7
-            local.get $5
+            local.set $5
+            local.get $4
             i64.const 0
             i64.store align=4
-            local.get $5
+            local.get $4
             i32.const 0
             i32.store offset=8
-            local.get $7
+            local.get $5
             i32.const -17
             i32.gt_u
             br_if $block_10
-            local.get $19
+            local.get $20
             i32.wrap_i64
             local.set $3
             block $block_13
               block $block_14
-                local.get $7
+                local.get $5
                 i32.const 11
                 i32.lt_u
                 if $if_25 (result i32)
-                  local.get $5
-                  local.get $20
+                  local.get $4
+                  local.get $21
                   i64.store8 offset=11
-                  local.get $7
+                  local.get $5
                   if $if_26 (result i32)
-                    local.get $5
+                    local.get $4
                     local.set $0
                     br $block_14
                   else
-                    local.get $5
+                    local.get $4
                   end ;; $if_26
                 else
+                  local.get $4
                   local.get $5
-                  local.get $7
                   i32.const 16
                   i32.add
                   i32.const -16
@@ -3671,13 +3680,13 @@
                   call $__Znwm
                   local.tee $0
                   i32.store
-                  local.get $5
+                  local.get $4
                   local.get $2
                   i32.const -2147483648
                   i32.or
                   i32.store offset=8
+                  local.get $4
                   local.get $5
-                  local.get $7
                   i32.store offset=4
                   br $block_14
                 end ;; $if_25
@@ -3686,28 +3695,28 @@
               end ;; $block_14
               local.get $0
               local.get $3
-              local.get $7
+              local.get $5
               call $_memcpy
               drop
             end ;; $block_13
             local.get $0
-            local.get $7
+            local.get $5
             i32.add
             i32.const 0
             i32.store8
-            local.get $9
-            local.get $11
-            local.get $5
+            local.get $10
+            local.get $13
+            local.get $4
             i32.load
-            local.get $5
-            local.get $5
+            local.get $4
+            local.get $4
             i32.load8_s offset=11
             local.tee $2
             i32.const 0
             i32.lt_s
             local.tee $0
             select
-            local.get $5
+            local.get $4
             i32.load offset=4
             local.get $2
             i32.const 255
@@ -3718,7 +3727,7 @@
             local.tee $0
             i64.load align=4
             i64.store align=4
-            local.get $9
+            local.get $10
             local.get $0
             i32.load offset=8
             i32.store offset=8
@@ -3729,17 +3738,17 @@
             i32.const 0
             i32.store offset=8
             i32.const 3
-            local.get $9
+            local.get $10
             i32.load
-            local.get $9
-            local.get $9
+            local.get $10
+            local.get $10
             i32.load8_s offset=11
             local.tee $2
             i32.const 0
             i32.lt_s
             local.tee $0
             select
-            local.get $9
+            local.get $10
             i32.load offset=4
             local.get $2
             i32.const 255
@@ -3747,48 +3756,49 @@
             local.get $0
             select
             call $_proxy_log
-            local.get $9
-            i32.load8_s offset=11
-            i32.const 0
-            i32.lt_s
-            if $if_27
-              local.get $9
-              i32.load
-              call $_free
-            end ;; $if_27
-            local.get $5
-            i32.load8_s offset=11
-            i32.const 0
-            i32.lt_s
-            if $if_28
-              local.get $5
-              i32.load
-              call $_free
-            end ;; $if_28
-            local.get $11
-            i32.load8_s offset=11
-            i32.const 0
-            i32.lt_s
-            if $if_29
-              local.get $11
-              i32.load
-              call $_free
-            end ;; $if_29
+            drop
             local.get $10
             i32.load8_s offset=11
             i32.const 0
             i32.lt_s
-            if $if_30
+            if $if_27
               local.get $10
               i32.load
               call $_free
+            end ;; $if_27
+            local.get $4
+            i32.load8_s offset=11
+            i32.const 0
+            i32.lt_s
+            if $if_28
+              local.get $4
+              i32.load
+              call $_free
+            end ;; $if_28
+            local.get $13
+            i32.load8_s offset=11
+            i32.const 0
+            i32.lt_s
+            if $if_29
+              local.get $13
+              i32.load
+              call $_free
+            end ;; $if_29
+            local.get $12
+            i32.load8_s offset=11
+            i32.const 0
+            i32.lt_s
+            if $if_30
+              local.get $12
+              i32.load
+              call $_free
             end ;; $if_30
-            local.get $8
+            local.get $6
             i32.load8_s offset=11
             i32.const 0
             i32.lt_s
             if $if_31
-              local.get $8
+              local.get $6
               i32.load
               call $_free
             end ;; $if_31
@@ -3796,55 +3806,55 @@
             i32.const 16
             i32.add
             local.tee $1
-            local.get $13
+            local.get $11
             i32.ne
             br_if $loop_2
           end ;; $loop_2
-          local.get $4
+          local.get $7
           i32.load
-          local.set $18
+          local.set $19
           br $block_9
         end ;; $block_10
         call $_abort
       end ;; $block_9
     end ;; $if_22
-    local.get $18
+    local.get $19
     if $if_32
-      local.get $4
-      local.get $18
+      local.get $7
+      local.get $19
       i32.store offset=4
-      local.get $18
+      local.get $19
       call $_free
     end ;; $if_32
-    local.get $16
+    local.get $17
     if $if_33
-      local.get $16
+      local.get $17
       i32.load
       call $_free
-      local.get $16
+      local.get $17
       call $_free
     end ;; $if_33
-    local.get $14
+    local.get $15
     if $if_34
-      local.get $14
+      local.get $15
       i32.load
       call $_free
-      local.get $14
+      local.get $15
       call $_free
     end ;; $if_34
-    local.get $15
+    local.get $16
     i32.eqz
     if $if_35
-      local.get $12
+      local.get $10
       global.set $31
       return
     end ;; $if_35
-    local.get $15
+    local.get $16
     i32.load
     call $_free
-    local.get $15
+    local.get $16
     call $_free
-    local.get $12
+    local.get $10
     global.set $31
     )
   
@@ -20344,24 +20354,29 @@
     (local $8 i32)
     (local $9 i32)
     (local $10 i32)
+    (local $11 i32)
     global.get $31
-    local.set $5
+    local.set $4
     global.get $31
-    i32.const 32
+    i32.const 48
     i32.add
     global.set $31
-    local.get $5
-    i32.const 20
+    local.get $4
+    i32.const 32
     i32.add
-    local.set $3
-    local.get $5
+    local.set $5
+    local.get $4
+    i32.const 28
+    i32.add
+    local.set $10
+    local.get $4
     i32.const 16
     i32.add
-    local.set $9
-    local.get $5
+    local.set $3
+    local.get $4
     i32.const 4
     i32.add
-    local.set $4
+    local.set $8
     i32.const 16
     call $__Znwm
     local.tee $2
@@ -20376,17 +20391,17 @@
     local.get $2
     i32.const 0
     i32.store
-    local.get $3
+    local.get $5
     local.get $2
     call $__ZNSt3__212__hash_tableINS_17__hash_value_typeIiNS_10unique_ptrI11ContextBaseNS_14default_deleteIS3_EEEEEENS_22__unordered_map_hasherIiS7_NS_4hashIiEELb1EEENS_21__unordered_map_equalIiS7_NS_8equal_toIiEELb1EEENS_9allocatorIS7_EEE20__node_insert_uniqueEPNS_11__hash_nodeIS7_PvEE
     block $block
       block $block_0
-        local.get $3
+        local.get $5
         i32.load8_s offset=4
         if $if
-          local.get $3
+          local.get $5
           i32.load
-          local.set $8
+          local.set $9
           br $block_0
         else
           local.get $2
@@ -20409,19 +20424,19 @@
           end ;; $if_0
           local.get $2
           call $_free
-          local.get $3
+          local.get $5
           i32.load
-          local.set $8
-          local.get $3
+          local.set $9
+          local.get $5
           i32.load8_s offset=4
           br_if $block_0
         end ;; $if
         br $block
       end ;; $block_0
-      local.get $3
+      local.get $5
       local.get $1
       i32.store
-      local.get $3
+      local.get $5
       call $__ZNSt3__213unordered_mapIiNS_10unique_ptrI11ContextBaseNS_14default_deleteIS2_EEEENS_4hashIiEENS_8equal_toIiEENS_9allocatorINS_4pairIKiS5_EEEEEixEOi
       i32.load
       local.tee $1
@@ -20448,10 +20463,10 @@
         local.get $1
         i32.load offset=72
         local.set $2
-        local.get $4
+        local.get $3
         i64.const 0
         i64.store align=4
-        local.get $4
+        local.get $3
         i32.const 0
         i32.store offset=8
         local.get $2
@@ -20463,13 +20478,13 @@
           local.get $2
           local.set $7
           local.get $6
-          local.set $10
+          local.set $11
         end ;; $if_2
       else
-        local.get $4
+        local.get $3
         i64.const 0
         i64.store align=4
-        local.get $4
+        local.get $3
         i32.const 0
         i32.store offset=8
         local.get $6
@@ -20477,7 +20492,7 @@
         i32.and
         local.set $7
         local.get $2
-        local.set $10
+        local.set $11
       end ;; $if_1
       local.get $1
       local.set $2
@@ -20487,19 +20502,19 @@
           i32.const 11
           i32.lt_u
           if $if_3 (result i32)
-            local.get $4
+            local.get $3
             local.get $7
             i32.store8 offset=11
             local.get $7
             if $if_4 (result i32)
-              local.get $4
+              local.get $3
               local.set $1
               br $block_2
             else
-              local.get $4
+              local.get $3
             end ;; $if_4
           else
-            local.get $4
+            local.get $3
             local.get $7
             i32.const 16
             i32.add
@@ -20509,12 +20524,12 @@
             call $__Znwm
             local.tee $1
             i32.store
-            local.get $4
+            local.get $3
             local.get $6
             i32.const -2147483648
             i32.or
             i32.store offset=8
-            local.get $4
+            local.get $3
             local.get $7
             i32.store offset=4
             br $block_2
@@ -20523,7 +20538,7 @@
           br $block_1
         end ;; $block_2
         local.get $1
-        local.get $10
+        local.get $11
         local.get $7
         call $_memcpy
         drop
@@ -20539,26 +20554,26 @@
       if $if_5
         block $block_3 (result i32)
           local.get $1
-          local.get $4
+          local.get $3
           call $__ZNSt3__212__hash_tableINS_17__hash_value_typeINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEENS_8functionIFNS_10unique_ptrI11RootContextNS_14default_deleteISA_EEEEjNS_17basic_string_viewIcS4_EEEEEEENS_22__unordered_map_hasherIS7_SI_NS_4hashIS7_EELb1EEENS_21__unordered_map_equalIS7_SI_NS_8equal_toIS7_EELb1EEENS5_ISI_EEE4findIS7_EENS_15__hash_iteratorIPNS_11__hash_nodeISI_PvEEEERKT_
           local.tee $1
           i32.eqz
           if $if_6
+            local.get $8
             local.get $3
-            local.get $4
             call $__ZNSt3__2plIcNS_11char_traitsIcEENS_9allocatorIcEEEENS_12basic_stringIT_T0_T1_EEPKS6_RKS9_
             i32.const 4
-            local.get $3
+            local.get $8
             i32.load
-            local.get $3
-            local.get $3
+            local.get $8
+            local.get $8
             i32.load8_s offset=11
             local.tee $0
             i32.const 0
             i32.lt_s
             local.tee $1
             select
-            local.get $3
+            local.get $8
             i32.load offset=4
             local.get $0
             i32.const 255
@@ -20566,24 +20581,29 @@
             local.get $1
             select
             call $_proxy_log
-            local.get $3
+            drop
+            local.get $8
             i32.load8_s offset=11
             i32.const 0
-            i32.lt_s
+            i32.ge_s
             if $if_7
-              local.get $3
-              i32.load
-              call $_free
+              i32.const 1
+              local.set $1
+              i32.const 0
+              br $block_3
             end ;; $if_7
+            local.get $8
+            i32.load
+            call $_free
             i32.const 1
             local.set $1
             i32.const 0
             br $block_3
           end ;; $if_6
-          local.get $3
+          local.get $5
           local.get $0
           i32.store
-          local.get $9
+          local.get $10
           local.get $2
           i32.store
           local.get $1
@@ -20601,10 +20621,10 @@
             i32.const 39
             call $___cxa_throw
           end ;; $if_8
-          local.get $5
+          local.get $4
           local.get $0
-          local.get $3
-          local.get $9
+          local.get $5
+          local.get $10
           local.get $0
           i32.load
           i32.load offset=24
@@ -20613,16 +20633,16 @@
           i32.const 210
           i32.add
           call_indirect $27 (type $5)
-          local.get $5
+          local.get $4
           i32.load
           local.set $1
-          local.get $5
+          local.get $4
           i32.const 0
           i32.store
-          local.get $8
+          local.get $9
           i32.load offset=12
           local.set $0
-          local.get $8
+          local.get $9
           local.get $1
           i32.store offset=12
           local.get $0
@@ -20636,10 +20656,10 @@
             i32.const 112
             i32.add
             call_indirect $27 (type $0)
-            local.get $5
+            local.get $4
             i32.load
             local.set $0
-            local.get $5
+            local.get $4
             i32.const 0
             i32.store
             local.get $0
@@ -20655,7 +20675,7 @@
               call_indirect $27 (type $0)
             end ;; $if_10
           else
-            local.get $5
+            local.get $4
             i32.const 0
             i32.store
           end ;; $if_9
@@ -20705,33 +20725,33 @@
         local.get $1
         local.get $2
         i32.store offset=68
-        local.get $8
+        local.get $9
         i32.load offset=12
         local.set $0
-        local.get $8
+        local.get $9
         local.get $1
         i32.store offset=12
-        local.get $0
-        if $if_11
+        block $block_4 (result i32)
           local.get $0
-          local.get $0
-          i32.load
-          i32.load offset=4
-          i32.const 63
-          i32.and
-          i32.const 112
-          i32.add
-          call_indirect $27 (type $0)
-          local.get $8
-          i32.load offset=12
-          local.set $1
-        end ;; $if_11
+          if $if_11
+            local.get $0
+            local.get $0
+            i32.load
+            i32.load offset=4
+            i32.const 63
+            i32.and
+            i32.const 112
+            i32.add
+            call_indirect $27 (type $0)
+            local.get $9
+            i32.load offset=12
+            local.set $1
+          end ;; $if_11
+          local.get $1
+        end ;; $block_4
         local.get $1
         i32.load
         i32.load offset=12
-        local.set $0
-        local.get $1
-        local.get $0
         i32.const 63
         i32.and
         call_indirect $27 (type $2)
@@ -20739,12 +20759,12 @@
         i32.const 1
         local.set $1
       end ;; $if_5
-      local.get $4
+      local.get $3
       i32.load8_s offset=11
       i32.const 0
       i32.lt_s
       if $if_12
-        local.get $4
+        local.get $3
         i32.load
         call $_free
       end ;; $if_12
@@ -20759,12 +20779,12 @@
         i32.const 112
         i32.add
         call_indirect $27 (type $0)
-        local.get $5
+        local.get $4
         global.set $31
         return
       end ;; $if_13
     end ;; $block
-    local.get $8
+    local.get $9
     i32.load offset=12
     local.tee $0
     i32.load
@@ -20786,7 +20806,7 @@
     i32.const 112
     i32.add
     call_indirect $27 (type $0)
-    local.get $5
+    local.get $4
     global.set $31
     )
   

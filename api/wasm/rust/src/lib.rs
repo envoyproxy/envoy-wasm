@@ -66,6 +66,6 @@ fn _free(ptr: *mut u8) {
 pub mod host {
     extern "C" {
         #[link_name = "_proxy_log"]
-        pub fn proxy_log(level: u32, message_data: *const u8, message_size: usize);
+        pub fn proxy_log(level: u32, message_data: *const u8, message_size: usize) -> u32;
     }
 }

@@ -43,8 +43,11 @@ void NullVm::start(Common::Wasm::Context* context) {
 
 uint64_t NullVm::getMemorySize() { return std::numeric_limits<uint64_t>::max(); }
 
-absl::string_view NullVm::getMemory(uint64_t pointer, uint64_t size) {
-  return {reinterpret_cast<char*>(pointer), static_cast<size_t>(size)};
+absl::optional<absl::string_view> NullVm::getMemory(uint64_t pointer, uint64_t size) {
+  if (pointer == 0 && size != 0) {
+    return absl::nullopt;
+  }
+  return absl::string_view(reinterpret_cast<char*>(pointer), static_cast<size_t>(size));
 }
 
 bool NullVm::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
@@ -53,14 +56,20 @@ bool NullVm::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
 }
 
 bool NullVm::setMemory(uint64_t pointer, uint64_t size, const void* data) {
+  if ((pointer == 0 || data == nullptr) && size != 0) {
+    return false;
+  }
   auto p = reinterpret_cast<char*>(pointer);
   memcpy(p, data, size);
   return true;
 }
 
-bool NullVm::setWord(uint64_t pointer, uint64_t data) {
+bool NullVm::setWord(uint64_t pointer, Word data) {
+  if (pointer == 0) {
+    return false;
+  }
   auto p = reinterpret_cast<char*>(pointer);
-  memcpy(p, &data, sizeof(data));
+  memcpy(p, &data.u64, sizeof(data.u64));
   return true;
 }
 

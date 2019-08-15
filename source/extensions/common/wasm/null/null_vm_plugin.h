@@ -20,6 +20,7 @@ public:
   virtual void getFunction(absl::string_view functionName, WasmCall4Void* f) PURE;
   virtual void getFunction(absl::string_view functionName, WasmCall5Void* f) PURE;
   virtual void getFunction(absl::string_view functionName, WasmCall8Void* f) PURE;
+  virtual void getFunction(absl::string_view functionName, WasmCall0Word* f) PURE;
   virtual void getFunction(absl::string_view functionName, WasmCall1Word* f) PURE;
   virtual void getFunction(absl::string_view functionName, WasmCall3Word* f) PURE;
 

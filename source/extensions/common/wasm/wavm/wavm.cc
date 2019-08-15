@@ -221,10 +221,10 @@ struct Wavm : public WasmVm {
   void link(absl::string_view debug_name, bool needs_emscripten) override;
   void start(Context* context) override;
   uint64_t getMemorySize() override;
-  absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
+  absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
-  bool setWord(uint64_t pointer, uint64_t data) override;
+  bool setWord(uint64_t pointer, Word data) override;
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name) override;
 
@@ -241,6 +241,7 @@ struct Wavm : public WasmVm {
   _GET_FUNCTION(WasmCall4Void);
   _GET_FUNCTION(WasmCall5Void);
   _GET_FUNCTION(WasmCall8Void);
+  _GET_FUNCTION(WasmCall0Word);
   _GET_FUNCTION(WasmCall1Word);
   _GET_FUNCTION(WasmCall3Word);
 #undef _GET_FUNCTION
@@ -255,8 +256,6 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback2Void);
   _REGISTER_CALLBACK(WasmCallback3Void);
   _REGISTER_CALLBACK(WasmCallback4Void);
-  _REGISTER_CALLBACK(WasmCallback5Void);
-  _REGISTER_CALLBACK(WasmCallback8Void);
   _REGISTER_CALLBACK(WasmCallback0Word);
   _REGISTER_CALLBACK(WasmCallback1Word);
   _REGISTER_CALLBACK(WasmCallback2Word);
@@ -267,11 +266,8 @@ struct Wavm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback7Word);
   _REGISTER_CALLBACK(WasmCallback8Word);
   _REGISTER_CALLBACK(WasmCallback9Word);
-  _REGISTER_CALLBACK(WasmCallback_ZWl);
-  _REGISTER_CALLBACK(WasmCallback_ZWm);
-  _REGISTER_CALLBACK(WasmCallback_m);
-  _REGISTER_CALLBACK(WasmCallback_jW);
-  _REGISTER_CALLBACK(WasmCallback_mW);
+  _REGISTER_CALLBACK(WasmCallback_WWl);
+  _REGISTER_CALLBACK(WasmCallback_WWm);
 #undef _REGISTER_CALLBACK
 
 #define _REGISTER_GLOBAL(_type)                                                                    \
@@ -322,7 +318,7 @@ std::unique_ptr<WasmVm> Wavm::clone() {
   auto wavm = std::make_unique<Wavm>();
   wavm->compartment_ = WAVM::Runtime::cloneCompartment(compartment_);
   wavm->memory_ = WAVM::Runtime::remapToClonedCompartment(memory_, wavm->compartment_);
-  memory_base_ = WAVM::Runtime::getMemoryBaseAddress(memory_);
+  wavm->memory_base_ = WAVM::Runtime::getMemoryBaseAddress(wavm->memory_);
   wavm->context_ = WAVM::Runtime::createContext(wavm->compartment_);
   for (auto& p : intrinsicModuleInstances_) {
     wavm->intrinsicModuleInstances_.emplace(
@@ -430,10 +426,12 @@ void Wavm::start(Context* context) {
 
 uint64_t Wavm::getMemorySize() { return WAVM::Runtime::getMemoryNumPages(memory_) * wasmPageSize; }
 
-absl::string_view Wavm::getMemory(uint64_t pointer, uint64_t size) {
-  return {reinterpret_cast<char*>(
-              WAVM::Runtime::memoryArrayPtr<U8>(memory_, pointer, static_cast<U64>(size))),
-          static_cast<size_t>(size)};
+absl::optional<absl::string_view> Wavm::getMemory(uint64_t pointer, uint64_t size) {
+  auto memoryNumBytes = WAVM::Runtime::getMemoryNumPages(memory_) * wasmPageSize;
+  if (pointer + size > memoryNumBytes) {
+    return absl::nullopt;
+  }
+  return absl::string_view(reinterpret_cast<char*>(memory_base_ + pointer), size);
 }
 
 bool Wavm::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
@@ -449,26 +447,18 @@ bool Wavm::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
 }
 
 bool Wavm::setMemory(uint64_t pointer, uint64_t size, const void* data) {
-  auto p = reinterpret_cast<char*>(
-      WAVM::Runtime::memoryArrayPtr<U8>(memory_, pointer, static_cast<U64>(size)));
-  if (p) {
-    memcpy(p, data, size);
-    return true;
-  } else {
+  auto memoryNumBytes = WAVM::Runtime::getMemoryNumPages(memory_) * wasmPageSize;
+  if (pointer + size > memoryNumBytes) {
     return false;
   }
+  auto p = reinterpret_cast<char*>(memory_base_ + pointer);
+  memcpy(p, data, size);
+  return true;
 }
 
-bool Wavm::setWord(uint64_t pointer, uint64_t data) {
-  auto p = reinterpret_cast<char*>(
-      WAVM::Runtime::memoryArrayPtr<U8>(memory_, pointer, static_cast<U64>(sizeof(uint32_t))));
-  if (p) {
-    uint32_t data32 = static_cast<uint32_t>(data);
-    memcpy(p, &data32, sizeof(uint32_t));
-    return true;
-  } else {
-    return false;
-  }
+bool Wavm::setWord(uint64_t pointer, Word data) {
+  uint32_t data32 = data.u32();
+  return setMemory(pointer, sizeof(uint32_t), &data32);
 }
 
 absl::string_view Wavm::getUserSection(absl::string_view name) {

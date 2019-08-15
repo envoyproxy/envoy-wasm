@@ -21,7 +21,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
   logInfo(std::string("header path ") + std::string(path->view()));
   std::string protocol;
   // Should not be found.
-  if (MetadataResult::Ok == getRequestProtocol(&protocol)) {
+  if (WasmResult::Ok == getRequestProtocol(&protocol)) {
     logInfo(std::string("request protocol response ") + protocol);
   }
   addRequestHeader("newheader", "newheadervalue");

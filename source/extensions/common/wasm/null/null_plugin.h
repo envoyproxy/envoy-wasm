@@ -19,7 +19,6 @@ using FilterDataStatus = Http::FilterDataStatus;
 using GrpcStatus = Envoy::Grpc::Status::GrpcStatus;
 using MetricType = Envoy::Extensions::Common::Wasm::Context::MetricType;
 using StringView = absl::string_view;
-using EnumType = int32_t;
 } // namespace Plugin
 } // namespace Null
 } // namespace Wasm
@@ -35,7 +34,7 @@ namespace Common {
 namespace Wasm {
 namespace Null {
 namespace Plugin {
-#include "api/wasm/cpp/proxy_wasm_impl.h"
+#include "api/wasm/cpp/proxy_wasm_api.h"
 } // namespace Plugin
 
 /**
@@ -66,6 +65,7 @@ public:
   void getFunction(absl::string_view functionName, WasmCall4Void* f) override;
   void getFunction(absl::string_view functionName, WasmCall5Void* f) override;
   void getFunction(absl::string_view functionName, WasmCall8Void* f) override;
+  void getFunction(absl::string_view functionName, WasmCall0Word* f) override;
   void getFunction(absl::string_view functionName, WasmCall1Word* f) override;
   void getFunction(absl::string_view functionName, WasmCall3Word* f) override;
 

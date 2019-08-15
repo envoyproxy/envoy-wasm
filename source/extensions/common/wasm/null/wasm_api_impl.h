@@ -19,134 +19,156 @@ namespace Plugin {
 #define WS(_x) Word(static_cast<uint64_t>(_x))
 #define WR(_x) Word(reinterpret_cast<uint64_t>(_x))
 
+inline WasmResult toWasmResult(Word w) { return static_cast<WasmResult>(w.u64); }
+
 // Logging
-inline void proxy_log(LogLevel level, const char* logMessage, size_t messageSize) {
-  logHandler(current_context_, WS(level), WR(logMessage), WS(messageSize));
+inline WasmResult proxy_log(LogLevel level, const char* logMessage, size_t messageSize) {
+  return toWasmResult(logHandler(current_context_, WS(level), WR(logMessage), WS(messageSize)));
 }
 
 // Timer
-inline void proxy_setTickPeriodMilliseconds(uint64_t millisecond) {
-  setTickPeriodMillisecondsHandler(current_context_, Word(millisecond));
+inline WasmResult proxy_setTickPeriodMilliseconds(uint64_t millisecond) {
+  return toWasmResult(setTickPeriodMillisecondsHandler(current_context_, Word(millisecond)));
 }
-inline uint64_t proxy_getCurrentTimeNanoseconds() {
-  return getCurrentTimeNanosecondsHandler(current_context_);
+inline WasmResult proxy_getCurrentTimeNanoseconds(uint64_t* result) {
+  return toWasmResult(getCurrentTimeNanosecondsHandler(current_context_, WR(result)));
 }
 
 // Metadata
-inline uint64_t proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
-                                  const char** value_ptr_ptr, size_t* value_size_ptr) {
-  return getMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size),
-                            WR(value_ptr_ptr), WR(value_size_ptr));
+inline WasmResult proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
+                                    const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return toWasmResult(getMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size),
+                                         WR(value_ptr_ptr), WR(value_size_ptr)));
 }
-inline uint64_t proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
-                                  const char* value_ptr, size_t value_size) {
-  return setMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr),
-                            WS(value_size));
+inline WasmResult proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
+                                    const char* value_ptr, size_t value_size) {
+  return toWasmResult(setMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size),
+                                         WR(value_ptr), WS(value_size)));
 }
-inline uint64_t proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
-                                       size_t* value_size) {
-  return getMetadataPairsHandler(current_context_, WS(type), WR(value_ptr), WR(value_size));
+inline WasmResult proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
+                                         size_t* value_size) {
+  return toWasmResult(
+      getMetadataPairsHandler(current_context_, WS(type), WR(value_ptr), WR(value_size)));
 }
-inline uint64_t proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
-                                        const char** value_ptr_ptr, size_t* value_size_ptr) {
-  return getMetadataStructHandler(current_context_, WS(type), WR(name_ptr), WS(name_size),
-                                  WR(value_ptr_ptr), WR(value_size_ptr));
+inline WasmResult proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
+                                          const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return toWasmResult(getMetadataStructHandler(current_context_, WS(type), WR(name_ptr),
+                                               WS(name_size), WR(value_ptr_ptr),
+                                               WR(value_size_ptr)));
 }
-inline uint64_t proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
-                                        const char* value_ptr, size_t value_size) {
-  return setMetadataStructHandler(current_context_, WS(type), WR(name_ptr), WS(name_size),
-                                  WR(value_ptr), WS(value_size));
+inline WasmResult proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
+                                          const char* value_ptr, size_t value_size) {
+  return toWasmResult(setMetadataStructHandler(current_context_, WS(type), WR(name_ptr),
+                                               WS(name_size), WR(value_ptr), WS(value_size)));
 }
 
 // Continue
-inline void proxy_continueRequest() { continueRequestHandler(current_context_); }
-inline void proxy_continueResponse() { continueResponseHandler(current_context_); }
-inline void proxy_sendLocalResponse(uint32_t response_code, const char* response_code_details_ptr,
-                                    size_t response_code_details_size, const char* body_ptr,
-                                    size_t body_size,
-                                    const char* additional_response_header_pairs_ptr,
-                                    size_t additional_response_header_pairs_size,
-                                    uint32_t grpc_status) {
-  sendLocalResponseHandler(current_context_, WS(response_code), WR(response_code_details_ptr),
-                           WS(response_code_details_size), WR(body_ptr), WS(body_size),
-                           WR(additional_response_header_pairs_ptr),
-                           WS(additional_response_header_pairs_size), WS(grpc_status));
+inline WasmResult proxy_continueRequest() {
+  return toWasmResult(continueRequestHandler(current_context_));
 }
-inline void proxy_clearRouteCache() { clearRouteCacheHandler(current_context_); }
+inline WasmResult proxy_continueResponse() {
+  return toWasmResult(continueResponseHandler(current_context_));
+}
+inline WasmResult
+proxy_sendLocalResponse(uint32_t response_code, const char* response_code_details_ptr,
+                        size_t response_code_details_size, const char* body_ptr, size_t body_size,
+                        const char* additional_response_header_pairs_ptr,
+                        size_t additional_response_header_pairs_size, uint32_t grpc_status) {
+  return toWasmResult(
+      sendLocalResponseHandler(current_context_, WS(response_code), WR(response_code_details_ptr),
+                               WS(response_code_details_size), WR(body_ptr), WS(body_size),
+                               WR(additional_response_header_pairs_ptr),
+                               WS(additional_response_header_pairs_size), WS(grpc_status)));
+}
+inline WasmResult proxy_clearRouteCache() {
+  return toWasmResult(clearRouteCacheHandler(current_context_));
+}
 
 // SharedData
-inline void proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,
-                                size_t* value_size, uint32_t* cas) {
-  getSharedDataHandler(current_context_, WR(key_ptr), WS(key_size), WR(value_ptr), WR(value_size),
-                       WR(cas));
+inline WasmResult proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,
+                                      size_t* value_size, uint32_t* cas) {
+  return toWasmResult(getSharedDataHandler(current_context_, WR(key_ptr), WS(key_size),
+                                           WR(value_ptr), WR(value_size), WR(cas)));
 }
 //  If cas != 0 and cas != the current cas for 'key' return false, otherwise set the value and
 //  return true.
-inline bool proxy_setSharedData(const char* key_ptr, size_t key_size, const char* value_ptr,
-                                size_t value_size, uint64_t cas) {
-  return setSharedDataHandler(current_context_, WR(key_ptr), WS(key_size), WR(value_ptr),
-                              WS(value_size), WS(cas));
+inline WasmResult proxy_setSharedData(const char* key_ptr, size_t key_size, const char* value_ptr,
+                                      size_t value_size, uint64_t cas) {
+  return toWasmResult(setSharedDataHandler(current_context_, WR(key_ptr), WS(key_size),
+                                           WR(value_ptr), WS(value_size), WS(cas)));
 }
 
 // SharedQueue
 // Note: Registering the same queue_name will overwrite the old registration while preseving any
 // pending data. Consequently it should typically be followed by a call to proxy_dequeueSharedQueue.
 // Returns unique token for the queue.
-inline uint32_t proxy_registerSharedQueue(const char* queue_name_ptr, size_t queue_name_size) {
-  return registerSharedQueueHandler(current_context_, WR(queue_name_ptr), WS(queue_name_size));
+inline WasmResult proxy_registerSharedQueue(const char* queue_name_ptr, size_t queue_name_size,
+                                            uint32_t* token) {
+  return toWasmResult(registerSharedQueueHandler(current_context_, WR(queue_name_ptr),
+                                                 WS(queue_name_size), WR(token)));
 }
 // Returns unique token for the queue.
-inline uint32_t proxy_resolveSharedQueue(const char* vm_id_ptr, size_t vm_id_size,
-                                         const char* queue_name_ptr, size_t queue_name_size) {
-  return resolveSharedQueueHandler(current_context_, WR(vm_id_ptr), WS(vm_id_size),
-                                   WR(queue_name_ptr), WS(queue_name_size));
+inline WasmResult proxy_resolveSharedQueue(const char* vm_id_ptr, size_t vm_id_size,
+                                           const char* queue_name_ptr, size_t queue_name_size,
+                                           uint32_t* token) {
+  return toWasmResult(resolveSharedQueueHandler(current_context_, WR(vm_id_ptr), WS(vm_id_size),
+                                                WR(queue_name_ptr), WS(queue_name_size),
+                                                WR(token)));
 }
 // Returns true on end-of-stream (no more data available).
-inline bool proxy_dequeueSharedQueue(uint32_t token, const char** data_ptr, size_t* data_size) {
-  return dequeueSharedQueueHandler(current_context_, WS(token), WR(data_ptr), WR(data_size));
+inline WasmResult proxy_dequeueSharedQueue(uint32_t token, const char** data_ptr,
+                                           size_t* data_size) {
+  return toWasmResult(
+      dequeueSharedQueueHandler(current_context_, WS(token), WR(data_ptr), WR(data_size)));
 }
 // Returns false if the queue was not found and the data was not enqueued.
-inline bool proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size) {
-  return enqueueSharedQueueHandler(current_context_, WS(token), WR(data_ptr), WS(data_size));
+inline WasmResult proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size) {
+  return toWasmResult(
+      enqueueSharedQueueHandler(current_context_, WS(token), WR(data_ptr), WS(data_size)));
 }
 
 // Headers/Trailers/Metadata Maps
-inline void proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size,
-                                    const char* value_ptr, size_t value_size) {
-  addHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr),
-                           WS(value_size));
+inline WasmResult proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size,
+                                          const char* value_ptr, size_t value_size) {
+  return toWasmResult(addHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr),
+                                               WS(key_size), WR(value_ptr), WS(value_size)));
 }
-inline void proxy_getHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size,
-                                    const char** value_ptr, size_t* value_size) {
-  getHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr),
-                           WR(value_size));
+inline WasmResult proxy_getHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size,
+                                          const char** value_ptr, size_t* value_size) {
+  return toWasmResult(getHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr),
+                                               WS(key_size), WR(value_ptr), WR(value_size)));
 }
-inline void proxy_getHeaderMapPairs(HeaderMapType type, const char** ptr, size_t* size) {
-  getHeaderMapPairsHandler(current_context_, WS(type), WR(ptr), WR(size));
+inline WasmResult proxy_getHeaderMapPairs(HeaderMapType type, const char** ptr, size_t* size) {
+  return toWasmResult(getHeaderMapPairsHandler(current_context_, WS(type), WR(ptr), WR(size)));
 }
-inline void proxy_setHeaderMapPairs(HeaderMapType type, const char* ptr, size_t size) {
-  setHeaderMapPairsHandler(current_context_, WS(type), WR(ptr), WS(size));
+inline WasmResult proxy_setHeaderMapPairs(HeaderMapType type, const char* ptr, size_t size) {
+  return toWasmResult(setHeaderMapPairsHandler(current_context_, WS(type), WR(ptr), WS(size)));
 }
-inline void proxy_replaceHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size,
-                                        const char* value_ptr, size_t value_size) {
-  replaceHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr),
-                               WS(value_size));
+inline WasmResult proxy_replaceHeaderMapValue(HeaderMapType type, const char* key_ptr,
+                                              size_t key_size, const char* value_ptr,
+                                              size_t value_size) {
+  return toWasmResult(replaceHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr),
+                                                   WS(key_size), WR(value_ptr), WS(value_size)));
 }
-inline void proxy_removeHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size) {
-  removeHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr), WS(key_size));
+inline WasmResult proxy_removeHeaderMapValue(HeaderMapType type, const char* key_ptr,
+                                             size_t key_size) {
+  return toWasmResult(
+      removeHeaderMapValueHandler(current_context_, WS(type), WR(key_ptr), WS(key_size)));
 }
-inline uint32_t proxy_getHeaderMapSize(HeaderMapType type) {
-  return getHeaderMapSizeHandler(current_context_, WS(type));
+inline WasmResult proxy_getHeaderMapSize(HeaderMapType type, size_t* size) {
+  return toWasmResult(getHeaderMapSizeHandler(current_context_, WS(type), WR(size)));
 }
 
 // Body
-inline void proxy_getRequestBodyBufferBytes(uint64_t start, uint64_t length, const char** ptr,
-                                            size_t* size) {
-  getRequestBodyBufferBytesHandler(current_context_, Word(start), Word(length), WR(ptr), WR(size));
+inline WasmResult proxy_getRequestBodyBufferBytes(uint64_t start, uint64_t length, const char** ptr,
+                                                  size_t* size) {
+  return toWasmResult(getRequestBodyBufferBytesHandler(current_context_, Word(start), Word(length),
+                                                       WR(ptr), WR(size)));
 }
-inline void proxy_getResponseBodyBufferBytes(uint64_t start, uint64_t length, const char** ptr,
-                                             size_t* size) {
-  getResponseBodyBufferBytesHandler(current_context_, WS(start), WS(length), WR(ptr), WR(size));
+inline WasmResult proxy_getResponseBodyBufferBytes(uint64_t start, uint64_t length,
+                                                   const char** ptr, size_t* size) {
+  return toWasmResult(getResponseBodyBufferBytesHandler(current_context_, WS(start), WS(length),
+                                                        WR(ptr), WR(size)));
 }
 
 // HTTP
@@ -177,30 +199,36 @@ inline uint64_t proxy_grpcStream(const char* service_ptr, size_t service_size,
                            WR(service_name_ptr), WS(service_name_size), WR(method_name_ptr),
                            WS(method_name_size));
 }
-inline void proxy_grpcCancel(uint64_t token) { grpcCancelHandler(current_context_, WS(token)); }
-inline void proxy_grpcClose(uint64_t token) { grpcCloseHandler(current_context_, WS(token)); }
-inline void proxy_grpcSend(uint64_t token, const char* message_ptr, size_t message_size,
-                           uint64_t end_stream) {
-  grpcSendHandler(current_context_, WS(token), WR(message_ptr), WS(message_size), WS(end_stream));
+inline WasmResult proxy_grpcCancel(uint64_t token) {
+  return toWasmResult(grpcCancelHandler(current_context_, WS(token)));
+}
+inline WasmResult proxy_grpcClose(uint64_t token) {
+  return toWasmResult(grpcCloseHandler(current_context_, WS(token)));
+}
+inline WasmResult proxy_grpcSend(uint64_t token, const char* message_ptr, size_t message_size,
+                                 uint64_t end_stream) {
+  return toWasmResult(grpcSendHandler(current_context_, WS(token), WR(message_ptr),
+                                      WS(message_size), WS(end_stream)));
 }
 
 // Metrics
 // Returns a metric_id which can be used to report a metric. On error returns 0.
-inline uint32_t proxy_defineMetric(MetricType type, const char* name_ptr, size_t name_size) {
-  return defineMetricHandler(current_context_, WS(type), WR(name_ptr), WS(name_size));
+inline WasmResult proxy_defineMetric(MetricType type, const char* name_ptr, size_t name_size,
+                                     uint32_t* metric_id) {
+  return toWasmResult(
+      defineMetricHandler(current_context_, WS(type), WR(name_ptr), WS(name_size), WR(metric_id)));
 }
-inline void proxy_incrementMetric(uint32_t metric_id, int64_t offset) {
-  incrementMetricHandler(current_context_, WS(metric_id), WS(offset));
+inline WasmResult proxy_incrementMetric(uint32_t metric_id, int64_t offset) {
+  return toWasmResult(incrementMetricHandler(current_context_, WS(metric_id), WS(offset)));
 }
-inline void proxy_recordMetric(uint32_t metric_id, uint64_t value) {
-  recordMetricHandler(current_context_, WS(metric_id), WS(value));
+inline WasmResult proxy_recordMetric(uint32_t metric_id, uint64_t value) {
+  return toWasmResult(recordMetricHandler(current_context_, WS(metric_id), WS(value)));
 }
-inline uint64_t proxy_getMetric(uint32_t metric_id) {
-  return getMetricHandler(current_context_, WS(metric_id));
+inline WasmResult proxy_getMetric(uint32_t metric_id, uint64_t* value) {
+  return toWasmResult(getMetricHandler(current_context_, WS(metric_id), WR(value)));
 }
-
-inline uint64_t proxy_setEffectiveContext(uint64_t context_id) {
-  return setEffectiveContextHandler(current_context_, WS(context_id));
+inline WasmResult proxy_setEffectiveContext(uint64_t context_id) {
+  return toWasmResult(setEffectiveContextHandler(current_context_, WS(context_id)));
 }
 
 #undef WS

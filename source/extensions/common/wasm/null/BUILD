@@ -45,7 +45,8 @@ envoy_cc_library(
     deps = [
         ":null_lib",
         ":null_vm_plugin_interface",
-        "//api/wasm/cpp:intrinsics_hdr",
+        "//api/wasm/cpp:api_lib",
+        "//api/wasm/cpp:shared_lib",
         "//external:abseil_node_hash_map",
         "//source/common/common:assert_lib",
         "//source/common/protobuf",

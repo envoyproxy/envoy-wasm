@@ -22,19 +22,19 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
 
 void ExampleRootContext::onTick() {
   google::protobuf::Value value;
-  if (MetadataResult::Ok != nodeMetadataValue("wasm_node_get_key", &value)) {
-    logDebug("onTick metadata error");
+  if (auto r = nodeMetadataValue("wasm_node_get_key", &value); r != WasmResult::Ok) {
+    logDebug(toString(r));
   }
   logDebug(std::string("onTick ") + value.string_value());
 }
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
   google::protobuf::Value value;
-  if (MetadataResult::Ok != nodeMetadataValue("wasm_node_get_key", &value)) {
-    logDebug("onRequestHeaders metadata error");
+  if (auto r = nodeMetadataValue("wasm_node_get_key", &value); r != WasmResult::Ok) {
+    logDebug(toString(r));
   }
-  if (MetadataResult::Ok != setMetadataStringValue(MetadataType::Request, "wasm_request_set_key", "wasm_request_set_value")) {
-    logDebug("onRequestHeaders metadata error");
+  if (auto r = setMetadataStringValue(MetadataType::Request, "wasm_request_set_key", "wasm_request_set_value"); r != WasmResult::Ok) {
+    logDebug(toString(r));
   }
   auto path = getRequestHeader(":path");
   logInfo(std::string("header path ") + path->toString());
@@ -45,20 +45,20 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
 
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
   google::protobuf::Value value;
-  if (MetadataResult::Ok != nodeMetadataValue("wasm_node_get_key", &value)) {
-    logDebug("onRequestHeaders metadata error");
+  if (auto r = nodeMetadataValue("wasm_node_get_key", &value); r != WasmResult::Ok) {
+    logDebug(toString(r));
   }
   logError(std::string("onRequestBody ") + value.string_value());
   google::protobuf::Struct request_struct;
-  google::protobuf::Struct response_struct;
-  if (MetadataResult::Ok != requestMetadataStruct(&request_struct)) {
-    logDebug("onRequestHeaders metadata error");
+  google::protobuf::Struct request_struct2;
+  if (auto r = requestMetadataStruct(&request_struct); r != WasmResult::Ok) { 
+    logDebug(toString(r));
   }
-  if (MetadataResult::Ok != requestMetadataStruct(&response_struct)) {
-    logDebug("onRequestHeaders metadata error");
+  if (auto r = requestMetadataStruct(&request_struct2); r != WasmResult::Ok) { 
+    logDebug(toString(r));
   }
   logTrace(std::string("Struct ") + request_struct.fields().at("wasm_request_get_key").string_value() + " " +
-           response_struct.fields().at("wasm_request_get_key").string_value());
+           request_struct2.fields().at("wasm_request_get_key").string_value());
   return FilterDataStatus::Continue;
 }
 

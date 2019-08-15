@@ -2,8 +2,8 @@
   (type $0 (func (param i32 i32)))
   (type $1 (func (param i32 i32 i32) (result i32)))
   (type $2 (func (param i32 i32) (result i32)))
-  (type $3 (func (param i32 i32 i32)))
-  (type $4 (func))
+  (type $3 (func))
+  (type $4 (func (param i32 i32 i32)))
   (type $5 (func (param i32 i32 i32 i32 i32)))
   (type $6 (func (param i32)))
   (type $7 (func (param i32) (result i32)))
@@ -12,7 +12,7 @@
   (type $10 (func (param i32 i32 i32 i32 i32) (result i32)))
   (type $11 (func (param i32 i32 i32 i32) (result i32)))
   (type $12 (func (param i32 i32 i32 i32)))
-  (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32)))
+  (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32) (result i32)))
   (export "memory" (memory $14))
   (export "__heap_base" (global $16))
   (export "__data_end" (global $17))
@@ -139,7 +139,7 @@
   (data $21 $14 (i32.const 1055044)
     "p\17\10\00L\19\10\00\0d\00\00\00\00\00\00\00\01\00\00\00\11\00\00\00\12\00\00\00\10\00\00\00")
   
-  (func $_proxy_onConfigure (type $3)
+  (func $_proxy_onConfigure (type $4)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -772,7 +772,7 @@
     call $__rdl_alloc
     )
   
-  (func $alloc::raw_vec::capacity_overflow::hd685e916963b651d (type $4)
+  (func $alloc::raw_vec::capacity_overflow::hd685e916963b651d (type $3)
     i32.const 1049040
     call $core::panicking::panic::h62fdcfa056e70982
     unreachable
@@ -1759,7 +1759,7 @@
     i32.const 0
     )
   
-  (func $core::result::unwrap_failed::h7b72eb0c479e1bd5 (type $4)
+  (func $core::result::unwrap_failed::h7b72eb0c479e1bd5 (type $3)
     (local $0 i32)
     global.get $15
     i32.const 64
@@ -2003,7 +2003,7 @@
     unreachable
     )
   
-  (func $core::result::unwrap_failed::hc7f92e904dbe4728 (type $4)
+  (func $core::result::unwrap_failed::hc7f92e904dbe4728 (type $3)
     (local $0 i32)
     global.get $15
     i32.const 64
@@ -2843,6 +2843,7 @@
           i32.add
           i32.load
           call $_proxy_log
+          drop
           block $block_6
             local.get $1
             i32.eqz
@@ -2926,7 +2927,7 @@
     unreachable
     )
   
-  (func $__post_instantiate (type $4)
+  (func $__post_instantiate (type $3)
     (local $0 i32)
     i32.const 0
     i32.const 0
@@ -3002,7 +3003,7 @@
     unreachable
     )
   
-  (func $alloc::raw_vec::RawVec<T_2c_A>::allocate_in::_7b__7b_closure_7d__7d_::h87cd55fc2e1e6651 (type $4)
+  (func $alloc::raw_vec::RawVec<T_2c_A>::allocate_in::_7b__7b_closure_7d__7d_::h87cd55fc2e1e6651 (type $3)
     call $alloc::raw_vec::capacity_overflow::hd685e916963b651d
     unreachable
     )
@@ -3419,7 +3420,7 @@
     unreachable
     )
   
-  (func $rust_panic (type $4)
+  (func $rust_panic (type $3)
     unreachable
     unreachable
     )
@@ -9107,7 +9108,7 @@
     call $core::fmt::num::imp::fmt_u64::h4648b2300e699242
     )
   
-  (func $core::panicking::panic_bounds_check::h51667a9f831439a7 (type $3)
+  (func $core::panicking::panic_bounds_check::h51667a9f831439a7 (type $4)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)

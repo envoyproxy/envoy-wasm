@@ -56,10 +56,10 @@ public:
   void start(Context* context) override;
 
   uint64_t getMemorySize() override;
-  absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
+  absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
-  bool setWord(uint64_t pointer, uint64_t word) override;
+  bool setWord(uint64_t pointer, Word word) override;
 
 #define _REGISTER_HOST_GLOBAL(_type)                                                               \
   std::unique_ptr<Global<_type>> makeGlobal(absl::string_view moduleName, absl::string_view name,  \
@@ -80,8 +80,6 @@ public:
   _REGISTER_HOST_FUNCTION(WasmCallback2Void);
   _REGISTER_HOST_FUNCTION(WasmCallback3Void);
   _REGISTER_HOST_FUNCTION(WasmCallback4Void);
-  _REGISTER_HOST_FUNCTION(WasmCallback5Void);
-  _REGISTER_HOST_FUNCTION(WasmCallback8Void);
   _REGISTER_HOST_FUNCTION(WasmCallback0Word);
   _REGISTER_HOST_FUNCTION(WasmCallback1Word);
   _REGISTER_HOST_FUNCTION(WasmCallback2Word);
@@ -92,11 +90,8 @@ public:
   _REGISTER_HOST_FUNCTION(WasmCallback7Word);
   _REGISTER_HOST_FUNCTION(WasmCallback8Word);
   _REGISTER_HOST_FUNCTION(WasmCallback9Word);
-  _REGISTER_HOST_FUNCTION(WasmCallback_ZWl);
-  _REGISTER_HOST_FUNCTION(WasmCallback_ZWm);
-  _REGISTER_HOST_FUNCTION(WasmCallback_m);
-  _REGISTER_HOST_FUNCTION(WasmCallback_jW);
-  _REGISTER_HOST_FUNCTION(WasmCallback_mW);
+  _REGISTER_HOST_FUNCTION(WasmCallback_WWl);
+  _REGISTER_HOST_FUNCTION(WasmCallback_WWm);
 #undef _REGISTER_HOST_FUNCTION
 
 #define _GET_MODULE_FUNCTION(_type)                                                                \
@@ -110,6 +105,7 @@ public:
   _GET_MODULE_FUNCTION(WasmCall4Void);
   _GET_MODULE_FUNCTION(WasmCall5Void);
   _GET_MODULE_FUNCTION(WasmCall8Void);
+  _GET_MODULE_FUNCTION(WasmCall0Word);
   _GET_MODULE_FUNCTION(WasmCall1Word);
   _GET_MODULE_FUNCTION(WasmCall3Word);
 #undef _GET_MODULE_FUNCTION
@@ -523,18 +519,22 @@ uint64_t V8::getMemorySize() {
   return memory_->data_size();
 }
 
-absl::string_view V8::getMemory(uint64_t pointer, uint64_t size) {
+absl::optional<absl::string_view> V8::getMemory(uint64_t pointer, uint64_t size) {
   ENVOY_LOG(trace, "[wasm] getMemory({}, {})", pointer, size);
   ASSERT(memory_ != nullptr);
-  RELEASE_ASSERT(pointer + size <= memory_->data_size(), "");
+  if (pointer + size > memory_->data_size()) {
+    return absl::nullopt;
+  }
   return absl::string_view(memory_->data() + pointer, size);
 }
 
 bool V8::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
   ENVOY_LOG(trace, "[wasm] getMemoryOffset({})", host_pointer);
   ASSERT(memory_ != nullptr);
-  RELEASE_ASSERT(static_cast<char*>(host_pointer) >= memory_->data(), "");
-  RELEASE_ASSERT(static_cast<char*>(host_pointer) <= memory_->data() + memory_->data_size(), "");
+  if (static_cast<char*>(host_pointer) >= memory_->data() ||
+      static_cast<char*>(host_pointer) <= memory_->data() + memory_->data_size()) {
+    return false;
+  }
   *vm_pointer = static_cast<char*>(host_pointer) - memory_->data();
   return true;
 }
@@ -542,17 +542,21 @@ bool V8::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
 bool V8::setMemory(uint64_t pointer, uint64_t size, const void* data) {
   ENVOY_LOG(trace, "[wasm] setMemory({}, {})", pointer, size);
   ASSERT(memory_ != nullptr);
-  RELEASE_ASSERT(pointer + size <= memory_->data_size(), "");
+  if (pointer + size > memory_->data_size()) {
+    return false;
+  }
   ::memcpy(memory_->data() + pointer, data, size);
   return true;
 }
 
-bool V8::setWord(uint64_t pointer, uint64_t word) {
-  ENVOY_LOG(trace, "[wasm] setWord({}, {})", pointer, word);
-  ASSERT(memory_ != nullptr);
-  RELEASE_ASSERT(pointer + sizeof(uint32_t) <= memory_->data_size(), "");
-  uint32_t word32 = static_cast<uint32_t>(word);
-  ::memcpy(memory_->data() + pointer, &word32, sizeof(uint32_t));
+bool V8::setWord(uint64_t pointer, Word word) {
+  ENVOY_LOG(trace, "[wasm] setWord({}, {})", word, pointer);
+  auto size = sizeof(uint32_t);
+  if (pointer + size > memory_->data_size()) {
+    return false;
+  }
+  uint32_t word32 = word.u32();
+  ::memcpy(memory_->data() + pointer, &word32, size);
   return true;
 }
 

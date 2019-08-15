@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "absl/types/optional.h"
+
 #include "envoy/common/exception.h"
 
 #include "common/common/logger.h"
@@ -49,6 +51,7 @@ using WasmCall5Void = std::function<void(Context*, Word, Word, Word, Word, Word)
 using WasmCall6Void = std::function<void(Context*, Word, Word, Word, Word, Word, Word)>;
 using WasmCall7Void = std::function<void(Context*, Word, Word, Word, Word, Word, Word, Word)>;
 using WasmCall8Void = std::function<void(Context*, Word, Word, Word, Word, Word, Word, Word, Word)>;
+using WasmCall0Word = std::function<Word(Context*)>;
 using WasmCall1Word = std::function<Word(Context*, Word)>;
 using WasmCall2Word = std::function<Word(Context*, Word, Word)>;
 using WasmCall3Word = std::function<Word(Context*, Word, Word, Word)>;
@@ -84,11 +87,8 @@ using WasmCallback9Word = Word (*)(void*, Word, Word, Word, Word, Word, Word, Wo
 // https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling-builtin
 // Extended with W = Word
 // Z = void, j = uint32_t, l = int64_t, m = uint64_t
-using WasmCallback_ZWl = void (*)(void*, Word, int64_t);
-using WasmCallback_ZWm = void (*)(void*, Word, uint64_t);
-using WasmCallback_m = uint64_t (*)(void*);
-using WasmCallback_mW = uint64_t (*)(void*, Word);
-using WasmCallback_jW = uint32_t (*)(void*, Word);
+using WasmCallback_WWl = Word (*)(void*, Word, int64_t);
+using WasmCallback_WWm = Word (*)(void*, Word, uint64_t);
 
 // Wasm VM instance. Provides the low level WASM interface.
 class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
@@ -116,14 +116,14 @@ public:
 
   // Get size of the currently allocated memory in the VM.
   virtual uint64_t getMemorySize() PURE;
-  // Convert a block of memory in the VM to a string_view.
-  virtual absl::string_view getMemory(uint64_t pointer, uint64_t size) PURE;
+  // Convert a block of memory in the VM to a string_view.  Returns 'false' in second if the pointer/size is invalid.
+  virtual absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) PURE;
   // Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).
   virtual bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) PURE;
   // Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
   virtual bool setMemory(uint64_t pointer, uint64_t size, const void* data) PURE;
   // Set a Word in the VM, returns true on success, false if the pointer is invalid.
-  virtual bool setWord(uint64_t pointer, uint64_t data) PURE;
+  virtual bool setWord(uint64_t pointer, Word data) PURE;
   // Make a new intrinsic module (e.g. for Emscripten support).
   virtual void makeModule(absl::string_view name) PURE;
 
@@ -138,6 +138,7 @@ public:
   virtual void getFunction(absl::string_view functionName, WasmCall4Void* f) PURE;
   virtual void getFunction(absl::string_view functionName, WasmCall5Void* f) PURE;
   virtual void getFunction(absl::string_view functionName, WasmCall8Void* f) PURE;
+  virtual void getFunction(absl::string_view functionName, WasmCall0Word* f) PURE;
   virtual void getFunction(absl::string_view functionName, WasmCall1Word* f) PURE;
   virtual void getFunction(absl::string_view functionName, WasmCall3Word* f) PURE;
 
@@ -150,8 +151,6 @@ public:
   REGISTER_CALLBACK(WasmCallback2Void);
   REGISTER_CALLBACK(WasmCallback3Void);
   REGISTER_CALLBACK(WasmCallback4Void);
-  REGISTER_CALLBACK(WasmCallback5Void);
-  REGISTER_CALLBACK(WasmCallback8Void);
   REGISTER_CALLBACK(WasmCallback0Word);
   REGISTER_CALLBACK(WasmCallback1Word);
   REGISTER_CALLBACK(WasmCallback2Word);
@@ -162,11 +161,8 @@ public:
   REGISTER_CALLBACK(WasmCallback7Word);
   REGISTER_CALLBACK(WasmCallback8Word);
   REGISTER_CALLBACK(WasmCallback9Word);
-  REGISTER_CALLBACK(WasmCallback_ZWl);
-  REGISTER_CALLBACK(WasmCallback_ZWm);
-  REGISTER_CALLBACK(WasmCallback_m);
-  REGISTER_CALLBACK(WasmCallback_mW);
-  REGISTER_CALLBACK(WasmCallback_jW);
+  REGISTER_CALLBACK(WasmCallback_WWl);
+  REGISTER_CALLBACK(WasmCallback_WWm);
 #undef REGISTER_CALLBACK
 
   // Register typed value exported by the host environment.

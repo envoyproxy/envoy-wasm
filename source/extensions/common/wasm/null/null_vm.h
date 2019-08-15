@@ -32,10 +32,10 @@ struct NullVm : public WasmVm {
   void setMemoryLayout(uint64_t, uint64_t, uint64_t) override {}
   void start(Common::Wasm::Context* context) override;
   uint64_t getMemorySize() override;
-  absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
+  absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
-  bool setWord(uint64_t pointer, uint64_t data) override;
+  bool setWord(uint64_t pointer, Word data) override;
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name) override;
 
@@ -50,6 +50,7 @@ struct NullVm : public WasmVm {
   _FORWARD_GET_FUNCTION(WasmCall4Void);
   _FORWARD_GET_FUNCTION(WasmCall5Void);
   _FORWARD_GET_FUNCTION(WasmCall8Void);
+  _FORWARD_GET_FUNCTION(WasmCall0Word);
   _FORWARD_GET_FUNCTION(WasmCall1Word);
   _FORWARD_GET_FUNCTION(WasmCall3Word);
 #undef _FORWARD_GET_FUNCTION
@@ -63,8 +64,6 @@ struct NullVm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback2Void);
   _REGISTER_CALLBACK(WasmCallback3Void);
   _REGISTER_CALLBACK(WasmCallback4Void);
-  _REGISTER_CALLBACK(WasmCallback5Void);
-  _REGISTER_CALLBACK(WasmCallback8Void);
   _REGISTER_CALLBACK(WasmCallback0Word);
   _REGISTER_CALLBACK(WasmCallback1Word);
   _REGISTER_CALLBACK(WasmCallback2Word);
@@ -75,11 +74,8 @@ struct NullVm : public WasmVm {
   _REGISTER_CALLBACK(WasmCallback7Word);
   _REGISTER_CALLBACK(WasmCallback8Word);
   _REGISTER_CALLBACK(WasmCallback9Word);
-  _REGISTER_CALLBACK(WasmCallback_ZWl);
-  _REGISTER_CALLBACK(WasmCallback_ZWm);
-  _REGISTER_CALLBACK(WasmCallback_m);
-  _REGISTER_CALLBACK(WasmCallback_jW);
-  _REGISTER_CALLBACK(WasmCallback_mW);
+  _REGISTER_CALLBACK(WasmCallback_WWl);
+  _REGISTER_CALLBACK(WasmCallback_WWm);
 #undef _REGISTER_CALLBACK
 
   // NullVm does not advertize code as emscripten so this will not get called.

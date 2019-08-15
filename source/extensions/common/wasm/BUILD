@@ -21,6 +21,7 @@ envoy_cc_library(
 envoy_cc_library(
     name = "wasm_vm_interface",
     hdrs = ["wasm_vm.h"],
+    external_deps = ["abseil_optional"],  
     deps = [
         ":well_known_names",
     ],
@@ -49,6 +50,7 @@ envoy_cc_library(
     deps = [
         ":wasm_hdr",
         "//external:abseil_node_hash_map",
+        "//api/wasm/cpp:shared_lib",
         "//source/common/buffer:buffer_lib",
         "//source/common/common:enum_to_int",
         "//source/common/config:datasource_lib",
