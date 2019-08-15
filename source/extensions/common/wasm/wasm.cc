@@ -25,14 +25,6 @@
 #include "common/http/utility.h"
 #include "common/tracing/http_tracer_impl.h"
 
-#include "extensions/common/wasm/null/null.h"
-
-#ifdef ENVOY_WASM_V8
-#include "extensions/common/wasm/v8/v8.h"
-#endif
-#ifdef ENVOY_WASM_WAVM
-#include "extensions/common/wasm/wavm/wavm.h"
-#endif
 #include "extensions/common/wasm/well_known_names.h"
 
 #include "absl/container/flat_hash_map.h"
