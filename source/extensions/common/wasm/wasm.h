@@ -861,6 +861,7 @@ pluginDirectionFromTrafficDirection(envoy::api::v2::core::TrafficDirection direc
     return PluginDirection::Outbound;
   default:
     ASSERT(!"Bad envoy::api::v2::core::TrafficDirection");
+    return PluginDirection::Unspecified;
   }
 }
 
