@@ -24,6 +24,7 @@ bool NullVm::load(const std::string& name, bool /* allow_precompiled */) {
   if (!factory) {
     return false;
   }
+  plugin_name_ = name;
   plugin_ = factory->create();
   return true;
 }
