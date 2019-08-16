@@ -9,7 +9,6 @@
 #include <vector>
 
 #define CHECK_RESULT(_c) do { if ((_c) != WasmResult::Ok) { proxy_log(LogLevel::critical, #_c, sizeof( #_c )-1); abort(); }} while(0)
-#
 
 //
 // High Level C++ API.
@@ -49,7 +48,6 @@ inline void logAbort(StringView logMessag) {
   logCritical(logMessag);
   abort();
 }
-
 
 // Buffers coming into the WASM filter.
 class WasmData {
