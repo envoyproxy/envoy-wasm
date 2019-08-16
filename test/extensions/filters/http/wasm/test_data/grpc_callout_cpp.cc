@@ -9,8 +9,8 @@ class ServiceContext : public RootContext {
   explicit ServiceContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
 
   void onStart(WasmDataPtr /* vm_configuration */) override {
-    ASSERT_OK(defineMetric(MetricType::Counter, "test_callout_successes", &callout_success_counter_));
-    ASSERT_OK(defineMetric(MetricType::Counter, "test_callout_failures", &callout_failure_counter_));
+    CHECK_RESULT(defineMetric(MetricType::Counter, "test_callout_successes", &callout_success_counter_));
+    CHECK_RESULT(defineMetric(MetricType::Counter, "test_callout_failures", &callout_failure_counter_));
   }
 
   void incrementCalloutSuccesses(uint32_t inc_amount = 1U) {

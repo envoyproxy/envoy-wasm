@@ -8,6 +8,9 @@
 #include <utility>
 #include <vector>
 
+#define CHECK_RESULT(_c) do { if ((_c) != WasmResult::Ok) { proxy_log(LogLevel::critical, #_c, sizeof( #_c )-1); abort(); }} while(0)
+#
+
 //
 // High Level C++ API.
 //
@@ -23,12 +26,6 @@ public:
   ProxyException(const std::string& message) : std::runtime_error(message) {}
 };
 #endif
-
-#define CHECK_WASM_RESULT(_r) do { \
-  auto _result = _r; \
-  (void) _result; /* unused */ \
-  assert(_result == WasmResult::Ok); \
-} while (0)
 
 inline WasmResult logTrace(StringView logMessage) {
   return proxy_log(LogLevel::trace, logMessage.data(), logMessage.size());
@@ -652,7 +649,7 @@ inline WasmResult ContextBase::metadataValue(MetadataType type, StringView key, 
       *value_ptr = it->second;
       return WasmResult::Ok;
     }
-    return WasmResult::NoSuchField;
+    return WasmResult::NotFound;
   } else {
     auto result = getMetadataValue(type, key, value_ptr);
     if (result != WasmResult::Ok) {
@@ -739,7 +736,7 @@ inline WasmResult ContextBase::namedMetadataValue(
     *value_ptr = it->second;
     return WasmResult::Ok;
   }
-  return WasmResult::NoSuchField;
+  return WasmResult::NotFound;
 }
 
 inline WasmResult Context::requestMetadataValue(StringView name, StringView key, google::protobuf::Value* value_ptr) {
@@ -1174,7 +1171,7 @@ inline uint32_t MetricBase::resolveFullName(const std::string& n) {
   auto it = metric_ids.find(n);
   if (it == metric_ids.end()) {
     uint32_t metric_id;
-    CHECK_WASM_RESULT(defineMetric(type, n, &metric_id));
+    CHECK_RESULT(defineMetric(type, n, &metric_id));
     metric_ids[n] = metric_id;
     return metric_id;
   }
@@ -1216,7 +1213,7 @@ template <typename... Fields> inline uint64_t Metric::get(Fields... f) {
   std::vector<std::string> fields{toString(f)...};
   auto metric_id = resolveWithFields(fields);
   uint64_t value;
-  CHECK_WASM_RESULT(getMetric(metric_id, &value));
+  CHECK_RESULT(getMetric(metric_id, &value));
   return value;
 }
 
@@ -1256,7 +1253,7 @@ struct SimpleCounter {
   void record(int64_t offset) { increment(offset); }
   uint64_t get() {
     uint64_t value;
-    CHECK_WASM_RESULT(getMetric(metric_id, &value)); 
+    CHECK_RESULT(getMetric(metric_id, &value));
     return value;
   }
   void operator++() { increment(1); }
@@ -1271,7 +1268,7 @@ struct SimpleGauge {
   void record(uint64_t offset) { recordMetric(metric_id, offset); }
   uint64_t get() {
     uint64_t value;
-    CHECK_WASM_RESULT(getMetric(metric_id, &value)); 
+    CHECK_RESULT(getMetric(metric_id, &value));
     return value;
   }
 
@@ -1317,7 +1314,7 @@ template <typename... Tags> struct Counter : public MetricBase {
     std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     uint64_t value;
-    CHECK_WASM_RESULT(getMetric(metric_id, &value));
+    CHECK_RESULT(getMetric(metric_id, &value));
     return value;
   }
 
@@ -1362,7 +1359,7 @@ template <typename... Tags> struct Gauge : public MetricBase {
     std::vector<std::string> fields{toString(tags)...};
     auto metric_id = resolveWithFields(fields);
     uint64_t value;
-    CHECK_WASM_RESULT(getMetric(metric_id, &value));
+    CHECK_RESULT(getMetric(metric_id, &value));
     return value;
   }
 

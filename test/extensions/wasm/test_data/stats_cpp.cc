@@ -7,24 +7,24 @@
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t, uint32_t,
                                                    uint32_t) {
   uint32_t c, g, h;
-  ASSERT_OK(defineMetric(MetricType::Counter, "test_counter", &c));
-  ASSERT_OK(defineMetric(MetricType::Gauge, "test_gauges", &g));
-  ASSERT_OK(defineMetric(MetricType::Histogram, "test_histogram", &h));
+  CHECK_RESULT(defineMetric(MetricType::Counter, "test_counter", &c));
+  CHECK_RESULT(defineMetric(MetricType::Gauge, "test_gauges", &g));
+  CHECK_RESULT(defineMetric(MetricType::Histogram, "test_histogram", &h));
 
-  ASSERT_OK(incrementMetric(c, 1));
-  ASSERT_OK(recordMetric(g, 2));
-  ASSERT_OK(recordMetric(h, 3));
+  CHECK_RESULT(incrementMetric(c, 1));
+  CHECK_RESULT(recordMetric(g, 2));
+  CHECK_RESULT(recordMetric(h, 3));
 
   uint64_t value;
-  ASSERT_OK(getMetric(c, &value));
+  CHECK_RESULT(getMetric(c, &value));
   logTrace(std::string("get counter = ") + std::to_string(value));
-  ASSERT_OK(incrementMetric(c, 1));
-  ASSERT_OK(getMetric(c, &value));
+  CHECK_RESULT(incrementMetric(c, 1));
+  CHECK_RESULT(getMetric(c, &value));
   logDebug(std::string("get counter = ") + std::to_string(value));
-  ASSERT_OK(recordMetric(c, 3));
-  ASSERT_OK(getMetric(c, &value));
+  CHECK_RESULT(recordMetric(c, 3));
+  CHECK_RESULT(getMetric(c, &value));
   logInfo(std::string("get counter = ") + std::to_string(value));
-  ASSERT_OK(getMetric(g, &value));
+  CHECK_RESULT(getMetric(g, &value));
   logWarn(std::string("get gauge = ") + std::to_string(value));
   // Get on histograms is not suppoorted.
   if (getMetric(h, &value) != WasmResult::Ok) {

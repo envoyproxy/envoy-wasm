@@ -25,7 +25,7 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
   uint32_t token;
-  ASSERT_OK(resolveSharedQueue("vm_id", "my_shared_queue", &token));
+  CHECK_RESULT(resolveSharedQueue("vm_id", "my_shared_queue", &token));
   if (WasmResult::Ok == enqueueSharedQueue(token, "data1")) {
     logWarn("onRequestHeaders enqueue Ok");
   }
@@ -33,7 +33,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
 }
 
 void ExampleRootContext::onStart(WasmDataPtr) {
-  ASSERT_OK(registerSharedQueue("my_shared_queue", &token_));
+  CHECK_RESULT(registerSharedQueue("my_shared_queue", &token_));
 }
 
 void ExampleRootContext::onQueueReady(uint32_t token) {

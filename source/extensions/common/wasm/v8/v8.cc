@@ -525,7 +525,7 @@ bool V8::setMemory(uint64_t pointer, uint64_t size, const void* data) {
 }
 
 bool V8::setWord(uint64_t pointer, Word word) {
-  ENVOY_LOG(trace, "[wasm] setWord({}, {})", word, pointer);
+  ENVOY_LOG(trace, "[wasm] setWord({}, {})", pointer, word.u64);
   auto size = sizeof(uint32_t);
   if (pointer + size > memory_->data_size()) {
     return false;
