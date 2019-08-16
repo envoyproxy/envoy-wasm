@@ -54,7 +54,6 @@ TEST_P(WasmFilterConfigTest, JsonLoadFromFileWASM) {
     "code": {
       "filename": "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"
     },
-    "allow_precompiled": true
   }}
   )EOF"));
 

@@ -57,28 +57,6 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
-TEST_P(WasmFactoryTest, CreateWasmFromPrecompiledWASM) {
-  auto factory =
-      Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
-  ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
-  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
-  config.mutable_vm_config()->set_allow_precompiled(true);
-  config.set_singleton(true);
-  Upstream::MockClusterManager cluster_manager;
-  Event::MockDispatcher dispatcher;
-  ThreadLocal::MockInstance tls;
-  Stats::IsolatedStoreImpl stats_store;
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api,
-                                                        *scope, scope, local_info);
-  auto wasm = factory->createWasm(config, context);
-  EXPECT_NE(wasm, nullptr);
-}
 
 TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   auto factory =
