@@ -749,6 +749,10 @@ Word ___cxa_uncaught_exceptionHandler(void*) {
   throw WasmException("emscripten cxa_uncaught_exception");
 }
 
+Word ___cxa_uncaught_exceptionsHandler(void*) {
+  throw WasmException("emscripten cxa_uncaught_exceptions");
+}
+
 Word ___clock_gettimeHandler(void*, Word, Word) { throw WasmException("emscripten clock_gettime"); }
 
 void ___lockHandler(void*, Word) { throw WasmException("emscripten lock"); }
@@ -1834,6 +1838,7 @@ void Wasm::registerCallbacks() {
     _REGISTER(___cxa_pure_virtual);
     _REGISTER(___cxa_allocate_exception);
     _REGISTER(___cxa_uncaught_exception);
+    _REGISTER(___cxa_uncaught_exceptions);
     _REGISTER(___call_main);
     _REGISTER(___clock_gettime);
     _REGISTER(___lock);
