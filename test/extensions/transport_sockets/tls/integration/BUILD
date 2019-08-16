@@ -10,6 +10,7 @@ envoy_package()
 
 envoy_cc_test(
     name = "ssl_integration_test",
+    size = "large",
     srcs = [
         "ssl_integration_test.cc",
         "ssl_integration_test.h",
@@ -17,7 +18,6 @@ envoy_cc_test(
     data = [
         "//test/config/integration/certs",
     ],
-    size = "large",
     deps = [
         "//source/common/event:dispatcher_includes",
         "//source/common/event:dispatcher_lib",
