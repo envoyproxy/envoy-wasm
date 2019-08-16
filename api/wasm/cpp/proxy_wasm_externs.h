@@ -99,7 +99,7 @@ extern "C" WasmResult proxy_setSharedData(const char* key_ptr, size_t key_size, 
 extern "C" WasmResult proxy_registerSharedQueue(const char* queue_name_ptr, size_t queue_name_size, uint32_t* token);
 // Returns: Ok, NotFound
 extern "C" WasmResult proxy_resolveSharedQueue(const char* vm_id, size_t vm_id_size, const char* queue_name_ptr, size_t queue_name_size, uint32_t* token);
-// Returns Ok, Eos, NotFound (token not registered).
+// Returns Ok, Empty, NotFound (token not registered).
 extern "C" WasmResult proxy_dequeueSharedQueue(uint32_t token, const char** data_ptr, size_t* data_size);
 // Returns false if the queue was not found and the data was not enqueued.
 extern "C" WasmResult proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size);
@@ -143,5 +143,4 @@ extern "C" WasmResult proxy_recordMetric(uint32_t metric_id, uint64_t value);
 extern "C" WasmResult proxy_getMetric(uint32_t metric_id, uint64_t* result);
 
 // System
-// Returns 0 on success.
 extern "C" WasmResult proxy_setEffectiveContext(uint32_t effective_context_id);
