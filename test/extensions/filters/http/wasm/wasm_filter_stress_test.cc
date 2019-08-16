@@ -167,6 +167,112 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
   EXPECT_EQ(counters["test_callout_successes"], requests_to_send);
 }
 
+TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
+  constexpr uint32_t connections_to_initiate = 30;
+  constexpr uint32_t requests_to_send = 30 * connections_to_initiate;
+  const std::string wasm_file = absl::StrCat(
+      TestEnvironment::runfilesDirectory(),
+      "/test/extensions/filters/http/wasm/test_data/grpc_callout_", wasmLang(), ".wasm");
+  // Must match cluster name in the wasm bundle:
+  const std::string callout_cluster_name{"callout_cluster"};
+
+  //
+  // Configure the wasm filter
+  //
+
+  config_helper_.addFilter(fmt::format(R"EOF(
+            name: envoy.wasm
+            config:
+              vm_config:
+                vm: "{}"
+                code:
+                  filename: "{}"
+                allow_precompiled: true
+)EOF",
+                                       wasmVM(), wasm_file));
+
+  //
+  // This test first sends a request from wasm to a callout cluster:
+  //    Client -> Envoy -> Wasm -> Callout Cluster
+  // The callout cluster sends an error response which prevents Envoy from
+  // forwarding the data plane request to the origin cluster.
+  //
+
+  addCluster(std::make_unique<ClusterHelper>(StressTest::ORIGIN_CLUSTER_NAME))
+      .addServer(std::make_unique<ServerCallbackHelper>(
+          [](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
+            ENVOY_LOG(debug, "Origin server received request");
+            Http::TestHeaderMapImpl response{{":status", "200"}};
+            stream.sendResponseHeaders(response);
+          }));
+  addCluster(std::make_unique<ClusterHelper>(callout_cluster_name))
+      .addServer(std::make_unique<ServerCallbackHelper>(
+          [](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
+            ENVOY_LOG(debug, "Callout server received request");
+            ProtobufWkt::Value response;
+            response.set_string_value("response");
+            stream.sendGrpcResponse(Grpc::Status::PermissionDenied, response);
+          }));
+
+  try {
+    bind();
+  } catch (Network::SocketBindException& ex) {
+    if (Network::Address::IpVersion::v6 == ipVersion()) {
+      ENVOY_LOG(info, "Environment does not support IPv6, skipping test");
+      GTEST_SKIP();
+    }
+    throw ex;
+  }
+
+  LoadGeneratorPtr client = start();
+
+  //
+  // Exec test and wait for it to finish
+  //
+
+  Http::HeaderMapPtr request{new Http::TestHeaderMapImpl{
+      {":method", "GET"}, {":path", "/"}, {":scheme", "http"}, {":authority", "host"}}};
+  client->run(connections_to_initiate, requests_to_send, std::move(request));
+
+  CounterMap counters;
+  extractCounters(counters);
+
+  //
+  // Block until all servers exit
+  //
+
+  stopServers();
+
+  //
+  // Evaluate test
+  //
+
+  // All client connections are successfully established.
+  EXPECT_EQ(client->connectSuccesses(), connections_to_initiate);
+  EXPECT_EQ(client->connectFailures(), 0);
+  // Client close callback called for every client connection.
+  EXPECT_EQ(client->localCloses(), connections_to_initiate);
+  // Client response callback is called for every request sent
+  EXPECT_EQ(client->responsesReceived(), requests_to_send);
+  // Every response was a 5xx class
+  EXPECT_EQ(client->class2xxResponses(), 0);
+  EXPECT_EQ(client->class4xxResponses(), 0);
+  EXPECT_EQ(client->class5xxResponses(), requests_to_send);
+  EXPECT_EQ(client->responseTimeouts(), 0);
+  // No client sockets are rudely closed by server / no client sockets are
+  // reset.
+  EXPECT_EQ(client->remoteCloses(), 0);
+
+  // assert that the callout server saw every request and prevented the
+  // origin server from seeing it.
+  EXPECT_EQ(findCluster(StressTest::ORIGIN_CLUSTER_NAME).requestsReceived(), 0);
+  EXPECT_EQ(findCluster(callout_cluster_name).requestsReceived(), requests_to_send);
+
+  // And the wasm filter should have successfully created the failure
+  // counter and received a gRPC error response for every inbound request.
+  EXPECT_EQ(counters["test_callout_failures"], requests_to_send);
+}
+
 // TODO fix test. Currently fails with a:
 // terminate called after throwing an instance of 'Extensions::Common::Wasm::WasmException'
 //  what():  emscripten cxa_allocate_exception
