@@ -430,7 +430,7 @@ public:
   static std::string convertTime(const std::string& input, const std::string& input_format,
                                  const std::string& output_format);
 
-  static constexpr std::chrono::milliseconds DefaultTimeout = std::chrono::milliseconds(10000);
+  static constexpr std::chrono::milliseconds DefaultTimeout = std::chrono::milliseconds(30000);
 
   static void renameFile(const std::string& old_name, const std::string& new_name);
   static void createDirectory(const std::string& name);
