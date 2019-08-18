@@ -1410,6 +1410,13 @@ TEST_F(PrometheusStatsFormatterTest, MetricName) {
   EXPECT_EQ(expected, actual);
 }
 
+TEST_F(PrometheusStatsFormatterTest, MetricNameOptOut) {
+  std::string raw = "_vulture.eats-liver";
+  std::string expected = "vulture_eats_liver";
+  auto actual = PrometheusStatsFormatter::metricName(raw);
+  EXPECT_EQ(expected, actual);
+}
+
 TEST_F(PrometheusStatsFormatterTest, SanitizeMetricName) {
   std::string raw = "An.artist.plays-violin@019street";
   std::string expected = "envoy_An_artist_plays_violin_019street";
