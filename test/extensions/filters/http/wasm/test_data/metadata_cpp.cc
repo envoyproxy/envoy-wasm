@@ -30,10 +30,12 @@ void ExampleRootContext::onTick() {
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
   google::protobuf::Value value;
-  if (auto r = nodeMetadataValue("wasm_node_get_key", &value); r != WasmResult::Ok) {
+  auto r = nodeMetadataValue("wasm_node_get_key", &value);
+  if (r != WasmResult::Ok) {
     logDebug(toString(r));
   }
-  if (auto r = setMetadataStringValue(MetadataType::Request, "wasm_request_set_key", "wasm_request_set_value"); r != WasmResult::Ok) {
+  r = setMetadataStringValue(MetadataType::Request, "wasm_request_set_key", "wasm_request_set_value");
+  if (r != WasmResult::Ok) {
     logDebug(toString(r));
   }
   auto path = getRequestHeader(":path");
@@ -45,16 +47,19 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
 
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
   google::protobuf::Value value;
-  if (auto r = nodeMetadataValue("wasm_node_get_key", &value); r != WasmResult::Ok) {
+  auto r = nodeMetadataValue("wasm_node_get_key", &value);
+  if (r != WasmResult::Ok) {
     logDebug(toString(r));
   }
   logError(std::string("onRequestBody ") + value.string_value());
   google::protobuf::Struct request_struct;
   google::protobuf::Struct request_struct2;
-  if (auto r = requestMetadataStruct(&request_struct); r != WasmResult::Ok) { 
+  r = requestMetadataStruct(&request_struct);
+  if (r != WasmResult::Ok) { 
     logDebug(toString(r));
   }
-  if (auto r = requestMetadataStruct(&request_struct2); r != WasmResult::Ok) { 
+  r = requestMetadataStruct(&request_struct2);
+  if (r != WasmResult::Ok) { 
     logDebug(toString(r));
   }
   logTrace(std::string("Struct ") + request_struct.fields().at("wasm_request_get_key").string_value() + " " +
