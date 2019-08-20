@@ -1628,3 +1628,8 @@ inline WasmResult ContextBase::setEffectiveContext() {
   return proxy_setEffectiveContext(id_);
 }
 
+inline uint64_t getCurrentTimeNanoseconds() {
+  uint64_t t;
+  CHECK_RESULT(proxy_getCurrentTimeNanoseconds(&t));
+  return t;
+}
