@@ -1604,23 +1604,25 @@ WasmResult Context::getMetadata(MetadataType type, absl::string_view key, std::s
                return WasmResult::Ok;
              }},
             {"request.peer_certificate_presented",
-             [](Context* context, bool* result_ptr) -> WasmResult {
+             [](Context* context, std::string* result_ptr) -> WasmResult {
                auto peer_certificate_presented =
                    context->peerCertificatePresented(StreamType::Request);
                if (!peer_certificate_presented) {
                  return WasmResult::NotFound;
                }
-               *result_ptr = peer_certificate_presented.value();
+               bool present = peer_certificate_presented.value();
+               result_ptr->assign(reinterpret_cast<const char*>(&present), sizeof(present));
                return WasmResult::Ok;
              }},
             {"response.peer_certificate_presented",
-             [](Context* context, bool* result_ptr) -> WasmResult {
+             [](Context* context, std::string* result_ptr) -> WasmResult {
                auto peer_certificate_presented =
                    context->peerCertificatePresented(StreamType::Response);
                if (!peer_certificate_presented) {
                  return WasmResult::NotFound;
                }
-               *result_ptr = peer_certificate_presented.value();
+               bool present = peer_certificate_presented.value();
+               result_ptr->assign(reinterpret_cast<const char*>(&present), sizeof(present));
                return WasmResult::Ok;
              }},
             {"plugin.direction",
