@@ -475,9 +475,7 @@ Word getSelectorExpressionHandler(void* raw_context, Word path_ptr, Word path_si
   if (!path.has_value()) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  std::vector<absl::string_view> parts =
-      absl::StrSplit(path.value(), absl::ByChar('\0'), absl::SkipEmpty());
-  auto value = context->getSelectorExpression(parts);
+  auto value = context->getSelectorExpression(path.value());
   if (value.has_value()) {
     context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr);
     return wasmResultToWord(WasmResult::Ok);
@@ -1092,7 +1090,7 @@ absl::optional<std::string> serializeValue(Filters::Common::Expr::CelValue value
   return {};
 }
 
-absl::optional<std::string> Context::getSelectorExpression(std::vector<absl::string_view> parts) {
+absl::optional<std::string> Context::getSelectorExpression(absl::string_view path) {
   using Filters::Common::Expr::CelValue;
   using google::api::expr::runtime::FieldBackedListImpl;
   using google::api::expr::runtime::FieldBackedMapImpl;
@@ -1103,34 +1101,47 @@ absl::optional<std::string> Context::getSelectorExpression(std::vector<absl::str
   CelValue value;
   Protobuf::Arena arena;
   const StreamInfo::StreamInfo& info = decoder_callbacks_->streamInfo();
-  const Filters::Common::Expr::RequestWrapper request(
-      request_headers_ ? request_headers_ : access_log_request_headers_, info);
-  const Filters::Common::Expr::ConnectionWrapper connection(info);
-  const Filters::Common::Expr::ResponseWrapper response(
-      response_headers_ ? response_headers_ : access_log_response_headers_,
-      response_trailers_ ? response_trailers_ : access_log_response_trailers_, info);
+  const auto request_headers = request_headers_ ? request_headers_ : access_log_request_headers_;
+  const auto response_headers =
+      response_headers_ ? response_headers_ : access_log_response_headers_;
+  const auto response_trailers =
+      response_trailers_ ? response_trailers_ : access_log_response_trailers_;
 
-  const Filters::Common::Expr::PeerWrapper source(info, false);
-  const Filters::Common::Expr::PeerWrapper destination(info, true);
+  size_t start = 0;
+  while (true) {
+    if (start >= path.size()) {
+      break;
+    }
 
-  for (auto& part : parts) {
+    size_t end = path.find('\0', start);
+    if (end == absl::string_view::npos) {
+      end = path.size();
+    }
+    auto part = path.substr(start, end - start);
+    start = end + 1;
+
     // top-level ident
     if (first) {
       first = false;
       if (part == "metadata") {
         value = CelValue::CreateMessage(&info.dynamicMetadata(), &arena);
       } else if (part == "request") {
-        value = CelValue::CreateMap(&request);
+        value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
+            &arena, request_headers, info));
       } else if (part == "response") {
-        value = CelValue::CreateMap(&response);
+        value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::ResponseWrapper>(
+            &arena, response_headers, response_trailers, info));
       } else if (part == "connection") {
-        value = CelValue::CreateMap(&connection);
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(&arena, info));
       } else if (part == "node") {
         value = CelValue::CreateMessage(&wasm_->local_info_.node(), &arena);
       } else if (part == "source") {
-        value = CelValue::CreateMap(&source);
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, info, false));
       } else if (part == "destination") {
-        value = CelValue::CreateMap(&destination);
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, info, true));
       } else {
         return {};
       }

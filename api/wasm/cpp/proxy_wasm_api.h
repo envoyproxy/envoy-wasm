@@ -542,6 +542,7 @@ inline absl::optional<WasmDataPtr> getSelectorExpression(std::initializer_list<a
   const char* value_ptr = nullptr;
   size_t value_size = 0;
   auto result = proxy_getSelectorExpression(buffer, size, &value_ptr, &value_size);
+  ::free(buffer);
   if (result != WasmResult::Ok) {
     return {};
   }
