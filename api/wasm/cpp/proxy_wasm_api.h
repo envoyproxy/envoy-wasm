@@ -55,6 +55,7 @@ public:
   WasmData(const char* data, size_t size) : data_(data), size_(size) {}
   ~WasmData() { ::free(const_cast<char*>(data_)); }
   const char* data() { return data_; }
+  size_t size() { return size_; }
   StringView view() { return {data_, size_}; }
   std::string toString() { return std::string(view()); }
   int32_t int32() { return *reinterpret_cast<const int32_t*>(data_); }
@@ -520,6 +521,31 @@ inline WasmResult getResponseTlsVersion(std::string *tls_version_ptr) {
 
 inline WasmResult getPluginDirection(PluginDirection *direction_ptr) {
   PROXY_EXPRESSION_GET_UINT32("plugin.direction", reinterpret_cast<uint32_t*>(direction_ptr));
+}
+
+// Generic selector
+inline absl::optional<WasmDataPtr> getSelectorExpression(std::initializer_list<absl::string_view> parts) {
+  size_t size = 0;
+  for (auto part: parts) {
+    size += part.size() + 1; // null terminated string value
+  }
+
+  char* buffer = static_cast<char*>(::malloc(size));
+  char* b = buffer;
+
+  for (auto part : parts) {
+    memcpy(b, part.data(), part.size());
+    b += part.size();
+    *b++ = 0;
+  }
+
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  auto result = proxy_getSelectorExpression(buffer, size, &value_ptr, &value_size);
+  if (result != WasmResult::Ok) {
+    return {};
+  }
+  return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
 // Metadata

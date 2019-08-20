@@ -56,6 +56,7 @@ envoy_cc_library(
         ":null_vm_plugin_interface",
         "//api/wasm/cpp:api_lib",
         "//api/wasm/cpp:shared_lib",
+        "//external:abseil_base",
         "//external:abseil_node_hash_map",
         "//source/common/common:assert_lib",
         "//source/common/protobuf",

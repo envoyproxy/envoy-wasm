@@ -66,6 +66,7 @@ envoy_cc_library(
         ":wasm_hdr",
         ":wasm_vm_lib",
         "//api/wasm/cpp:shared_lib",
+        "//external:abseil_base",
         "//external:abseil_node_hash_map",
         "//source/common/buffer:buffer_lib",
         "//source/common/common:enum_to_int",
@@ -74,5 +75,9 @@ envoy_cc_library(
         "//source/common/http:utility_lib",
         "//source/common/tracing:http_tracer_lib",
         "//source/extensions/common/wasm/null:null_lib",
+        "//source/extensions/filters/common/expr:context_lib",
+        "@com_google_cel_cpp//eval/eval:field_access",
+        "@com_google_cel_cpp//eval/eval:field_backed_list_impl",
+        "@com_google_cel_cpp//eval/eval:field_backed_map_impl",
     ],
 )
