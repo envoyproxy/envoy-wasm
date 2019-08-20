@@ -1094,8 +1094,6 @@ absl::optional<std::string> Context::getSelectorExpression(absl::string_view pat
   using Filters::Common::Expr::CelValue;
   using google::api::expr::runtime::FieldBackedListImpl;
   using google::api::expr::runtime::FieldBackedMapImpl;
-  using Protobuf::Descriptor;
-  using Protobuf::FieldDescriptor;
 
   bool first = true;
   CelValue value;
@@ -1161,8 +1159,8 @@ absl::optional<std::string> Context::getSelectorExpression(absl::string_view pat
       if (msg == nullptr) {
         return {};
       }
-      const Descriptor* desc = msg->GetDescriptor();
-      const FieldDescriptor* field_desc = desc->FindFieldByName(std::string(part));
+      const Protobuf::Descriptor* desc = msg->GetDescriptor();
+      const Protobuf::FieldDescriptor* field_desc = desc->FindFieldByName(std::string(part));
       if (field_desc == nullptr) {
         return {};
       } else if (field_desc->is_map()) {
