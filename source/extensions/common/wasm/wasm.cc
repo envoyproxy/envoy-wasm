@@ -1457,6 +1457,14 @@ std::string Context::getTlsVersion(StreamType type) {
   return streamInfo->downstreamSslConnection()->tlsVersion();
 }
 
+absl::optional<bool> Context::peerCertificatePresented(StreamType type) {
+  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
+  if (!streamInfo || !streamInfo->downstreamSslConnection()) {
+    return absl::nullopt;
+  }
+  return streamInfo->downstreamSslConnection()->peerCertificatePresented();
+}
+
 const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
                                                            absl::string_view name) {
   switch (type) {
@@ -1593,6 +1601,28 @@ WasmResult Context::getMetadata(MetadataType type, absl::string_view key, std::s
                if (tls_version.empty()) {
                  return WasmResult::NotFound;
                }
+               return WasmResult::Ok;
+             }},
+            {"request.peer_certificate_presented",
+             [](Context* context, std::string* result_ptr) -> WasmResult {
+               auto peer_certificate_presented =
+                   context->peerCertificatePresented(StreamType::Request);
+               if (!peer_certificate_presented) {
+                 return WasmResult::NotFound;
+               }
+               bool present = peer_certificate_presented.value();
+               result_ptr->assign(reinterpret_cast<const char*>(&present), sizeof(present));
+               return WasmResult::Ok;
+             }},
+            {"response.peer_certificate_presented",
+             [](Context* context, std::string* result_ptr) -> WasmResult {
+               auto peer_certificate_presented =
+                   context->peerCertificatePresented(StreamType::Response);
+               if (!peer_certificate_presented) {
+                 return WasmResult::NotFound;
+               }
+               bool present = peer_certificate_presented.value();
+               result_ptr->assign(reinterpret_cast<const char*>(&present), sizeof(present));
                return WasmResult::Ok;
              }},
             {"plugin.direction",

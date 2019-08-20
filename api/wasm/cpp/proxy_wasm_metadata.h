@@ -27,7 +27,10 @@ enum class MetadataType : int32_t {
   request.response_code : int32
   response.response_code : int32
   upstream.tls_version : string
-  downstream.tls_version : string
+  request.tls_version : string
+  response.tls_version : string
+  request.peer_certificate_presented : bool
+  response.peer_certificate_presented : bool
   plugin.direction : int32 (enum PluginDirection)
  */
 

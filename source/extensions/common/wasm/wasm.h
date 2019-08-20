@@ -252,6 +252,7 @@ public:
   virtual uint32_t getDestinationPort(StreamType type);
   virtual uint32_t getResponseCode(StreamType type);
   virtual std::string getTlsVersion(StreamType type);
+  virtual absl::optional<bool> peerCertificatePresented(StreamType type);
 
   // Metadata
   // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the

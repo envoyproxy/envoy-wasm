@@ -25,6 +25,8 @@ enum class WasmResult : uint32_t {
   Empty = 7,
   // The provided CAS did not match that of the stored data.
   CasMismatch = 8,
+  // Returned result was unexpected, e.g. of the incorrect size.
+  ResultMismatch = 9,
 };
 
 inline std::string toString(WasmResult r) {
@@ -38,5 +40,6 @@ inline std::string toString(WasmResult r) {
     case WasmResult::InvalidMemoryAccess : return "InvalidMemoryAccess";
     case WasmResult::Empty : return "Empty";
     case WasmResult::CasMismatch : return "CasMismatch";
+    case WasmResult::ResultMismatch : return "ResultMismatch";
   }
 }
