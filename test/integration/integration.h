@@ -193,9 +193,13 @@ public:
   void registerTestServerPorts(const std::vector<std::string>& port_names);
   void createTestServer(const std::string& json_path, const std::vector<std::string>& port_names);
   void createGeneratedApiTestServer(const std::string& bootstrap_path,
-                                    const std::vector<std::string>& port_names);
+                                    const std::vector<std::string>& port_names,
+                                    bool allow_unknown_static_fields,
+                                    bool reject_unknown_dynamic_fields, bool allow_lds_rejection);
   void createApiTestServer(const ApiFilesystemConfig& api_filesystem_config,
-                           const std::vector<std::string>& port_names);
+                           const std::vector<std::string>& port_names,
+                           bool allow_unknown_static_fields, bool reject_unknown_dynamic_fields,
+                           bool allow_lds_rejection);
 
   Event::TestTimeSystem& timeSystem() { return time_system_; }
 
@@ -218,6 +222,7 @@ public:
                           const std::vector<std::string>& expected_resource_names,
                           const std::vector<std::string>& expected_resource_names_added,
                           const std::vector<std::string>& expected_resource_names_removed,
+                          bool expect_node = false,
                           const Protobuf::int32 expected_error_code = Grpc::Status::GrpcStatus::Ok,
                           const std::string& expected_error_message = "");
   template <class T>
@@ -250,7 +255,7 @@ public:
       const std::string& expected_error_message = "");
   AssertionResult compareSotwDiscoveryRequest(
       const std::string& expected_type_url, const std::string& expected_version,
-      const std::vector<std::string>& expected_resource_names,
+      const std::vector<std::string>& expected_resource_names, bool expect_node = false,
       const Protobuf::int32 expected_error_code = Grpc::Status::GrpcStatus::Ok,
       const std::string& expected_error_message = "");
 
