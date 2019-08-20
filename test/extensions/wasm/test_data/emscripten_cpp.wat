@@ -26,7 +26,7 @@
   (import "env" "_emscripten_get_heap_size" (func $_emscripten_get_heap_size (result i32)))
   (import "env" "_emscripten_memcpy_big" (func $_emscripten_memcpy_big (param i32 i32 i32) (result i32)))
   (import "env" "_emscripten_resize_heap" (func $_emscripten_resize_heap (param i32) (result i32)))
-  (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32)))
+  (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32) (result i32)))
   (import "env" "abortOnCannotGrowMemory" (func $abortOnCannotGrowMemory (param i32) (result i32)))
   (import "env" "__table_base" (global $22 i32))
   (import "env" "DYNAMICTOP_PTR" (global $23 i32))
@@ -156,6 +156,7 @@
     (param $2 i32)
     (param $3 i32)
     (param $4 i32)
+    (local $5 i32)
     global.get $25
     local.set $0
     global.get $25
@@ -165,125 +166,129 @@
     local.get $0
     i32.const 24
     i32.add
-    local.set $1
+    local.set $2
     local.get $0
-    i32.const 12
+    i32.const 36
     i32.add
-    local.tee $2
+    local.tee $1
     i64.const 0
     i64.store align=4
-    local.get $2
+    local.get $1
     i32.const 0
     i32.store offset=8
-    local.get $2
+    local.get $1
     i32.const 4
     i32.store8 offset=11
-    local.get $2
+    local.get $1
     i32.const 542007630
     i32.store
-    local.get $2
+    local.get $1
     i32.const 0
     i32.store8 offset=4
     local.get $0
+    i32.const 12
+    i32.add
+    local.tee $3
     global.get $24
     f32.demote_f64
     call $__ZNSt3__29to_stringEf
-    local.get $1
     local.get $2
-    local.get $0
+    local.get $1
+    local.get $3
     i32.load
-    local.get $0
-    local.get $0
+    local.get $3
+    local.get $3
     i32.load8_s offset=11
-    local.tee $3
+    local.tee $4
     i32.const 0
     i32.lt_s
-    local.tee $4
+    local.tee $5
     select
-    local.get $0
-    i32.load offset=4
     local.get $3
+    i32.load offset=4
+    local.get $4
     i32.const 255
     i32.and
-    local.get $4
+    local.get $5
     select
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
-    local.tee $3
+    local.tee $4
     i64.load align=4
     i64.store align=4
-    local.get $1
-    local.get $3
+    local.get $2
+    local.get $4
     i32.load offset=8
     i32.store offset=8
-    local.get $3
+    local.get $4
     i64.const 0
     i64.store align=4
-    local.get $3
+    local.get $4
     i32.const 0
     i32.store offset=8
     i32.const 2
-    local.get $1
+    local.get $2
     i32.load
-    local.get $1
-    local.get $1
+    local.get $2
+    local.get $2
     i32.load8_s offset=11
-    local.tee $3
+    local.tee $4
     i32.const 0
     i32.lt_s
-    local.tee $4
+    local.tee $5
     select
-    local.get $1
+    local.get $2
     i32.load offset=4
-    local.get $3
+    local.get $4
     i32.const 255
     i32.and
-    local.get $4
+    local.get $5
     select
     call $_proxy_log
-    local.get $1
+    drop
+    local.get $2
     i32.load8_s offset=11
     i32.const 0
     i32.lt_s
     if $if
-      local.get $1
+      local.get $2
       i32.load
       call $_free
     end ;; $if
-    local.get $0
+    local.get $3
     i32.load8_s offset=11
     i32.const 0
     i32.lt_s
     if $if_0
-      local.get $0
+      local.get $3
       i32.load
       call $_free
     end ;; $if_0
-    local.get $2
+    local.get $1
     i32.load8_s offset=11
     i32.const 0
     i32.lt_s
     if $if_1
-      local.get $2
+      local.get $1
       i32.load
       call $_free
     end ;; $if_1
-    local.get $2
+    local.get $1
     i64.const 0
     i64.store align=4
-    local.get $2
+    local.get $1
     i32.const 0
     i32.store offset=8
-    local.get $2
+    local.get $1
     i32.const 4
     i32.store8 offset=11
-    local.get $2
+    local.get $1
     i32.const 543583849
     i32.store
-    local.get $2
+    local.get $1
     i32.const 0
     i32.store8 offset=4
+    local.get $0
     local.get $1
-    local.get $2
     i32.const 2100
     i32.const 2108
     i32.const 1736
@@ -293,52 +298,53 @@
     i32.const 2139095040
     i32.eq
     select
-    local.tee $3
-    local.get $3
+    local.tee $2
+    local.get $2
     call $_strlen
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
-    local.tee $3
+    local.tee $2
     i64.load align=4
     i64.store align=4
-    local.get $1
-    local.get $3
+    local.get $0
+    local.get $2
     i32.load offset=8
     i32.store offset=8
-    local.get $3
+    local.get $2
     i64.const 0
     i64.store align=4
-    local.get $3
+    local.get $2
     i32.const 0
     i32.store offset=8
     i32.const 3
-    local.get $1
+    local.get $0
     i32.load
-    local.get $1
-    local.get $1
+    local.get $0
+    local.get $0
     i32.load8_s offset=11
-    local.tee $3
+    local.tee $2
     i32.const 0
     i32.lt_s
-    local.tee $4
+    local.tee $3
     select
-    local.get $1
+    local.get $0
     i32.load offset=4
-    local.get $3
+    local.get $2
     i32.const 255
     i32.and
-    local.get $4
+    local.get $3
     select
     call $_proxy_log
-    local.get $1
+    drop
+    local.get $0
     i32.load8_s offset=11
     i32.const 0
     i32.lt_s
     if $if_2
-      local.get $1
+      local.get $0
       i32.load
       call $_free
     end ;; $if_2
-    local.get $2
+    local.get $1
     i32.load8_s offset=11
     i32.const 0
     i32.ge_s
@@ -347,7 +353,7 @@
       global.set $25
       return
     end ;; $if_3
-    local.get $2
+    local.get $1
     i32.load
     call $_free
     local.get $0

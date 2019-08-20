@@ -17,24 +17,31 @@ public:
 
   void onStart(WasmDataPtr) override;
   void onQueueReady(uint32_t token) override;
+
+  uint32_t token_;
 };
 
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext), ROOT_FACTORY(ExampleRootContext));
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
-  auto token = resolveSharedQueue("vm_id", "my_shared_queue");
-  auto result = enqueueSharedQueue(token, "data1");
-  logWarn("onRequestHeaders " + std::to_string(result));
+  uint32_t token;
+  CHECK_RESULT(resolveSharedQueue("vm_id", "my_shared_queue", &token));
+  if (WasmResult::Ok == enqueueSharedQueue(token, "data1")) {
+    logWarn("onRequestHeaders enqueue Ok");
+  }
   return FilterHeadersStatus::Continue;
 }
 
 void ExampleRootContext::onStart(WasmDataPtr) {
-  registerSharedQueue("my_shared_queue");
+  CHECK_RESULT(registerSharedQueue("my_shared_queue", &token_));
 }
 
 void ExampleRootContext::onQueueReady(uint32_t token) {
-  logInfo("onQueueReady");
+  if (token == token_) {
+    logInfo("onQueueReady");
+  }
   std::unique_ptr<WasmData> data;
-  auto result = dequeueSharedQueue(token, &data);
-  logDebug("data " + data->toString() + " " + std::to_string(result));
+  if (WasmResult::Ok == dequeueSharedQueue(token, &data)) {
+    logDebug("data " + data->toString() + " Ok");
+  }
 }

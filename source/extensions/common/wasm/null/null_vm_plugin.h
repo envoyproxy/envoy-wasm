@@ -13,15 +13,9 @@ public:
   NullVmPlugin() {}
   virtual ~NullVmPlugin() {}
 
-  virtual void getFunction(absl::string_view functionName, WasmCall0Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall1Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall2Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall3Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall4Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall5Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall8Void* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall1Word* f) PURE;
-  virtual void getFunction(absl::string_view functionName, WasmCall3Word* f) PURE;
+#define _DECLARE_PURE(_t) virtual void getFunction(absl::string_view functionName, _t* f) PURE;
+  FOR_ALL_WASM_VM_EXPORTS(_DECLARE_PURE)
+#undef _DECLARE_PURE
 
   virtual void start() PURE;
 };

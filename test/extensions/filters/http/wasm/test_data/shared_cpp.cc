@@ -14,18 +14,19 @@ public:
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
-  auto result1 = setSharedData("shared_data_key1", "shared_data_value1");
-  auto result2 = setSharedData("shared_data_key2", "shared_data_value2");
+  CHECK_RESULT(setSharedData("shared_data_key1", "shared_data_value1"));
+  CHECK_RESULT(setSharedData("shared_data_key2", "shared_data_value2"));
   uint32_t cas = 0;
-  auto value2 = getSharedData("shared_data_key2", &cas);
-  auto result3 = setSharedData("shared_data_key2", "shared_data_value3", cas+1);  // Bad cas.
-  logInfo("set " + std::to_string(result1) + " " + std::to_string(result2) + " " + std::to_string(result3));
+  auto value2 = getSharedDataValue("shared_data_key2", &cas);
+  if (WasmResult::CasMismatch == setSharedData("shared_data_key2", "shared_data_value3", cas+1)) { // Bad cas.
+    logInfo("set CasMismatch");
+  }
   return FilterHeadersStatus::Continue;
 }
 
 void ExampleContext::onLog() {
-  auto value1 = getSharedData("shared_data_key1");
+  auto value1 = getSharedDataValue("shared_data_key1");
   logDebug("get 1 " + value1->toString());
-  auto value2 = getSharedData("shared_data_key2");
+  auto value2 = getSharedDataValue("shared_data_key2");
   logWarn("get 2 " + value2->toString());
 }

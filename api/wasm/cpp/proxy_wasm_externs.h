@@ -52,67 +52,71 @@
 //
 
 // Logging
-extern "C" void proxy_log(LogLevel level, const char* logMessage, size_t messageSize);
+extern "C" WasmResult proxy_log(LogLevel level, const char* logMessage, size_t messageSize);
 
 // Timer (must be called from a root context, e.g. onStart, onTick).
-extern "C" void proxy_setTickPeriodMilliseconds(uint32_t millisecond);
+extern "C" WasmResult proxy_setTickPeriodMilliseconds(uint32_t millisecond);
 
 // Time
-extern "C" uint64_t proxy_getCurrentTimeNanoseconds();
+extern "C" WasmResult proxy_getCurrentTimeNanoseconds(uint64_t* nanoseconds);
 
 // Metadata
-extern "C" uint32_t proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
+extern "C" WasmResult proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
                                       const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" uint32_t proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
+extern "C" WasmResult proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
                                       const char* value_ptr, size_t value_size);
-extern "C" uint32_t proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
+extern "C" WasmResult proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
                                            size_t* value_size);
-extern "C" uint32_t proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
+extern "C" WasmResult proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
                                             const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" uint32_t proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
+extern "C" WasmResult proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
                                             const char* value_ptr, size_t value_size);
 
 // Continue/Reply/Route
-extern "C" void proxy_continueRequest();
-extern "C" void proxy_continueResponse();
-extern "C" void proxy_sendLocalResponse(uint32_t response_code,
+extern "C" WasmResult proxy_continueRequest();
+extern "C" WasmResult proxy_continueResponse();
+extern "C" WasmResult proxy_sendLocalResponse(uint32_t response_code,
     const char* response_code_details_ptr, size_t response_code_details_size,
     const char* body_ptr, size_t body_size,
     const char* additional_response_header_pairs_ptr, size_t additional_response_header_pairs_size,
     uint32_t grpc_status);
-extern "C" void proxy_clearRouteCache();
+extern "C" WasmResult proxy_clearRouteCache();
 
 // SharedData
-extern "C" void proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,
-                                    size_t* value_size, uint32_t* cas);
+// Returns: Ok, NotFound
+extern "C" WasmResult proxy_getSharedData(const char* key_ptr, size_t key_size, const char** value_ptr,
+                                          size_t* value_size, uint32_t* cas);
 //  If cas != 0 and cas != the current cas for 'key' return false, otherwise set the value and
 //  return true.
-extern "C" bool proxy_setSharedData(const char* key_ptr, size_t key_size, const char* value_ptr,
-                                    size_t value_size, uint32_t cas);
+// Returns: Ok, CasMismatch
+extern "C" WasmResult proxy_setSharedData(const char* key_ptr, size_t key_size, const char* value_ptr,
+                                          size_t value_size, uint32_t cas);
 
 // SharedQueue
 // Note: Registering the same queue_name will overwrite the old registration while preseving any pending data.
 // Consequently it should typically be followed by a call to proxy_dequeueSharedQueue.
-extern "C" uint32_t proxy_registerSharedQueue(const char* queue_name_ptr, size_t queue_name_size);
-extern "C" uint32_t proxy_resolveSharedQueue(const char* vm_id, size_t vm_id_size, const char* queue_name_ptr, size_t queue_name_size);
-// Returns true on end-of-stream (no more data available).
-extern "C" bool proxy_dequeueSharedQueue(uint32_t token, const char** data_ptr, size_t* data_size);
+// Returns: Ok
+extern "C" WasmResult proxy_registerSharedQueue(const char* queue_name_ptr, size_t queue_name_size, uint32_t* token);
+// Returns: Ok, NotFound
+extern "C" WasmResult proxy_resolveSharedQueue(const char* vm_id, size_t vm_id_size, const char* queue_name_ptr, size_t queue_name_size, uint32_t* token);
+// Returns Ok, Empty, NotFound (token not registered).
+extern "C" WasmResult proxy_dequeueSharedQueue(uint32_t token, const char** data_ptr, size_t* data_size);
 // Returns false if the queue was not found and the data was not enqueued.
-extern "C" bool proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size);
+extern "C" WasmResult proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size);
 
 // Headers/Trailers/Metadata Maps
-extern "C" void proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
-extern "C" void proxy_getHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char** value_ptr, size_t* value_size);
-extern "C" void proxy_getHeaderMapPairs(HeaderMapType type, const char** ptr, size_t* size);
-extern "C" void proxy_setHeaderMapPairs(HeaderMapType type, const char* ptr, size_t size);
-extern "C" void proxy_replaceHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
-extern "C" void proxy_removeHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size);
-extern "C" uint32_t proxy_getHeaderMapSize(HeaderMapType type);
+extern "C" WasmResult proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
+extern "C" WasmResult proxy_getHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char** value_ptr, size_t* value_size);
+extern "C" WasmResult proxy_getHeaderMapPairs(HeaderMapType type, const char** ptr, size_t* size);
+extern "C" WasmResult proxy_setHeaderMapPairs(HeaderMapType type, const char* ptr, size_t size);
+extern "C" WasmResult proxy_replaceHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
+extern "C" WasmResult proxy_removeHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size);
+extern "C" WasmResult proxy_getHeaderMapSize(HeaderMapType type, size_t* size);
 
 // Body
-extern "C" void proxy_getRequestBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr,
+extern "C" WasmResult proxy_getRequestBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr,
                                                 size_t* size);
-extern "C" void proxy_getResponseBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr,
+extern "C" WasmResult proxy_getResponseBodyBufferBytes(uint32_t start, uint32_t length, const char** ptr,
                                                  size_t* size);
 
 // HTTP
@@ -128,17 +132,15 @@ extern "C" uint32_t proxy_grpcCall(const char* service_ptr, size_t service_size,
                                    const char* request_ptr, size_t request_size, uint32_t timeout_milliseconds);
 extern "C" uint32_t proxy_grpcStream(const char* service_ptr, size_t service_size, const char* service_name_ptr,
                                      size_t service_name_size, const char* method_name_ptr, size_t method_name_size);
-extern "C" void proxy_grpcCancel(uint32_t token);
-extern "C" void proxy_grpcClose(uint32_t token);
-extern "C" void proxy_grpcSend(uint32_t token, const char* message_ptr, size_t message_size, uint32_t end_stream);
+extern "C" WasmResult proxy_grpcCancel(uint32_t token);
+extern "C" WasmResult proxy_grpcClose(uint32_t token);
+extern "C" WasmResult proxy_grpcSend(uint32_t token, const char* message_ptr, size_t message_size, uint32_t end_stream);
 
 // Metrics
-// Returns a metric_id which can be used to report a metric. On error returns 0.
-extern "C" uint32_t proxy_defineMetric(MetricType type, const char* name_ptr, size_t name_size);
-extern "C" void proxy_incrementMetric(uint32_t metric_id, int64_t offset);
-extern "C" void proxy_recordMetric(uint32_t metric_id, uint64_t value);
-extern "C" uint64_t proxy_getMetric(uint32_t metric_id);
+extern "C" WasmResult proxy_defineMetric(MetricType type, const char* name_ptr, size_t name_size, uint32_t* metric_id);
+extern "C" WasmResult proxy_incrementMetric(uint32_t metric_id, int64_t offset);
+extern "C" WasmResult proxy_recordMetric(uint32_t metric_id, uint64_t value);
+extern "C" WasmResult proxy_getMetric(uint32_t metric_id, uint64_t* result);
 
 // System
-// Returns 0 on success.
-extern "C" uint32_t proxy_setEffectiveContext(uint32_t effective_context_id);
+extern "C" WasmResult proxy_setEffectiveContext(uint32_t effective_context_id);

@@ -24,7 +24,7 @@
   (import "env" "_emscripten_get_heap_size" (func $_emscripten_get_heap_size (result i32)))
   (import "env" "_emscripten_memcpy_big" (func $_emscripten_memcpy_big (param i32 i32 i32) (result i32)))
   (import "env" "_emscripten_resize_heap" (func $_emscripten_resize_heap (param i32) (result i32)))
-  (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32)))
+  (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32) (result i32)))
   (import "env" "abortOnCannotGrowMemory" (func $abortOnCannotGrowMemory (param i32) (result i32)))
   (import "env" "__table_base" (global $20 i32))
   (import "env" "DYNAMICTOP_PTR" (global $21 i32))
@@ -165,11 +165,11 @@
     i32.add
     global.set $22
     local.get $0
-    i32.const 96
+    i32.const 84
     i32.add
     local.set $1
     local.get $0
-    i32.const 84
+    i32.const 96
     i32.add
     local.set $7
     local.get $0
@@ -386,6 +386,7 @@
     local.get $6
     select
     call $_proxy_log
+    drop
     local.get $1
     i32.load8_s offset=11
     i32.const 0

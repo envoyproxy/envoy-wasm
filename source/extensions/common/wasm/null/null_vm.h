@@ -8,7 +8,6 @@
 
 #include "common/common/assert.h"
 
-#include "extensions/common/wasm/null/null.h"
 #include "extensions/common/wasm/null/null_vm_plugin.h"
 #include "extensions/common/wasm/well_known_names.h"
 
@@ -32,10 +31,10 @@ struct NullVm : public WasmVm {
   void setMemoryLayout(uint64_t, uint64_t, uint64_t) override {}
   void start(Common::Wasm::Context* context) override;
   uint64_t getMemorySize() override;
-  absl::string_view getMemory(uint64_t pointer, uint64_t size) override;
+  absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
-  bool setWord(uint64_t pointer, uint64_t data) override;
+  bool setWord(uint64_t pointer, Word data) override;
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name) override;
 
@@ -43,43 +42,14 @@ struct NullVm : public WasmVm {
   void getFunction(absl::string_view functionName, _T* f) override {                               \
     plugin_->getFunction(functionName, f);                                                         \
   }
-  _FORWARD_GET_FUNCTION(WasmCall0Void);
-  _FORWARD_GET_FUNCTION(WasmCall1Void);
-  _FORWARD_GET_FUNCTION(WasmCall2Void);
-  _FORWARD_GET_FUNCTION(WasmCall3Void);
-  _FORWARD_GET_FUNCTION(WasmCall4Void);
-  _FORWARD_GET_FUNCTION(WasmCall5Void);
-  _FORWARD_GET_FUNCTION(WasmCall8Void);
-  _FORWARD_GET_FUNCTION(WasmCall1Word);
-  _FORWARD_GET_FUNCTION(WasmCall3Word);
+  FOR_ALL_WASM_VM_EXPORTS(_FORWARD_GET_FUNCTION)
 #undef _FORWARD_GET_FUNCTION
 
   // These are noops for NullVm.
 #define _REGISTER_CALLBACK(_type)                                                                  \
   void registerCallback(absl::string_view, absl::string_view, _type,                               \
                         typename ConvertFunctionTypeWordToUint32<_type>::type) override{};
-  _REGISTER_CALLBACK(WasmCallback0Void);
-  _REGISTER_CALLBACK(WasmCallback1Void);
-  _REGISTER_CALLBACK(WasmCallback2Void);
-  _REGISTER_CALLBACK(WasmCallback3Void);
-  _REGISTER_CALLBACK(WasmCallback4Void);
-  _REGISTER_CALLBACK(WasmCallback5Void);
-  _REGISTER_CALLBACK(WasmCallback8Void);
-  _REGISTER_CALLBACK(WasmCallback0Word);
-  _REGISTER_CALLBACK(WasmCallback1Word);
-  _REGISTER_CALLBACK(WasmCallback2Word);
-  _REGISTER_CALLBACK(WasmCallback3Word);
-  _REGISTER_CALLBACK(WasmCallback4Word);
-  _REGISTER_CALLBACK(WasmCallback5Word);
-  _REGISTER_CALLBACK(WasmCallback6Word);
-  _REGISTER_CALLBACK(WasmCallback7Word);
-  _REGISTER_CALLBACK(WasmCallback8Word);
-  _REGISTER_CALLBACK(WasmCallback9Word);
-  _REGISTER_CALLBACK(WasmCallback_ZWl);
-  _REGISTER_CALLBACK(WasmCallback_ZWm);
-  _REGISTER_CALLBACK(WasmCallback_m);
-  _REGISTER_CALLBACK(WasmCallback_jW);
-  _REGISTER_CALLBACK(WasmCallback_mW);
+  FOR_ALL_WASM_VM_IMPORTS(_REGISTER_CALLBACK)
 #undef _REGISTER_CALLBACK
 
   // NullVm does not advertize code as emscripten so this will not get called.

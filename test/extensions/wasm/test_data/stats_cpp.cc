@@ -6,21 +6,30 @@
 // Test the low level interface.
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t, uint32_t,
                                                    uint32_t) {
-  auto c = defineMetric(MetricType::Counter, "test_counter");
-  auto g = defineMetric(MetricType::Gauge, "test_gauges");
-  auto h = defineMetric(MetricType::Histogram, "test_histogram");
+  uint32_t c, g, h;
+  CHECK_RESULT(defineMetric(MetricType::Counter, "test_counter", &c));
+  CHECK_RESULT(defineMetric(MetricType::Gauge, "test_gauges", &g));
+  CHECK_RESULT(defineMetric(MetricType::Histogram, "test_histogram", &h));
 
-  incrementMetric(c, 1);
-  recordMetric(g, 2);
-  recordMetric(h, 3);
+  CHECK_RESULT(incrementMetric(c, 1));
+  CHECK_RESULT(recordMetric(g, 2));
+  CHECK_RESULT(recordMetric(h, 3));
 
-  logTrace(std::string("get counter = ") + std::to_string(getMetric(c)));
-  incrementMetric(c, 1);
-  logDebug(std::string("get counter = ") + std::to_string(getMetric(c)));
-  recordMetric(c, 3);
-  logInfo(std::string("get counter = ") + std::to_string(getMetric(c)));
-  logWarn(std::string("get gauge = ") + std::to_string(getMetric(g)));
-  logError(std::string("get histogram = ") + std::to_string(getMetric(h)));
+  uint64_t value;
+  CHECK_RESULT(getMetric(c, &value));
+  logTrace(std::string("get counter = ") + std::to_string(value));
+  CHECK_RESULT(incrementMetric(c, 1));
+  CHECK_RESULT(getMetric(c, &value));
+  logDebug(std::string("get counter = ") + std::to_string(value));
+  CHECK_RESULT(recordMetric(c, 3));
+  CHECK_RESULT(getMetric(c, &value));
+  logInfo(std::string("get counter = ") + std::to_string(value));
+  CHECK_RESULT(getMetric(g, &value));
+  logWarn(std::string("get gauge = ") + std::to_string(value));
+  // Get on histograms is not suppoorted.
+  if (getMetric(h, &value) != WasmResult::Ok) {
+    logError(std::string("get histogram = Unsupported"));
+  }
 }
 
 // Test the higher level interface.

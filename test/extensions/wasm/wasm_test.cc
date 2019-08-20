@@ -250,7 +250,7 @@ TEST_P(WasmTest, Stats) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("get counter = 5")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("get gauge = 2")));
   // Get is not supported on histograms.
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("get histogram = 0")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("get histogram = Unsupported")));
 
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->startForTesting(std::move(context));

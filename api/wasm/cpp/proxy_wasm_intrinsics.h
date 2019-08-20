@@ -10,10 +10,12 @@
 #endif
 
 #include <cstdint>
-using EnumType = int32_t;
 #include <string_view>
 using StringView = std::string_view;
 
+#include "proxy_wasm_enums.h"
+#include "proxy_wasm_result.h"
+#include "proxy_wasm_metadata.h"
 #include "proxy_wasm_enums.h"
 #include "proxy_wasm_externs.h"
 #ifndef EMSCRIPTEN_PROTOBUF_LITE
@@ -21,4 +23,4 @@ using StringView = std::string_view;
 #else
 #include "proxy_wasm_intrinsics_lite.pb.h"
 #endif
-#include "proxy_wasm_impl.h"
+#include "proxy_wasm_api.h"
