@@ -57,10 +57,6 @@ public:
   const char* data() { return data_; }
   StringView view() { return {data_, size_}; }
   std::string toString() { return std::string(view()); }
-  int32_t int32() { return *reinterpret_cast<const int32_t*>(data_); }
-  uint32_t uint32() { return *reinterpret_cast<const uint32_t*>(data_); }
-  int64_t int64() { return *reinterpret_cast<const int64_t*>(data_); }
-  uint64_t uint64() { return *reinterpret_cast<const uint64_t*>(data_); }
   std::vector<std::pair<StringView, StringView>> pairs();
   template<typename T> T proto() {
     T p;
@@ -474,15 +470,17 @@ inline bool ContextBase::isProactivelyCachable(MetadataType type) {
   return WasmResult::Ok; \
 } while(0)
 
-#define PROXY_EXPRESSION_GET_UINT32(_expression, _uint32_ptr) do { \
+#define PROXY_EXPRESSION_GET(_expression, _data_ptr) do { \
   const char* _value_ptr = nullptr; \
   size_t _value_size = 0; \
   auto _result = static_cast<WasmResult>(proxy_getMetadata(MetadataType::Expression, _expression, sizeof(_expression)-1, &_value_ptr, &_value_size)); \
   if (_result != WasmResult::Ok) { \
-    *_uint32_ptr = 0; \
     return _result; \
   } \
-  *_uint32_ptr = *reinterpret_cast<const uint32_t*>(_value_ptr); \
+  if (_value_size != sizeof(*_data_ptr)) { \
+    return WasmResult::ResultMismatch; \
+  } \
+  memcpy(_data_ptr, _value_ptr, sizeof(*_data_ptr)); \
   return WasmResult::Ok; \
 } while(0)
 
@@ -495,19 +493,19 @@ inline WasmResult getResponseProtocol(std::string *protocol_ptr) {
 }
 
 inline WasmResult getRequestDestinationPort(uint32_t* port) {
-  PROXY_EXPRESSION_GET_UINT32("request.destination_port", port);
+  PROXY_EXPRESSION_GET("request.destination_port", port);
 }
 
 inline WasmResult getResponseDestinationPort(uint32_t* port) {
-  PROXY_EXPRESSION_GET_UINT32("response.destination_port", port);
+  PROXY_EXPRESSION_GET("response.destination_port", port);
 }
 
 inline WasmResult getRequestResponseCode(uint32_t* response_code) {
-  PROXY_EXPRESSION_GET_UINT32("request.response_code", response_code);
+  PROXY_EXPRESSION_GET("request.response_code", response_code);
 }
 
 inline WasmResult getResponseResponseCode(uint32_t* response_code) {
-  PROXY_EXPRESSION_GET_UINT32("response.response_code", response_code);
+  PROXY_EXPRESSION_GET("response.response_code", response_code);
 }
 
 inline WasmResult getRequestTlsVersion(std::string *tls_version_ptr) {
@@ -518,8 +516,16 @@ inline WasmResult getResponseTlsVersion(std::string *tls_version_ptr) {
   PROXY_EXPRESSION_GET_STRING("response.tls_version", tls_version_ptr);
 }
 
+inline WasmResult getRequestPeerCertificatePresented(bool *peer_certificate_presented) {
+  PROXY_EXPRESSION_GET("request.peer_certificate_presented", peer_certificate_presented);
+}
+
+inline WasmResult getResponsePeerCertificatePresented(bool *peer_certificate_presented) {
+  PROXY_EXPRESSION_GET("response.peer_certificate_presented", peer_certificate_presented);
+}
+
 inline WasmResult getPluginDirection(PluginDirection *direction_ptr) {
-  PROXY_EXPRESSION_GET_UINT32("plugin.direction", reinterpret_cast<uint32_t*>(direction_ptr));
+  PROXY_EXPRESSION_GET("plugin.direction", reinterpret_cast<uint32_t*>(direction_ptr));
 }
 
 // Metadata
