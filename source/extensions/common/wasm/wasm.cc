@@ -476,11 +476,13 @@ Word getSelectorExpressionHandler(void* raw_context, Word path_ptr, Word path_si
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
   auto value = context->getSelectorExpression(path.value());
-  if (value.has_value()) {
-    context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr);
-    return wasmResultToWord(WasmResult::Ok);
+  if (!value.has_value()) {
+    return wasmResultToWord(WasmResult::NotFound);
   }
-  return wasmResultToWord(WasmResult::NotFound);
+  if (!context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr)) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  return wasmResultToWord(WasmResult::Ok);
 }
 
 // Continue/Reply/Route
