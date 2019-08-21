@@ -1115,7 +1115,9 @@ absl::optional<std::string> Context::getSelectorExpression(absl::string_view pat
 
     size_t end = path.find('\0', start);
     if (end == absl::string_view::npos) {
-      end = path.size();
+      // this should not happen unless the input string is not null-terminated in the view
+      // if it does happen, assume malformed path and return empty
+      return {};
     }
     auto part = path.substr(start, end - start);
     start = end + 1;
