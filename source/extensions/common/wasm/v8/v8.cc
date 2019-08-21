@@ -27,7 +27,7 @@ struct FuncData {
   FuncData(std::string name) : name(name) {}
 
   std::string name;
-  wasm::own<wasm::Func*> callback;
+  wasm::own<wasm::Func> callback;
   void* raw_func;
 };
 
@@ -112,15 +112,15 @@ private:
                              std::function<R(Context*, Args...)>* function);
 
   wasm::vec<byte_t> source_ = wasm::vec<byte_t>::invalid();
-  wasm::own<wasm::Store*> store_;
-  wasm::own<wasm::Module*> module_;
-  wasm::own<wasm::Instance*> instance_;
-  wasm::own<wasm::Memory*> memory_;
-  wasm::own<wasm::Table*> table_;
+  wasm::own<wasm::Store> store_;
+  wasm::own<wasm::Module> module_;
+  wasm::own<wasm::Instance> instance_;
+  wasm::own<wasm::Memory> memory_;
+  wasm::own<wasm::Table> table_;
 
-  absl::flat_hash_map<std::string, wasm::own<wasm::Global*>> host_globals_;
+  absl::flat_hash_map<std::string, wasm::own<wasm::Global>> host_globals_;
   absl::flat_hash_map<std::string, FuncDataPtr> host_functions_;
-  absl::flat_hash_map<std::string, wasm::own<wasm::Func*>> module_functions_;
+  absl::flat_hash_map<std::string, wasm::own<wasm::Func>> module_functions_;
 
   uint32_t memory_stack_base_;
   uint32_t memory_heap_base_;
@@ -150,7 +150,7 @@ static const char* printValKind(wasm::ValKind kind) {
   }
 }
 
-static std::string printValTypes(const wasm::vec<wasm::ValType*>& types) {
+static std::string printValTypes(const wasm::ownvec<wasm::ValType>& types) {
   if (types.size() == 0) {
     return "void";
   }
@@ -166,8 +166,8 @@ static std::string printValTypes(const wasm::vec<wasm::ValType*>& types) {
   return s;
 }
 
-static bool equalValTypes(const wasm::vec<wasm::ValType*>& left,
-                          const wasm::vec<wasm::ValType*>& right) {
+static bool equalValTypes(const wasm::ownvec<wasm::ValType>& left,
+                          const wasm::ownvec<wasm::ValType>& right) {
   if (left.size() != right.size()) {
     return false;
   }
@@ -222,7 +222,7 @@ template <typename T> struct V8ProxyForGlobal : Global<T> {
 
 template <typename T, std::size_t... I>
 constexpr auto convertArgsTupleToValTypesImpl(absl::index_sequence<I...>) {
-  return wasm::vec<wasm::ValType*>::make(
+  return wasm::ownvec<wasm::ValType>::make(
       wasm::ValType::make(convertArgToValKind<typename std::tuple_element<I, T>::type>())...);
 }
 
@@ -396,7 +396,7 @@ void V8::link(absl::string_view debug_name, bool needs_emscripten) {
   for (size_t i = 0; i < export_types.size(); i++) {
     absl::string_view name(export_types[i]->name().get(), export_types[i]->name().size());
     auto export_type = export_types[i]->type();
-    auto export_item = exports[i];
+    auto export_item = exports[i].get();
     ASSERT(export_type->kind() == export_item->kind());
 
     switch (export_type->kind()) {
@@ -556,7 +556,7 @@ void V8::registerHostFunctionImpl(absl::string_view moduleName, absl::string_vie
                                    convertArgsTupleToValTypes<std::tuple<>>());
   auto func = wasm::Func::make(
       store_.get(), type.get(),
-      [](void* data, const wasm::Val params[], wasm::Val[]) -> wasm::own<wasm::Trap*> {
+      [](void* data, const wasm::Val params[], wasm::Val[]) -> wasm::own<wasm::Trap> {
         auto func_data = reinterpret_cast<FuncData*>(data);
         ENVOY_LOG(trace, "[wasm] callHostFunction(\"{}\")", func_data->name);
         auto args_tuple = convertValTypesToArgsTuple<std::tuple<Args...>>(params);
@@ -580,7 +580,7 @@ void V8::registerHostFunctionImpl(absl::string_view moduleName, absl::string_vie
                                    convertArgsTupleToValTypes<std::tuple<R>>());
   auto func = wasm::Func::make(
       store_.get(), type.get(),
-      [](void* data, const wasm::Val params[], wasm::Val results[]) -> wasm::own<wasm::Trap*> {
+      [](void* data, const wasm::Val params[], wasm::Val results[]) -> wasm::own<wasm::Trap> {
         auto func_data = reinterpret_cast<FuncData*>(data);
         ENVOY_LOG(trace, "[wasm] callHostFunction(\"{}\")", func_data->name);
         auto args_tuple = convertValTypesToArgsTuple<std::tuple<Args...>>(params);
