@@ -1431,7 +1431,11 @@ uint32_t Context::getDestinationPort(StreamType type) {
   auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
   if (!streamInfo)
     return 0;
-  auto address = streamInfo->upstreamHost()->address();
+  auto host = streamInfo->upstreamHost();
+  if (!host) {
+    return 0;
+  }
+  auto address = host->address();
   if (!address) {
     return 0;
   }
