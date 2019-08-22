@@ -1040,8 +1040,6 @@ uint64_t Context::getCurrentTimeNanoseconds() {
       .count();
 }
 
-template <int N> struct marshall { char buf[N]; };
-
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
   using Filters::Common::Expr::CelValue;
   switch (value.type()) {
@@ -1057,39 +1055,33 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     result->assign(value.BytesOrDie().value().data(), value.BytesOrDie().value().size());
     return WasmResult::Ok;
   case CelValue::Type::kInt64: {
-    const size_t n = sizeof(int64_t);
-    marshall<n> out = absl::bit_cast<marshall<n>>(value.Int64OrDie());
-    result->assign(out.buf, n);
+    auto out = value.Int64OrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
     return WasmResult::Ok;
   }
   case CelValue::Type::kUint64: {
-    const size_t n = sizeof(uint64_t);
-    marshall<n> out = absl::bit_cast<marshall<n>>(value.Uint64OrDie());
-    result->assign(out.buf, n);
+    auto out = value.Uint64OrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(uint64_t));
     return WasmResult::Ok;
   }
   case CelValue::Type::kDouble: {
-    const size_t n = sizeof(double);
-    marshall<n> out = absl::bit_cast<marshall<n>>(value.DoubleOrDie());
-    result->assign(out.buf, n);
+    auto out = value.DoubleOrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(double));
     return WasmResult::Ok;
   }
   case CelValue::Type::kBool: {
-    const size_t n = sizeof(bool);
-    marshall<n> out = absl::bit_cast<marshall<n>>(value.BoolOrDie());
-    result->assign(out.buf, n);
+    auto out = value.BoolOrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(bool));
     return WasmResult::Ok;
   }
   case CelValue::Type::kDuration: {
-    const size_t n = sizeof(absl::Duration);
-    marshall<n> out = absl::bit_cast<marshall<n>>(value.DurationOrDie());
-    result->assign(out.buf, n);
+    auto out = value.DurationOrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Duration));
     return WasmResult::Ok;
   }
   case CelValue::Type::kTimestamp: {
-    const size_t n = sizeof(absl::Time);
-    marshall<n> out = absl::bit_cast<marshall<n>>(value.TimestampOrDie());
-    result->assign(out.buf, n);
+    auto out = value.TimestampOrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
     return WasmResult::Ok;
   }
   default:
