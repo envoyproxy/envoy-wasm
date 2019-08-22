@@ -256,7 +256,7 @@ public:
   virtual std::string getTlsVersion(StreamType type);
 
   // Generic resolver producing a serialized value
-  virtual absl::optional<std::string> getSelectorExpression(absl::string_view path);
+  virtual WasmResult getSelectorExpression(absl::string_view path, std::string* result);
 
   // Metadata
   // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the

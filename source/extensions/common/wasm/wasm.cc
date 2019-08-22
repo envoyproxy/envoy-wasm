@@ -475,11 +475,12 @@ Word getSelectorExpressionHandler(void* raw_context, Word path_ptr, Word path_si
   if (!path.has_value()) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  auto value = context->getSelectorExpression(path.value());
-  if (!value.has_value()) {
-    return wasmResultToWord(WasmResult::NotFound);
+  std::string value;
+  auto result = context->getSelectorExpression(path.value(), &value);
+  if (result != WasmResult::Ok) {
+    return wasmResultToWord(result);
   }
-  if (!context->wasm()->copyToPointerSize(value.value(), value_ptr_ptr, value_size_ptr)) {
+  if (!context->wasm()->copyToPointerSize(value, value_ptr_ptr, value_size_ptr)) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
   return wasmResultToWord(WasmResult::Ok);
@@ -1041,58 +1042,65 @@ uint64_t Context::getCurrentTimeNanoseconds() {
 
 template <int N> struct marshall { char buf[N]; };
 
-absl::optional<std::string> serializeValue(Filters::Common::Expr::CelValue value) {
+WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
   using Filters::Common::Expr::CelValue;
   switch (value.type()) {
   case CelValue::Type::kMessage:
     if (value.MessageOrDie() != nullptr) {
-      std::string result;
-      value.MessageOrDie()->SerializeToString(&result);
-      return result;
+      value.MessageOrDie()->SerializeToString(result);
+      return WasmResult::Ok;
     }
   case CelValue::Type::kString:
-    return std::string(value.StringOrDie().value());
+    result->assign(value.StringOrDie().value().data(), value.StringOrDie().value().size());
+    return WasmResult::Ok;
   case CelValue::Type::kBytes:
-    return std::string(value.BytesOrDie().value());
+    result->assign(value.BytesOrDie().value().data(), value.BytesOrDie().value().size());
+    return WasmResult::Ok;
   case CelValue::Type::kInt64: {
     const size_t n = sizeof(int64_t);
     marshall<n> out = absl::bit_cast<marshall<n>>(value.Int64OrDie());
-    return std::string(out.buf, n);
+    result->assign(out.buf, n);
+    return WasmResult::Ok;
   }
   case CelValue::Type::kUint64: {
     const size_t n = sizeof(uint64_t);
     marshall<n> out = absl::bit_cast<marshall<n>>(value.Uint64OrDie());
-    return std::string(out.buf, n);
+    result->assign(out.buf, n);
+    return WasmResult::Ok;
   }
   case CelValue::Type::kDouble: {
     const size_t n = sizeof(double);
     marshall<n> out = absl::bit_cast<marshall<n>>(value.DoubleOrDie());
-    return std::string(out.buf, n);
+    result->assign(out.buf, n);
+    return WasmResult::Ok;
   }
   case CelValue::Type::kBool: {
     const size_t n = sizeof(bool);
     marshall<n> out = absl::bit_cast<marshall<n>>(value.BoolOrDie());
-    return std::string(out.buf, n);
+    result->assign(out.buf, n);
+    return WasmResult::Ok;
   }
   case CelValue::Type::kDuration: {
     const size_t n = sizeof(absl::Duration);
     marshall<n> out = absl::bit_cast<marshall<n>>(value.DurationOrDie());
-    return std::string(out.buf, n);
+    result->assign(out.buf, n);
+    return WasmResult::Ok;
   }
   case CelValue::Type::kTimestamp: {
     const size_t n = sizeof(absl::Time);
     marshall<n> out = absl::bit_cast<marshall<n>>(value.TimestampOrDie());
-    return std::string(out.buf, n);
+    result->assign(out.buf, n);
+    return WasmResult::Ok;
   }
   default:
     // TODO: lists and maps
     break;
   }
 
-  return {};
+  return WasmResult::SerializationFailure;
 }
 
-absl::optional<std::string> Context::getSelectorExpression(absl::string_view path) {
+WasmResult Context::getSelectorExpression(absl::string_view path, std::string* result) {
   using Filters::Common::Expr::CelValue;
   using google::api::expr::runtime::FieldBackedListImpl;
   using google::api::expr::runtime::FieldBackedMapImpl;
@@ -1116,8 +1124,7 @@ absl::optional<std::string> Context::getSelectorExpression(absl::string_view pat
     size_t end = path.find('\0', start);
     if (end == absl::string_view::npos) {
       // this should not happen unless the input string is not null-terminated in the view
-      // if it does happen, assume malformed path and return empty
-      return {};
+      return WasmResult::ParseFailure;
     }
     auto part = path.substr(start, end - start);
     start = end + 1;
@@ -1145,7 +1152,7 @@ absl::optional<std::string> Context::getSelectorExpression(absl::string_view pat
         value = CelValue::CreateMap(
             Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, info, true));
       } else {
-        return {};
+        return WasmResult::NotFound;
       }
       continue;
     }
@@ -1185,7 +1192,7 @@ absl::optional<std::string> Context::getSelectorExpression(absl::string_view pat
     }
   }
 
-  return serializeValue(value);
+  return serializeValue(value, result);
 }
 
 // Shared Data
