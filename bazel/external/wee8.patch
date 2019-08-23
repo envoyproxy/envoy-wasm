@@ -1,11 +1,10 @@
-# 1. Fix handling of f64 globals.
-# 2. Force full GC when destroying VMs.
-# 3. Fix build with -DDEBUG.
-# 4. Fix for VMs with overlapping lifetimes (https://crrev.com/c/1698387).
-# 5. Fix linking with unbundled toolchain on macOS.
+# 1. Force full GC when destroying VMs.
+# 2. Fix build with -DDEBUG.
+# 3. Fix for VMs with overlapping lifetimes (https://crrev.com/c/1698387).
+# 4. Fix linking with unbundled toolchain on macOS.
 --- a/wee8/build/toolchain/gcc_toolchain.gni
 +++ b/wee8/build/toolchain/gcc_toolchain.gni
-@@ -355,6 +355,8 @@
+@@ -355,6 +355,8 @@ template("gcc_toolchain") {
          # AIX does not support either -D (deterministic output) or response
          # files.
          command = "$ar -X64 {{arflags}} -r -c -s {{output}} {{inputs}}"
@@ -14,7 +13,7 @@
        } else {
          rspfile = "{{output}}.rsp"
          rspfile_content = "{{inputs}}"
-@@ -546,7 +548,7 @@
+@@ -546,7 +548,7 @@ template("gcc_toolchain") {
 
        start_group_flag = ""
        end_group_flag = ""
@@ -25,16 +24,7 @@
          end_group_flag = "-Wl,--end-group "
 --- a/wee8/src/wasm/c-api.cc
 +++ b/wee8/src/wasm/c-api.cc
-@@ -825,7 +825,7 @@ void global_set_f32(v8::Local<v8::Object> global, float val) {
- void global_set_f64(v8::Local<v8::Object> global, double val) {
-   auto v8_object = v8::Utils::OpenHandle<v8::Object, i::JSReceiver>(global);
-   auto v8_global = i::Handle<i::WasmGlobalObject>::cast(v8_object);
--  v8_global->SetF32(val);
-+  v8_global->SetF64(val);
- }
-
- // Tables
-@@ -985,7 +985,7 @@ auto seal(const typename implement<C>::type* x) -> const C* {
+@@ -633,7 +633,7 @@ auto seal(const typename implement<C>::type* x) -> const C* {
    return reinterpret_cast<const C*>(x);
  }
 
@@ -43,22 +33,22 @@
  template <class T>
  void vec<T>::make_data() {}
 
-@@ -1107,13 +1107,12 @@ class StoreImpl {
-   StoreImpl() {}
+@@ -708,13 +708,12 @@ auto Engine::make(own<Config*>&& config) -> own<Engine*> {
+ // Stores
 
-   ~StoreImpl() {
+ StoreImpl::~StoreImpl() {
 -#ifdef DEBUG
 +#if 1
-     reinterpret_cast<i::Isolate*>(isolate_)->heap()->PreciseCollectAllGarbage(
-         i::Heap::kNoGCFlags, i::GarbageCollectionReason::kTesting,
-         v8::kGCCallbackFlagForced);
+   reinterpret_cast<i::Isolate*>(isolate_)->heap()->PreciseCollectAllGarbage(
+       i::Heap::kNoGCFlags, i::GarbageCollectionReason::kTesting,
+       v8::kGCCallbackFlagForced);
  #endif
-     context()->Exit();
--    isolate_->Exit();
-     isolate_->Dispose();
-     delete create_params_.array_buffer_allocator;
-   }
-@@ -1163,7 +1162,6 @@ auto Store::make(Engine*) -> own<Store*> {
+   context()->Exit();
+-  isolate_->Exit();
+   isolate_->Dispose();
+   delete create_params_.array_buffer_allocator;
+ }
+@@ -739,7 +738,6 @@ auto Store::make(Engine*) -> own<Store*> {
    if (!isolate) return own<Store*>();
 
    {
@@ -66,11 +56,16 @@
      v8::HandleScope handle_scope(isolate);
 
      // Create context.
-@@ -1246,7 +1244,6 @@ auto Store::make(Engine*) -> own<Store*> {
-     store->host_data_map_ = v8::Eternal<v8::Object>(isolate, map);
+@@ -750,8 +748,10 @@ auto Store::make(Engine*) -> own<Store*> {
+     store->isolate_ = isolate;
+     store->context_ = v8::Eternal<v8::Context>(isolate, context);
    }
-
+-
 -  store->isolate()->Enter();
++  // We intentionally do not call isolate->Enter() here, because that would
++  // prevent embedders from using stores with overlapping but non-nested
++  // lifetimes. The consequence is that Isolate::Current() is dysfunctional
++  // and hence must not be called by anything reachable via this file.
    store->context()->Enter();
    isolate->SetData(0, store.get());
 
