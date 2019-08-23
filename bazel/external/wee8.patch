@@ -2,6 +2,7 @@
 # 2. Fix build with -DDEBUG.
 # 3. Fix for VMs with overlapping lifetimes (https://crrev.com/c/1698387).
 # 4. Fix linking with unbundled toolchain on macOS.
+# 5. Increase VSZ limit to 4TiB (allows us to start up to 370 VMs).
 --- a/wee8/build/toolchain/gcc_toolchain.gni
 +++ b/wee8/build/toolchain/gcc_toolchain.gni
 @@ -355,6 +355,8 @@ template("gcc_toolchain") {
@@ -69,6 +70,17 @@
    store->context()->Enter();
    isolate->SetData(0, store.get());
 
+--- a/wee8/src/wasm/wasm-memory.cc
++++ b/wee8/src/wasm/wasm-memory.cc
+@@ -139,7 +139,7 @@ void* TryAllocateBackingStore(WasmMemoryTracker* memory_tracker, Heap* heap,
+ // address space limits needs to be smaller.
+ constexpr size_t kAddressSpaceLimit = 0x8000000000L;  // 512 GiB
+ #elif V8_TARGET_ARCH_64_BIT
+-constexpr size_t kAddressSpaceLimit = 0x10100000000L;  // 1 TiB + 4 GiB
++constexpr size_t kAddressSpaceLimit = 0x40100000000L;  // 4 TiB + 4 GiB
+ #else
+ constexpr size_t kAddressSpaceLimit = 0xC0000000;  // 3 GiB
+ #endif
 --- a/wee8/third_party/wasm-api/wasm.hh
 +++ b/wee8/third_party/wasm-api/wasm.hh
 @@ -111,7 +111,7 @@ class vec {
