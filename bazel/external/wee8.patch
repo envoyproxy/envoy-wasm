@@ -1,6 +1,28 @@
 # 1. Fix handling of f64 globals.
 # 2. Force full GC when destroying VMs.
 # 3. Fix build with -DDEBUG.
+# 4. Fix for VMs with overlapping lifetimes (https://crrev.com/c/1698387).
+# 5. Fix linking with unbundled toolchain on macOS.
+--- a/wee8/build/toolchain/gcc_toolchain.gni
++++ b/wee8/build/toolchain/gcc_toolchain.gni
+@@ -355,6 +355,8 @@
+         # AIX does not support either -D (deterministic output) or response
+         # files.
+         command = "$ar -X64 {{arflags}} -r -c -s {{output}} {{inputs}}"
++      } else if (current_os == "mac") {
++        command = "\"$ar\" {{arflags}} -r -c -s {{output}} {{inputs}}"
+       } else {
+         rspfile = "{{output}}.rsp"
+         rspfile_content = "{{inputs}}"
+@@ -546,7 +548,7 @@
+
+       start_group_flag = ""
+       end_group_flag = ""
+-      if (current_os != "aix") {
++      if (current_os != "aix" && current_os != "mac") {
+         # the "--start-group .. --end-group" feature isn't available on the aix ld.
+         start_group_flag = "-Wl,--start-group"
+         end_group_flag = "-Wl,--end-group "
 --- a/wee8/src/wasm/c-api.cc
 +++ b/wee8/src/wasm/c-api.cc
 @@ -825,7 +825,7 @@ void global_set_f32(v8::Local<v8::Object> global, float val) {
@@ -12,7 +34,16 @@
  }
 
  // Tables
-@@ -1107,7 +1107,7 @@ class StoreImpl {
+@@ -985,7 +985,7 @@ auto seal(const typename implement<C>::type* x) -> const C* {
+   return reinterpret_cast<const C*>(x);
+ }
+
+-#ifdef DEBUG
++#if 0
+ template <class T>
+ void vec<T>::make_data() {}
+
+@@ -1107,13 +1107,12 @@ class StoreImpl {
    StoreImpl() {}
 
    ~StoreImpl() {
@@ -21,6 +52,28 @@
      reinterpret_cast<i::Isolate*>(isolate_)->heap()->PreciseCollectAllGarbage(
          i::Heap::kNoGCFlags, i::GarbageCollectionReason::kTesting,
          v8::kGCCallbackFlagForced);
+ #endif
+     context()->Exit();
+-    isolate_->Exit();
+     isolate_->Dispose();
+     delete create_params_.array_buffer_allocator;
+   }
+@@ -1163,7 +1162,6 @@ auto Store::make(Engine*) -> own<Store*> {
+   if (!isolate) return own<Store*>();
+
+   {
+-    v8::Isolate::Scope isolate_scope(isolate);
+     v8::HandleScope handle_scope(isolate);
+
+     // Create context.
+@@ -1246,7 +1244,6 @@ auto Store::make(Engine*) -> own<Store*> {
+     store->host_data_map_ = v8::Eternal<v8::Object>(isolate, map);
+   }
+
+-  store->isolate()->Enter();
+   store->context()->Enter();
+   isolate->SetData(0, store.get());
+
 --- a/wee8/third_party/wasm-api/wasm.hh
 +++ b/wee8/third_party/wasm-api/wasm.hh
 @@ -111,7 +111,7 @@ class vec {

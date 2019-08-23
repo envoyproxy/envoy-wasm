@@ -214,16 +214,6 @@ alias(
     }),
 )
 
-# Alias pointing to a platform-specific version of wee8.
-alias(
-    name = "wee8",
-    actual = select({
-        ":darwin": "@wee8_macos//:wee8",
-        ":darwin_x86_64": "@wee8_macos//:wee8",
-        "//conditions:default": "@wee8_linux//:wee8",
-    }),
-)
-
 config_setting(
     name = "linux_x86_64",
     values = {"cpu": "k8"},

@@ -120,14 +120,6 @@ def envoy_dependencies(skip_targets = []):
         actual = "@envoy//bazel:boringssl",
     )
 
-    # Binding to an alias pointing to a platform-specific version of wee8.
-    _wee8_linux()
-    _wee8_macos()
-    native.bind(
-        name = "wee8",
-        actual = "@envoy//bazel:wee8",
-    )
-
     # The long repo names (`com_github_fmtlib_fmt` instead of `fmtlib`) are
     # semi-standard in the Bazel community, intended to avoid both duplicate
     # dependencies and name conflicts.
@@ -158,6 +150,7 @@ def envoy_dependencies(skip_targets = []):
     _com_github_curl()
     _com_github_envoyproxy_sqlparser()
     _com_googlesource_quiche()
+    _com_googlesource_chromium_v8()
     _org_llvm_llvm()
     _com_github_wavm_wavm()
     _com_lightstep_tracer_cpp()
@@ -731,26 +724,18 @@ def _com_github_wavm_wavm():
         actual = "@envoy//bazel/foreign_cc:wavm",
     )
 
-def _wee8_linux():
-    location = REPOSITORY_LOCATIONS["wee8_linux"]
+def _com_googlesource_chromium_v8():
+    location = REPOSITORY_LOCATIONS["com_googlesource_chromium_v8"]
     genrule_repository(
-        name = "wee8_linux",
-        urls = location["urls"],
-        sha256 = location["sha256"],
+        name = "com_googlesource_chromium_v8",
         genrule_cmd_file = "@envoy//bazel/external:wee8.genrule_cmd",
         build_file = "@envoy//bazel/external:wee8.BUILD",
         patches = ["@envoy//bazel/external:wee8.patch"],
+        **location
     )
-
-def _wee8_macos():
-    location = REPOSITORY_LOCATIONS["wee8_macos"]
-    genrule_repository(
-        name = "wee8_macos",
-        urls = location["urls"],
-        sha256 = location["sha256"],
-        genrule_cmd_file = "@envoy//bazel/external:wee8.genrule_cmd",
-        build_file = "@envoy//bazel/external:wee8.BUILD",
-        patches = ["@envoy//bazel/external:wee8.patch"],
+    native.bind(
+        name = "wee8",
+        actual = "@com_googlesource_chromium_v8//:wee8",
     )
 
 def _foreign_cc_dependencies():

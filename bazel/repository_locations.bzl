@@ -241,19 +241,11 @@ REPOSITORY_LOCATIONS = dict(
         strip_prefix = "WAVM-95dbf08c8695b8941e7020c557d8612f9d2af895",
         urls = ["https://github.com/WAVM/WAVM/archive/95dbf08c8695b8941e7020c557d8612f9d2af895.tar.gz"],
     ),
-    wee8_linux = dict(
+    com_googlesource_chromium_v8 = dict(
         # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
-        # and contains complete checkout of v8 with all dependencies necessary to build wee8 on Linux-x86_64.
-        # TODO(PiotrSikora): switch to local compiler and provide single platform-agnostic archive.
-        sha256 = "1caebced30cb9d3531be4720b70c9132c988b362160f7721bc01caeb572c0eb7",
-        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.5.288.22-linux-x86_64.tar.gz"],
-    ),
-    wee8_macos = dict(
-        # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
-        # and contains complete checkout of v8 with all dependencies necessary to build wee8 on macOS-x86_64.
-        # TODO(PiotrSikora): switch to local compiler and provide single platform-agnostic archive.
-        sha256 = "f84e423417db0b03b96e853b7d92f69be7d4936a33d1e8e05848fb146925ff68",
-        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.5.288.22-macos-x86_64.tar.gz"],
+        # and contains complete checkout of v8 with all dependencies necessary to build wee8.
+        sha256 = "d59c26ce5d7a2b23fb6251823df700cda0dc9a93086c932be5dfd9048a763d03",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.5.288.22.tar.gz"],
     ),
     io_opencensus_cpp = dict(
         sha256 = "8d6016e47c2e19e7acbadb6f905b8c422748c64299d71101ac8f28151677e195",
