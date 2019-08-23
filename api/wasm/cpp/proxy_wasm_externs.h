@@ -72,6 +72,10 @@ extern "C" WasmResult proxy_getMetadataStruct(MetadataType type, const char* nam
 extern "C" WasmResult proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
                                             const char* value_ptr, size_t value_size);
 
+// Generic selector
+extern "C" WasmResult proxy_getSelectorExpression(const char* path_ptr, size_t path_size,
+                                                  const char** value_ptr_ptr, size_t* value_size_ptr);
+
 // Continue/Reply/Route
 extern "C" WasmResult proxy_continueRequest();
 extern "C" WasmResult proxy_continueResponse();

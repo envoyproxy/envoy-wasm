@@ -6,6 +6,7 @@
 #else
 
 #include "extensions/common/wasm/null/null_plugin.h"
+#include "absl/base/casts.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -45,7 +46,24 @@ FilterDataStatus PluginContext::onRequestBody(size_t body_buffer_length, bool /*
 
 void PluginContext::onLog() {
   auto path = getRequestHeader(":path");
-  logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
+  if (path->view() == "/test_context") {
+    logWarn("request.path: " + getSelectorExpression({"request", "path"}).value()->toString());
+    logWarn("node.metadata: " +
+            getSelectorExpression({"node", "metadata", "istio.io/metadata"}).value()->toString());
+    logWarn("metadata: " + getSelectorExpression({"metadata", "filter_metadata", "envoy.wasm",
+                                                  "wasm_request_get_key"})
+                               .value()
+                               ->toString());
+    auto responseCode = getSelectorExpression({"response", "code"}).value();
+    if (responseCode->size() == sizeof(int64_t)) {
+      char buf[sizeof(int64_t)];
+      responseCode->view().copy(buf, sizeof(int64_t), 0);
+      int64_t code = absl::bit_cast<int64_t>(buf);
+      logWarn("response.code: " + absl::StrCat(code));
+    }
+  } else {
+    logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
+  }
 }
 
 void PluginContext::onDone() { logWarn("onDone " + std::to_string(id())); }

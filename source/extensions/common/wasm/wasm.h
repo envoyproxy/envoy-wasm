@@ -51,6 +51,8 @@ Word getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
                               Word value_ptr_ptr, Word value_size_ptr);
 Word setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr, Word value_size);
+Word getSelectorExpressionHandler(void* raw_context, Word path_ptr, Word path_size,
+                                  Word value_ptr_ptr, Word value_size_ptr);
 Word continueRequestHandler(void* raw_context);
 Word continueResponseHandler(void* raw_context);
 Word sendLocalResponseHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
@@ -253,6 +255,9 @@ public:
   virtual uint32_t getResponseCode(StreamType type);
   virtual std::string getTlsVersion(StreamType type);
   virtual absl::optional<bool> peerCertificatePresented(StreamType type);
+
+  // Generic resolver producing a serialized value
+  virtual WasmResult getSelectorExpression(absl::string_view path, std::string* result);
 
   // Metadata
   // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the

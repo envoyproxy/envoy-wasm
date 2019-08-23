@@ -62,6 +62,13 @@ inline WasmResult proxy_setMetadataStruct(MetadataType type, const char* name_pt
                                                    WS(name_size), WR(value_ptr), WS(value_size)));
 }
 
+// Generic selector
+inline WasmResult proxy_getSelectorExpression(const char* path_ptr, size_t path_size,
+                                              const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return wordToWasmResult(getSelectorExpressionHandler(
+      current_context_, WR(path_ptr), WS(path_size), WR(value_ptr_ptr), WR(value_size_ptr)));
+}
+
 // Continue
 inline WasmResult proxy_continueRequest() {
   return wordToWasmResult(continueRequestHandler(current_context_));

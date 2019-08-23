@@ -367,6 +367,42 @@ TEST_F(WasmHttpFilterTest, NullPluginRequestHeadersOnly) {
   filter_->onDestroy();
 }
 
+TEST_F(WasmHttpFilterTest, NullVmResolver) {
+  setupNullConfig("null_vm_plugin");
+  setupFilter();
+  envoy::api::v2::core::Node node_data;
+  ProtobufWkt::Value node_val;
+  node_val.set_string_value("sample_data");
+  (*node_data.mutable_metadata()->mutable_fields())["istio.io/metadata"] = node_val;
+  EXPECT_CALL(local_info_, node()).WillRepeatedly(ReturnRef(node_data));
+
+  request_stream_info_.metadata_.mutable_filter_metadata()->insert(
+      Protobuf::MapPair<std::string, ProtobufWkt::Struct>(
+          HttpFilters::HttpFilterNames::get().Wasm,
+          MessageUtil::keyValueStruct("wasm_request_get_key", "wasm_request_get_value")));
+  EXPECT_CALL(request_stream_info_, responseCode()).WillRepeatedly(Return(403));
+  EXPECT_CALL(decoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::info, Eq(absl::string_view("header path /test_context"))));
+
+  // test outputs should match inputs
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn,
+                                   Eq(absl::string_view("request.path: /test_context"))));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::warn, Eq(absl::string_view("node.metadata: sample_data"))));
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn,
+                                   Eq(absl::string_view("metadata: wasm_request_get_value"))));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::warn, Eq(absl::string_view("response.code: 403"))));
+
+  Http::TestHeaderMapImpl request_headers{{":path", "/test_context"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  StreamInfo::MockStreamInfo log_stream_info;
+  filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
+}
+
 TEST_P(WasmHttpFilterTest, SharedData) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/shared_cpp.wasm")));

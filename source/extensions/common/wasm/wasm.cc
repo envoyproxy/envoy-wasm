@@ -26,10 +26,15 @@
 #include "common/tracing/http_tracer_impl.h"
 
 #include "extensions/common/wasm/well_known_names.h"
+#include "extensions/filters/common/expr/context.h"
 
+#include "absl/base/casts.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_map.h"
 #include "absl/synchronization/mutex.h"
+#include "eval/eval/field_access.h"
+#include "eval/eval/field_backed_list_impl.h"
+#include "eval/eval/field_backed_map_impl.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -460,6 +465,25 @@ Word setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
   }
   return Word(static_cast<uint64_t>(context->setMetadataStruct(static_cast<MetadataType>(type.u64),
                                                                name.value(), value.value())));
+}
+
+// Generic selector
+Word getSelectorExpressionHandler(void* raw_context, Word path_ptr, Word path_size,
+                                  Word value_ptr_ptr, Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto path = context->wasmVm()->getMemory(path_ptr, path_size);
+  if (!path.has_value()) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  std::string value;
+  auto result = context->getSelectorExpression(path.value(), &value);
+  if (result != WasmResult::Ok) {
+    return wasmResultToWord(result);
+  }
+  if (!context->wasm()->copyToPointerSize(value, value_ptr_ptr, value_size_ptr)) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  return wasmResultToWord(WasmResult::Ok);
 }
 
 // Continue/Reply/Route
@@ -1014,6 +1038,153 @@ uint64_t Context::getCurrentTimeNanoseconds() {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
              wasm_->time_source_.systemTime().time_since_epoch())
       .count();
+}
+
+WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
+  using Filters::Common::Expr::CelValue;
+  switch (value.type()) {
+  case CelValue::Type::kMessage:
+    if (value.MessageOrDie() != nullptr) {
+      value.MessageOrDie()->SerializeToString(result);
+      return WasmResult::Ok;
+    }
+  case CelValue::Type::kString:
+    result->assign(value.StringOrDie().value().data(), value.StringOrDie().value().size());
+    return WasmResult::Ok;
+  case CelValue::Type::kBytes:
+    result->assign(value.BytesOrDie().value().data(), value.BytesOrDie().value().size());
+    return WasmResult::Ok;
+  case CelValue::Type::kInt64: {
+    auto out = value.Int64OrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
+    return WasmResult::Ok;
+  }
+  case CelValue::Type::kUint64: {
+    auto out = value.Uint64OrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(uint64_t));
+    return WasmResult::Ok;
+  }
+  case CelValue::Type::kDouble: {
+    auto out = value.DoubleOrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(double));
+    return WasmResult::Ok;
+  }
+  case CelValue::Type::kBool: {
+    auto out = value.BoolOrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(bool));
+    return WasmResult::Ok;
+  }
+  case CelValue::Type::kDuration: {
+    auto out = value.DurationOrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Duration));
+    return WasmResult::Ok;
+  }
+  case CelValue::Type::kTimestamp: {
+    auto out = value.TimestampOrDie();
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
+    return WasmResult::Ok;
+  }
+  default:
+    // TODO: lists and maps
+    break;
+  }
+
+  return WasmResult::SerializationFailure;
+}
+
+WasmResult Context::getSelectorExpression(absl::string_view path, std::string* result) {
+  using Filters::Common::Expr::CelValue;
+  using google::api::expr::runtime::FieldBackedListImpl;
+  using google::api::expr::runtime::FieldBackedMapImpl;
+
+  bool first = true;
+  CelValue value;
+  Protobuf::Arena arena;
+  const StreamInfo::StreamInfo& info = decoder_callbacks_->streamInfo();
+  const auto request_headers = request_headers_ ? request_headers_ : access_log_request_headers_;
+  const auto response_headers =
+      response_headers_ ? response_headers_ : access_log_response_headers_;
+  const auto response_trailers =
+      response_trailers_ ? response_trailers_ : access_log_response_trailers_;
+
+  size_t start = 0;
+  while (true) {
+    if (start >= path.size()) {
+      break;
+    }
+
+    size_t end = path.find('\0', start);
+    if (end == absl::string_view::npos) {
+      // this should not happen unless the input string is not null-terminated in the view
+      return WasmResult::ParseFailure;
+    }
+    auto part = path.substr(start, end - start);
+    start = end + 1;
+
+    // top-level ident
+    if (first) {
+      first = false;
+      if (part == "metadata") {
+        value = CelValue::CreateMessage(&info.dynamicMetadata(), &arena);
+      } else if (part == "request") {
+        value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
+            &arena, request_headers, info));
+      } else if (part == "response") {
+        value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::ResponseWrapper>(
+            &arena, response_headers, response_trailers, info));
+      } else if (part == "connection") {
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(&arena, info));
+      } else if (part == "node") {
+        value = CelValue::CreateMessage(&wasm_->local_info_.node(), &arena);
+      } else if (part == "source") {
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, info, false));
+      } else if (part == "destination") {
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, info, true));
+      } else {
+        return WasmResult::NotFound;
+      }
+      continue;
+    }
+
+    if (value.IsMap()) {
+      auto& map = *value.MapOrDie();
+      auto field = map[CelValue::CreateString(part)];
+      if (field.has_value()) {
+        value = field.value();
+      } else {
+        return {};
+      }
+    } else if (value.IsMessage()) {
+      auto msg = value.MessageOrDie();
+      if (msg == nullptr) {
+        return {};
+      }
+      const Protobuf::Descriptor* desc = msg->GetDescriptor();
+      const Protobuf::FieldDescriptor* field_desc = desc->FindFieldByName(std::string(part));
+      if (field_desc == nullptr) {
+        return {};
+      } else if (field_desc->is_map()) {
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<FieldBackedMapImpl>(&arena, msg, field_desc, &arena));
+      } else if (field_desc->is_repeated()) {
+        value = CelValue::CreateList(
+            Protobuf::Arena::Create<FieldBackedListImpl>(&arena, msg, field_desc, &arena));
+      } else {
+        auto status =
+            google::api::expr::runtime::CreateValueFromSingleField(msg, field_desc, &arena, &value);
+        if (!status.ok()) {
+          return {};
+        }
+      }
+    } else {
+      return {};
+    }
+  }
+
+  return serializeValue(value, result);
 }
 
 // Shared Data
