@@ -10,15 +10,17 @@
   (type $8 (func (result i32)))
   (type $9 (func (param i32) (result i32)))
   (type $10 (func (param i32 i32 i32)))
-  (type $11 (func (param f64 i32) (result f64)))
-  (type $12 (func (param i32 i32) (result i32)))
-  (type $13 (func (param i32 i32 i32 i32) (result i32)))
-  (type $14 (func (param i64 i32 i32) (result i32)))
-  (type $15 (func (param i64 i32) (result i32)))
+  (type $11 (func (param i32 i32) (result i32)))
+  (type $12 (func (param i32 i32 i32 i32) (result i32)))
+  (type $13 (func (param i64 i32 i32) (result i32)))
+  (type $14 (func (param i64 i32) (result i32)))
+  (type $15 (func (param f64 i32) (result f64)))
   (type $16 (func (param i32 i32 i32 i32 i32 i32 i32)))
   (type $17 (func (param i32 f32)))
   (type $18 (func (param i32 i32 f32)))
-  (type $19 (func (param i32 i32 f64 i32 i32 i32 i32) (result i32)))
+  (type $19 (func (param i32 f64)))
+  (type $20 (func (param i32 i32 f64)))
+  (type $21 (func (param i32 i32 f64 i32 i32 i32 i32) (result i32)))
   (import "env" "abort" (func $abort (param i32)))
   (import "env" "___cxa_uncaught_exceptions" (func $___cxa_uncaught_exceptions (result i32)))
   (import "env" "___setErrNo" (func $___setErrNo (param i32)))
@@ -28,11 +30,12 @@
   (import "env" "_emscripten_resize_heap" (func $_emscripten_resize_heap (param i32) (result i32)))
   (import "env" "_proxy_log" (func $_proxy_log (param i32 i32 i32) (result i32)))
   (import "env" "abortOnCannotGrowMemory" (func $abortOnCannotGrowMemory (param i32) (result i32)))
-  (import "env" "__table_base" (global $22 i32))
-  (import "env" "DYNAMICTOP_PTR" (global $23 i32))
-  (import "global" "NaN" (global $24 f64))
-  (import "env" "memory" (memory $21 256 256))
-  (import "env" "table" (table $20 29 29 funcref))
+  (import "env" "__table_base" (global $24 i32))
+  (import "env" "DYNAMICTOP_PTR" (global $25 i32))
+  (import "global" "NaN" (global $26 f64))
+  (import "global" "Infinity" (global $27 f64))
+  (import "env" "memory" (memory $23 256 256))
+  (import "env" "table" (table $22 29 29 funcref))
   (export "__GLOBAL__sub_I_status_cc" (func $__GLOBAL__sub_I_status_cc))
   (export "__ZSt18uncaught_exceptionv" (func $__ZSt18uncaught_exceptionv))
   (export "___cxa_can_catch" (func $___cxa_can_catch))
@@ -41,6 +44,7 @@
   (export "_free" (func $_free))
   (export "_malloc" (func $_malloc))
   (export "_memcpy" (func $_memcpy))
+  (export "_memmove" (func $_memmove))
   (export "_memset" (func $_memset))
   (export "_proxy_onStart" (func $_proxy_onStart))
   (export "_sbrk" (func $_sbrk))
@@ -56,98 +60,99 @@
   (export "stackAlloc" (func $stackAlloc))
   (export "stackRestore" (func $stackRestore))
   (export "stackSave" (func $stackSave))
-  (global $25  (mut i32) (i32.const 4176))
-  (global $26  (mut i32) (i32.const 5247056))
-  (elem $27 $20 (global.get $22)
+  (global $28  (mut i32) (i32.const 4176))
+  (global $29  (mut i32) (i32.const 5247056))
+  (elem $30 $22 (global.get $24)
     $b0 $_fmt_fp $b1 $_sn_write $__ZNK10__cxxabiv117__class_type_info9can_catchEPKNS_16__shim_type_infoERPv $b1 $b2 $b3
     $__ZN10__cxxabiv116__shim_type_infoD2Ev $__ZN10__cxxabiv117__class_type_infoD0Ev $__ZN10__cxxabiv116__shim_type_infoD2Ev $__ZN10__cxxabiv116__shim_type_infoD2Ev $__ZN10__cxxabiv117__class_type_infoD0Ev $b3 $b3 $b4
     $_pop_arg_long_double $b5 $__ZNK10__cxxabiv117__class_type_info27has_unambiguous_public_baseEPNS_19__dynamic_cast_infoEPvi $__ZNK10__cxxabiv120__si_class_type_info27has_unambiguous_public_baseEPNS_19__dynamic_cast_infoEPvi $b5 $b6 $__ZNK10__cxxabiv117__class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $__ZNK10__cxxabiv120__si_class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib
     $b6 $b7 $__ZNK10__cxxabiv117__class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $__ZNK10__cxxabiv120__si_class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $b7)
-  (data $28 $21 (i32.const 1024)
+  (data $31 $23 (i32.const 1024)
     "\11\00\n\00\11\11\11\00\00\00\00\05\00\00\00\00\00\00\09\00\00\00\00\0b")
-  (data $29 $21 (i32.const 1056)
+  (data $32 $23 (i32.const 1056)
     "\11\00\0f\n\11\11\11\03\n\07\00\01\13\09\0b\0b\00\00\09\06\0b\00\00\0b\00\06\11\00\00\00\11\11\11")
-  (data $30 $21 (i32.const 1105)
+  (data $33 $23 (i32.const 1105)
     "\0b")
-  (data $31 $21 (i32.const 1114)
+  (data $34 $23 (i32.const 1114)
     "\11\00\n\n\11\11\11\00\n\00\00\02\00\09\0b\00\00\00\09\00\0b\00\00\0b")
-  (data $32 $21 (i32.const 1163)
+  (data $35 $23 (i32.const 1163)
     "\0c")
-  (data $33 $21 (i32.const 1175)
+  (data $36 $23 (i32.const 1175)
     "\0c\00\00\00\00\0c\00\00\00\00\09\0c\00\00\00\00\00\0c\00\00\0c")
-  (data $34 $21 (i32.const 1221)
+  (data $37 $23 (i32.const 1221)
     "\0e")
-  (data $35 $21 (i32.const 1233)
+  (data $38 $23 (i32.const 1233)
     "\0d\00\00\00\04\0d\00\00\00\00\09\0e\00\00\00\00\00\0e\00\00\0e")
-  (data $36 $21 (i32.const 1279)
+  (data $39 $23 (i32.const 1279)
     "\10")
-  (data $37 $21 (i32.const 1291)
+  (data $40 $23 (i32.const 1291)
     "\0f\00\00\00\00\0f\00\00\00\00\09\10\00\00\00\00\00\10\00\00\10\00\00\12\00\00\00\12\12\12")
-  (data $38 $21 (i32.const 1346)
+  (data $41 $23 (i32.const 1346)
     "\12\00\00\00\12\12\12\00\00\00\00\00\00\09")
-  (data $39 $21 (i32.const 1395)
+  (data $42 $23 (i32.const 1395)
     "\0b")
-  (data $40 $21 (i32.const 1407)
+  (data $43 $23 (i32.const 1407)
     "\n\00\00\00\00\n\00\00\00\00\09\0b\00\00\00\00\00\0b\00\00\0b")
-  (data $41 $21 (i32.const 1453)
+  (data $44 $23 (i32.const 1453)
     "\0c")
-  (data $42 $21 (i32.const 1465)
+  (data $45 $23 (i32.const 1465)
     "\0c\00\00\00\00\0c\00\00\00\00\09\0c\00\00\00\00\00\0c\00\00\0c\00\000123456789ABCDEF")
-  (data $43 $21 (i32.const 1540)
+  (data $46 $23 (i32.const 1540)
     "\01")
-  (data $44 $21 (i32.const 1579)
+  (data $47 $23 (i32.const 1579)
     "\ff\ff\ff\ff\ff")
-  (data $45 $21 (i32.const 1648)
-    "\f0\07\00\00\9c\08\00\00\80\06\00\00\00\00\00\00\f0\07\00\00I\08\00\00\90\06\00\00\00\00\00\00\c8\07\00\00j\08\00\00\f0\07\00\00w\08\00\00p\06\00\00\00\00\00\00\f0\07\00\00\be\08\00\00"
-    "\80\06\00\00\00\00\00\00\f0\07\00\00\e0\08\00\00\a8\06")
-  (data $46 $21 (i32.const 1738)
+  (data $48 $23 (i32.const 1648)
+    "\f0\07\00\00\a1\08\00\00\80\06\00\00\00\00\00\00\f0\07\00\00N\08\00\00\90\06\00\00\00\00\00\00\c8\07\00\00o\08\00\00\f0\07\00\00|\08\00\00p\06\00\00\00\00\00\00\f0\07\00\00\c3\08\00\00"
+    "\80\06\00\00\00\00\00\00\f0\07\00\00\e5\08\00\00\a8\06")
+  (data $49 $23 (i32.const 1738)
     "\80\7f")
-  (data $47 $21 (i32.const 1928)
-    "h\09")
-  (data $48 $21 (i32.const 1988)
+  (data $50 $23 (i32.const 1928)
+    "l\09")
+  (data $51 $23 (i32.const 1988)
     "p\06\00\00\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00\02\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00\00\00\00\00\98\06\00\00\01\00\00\00\05\00\00\00\03\00\00\00\04\00\00\00\02\00\00\00"
-    "\02\00\00\00\02\00\00\00\02\00\00\00-+   0X0x\00(null)\00-0X+0X 0X-0x+0x 0x\00inf\00INF\00nan\00NAN\00"
-    ".\00%f\00N10__cxxabiv116__shim_type_infoE\00St9type_info\00N10__cxxabiv1"
-    "20__si_class_type_infoE\00N10__cxxabiv117__class_type_infoE\00N10__c"
-    "xxabiv117__pbase_type_infoE\00N10__cxxabiv119__pointer_type_infoE")
+    "\02\00\00\00\02\00\00\00\02\00\00\00inf \00-+   0X0x\00(null)\00-0X+0X 0X-0x+0x 0x\00inf\00INF\00nan"
+    "\00NAN\00.\00%f\00N10__cxxabiv116__shim_type_infoE\00St9type_info\00N10__cxx"
+    "abiv120__si_class_type_infoE\00N10__cxxabiv117__class_type_infoE\00N"
+    "10__cxxabiv117__pbase_type_infoE\00N10__cxxabiv119__pointer_type_i"
+    "nfoE")
   
   (func $stackAlloc (type $9)
     (param $0 i32)
     (result i32)
     (local $1 i32)
-    global.get $25
+    global.get $28
     local.set $1
     local.get $0
-    global.get $25
+    global.get $28
     i32.add
-    global.set $25
-    global.get $25
+    global.set $28
+    global.get $28
     i32.const 15
     i32.add
     i32.const -16
     i32.and
-    global.set $25
+    global.set $28
     local.get $1
     )
   
   (func $stackSave (type $8)
     (result i32)
-    global.get $25
+    global.get $28
     )
   
   (func $stackRestore (type $7)
     (param $0 i32)
     local.get $0
-    global.set $25
+    global.set $28
     )
   
   (func $establishStackSpace (type $2)
     (param $0 i32)
     (param $1 i32)
     local.get $0
-    global.set $25
+    global.set $28
     local.get $1
-    global.set $26
+    global.set $29
     )
   
   (func $_proxy_onStart (type $6)
@@ -157,18 +162,28 @@
     (param $3 i32)
     (param $4 i32)
     (local $5 i32)
-    global.get $25
+    (local $6 i32)
+    (local $7 i32)
+    global.get $28
     local.set $0
-    global.get $25
-    i32.const 48
+    global.get $28
+    i32.const 80
     i32.add
-    global.set $25
+    global.set $28
     local.get $0
-    i32.const 24
+    i32.const 48
     i32.add
     local.set $2
     local.get $0
-    i32.const 36
+    i32.const 24
+    i32.add
+    local.set $3
+    local.get $0
+    i32.const 12
+    i32.add
+    local.set $4
+    local.get $0
+    i32.const 60
     i32.add
     local.tee $1
     i64.const 0
@@ -186,43 +201,43 @@
     i32.const 0
     i32.store8 offset=4
     local.get $0
-    i32.const 12
+    i32.const 36
     i32.add
-    local.tee $3
-    global.get $24
+    local.tee $5
+    global.get $26
     f32.demote_f64
     call $__ZNSt3__29to_stringEf
     local.get $2
     local.get $1
-    local.get $3
+    local.get $5
     i32.load
-    local.get $3
-    local.get $3
+    local.get $5
+    local.get $5
     i32.load8_s offset=11
-    local.tee $4
+    local.tee $6
     i32.const 0
     i32.lt_s
-    local.tee $5
+    local.tee $7
     select
-    local.get $3
+    local.get $5
     i32.load offset=4
-    local.get $4
+    local.get $6
     i32.const 255
     i32.and
-    local.get $5
+    local.get $7
     select
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKcm
-    local.tee $4
+    local.tee $6
     i64.load align=4
     i64.store align=4
     local.get $2
-    local.get $4
+    local.get $6
     i32.load offset=8
     i32.store offset=8
-    local.get $4
+    local.get $6
     i64.const 0
     i64.store align=4
-    local.get $4
+    local.get $6
     i32.const 0
     i32.store offset=8
     i32.const 2
@@ -231,17 +246,17 @@
     local.get $2
     local.get $2
     i32.load8_s offset=11
-    local.tee $4
+    local.tee $6
     i32.const 0
     i32.lt_s
-    local.tee $5
+    local.tee $7
     select
     local.get $2
     i32.load offset=4
-    local.get $4
+    local.get $6
     i32.const 255
     i32.and
-    local.get $5
+    local.get $7
     select
     call $_proxy_log
     drop
@@ -254,12 +269,12 @@
       i32.load
       call $_free
     end ;; $if
-    local.get $3
+    local.get $5
     i32.load8_s offset=11
     i32.const 0
     i32.lt_s
     if $if_0
-      local.get $3
+      local.get $5
       i32.load
       call $_free
     end ;; $if_0
@@ -272,6 +287,121 @@
       i32.load
       call $_free
     end ;; $if_1
+    local.get $1
+    global.get $27
+    f32.demote_f64
+    call $__ZNSt3__29to_stringEf
+    local.get $3
+    local.get $1
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc
+    local.tee $2
+    i64.load align=4
+    i64.store align=4
+    local.get $3
+    local.get $2
+    i32.load offset=8
+    i32.store offset=8
+    local.get $2
+    i64.const 0
+    i64.store align=4
+    local.get $2
+    i32.const 0
+    i32.store offset=8
+    i32.const 3
+    local.get $3
+    i32.load
+    local.get $3
+    local.get $3
+    i32.load8_s offset=11
+    local.tee $2
+    i32.const 0
+    i32.lt_s
+    local.tee $5
+    select
+    local.get $3
+    i32.load offset=4
+    local.get $2
+    i32.const 255
+    i32.and
+    local.get $5
+    select
+    call $_proxy_log
+    drop
+    local.get $3
+    i32.load8_s offset=11
+    i32.const 0
+    i32.lt_s
+    if $if_2
+      local.get $3
+      i32.load
+      call $_free
+    end ;; $if_2
+    local.get $1
+    i32.load8_s offset=11
+    i32.const 0
+    i32.lt_s
+    if $if_3
+      local.get $1
+      i32.load
+      call $_free
+    end ;; $if_3
+    local.get $1
+    global.get $27
+    call $__ZNSt3__29to_stringEd
+    local.get $4
+    local.get $1
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc
+    local.tee $2
+    i64.load align=4
+    i64.store align=4
+    local.get $4
+    local.get $2
+    i32.load offset=8
+    i32.store offset=8
+    local.get $2
+    i64.const 0
+    i64.store align=4
+    local.get $2
+    i32.const 0
+    i32.store offset=8
+    i32.const 3
+    local.get $4
+    i32.load
+    local.get $4
+    local.get $4
+    i32.load8_s offset=11
+    local.tee $2
+    i32.const 0
+    i32.lt_s
+    local.tee $3
+    select
+    local.get $4
+    i32.load offset=4
+    local.get $2
+    i32.const 255
+    i32.and
+    local.get $3
+    select
+    call $_proxy_log
+    drop
+    local.get $4
+    i32.load8_s offset=11
+    i32.const 0
+    i32.lt_s
+    if $if_4
+      local.get $4
+      i32.load
+      call $_free
+    end ;; $if_4
+    local.get $1
+    i32.load8_s offset=11
+    i32.const 0
+    i32.lt_s
+    if $if_5
+      local.get $1
+      i32.load
+      call $_free
+    end ;; $if_5
     local.get $1
     i64.const 0
     i64.store align=4
@@ -289,8 +419,8 @@
     i32.store8 offset=4
     local.get $0
     local.get $1
-    i32.const 2100
-    i32.const 2108
+    i32.const 2105
+    i32.const 2113
     i32.const 1736
     i32.load
     i32.const 2147483647
@@ -339,36 +469,36 @@
     i32.load8_s offset=11
     i32.const 0
     i32.lt_s
-    if $if_2
+    if $if_6
       local.get $0
       i32.load
       call $_free
-    end ;; $if_2
+    end ;; $if_6
     local.get $1
     i32.load8_s offset=11
     i32.const 0
     i32.ge_s
-    if $if_3
+    if $if_7
       local.get $0
-      global.set $25
+      global.set $28
       return
-    end ;; $if_3
+    end ;; $if_7
     local.get $1
     i32.load
     call $_free
     local.get $0
-    global.set $25
+    global.set $28
     )
   
   (func $__GLOBAL__sub_I_status_cc (type $3)
     (local $0 i32)
     (local $1 i32)
-    global.get $25
+    global.get $28
     local.set $0
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     i32.const 2320
     i64.const 0
     i64.store align=4
@@ -407,7 +537,7 @@
     local.get $1
     call $__ZN6google8protobuf4util6StatusC2ENS1_5error4CodeENS0_11StringPieceE
     local.get $0
-    global.set $25
+    global.set $28
     )
   
   (func $__ZN6google8protobuf4util6StatusC2ENS1_5error4CodeENS0_11StringPieceE (type $10)
@@ -419,12 +549,12 @@
     (local $5 i32)
     (local $6 i32)
     (local $7 i32)
-    global.get $25
+    global.get $28
     local.set $5
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     local.get $0
     local.get $1
     i32.store
@@ -441,7 +571,7 @@
     i32.eqz
     if $if
       local.get $5
-      global.set $25
+      global.set $28
       return
     end ;; $if
     local.get $5
@@ -572,12 +702,69 @@
     i32.load offset=8
     i32.store offset=8
     local.get $5
-    global.set $25
+    global.set $28
     )
   
   (func $___errno_location (type $8)
     (result i32)
-    i32.const 2432
+    i32.const 2368
+    )
+  
+  (func $_strcmp (type $11)
+    (param $0 i32)
+    (param $1 i32)
+    (result i32)
+    (local $2 i32)
+    (local $3 i32)
+    local.get $0
+    i32.load8_s
+    local.tee $2
+    local.get $1
+    i32.load8_s
+    local.tee $3
+    i32.ne
+    local.get $2
+    i32.eqz
+    i32.or
+    if $if (result i32)
+      local.get $2
+      local.set $1
+      local.get $3
+    else
+      loop $loop (result i32)
+        local.get $0
+        i32.const 1
+        i32.add
+        local.tee $0
+        i32.load8_s
+        local.tee $2
+        local.get $1
+        i32.const 1
+        i32.add
+        local.tee $1
+        i32.load8_s
+        local.tee $3
+        i32.ne
+        local.get $2
+        i32.eqz
+        i32.or
+        if $if_0 (result i32)
+          local.get $2
+          local.set $1
+          local.get $3
+        else
+          br $loop
+        end ;; $if_0
+      end ;; $loop
+    end ;; $if
+    local.set $0
+    local.get $1
+    i32.const 255
+    i32.and
+    local.get $0
+    i32.const 255
+    i32.and
+    i32.sub
     )
   
   (func $_strlen (type $9)
@@ -661,280 +848,6 @@
     i32.sub
     )
   
-  (func $_frexp (type $11)
-    (param $0 f64)
-    (param $1 i32)
-    (result f64)
-    (local $2 i32)
-    (local $3 i64)
-    (local $4 i64)
-    block $block
-      block $block_0
-        local.get $0
-        i64.reinterpret_f64
-        local.tee $3
-        i64.const 52
-        i64.shr_u
-        local.tee $4
-        i32.wrap_i64
-        i32.const 2047
-        i32.and
-        local.tee $2
-        if $if
-          local.get $2
-          i32.const 2047
-          i32.eq
-          if $if_0
-            br $block
-          else
-            br $block_0
-          end ;; $if_0
-          unreachable
-        end ;; $if
-        local.get $1
-        local.get $0
-        f64.const 0x0.0000000000000p-1023
-        f64.ne
-        if $if_1 (result i32)
-          local.get $0
-          f64.const 0x1.0000000000000p+64
-          f64.mul
-          local.get $1
-          call $_frexp
-          local.set $0
-          local.get $1
-          i32.load
-          i32.const -64
-          i32.add
-        else
-          i32.const 0
-        end ;; $if_1
-        i32.store
-        br $block
-      end ;; $block_0
-      local.get $1
-      local.get $4
-      i32.wrap_i64
-      i32.const 2047
-      i32.and
-      i32.const -1022
-      i32.add
-      i32.store
-      local.get $3
-      i64.const -9218868437227405313
-      i64.and
-      i64.const 4602678819172646912
-      i64.or
-      f64.reinterpret_i64
-      local.set $0
-    end ;; $block
-    local.get $0
-    )
-  
-  (func $_strcmp (type $12)
-    (param $0 i32)
-    (param $1 i32)
-    (result i32)
-    (local $2 i32)
-    (local $3 i32)
-    local.get $0
-    i32.load8_s
-    local.tee $2
-    local.get $1
-    i32.load8_s
-    local.tee $3
-    i32.ne
-    local.get $2
-    i32.eqz
-    i32.or
-    if $if (result i32)
-      local.get $2
-      local.set $1
-      local.get $3
-    else
-      loop $loop (result i32)
-        local.get $0
-        i32.const 1
-        i32.add
-        local.tee $0
-        i32.load8_s
-        local.tee $2
-        local.get $1
-        i32.const 1
-        i32.add
-        local.tee $1
-        i32.load8_s
-        local.tee $3
-        i32.ne
-        local.get $2
-        i32.eqz
-        i32.or
-        if $if_0 (result i32)
-          local.get $2
-          local.set $1
-          local.get $3
-        else
-          br $loop
-        end ;; $if_0
-      end ;; $loop
-    end ;; $if
-    local.set $0
-    local.get $1
-    i32.const 255
-    i32.and
-    local.get $0
-    i32.const 255
-    i32.and
-    i32.sub
-    )
-  
-  (func $_memchr (type $12)
-    (param $0 i32)
-    (param $1 i32)
-    (result i32)
-    (local $2 i32)
-    block $block
-      block $block_0
-        block $block_1
-          local.get $1
-          i32.const 0
-          i32.ne
-          local.tee $2
-          local.get $0
-          i32.const 3
-          i32.and
-          i32.const 0
-          i32.ne
-          i32.and
-          if $if
-            loop $loop
-              local.get $0
-              i32.load8_u
-              i32.eqz
-              br_if $block_1
-              local.get $1
-              i32.const -1
-              i32.add
-              local.tee $1
-              i32.const 0
-              i32.ne
-              local.tee $2
-              local.get $0
-              i32.const 1
-              i32.add
-              local.tee $0
-              i32.const 3
-              i32.and
-              i32.const 0
-              i32.ne
-              i32.and
-              br_if $loop
-            end ;; $loop
-          end ;; $if
-          local.get $2
-          i32.eqz
-          br_if $block_0
-        end ;; $block_1
-        local.get $0
-        i32.load8_u
-        i32.eqz
-        if $if_0
-          local.get $1
-          i32.eqz
-          br_if $block_0
-          br $block
-        end ;; $if_0
-        block $block_2
-          block $block_3
-            local.get $1
-            i32.const 3
-            i32.le_u
-            br_if $block_3
-            loop $loop_0
-              local.get $0
-              i32.load
-              local.tee $2
-              i32.const -2139062144
-              i32.and
-              i32.const -2139062144
-              i32.xor
-              local.get $2
-              i32.const -16843009
-              i32.add
-              i32.and
-              i32.eqz
-              if $if_1
-                local.get $0
-                i32.const 4
-                i32.add
-                local.set $0
-                local.get $1
-                i32.const -4
-                i32.add
-                local.tee $1
-                i32.const 3
-                i32.gt_u
-                br_if $loop_0
-                br $block_3
-              end ;; $if_1
-            end ;; $loop_0
-            br $block_2
-          end ;; $block_3
-          local.get $1
-          i32.eqz
-          br_if $block_0
-        end ;; $block_2
-        loop $loop_1
-          local.get $0
-          i32.load8_u
-          i32.eqz
-          br_if $block
-          local.get $1
-          i32.const -1
-          i32.add
-          local.tee $1
-          i32.eqz
-          br_if $block_0
-          local.get $0
-          i32.const 1
-          i32.add
-          local.set $0
-          br $loop_1
-          unreachable
-        end ;; $loop_1
-        unreachable
-      end ;; $block_0
-      i32.const 0
-      local.set $0
-    end ;; $block
-    local.get $0
-    )
-  
-  (func $_snprintf (type $0)
-    (param $0 i32)
-    (param $1 i32)
-    (param $2 i32)
-    (result i32)
-    (local $3 i32)
-    global.get $25
-    local.set $3
-    global.get $25
-    i32.const 16
-    i32.add
-    global.set $25
-    local.get $3
-    local.get $2
-    i32.store
-    local.get $0
-    local.get $1
-    local.get $3
-    call $_vsnprintf
-    local.set $0
-    local.get $3
-    global.set $25
-    local.get $0
-    )
-  
   (func $_vsnprintf (type $0)
     (param $0 i32)
     (param $1 i32)
@@ -942,12 +855,12 @@
     (result i32)
     (local $3 i32)
     (local $4 i32)
-    global.get $25
+    global.get $28
     local.set $3
-    global.get $25
+    global.get $28
     i32.const 160
     i32.add
-    global.set $25
+    global.set $28
     local.get $3
     i32.const 144
     i32.add
@@ -967,7 +880,7 @@
         br_if $block_0
         local.get $1
         if $if (result i32)
-          i32.const 2432
+          i32.const 2368
           i32.const 75
           i32.store
           i32.const -1
@@ -1031,7 +944,7 @@
       end ;; $if_0
     end ;; $block
     local.get $3
-    global.set $25
+    global.set $28
     local.get $0
     )
   
@@ -1066,12 +979,12 @@
     (local $26 i64)
     (local $27 i64)
     (local $28 f64)
-    global.get $25
+    global.get $28
     local.set $21
-    global.get $25
+    global.get $28
     i32.const 560
     i32.add
-    global.set $25
+    global.set $28
     local.get $21
     i32.const 32
     i32.add
@@ -1103,13 +1016,13 @@
       local.tee $1
       i64.reinterpret_f64
       local.set $25
-      i32.const 2081
+      i32.const 2086
       local.set $18
       i32.const 1
     else
-      i32.const 2084
+      i32.const 2089
+      i32.const 2092
       i32.const 2087
-      i32.const 2082
       local.get $4
       i32.const 1
       i32.and
@@ -1132,8 +1045,8 @@
     i64.const 9218868437227405312
     i64.eq
     if $if_0 (result i32)
-      i32.const 2108
-      i32.const 2112
+      i32.const 2113
+      i32.const 2117
       local.get $5
       i32.const 32
       i32.and
@@ -1141,8 +1054,8 @@
       i32.ne
       local.tee $3
       select
-      i32.const 2100
-      i32.const 2104
+      i32.const 2105
+      i32.const 2109
       local.get $3
       select
       local.get $1
@@ -1160,7 +1073,7 @@
       local.get $4
       i32.const -65537
       i32.and
-      call $_pad_524
+      call $_pad_531
       local.get $0
       local.get $18
       local.get $19
@@ -1176,7 +1089,7 @@
       local.get $4
       i32.const 8192
       i32.xor
-      call $_pad_524
+      call $_pad_531
       local.get $3
     else
       block $block (result i32)
@@ -1434,7 +1347,7 @@
           i32.add
           local.tee $3
           local.get $4
-          call $_pad_524
+          call $_pad_531
           local.get $0
           local.get $9
           local.get $8
@@ -1446,7 +1359,7 @@
           local.get $4
           i32.const 65536
           i32.xor
-          call $_pad_524
+          call $_pad_531
           local.get $0
           local.get $12
           local.get $5
@@ -1466,7 +1379,7 @@
           i32.sub
           i32.const 0
           i32.const 0
-          call $_pad_524
+          call $_pad_531
           local.get $0
           local.get $6
           local.get $7
@@ -1478,7 +1391,7 @@
           local.get $4
           i32.const 8192
           i32.xor
-          call $_pad_524
+          call $_pad_531
           local.get $3
           br $block
         end ;; $if_2
@@ -2385,7 +2298,7 @@
         i32.add
         local.tee $14
         local.get $4
-        call $_pad_524
+        call $_pad_531
         local.get $0
         local.get $18
         local.get $19
@@ -2397,7 +2310,7 @@
         local.get $4
         i32.const 65536
         i32.xor
-        call $_pad_524
+        call $_pad_531
         local.get $15
         if $if_49
           local.get $12
@@ -2490,7 +2403,7 @@
           i32.eqz
           if $if_54
             local.get $0
-            i32.const 2116
+            i32.const 2121
             i32.const 1
             call $_out
           end ;; $if_54
@@ -2569,7 +2482,7 @@
           i32.add
           i32.const 9
           i32.const 0
-          call $_pad_524
+          call $_pad_531
         else
           local.get $0
           i32.const 48
@@ -2649,7 +2562,7 @@
                     br $block_4
                   end ;; $if_61
                   local.get $0
-                  i32.const 2116
+                  i32.const 2121
                   i32.const 1
                   call $_out
                   local.get $6
@@ -2712,7 +2625,7 @@
           i32.add
           i32.const 18
           i32.const 0
-          call $_pad_524
+          call $_pad_531
           local.get $0
           local.get $9
           local.get $16
@@ -2727,13 +2640,13 @@
         local.get $4
         i32.const 8192
         i32.xor
-        call $_pad_524
+        call $_pad_531
         local.get $14
       end ;; $block
     end ;; $if_0
     local.set $0
     local.get $21
-    global.set $25
+    global.set $28
     local.get $2
     local.get $0
     local.get $0
@@ -2766,7 +2679,7 @@
     f64.store
     )
   
-  (func $___vfprintf_internal (type $12)
+  (func $___vfprintf_internal (type $11)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -2775,12 +2688,12 @@
     (local $4 i32)
     (local $5 i32)
     (local $6 i32)
-    global.get $25
+    global.get $28
     local.set $2
-    global.get $25
+    global.get $28
     i32.const 224
     i32.add
-    global.set $25
+    global.set $28
     local.get $2
     i32.const 160
     i32.add
@@ -2890,7 +2803,7 @@
           i32.and
           i32.const 2
           i32.add
-          call_indirect $20 (type $0)
+          call_indirect $22 (type $0)
           drop
           local.get $1
           i32.const -1
@@ -2933,11 +2846,11 @@
     end ;; $if
     local.set $0
     local.get $2
-    global.set $25
+    global.set $28
     local.get $0
     )
   
-  (func $_printf_core (type $13)
+  (func $_printf_core (type $12)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -2965,12 +2878,12 @@
     (local $23 i32)
     (local $24 i32)
     (local $25 i64)
-    global.get $25
+    global.get $28
     local.set $15
-    global.get $25
+    global.get $28
     i32.const -64
     i32.sub
-    global.set $25
+    global.set $28
     local.get $15
     i32.const 40
     i32.add
@@ -2987,7 +2900,7 @@
     i32.const 56
     i32.add
     local.tee $11
-    i32.const 2118
+    i32.const 2123
     i32.store
     local.get $0
     i32.const 0
@@ -3017,7 +2930,7 @@
                 i32.sub
                 i32.gt_s
                 if $if_0 (result i32)
-                  i32.const 2432
+                  i32.const 2368
                   i32.const 75
                   i32.store
                   i32.const -1
@@ -3731,7 +3644,7 @@
                                           local.set $4
                                           i32.const 0
                                           local.set $12
-                                          i32.const 2064
+                                          i32.const 2069
                                           local.set $8
                                           br $block_14
                                         end ;; $block_25
@@ -3747,13 +3660,13 @@
                                           i64.sub
                                           local.tee $25
                                           i64.store
-                                          i32.const 2064
+                                          i32.const 2069
                                           local.set $8
                                           i32.const 1
                                         else
-                                          i32.const 2065
-                                          i32.const 2066
-                                          i32.const 2064
+                                          i32.const 2070
+                                          i32.const 2071
+                                          i32.const 2069
                                           local.get $7
                                           i32.const 1
                                           i32.and
@@ -3777,7 +3690,7 @@
                                       local.set $25
                                       i32.const 0
                                       local.set $12
-                                      i32.const 2064
+                                      i32.const 2069
                                       local.set $8
                                       br $block_16
                                     end ;; $block_23
@@ -3793,7 +3706,7 @@
                                     local.set $5
                                     i32.const 0
                                     local.set $12
-                                    i32.const 2064
+                                    i32.const 2069
                                     local.set $8
                                     local.get $18
                                     local.set $4
@@ -3802,7 +3715,7 @@
                                   local.get $10
                                   i32.load
                                   local.tee $5
-                                  i32.const 2074
+                                  i32.const 2079
                                   local.get $5
                                   select
                                   local.tee $6
@@ -3822,7 +3735,7 @@
                                   local.set $5
                                   i32.const 0
                                   local.set $12
-                                  i32.const 2064
+                                  i32.const 2069
                                   local.set $8
                                   local.get $4
                                   local.get $6
@@ -3858,7 +3771,7 @@
                                 local.get $16
                                 i32.const 0
                                 local.get $7
-                                call $_pad_524
+                                call $_pad_531
                                 i32.const 0
                                 local.set $4
                                 br $block_13
@@ -3873,7 +3786,7 @@
                             local.get $7
                             local.get $6
                             i32.const 1
-                            call_indirect $20 (type $1)
+                            call_indirect $22 (type $1)
                             local.set $4
                             br $block_9
                           end ;; $block_18
@@ -3883,7 +3796,7 @@
                           local.set $5
                           i32.const 0
                           local.set $12
-                          i32.const 2064
+                          i32.const 2069
                           local.set $8
                           local.get $18
                           local.set $4
@@ -3911,11 +3824,11 @@
                         local.tee $8
                         select
                         local.set $12
-                        i32.const 2064
+                        i32.const 2069
                         local.get $6
                         i32.const 4
                         i32.shr_u
-                        i32.const 2064
+                        i32.const 2069
                         i32.add
                         local.get $8
                         select
@@ -3981,7 +3894,7 @@
                     local.get $16
                     local.get $4
                     local.get $7
-                    call $_pad_524
+                    call $_pad_531
                     local.get $4
                     if $if_28
                       i32.const 0
@@ -4075,7 +3988,7 @@
                 local.get $7
                 i32.const 8192
                 i32.xor
-                call $_pad_524
+                call $_pad_531
                 local.get $16
                 local.get $4
                 local.get $16
@@ -4108,7 +4021,7 @@
               local.tee $4
               local.get $5
               local.get $7
-              call $_pad_524
+              call $_pad_531
               local.get $0
               local.get $8
               local.get $12
@@ -4120,13 +4033,13 @@
               local.get $7
               i32.const 65536
               i32.xor
-              call $_pad_524
+              call $_pad_531
               local.get $0
               i32.const 48
               local.get $14
               local.get $13
               i32.const 0
-              call $_pad_524
+              call $_pad_531
               local.get $0
               local.get $6
               local.get $13
@@ -4138,7 +4051,7 @@
               local.get $7
               i32.const 8192
               i32.xor
-              call $_pad_524
+              call $_pad_531
             end ;; $block_9
             local.get $22
             local.set $7
@@ -4211,7 +4124,7 @@
       end ;; $if_29
     end ;; $block
     local.get $15
-    global.set $25
+    global.set $28
     local.get $9
     )
   
@@ -4499,12 +4412,12 @@
         local.get $0
         local.get $2
         i32.const 16
-        call_indirect $20 (type $2)
+        call_indirect $22 (type $2)
       end ;; $block
     end ;; $if
     )
   
-  (func $_fmt_x (type $14)
+  (func $_fmt_x (type $13)
     (param $0 i64)
     (param $1 i32)
     (param $2 i32)
@@ -4540,7 +4453,7 @@
     local.get $1
     )
   
-  (func $_fmt_o (type $15)
+  (func $_fmt_o (type $14)
     (param $0 i64)
     (param $1 i32)
     (result i32)
@@ -4572,7 +4485,7 @@
     local.get $1
     )
   
-  (func $_fmt_u (type $15)
+  (func $_fmt_u (type $14)
     (param $0 i64)
     (param $1 i32)
     (result i32)
@@ -4645,19 +4558,141 @@
     local.get $1
     )
   
-  (func $_pad_524 (type $6)
+  (func $_memchr (type $11)
+    (param $0 i32)
+    (param $1 i32)
+    (result i32)
+    (local $2 i32)
+    block $block
+      block $block_0
+        block $block_1
+          local.get $1
+          i32.const 0
+          i32.ne
+          local.tee $2
+          local.get $0
+          i32.const 3
+          i32.and
+          i32.const 0
+          i32.ne
+          i32.and
+          if $if
+            loop $loop
+              local.get $0
+              i32.load8_u
+              i32.eqz
+              br_if $block_1
+              local.get $1
+              i32.const -1
+              i32.add
+              local.tee $1
+              i32.const 0
+              i32.ne
+              local.tee $2
+              local.get $0
+              i32.const 1
+              i32.add
+              local.tee $0
+              i32.const 3
+              i32.and
+              i32.const 0
+              i32.ne
+              i32.and
+              br_if $loop
+            end ;; $loop
+          end ;; $if
+          local.get $2
+          i32.eqz
+          br_if $block_0
+        end ;; $block_1
+        local.get $0
+        i32.load8_u
+        i32.eqz
+        if $if_0
+          local.get $1
+          i32.eqz
+          br_if $block_0
+          br $block
+        end ;; $if_0
+        block $block_2
+          block $block_3
+            local.get $1
+            i32.const 3
+            i32.le_u
+            br_if $block_3
+            loop $loop_0
+              local.get $0
+              i32.load
+              local.tee $2
+              i32.const -2139062144
+              i32.and
+              i32.const -2139062144
+              i32.xor
+              local.get $2
+              i32.const -16843009
+              i32.add
+              i32.and
+              i32.eqz
+              if $if_1
+                local.get $0
+                i32.const 4
+                i32.add
+                local.set $0
+                local.get $1
+                i32.const -4
+                i32.add
+                local.tee $1
+                i32.const 3
+                i32.gt_u
+                br_if $loop_0
+                br $block_3
+              end ;; $if_1
+            end ;; $loop_0
+            br $block_2
+          end ;; $block_3
+          local.get $1
+          i32.eqz
+          br_if $block_0
+        end ;; $block_2
+        loop $loop_1
+          local.get $0
+          i32.load8_u
+          i32.eqz
+          br_if $block
+          local.get $1
+          i32.const -1
+          i32.add
+          local.tee $1
+          i32.eqz
+          br_if $block_0
+          local.get $0
+          i32.const 1
+          i32.add
+          local.set $0
+          br $loop_1
+          unreachable
+        end ;; $loop_1
+        unreachable
+      end ;; $block_0
+      i32.const 0
+      local.set $0
+    end ;; $block
+    local.get $0
+    )
+  
+  (func $_pad_531 (type $6)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
     (param $3 i32)
     (param $4 i32)
     (local $5 i32)
-    global.get $25
+    global.get $28
     local.set $5
-    global.get $25
+    global.get $28
     i32.const 256
     i32.add
-    global.set $25
+    global.set $28
     local.get $4
     i32.const 73728
     i32.and
@@ -4716,10 +4751,10 @@
       call $_out
     end ;; $if
     local.get $5
-    global.set $25
+    global.set $28
     )
   
-  (func $_wctomb (type $12)
+  (func $_wctomb (type $11)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -4733,7 +4768,7 @@
     end ;; $if
     )
   
-  (func $_wcrtomb (type $12)
+  (func $_wcrtomb (type $11)
     (param $0 i32)
     (param $1 i32)
     (result i32)
@@ -4767,7 +4802,7 @@
             i32.const 1
             br $block
           else
-            i32.const 2432
+            i32.const 2368
             i32.const 84
             i32.store
             i32.const -1
@@ -4872,7 +4907,7 @@
           i32.store8 offset=3
           i32.const 4
         else
-          i32.const 2432
+          i32.const 2368
           i32.const 84
           i32.store
           i32.const -1
@@ -4924,7 +4959,7 @@
         i32.and
         i32.const 2
         i32.add
-        call_indirect $20 (type $0)
+        call_indirect $22 (type $0)
         drop
         br $block
       end ;; $if_0
@@ -4971,7 +5006,7 @@
           i32.and
           i32.const 2
           i32.add
-          call_indirect $20 (type $0)
+          call_indirect $22 (type $0)
           local.get $3
           i32.lt_u
           br_if $block
@@ -5052,6 +5087,76 @@
     end ;; $if
     )
   
+  (func $_frexp (type $15)
+    (param $0 f64)
+    (param $1 i32)
+    (result f64)
+    (local $2 i32)
+    (local $3 i64)
+    (local $4 i64)
+    block $block
+      block $block_0
+        local.get $0
+        i64.reinterpret_f64
+        local.tee $3
+        i64.const 52
+        i64.shr_u
+        local.tee $4
+        i32.wrap_i64
+        i32.const 2047
+        i32.and
+        local.tee $2
+        if $if
+          local.get $2
+          i32.const 2047
+          i32.eq
+          if $if_0
+            br $block
+          else
+            br $block_0
+          end ;; $if_0
+          unreachable
+        end ;; $if
+        local.get $1
+        local.get $0
+        f64.const 0x0.0000000000000p-1023
+        f64.ne
+        if $if_1 (result i32)
+          local.get $0
+          f64.const 0x1.0000000000000p+64
+          f64.mul
+          local.get $1
+          call $_frexp
+          local.set $0
+          local.get $1
+          i32.load
+          i32.const -64
+          i32.add
+        else
+          i32.const 0
+        end ;; $if_1
+        i32.store
+        br $block
+      end ;; $block_0
+      local.get $1
+      local.get $4
+      i32.wrap_i64
+      i32.const 2047
+      i32.and
+      i32.const -1022
+      i32.add
+      i32.store
+      local.get $3
+      i64.const -9218868437227405313
+      i64.and
+      i64.const 4602678819172646912
+      i64.or
+      f64.reinterpret_i64
+      local.set $0
+    end ;; $block
+    local.get $0
+    )
+  
   (func $_sn_write (type $0)
     (param $0 i32)
     (param $1 i32)
@@ -5086,6 +5191,31 @@
     local.get $2
     )
   
+  (func $_snprintf (type $0)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
+    (result i32)
+    (local $3 i32)
+    global.get $28
+    local.set $3
+    global.get $28
+    i32.const 16
+    i32.add
+    global.set $28
+    local.get $3
+    local.get $2
+    i32.store
+    local.get $0
+    local.get $1
+    local.get $3
+    call $_vsnprintf
+    local.set $0
+    local.get $3
+    global.set $28
+    local.get $0
+    )
+  
   (func $_malloc (type $9)
     (param $0 i32)
     (result i32)
@@ -5111,12 +5241,12 @@
     (local $20 i32)
     (local $21 i32)
     (local $22 i32)
-    global.get $25
+    global.get $28
     local.set $17
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     local.get $0
     i32.const 245
     i32.lt_u
@@ -5216,7 +5346,7 @@
         i32.or
         i32.store offset=4
         local.get $17
-        global.set $25
+        global.set $28
         local.get $1
         return
       end ;; $if_0
@@ -5443,7 +5573,7 @@
           local.get $3
           i32.store
           local.get $17
-          global.set $25
+          global.set $28
           local.get $9
           return
         end ;; $if_5
@@ -5893,7 +6023,7 @@
             i32.store
           end ;; $if_32
           local.get $17
-          global.set $25
+          global.set $28
           local.get $9
           i32.const 8
           i32.add
@@ -6802,7 +6932,7 @@
                   end ;; $block_10
                 end ;; $if_68
                 local.get $17
-                global.set $25
+                global.set $28
                 local.get $2
                 i32.const 8
                 i32.add
@@ -8132,7 +8262,7 @@
                       end ;; $block_26
                     end ;; $if_104
                     local.get $17
-                    global.set $25
+                    global.set $28
                     local.get $12
                     i32.const 8
                     i32.add
@@ -8875,7 +9005,7 @@
               br $block_14
             end ;; $if_153
           end ;; $block_15
-          i32.const 2432
+          i32.const 2368
           i32.const 12
           i32.store
           br $block_12
@@ -8900,14 +9030,14 @@
         i32.store offset=4
       end ;; $block_13
       local.get $17
-      global.set $25
+      global.set $28
       local.get $0
       i32.const 8
       i32.add
       return
     end ;; $block_12
     local.get $17
-    global.set $25
+    global.set $28
     i32.const 0
     )
   
@@ -10170,6 +10300,36 @@
     end ;; $if
     )
   
+  (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev (type $7)
+    (param $0 i32)
+    local.get $0
+    i32.load8_s offset=11
+    i32.const 0
+    i32.lt_s
+    if $if
+      local.get $0
+      i32.load offset=8
+      drop
+      local.get $0
+      i32.load
+      call $_free
+    end ;; $if
+    )
+  
+  (func $__ZNSt3__211char_traitsIcE4moveEPcPKcm (type $10)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
+    local.get $2
+    if $if
+      local.get $0
+      local.get $1
+      local.get $2
+      call $_memmove
+      drop
+    end ;; $if
+    )
+  
   (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE21__grow_by_and_replaceEmmmmmmPKc (type $16)
     (param $0 i32)
     (param $1 i32)
@@ -10181,12 +10341,12 @@
     (local $7 i32)
     (local $8 i32)
     (local $9 i32)
-    global.get $25
+    global.get $28
     local.set $7
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     i32.const -18
     local.get $1
     i32.sub
@@ -10301,7 +10461,7 @@
     i32.load8_s
     i32.store8
     local.get $7
-    global.set $25
+    global.set $28
     )
   
   (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6resizeEmc (type $2)
@@ -10310,12 +10470,12 @@
     (local $2 i32)
     (local $3 i32)
     (local $4 i32)
-    global.get $25
+    global.get $28
     local.set $2
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     local.get $0
     i32.load8_s offset=11
     local.tee $3
@@ -10373,7 +10533,7 @@
       end ;; $if_1
     end ;; $if_0
     local.get $2
-    global.set $25
+    global.set $28
     )
   
   (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEmc (type $2)
@@ -10383,12 +10543,12 @@
     (local $3 i32)
     (local $4 i32)
     (local $5 i32)
-    global.get $25
+    global.get $28
     local.set $5
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     local.get $1
     if $if
       local.get $0
@@ -10482,7 +10642,7 @@
       i32.store8
     end ;; $if
     local.get $5
-    global.set $25
+    global.set $28
     )
   
   (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE9__grow_byEmmmmmm (type $6)
@@ -10733,12 +10893,12 @@
     (local $4 i32)
     (local $5 i32)
     (local $6 i32)
-    global.get $25
+    global.get $28
     local.set $5
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     local.get $0
     i32.load8_s offset=11
     local.tee $4
@@ -10825,20 +10985,168 @@
       end ;; $if_1
     end ;; $if_0
     local.get $5
-    global.set $25
+    global.set $28
     local.get $0
+    )
+  
+  (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKcm (type $11)
+    (param $0 i32)
+    (param $1 i32)
+    (result i32)
+    (local $2 i32)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    (local $6 i32)
+    i32.const 2064
+    local.set $6
+    global.get $28
+    local.set $5
+    global.get $28
+    i32.const 16
+    i32.add
+    global.set $28
+    local.get $0
+    i32.load8_s offset=11
+    local.tee $2
+    i32.const 0
+    i32.lt_s
+    local.tee $4
+    if $if (result i32)
+      local.get $0
+      i32.load offset=4
+    else
+      local.get $2
+      i32.const 255
+      i32.and
+    end ;; $if
+    local.tee $2
+    i32.const 0
+    i32.lt_u
+    if $if_0
+      call $_abort
+    end ;; $if_0
+    local.get $4
+    if $if_1 (result i32)
+      local.get $0
+      i32.load offset=8
+      i32.const 2147483647
+      i32.and
+      i32.const -1
+      i32.add
+    else
+      i32.const 10
+    end ;; $if_1
+    local.tee $3
+    local.get $2
+    i32.sub
+    local.get $1
+    i32.lt_u
+    if $if_2
+      local.get $0
+      local.get $3
+      local.get $1
+      local.get $2
+      i32.add
+      local.get $3
+      i32.sub
+      local.get $2
+      i32.const 0
+      local.get $1
+      i32.const 2064
+      call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE21__grow_by_and_replaceEmmmmmmPKc
+    else
+      local.get $1
+      if $if_3
+        local.get $4
+        if $if_4 (result i32)
+          local.get $0
+          i32.load
+        else
+          local.get $0
+        end ;; $if_4
+        local.tee $4
+        local.set $3
+        local.get $2
+        if $if_5
+          local.get $1
+          i32.const 2064
+          i32.add
+          i32.const 2064
+          local.get $3
+          i32.const 2064
+          i32.le_u
+          local.get $2
+          local.get $4
+          i32.add
+          i32.const 2064
+          i32.gt_u
+          i32.and
+          select
+          local.set $6
+          local.get $1
+          local.get $3
+          i32.add
+          local.get $3
+          local.get $2
+          call $__ZNSt3__211char_traitsIcE4moveEPcPKcm
+        end ;; $if_5
+        local.get $3
+        local.get $6
+        local.get $1
+        call $__ZNSt3__211char_traitsIcE4moveEPcPKcm
+        local.get $1
+        local.get $2
+        i32.add
+        local.set $1
+        local.get $0
+        i32.load8_s offset=11
+        i32.const 0
+        i32.lt_s
+        if $if_6
+          local.get $0
+          local.get $1
+          i32.store offset=4
+        else
+          local.get $0
+          local.get $1
+          i32.store8 offset=11
+        end ;; $if_6
+        local.get $5
+        i32.const 0
+        i32.store8
+        local.get $1
+        local.get $4
+        i32.add
+        local.get $5
+        i32.load8_s
+        i32.store8
+      end ;; $if_3
+    end ;; $if_2
+    local.get $5
+    global.set $28
+    local.get $0
+    )
+  
+  (func $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKc (type $9)
+    (param $0 i32)
+    (result i32)
+    local.get $0
+    i32.const 2064
+    call $_strlen
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6insertEmPKcm
     )
   
   (func $__ZNSt3__29to_stringEf (type $17)
     (param $0 i32)
     (param $1 f32)
     (local $2 i32)
-    global.get $25
+    global.get $28
     local.set $2
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     local.get $2
     call $__ZNKSt3__212_GLOBAL__N_114initial_stringINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEfLb1EEclEv
     local.get $0
@@ -10846,19 +11154,9 @@
     local.get $1
     call $__ZNSt3__212_GLOBAL__N_19as_stringINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEPFiPcmPKczEfEET_T0_SD_PKNSD_10value_typeET1_
     local.get $2
-    i32.load8_s offset=11
-    i32.const 0
-    i32.lt_s
-    if $if
-      local.get $2
-      i32.load offset=8
-      drop
-      local.get $2
-      i32.load
-      call $_free
-    end ;; $if
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
     local.get $2
-    global.set $25
+    global.set $28
     )
   
   (func $__ZNKSt3__212_GLOBAL__N_114initial_stringINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEfLb1EEclEv (type $7)
@@ -10915,12 +11213,12 @@
     (local $4 i32)
     (local $5 i32)
     (local $6 f64)
-    global.get $25
+    global.get $28
     local.set $5
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     local.get $1
     i32.load8_s offset=11
     local.tee $3
@@ -11021,7 +11319,142 @@
       end ;; $if_2
     end ;; $loop_0
     local.get $5
-    global.set $25
+    global.set $28
+    )
+  
+  (func $__ZNSt3__29to_stringEd (type $19)
+    (param $0 i32)
+    (param $1 f64)
+    (local $2 i32)
+    global.get $28
+    local.set $2
+    global.get $28
+    i32.const 16
+    i32.add
+    global.set $28
+    local.get $2
+    call $__ZNKSt3__212_GLOBAL__N_114initial_stringINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEfLb1EEclEv
+    local.get $0
+    local.get $2
+    local.get $1
+    call $__ZNSt3__212_GLOBAL__N_19as_stringINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEPFiPcmPKczEdEET_T0_SD_PKNSD_10value_typeET1_
+    local.get $2
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEED2Ev
+    local.get $2
+    global.set $28
+    )
+  
+  (func $__ZNSt3__212_GLOBAL__N_19as_stringINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEPFiPcmPKczEdEET_T0_SD_PKNSD_10value_typeET1_ (type $20)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 f64)
+    (local $3 i32)
+    (local $4 i32)
+    (local $5 i32)
+    global.get $28
+    local.set $5
+    global.get $28
+    i32.const 16
+    i32.add
+    global.set $28
+    local.get $1
+    i32.load8_s offset=11
+    local.tee $3
+    i32.const 0
+    i32.lt_s
+    if $if (result i32)
+      local.get $1
+      i32.load offset=4
+    else
+      local.get $3
+      i32.const 255
+      i32.and
+    end ;; $if
+    local.set $4
+    loop $loop
+      block $block
+        local.get $3
+        i32.const 24
+        i32.shl
+        i32.const 24
+        i32.shr_s
+        i32.const 0
+        i32.lt_s
+        if $if_0 (result i32)
+          local.get $1
+          i32.load
+        else
+          local.get $1
+        end ;; $if_0
+        local.set $3
+        local.get $5
+        local.get $2
+        f64.store
+        local.get $1
+        local.get $3
+        local.get $4
+        i32.const 1
+        i32.add
+        local.get $5
+        call $_snprintf
+        local.tee $3
+        i32.const -1
+        i32.gt_s
+        if $if_1 (result i32)
+          local.get $3
+          local.get $4
+          i32.le_u
+          br_if $block
+          local.get $3
+        else
+          local.get $4
+          i32.const 1
+          i32.shl
+          i32.const 1
+          i32.or
+        end ;; $if_1
+        local.tee $4
+        call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6resizeEmc
+        local.get $1
+        i32.load8_s offset=11
+        local.set $3
+        br $loop
+      end ;; $block
+    end ;; $loop
+    local.get $1
+    local.get $3
+    call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6resizeEmc
+    local.get $0
+    local.get $1
+    i64.load align=4
+    i64.store align=4
+    local.get $0
+    local.get $1
+    i32.load offset=8
+    i32.store offset=8
+    i32.const 0
+    local.set $0
+    loop $loop_0
+      local.get $0
+      i32.const 3
+      i32.ne
+      if $if_2
+        local.get $0
+        i32.const 2
+        i32.shl
+        local.get $1
+        i32.add
+        i32.const 0
+        i32.store
+        local.get $0
+        i32.const 1
+        i32.add
+        local.set $0
+        br $loop_0
+      end ;; $if_2
+    end ;; $loop_0
+    local.get $5
+    global.set $28
     )
   
   (func $__ZN10__cxxabiv116__shim_type_infoD2Ev (type $7)
@@ -11041,12 +11474,12 @@
     (param $2 i32)
     (result i32)
     (local $3 i32)
-    global.get $25
+    global.get $28
     local.set $3
-    global.get $25
+    global.get $28
     i32.const -64
     i32.sub
-    global.set $25
+    global.set $28
     local.get $0
     local.get $1
     i32.const 0
@@ -11111,7 +11544,7 @@
           i32.and
           i32.const 17
           i32.add
-          call_indirect $20 (type $4)
+          call_indirect $22 (type $4)
           local.get $3
           i32.load offset=24
           i32.const 1
@@ -11134,7 +11567,7 @@
     end ;; $if
     local.set $0
     local.get $3
-    global.set $25
+    global.set $28
     local.get $0
     )
   
@@ -11430,19 +11863,19 @@
     end ;; $if
     )
   
-  (func $___dynamic_cast (type $12)
+  (func $___dynamic_cast (type $11)
     (param $0 i32)
     (param $1 i32)
     (result i32)
     (local $2 i32)
     (local $3 i32)
     (local $4 i32)
-    global.get $25
+    global.get $28
     local.set $2
-    global.get $25
+    global.get $28
     i32.const -64
     i32.sub
-    global.set $25
+    global.set $28
     local.get $0
     local.get $0
     i32.load
@@ -11511,7 +11944,7 @@
       i32.and
       i32.const 25
       i32.add
-      call_indirect $20 (type $5)
+      call_indirect $22 (type $5)
       local.get $4
       i32.const 0
       local.get $2
@@ -11533,7 +11966,7 @@
         i32.and
         i32.const 21
         i32.add
-        call_indirect $20 (type $6)
+        call_indirect $22 (type $6)
         block $block_0
           block $block_1
             block $block_2
@@ -11595,7 +12028,7 @@
     end ;; $if
     local.set $0
     local.get $2
-    global.set $25
+    global.set $28
     local.get $0
     )
   
@@ -11636,7 +12069,7 @@
       i32.and
       i32.const 25
       i32.add
-      call_indirect $20 (type $5)
+      call_indirect $22 (type $5)
     end ;; $if
     )
   
@@ -11693,7 +12126,7 @@
           i32.and
           i32.const 21
           i32.add
-          call_indirect $20 (type $6)
+          call_indirect $22 (type $6)
           br $block
         end ;; $if_2
         local.get $1
@@ -11737,7 +12170,7 @@
               i32.and
               i32.const 25
               i32.add
-              call_indirect $20 (type $5)
+              call_indirect $22 (type $5)
               local.get $1
               i32.load8_s offset=53
               if $if_6
@@ -11826,7 +12259,7 @@
       i32.and
       i32.const 17
       i32.add
-      call_indirect $20 (type $4)
+      call_indirect $22 (type $4)
     end ;; $if
     )
   
@@ -11837,12 +12270,12 @@
     (result i32)
     (local $3 i32)
     (local $4 i32)
-    global.get $25
+    global.get $28
     local.set $3
-    global.get $25
+    global.get $28
     i32.const 16
     i32.add
-    global.set $25
+    global.set $28
     local.get $3
     local.get $2
     i32.load
@@ -11859,7 +12292,7 @@
     i32.and
     i32.const 2
     i32.add
-    call_indirect $20 (type $0)
+    call_indirect $22 (type $0)
     local.tee $0
     if $if
       local.get $2
@@ -11868,7 +12301,7 @@
       i32.store
     end ;; $if
     local.get $3
-    global.set $25
+    global.set $28
     local.get $0
     i32.const 1
     i32.and
@@ -12121,6 +12554,65 @@
     local.get $4
     )
   
+  (func $_memmove (type $0)
+    (param $0 i32)
+    (param $1 i32)
+    (param $2 i32)
+    (result i32)
+    (local $3 i32)
+    local.get $1
+    local.get $0
+    i32.lt_s
+    local.get $0
+    local.get $1
+    local.get $2
+    i32.add
+    i32.lt_s
+    i32.and
+    if $if
+      local.get $1
+      local.get $2
+      i32.add
+      local.set $1
+      local.get $0
+      local.tee $3
+      local.get $2
+      i32.add
+      local.set $0
+      loop $loop
+        local.get $2
+        i32.const 0
+        i32.gt_s
+        if $if_0
+          local.get $2
+          i32.const 1
+          i32.sub
+          local.set $2
+          local.get $0
+          i32.const 1
+          i32.sub
+          local.tee $0
+          local.get $1
+          i32.const 1
+          i32.sub
+          local.tee $1
+          i32.load8_s
+          i32.store8
+          br $loop
+        end ;; $if_0
+      end ;; $loop
+      local.get $3
+      local.set $0
+    else
+      local.get $0
+      local.get $1
+      local.get $2
+      call $_memcpy
+      drop
+    end ;; $if
+    local.get $0
+    )
+  
   (func $_memset (type $0)
     (param $0 i32)
     (param $1 i32)
@@ -12283,7 +12775,7 @@
     call $_emscripten_get_heap_size
     local.set $3
     local.get $0
-    global.get $23
+    global.get $25
     i32.load
     local.tee $2
     i32.add
@@ -12321,13 +12813,13 @@
         return
       end ;; $if_1
     end ;; $if_0
-    global.get $23
+    global.get $25
     local.get $1
     i32.store
     local.get $2
     )
   
-  (func $dynCall_iidiiii (type $19)
+  (func $dynCall_iidiiii (type $21)
     (param $0 i32)
     (param $1 i32)
     (param $2 f64)
@@ -12345,10 +12837,10 @@
     local.get $0
     i32.const 1
     i32.and
-    call_indirect $20 (type $1)
+    call_indirect $22 (type $1)
     )
   
-  (func $dynCall_iiii (type $13)
+  (func $dynCall_iiii (type $12)
     (param $0 i32)
     (param $1 i32)
     (param $2 i32)
@@ -12362,13 +12854,13 @@
     i32.and
     i32.const 2
     i32.add
-    call_indirect $20 (type $0)
+    call_indirect $22 (type $0)
     )
   
   (func $dynCall_v (type $7)
     (param $0 i32)
     i32.const 6
-    call_indirect $20 (type $3)
+    call_indirect $22 (type $3)
     )
   
   (func $dynCall_vi (type $2)
@@ -12380,7 +12872,7 @@
     i32.and
     i32.const 7
     i32.add
-    call_indirect $20 (type $7)
+    call_indirect $22 (type $7)
     )
   
   (func $dynCall_vii (type $10)
@@ -12394,7 +12886,7 @@
     i32.and
     i32.const 15
     i32.add
-    call_indirect $20 (type $2)
+    call_indirect $22 (type $2)
     )
   
   (func $dynCall_viiii (type $6)
@@ -12412,7 +12904,7 @@
     i32.and
     i32.const 17
     i32.add
-    call_indirect $20 (type $4)
+    call_indirect $22 (type $4)
     )
   
   (func $dynCall_viiiii (type $5)
@@ -12432,7 +12924,7 @@
     i32.and
     i32.const 21
     i32.add
-    call_indirect $20 (type $6)
+    call_indirect $22 (type $6)
     )
   
   (func $dynCall_viiiiii (type $16)
@@ -12454,7 +12946,7 @@
     i32.and
     i32.const 25
     i32.add
-    call_indirect $20 (type $5)
+    call_indirect $22 (type $5)
     )
   
   (func $b0 (type $1)
