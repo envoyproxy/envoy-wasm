@@ -28,6 +28,7 @@ build --action_env=PATH
 # Basic ASAN/UBSAN that works for gcc
 build:asan --action_env=BAZEL_LINKLIBS=
 build:asan --action_env=BAZEL_LINKOPTS=-lstdc++:-lm
+build:asan --action_env=ENVOY_ASAN=1
 build:asan --define ENVOY_CONFIG_ASAN=1
 build:asan --copt -fsanitize=address,undefined
 build:asan --linkopt -fsanitize=address,undefined
@@ -59,6 +60,7 @@ build:macos-asan --copt -DGRPC_BAZEL_BUILD
 build:macos-asan --dynamic_mode=off
 
 # Clang TSAN
+build:clang-tsan --action_env=ENVOY_TSAN=1
 build:clang-tsan --define ENVOY_CONFIG_TSAN=1
 build:clang-tsan --copt -fsanitize=thread
 build:clang-tsan --linkopt -fsanitize=thread
@@ -70,6 +72,7 @@ build:clang-tsan --copt -DEVENT__DISABLE_DEBUG_MODE
 
 # Clang MSAN - broken today since we need to rebuild lib[std]c++ and external deps with MSAN
 # support (see https://github.com/envoyproxy/envoy/issues/443).
+build:clang-msan --action_env=ENVOY_MSAN=1
 build:clang-msan --define ENVOY_CONFIG_MSAN=1
 build:clang-msan --copt -fsanitize=memory
 build:clang-msan --linkopt -fsanitize=memory
