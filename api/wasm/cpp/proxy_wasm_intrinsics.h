@@ -12,6 +12,8 @@
 #include <cstdint>
 #include <string_view>
 using StringView = std::string_view;
+#include <optional>
+template <typename T> using Optional = std::optional<T>;
 
 #include "proxy_wasm_enums.h"
 #include "proxy_wasm_result.h"
