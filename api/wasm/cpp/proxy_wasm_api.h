@@ -530,7 +530,7 @@ inline WasmResult getPluginDirection(PluginDirection *direction_ptr) {
 }
 
 // Generic selector
-inline absl::optional<WasmDataPtr> getSelectorExpression(std::initializer_list<absl::string_view> parts) {
+inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringView> parts) {
   size_t size = 0;
   for (auto part: parts) {
     size += part.size() + 1; // null terminated string value
