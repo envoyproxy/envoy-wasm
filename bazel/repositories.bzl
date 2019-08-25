@@ -725,17 +725,15 @@ def _com_github_wavm_wavm():
     )
 
 def _com_googlesource_chromium_v8():
-    location = REPOSITORY_LOCATIONS["com_googlesource_chromium_v8"]
-    genrule_repository(
+    _repository_impl(
         name = "com_googlesource_chromium_v8",
-        genrule_cmd_file = "@envoy//bazel/external:wee8.genrule_cmd",
-        build_file = "@envoy//bazel/external:wee8.BUILD",
-        patches = ["@envoy//bazel/external:wee8.patch"],
-        **location
+        build_file_content = BUILD_ALL_CONTENT,
+        patch_args = ["-p1"],
+        patches = ["@envoy//bazel/foreign_cc:wee8.patch"],
     )
     native.bind(
         name = "wee8",
-        actual = "@com_googlesource_chromium_v8//:wee8",
+        actual = "@envoy//bazel/foreign_cc:wee8",
     )
 
 def _foreign_cc_dependencies():

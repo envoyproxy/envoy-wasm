@@ -290,3 +290,22 @@ envoy_cmake_external(
         "//conditions:default": ["libz.a"],
     }),
 )
+
+configure_make(
+    name = "wee8",
+    configure_command = "third_party/depot_tools/gn",
+    configure_options = [
+        "gen",
+        "out/wee8",
+        """--args='v8_use_external_startup_data=false v8_enable_i18n_support=false v8_enable_gdbjit=false v8_expose_symbols=true is_component_build=false is_debug=false clang_use_chrome_plugins=false use_sysroot=false use_custom_libcxx=false use_glib=false custom_toolchain="//build/toolchain/linux/unbundle:default"'""",
+    ],
+    make_commands = [
+        "third_party/depot_tools/ninja -C out/wee8 wee8",
+        "mkdir -p $$INSTALL_PREFIX$$/include",
+        "cp -L -r --no-target-directory third_party/wasm-api $$INSTALL_PREFIX$$/include/wasm-api",
+        "cp -L -r --no-target-directory out/wee8/obj $$INSTALL_PREFIX$$/lib",
+    ],
+    configure_in_place = True,
+    lib_source = "@com_googlesource_chromium_v8//:all",
+    static_libraries = ["libwee8.a"],
+)

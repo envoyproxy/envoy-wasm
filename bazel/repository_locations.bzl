@@ -245,6 +245,7 @@ REPOSITORY_LOCATIONS = dict(
         # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
         # and contains complete checkout of v8 with all dependencies necessary to build wee8.
         sha256 = "690ca8e3460362fba8e95d94c9325211ad477a4d71a392461f899ec91afd1292",
+        strip_prefix = "wee8",
         urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.6.303.20.tar.gz"],
     ),
     io_opencensus_cpp = dict(
