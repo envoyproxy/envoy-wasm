@@ -27,28 +27,28 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
                                                       ROOT_FACTORY(ExampleRootContext),
                                                       "my_root_id");
 
-void ExampleRootContext::onStart(WasmDataPtr) { logTrace("onStart"); }
+void ExampleRootContext::onStart(WasmDataPtr) { LOG_TRACE("onStart"); }
 
-void ExampleContext::onCreate() { logWarn(std::string("onCreate " + std::to_string(id()))); }
+void ExampleContext::onCreate() { LOG_WARN(std::string("onCreate " + std::to_string(id()))); }
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
-  logDebug(std::string("onRequestHeaders ") + std::to_string(id()));
+  LOG_DEBUG(std::string("onRequestHeaders ") + std::to_string(id()));
   auto result = getRequestHeaderPairs();
   auto pairs = result->pairs();
-  logInfo(std::string("headers: ") + std::to_string(pairs.size()));
+  LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
   for (auto& p : pairs) {
-    logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
+    LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
   }
   return FilterHeadersStatus::Continue;
 }
 
 FilterHeadersStatus ExampleContext::onResponseHeaders() {
-  logDebug(std::string("onResponseHeaders ") + std::to_string(id()));
+  LOG_DEBUG(std::string("onResponseHeaders ") + std::to_string(id()));
   auto result = getResponseHeaderPairs();
   auto pairs = result->pairs();
-  logInfo(std::string("headers: ") + std::to_string(pairs.size()));
+  LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
   for (auto& p : pairs) {
-    logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
+    LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
   }
   addResponseHeader("newheader", "newheadervalue");
   replaceResponseHeader("location", "envoy-wasm");
@@ -57,12 +57,12 @@ FilterHeadersStatus ExampleContext::onResponseHeaders() {
 
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
   auto body = getRequestBodyBufferBytes(0, body_buffer_length);
-  logError(std::string("onRequestBody ") + std::string(body->view()));
+  LOG_ERROR(std::string("onRequestBody ") + std::string(body->view()));
   return FilterDataStatus::Continue;
 }
 
-void ExampleContext::onDone() { logWarn(std::string("onDone " + std::to_string(id()))); }
+void ExampleContext::onDone() { LOG_WARN(std::string("onDone " + std::to_string(id()))); }
 
-void ExampleContext::onLog() { logWarn(std::string("onLog " + std::to_string(id()))); }
+void ExampleContext::onLog() { LOG_WARN(std::string("onLog " + std::to_string(id()))); }
 
-void ExampleContext::onDelete() { logWarn(std::string("onDelete " + std::to_string(id()))); }
+void ExampleContext::onDelete() { LOG_WARN(std::string("onDelete " + std::to_string(id()))); }

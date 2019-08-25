@@ -49,6 +49,15 @@ inline void logAbort(StringView logMessag) {
   abort();
 }
 
+#define LOG(_level, ...)                                                        \
+    log##_level(std::string("[") + __FILE__ + ":" + std::to_string(__LINE__) + "]::" + __FUNCTION__ + "() " + __VA_ARGS__)
+#define LOG_TRACE(...) LOG(Trace, __VA_ARGS__)
+#define LOG_DEBUG(...) LOG(Debug, __VA_ARGS__)
+#define LOG_INFO(...) LOG(Info, __VA_ARGS__)
+#define LOG_WARN(...) LOG(Warn, __VA_ARGS__)
+#define LOG_ERROR(...) LOG(Error, __VA_ARGS__)
+#define LOG_CRITICAL(...) LOG(Critical, __VA_ARGS__)
+
 // Buffers coming into the WASM filter.
 class WasmData {
 public:
