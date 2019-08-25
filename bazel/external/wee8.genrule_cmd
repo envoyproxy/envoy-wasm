@@ -15,8 +15,44 @@ pushd $$ROOT/wee8
 # Clean after previous build.
 rm -rf out/wee8
 
+# Export compiler configuration.
+if [[ ( `uname` == "Darwin" && $${CXX-} == "" ) || $${CXX-} == *"clang"* ]]; then
+  export IS_CLANG=true
+  export CC=$${CC:-clang}
+  export CXX=$${CXX:-clang++}
+else
+  export IS_CLANG=false
+  export CC=$${CC:-gcc}
+  export CXX=$${CXX:-g++}
+fi
+
+export AR=$${AR:-ar}
+export NM=$${NM:-nm}
+
+# Release build.
+WEE8_BUILD_ARGS+=" is_debug=false"
+# Clang or not Clang, that is the question.
+WEE8_BUILD_ARGS+=" is_clang=$$IS_CLANG"
+# Disable custom compiler plugins.
+WEE8_BUILD_ARGS+=" clang_use_chrome_plugins=false"
+# Use local toolchain.
+WEE8_BUILD_ARGS+=" custom_toolchain=\"//build/toolchain/linux/unbundle:default\""
+# Use local stdlibc++ / libc++.
+WEE8_BUILD_ARGS+=" use_custom_libcxx=false"
+# Use local sysroot.
+WEE8_BUILD_ARGS+=" use_sysroot=false"
+# Disable unused GLib2 dependency.
+WEE8_BUILD_ARGS+=" use_glib=false"
+# Expose debug symbols.
+WEE8_BUILD_ARGS+=" v8_expose_symbols=true"
+# Build monolithic library.
+WEE8_BUILD_ARGS+=" is_component_build=false"
+WEE8_BUILD_ARGS+=" v8_enable_i18n_support=false"
+WEE8_BUILD_ARGS+=" v8_enable_gdbjit=false"
+WEE8_BUILD_ARGS+=" v8_use_external_startup_data=false"
+
 # Build wee8.
-AR=ar NM=nm third_party/depot_tools/gn gen out/wee8 --args='v8_use_external_startup_data=false v8_enable_i18n_support=false v8_enable_gdbjit=false v8_expose_symbols=true is_component_build=false is_debug=false clang_use_chrome_plugins=false use_sysroot=false use_custom_libcxx=false use_glib=false custom_toolchain="//build/toolchain/linux/unbundle:default"'
+third_party/depot_tools/gn gen out/wee8 --args="$$WEE8_BUILD_ARGS"
 third_party/depot_tools/ninja -C out/wee8 wee8
 
 # Move compiled library to the expected destinations.
