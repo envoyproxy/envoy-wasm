@@ -21,12 +21,4 @@ if [[ "$(uname -m)" == "x86_64" ]]; then
   curl -sLo cmake-"$VERSION".tar.gz https://github.com/Kitware/CMake/releases/download/v"$VERSION"/cmake-"$VERSION"-Linux-x86_64.tar.gz \
     && echo "$SHA256" cmake-"$VERSION".tar.gz | sha256sum --check \
     && tar -zxf cmake-"$VERSION".tar.gz -C /usr --strip-components=1
-
-  # ninja
-  VERSION=1.8.2
-  SHA256=d2fea9ff33b3ef353161ed906f260d565ca55b8ca0568fa07b1d2cab90a84a07
-  curl -sLo ninja-"$VERSION".zip https://github.com/ninja-build/ninja/releases/download/v"$VERSION"/ninja-linux.zip \
-    && echo "$SHA256" ninja-"$VERSION".zip | sha256sum --check \
-    && unzip ninja-"$VERSION".zip \
-    && mv ninja /usr/bin
 fi

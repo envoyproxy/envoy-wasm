@@ -41,6 +41,8 @@ WEE8_BUILD_ARGS+=" custom_toolchain=\"//build/toolchain/linux/unbundle:default\"
 WEE8_BUILD_ARGS+=" use_custom_libcxx=false"
 # Use local sysroot.
 WEE8_BUILD_ARGS+=" use_sysroot=false"
+# Disable unused GLib2 dependency.
+WEE8_BUILD_ARGS+=" use_glib=false"
 # Expose debug symbols.
 WEE8_BUILD_ARGS+=" v8_expose_symbols=true"
 # Build monolithic library.
