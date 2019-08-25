@@ -6,8 +6,10 @@ set -e
 yum install -y centos-release-scl epel-release
 yum update -y
 yum install -y devtoolset-7-gcc devtoolset-7-gcc-c++ devtoolset-7-binutils java-1.8.0-openjdk-headless rsync \
-    rh-git218 wget unzip which make patch devtoolset-7-libatomic-devel openssl python27 \
-    libtool autoconf tcpdump glib2-devel
+    rh-git218 wget unzip which make patch ninja-build devtoolset-7-libatomic-devel openssl python27 \
+    libtool autoconf tcpdump
+
+ln -s /usr/bin/ninja-build /usr/bin/ninja
 
 # SLES 11 has older glibc than CentOS 7, so pre-built binary for it works on CentOS 7
 LLVM_VERSION=8.0.0
