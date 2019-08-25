@@ -14,4 +14,11 @@ if [[ "$(uname -m)" == "x86_64" ]]; then
   curl --location --output /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v${VERSION}/bazelisk-linux-amd64 \
     && echo "$SHA256  /usr/local/bin/bazel" | sha256sum --check \
     && chmod +x /usr/local/bin/bazel
+
+  # CMake
+  VERSION=3.14.5
+  SHA256=757e7ddd29d11422334a60d7cd9c19b7af20349a03cb15aa3c879f1b54193c95
+  curl -sLo cmake-"$VERSION".tar.gz https://github.com/Kitware/CMake/releases/download/v"$VERSION"/cmake-"$VERSION"-Linux-x86_64.tar.gz \
+    && echo "$SHA256" cmake-"$VERSION".tar.gz | sha256sum --check \
+    && tar -zxf cmake-"$VERSION".tar.gz -C /usr --strip-components=1
 fi
