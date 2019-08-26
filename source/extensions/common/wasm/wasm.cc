@@ -2394,6 +2394,11 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
     start = decodeVarint(start, end, &emscripten_metadata_minor_version_);
     start = decodeVarint(start, end, &emscripten_abi_major_version_);
     start = decodeVarint(start, end, &emscripten_abi_minor_version_);
+    if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 1) {
+      // metadata 0.2 - added: wasm_backend.
+      uint32_t temp;
+      start = decodeVarint(start, end, &temp);
+    }
     start = decodeVarint(start, end, &emscripten_memory_size_);
     start = decodeVarint(start, end, &emscripten_table_size_);
     if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 0) {
