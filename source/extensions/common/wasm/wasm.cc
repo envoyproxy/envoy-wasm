@@ -2814,11 +2814,9 @@ static std::shared_ptr<Wasm> createWasmInternal(
   if (!wasm->initialize(code, vm_id, vm_config.allow_precompiled())) {
     throw WasmException(fmt::format("Failed to initialize WASM code from {}", path));
   }
-  Context* context;
   if (!root_context_for_testing) {
-    context = wasm->start(root_id, vm_config.configuration());
+    wasm->start(root_id, vm_config.configuration());
   } else {
-    context = root_context_for_testing.get();
     wasm->startForTesting(std::move(root_context_for_testing));
   }
   return wasm;
