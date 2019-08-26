@@ -175,10 +175,10 @@ TEST_P(WasmTest, EmscriptenVersion) {
   uint32_t major = 9, minor = 9, abi_major = 9, abi_minor = 9;
   EXPECT_TRUE(wasm->getEmscriptenVersion(&major, &minor, &abi_major, &abi_minor));
   EXPECT_EQ(major, 0);
-  EXPECT_LE(minor, 1);
-  // Up to (at least) emsdk 1.38.39.
+  EXPECT_LE(minor, 2);
+  // Up to (at least) emsdk 1.38.42.
   EXPECT_EQ(abi_major, 0);
-  EXPECT_LE(abi_minor, 3);
+  EXPECT_LE(abi_minor, 4);
 }
 
 TEST_P(WasmTest, IntrinsicGlobals) {

@@ -48,14 +48,14 @@ Now you want to make changes to the C++ filter, regenerate to WASM module.
 1. Download and install [`protobuf`](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md).
 2. Download and install [`WAVM`](https://github.com/WAVM/WAVM).
 3. Download and install [`emscripten`](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions)
-4. Activate emsdk archived version 1.38.39 (Note: by 07/26/2019 the latest known working version is 1.38.39).
+4. Activate emsdk archived version 1.38.42 (Note: by 08/26/2019 the latest known working version is 1.38.42).
 
     ```shell
     # in emsdk directory
-    ./emsdk install sdk-1.38.39-64bit
-    ./emsdk activate sdk-1.38.39-64bit
+    ./emsdk install sdk-1.38.42-64bit
+    ./emsdk activate sdk-1.38.42-64bit
     source emsdk_env.sh
-    # verify, should output 1.38.39
+    # verify, should output 1.38.42
     em++ -v 2>&1 |grep Emscripten
     ```
 

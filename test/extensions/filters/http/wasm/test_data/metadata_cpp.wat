@@ -173,7 +173,7 @@
     $b10 $b10 $b11 $__ZN11RootContext18onHttpCallResponseEjNSt3__210unique_ptrI8WasmDataNS0_14default_deleteIS2_EEEES5_S5_ $__ZNK10__cxxabiv117__class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $__ZNK10__cxxabiv120__si_class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $__ZNK10__cxxabiv121__vmi_class_type_info16search_below_dstEPNS_19__dynamic_cast_infoEPKvib $b11
     $b11 $b11 $b12 $__ZNK10__cxxabiv117__class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $__ZNK10__cxxabiv120__si_class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $__ZNK10__cxxabiv121__vmi_class_type_info16search_above_dstEPNS_19__dynamic_cast_infoEPKvS4_ib $b13)
   (data $35 $29 (i32.const 1024)
-    ">;\00\00C;\00\00K;\00\00Q;")
+    "@;\00\00E;\00\00M;\00\00S;")
   (data $36 $29 (i32.const 1168)
     "\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0"
     "\f0\f0\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\01\02\03\03\03\03\03\03\03\03\03\03\03\03\07\03\03\04\05\05\05\06\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0\f0"
@@ -248,12 +248,12 @@
     "\00\00\00g\00\00\00k\00\00\00m\00\00\00q\00\00\00y\00\00\00\7f\00\00\00\83\00\00\00\89\00\00\00\8b\00\00\00\8f\00\00\00\95\00\00\00\97\00\00\00\9d\00\00\00\a3\00\00\00\a7\00\00\00\a9"
     "\00\00\00\ad\00\00\00\b3\00\00\00\b5\00\00\00\bb\00\00\00\bf\00\00\00\c1\00\00\00\c5\00\00\00\c7\00\00\00\d1\00\00\00\ac\1e\00\00\e9+\00\00\d4\1e\00\00\e0+\00\00p\11\00\00\00\00\00\00\d4"
     "\1e\00\00\cf+\00\00x\11\00\00\00\00\00\00\d4\1e\00\00\0c,\00\00p\11\00\00\00\00\00\00\d4\1e\00\00\f7+\00\00\98\11\00\00\00\00\00\00\ac\1e\00\00!-\00\00\f0*\00\00\e2,\00\00\00"
-    "\00\00\00\01\00\00\00\b8\11\00\00\00\00\00\00\ac\1e\00\00G-\00\00\ac\1e\00\00L-\00\00\ac\1e\00\00}-\00\00\d4\1e\00\00\e57\00\00\a0\12\00\00\00\00\00\00\d4\1e\00\00\c76\00\00\10"
-    "\12\00\00\00\00\00\00\d4\1e\00\00\840\00\00 \12\00\00\00\00\00\00\d4\1e\00\00\b40\00\000\12\00\00\00\00\00\00\d4\1e\00\00z1\00\00\a0\12\00\00\00\00\00\00\d4\1e\00\00\946\00\00\a0"
-    "\12\00\00\00\00\00\00\f0*\00\00R5\00\00\00\00\00\00\01\00\00\00h\12\00\00\00\00\00\00\ac\1e\00\00\bf5\00\00\d4\1e\00\00\ae6\00\00\a0\12\00\00\00\00\00\00\d4\1e\00\0098\00\00\90"
+    "\00\00\00\01\00\00\00\b8\11\00\00\00\00\00\00\ac\1e\00\00G-\00\00\ac\1e\00\00L-\00\00\ac\1e\00\00}-\00\00\d4\1e\00\00\e77\00\00\a0\12\00\00\00\00\00\00\d4\1e\00\00\c96\00\00\10"
+    "\12\00\00\00\00\00\00\d4\1e\00\00\860\00\00 \12\00\00\00\00\00\00\d4\1e\00\00\b60\00\000\12\00\00\00\00\00\00\d4\1e\00\00|1\00\00\a0\12\00\00\00\00\00\00\d4\1e\00\00\966\00\00\a0"
+    "\12\00\00\00\00\00\00\f0*\00\00T5\00\00\00\00\00\00\01\00\00\00h\12\00\00\00\00\00\00\ac\1e\00\00\c15\00\00\d4\1e\00\00\b06\00\00\a0\12\00\00\00\00\00\00\d4\1e\00\00;8\00\00\90"
     "\14\00\00\00\00\00\00\ff\ff\ff\ff\ff\ff\ff\ff")
   (data $53 $29 (i32.const 4768)
-    "\ac\1e\00\00>=\00\00\d4\1e\00\00,C\00\00\c8\12\00\00\00\00\00\00\d4\1e\00\00\e8C\00\00\c8\12\00\00\00\00\00\00\ac\1e\00\00\b4D\00\00\05")
+    "\ac\1e\00\00@=\00\00\d4\1e\00\00.C\00\00\c8\12\00\00\00\00\00\00\d4\1e\00\00\eaC\00\00\c8\12\00\00\00\00\00\00\ac\1e\00\00\b6D\00\00\05")
   (data $54 $29 (i32.const 4828)
     "-")
   (data $55 $29 (i32.const 4852)
@@ -277,26 +277,26 @@
   (data $64 $29 (i32.const 5179)
     "\ff\ff\ff\ff\ff")
   (data $65 $29 (i32.const 5248)
-    "\d4\1e\00\00+E\00\00\90\14\00\00\00\00\00\00\ac\1e\00\00\edE\00\00\d4\1e\00\00MF\00\00\a8\14\00\00\00\00\00\00\d4\1e\00\00\faE\00\00\b8\14\00\00\00\00\00\00\ac\1e\00\00\1bF\00\00"
-    "\d4\1e\00\00(F\00\00\98\14\00\00\00\00\00\00\d4\1e\00\00\ddG\00\00\e0\14\00\00\00\00\00\00\ac\1e\00\00\0cH\00\00\d4\1e\00\00\c0H\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\03I\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00PI\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\96I\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c6I\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\04J\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\005J\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\85J\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\beJ\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f9J\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\005K\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00xK\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\a6K\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\d9K\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00\95L\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c2L\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f3L\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\001M\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00\a9M\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00nM\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f0M\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\009N\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00\94N\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\bfN\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f9N\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00-O\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00}O\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\acO\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\e5O\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\1eP\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00CR\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\91R\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\ccR\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f8R\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00BS\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00wS\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\aaS\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\e1S\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00\16T\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\acT\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\deT\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\10U\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00hU\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\b0U\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\e8U\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\006V\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00uV\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\b8V\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\e9V\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00#X\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00cX\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\96X\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\d0X\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\09Y\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00FY\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c3Y\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\efY\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00%Z\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00yZ\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\b1Z\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f4Z\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00%[\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00U[\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\90[\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\d2[\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c1\\\00\00"
-    "\e0\14\00\00\00\00\00\00\d4\1e\00\00L]\00\00\90\14\00\00\00\00\00\00\d4\1e\00\00\\]\00\00\08\19\00\00\00\00\00\00\d4\1e\00\00m]\00\00\a8\14\00\00\00\00\00\00\d4\1e\00\00\8f]\00\00"
-    "(\19\00\00\00\00\00\00\d4\1e\00\00\b3]\00\00\a8\14\00\00\00\00\00\00\d4*\00\00\db]\00\00\d4*\00\00\dd]\00\00\d4*\00\00\df]\00\00\d4\1e\00\00\e1]\00\00\98\14")
+    "\d4\1e\00\00-E\00\00\90\14\00\00\00\00\00\00\ac\1e\00\00\efE\00\00\d4\1e\00\00OF\00\00\a8\14\00\00\00\00\00\00\d4\1e\00\00\fcE\00\00\b8\14\00\00\00\00\00\00\ac\1e\00\00\1dF\00\00"
+    "\d4\1e\00\00*F\00\00\98\14\00\00\00\00\00\00\d4\1e\00\00\dfG\00\00\e0\14\00\00\00\00\00\00\ac\1e\00\00\0eH\00\00\d4\1e\00\00\c2H\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\05I\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00RI\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\98I\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c8I\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\06J\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\007J\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\87J\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c0J\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\fbJ\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\007K\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00zK\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\a8K\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\dbK\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00\97L\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c4L\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f5L\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\003M\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00\abM\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00pM\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f2M\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00;N\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00\96N\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c1N\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\fbN\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00/O\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00\7fO\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\aeO\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\e7O\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00 P\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00ER\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\93R\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\ceR\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\faR\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00DS\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00yS\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\acS\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\e3S\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00\18T\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\aeT\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\e0T\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\12U\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00jU\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\b2U\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\eaU\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\008V\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00wV\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\baV\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\ebV\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00%X\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00eX\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\98X\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\d2X\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\0bY\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00HY\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c5Y\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f1Y\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00'Z\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00{Z\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\b3Z\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\f6Z\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00'[\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00W[\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\92[\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\d4[\00\00\e0\14\00\00\00\00\00\00\d4\1e\00\00\c3\\\00\00"
+    "\e0\14\00\00\00\00\00\00\d4\1e\00\00N]\00\00\90\14\00\00\00\00\00\00\d4\1e\00\00^]\00\00\08\19\00\00\00\00\00\00\d4\1e\00\00o]\00\00\a8\14\00\00\00\00\00\00\d4\1e\00\00\91]\00\00"
+    "(\19\00\00\00\00\00\00\d4\1e\00\00\b5]\00\00\a8\14\00\00\00\00\00\00\d4*\00\00\dd]\00\00\d4*\00\00\df]\00\00\d4*\00\00\e1]\00\00\d4\1e\00\00\e3]\00\00\98\14")
   (data $66 $29 (i32.const 6532)
     "\88\11\00\00\01\00\00\00\02\00\00\00\01\00\00\00\02\00\00\00\01\00\00\00\02\00\00\00\03\00\00\00\03\00\00\00\04\00\00\00\01\00\00\00\05\00\00\00\06\00\00\00\07\00\00\00\02\00\00\00\08\00\00\00"
     "\04\00\00\00\05\00\00\00\06\00\00\00\00\00\00\00\a8\11\00\00\07\00\00\00\08\00\00\00\09\00\00\00\n\00\00\00\01\00\00\00\02\00\00\00\01\00\00\00\02\00\00\00\09\00\00\00\03\00\00\00\01\00\00\00"
@@ -388,198 +388,198 @@
     "CK failed: it != end(): \00key not found: \00N6google8protobuf8inter"
     "nal29InternalMetadataWithArenaBaseINSt3__212basic_stringIcNS3_11"
     "char_traitsIcEENS3_9allocatorIcEEEENS1_29InternalMetadataWithAre"
-    "naLiteEE9ContainerE\00/home/jplev_google_com/envoy/api/wasm/cpp/st"
-    "ruct_lite.pb.cc\00/usr/local/include/google/protobuf/repeated_fiel"
-    "d.h\00CHECK failed: (index) >= (0): \00CHECK failed: (index) < (curr"
-    "ent_size_): \00/usr/local/include/google/protobuf/map.h\00CHECK fail"
-    "ed: (bucket_index_ & 1) == (0): \00CHECK failed: m_->index_of_firs"
-    "t_non_null_ == m_->num_buckets_ || m_->table_[m_->index_of_first"
-    "_non_null_] != NULL: \00CHECK failed: !tree->empty(): \00CHECK faile"
-    "d: node_ != NULL && m_ != NULL: \00google.protobuf.Value.string_va"
-    "lue\00google.protobuf.Struct.FieldsEntry.key\00CHECK failed: (&from)"
-    " != (this): \00CHECK failed: (&other) != (this): \00N6google8protobu"
-    "f27Struct_FieldsEntry_DoNotUseE\00N6google8protobuf8internal12MapE"
-    "ntryLiteINS0_27Struct_FieldsEntry_DoNotUseENSt3__212basic_string"
-    "IcNS4_11char_traitsIcEENS4_9allocatorIcEEEENS0_5ValueELNS1_14Wir"
-    "eFormatLite9FieldTypeE9ELSD_11ELi0EEE\00N6google8protobuf8internal"
-    "12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseENS0_11MessageLi"
-    "teENSt3__212basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcE"
-    "EEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9ELSE_11ELi0EEE\00CH"
-    "ECK failed: (it.m_) == (this): \00CHECK failed: TableEntryIsNonEmp"
-    "tyList(b): \00CHECK failed: TableEntryIsTree(b): \00CHECK failed: Ge"
-    "tArenaNoVirtual() == NULL: \00CHECK failed: index_of_first_non_nul"
-    "l_ == num_buckets_ || table_[index_of_first_non_null_] != NULL: "
-    "\00CHECK failed: find(*KeyPtrFromNodePtr(node)) == end(): \00CHECK f"
-    "ailed: (count) <= (kMaxLength): \00CHECK failed: (result.bucket_in"
-    "dex_) == (b & ~static_cast<size_type>(1)): \00CHECK failed: (table"
-    "_[b]) == (table_[b ^ 1]): \00CHECK failed: !TableEntryIsTree(b) &&"
-    " !TableEntryIsTree(b ^ 1): \00CHECK failed: (count) == (tree->size"
-    "()): \00CHECK failed: (new_num_buckets) >= (kMinTableSize): \00CHECK"
-    " failed: n >= kMinTableSize: \00CHECK failed: (n & (n - 1)) == (0)"
-    ": \00CHECK failed: table_[b] == table_[b + 1] && (b & 1) == 0: \00N6"
-    "google8protobuf3MapINSt3__212basic_stringIcNS2_11char_traitsIcEE"
-    "NS2_9allocatorIcEEEENS0_5ValueEE8InnerMapE\00N6google8protobuf4has"
-    "hINSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIcEE"
-    "EEEE\00f == NULL || dynamic_cast<To>(f) != NULL\00/usr/local/include"
-    "/google/protobuf/stubs/casts.h\00down_cast\00google.protobuf.Struct\00"
-    "N6google8protobuf6StructE\00N6google8protobuf5ValueE\00N6google8prot"
-    "obuf8internal12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseENS"
-    "0_11MessageLiteENSt3__212basic_stringIcNS5_11char_traitsIcEENS5_"
-    "9allocatorIcEEEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9ELSE"
-    "_11ELi0EE15MapEntryWrapperE\00CHECK failed: (n) >= (0): \00google.pr"
-    "otobuf.ListValue\00N6google8protobuf9ListValueE\00google.protobuf.Va"
-    "lue\00no context factory for root_id: \00N6google8protobuf14FatalExc"
-    "eptionE\00google/protobuf/stubs/common.cc\00This program requires ve"
-    "rsion \00%d.%d.%d\00 of the Protocol Buffer runtime library, but the"
-    " installed version is \00.  Please update your library.  If you co"
-    "mpiled the program yourself, make sure that your headers are fro"
-    "m the same version of Protocol Buffers as your link-time library"
-    ".  (Version verification failed in \"\00\".)\00This program was compil"
-    "ed against version \00 of the Protocol Buffer runtime library, whi"
-    "ch is not compatible with the installed version (\00).  Contact th"
-    "e program author for an update.  If you compiled the program you"
-    "rself, make sure that your headers are from the same version of "
-    "Protocol Buffers as your link-time library.  (Version verificati"
-    "on failed in \"\00[libprotobuf %s %s:%d] %s\n\00INFO\00WARNING\00ERROR\00FAT"
-    "AL\00allocator<T>::allocate(size_t n) 'n' exceeds maximum supporte"
-    "d size\00%d\00%lu\00google/protobuf/arena.cc\00CHECK failed: (min_bytes)"
-    " <= (std::numeric_limits<size_t>::max() - kBlockHeaderSize): \00go"
-    "ogle/protobuf/generated_message_util.cc\00Not implemented field nu"
-    "mber \00 with type \00CHECK failed: (scc->visit_status.load(std::mem"
-    "ory_order_relaxed)) == (SCCInfoBase::kRunning): \00google/protobuf"
-    "/message_lite.cc\00CHECK failed: !coded_out.HadError(): \00(cannot d"
-    "etermine missing fields for lite message)\00N6google8protobuf11Mes"
-    "sageLiteE\00parse\00Can't \00 message of type \"\00\" because it is missin"
-    "g required fields: \00Exceeded maximum protobuf size of 2GB: \00CHEC"
-    "K failed: (byte_size_before_serialization) == (byte_size_after_s"
-    "erialization): \00 was modified concurrently during serialization."
-    "\00CHECK failed: (bytes_produced_by_serialization) == (byte_size_b"
-    "efore_serialization): \00Byte size calculation and serialization w"
-    "ere inconsistent.  This may indicate a bug in protocol buffers o"
-    "r it may be caused by concurrent modification of \00This shouldn't"
-    " be called if all the sizes are equal.\00google/protobuf/repeated_"
-    "field.cc\00CHECK failed: (new_size) <= ((std::numeric_limits<size_"
-    "t>::max() - kRepHeaderSize) / sizeof(old_rep->elements[0])): \00Re"
-    "quested size is too large to fit into size_t.\00google/protobuf/wi"
-    "re_format_lite.cc\00CHECK failed: (value.size()) <= (kint32max): \00"
-    "serializing\00parsing\00 '%s'\00String field\00 contains invalid \00UTF-8 "
-    "data when \00 a protocol \00buffer. Use the 'bytes' type if you inte"
-    "nd to send raw \00bytes. \00google/protobuf/io/coded_stream.cc\00CHECK"
-    " failed: (buffer_size) >= (0): \00A protocol message was rejected "
-    "because it was too big (more than \00 bytes).  To increase the lim"
-    "it (or to disable these warnings), see CodedInputStream::SetTota"
-    "lBytesLimit() in google/protobuf/io/coded_stream.h.\00google/proto"
-    "buf/io/zero_copy_stream_impl_lite.cc\00CHECK failed: (count) >= (0"
-    "): \00CHECK failed: (last_returned_size_) > (0): \00BackUp() can onl"
-    "y be called after a successful Next().\00CHECK failed: (count) <= "
-    "(last_returned_size_): \00N6google8protobuf2io17ArrayOutputStreamE"
-    "\00CHECK failed: target_ != NULL: \00CHECK failed: (count) <= (targe"
-    "t_->size()): \00Cannot allocate buffer larger than kint32max for \00"
-    "StringOutputStream.\00N6google8protobuf2io18StringOutputStreamE\00go"
-    "ogle/protobuf/io/zero_copy_stream.cc\00This ZeroCopyOutputStream d"
-    "oesn't support aliasing. Reaching here usually means a ZeroCopyO"
-    "utputStream implementation bug.\00N6google8protobuf2io20ZeroCopyOu"
-    "tputStreamE\00-+   0X0x\00(null)\00-0X+0X 0X-0x+0x 0x\00inf\00INF\00nan\00NAN\00"
-    "std::bad_function_call\00NSt3__217bad_function_callE\00mutex lock fa"
-    "iled\00%u\00terminating with %s exception of type %s: %s\00terminating"
-    " with %s exception of type %s\00terminating with %s foreign except"
-    "ion\00terminating\00uncaught\00St9exception\00N10__cxxabiv116__shim_type"
-    "_infoE\00St9type_info\00N10__cxxabiv120__si_class_type_infoE\00N10__cx"
-    "xabiv117__class_type_infoE\00terminate_handler unexpectedly return"
-    "ed\00_Z\00___Z\00_block_invoke\00invocation function for block in \00void\00"
-    "bool\00char\00signed char\00unsigned char\00short\00unsigned short\00int\00uns"
-    "igned int\00long\00unsigned long\00long long\00__int128\00unsigned __int12"
-    "8\00float\00long double\00__float128\00...\00decimal64\00decimal128\00decimal3"
-    "2\00decimal16\00char32_t\00char16_t\00auto\00decltype(auto)\00std::nullptr_t"
-    "\00[abi:\00]\00N12_GLOBAL__N_116itanium_demangle10AbiTagAttrE\00N12_GLOB"
-    "AL__N_116itanium_demangle4NodeE\00allocator\00basic_string\00string\00is"
-    "tream\00ostream\00iostream\00std::allocator\00std::basic_string\00std::str"
-    "ing\00std::istream\00std::ostream\00std::iostream\00N12_GLOBAL__N_116ita"
-    "nium_demangle19SpecialSubstitutionE\00 imaginary\00N12_GLOBAL__N_116"
-    "itanium_demangle20PostfixQualifiedTypeE\00 complex\00)\00 \00(\00&\00&&\00N12_"
-    "GLOBAL__N_116itanium_demangle13ReferenceTypeE\00objc_object\00*\00id<\00"
-    ">\00N12_GLOBAL__N_116itanium_demangle11PointerTypeE\00N12_GLOBAL__N_"
-    "116itanium_demangle20NameWithTemplateArgsE\00<\00, \00N12_GLOBAL__N_11"
-    "6itanium_demangle12TemplateArgsE\00N12_GLOBAL__N_116itanium_demang"
-    "le13ParameterPackE\00wchar_t\00b0E\00b1E\00u\00l\00ul\00ll\00ull\00N12_GLOBAL__N_1"
-    "16itanium_demangle15IntegerCastExprE\00%LaL\00N12_GLOBAL__N_116itani"
-    "um_demangle16FloatLiteralImplIeEE\00%a\00N12_GLOBAL__N_116itanium_de"
-    "mangle16FloatLiteralImplIdEE\00%af\00N12_GLOBAL__N_116itanium_demang"
-    "le16FloatLiteralImplIfEE\00true\00false\00N12_GLOBAL__N_116itanium_dem"
-    "angle8BoolExprE\00-\00N12_GLOBAL__N_116itanium_demangle14IntegerLite"
-    "ralE\00N12_GLOBAL__N_116itanium_demangle20TemplateArgumentPackE\00gs"
-    "\00&=\00=\00alignof (\00,\00~\00.*\00/\00/=\00^\00^=\00==\00>=\00<=\00<<\00<<=\00-=\00*=\00--\00!=\00!\00|"
-    "|\00|\00|=\00->*\00+\00+=\00++\00->\00%\00%=\00>>\00>>=\00sizeof (\00typeid (\00throw\00throw "
-    "\00N12_GLOBAL__N_116itanium_demangle9ThrowExprE\00N12_GLOBAL__N_116i"
-    "tanium_demangle12InitListExprE\00N12_GLOBAL__N_116itanium_demangle"
-    "13NodeArrayNodeE\00sizeof... (\00N12_GLOBAL__N_116itanium_demangle13"
-    "EnclosingExprE\00sizeof...(\00N12_GLOBAL__N_116itanium_demangle22Par"
-    "ameterPackExpansionE\00N12_GLOBAL__N_116itanium_demangle19SizeofPa"
-    "ramPackExprE\00static_cast\00>(\00N12_GLOBAL__N_116itanium_demangle8Ca"
-    "stExprE\00reinterpret_cast\00) ? (\00) : (\00N12_GLOBAL__N_116itanium_de"
-    "mangle15ConditionalExprE\00noexcept (\00nw\00na\00pi\00::operator \00new\00[]\00"
-    "N12_GLOBAL__N_116itanium_demangle7NewExprE\00N12_GLOBAL__N_116itan"
-    "ium_demangle11PostfixExprE\00 ... \00 = \00N12_GLOBAL__N_116itanium_de"
-    "mangle15BracedRangeExprE\00N12_GLOBAL__N_116itanium_demangle10Brac"
-    "edExprE\00_GLOBAL__N\00(anonymous namespace)\00N12_GLOBAL__N_116itaniu"
-    "m_demangle8NameTypeE\00)[\00N12_GLOBAL__N_116itanium_demangle18Array"
-    "SubscriptExprE\00.\00N12_GLOBAL__N_116itanium_demangle10MemberExprE\00"
-    "srN\00sr\00::\00N12_GLOBAL__N_116itanium_demangle19GlobalQualifiedName"
-    "E\00dn\00on\00operator&&\00operator&\00operator&=\00operator=\00operator()\00ope"
-    "rator,\00operator~\00operator delete[]\00operator*\00operator/\00operator/"
-    "=\00operator^\00operator^=\00operator==\00operator>=\00operator>\00operator["
-    "]\00operator<=\00operator<<\00operator<<=\00operator<\00operator-\00operator"
-    "-=\00operator*=\00operator--\00operator new[]\00operator!=\00operator!\00ope"
-    "rator new\00operator||\00operator|\00operator|=\00operator->*\00operator+\00"
-    "operator+=\00operator++\00operator->\00operator?\00operator%\00operator%=\00"
-    "operator>>\00operator>>=\00operator<=>\00operator\"\" \00N12_GLOBAL__N_116"
-    "itanium_demangle15LiteralOperatorE\00operator delete\00operator \00N12"
-    "_GLOBAL__N_116itanium_demangle22ConversionOperatorTypeE\00N12_GLOB"
-    "AL__N_116itanium_demangle8DtorNameE\00N12_GLOBAL__N_116itanium_dem"
-    "angle13QualifiedNameE\00dynamic_cast\00delete\00[] \00N12_GLOBAL__N_116i"
-    "tanium_demangle10DeleteExprE\00cv\00)(\00N12_GLOBAL__N_116itanium_dema"
-    "ngle14ConversionExprE\00N12_GLOBAL__N_116itanium_demangle8CallExpr"
-    "E\00const_cast\00N12_GLOBAL__N_116itanium_demangle10PrefixExprE\00) \00 "
-    "(\00N12_GLOBAL__N_116itanium_demangle10BinaryExprE\00aa\00an\00aN\00aS\00cm\00"
-    "ds\00dv\00dV\00eo\00eO\00eq\00ge\00gt\00le\00ls\00lS\00lt\00mi\00mI\00ml\00mL\00ne\00oo\00or\00oR\00pl\00p"
-    "L\00rm\00rM\00rs\00rS\00... \00 ...\00N12_GLOBAL__N_116itanium_demangle8FoldEx"
-    "prE\00fp\00fL\00N12_GLOBAL__N_116itanium_demangle13FunctionParamE\00N12_"
-    "GLOBAL__N_116itanium_demangle24ForwardTemplateReferenceE\00Ts\00stru"
-    "ct\00Tu\00union\00Te\00enum\00N12_GLOBAL__N_116itanium_demangle22Elaborate"
-    "dTypeSpefTypeE\00StL\00St\00std::\00N12_GLOBAL__N_116itanium_demangle16S"
-    "tdQualifiedNameE\00DC\00N12_GLOBAL__N_116itanium_demangle21Structure"
-    "dBindingNameE\00Ut\00Ul\00vE\00'lambda\00'(\00N12_GLOBAL__N_116itanium_deman"
-    "gle15ClosureTypeNameE\00'unnamed\00'\00N12_GLOBAL__N_116itanium_demang"
-    "le15UnnamedTypeNameE\00string literal\00N12_GLOBAL__N_116itanium_dem"
-    "angle9LocalNameE\00std\00N12_GLOBAL__N_116itanium_demangle12CtorDtor"
-    "NameE\00basic_istream\00basic_ostream\00basic_iostream\00std::basic_stri"
-    "ng<char, std::char_traits<char>, std::allocator<char> >\00std::bas"
-    "ic_istream<char, std::char_traits<char> >\00std::basic_ostream<cha"
-    "r, std::char_traits<char> >\00std::basic_iostream<char, std::char_"
-    "traits<char> >\00N12_GLOBAL__N_116itanium_demangle27ExpandedSpecia"
-    "lSubstitutionE\00N12_GLOBAL__N_116itanium_demangle10NestedNameE\00::"
-    "*\00N12_GLOBAL__N_116itanium_demangle19PointerToMemberTypeE\00[\00N12_"
-    "GLOBAL__N_116itanium_demangle9ArrayTypeE\00Dv\00 vector[\00N12_GLOBAL_"
-    "_N_116itanium_demangle10VectorTypeE\00pixel vector[\00N12_GLOBAL__N_"
-    "116itanium_demangle15PixelVectorTypeE\00decltype(\00double\00unsigned "
-    "long long\00objcproto\00 const\00 volatile\00 restrict\00N12_GLOBAL__N_116"
-    "itanium_demangle8QualTypeE\00N12_GLOBAL__N_116itanium_demangle17Ve"
-    "ndorExtQualTypeE\00N12_GLOBAL__N_116itanium_demangle13ObjCProtoNam"
-    "eE\00Do\00noexcept\00DO\00Dw\00Dx\00RE\00OE\00 &\00 &&\00N12_GLOBAL__N_116itanium_de"
-    "mangle12FunctionTypeE\00throw(\00N12_GLOBAL__N_116itanium_demangle20"
-    "DynamicExceptionSpecE\00noexcept(\00N12_GLOBAL__N_116itanium_demangl"
-    "e12NoexceptSpecE\00N12_GLOBAL__N_116itanium_demangle11SpecialNameE"
-    "\00N12_GLOBAL__N_116itanium_demangle9DotSuffixE\00Ua9enable_ifI\00N12_"
-    "GLOBAL__N_116itanium_demangle16FunctionEncodingE\00 [enable_if:\00N1"
-    "2_GLOBAL__N_116itanium_demangle12EnableIfAttrE\00thread-local wrap"
-    "per routine for \00reference temporary for \00guard variable for \00no"
-    "n-virtual thunk to \00virtual thunk to \00thread-local initializatio"
-    "n routine for \00construction vtable for \00-in-\00N12_GLOBAL__N_116it"
-    "anium_demangle21CtorVtableSpecialNameE\00covariant return thunk to"
-    " \00typeinfo name for \00typeinfo for \00VTT for \00vtable for \00St11logi"
-    "c_error\00St12length_error\00N10__cxxabiv117__pbase_type_infoE\00N10__"
-    "cxxabiv119__pointer_type_infoE\00N10__cxxabiv123__fundamental_type"
-    "_infoE\00v\00c\00h\00N10__cxxabiv121__vmi_class_type_infoE")
+    "naLiteEE9ContainerE\00/home/piotrsikora/Google/envoy/api/wasm/cpp/"
+    "struct_lite.pb.cc\00/usr/local/include/google/protobuf/repeated_fi"
+    "eld.h\00CHECK failed: (index) >= (0): \00CHECK failed: (index) < (cu"
+    "rrent_size_): \00/usr/local/include/google/protobuf/map.h\00CHECK fa"
+    "iled: (bucket_index_ & 1) == (0): \00CHECK failed: m_->index_of_fi"
+    "rst_non_null_ == m_->num_buckets_ || m_->table_[m_->index_of_fir"
+    "st_non_null_] != NULL: \00CHECK failed: !tree->empty(): \00CHECK fai"
+    "led: node_ != NULL && m_ != NULL: \00google.protobuf.Value.string_"
+    "value\00google.protobuf.Struct.FieldsEntry.key\00CHECK failed: (&fro"
+    "m) != (this): \00CHECK failed: (&other) != (this): \00N6google8proto"
+    "buf27Struct_FieldsEntry_DoNotUseE\00N6google8protobuf8internal12Ma"
+    "pEntryLiteINS0_27Struct_FieldsEntry_DoNotUseENSt3__212basic_stri"
+    "ngIcNS4_11char_traitsIcEENS4_9allocatorIcEEEENS0_5ValueELNS1_14W"
+    "ireFormatLite9FieldTypeE9ELSD_11ELi0EEE\00N6google8protobuf8intern"
+    "al12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseENS0_11Message"
+    "LiteENSt3__212basic_stringIcNS5_11char_traitsIcEENS5_9allocatorI"
+    "cEEEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9ELSE_11ELi0EEE\00"
+    "CHECK failed: (it.m_) == (this): \00CHECK failed: TableEntryIsNonE"
+    "mptyList(b): \00CHECK failed: TableEntryIsTree(b): \00CHECK failed: "
+    "GetArenaNoVirtual() == NULL: \00CHECK failed: index_of_first_non_n"
+    "ull_ == num_buckets_ || table_[index_of_first_non_null_] != NULL"
+    ": \00CHECK failed: find(*KeyPtrFromNodePtr(node)) == end(): \00CHECK"
+    " failed: (count) <= (kMaxLength): \00CHECK failed: (result.bucket_"
+    "index_) == (b & ~static_cast<size_type>(1)): \00CHECK failed: (tab"
+    "le_[b]) == (table_[b ^ 1]): \00CHECK failed: !TableEntryIsTree(b) "
+    "&& !TableEntryIsTree(b ^ 1): \00CHECK failed: (count) == (tree->si"
+    "ze()): \00CHECK failed: (new_num_buckets) >= (kMinTableSize): \00CHE"
+    "CK failed: n >= kMinTableSize: \00CHECK failed: (n & (n - 1)) == ("
+    "0): \00CHECK failed: table_[b] == table_[b + 1] && (b & 1) == 0: \00"
+    "N6google8protobuf3MapINSt3__212basic_stringIcNS2_11char_traitsIc"
+    "EENS2_9allocatorIcEEEENS0_5ValueEE8InnerMapE\00N6google8protobuf4h"
+    "ashINSt3__212basic_stringIcNS2_11char_traitsIcEENS2_9allocatorIc"
+    "EEEEEE\00f == NULL || dynamic_cast<To>(f) != NULL\00/usr/local/inclu"
+    "de/google/protobuf/stubs/casts.h\00down_cast\00google.protobuf.Struc"
+    "t\00N6google8protobuf6StructE\00N6google8protobuf5ValueE\00N6google8pr"
+    "otobuf8internal12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseE"
+    "NS0_11MessageLiteENSt3__212basic_stringIcNS5_11char_traitsIcEENS"
+    "5_9allocatorIcEEEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9EL"
+    "SE_11ELi0EE15MapEntryWrapperE\00CHECK failed: (n) >= (0): \00google."
+    "protobuf.ListValue\00N6google8protobuf9ListValueE\00google.protobuf."
+    "Value\00no context factory for root_id: \00N6google8protobuf14FatalE"
+    "xceptionE\00google/protobuf/stubs/common.cc\00This program requires "
+    "version \00%d.%d.%d\00 of the Protocol Buffer runtime library, but t"
+    "he installed version is \00.  Please update your library.  If you "
+    "compiled the program yourself, make sure that your headers are f"
+    "rom the same version of Protocol Buffers as your link-time libra"
+    "ry.  (Version verification failed in \"\00\".)\00This program was comp"
+    "iled against version \00 of the Protocol Buffer runtime library, w"
+    "hich is not compatible with the installed version (\00).  Contact "
+    "the program author for an update.  If you compiled the program y"
+    "ourself, make sure that your headers are from the same version o"
+    "f Protocol Buffers as your link-time library.  (Version verifica"
+    "tion failed in \"\00[libprotobuf %s %s:%d] %s\n\00INFO\00WARNING\00ERROR\00F"
+    "ATAL\00allocator<T>::allocate(size_t n) 'n' exceeds maximum suppor"
+    "ted size\00%d\00%lu\00google/protobuf/arena.cc\00CHECK failed: (min_byte"
+    "s) <= (std::numeric_limits<size_t>::max() - kBlockHeaderSize): \00"
+    "google/protobuf/generated_message_util.cc\00Not implemented field "
+    "number \00 with type \00CHECK failed: (scc->visit_status.load(std::m"
+    "emory_order_relaxed)) == (SCCInfoBase::kRunning): \00google/protob"
+    "uf/message_lite.cc\00CHECK failed: !coded_out.HadError(): \00(cannot"
+    " determine missing fields for lite message)\00N6google8protobuf11M"
+    "essageLiteE\00parse\00Can't \00 message of type \"\00\" because it is miss"
+    "ing required fields: \00Exceeded maximum protobuf size of 2GB: \00CH"
+    "ECK failed: (byte_size_before_serialization) == (byte_size_after"
+    "_serialization): \00 was modified concurrently during serializatio"
+    "n.\00CHECK failed: (bytes_produced_by_serialization) == (byte_size"
+    "_before_serialization): \00Byte size calculation and serialization"
+    " were inconsistent.  This may indicate a bug in protocol buffers"
+    " or it may be caused by concurrent modification of \00This shouldn"
+    "'t be called if all the sizes are equal.\00google/protobuf/repeate"
+    "d_field.cc\00CHECK failed: (new_size) <= ((std::numeric_limits<siz"
+    "e_t>::max() - kRepHeaderSize) / sizeof(old_rep->elements[0])): \00"
+    "Requested size is too large to fit into size_t.\00google/protobuf/"
+    "wire_format_lite.cc\00CHECK failed: (value.size()) <= (kint32max):"
+    " \00serializing\00parsing\00 '%s'\00String field\00 contains invalid \00UTF-"
+    "8 data when \00 a protocol \00buffer. Use the 'bytes' type if you in"
+    "tend to send raw \00bytes. \00google/protobuf/io/coded_stream.cc\00CHE"
+    "CK failed: (buffer_size) >= (0): \00A protocol message was rejecte"
+    "d because it was too big (more than \00 bytes).  To increase the l"
+    "imit (or to disable these warnings), see CodedInputStream::SetTo"
+    "talBytesLimit() in google/protobuf/io/coded_stream.h.\00google/pro"
+    "tobuf/io/zero_copy_stream_impl_lite.cc\00CHECK failed: (count) >= "
+    "(0): \00CHECK failed: (last_returned_size_) > (0): \00BackUp() can o"
+    "nly be called after a successful Next().\00CHECK failed: (count) <"
+    "= (last_returned_size_): \00N6google8protobuf2io17ArrayOutputStrea"
+    "mE\00CHECK failed: target_ != NULL: \00CHECK failed: (count) <= (tar"
+    "get_->size()): \00Cannot allocate buffer larger than kint32max for"
+    " \00StringOutputStream.\00N6google8protobuf2io18StringOutputStreamE\00"
+    "google/protobuf/io/zero_copy_stream.cc\00This ZeroCopyOutputStream"
+    " doesn't support aliasing. Reaching here usually means a ZeroCop"
+    "yOutputStream implementation bug.\00N6google8protobuf2io20ZeroCopy"
+    "OutputStreamE\00-+   0X0x\00(null)\00-0X+0X 0X-0x+0x 0x\00inf\00INF\00nan\00NA"
+    "N\00std::bad_function_call\00NSt3__217bad_function_callE\00mutex lock "
+    "failed\00%u\00terminating with %s exception of type %s: %s\00terminati"
+    "ng with %s exception of type %s\00terminating with %s foreign exce"
+    "ption\00terminating\00uncaught\00St9exception\00N10__cxxabiv116__shim_ty"
+    "pe_infoE\00St9type_info\00N10__cxxabiv120__si_class_type_infoE\00N10__"
+    "cxxabiv117__class_type_infoE\00terminate_handler unexpectedly retu"
+    "rned\00_Z\00___Z\00_block_invoke\00invocation function for block in \00voi"
+    "d\00bool\00char\00signed char\00unsigned char\00short\00unsigned short\00int\00u"
+    "nsigned int\00long\00unsigned long\00long long\00__int128\00unsigned __int"
+    "128\00float\00long double\00__float128\00...\00decimal64\00decimal128\00decima"
+    "l32\00decimal16\00char32_t\00char16_t\00auto\00decltype(auto)\00std::nullptr"
+    "_t\00[abi:\00]\00N12_GLOBAL__N_116itanium_demangle10AbiTagAttrE\00N12_GL"
+    "OBAL__N_116itanium_demangle4NodeE\00allocator\00basic_string\00string\00"
+    "istream\00ostream\00iostream\00std::allocator\00std::basic_string\00std::s"
+    "tring\00std::istream\00std::ostream\00std::iostream\00N12_GLOBAL__N_116i"
+    "tanium_demangle19SpecialSubstitutionE\00 imaginary\00N12_GLOBAL__N_1"
+    "16itanium_demangle20PostfixQualifiedTypeE\00 complex\00)\00 \00(\00&\00&&\00N1"
+    "2_GLOBAL__N_116itanium_demangle13ReferenceTypeE\00objc_object\00*\00id"
+    "<\00>\00N12_GLOBAL__N_116itanium_demangle11PointerTypeE\00N12_GLOBAL__"
+    "N_116itanium_demangle20NameWithTemplateArgsE\00<\00, \00N12_GLOBAL__N_"
+    "116itanium_demangle12TemplateArgsE\00N12_GLOBAL__N_116itanium_dema"
+    "ngle13ParameterPackE\00wchar_t\00b0E\00b1E\00u\00l\00ul\00ll\00ull\00N12_GLOBAL__N"
+    "_116itanium_demangle15IntegerCastExprE\00%LaL\00N12_GLOBAL__N_116ita"
+    "nium_demangle16FloatLiteralImplIeEE\00%a\00N12_GLOBAL__N_116itanium_"
+    "demangle16FloatLiteralImplIdEE\00%af\00N12_GLOBAL__N_116itanium_dema"
+    "ngle16FloatLiteralImplIfEE\00true\00false\00N12_GLOBAL__N_116itanium_d"
+    "emangle8BoolExprE\00-\00N12_GLOBAL__N_116itanium_demangle14IntegerLi"
+    "teralE\00N12_GLOBAL__N_116itanium_demangle20TemplateArgumentPackE\00"
+    "gs\00&=\00=\00alignof (\00,\00~\00.*\00/\00/=\00^\00^=\00==\00>=\00<=\00<<\00<<=\00-=\00*=\00--\00!=\00!"
+    "\00||\00|\00|=\00->*\00+\00+=\00++\00->\00%\00%=\00>>\00>>=\00sizeof (\00typeid (\00throw\00thro"
+    "w \00N12_GLOBAL__N_116itanium_demangle9ThrowExprE\00N12_GLOBAL__N_11"
+    "6itanium_demangle12InitListExprE\00N12_GLOBAL__N_116itanium_demang"
+    "le13NodeArrayNodeE\00sizeof... (\00N12_GLOBAL__N_116itanium_demangle"
+    "13EnclosingExprE\00sizeof...(\00N12_GLOBAL__N_116itanium_demangle22P"
+    "arameterPackExpansionE\00N12_GLOBAL__N_116itanium_demangle19Sizeof"
+    "ParamPackExprE\00static_cast\00>(\00N12_GLOBAL__N_116itanium_demangle8"
+    "CastExprE\00reinterpret_cast\00) ? (\00) : (\00N12_GLOBAL__N_116itanium_"
+    "demangle15ConditionalExprE\00noexcept (\00nw\00na\00pi\00::operator \00new\00["
+    "]\00N12_GLOBAL__N_116itanium_demangle7NewExprE\00N12_GLOBAL__N_116it"
+    "anium_demangle11PostfixExprE\00 ... \00 = \00N12_GLOBAL__N_116itanium_"
+    "demangle15BracedRangeExprE\00N12_GLOBAL__N_116itanium_demangle10Br"
+    "acedExprE\00_GLOBAL__N\00(anonymous namespace)\00N12_GLOBAL__N_116itan"
+    "ium_demangle8NameTypeE\00)[\00N12_GLOBAL__N_116itanium_demangle18Arr"
+    "aySubscriptExprE\00.\00N12_GLOBAL__N_116itanium_demangle10MemberExpr"
+    "E\00srN\00sr\00::\00N12_GLOBAL__N_116itanium_demangle19GlobalQualifiedNa"
+    "meE\00dn\00on\00operator&&\00operator&\00operator&=\00operator=\00operator()\00o"
+    "perator,\00operator~\00operator delete[]\00operator*\00operator/\00operato"
+    "r/=\00operator^\00operator^=\00operator==\00operator>=\00operator>\00operato"
+    "r[]\00operator<=\00operator<<\00operator<<=\00operator<\00operator-\00operat"
+    "or-=\00operator*=\00operator--\00operator new[]\00operator!=\00operator!\00o"
+    "perator new\00operator||\00operator|\00operator|=\00operator->*\00operator"
+    "+\00operator+=\00operator++\00operator->\00operator?\00operator%\00operator%"
+    "=\00operator>>\00operator>>=\00operator<=>\00operator\"\" \00N12_GLOBAL__N_1"
+    "16itanium_demangle15LiteralOperatorE\00operator delete\00operator \00N"
+    "12_GLOBAL__N_116itanium_demangle22ConversionOperatorTypeE\00N12_GL"
+    "OBAL__N_116itanium_demangle8DtorNameE\00N12_GLOBAL__N_116itanium_d"
+    "emangle13QualifiedNameE\00dynamic_cast\00delete\00[] \00N12_GLOBAL__N_11"
+    "6itanium_demangle10DeleteExprE\00cv\00)(\00N12_GLOBAL__N_116itanium_de"
+    "mangle14ConversionExprE\00N12_GLOBAL__N_116itanium_demangle8CallEx"
+    "prE\00const_cast\00N12_GLOBAL__N_116itanium_demangle10PrefixExprE\00) "
+    "\00 (\00N12_GLOBAL__N_116itanium_demangle10BinaryExprE\00aa\00an\00aN\00aS\00c"
+    "m\00ds\00dv\00dV\00eo\00eO\00eq\00ge\00gt\00le\00ls\00lS\00lt\00mi\00mI\00ml\00mL\00ne\00oo\00or\00oR\00pl"
+    "\00pL\00rm\00rM\00rs\00rS\00... \00 ...\00N12_GLOBAL__N_116itanium_demangle8Fold"
+    "ExprE\00fp\00fL\00N12_GLOBAL__N_116itanium_demangle13FunctionParamE\00N1"
+    "2_GLOBAL__N_116itanium_demangle24ForwardTemplateReferenceE\00Ts\00st"
+    "ruct\00Tu\00union\00Te\00enum\00N12_GLOBAL__N_116itanium_demangle22Elabora"
+    "tedTypeSpefTypeE\00StL\00St\00std::\00N12_GLOBAL__N_116itanium_demangle1"
+    "6StdQualifiedNameE\00DC\00N12_GLOBAL__N_116itanium_demangle21Structu"
+    "redBindingNameE\00Ut\00Ul\00vE\00'lambda\00'(\00N12_GLOBAL__N_116itanium_dem"
+    "angle15ClosureTypeNameE\00'unnamed\00'\00N12_GLOBAL__N_116itanium_dema"
+    "ngle15UnnamedTypeNameE\00string literal\00N12_GLOBAL__N_116itanium_d"
+    "emangle9LocalNameE\00std\00N12_GLOBAL__N_116itanium_demangle12CtorDt"
+    "orNameE\00basic_istream\00basic_ostream\00basic_iostream\00std::basic_st"
+    "ring<char, std::char_traits<char>, std::allocator<char> >\00std::b"
+    "asic_istream<char, std::char_traits<char> >\00std::basic_ostream<c"
+    "har, std::char_traits<char> >\00std::basic_iostream<char, std::cha"
+    "r_traits<char> >\00N12_GLOBAL__N_116itanium_demangle27ExpandedSpec"
+    "ialSubstitutionE\00N12_GLOBAL__N_116itanium_demangle10NestedNameE\00"
+    "::*\00N12_GLOBAL__N_116itanium_demangle19PointerToMemberTypeE\00[\00N1"
+    "2_GLOBAL__N_116itanium_demangle9ArrayTypeE\00Dv\00 vector[\00N12_GLOBA"
+    "L__N_116itanium_demangle10VectorTypeE\00pixel vector[\00N12_GLOBAL__"
+    "N_116itanium_demangle15PixelVectorTypeE\00decltype(\00double\00unsigne"
+    "d long long\00objcproto\00 const\00 volatile\00 restrict\00N12_GLOBAL__N_1"
+    "16itanium_demangle8QualTypeE\00N12_GLOBAL__N_116itanium_demangle17"
+    "VendorExtQualTypeE\00N12_GLOBAL__N_116itanium_demangle13ObjCProtoN"
+    "ameE\00Do\00noexcept\00DO\00Dw\00Dx\00RE\00OE\00 &\00 &&\00N12_GLOBAL__N_116itanium_"
+    "demangle12FunctionTypeE\00throw(\00N12_GLOBAL__N_116itanium_demangle"
+    "20DynamicExceptionSpecE\00noexcept(\00N12_GLOBAL__N_116itanium_deman"
+    "gle12NoexceptSpecE\00N12_GLOBAL__N_116itanium_demangle11SpecialNam"
+    "eE\00N12_GLOBAL__N_116itanium_demangle9DotSuffixE\00Ua9enable_ifI\00N1"
+    "2_GLOBAL__N_116itanium_demangle16FunctionEncodingE\00 [enable_if:\00"
+    "N12_GLOBAL__N_116itanium_demangle12EnableIfAttrE\00thread-local wr"
+    "apper routine for \00reference temporary for \00guard variable for \00"
+    "non-virtual thunk to \00virtual thunk to \00thread-local initializat"
+    "ion routine for \00construction vtable for \00-in-\00N12_GLOBAL__N_116"
+    "itanium_demangle21CtorVtableSpecialNameE\00covariant return thunk "
+    "to \00typeinfo name for \00typeinfo for \00VTT for \00vtable for \00St11lo"
+    "gic_error\00St12length_error\00N10__cxxabiv117__pbase_type_infoE\00N10"
+    "__cxxabiv119__pointer_type_infoE\00N10__cxxabiv123__fundamental_ty"
+    "pe_infoE\00v\00c\00h\00N10__cxxabiv121__vmi_class_type_infoE")
   
   (func $globalCtors (type $8)
     call $__GLOBAL__sub_I_metadata_cpp_cc
@@ -2019,7 +2019,7 @@
     i32.store offset=8
     local.get $2
     local.get $5
-    i32.const 18759
+    i32.const 18761
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKc
     local.tee $0
     i64.load align=4
@@ -2245,7 +2245,7 @@
     i32.const 3
     i32.store
     local.get $2
-    i32.const 12001
+    i32.const 12003
     i32.store offset=4
     local.get $2
     i32.const 1058
@@ -2360,7 +2360,7 @@
     i32.store offset=8
     local.get $5
     local.get $6
-    i32.const 18759
+    i32.const 18761
     call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKc
     local.tee $0
     i64.load align=4
@@ -11393,7 +11393,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 12996
+      i32.const 12998
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -11527,19 +11527,19 @@
     i32.const 25
     i32.store offset=4
     local.get $1
-    i32.const 14283
+    i32.const 14285
     i64.load align=1
     i64.store align=1
     local.get $1
-    i32.const 14291
+    i32.const 14293
     i64.load align=1
     i64.store offset=8 align=1
     local.get $1
-    i32.const 14299
+    i32.const 14301
     i64.load align=1
     i64.store offset=16 align=1
     local.get $1
-    i32.const 14307
+    i32.const 14309
     i32.load8_s
     i32.store8 offset=24
     local.get $1
@@ -11651,10 +11651,10 @@
       local.get $1
       call $__ZN6google8protobuf9ListValue9MergeFromERKS1_
     else
-      i32.const 13849
-      i32.const 13890
+      i32.const 13851
+      i32.const 13892
       i32.const 92
-      i32.const 13939
+      i32.const 13941
       call $___assert_fail
     end ;; $if
     )
@@ -12253,7 +12253,7 @@
       i32.const 3
       i32.store
       local.get $3
-      i32.const 11876
+      i32.const 11878
       i32.store offset=4
       local.get $3
       i32.const 1505
@@ -12265,7 +12265,7 @@
       i32.const 0
       i32.store offset=20
       local.get $3
-      i32.const 11928
+      i32.const 11930
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $3
@@ -12295,7 +12295,7 @@
     i32.const 3
     i32.store
     local.get $2
-    i32.const 11876
+    i32.const 11878
     i32.store offset=4
     local.get $2
     i32.const 1506
@@ -12307,7 +12307,7 @@
     i32.const 0
     i32.store offset=20
     local.get $2
-    i32.const 11959
+    i32.const 11961
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     call $__ZN6google8protobuf8internal10LogMessage6FinishEv
     local.get $2
@@ -12965,7 +12965,7 @@
         i32.const 3
         i32.store
         local.get $3
-        i32.const 12001
+        i32.const 12003
         i32.store offset=4
         local.get $3
         i32.const 418
@@ -12977,7 +12977,7 @@
         i32.const 0
         i32.store offset=20
         local.get $3
-        i32.const 12085
+        i32.const 12087
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $3
@@ -13063,7 +13063,7 @@
       i32.const 3
       i32.store
       local.get $2
-      i32.const 12001
+      i32.const 12003
       i32.store offset=4
       local.get $2
       i32.const 427
@@ -13075,7 +13075,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 12202
+      i32.const 12204
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -13146,7 +13146,7 @@
         i32.const 3
         i32.store
         local.get $2
-        i32.const 12001
+        i32.const 12003
         i32.store offset=4
         local.get $2
         i32.const 451
@@ -13158,7 +13158,7 @@
         i32.const 0
         i32.store offset=20
         local.get $2
-        i32.const 12042
+        i32.const 12044
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $2
@@ -13294,7 +13294,7 @@
       i32.const 3
       i32.store
       local.get $3
-      i32.const 12001
+      i32.const 12003
       i32.store offset=4
       local.get $3
       i32.const 476
@@ -13306,7 +13306,7 @@
       i32.const 0
       i32.store offset=20
       local.get $3
-      i32.const 12233
+      i32.const 12235
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $3
@@ -13671,10 +13671,10 @@
       local.get $1
       call $__ZN6google8protobuf8internal12MapEntryImplINS0_27Struct_FieldsEntry_DoNotUseENS0_11MessageLiteENSt3__212basic_stringIcNS5_11char_traitsIcEENS5_9allocatorIcEEEENS0_5ValueELNS1_14WireFormatLite9FieldTypeE9ELSE_11ELi0EE17MergeFromInternalERKSF_
     else
-      i32.const 13849
-      i32.const 13890
+      i32.const 13851
+      i32.const 13892
       i32.const 92
-      i32.const 13939
+      i32.const 13941
       call $___assert_fail
     end ;; $if
     )
@@ -14688,7 +14688,7 @@
                             i32.and
                           end ;; $if_11
                           i32.const 0
-                          i32.const 12277
+                          i32.const 12279
                           call $__ZN6google8protobuf8internal14WireFormatLite16VerifyUtf8StringEPKciNS2_9OperationES4_
                           br_if $loop
                           i32.const 0
@@ -15428,7 +15428,7 @@
                     local.get $6
                     select
                     i32.const 0
-                    i32.const 12312
+                    i32.const 12314
                     call $__ZN6google8protobuf8internal14WireFormatLite16VerifyUtf8StringEPKciNS2_9OperationES4_
                     select
                     br $block_4
@@ -16892,7 +16892,7 @@
       i32.const 0
       i32.store offset=20
       local.get $4
-      i32.const 12351
+      i32.const 12353
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $4
@@ -17226,7 +17226,7 @@
       i32.const 0
       i32.store offset=20
       local.get $3
-      i32.const 12351
+      i32.const 12353
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $3
@@ -17421,7 +17421,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 12351
+      i32.const 12353
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -17518,7 +17518,7 @@
       i32.const 3
       i32.store
       local.get $2
-      i32.const 11876
+      i32.const 11878
       i32.store offset=4
       local.get $2
       i32.const 1586
@@ -17530,7 +17530,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 12385
+      i32.const 12387
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -17758,7 +17758,7 @@
       i32.const 3
       i32.store
       local.get $2
-      i32.const 12001
+      i32.const 12003
       i32.store offset=4
       local.get $2
       i32.const 601
@@ -17770,7 +17770,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 12882
+      i32.const 12884
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -17832,7 +17832,7 @@
         i32.const 3
         i32.store
         local.get $2
-        i32.const 12001
+        i32.const 12003
         i32.store offset=4
         local.get $2
         i32.const 607
@@ -17844,7 +17844,7 @@
         i32.const 0
         i32.store offset=20
         local.get $2
-        i32.const 12916
+        i32.const 12918
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $2
@@ -17887,7 +17887,7 @@
         i32.const 3
         i32.store
         local.get $3
-        i32.const 12001
+        i32.const 12003
         i32.store offset=4
         local.get $3
         i32.const 612
@@ -17899,7 +17899,7 @@
         i32.const 0
         i32.store offset=20
         local.get $3
-        i32.const 12960
+        i32.const 12962
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $3
@@ -18980,7 +18980,7 @@
       i32.const 0
       i32.store offset=20
       local.get $1
-      i32.const 12996
+      i32.const 12998
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $1
@@ -19337,7 +19337,7 @@
       i32.const 3
       i32.store
       local.get $2
-      i32.const 12001
+      i32.const 12003
       i32.store offset=4
       local.get $2
       i32.const 765
@@ -19349,7 +19349,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 13466
+      i32.const 13468
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -19538,7 +19538,7 @@
         i32.const 3
         i32.store
         local.get $4
-        i32.const 12001
+        i32.const 12003
         i32.store offset=4
         local.get $4
         i32.const 672
@@ -19550,7 +19550,7 @@
         i32.const 0
         i32.store offset=20
         local.get $4
-        i32.const 13040
+        i32.const 13042
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $4
@@ -19576,7 +19576,7 @@
       i32.const 3
       i32.store
       local.get $4
-      i32.const 12001
+      i32.const 12003
       i32.store offset=4
       local.get $4
       i32.const 678
@@ -19588,7 +19588,7 @@
       i32.const 0
       i32.store offset=20
       local.get $4
-      i32.const 13141
+      i32.const 13143
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $4
@@ -19670,7 +19670,7 @@
         i32.const 3
         i32.store
         local.get $6
-        i32.const 12001
+        i32.const 12003
         i32.store offset=4
         local.get $6
         i32.const 878
@@ -19682,7 +19682,7 @@
         i32.const 0
         i32.store offset=20
         local.get $6
-        i32.const 13197
+        i32.const 13199
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $6
@@ -19714,7 +19714,7 @@
         i32.const 3
         i32.store
         local.get $5
-        i32.const 12001
+        i32.const 12003
         i32.store offset=4
         local.get $5
         i32.const 685
@@ -19726,7 +19726,7 @@
         i32.const 0
         i32.store offset=20
         local.get $5
-        i32.const 13237
+        i32.const 13239
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $5
@@ -19843,7 +19843,7 @@
       i32.const 3
       i32.store
       local.get $2
-      i32.const 12001
+      i32.const 12003
       i32.store offset=4
       local.get $2
       i32.const 837
@@ -19855,7 +19855,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 13359
+      i32.const 13361
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -20127,7 +20127,7 @@
     i32.const 3
     i32.store
     local.get $2
-    i32.const 12001
+    i32.const 12003
     i32.store offset=4
     local.get $2
     i32.const 848
@@ -20139,7 +20139,7 @@
     i32.const 0
     i32.store offset=20
     local.get $2
-    i32.const 13424
+    i32.const 13426
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     call $__ZN6google8protobuf8internal10LogMessage6FinishEv
     local.get $2
@@ -20201,7 +20201,7 @@
       i32.const 3
       i32.store
       local.get $4
-      i32.const 12001
+      i32.const 12003
       i32.store offset=4
       local.get $4
       i32.const 713
@@ -20213,7 +20213,7 @@
       i32.const 0
       i32.store offset=20
       local.get $4
-      i32.const 13312
+      i32.const 13314
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $4
@@ -21498,7 +21498,7 @@
       i32.const 3
       i32.store
       local.get $2
-      i32.const 12001
+      i32.const 12003
       i32.store offset=4
       local.get $2
       i32.const 926
@@ -21510,7 +21510,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 13519
+      i32.const 13521
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -21526,7 +21526,7 @@
       i32.const 3
       i32.store
       local.get $3
-      i32.const 12001
+      i32.const 12003
       i32.store offset=4
       local.get $3
       i32.const 927
@@ -21538,7 +21538,7 @@
       i32.const 0
       i32.store offset=20
       local.get $3
-      i32.const 13554
+      i32.const 13556
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $3
@@ -22119,7 +22119,7 @@
             i32.const 3
             i32.store
             local.get $5
-            i32.const 12001
+            i32.const 12003
             i32.store offset=4
             local.get $5
             i32.const 527
@@ -22131,7 +22131,7 @@
             i32.const 0
             i32.store offset=20
             local.get $5
-            i32.const 13591
+            i32.const 13593
             call $__ZN6google8protobuf8internal10LogMessagelsEPKc
             call $__ZN6google8protobuf8internal10LogMessage6FinishEv
             local.get $5
@@ -22407,7 +22407,7 @@
       i32.const 0
       i32.store offset=20
       local.get $1
-      i32.const 12996
+      i32.const 12998
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $1
@@ -22489,19 +22489,19 @@
     i32.const 22
     i32.store offset=4
     local.get $1
-    i32.const 13949
+    i32.const 13951
     i64.load align=1
     i64.store align=1
     local.get $1
-    i32.const 13957
+    i32.const 13959
     i64.load align=1
     i64.store offset=8 align=1
     local.get $1
-    i32.const 13965
+    i32.const 13967
     i32.load align=1
     i32.store offset=16 align=1
     local.get $1
-    i32.const 13969
+    i32.const 13971
     i32.load16_s align=1
     i32.store16 offset=20 align=1
     local.get $1
@@ -22579,10 +22579,10 @@
       local.get $1
       call $__ZN6google8protobuf6Struct9MergeFromERKS1_
     else
-      i32.const 13849
-      i32.const 13890
+      i32.const 13851
+      i32.const 13892
       i32.const 92
-      i32.const 13939
+      i32.const 13941
       call $___assert_fail
     end ;; $if
     )
@@ -22761,7 +22761,7 @@
             local.get $2
             local.get $4
             i32.const 1
-            i32.const 12312
+            i32.const 12314
             call $__ZN6google8protobuf8internal14WireFormatLite16VerifyUtf8StringEPKciNS2_9OperationES4_
             drop
             local.get $5
@@ -22969,7 +22969,7 @@
             local.get $2
             local.get $4
             i32.const 1
-            i32.const 12312
+            i32.const 12314
             call $__ZN6google8protobuf8internal14WireFormatLite16VerifyUtf8StringEPKciNS2_9OperationES4_
             drop
             local.get $8
@@ -26182,7 +26182,7 @@
       i32.const 3
       i32.store
       local.get $1
-      i32.const 11876
+      i32.const 11878
       i32.store offset=4
       local.get $1
       i32.const 1567
@@ -26194,7 +26194,7 @@
       i32.const 0
       i32.store offset=20
       local.get $1
-      i32.const 14256
+      i32.const 14258
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $1
@@ -26398,19 +26398,19 @@
     i32.const 21
     i32.store offset=4
     local.get $1
-    i32.const 14338
+    i32.const 14340
     i64.load align=1
     i64.store align=1
     local.get $1
-    i32.const 14346
+    i32.const 14348
     i64.load align=1
     i64.store offset=8 align=1
     local.get $1
-    i32.const 14354
+    i32.const 14356
     i32.load align=1
     i32.store offset=16 align=1
     local.get $1
-    i32.const 14358
+    i32.const 14360
     i32.load8_s
     i32.store8 offset=20
     local.get $1
@@ -26486,10 +26486,10 @@
       local.get $1
       call $__ZN6google8protobuf5Value9MergeFromERKS1_
     else
-      i32.const 13849
-      i32.const 13890
+      i32.const 13851
+      i32.const 13892
       i32.const 92
-      i32.const 13939
+      i32.const 13941
       call $___assert_fail
     end ;; $if
     )
@@ -26552,7 +26552,7 @@
       local.get $2
       local.get $3
       i32.const 1
-      i32.const 12277
+      i32.const 12279
       call $__ZN6google8protobuf8internal14WireFormatLite16VerifyUtf8StringEPKciNS2_9OperationES4_
       drop
       local.get $0
@@ -34945,7 +34945,7 @@
     i32.store
     local.get $2
     i32.const 128
-    i32.const 15259
+    i32.const 15261
     local.get $3
     call $_snprintf
     drop
@@ -34983,7 +34983,7 @@
     i32.store
     local.get $2
     i32.const 128
-    i32.const 17753
+    i32.const 17755
     local.get $3
     call $_snprintf
     drop
@@ -35021,7 +35021,7 @@
     i32.store
     local.get $2
     i32.const 128
-    i32.const 15262
+    i32.const 15264
     local.get $3
     call $_snprintf
     drop
@@ -35310,7 +35310,7 @@
       i32.const 3
       i32.store
       local.get $3
-      i32.const 15266
+      i32.const 15268
       i32.store offset=4
       local.get $3
       i32.const 116
@@ -35322,7 +35322,7 @@
       i32.const 0
       i32.store offset=20
       local.get $3
-      i32.const 15291
+      i32.const 15293
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $3
@@ -46186,7 +46186,7 @@
         i32.const 3
         i32.store
         local.get $11
-        i32.const 15378
+        i32.const 15380
         i32.store offset=4
         local.get $11
         i32.const 571
@@ -46198,7 +46198,7 @@
         i32.const 0
         i32.store offset=20
         local.get $11
-        i32.const 15420
+        i32.const 15422
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         local.get $4
         call $__ZN6google8protobuf8internal10LogMessagelsEi
@@ -46235,7 +46235,7 @@
     i32.const 3
     i32.store
     local.get $1
-    i32.const 15378
+    i32.const 15380
     i32.store offset=4
     local.get $1
     i32.const 534
@@ -46247,12 +46247,12 @@
     i32.const 0
     i32.store offset=20
     local.get $1
-    i32.const 15420
+    i32.const 15422
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     local.get $0
     i32.load offset=4
     call $__ZN6google8protobuf8internal10LogMessagelsEj
-    i32.const 15450
+    i32.const 15452
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     local.get $0
     i32.load offset=12
@@ -46312,7 +46312,7 @@
       i32.const 3
       i32.store
       local.get $0
-      i32.const 15378
+      i32.const 15380
       i32.store offset=4
       local.get $0
       i32.const 801
@@ -46324,7 +46324,7 @@
       i32.const 0
       i32.store offset=20
       local.get $0
-      i32.const 15462
+      i32.const 15464
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $0
@@ -46461,31 +46461,31 @@
     i32.const 50
     i32.store offset=4
     local.get $1
-    i32.const 15627
+    i32.const 15629
     i64.load align=1
     i64.store align=1
     local.get $1
-    i32.const 15635
+    i32.const 15637
     i64.load align=1
     i64.store offset=8 align=1
     local.get $1
-    i32.const 15643
+    i32.const 15645
     i64.load align=1
     i64.store offset=16 align=1
     local.get $1
-    i32.const 15651
+    i32.const 15653
     i64.load align=1
     i64.store offset=24 align=1
     local.get $1
-    i32.const 15659
+    i32.const 15661
     i64.load align=1
     i64.store offset=32 align=1
     local.get $1
-    i32.const 15667
+    i32.const 15669
     i64.load align=1
     i64.store offset=40 align=1
     local.get $1
-    i32.const 15675
+    i32.const 15677
     i32.load16_s align=1
     i32.store16 offset=48 align=1
     local.get $1
@@ -46622,7 +46622,7 @@
       i32.const 3
       i32.store
       local.get $4
-      i32.const 15557
+      i32.const 15559
       i32.store offset=4
       local.get $4
       i32.const 373
@@ -46634,7 +46634,7 @@
       i32.const 0
       i32.store offset=20
       local.get $4
-      i32.const 15589
+      i32.const 15591
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $4
@@ -46763,7 +46763,7 @@
       i32.const 2
       i32.store
       local.get $6
-      i32.const 15557
+      i32.const 15559
       i32.store offset=4
       local.get $6
       i32.const 121
@@ -46781,15 +46781,15 @@
       i32.const 0
       i32.store offset=8
       local.get $5
-      i32.const 15716
+      i32.const 15718
       call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKc
       drop
       local.get $5
-      i32.const 15710
+      i32.const 15712
       call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKc
       drop
       local.get $5
-      i32.const 15723
+      i32.const 15725
       call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKc
       drop
       local.get $4
@@ -46832,7 +46832,7 @@
         call $_free
       end ;; $if_1
       local.get $5
-      i32.const 15742
+      i32.const 15744
       call $__ZNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKc
       drop
       local.get $4
@@ -46927,7 +46927,7 @@
       i32.const 3
       i32.store
       local.get $6
-      i32.const 15557
+      i32.const 15559
       i32.store offset=4
       local.get $6
       i32.const 68
@@ -46939,7 +46939,7 @@
       i32.const 0
       i32.store offset=20
       local.get $6
-      i32.const 15824
+      i32.const 15826
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       local.set $1
       local.get $5
@@ -46955,7 +46955,7 @@
       local.get $1
       local.get $5
       call $__ZN6google8protobuf8internal10LogMessagelsERKNSt3__212basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEE
-      i32.const 15908
+      i32.const 15910
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $5
@@ -46978,7 +46978,7 @@
       i32.const 3
       i32.store
       local.get $4
-      i32.const 15557
+      i32.const 15559
       i32.store offset=4
       local.get $4
       i32.const 75
@@ -46990,7 +46990,7 @@
       i32.const 0
       i32.store offset=20
       local.get $4
-      i32.const 16198
+      i32.const 16200
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $4
@@ -47007,7 +47007,7 @@
     i32.const 3
     i32.store
     local.get $0
-    i32.const 15557
+    i32.const 15559
     i32.store offset=4
     local.get $0
     i32.const 71
@@ -47019,9 +47019,9 @@
     i32.const 0
     i32.store offset=20
     local.get $1
-    i32.const 15957
+    i32.const 15959
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
-    i32.const 16043
+    i32.const 16045
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     local.set $0
     local.get $5
@@ -47037,7 +47037,7 @@
     local.get $0
     local.get $5
     call $__ZN6google8protobuf8internal10LogMessagelsERKNSt3__212basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEE
-    i32.const 20451
+    i32.const 20453
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     call $__ZN6google8protobuf8internal10LogMessage6FinishEv
     local.get $5
@@ -47055,7 +47055,7 @@
     i32.const 3
     i32.store
     local.get $4
-    i32.const 15557
+    i32.const 15559
     i32.store offset=4
     local.get $4
     i32.const 75
@@ -47067,7 +47067,7 @@
     i32.const 0
     i32.store offset=20
     local.get $4
-    i32.const 16198
+    i32.const 16200
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     call $__ZN6google8protobuf8internal10LogMessage6FinishEv
     local.get $4
@@ -47118,7 +47118,7 @@
       i32.const 2
       i32.store
       local.get $2
-      i32.const 15557
+      i32.const 15559
       i32.store offset=4
       local.get $2
       i32.const 289
@@ -47130,7 +47130,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 15784
+      i32.const 15786
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       local.get $3
       call $__ZN6google8protobuf8internal10LogMessagelsEm
@@ -47291,7 +47291,7 @@
       i32.const 3
       i32.store
       local.get $3
-      i32.const 16251
+      i32.const 16253
       i32.store offset=4
       local.get $3
       i32.const 59
@@ -47303,9 +47303,9 @@
       i32.const 0
       i32.store offset=20
       local.get $3
-      i32.const 16285
+      i32.const 16287
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
-      i32.const 16402
+      i32.const 16404
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $3
@@ -48988,7 +48988,7 @@
             i32.const 3
             i32.store
             local.get $4
-            i32.const 16450
+            i32.const 16452
             i32.store offset=4
             local.get $4
             i32.const 507
@@ -49000,7 +49000,7 @@
             i32.const 0
             i32.store offset=20
             local.get $4
-            i32.const 16486
+            i32.const 16488
             call $__ZN6google8protobuf8internal10LogMessagelsEPKc
             call $__ZN6google8protobuf8internal10LogMessage6FinishEv
             local.get $4
@@ -49200,7 +49200,7 @@
             i32.const 3
             i32.store
             local.get $4
-            i32.const 16450
+            i32.const 16452
             i32.store offset=4
             local.get $4
             i32.const 516
@@ -49212,7 +49212,7 @@
             i32.const 0
             i32.store offset=20
             local.get $4
-            i32.const 16486
+            i32.const 16488
             call $__ZN6google8protobuf8internal10LogMessagelsEPKc
             call $__ZN6google8protobuf8internal10LogMessage6FinishEv
             local.get $4
@@ -49891,13 +49891,13 @@
       i32.load offset=8
       i32.store offset=8
     end ;; $if_0
-    i32.const 16532
+    i32.const 16534
     i32.const 0
     local.get $2
     i32.const 1
     i32.eq
     select
-    i32.const 16544
+    i32.const 16546
     local.get $2
     select
     local.set $3
@@ -49909,7 +49909,7 @@
     i32.const 2
     i32.store
     local.get $1
-    i32.const 16450
+    i32.const 16452
     i32.store offset=4
     local.get $1
     i32.const 626
@@ -49921,21 +49921,21 @@
     i32.const 0
     i32.store offset=20
     local.get $2
-    i32.const 16558
+    i32.const 16560
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     local.get $0
     call $__ZN6google8protobuf8internal10LogMessagelsERKNSt3__212basic_stringIcNS3_11char_traitsIcEENS3_9allocatorIcEEEE
-    i32.const 16571
+    i32.const 16573
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
-    i32.const 16590
+    i32.const 16592
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     local.get $3
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
-    i32.const 16607
+    i32.const 16609
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
-    i32.const 16620
+    i32.const 16622
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
-    i32.const 16676
+    i32.const 16678
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     call $__ZN6google8protobuf8internal10LogMessage6FinishEv
     local.get $2
@@ -50771,7 +50771,7 @@
                 i32.const 3
                 i32.store
                 local.get $2
-                i32.const 16684
+                i32.const 16686
                 i32.store offset=4
                 local.get $2
                 i32.const 591
@@ -50783,7 +50783,7 @@
                 i32.const 0
                 i32.store offset=20
                 local.get $2
-                i32.const 16719
+                i32.const 16721
                 call $__ZN6google8protobuf8internal10LogMessagelsEPKc
                 call $__ZN6google8protobuf8internal10LogMessage6FinishEv
                 local.get $2
@@ -50926,7 +50926,7 @@
     i32.const 2
     i32.store
     local.get $1
-    i32.const 16684
+    i32.const 16686
     i32.store offset=4
     local.get $1
     i32.const 190
@@ -50938,12 +50938,12 @@
     i32.const 0
     i32.store offset=20
     local.get $1
-    i32.const 16756
+    i32.const 16758
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     local.get $0
     i32.load offset=36
     call $__ZN6google8protobuf8internal10LogMessagelsEi
-    i32.const 16823
+    i32.const 16825
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     call $__ZN6google8protobuf8internal10LogMessage6FinishEv
     local.get $1
@@ -53407,7 +53407,7 @@
       i32.const 3
       i32.store
       local.get $2
-      i32.const 16968
+      i32.const 16970
       i32.store offset=4
       local.get $2
       i32.const 132
@@ -53419,9 +53419,9 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 17048
+      i32.const 17050
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
-      i32.const 17092
+      i32.const 17094
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -53442,7 +53442,7 @@
       i32.const 3
       i32.store
       local.get $2
-      i32.const 16968
+      i32.const 16970
       i32.store offset=4
       local.get $2
       i32.const 134
@@ -53454,7 +53454,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 17147
+      i32.const 17149
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -53481,7 +53481,7 @@
     i32.const 3
     i32.store
     local.get $3
-    i32.const 16968
+    i32.const 16970
     i32.store offset=4
     local.get $3
     i32.const 135
@@ -53493,7 +53493,7 @@
     i32.const 0
     i32.store offset=20
     local.get $3
-    i32.const 17017
+    i32.const 17019
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     call $__ZN6google8protobuf8internal10LogMessage6FinishEv
     local.get $3
@@ -53549,7 +53549,7 @@
         i32.const 3
         i32.store
         local.get $3
-        i32.const 16968
+        i32.const 16970
         i32.store offset=4
         local.get $3
         i32.const 151
@@ -53561,7 +53561,7 @@
         i32.const 0
         i32.store offset=20
         local.get $3
-        i32.const 17237
+        i32.const 17239
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $3
@@ -53635,7 +53635,7 @@
         i32.const 2
         i32.store
         local.get $5
-        i32.const 16968
+        i32.const 16970
         i32.store offset=4
         local.get $5
         i32.const 164
@@ -53647,9 +53647,9 @@
         i32.const 0
         i32.store offset=20
         local.get $5
-        i32.const 17314
+        i32.const 17316
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
-        i32.const 17364
+        i32.const 17366
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $5
@@ -53724,7 +53724,7 @@
       i32.const 3
       i32.store
       local.get $2
-      i32.const 16968
+      i32.const 16970
       i32.store offset=4
       local.get $2
       i32.const 182
@@ -53736,7 +53736,7 @@
       i32.const 0
       i32.store offset=20
       local.get $2
-      i32.const 17017
+      i32.const 17019
       call $__ZN6google8protobuf8internal10LogMessagelsEPKc
       call $__ZN6google8protobuf8internal10LogMessage6FinishEv
       local.get $2
@@ -53757,7 +53757,7 @@
           i32.const 3
           i32.store
           local.get $2
-          i32.const 16968
+          i32.const 16970
           i32.store offset=4
           local.get $2
           i32.const 183
@@ -53769,7 +53769,7 @@
           i32.const 0
           i32.store offset=20
           local.get $2
-          i32.const 17237
+          i32.const 17239
           call $__ZN6google8protobuf8internal10LogMessagelsEPKc
           call $__ZN6google8protobuf8internal10LogMessage6FinishEv
           local.get $2
@@ -53799,7 +53799,7 @@
         i32.const 3
         i32.store
         local.get $3
-        i32.const 16968
+        i32.const 16970
         i32.store offset=4
         local.get $3
         i32.const 184
@@ -53811,7 +53811,7 @@
         i32.const 0
         i32.store offset=20
         local.get $3
-        i32.const 17269
+        i32.const 17271
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $3
@@ -53872,7 +53872,7 @@
         i32.const 3
         i32.store
         local.get $1
-        i32.const 16968
+        i32.const 16970
         i32.store offset=4
         local.get $1
         i32.const 189
@@ -53884,7 +53884,7 @@
         i32.const 0
         i32.store offset=20
         local.get $1
-        i32.const 17237
+        i32.const 17239
         call $__ZN6google8protobuf8internal10LogMessagelsEPKc
         call $__ZN6google8protobuf8internal10LogMessage6FinishEv
         local.get $1
@@ -53939,7 +53939,7 @@
     i32.add
     local.tee $3
     i32.const 1024
-    i32.const 16552
+    i32.const 16554
     local.get $2
     call $_vsnprintf
     local.tee $4
@@ -53972,7 +53972,7 @@
       i32.store
       local.get $3
       local.get $5
-      i32.const 16552
+      i32.const 16554
       local.get $2
       call $_vsnprintf
       local.tee $1
@@ -54519,7 +54519,7 @@
     i32.const 3
     i32.store
     local.get $0
-    i32.const 17426
+    i32.const 17428
     i32.store offset=4
     local.get $0
     i32.const 47
@@ -54531,7 +54531,7 @@
     i32.const 0
     i32.store offset=20
     local.get $0
-    i32.const 17465
+    i32.const 17467
     call $__ZN6google8protobuf8internal10LogMessagelsEPKc
     call $__ZN6google8protobuf8internal10LogMessage6FinishEv
     local.get $0
@@ -55500,13 +55500,13 @@
       local.tee $1
       i64.reinterpret_f64
       local.set $25
-      i32.const 17649
+      i32.const 17651
       local.set $18
       i32.const 1
     else
+      i32.const 17654
+      i32.const 17657
       i32.const 17652
-      i32.const 17655
-      i32.const 17650
       local.get $4
       i32.const 1
       i32.and
@@ -55529,8 +55529,8 @@
     i64.const 9218868437227405312
     i64.eq
     if $if_0 (result i32)
-      i32.const 17676
-      i32.const 17680
+      i32.const 17678
+      i32.const 17682
       local.get $5
       i32.const 32
       i32.and
@@ -55538,8 +55538,8 @@
       i32.ne
       local.tee $3
       select
-      i32.const 17668
-      i32.const 17672
+      i32.const 17670
+      i32.const 17674
       local.get $3
       select
       local.get $1
@@ -56887,7 +56887,7 @@
           i32.eqz
           if $if_54
             local.get $0
-            i32.const 20451
+            i32.const 20453
             i32.const 1
             call $_out
           end ;; $if_54
@@ -57046,7 +57046,7 @@
                     br $block_4
                   end ;; $if_61
                   local.get $0
-                  i32.const 20451
+                  i32.const 20453
                   i32.const 1
                   call $_out
                   local.get $6
@@ -58136,7 +58136,7 @@
                                           local.set $1
                                           i32.const 0
                                           local.set $12
-                                          i32.const 17632
+                                          i32.const 17634
                                           local.set $8
                                           br $block_14
                                         end ;; $block_25
@@ -58152,13 +58152,13 @@
                                           i64.sub
                                           local.tee $25
                                           i64.store
-                                          i32.const 17632
+                                          i32.const 17634
                                           local.set $8
                                           i32.const 1
                                         else
-                                          i32.const 17633
+                                          i32.const 17635
+                                          i32.const 17636
                                           i32.const 17634
-                                          i32.const 17632
                                           local.get $7
                                           i32.const 1
                                           i32.and
@@ -58182,7 +58182,7 @@
                                       local.set $25
                                       i32.const 0
                                       local.set $12
-                                      i32.const 17632
+                                      i32.const 17634
                                       local.set $8
                                       br $block_16
                                     end ;; $block_23
@@ -58198,7 +58198,7 @@
                                     local.set $5
                                     i32.const 0
                                     local.set $12
-                                    i32.const 17632
+                                    i32.const 17634
                                     local.set $8
                                     local.get $18
                                     local.set $1
@@ -58207,7 +58207,7 @@
                                   local.get $10
                                   i32.load
                                   local.tee $5
-                                  i32.const 17642
+                                  i32.const 17644
                                   local.get $5
                                   select
                                   local.tee $6
@@ -58227,7 +58227,7 @@
                                   local.set $5
                                   i32.const 0
                                   local.set $12
-                                  i32.const 17632
+                                  i32.const 17634
                                   local.set $8
                                   local.get $1
                                   local.get $6
@@ -58288,7 +58288,7 @@
                           local.set $5
                           i32.const 0
                           local.set $12
-                          i32.const 17632
+                          i32.const 17634
                           local.set $8
                           local.get $18
                           local.set $1
@@ -58316,11 +58316,11 @@
                         local.tee $8
                         select
                         local.set $12
-                        i32.const 17632
+                        i32.const 17634
                         local.get $6
                         i32.const 4
                         i32.shr_u
-                        i32.const 17632
+                        i32.const 17634
                         i32.add
                         local.get $8
                         select
@@ -59505,7 +59505,7 @@
     local.get $1
     i32.store
     local.get $0
-    i32.const 15139
+    i32.const 15141
     local.get $2
     call $_vfprintf
     drop
@@ -66697,7 +66697,7 @@
   (func $__ZNKSt3__217bad_function_call4whatEv (type $5)
     (param $0 i32)
     (result i32)
-    i32.const 17684
+    i32.const 17686
     )
   
   (func $__ZNSt3__212__next_primeEm (type $5)
@@ -68634,7 +68634,7 @@
     (param $0 i32)
     (local $1 i32)
     (local $2 i32)
-    i32.const 15191
+    i32.const 15193
     call $_strlen
     local.tee $2
     i32.const 13
@@ -68653,7 +68653,7 @@
     i32.const 12
     i32.add
     local.tee $1
-    i32.const 15191
+    i32.const 15193
     local.get $2
     i32.const 1
     i32.add
@@ -69789,7 +69789,7 @@
       local.set $0
     end ;; $if_0
     local.get $0
-    i32.const 14360
+    i32.const 14362
     local.get $1
     call $__ZNSt3__211char_traitsIcE4copyEPcPKcm
     local.get $3
@@ -69836,7 +69836,7 @@
       end ;; $if
     end ;; $loop
     local.get $0
-    i32.const 14360
+    i32.const 14362
     call $_strlen
     local.tee $2
     local.get $2
@@ -69997,7 +69997,7 @@
         local.get $4
         i32.const 1
         i32.add
-        i32.const 17753
+        i32.const 17755
         local.get $5
         call $_snprintf
         local.tee $3
@@ -70111,9 +70111,9 @@
       i64.ne
       if $if_0
         local.get $1
-        i32.const 17892
+        i32.const 17894
         i32.store
-        i32.const 17842
+        i32.const 17844
         local.get $1
         call $_abort_message
       end ;; $if_0
@@ -70178,7 +70178,7 @@
         call_indirect $28 (type $5)
         local.set $0
         local.get $4
-        i32.const 17892
+        i32.const 17894
         i32.store
         local.get $4
         local.get $1
@@ -70186,22 +70186,22 @@
         local.get $4
         local.get $0
         i32.store offset=8
-        i32.const 17756
+        i32.const 17758
         local.get $4
         call $_abort_message
       else
         local.get $3
-        i32.const 17892
+        i32.const 17894
         i32.store
         local.get $3
         local.get $1
         i32.store offset=4
-        i32.const 17801
+        i32.const 17803
         local.get $3
         call $_abort_message
       end ;; $if_3
     end ;; $if
-    i32.const 17880
+    i32.const 17882
     local.get $2
     i32.const 1056
     i32.add
@@ -71166,7 +71166,7 @@
     local.get $3
     i32.const 24
     i32.add
-    i32.const 18071
+    i32.const 18073
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     local.get $3
@@ -71240,7 +71240,7 @@
     else
       block $block (result i32)
         local.get $2
-        i32.const 18074
+        i32.const 18076
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $1
         local.get $2
@@ -71270,7 +71270,7 @@
         local.get $2
         if $if_4 (result i32)
           local.get $4
-          i32.const 18079
+          i32.const 18081
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $1
           local.get $4
@@ -71331,7 +71331,7 @@
                 i32.const 0
               else
                 local.get $0
-                i32.const 18093
+                i32.const 18095
                 local.get $3
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_11SpecialNameEJRA34_KcRPNS0_4NodeEEEESC_DpOT0_
               end ;; $if_9
@@ -71563,7 +71563,7 @@
     i32.const 152
     i32.add
     call_indirect $28 (type $8)
-    i32.const 18031
+    i32.const 18033
     local.get $1
     call $_abort_message
     )
@@ -71800,7 +71800,7 @@
             i32.const 0
             i32.store
             local.get $5
-            i32.const 23426
+            i32.const 23428
             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
             local.get $3
             local.get $5
@@ -72320,7 +72320,7 @@
                                                                               i32.add
                                                                               i32.store
                                                                               local.get $0
-                                                                              i32.const 18127
+                                                                              i32.const 18129
                                                                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                                               br $block
                                                                             end ;; $block_35
@@ -72343,7 +72343,7 @@
                                                                           i32.add
                                                                           i32.store
                                                                           local.get $0
-                                                                          i32.const 18132
+                                                                          i32.const 18134
                                                                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                                           br $block
                                                                         end ;; $block_33
@@ -72354,7 +72354,7 @@
                                                                         i32.add
                                                                         i32.store
                                                                         local.get $0
-                                                                        i32.const 18137
+                                                                        i32.const 18139
                                                                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                                         br $block
                                                                       end ;; $block_32
@@ -72365,7 +72365,7 @@
                                                                       i32.add
                                                                       i32.store
                                                                       local.get $0
-                                                                      i32.const 18142
+                                                                      i32.const 18144
                                                                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                                       br $block
                                                                     end ;; $block_31
@@ -72376,7 +72376,7 @@
                                                                     i32.add
                                                                     i32.store
                                                                     local.get $0
-                                                                    i32.const 18154
+                                                                    i32.const 18156
                                                                     call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                                     br $block
                                                                   end ;; $block_30
@@ -72387,7 +72387,7 @@
                                                                   i32.add
                                                                   i32.store
                                                                   local.get $0
-                                                                  i32.const 18168
+                                                                  i32.const 18170
                                                                   call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                                   br $block
                                                                 end ;; $block_29
@@ -72398,7 +72398,7 @@
                                                                 i32.add
                                                                 i32.store
                                                                 local.get $0
-                                                                i32.const 18174
+                                                                i32.const 18176
                                                                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                                 br $block
                                                               end ;; $block_28
@@ -72409,7 +72409,7 @@
                                                               i32.add
                                                               i32.store
                                                               local.get $0
-                                                              i32.const 18189
+                                                              i32.const 18191
                                                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                               br $block
                                                             end ;; $block_27
@@ -72420,7 +72420,7 @@
                                                             i32.add
                                                             i32.store
                                                             local.get $0
-                                                            i32.const 18193
+                                                            i32.const 18195
                                                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                             br $block
                                                           end ;; $block_26
@@ -72431,7 +72431,7 @@
                                                           i32.add
                                                           i32.store
                                                           local.get $0
-                                                          i32.const 18206
+                                                          i32.const 18208
                                                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                           br $block
                                                         end ;; $block_25
@@ -72442,7 +72442,7 @@
                                                         i32.add
                                                         i32.store
                                                         local.get $0
-                                                        i32.const 18211
+                                                        i32.const 18213
                                                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                         br $block
                                                       end ;; $block_24
@@ -72453,7 +72453,7 @@
                                                       i32.add
                                                       i32.store
                                                       local.get $0
-                                                      i32.const 18225
+                                                      i32.const 18227
                                                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                       br $block
                                                     end ;; $block_23
@@ -72476,7 +72476,7 @@
                                                   i32.add
                                                   i32.store
                                                   local.get $0
-                                                  i32.const 18235
+                                                  i32.const 18237
                                                   call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                   br $block
                                                 end ;; $block_21
@@ -72487,7 +72487,7 @@
                                                 i32.add
                                                 i32.store
                                                 local.get $0
-                                                i32.const 18244
+                                                i32.const 18246
                                                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                 br $block
                                               end ;; $block_20
@@ -72498,7 +72498,7 @@
                                               i32.add
                                               i32.store
                                               local.get $0
-                                              i32.const 18262
+                                              i32.const 18264
                                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                               br $block
                                             end ;; $block_19
@@ -72521,7 +72521,7 @@
                                           i32.add
                                           i32.store
                                           local.get $0
-                                          i32.const 18268
+                                          i32.const 18270
                                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                           br $block
                                         end ;; $block_17
@@ -72532,7 +72532,7 @@
                                         i32.add
                                         i32.store
                                         local.get $0
-                                        i32.const 18280
+                                        i32.const 18282
                                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                         br $block
                                       end ;; $block_16
@@ -72543,7 +72543,7 @@
                                       i32.add
                                       i32.store
                                       local.get $0
-                                      i32.const 18291
+                                      i32.const 18293
                                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                       br $block
                                     end ;; $block_15
@@ -72617,7 +72617,7 @@
                                                             i32.add
                                                             i32.store
                                                             local.get $0
-                                                            i32.const 18295
+                                                            i32.const 18297
                                                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                             br $block
                                                           end ;; $block_53
@@ -72628,7 +72628,7 @@
                                                           i32.add
                                                           i32.store
                                                           local.get $0
-                                                          i32.const 18305
+                                                          i32.const 18307
                                                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                           br $block
                                                         end ;; $block_52
@@ -72639,7 +72639,7 @@
                                                         i32.add
                                                         i32.store
                                                         local.get $0
-                                                        i32.const 18316
+                                                        i32.const 18318
                                                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                         br $block
                                                       end ;; $block_51
@@ -72650,7 +72650,7 @@
                                                       i32.add
                                                       i32.store
                                                       local.get $0
-                                                      i32.const 18326
+                                                      i32.const 18328
                                                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                       br $block
                                                     end ;; $block_50
@@ -72661,7 +72661,7 @@
                                                     i32.add
                                                     i32.store
                                                     local.get $0
-                                                    i32.const 18336
+                                                    i32.const 18338
                                                     call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                     br $block
                                                   end ;; $block_49
@@ -72672,7 +72672,7 @@
                                                   i32.add
                                                   i32.store
                                                   local.get $0
-                                                  i32.const 18345
+                                                  i32.const 18347
                                                   call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                   br $block
                                                 end ;; $block_48
@@ -72683,7 +72683,7 @@
                                                 i32.add
                                                 i32.store
                                                 local.get $0
-                                                i32.const 18354
+                                                i32.const 18356
                                                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                                 br $block
                                               end ;; $block_47
@@ -72694,7 +72694,7 @@
                                               i32.add
                                               i32.store
                                               local.get $0
-                                              i32.const 18359
+                                              i32.const 18361
                                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                               br $block
                                             end ;; $block_46
@@ -72705,7 +72705,7 @@
                                             i32.add
                                             i32.store
                                             local.get $0
-                                            i32.const 18374
+                                            i32.const 18376
                                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                             br $block
                                           end ;; $block_45
@@ -73180,7 +73180,7 @@
     i32.const 0
     i32.store
     local.get $3
-    i32.const 23127
+    i32.const 23129
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     local.get $3
@@ -73194,14 +73194,14 @@
         if $if (result i32)
           local.get $6
           local.get $0
-          i32.const 23130
+          i32.const 23132
           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
           i32.store
           br $block_0
         else
           block $block_1 (result i32)
             local.get $4
-            i32.const 23139
+            i32.const 23141
             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
             local.get $1
             local.get $4
@@ -73238,7 +73238,7 @@
               br $block_0
             end ;; $if_0
             local.get $5
-            i32.const 23142
+            i32.const 23144
             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
             local.get $1
             local.get $5
@@ -73301,7 +73301,7 @@
         br $block
       end ;; $block_0
       local.get $8
-      i32.const 23145
+      i32.const 23147
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $1
       local.get $8
@@ -73357,7 +73357,7 @@
                       i32.eqz
                       if $if_4
                         local.get $9
-                        i32.const 23148
+                        i32.const 23150
                         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                         local.get $1
                         local.get $9
@@ -73368,7 +73368,7 @@
                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                         br_if $block_7
                         local.get $10
-                        i32.const 23151
+                        i32.const 23153
                         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                         local.get $1
                         local.get $10
@@ -73480,7 +73480,7 @@
       else
         block $block (result i32)
           local.get $5
-          i32.const 22942
+          i32.const 22944
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $2
           local.get $5
@@ -73775,7 +73775,7 @@
           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfEc
           if $if_2 (result i32)
             local.get $0
-            i32.const 22906
+            i32.const 22908
             local.get $1
             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_13EnclosingExprEJRA10_KcRPNS0_4NodeERA2_S8_EEESC_DpOT0_
           else
@@ -73813,7 +73813,7 @@
     local.get $1
     i32.const 8
     i32.add
-    i32.const 22781
+    i32.const 22783
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $1
@@ -74202,7 +74202,7 @@
     i32.const 24
     i32.add
     local.tee $5
-    i32.const 21837
+    i32.const 21839
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $5
@@ -74213,12 +74213,12 @@
     call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
     if $if
       local.get $1
-      i32.const 21840
+      i32.const 21842
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     else
       block $block
         local.get $3
-        i32.const 21847
+        i32.const 21849
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $3
@@ -74229,12 +74229,12 @@
         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
         if $if_0
           local.get $1
-          i32.const 21850
+          i32.const 21852
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           br $block
         end ;; $if_0
         local.get $4
-        i32.const 21856
+        i32.const 21858
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $4
@@ -74245,7 +74245,7 @@
         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
         if $if_1
           local.get $1
-          i32.const 21859
+          i32.const 21861
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         end ;; $if_1
       end ;; $block
@@ -74338,7 +74338,7 @@
         i32.load8_s offset=362
         if $if_2
           local.get $0
-          i32.const 18354
+          i32.const 18356
           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
           br $block
         end ;; $if_2
@@ -75361,7 +75361,7 @@
     i32.add
     call_indirect $28 (type $3)
     local.get $4
-    i32.const 18389
+    i32.const 18391
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -75382,7 +75382,7 @@
     local.get $3
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $5
-    i32.const 18395
+    i32.const 18397
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -75594,7 +75594,7 @@
                     $block ;; default
                 end ;; $block_5
                 local.get $4
-                i32.const 18539
+                i32.const 18541
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $2
                 local.get $4
@@ -75606,7 +75606,7 @@
                 br $block
               end ;; $block_4
               local.get $5
-              i32.const 18554
+              i32.const 18556
               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
               local.get $2
               local.get $5
@@ -75618,7 +75618,7 @@
               br $block
             end ;; $block_3
             local.get $6
-            i32.const 18572
+            i32.const 18574
             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
             local.get $2
             local.get $6
@@ -75630,7 +75630,7 @@
             br $block
           end ;; $block_2
           local.get $7
-          i32.const 18584
+          i32.const 18586
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $2
           local.get $7
@@ -75642,7 +75642,7 @@
           br $block
         end ;; $block_1
         local.get $8
-        i32.const 18597
+        i32.const 18599
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $8
@@ -75654,7 +75654,7 @@
         br $block
       end ;; $block_0
       local.get $3
-      i32.const 18610
+      i32.const 18612
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $3
@@ -75685,32 +75685,32 @@
                     $block ;; default
                 end ;; $block_5
                 local.get $0
-                i32.const 18484
+                i32.const 18486
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 br $block
               end ;; $block_4
               local.get $0
-              i32.const 18494
+              i32.const 18496
               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
               br $block
             end ;; $block_3
             local.get $0
-            i32.const 18507
+            i32.const 18509
             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
             br $block
           end ;; $block_2
           local.get $0
-          i32.const 18514
+          i32.const 18516
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           br $block
         end ;; $block_1
         local.get $0
-        i32.const 18522
+        i32.const 18524
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         br $block
       end ;; $block_0
       local.get $0
-      i32.const 18530
+      i32.const 18532
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     end ;; $block
     )
@@ -75739,7 +75739,7 @@
     i32.load
     local.set $1
     local.get $2
-    i32.const 18680
+    i32.const 18682
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -75855,7 +75855,7 @@
     i32.load
     local.set $1
     local.get $2
-    i32.const 18748
+    i32.const 18750
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -75996,7 +75996,7 @@
       call $__ZNK12_GLOBAL__N_116itanium_demangle4Node8hasArrayERNS_12OutputStreamE
       if $if_0
         local.get $7
-        i32.const 18759
+        i32.const 18761
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $3
         local.get $7
@@ -76019,7 +76019,7 @@
           br $block
         end ;; $block_0
         local.get $8
-        i32.const 18761
+        i32.const 18763
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $3
         local.get $8
@@ -76030,8 +76030,8 @@
         call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
       end ;; $block
       local.get $2
+      i32.const 18767
       i32.const 18765
-      i32.const 18763
       local.get $6
       i32.load
       select
@@ -76122,7 +76122,7 @@
           br $block
         end ;; $block_0
         local.get $2
-        i32.const 18757
+        i32.const 18759
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $5
         local.get $2
@@ -76395,7 +76395,7 @@
           i32.load offset=8
           local.set $0
           local.get $8
-          i32.const 18832
+          i32.const 18834
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $2
           local.get $8
@@ -76416,7 +76416,7 @@
           local.get $2
           call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
           local.get $9
-          i32.const 18836
+          i32.const 18838
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $2
           local.get $9
@@ -76449,7 +76449,7 @@
       call $__ZNK12_GLOBAL__N_116itanium_demangle4Node8hasArrayERNS_12OutputStreamE
       if $if_0
         local.get $5
-        i32.const 18759
+        i32.const 18761
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $5
@@ -76474,7 +76474,7 @@
           br $block_1
         end ;; $block_2
         local.get $6
-        i32.const 18761
+        i32.const 18763
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $6
@@ -76485,7 +76485,7 @@
         call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
       end ;; $block_1
       local.get $7
-      i32.const 18830
+      i32.const 18832
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $7
@@ -76549,7 +76549,7 @@
           br $block_1
         end ;; $block_2
         local.get $3
-        i32.const 18757
+        i32.const 18759
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $4
         local.get $3
@@ -76605,7 +76605,7 @@
       i64.load offset=8 align=4
       i64.store align=4
       local.get $1
-      i32.const 18818
+      i32.const 18820
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $1
@@ -77247,7 +77247,7 @@
     local.get $2
     i32.const 16
     i32.add
-    i32.const 18943
+    i32.const 18945
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -77281,7 +77281,7 @@
     i32.eq
     if $if_0
       local.get $4
-      i32.const 18759
+      i32.const 18761
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $4
@@ -77292,7 +77292,7 @@
       call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     end ;; $if_0
     local.get $2
-    i32.const 18836
+    i32.const 18838
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -77339,7 +77339,7 @@
         i32.eqz
         if $if_0
           local.get $2
-          i32.const 18945
+          i32.const 18947
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $4
           local.get $2
@@ -78091,7 +78091,7 @@
     local.get $3
     i32.const 328
     i32.add
-    i32.const 19474
+    i32.const 19476
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $3
@@ -78243,7 +78243,7 @@
                                                       i32.add
                                                       i32.store
                                                       local.get $6
-                                                      i32.const 18765
+                                                      i32.const 18767
                                                       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                                       local.get $2
                                                       local.get $6
@@ -78260,7 +78260,7 @@
                                                     i32.add
                                                     i32.store
                                                     local.get $7
-                                                    i32.const 18763
+                                                    i32.const 18765
                                                     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                                     local.get $2
                                                     local.get $7
@@ -78277,7 +78277,7 @@
                                                   i32.add
                                                   i32.store
                                                   local.get $8
-                                                  i32.const 18763
+                                                  i32.const 18765
                                                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                                   local.get $2
                                                   local.get $8
@@ -78294,7 +78294,7 @@
                                                 i32.add
                                                 i32.store
                                                 local.get $9
-                                                i32.const 19477
+                                                i32.const 19479
                                                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                                 local.get $2
                                                 local.get $9
@@ -78311,7 +78311,7 @@
                                               i32.add
                                               i32.store
                                               local.get $10
-                                              i32.const 19480
+                                              i32.const 19482
                                               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                               local.get $2
                                               local.get $10
@@ -78335,7 +78335,7 @@
                                             local.get $1
                                             if $if_2 (result i32)
                                               local.get $0
-                                              i32.const 19482
+                                              i32.const 19484
                                               local.get $2
                                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_13EnclosingExprEJRA10_KcRPNS0_4NodeERA2_S8_EEESC_DpOT0_
                                             else
@@ -78356,7 +78356,7 @@
                                           local.get $1
                                           if $if_3 (result i32)
                                             local.get $0
-                                            i32.const 19482
+                                            i32.const 19484
                                             local.get $2
                                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_13EnclosingExprEJRA10_KcRPNS0_4NodeERA2_S8_EEESC_DpOT0_
                                           else
@@ -78486,7 +78486,7 @@
                                             i32.add
                                             i32.store
                                             local.get $11
-                                            i32.const 19492
+                                            i32.const 19494
                                             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                             local.get $2
                                             local.get $11
@@ -78503,7 +78503,7 @@
                                           i32.add
                                           i32.store
                                           local.get $12
-                                          i32.const 19494
+                                          i32.const 19496
                                           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                           local.get $2
                                           local.get $12
@@ -78605,7 +78605,7 @@
                                                   i32.add
                                                   i32.store
                                                   local.get $13
-                                                  i32.const 18830
+                                                  i32.const 18832
                                                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                                   local.get $2
                                                   local.get $13
@@ -78666,7 +78666,7 @@
                                               if $if_12 (result i32)
                                                 local.get $0
                                                 local.get $2
-                                                i32.const 19496
+                                                i32.const 19498
                                                 local.get $4
                                                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_10MemberExprEJRPNS0_4NodeERA3_KcSA_EEES9_DpOT0_
                                               else
@@ -78716,7 +78716,7 @@
                                         i32.add
                                         i32.store
                                         local.get $14
-                                        i32.const 19499
+                                        i32.const 19501
                                         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                         local.get $2
                                         local.get $14
@@ -78733,7 +78733,7 @@
                                       i32.add
                                       i32.store
                                       local.get $15
-                                      i32.const 19501
+                                      i32.const 19503
                                       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                       local.get $2
                                       local.get $15
@@ -78767,7 +78767,7 @@
                                         i32.add
                                         i32.store
                                         local.get $16
-                                        i32.const 19504
+                                        i32.const 19506
                                         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                         local.get $2
                                         local.get $16
@@ -78784,7 +78784,7 @@
                                       i32.add
                                       i32.store
                                       local.get $17
-                                      i32.const 19506
+                                      i32.const 19508
                                       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                       local.get $2
                                       local.get $17
@@ -78801,7 +78801,7 @@
                                     i32.add
                                     i32.store
                                     local.get $18
-                                    i32.const 19509
+                                    i32.const 19511
                                     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                     local.get $2
                                     local.get $18
@@ -78832,7 +78832,7 @@
                                     i32.add
                                     i32.store
                                     local.get $19
-                                    i32.const 19512
+                                    i32.const 19514
                                     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                     local.get $2
                                     local.get $19
@@ -78849,7 +78849,7 @@
                                   i32.add
                                   i32.store
                                   local.get $20
-                                  i32.const 18836
+                                  i32.const 18838
                                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                   local.get $2
                                   local.get $20
@@ -78989,7 +78989,7 @@
                                     i32.add
                                     i32.store
                                     local.get $21
-                                    i32.const 19515
+                                    i32.const 19517
                                     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                     local.get $2
                                     local.get $21
@@ -79006,7 +79006,7 @@
                                   i32.add
                                   i32.store
                                   local.get $22
-                                  i32.const 19518
+                                  i32.const 19520
                                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                   local.get $2
                                   local.get $22
@@ -79023,7 +79023,7 @@
                                 i32.add
                                 i32.store
                                 local.get $23
-                                i32.const 19521
+                                i32.const 19523
                                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                 local.get $2
                                 local.get $23
@@ -79040,7 +79040,7 @@
                               i32.add
                               i32.store
                               local.get $24
-                              i32.const 18943
+                              i32.const 18945
                               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                               local.get $2
                               local.get $24
@@ -79076,7 +79076,7 @@
                                     i32.add
                                     i32.store
                                     local.get $25
-                                    i32.const 19364
+                                    i32.const 19366
                                     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                     local.get $2
                                     local.get $25
@@ -79093,7 +79093,7 @@
                                   i32.add
                                   i32.store
                                   local.get $26
-                                  i32.const 19525
+                                  i32.const 19527
                                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                   local.get $2
                                   local.get $26
@@ -79110,7 +79110,7 @@
                                 i32.add
                                 i32.store
                                 local.get $27
-                                i32.const 18830
+                                i32.const 18832
                                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                 local.get $2
                                 local.get $27
@@ -79127,7 +79127,7 @@
                               i32.add
                               i32.store
                               local.get $28
-                              i32.const 19528
+                              i32.const 19530
                               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                               local.get $2
                               local.get $28
@@ -79148,7 +79148,7 @@
                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfEc
                             if $if_17
                               local.get $29
-                              i32.const 19531
+                              i32.const 19533
                               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                               local.get $2
                               local.get $29
@@ -79168,7 +79168,7 @@
                             if $if_18 (result i32)
                               local.get $0
                               local.get $2
-                              i32.const 19531
+                              i32.const 19533
                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_11PostfixExprEJRPNS0_4NodeERA3_KcEEES9_DpOT0_
                             else
                               i32.const 0
@@ -79203,7 +79203,7 @@
                                 i32.add
                                 i32.store
                                 local.get $30
-                                i32.const 19534
+                                i32.const 19536
                                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                 local.get $2
                                 local.get $30
@@ -79220,7 +79220,7 @@
                               i32.add
                               i32.store
                               local.get $31
-                              i32.const 19364
+                              i32.const 19366
                               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                               local.get $2
                               local.get $31
@@ -79237,7 +79237,7 @@
                             i32.add
                             i32.store
                             local.get $32
-                            i32.const 19537
+                            i32.const 19539
                             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                             local.get $2
                             local.get $32
@@ -79298,7 +79298,7 @@
                             i32.add
                             i32.store
                             local.get $33
-                            i32.const 19539
+                            i32.const 19541
                             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                             local.get $2
                             local.get $33
@@ -79315,7 +79315,7 @@
                           i32.add
                           i32.store
                           local.get $34
-                          i32.const 19542
+                          i32.const 19544
                           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                           local.get $2
                           local.get $34
@@ -79332,7 +79332,7 @@
                         i32.add
                         i32.store
                         local.get $35
-                        i32.const 19544
+                        i32.const 19546
                         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                         local.get $2
                         local.get $35
@@ -79369,7 +79369,7 @@
                                 i32.add
                                 i32.store
                                 local.get $36
-                                i32.const 19547
+                                i32.const 19549
                                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                 local.get $2
                                 local.get $36
@@ -79386,7 +79386,7 @@
                               i32.add
                               i32.store
                               local.get $37
-                              i32.const 19551
+                              i32.const 19553
                               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                               local.get $2
                               local.get $37
@@ -79403,7 +79403,7 @@
                             i32.add
                             i32.store
                             local.get $38
-                            i32.const 19553
+                            i32.const 19555
                             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                             local.get $2
                             local.get $38
@@ -79424,7 +79424,7 @@
                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfEc
                           if $if_20
                             local.get $39
-                            i32.const 19556
+                            i32.const 19558
                             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                             local.get $2
                             local.get $39
@@ -79444,7 +79444,7 @@
                           if $if_21 (result i32)
                             local.get $0
                             local.get $2
-                            i32.const 19556
+                            i32.const 19558
                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_11PostfixExprEJRPNS0_4NodeERA3_KcEEES9_DpOT0_
                           else
                             i32.const 0
@@ -79457,7 +79457,7 @@
                         i32.add
                         i32.store
                         local.get $40
-                        i32.const 19551
+                        i32.const 19553
                         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                         local.get $2
                         local.get $40
@@ -79489,7 +79489,7 @@
                         if $if_23 (result i32)
                           local.get $0
                           local.get $2
-                          i32.const 19559
+                          i32.const 19561
                           local.get $4
                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_10MemberExprEJRPNS0_4NodeERA3_KcSA_EEES9_DpOT0_
                         else
@@ -79616,7 +79616,7 @@
                         i32.add
                         i32.store
                         local.get $41
-                        i32.const 19562
+                        i32.const 19564
                         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                         local.get $2
                         local.get $41
@@ -79633,7 +79633,7 @@
                       i32.add
                       i32.store
                       local.get $42
-                      i32.const 19564
+                      i32.const 19566
                       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                       local.get $2
                       local.get $42
@@ -79650,7 +79650,7 @@
                     i32.add
                     i32.store
                     local.get $43
-                    i32.const 19567
+                    i32.const 19569
                     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                     local.get $2
                     local.get $43
@@ -79667,7 +79667,7 @@
                   i32.add
                   i32.store
                   local.get $44
-                  i32.const 19570
+                  i32.const 19572
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   local.get $2
                   local.get $44
@@ -79769,7 +79769,7 @@
                       local.get $1
                       if $if_32 (result i32)
                         local.get $0
-                        i32.const 19574
+                        i32.const 19576
                         local.get $2
                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_13EnclosingExprEJRA10_KcRPNS0_4NodeERA2_S8_EEESC_DpOT0_
                       else
@@ -79790,7 +79790,7 @@
                     local.get $1
                     if $if_33 (result i32)
                       local.get $0
-                      i32.const 19574
+                      i32.const 19576
                       local.get $2
                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_13EnclosingExprEJRA10_KcRPNS0_4NodeERA2_S8_EEESC_DpOT0_
                     else
@@ -79954,7 +79954,7 @@
                       local.get $1
                       if $if_37 (result i32)
                         local.get $0
-                        i32.const 19583
+                        i32.const 19585
                         local.get $2
                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_13EnclosingExprEJRA10_KcRPNS0_4NodeERA2_S8_EEESC_DpOT0_
                       else
@@ -79975,7 +79975,7 @@
                     local.get $1
                     if $if_38 (result i32)
                       local.get $0
-                      i32.const 19583
+                      i32.const 19585
                       local.get $2
                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_13EnclosingExprEJRA10_KcRPNS0_4NodeERA2_S8_EEESC_DpOT0_
                     else
@@ -80054,7 +80054,7 @@
                 i32.add
                 i32.store
                 local.get $0
-                i32.const 19592
+                i32.const 19594
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                 br $block
               end ;; $block_111
@@ -80259,7 +80259,7 @@
                                               i32.add
                                               i32.store
                                               local.get $3
-                                              i32.const 19047
+                                              i32.const 19049
                                               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                               local.get $1
                                               local.get $3
@@ -80271,7 +80271,7 @@
                                               br $block
                                             end ;; $block_18
                                             local.get $4
-                                            i32.const 19055
+                                            i32.const 19057
                                             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                             local.get $1
                                             local.get $4
@@ -80290,7 +80290,7 @@
                                               br $block
                                             end ;; $if_1
                                             local.get $5
-                                            i32.const 19059
+                                            i32.const 19061
                                             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                             local.get $1
                                             local.get $5
@@ -80318,7 +80318,7 @@
                                           i32.add
                                           i32.store
                                           local.get $6
-                                          i32.const 18137
+                                          i32.const 18139
                                           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                           local.get $1
                                           local.get $6
@@ -80336,7 +80336,7 @@
                                         i32.add
                                         i32.store
                                         local.get $7
-                                        i32.const 18142
+                                        i32.const 18144
                                         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                         local.get $1
                                         local.get $7
@@ -80354,7 +80354,7 @@
                                       i32.add
                                       i32.store
                                       local.get $8
-                                      i32.const 18154
+                                      i32.const 18156
                                       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                       local.get $1
                                       local.get $8
@@ -80372,7 +80372,7 @@
                                     i32.add
                                     i32.store
                                     local.get $9
-                                    i32.const 18168
+                                    i32.const 18170
                                     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                     local.get $1
                                     local.get $9
@@ -80390,7 +80390,7 @@
                                   i32.add
                                   i32.store
                                   local.get $10
-                                  i32.const 18174
+                                  i32.const 18176
                                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                                   local.get $1
                                   local.get $10
@@ -80426,7 +80426,7 @@
                               i32.add
                               i32.store
                               local.get $12
-                              i32.const 19063
+                              i32.const 19065
                               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                               local.get $1
                               local.get $12
@@ -80444,7 +80444,7 @@
                             i32.add
                             i32.store
                             local.get $13
-                            i32.const 19065
+                            i32.const 19067
                             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                             local.get $1
                             local.get $13
@@ -80462,7 +80462,7 @@
                           i32.add
                           i32.store
                           local.get $14
-                          i32.const 19067
+                          i32.const 19069
                           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                           local.get $1
                           local.get $14
@@ -80480,7 +80480,7 @@
                         i32.add
                         i32.store
                         local.get $15
-                        i32.const 19070
+                        i32.const 19072
                         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                         local.get $1
                         local.get $15
@@ -80498,7 +80498,7 @@
                       i32.add
                       i32.store
                       local.get $16
-                      i32.const 19073
+                      i32.const 19075
                       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                       local.get $1
                       local.get $16
@@ -80516,7 +80516,7 @@
                     i32.add
                     i32.store
                     local.get $17
-                    i32.const 18235
+                    i32.const 18237
                     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                     local.get $1
                     local.get $17
@@ -80534,7 +80534,7 @@
                   i32.add
                   i32.store
                   local.get $18
-                  i32.const 18244
+                  i32.const 18246
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   local.get $1
                   local.get $18
@@ -80576,7 +80576,7 @@
             br $block
           end ;; $block_1
           local.get $19
-          i32.const 18071
+          i32.const 18073
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $1
           local.get $19
@@ -81120,7 +81120,7 @@
     i32.const 16
     i32.add
     local.tee $5
-    i32.const 18761
+    i32.const 18763
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -81134,7 +81134,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -81361,7 +81361,7 @@
       f64.store
       local.get $2
       i32.const 40
-      i32.const 19129
+      i32.const 19131
       local.get $5
       call $_snprintf
       local.get $2
@@ -81583,7 +81583,7 @@
       f64.store
       local.get $2
       i32.const 32
-      i32.const 19190
+      i32.const 19192
       local.get $4
       call $_snprintf
       local.get $2
@@ -81803,7 +81803,7 @@
       f64.store
       local.get $2
       i32.const 24
-      i32.const 19249
+      i32.const 19251
       local.get $4
       call $_snprintf
       local.get $2
@@ -81869,11 +81869,11 @@
     i32.load8_s offset=8
     if $if
       local.get $2
-      i32.const 19309
+      i32.const 19311
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     else
       local.get $2
-      i32.const 19314
+      i32.const 19316
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     end ;; $if
     local.get $2
@@ -82008,7 +82008,7 @@
     i32.gt_u
     if $if
       local.get $4
-      i32.const 18761
+      i32.const 18763
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $4
@@ -82029,7 +82029,7 @@
       local.get $2
       call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
       local.get $5
-      i32.const 18757
+      i32.const 18759
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $5
@@ -82057,7 +82057,7 @@
     i32.eq
     if $if_0
       local.get $4
-      i32.const 19364
+      i32.const 19366
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $4
@@ -82220,7 +82220,7 @@
     local.get $2
     i32.const 8
     i32.add
-    i32.const 21720
+    i32.const 21722
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     local.get $2
@@ -82249,7 +82249,7 @@
       end ;; $if_0
     else
       local.get $2
-      i32.const 21723
+      i32.const 21725
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $1
       local.get $2
@@ -82547,7 +82547,7 @@
         i32.const 0
         i32.store offset=4
         local.get $3
-        i32.const 21573
+        i32.const 21575
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $1
         local.get $3
@@ -82560,13 +82560,13 @@
             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
             if $if_1
               local.get $1
-              i32.const 18765
+              i32.const 18767
               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
               br $block_4
             else
               block $block_5
                 local.get $4
-                i32.const 21576
+                i32.const 21578
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $4
@@ -82577,12 +82577,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_2
                   local.get $1
-                  i32.const 18763
+                  i32.const 18765
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_2
                 local.get $8
-                i32.const 21579
+                i32.const 21581
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $8
@@ -82593,12 +82593,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_3
                   local.get $1
-                  i32.const 19477
+                  i32.const 19479
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_3
                 local.get $9
-                i32.const 21582
+                i32.const 21584
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $9
@@ -82609,12 +82609,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_4
                   local.get $1
-                  i32.const 19480
+                  i32.const 19482
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_4
                 local.get $10
-                i32.const 21585
+                i32.const 21587
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $10
@@ -82625,12 +82625,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_5
                   local.get $1
-                  i32.const 19492
+                  i32.const 19494
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_5
                 local.get $11
-                i32.const 21588
+                i32.const 21590
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $11
@@ -82641,12 +82641,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_6
                   local.get $1
-                  i32.const 19496
+                  i32.const 19498
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_6
                 local.get $12
-                i32.const 21591
+                i32.const 21593
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $12
@@ -82657,12 +82657,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_7
                   local.get $1
-                  i32.const 19499
+                  i32.const 19501
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_7
                 local.get $13
-                i32.const 21594
+                i32.const 21596
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $13
@@ -82673,12 +82673,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_8
                   local.get $1
-                  i32.const 19501
+                  i32.const 19503
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_8
                 local.get $14
-                i32.const 21597
+                i32.const 21599
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $14
@@ -82689,12 +82689,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_9
                   local.get $1
-                  i32.const 19504
+                  i32.const 19506
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_9
                 local.get $15
-                i32.const 21600
+                i32.const 21602
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $15
@@ -82705,12 +82705,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_10
                   local.get $1
-                  i32.const 19506
+                  i32.const 19508
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_10
                 local.get $16
-                i32.const 21603
+                i32.const 21605
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $16
@@ -82721,12 +82721,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_11
                   local.get $1
-                  i32.const 19509
+                  i32.const 19511
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_11
                 local.get $17
-                i32.const 21606
+                i32.const 21608
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $17
@@ -82737,12 +82737,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_12
                   local.get $1
-                  i32.const 19512
+                  i32.const 19514
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_12
                 local.get $18
-                i32.const 21609
+                i32.const 21611
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $18
@@ -82753,12 +82753,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_13
                   local.get $1
-                  i32.const 18836
+                  i32.const 18838
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_13
                 local.get $19
-                i32.const 21612
+                i32.const 21614
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $19
@@ -82769,12 +82769,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_14
                   local.get $1
-                  i32.const 19515
+                  i32.const 19517
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_14
                 local.get $20
-                i32.const 21615
+                i32.const 21617
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $20
@@ -82785,12 +82785,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_15
                   local.get $1
-                  i32.const 19518
+                  i32.const 19520
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_15
                 local.get $21
-                i32.const 21618
+                i32.const 21620
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $21
@@ -82801,12 +82801,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_16
                   local.get $1
-                  i32.const 19521
+                  i32.const 19523
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_16
                 local.get $22
-                i32.const 21621
+                i32.const 21623
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $22
@@ -82817,12 +82817,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_17
                   local.get $1
-                  i32.const 18943
+                  i32.const 18945
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_17
                 local.get $23
-                i32.const 21624
+                i32.const 21626
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $23
@@ -82833,12 +82833,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_18
                   local.get $1
-                  i32.const 19364
+                  i32.const 19366
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_18
                 local.get $24
-                i32.const 21627
+                i32.const 21629
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $24
@@ -82849,12 +82849,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_19
                   local.get $1
-                  i32.const 19525
+                  i32.const 19527
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_19
                 local.get $25
-                i32.const 21630
+                i32.const 21632
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $25
@@ -82865,12 +82865,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_20
                   local.get $1
-                  i32.const 18830
+                  i32.const 18832
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_20
                 local.get $26
-                i32.const 21633
+                i32.const 21635
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $26
@@ -82881,12 +82881,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_21
                   local.get $1
-                  i32.const 19528
+                  i32.const 19530
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_21
                 local.get $27
-                i32.const 21636
+                i32.const 21638
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $27
@@ -82897,12 +82897,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_22
                   local.get $1
-                  i32.const 19534
+                  i32.const 19536
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_22
                 local.get $28
-                i32.const 21639
+                i32.const 21641
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $28
@@ -82913,12 +82913,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_23
                   local.get $1
-                  i32.const 19539
+                  i32.const 19541
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_23
                 local.get $29
-                i32.const 21642
+                i32.const 21644
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $29
@@ -82929,12 +82929,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_24
                   local.get $1
-                  i32.const 19542
+                  i32.const 19544
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_24
                 local.get $30
-                i32.const 21645
+                i32.const 21647
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $30
@@ -82945,12 +82945,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_25
                   local.get $1
-                  i32.const 19544
+                  i32.const 19546
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_25
                 local.get $31
-                i32.const 21648
+                i32.const 21650
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $31
@@ -82961,12 +82961,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_26
                   local.get $1
-                  i32.const 19551
+                  i32.const 19553
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_26
                 local.get $32
-                i32.const 21651
+                i32.const 21653
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $32
@@ -82977,12 +82977,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_27
                   local.get $1
-                  i32.const 19553
+                  i32.const 19555
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_27
                 local.get $33
-                i32.const 21654
+                i32.const 21656
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $33
@@ -82993,12 +82993,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_28
                   local.get $1
-                  i32.const 19562
+                  i32.const 19564
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_28
                 local.get $34
-                i32.const 21657
+                i32.const 21659
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $34
@@ -83009,12 +83009,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_29
                   local.get $1
-                  i32.const 19564
+                  i32.const 19566
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_29
                 local.get $35
-                i32.const 21660
+                i32.const 21662
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $35
@@ -83025,12 +83025,12 @@
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
                 if $if_30
                   local.get $1
-                  i32.const 19567
+                  i32.const 19569
                   call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                   br $block_4
                 end ;; $if_30
                 local.get $36
-                i32.const 21663
+                i32.const 21665
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $1
                 local.get $36
@@ -83046,7 +83046,7 @@
                   br $block_5
                 end ;; $if_31
                 local.get $1
-                i32.const 19570
+                i32.const 19572
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 br $block_4
               end ;; $block_5
@@ -83247,7 +83247,7 @@
     local.get $2
     i32.const 16
     i32.add
-    i32.const 21361
+    i32.const 21363
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -83425,7 +83425,7 @@
     local.get $4
     i32.const 24
     i32.add
-    i32.const 20500
+    i32.const 20502
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $4
@@ -83532,7 +83532,7 @@
         end ;; $if_0
       else
         local.get $1
-        i32.const 19474
+        i32.const 19476
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $1
@@ -83543,7 +83543,7 @@
         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
         local.set $5
         local.get $4
-        i32.const 20504
+        i32.const 20506
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $4
@@ -84007,7 +84007,7 @@
     local.get $2
     i32.const 40
     i32.add
-    i32.const 19474
+    i32.const 19476
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     local.get $2
@@ -84041,7 +84041,7 @@
     i32.eq
     i32.store8
     local.get $4
-    i32.const 20088
+    i32.const 20090
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     local.get $4
@@ -84054,7 +84054,7 @@
         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
         br_if $block_0
         local.get $3
-        i32.const 20091
+        i32.const 20093
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $1
         local.get $3
@@ -84119,7 +84119,7 @@
       if $if_1 (result i32)
         block $block_3 (result i32)
           local.get $5
-          i32.const 20094
+          i32.const 20096
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $1
           local.get $5
@@ -84274,7 +84274,7 @@
     i32.add
     local.set $3
     local.get $2
-    i32.const 19598
+    i32.const 19600
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -84469,13 +84469,13 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $5
-    i32.const 19749
+    i32.const 19751
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
     local.set $1
     local.get $2
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $4
     local.get $5
@@ -84637,7 +84637,7 @@
     i32.const 24
     i32.add
     local.tee $5
-    i32.const 19811
+    i32.const 19813
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -84654,7 +84654,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle22ParameterPackExpansion9printLeftERNS_12OutputStreamE
     local.get $2
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -84776,7 +84776,7 @@
               $block_0 ;; default
           end ;; $block_2
           local.get $8
-          i32.const 18291
+          i32.const 18293
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $5
           local.get $8
@@ -84800,7 +84800,7 @@
         i32.ge_u
         br_if $block
         local.get $2
-        i32.const 18945
+        i32.const 18947
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $5
         local.get $2
@@ -84885,7 +84885,7 @@
     i32.load
     local.set $1
     local.get $3
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $5
     local.get $6
@@ -84927,7 +84927,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $3
-    i32.const 19937
+    i32.const 19939
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -85026,7 +85026,7 @@
     local.get $3
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $4
-    i32.const 18943
+    i32.const 18945
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -85050,7 +85050,7 @@
     i32.add
     call_indirect $28 (type $3)
     local.get $5
-    i32.const 19949
+    i32.const 19951
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -85074,7 +85074,7 @@
     i32.add
     call_indirect $28 (type $3)
     local.get $6
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $6
@@ -85109,7 +85109,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $3
-    i32.const 19996
+    i32.const 19998
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -85195,7 +85195,7 @@
     i32.const 24
     i32.add
     local.tee $6
-    i32.const 18761
+    i32.const 18763
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $6
@@ -85209,7 +85209,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 20013
+    i32.const 20015
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $4
@@ -85223,7 +85223,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $5
-    i32.const 20019
+    i32.const 20021
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $5
@@ -85237,7 +85237,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $3
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $3
@@ -85281,13 +85281,13 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $5
-    i32.const 20077
+    i32.const 20079
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
     local.set $1
     local.get $2
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $4
     local.get $5
@@ -85452,7 +85452,7 @@
     i32.load8_s offset=28
     if $if
       local.get $4
-      i32.const 20097
+      i32.const 20099
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $4
@@ -85481,7 +85481,7 @@
     local.get $3
     i32.const 40
     i32.add
-    i32.const 20109
+    i32.const 20111
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $3
@@ -85494,7 +85494,7 @@
     i32.load8_s offset=29
     if $if_0
       local.get $4
-      i32.const 20113
+      i32.const 20115
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $4
@@ -85514,7 +85514,7 @@
     i32.load offset=4
     if $if_1
       local.get $5
-      i32.const 18761
+      i32.const 18763
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $5
@@ -85527,7 +85527,7 @@
       local.get $1
       call $__ZNK12_GLOBAL__N_116itanium_demangle9NodeArray14printWithCommaERNS_12OutputStreamE
       local.get $6
-      i32.const 18757
+      i32.const 18759
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $6
@@ -85548,7 +85548,7 @@
     i32.load offset=4
     if $if_2
       local.get $7
-      i32.const 18761
+      i32.const 18763
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $7
@@ -85561,7 +85561,7 @@
       local.get $1
       call $__ZNK12_GLOBAL__N_116itanium_demangle9NodeArray14printWithCommaERNS_12OutputStreamE
       local.get $3
-      i32.const 18757
+      i32.const 18759
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $3
@@ -85746,7 +85746,7 @@
         i32.add
         i32.store
         local.get $1
-        i32.const 20316
+        i32.const 20318
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $4
         local.get $1
@@ -85861,7 +85861,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 20207
+    i32.const 20209
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -85893,7 +85893,7 @@
     i32.ge_s
     if $if (result i32)
       local.get $2
-      i32.const 20213
+      i32.const 20215
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $2
@@ -86003,7 +86003,7 @@
     i32.ge_s
     if $if_0 (result i32)
       local.get $2
-      i32.const 20213
+      i32.const 20215
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $2
@@ -86206,7 +86206,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $1
-    i32.const 20327
+    i32.const 20329
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $1
@@ -86339,7 +86339,7 @@
     i32.const 16
     i32.add
     local.tee $5
-    i32.const 18761
+    i32.const 18763
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -86353,7 +86353,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 20393
+    i32.const 20395
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -86367,7 +86367,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $2
-    i32.const 18395
+    i32.const 18397
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -86405,7 +86405,7 @@
     i32.load
     local.set $1
     local.get $3
-    i32.const 20451
+    i32.const 20453
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     i32.load
@@ -86769,7 +86769,7 @@
     else
       block $block (result i32)
         local.get $1
-        i32.const 20566
+        i32.const 20568
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $3
         local.get $1
@@ -86784,7 +86784,7 @@
           br $block
         end ;; $if_1
         local.get $4
-        i32.const 20569
+        i32.const 20571
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $3
         local.get $4
@@ -86908,7 +86908,7 @@
     i32.add
     local.set $3
     local.get $2
-    i32.const 20507
+    i32.const 20509
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -87088,7 +87088,7 @@
                                             i32.add
                                             i32.store
                                             local.get $0
-                                            i32.const 20572
+                                            i32.const 20574
                                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                             local.set $0
                                             br $block
@@ -87100,7 +87100,7 @@
                                           i32.add
                                           i32.store
                                           local.get $0
-                                          i32.const 20583
+                                          i32.const 20585
                                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                           local.set $0
                                           br $block
@@ -87112,7 +87112,7 @@
                                         i32.add
                                         i32.store
                                         local.get $0
-                                        i32.const 20593
+                                        i32.const 20595
                                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                         local.set $0
                                         br $block
@@ -87124,7 +87124,7 @@
                                       i32.add
                                       i32.store
                                       local.get $0
-                                      i32.const 20604
+                                      i32.const 20606
                                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                       local.set $0
                                       br $block
@@ -87169,7 +87169,7 @@
                                           i32.add
                                           i32.store
                                           local.get $0
-                                          i32.const 20614
+                                          i32.const 20616
                                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                           local.set $0
                                           br $block
@@ -87181,7 +87181,7 @@
                                         i32.add
                                         i32.store
                                         local.get $0
-                                        i32.const 20625
+                                        i32.const 20627
                                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                         local.set $0
                                         br $block
@@ -87193,7 +87193,7 @@
                                       i32.add
                                       i32.store
                                       local.get $0
-                                      i32.const 20635
+                                      i32.const 20637
                                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                       local.set $0
                                       br $block
@@ -87328,7 +87328,7 @@
                                           i32.add
                                           i32.store
                                           local.get $0
-                                          i32.const 20645
+                                          i32.const 20647
                                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                           local.set $0
                                           br $block
@@ -87340,7 +87340,7 @@
                                         i32.add
                                         i32.store
                                         local.get $0
-                                        i32.const 20663
+                                        i32.const 20665
                                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                         local.set $0
                                         br $block
@@ -87365,7 +87365,7 @@
                                     i32.add
                                     i32.store
                                     local.get $0
-                                    i32.const 20673
+                                    i32.const 20675
                                     call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                     local.set $0
                                     br $block
@@ -87377,7 +87377,7 @@
                                   i32.add
                                   i32.store
                                   local.get $0
-                                  i32.const 20683
+                                  i32.const 20685
                                   call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                   local.set $0
                                   br $block
@@ -87423,7 +87423,7 @@
                                     i32.add
                                     i32.store
                                     local.get $0
-                                    i32.const 20694
+                                    i32.const 20696
                                     call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                     local.set $0
                                     br $block
@@ -87435,7 +87435,7 @@
                                   i32.add
                                   i32.store
                                   local.get $0
-                                  i32.const 20704
+                                  i32.const 20706
                                   call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                   local.set $0
                                   br $block
@@ -87447,7 +87447,7 @@
                                 i32.add
                                 i32.store
                                 local.get $0
-                                i32.const 20715
+                                i32.const 20717
                                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                 local.set $0
                                 br $block
@@ -87490,7 +87490,7 @@
                                 i32.add
                                 i32.store
                                 local.get $0
-                                i32.const 20726
+                                i32.const 20728
                                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                 local.set $0
                                 br $block
@@ -87502,7 +87502,7 @@
                               i32.add
                               i32.store
                               local.get $0
-                              i32.const 20737
+                              i32.const 20739
                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                               local.set $0
                               br $block
@@ -87537,7 +87537,7 @@
                             i32.add
                             i32.store
                             local.get $0
-                            i32.const 20747
+                            i32.const 20749
                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                           else
                             i32.const 0
@@ -87584,7 +87584,7 @@
                                   i32.add
                                   i32.store
                                   local.get $0
-                                  i32.const 20758
+                                  i32.const 20760
                                   call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                   local.set $0
                                   br $block
@@ -87620,7 +87620,7 @@
                               i32.add
                               i32.store
                               local.get $0
-                              i32.const 20769
+                              i32.const 20771
                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                               local.set $0
                               br $block
@@ -87632,7 +87632,7 @@
                             i32.add
                             i32.store
                             local.get $0
-                            i32.const 20780
+                            i32.const 20782
                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                             local.set $0
                             br $block
@@ -87644,7 +87644,7 @@
                           i32.add
                           i32.store
                           local.get $0
-                          i32.const 20792
+                          i32.const 20794
                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                           local.set $0
                           br $block
@@ -87692,7 +87692,7 @@
                                 i32.add
                                 i32.store
                                 local.get $0
-                                i32.const 20802
+                                i32.const 20804
                                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                                 local.set $0
                                 br $block
@@ -87704,7 +87704,7 @@
                               i32.add
                               i32.store
                               local.get $0
-                              i32.const 20812
+                              i32.const 20814
                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                               local.set $0
                               br $block
@@ -87716,7 +87716,7 @@
                             i32.add
                             i32.store
                             local.get $0
-                            i32.const 20663
+                            i32.const 20665
                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                             local.set $0
                             br $block
@@ -87728,7 +87728,7 @@
                           i32.add
                           i32.store
                           local.get $0
-                          i32.const 20823
+                          i32.const 20825
                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                           local.set $0
                           br $block
@@ -87740,7 +87740,7 @@
                         i32.add
                         i32.store
                         local.get $0
-                        i32.const 20834
+                        i32.const 20836
                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                         local.set $0
                         br $block
@@ -87787,7 +87787,7 @@
                               i32.add
                               i32.store
                               local.get $0
-                              i32.const 20845
+                              i32.const 20847
                               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                               local.set $0
                               br $block
@@ -87799,7 +87799,7 @@
                             i32.add
                             i32.store
                             local.get $0
-                            i32.const 20860
+                            i32.const 20862
                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                             local.set $0
                             br $block
@@ -87811,7 +87811,7 @@
                           i32.add
                           i32.store
                           local.get $0
-                          i32.const 20802
+                          i32.const 20804
                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                           local.set $0
                           br $block
@@ -87823,7 +87823,7 @@
                         i32.add
                         i32.store
                         local.get $0
-                        i32.const 20871
+                        i32.const 20873
                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                         local.set $0
                         br $block
@@ -87835,7 +87835,7 @@
                       i32.add
                       i32.store
                       local.get $0
-                      i32.const 20881
+                      i32.const 20883
                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                       local.set $0
                       br $block
@@ -87881,7 +87881,7 @@
                         i32.add
                         i32.store
                         local.get $0
-                        i32.const 20894
+                        i32.const 20896
                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                         local.set $0
                         br $block
@@ -87893,7 +87893,7 @@
                       i32.add
                       i32.store
                       local.get $0
-                      i32.const 20905
+                      i32.const 20907
                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                       local.set $0
                       br $block
@@ -87905,7 +87905,7 @@
                     i32.add
                     i32.store
                     local.get $0
-                    i32.const 20915
+                    i32.const 20917
                     call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                     local.set $0
                     br $block
@@ -87954,7 +87954,7 @@
                             i32.add
                             i32.store
                             local.get $0
-                            i32.const 20926
+                            i32.const 20928
                             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                             local.set $0
                             br $block
@@ -87966,7 +87966,7 @@
                           i32.add
                           i32.store
                           local.get $0
-                          i32.const 20938
+                          i32.const 20940
                           call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                           local.set $0
                           br $block
@@ -87978,7 +87978,7 @@
                         i32.add
                         i32.store
                         local.get $0
-                        i32.const 20948
+                        i32.const 20950
                         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                         local.set $0
                         br $block
@@ -87990,7 +87990,7 @@
                       i32.add
                       i32.store
                       local.get $0
-                      i32.const 20959
+                      i32.const 20961
                       call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                       local.set $0
                       br $block
@@ -88002,7 +88002,7 @@
                     i32.add
                     i32.store
                     local.get $0
-                    i32.const 20938
+                    i32.const 20940
                     call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                     local.set $0
                     br $block
@@ -88014,7 +88014,7 @@
                   i32.add
                   i32.store
                   local.get $0
-                  i32.const 20970
+                  i32.const 20972
                   call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                   local.set $0
                   br $block
@@ -88049,7 +88049,7 @@
                 i32.add
                 i32.store
                 local.get $0
-                i32.const 20981
+                i32.const 20983
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
               else
                 i32.const 0
@@ -88095,7 +88095,7 @@
                     i32.add
                     i32.store
                     local.get $0
-                    i32.const 20991
+                    i32.const 20993
                     call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                     local.set $0
                     br $block
@@ -88107,7 +88107,7 @@
                   i32.add
                   i32.store
                   local.get $0
-                  i32.const 21001
+                  i32.const 21003
                   call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                   local.set $0
                   br $block
@@ -88119,7 +88119,7 @@
                 i32.add
                 i32.store
                 local.get $0
-                i32.const 21012
+                i32.const 21014
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
                 local.set $0
                 br $block
@@ -88131,7 +88131,7 @@
               i32.add
               i32.store
               local.get $0
-              i32.const 21023
+              i32.const 21025
               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
               local.set $0
               br $block
@@ -88166,7 +88166,7 @@
             i32.add
             i32.store
             local.get $0
-            i32.const 21035
+            i32.const 21037
             call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
           else
             i32.const 0
@@ -88299,7 +88299,7 @@
     i32.add
     local.set $3
     local.get $2
-    i32.const 21047
+    i32.const 21049
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -88336,7 +88336,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $1
-    i32.const 21111
+    i32.const 21113
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $1
@@ -88392,7 +88392,7 @@
     i32.add
     local.set $3
     local.get $2
-    i32.const 21127
+    i32.const 21129
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -88462,7 +88462,7 @@
     i32.add
     local.set $3
     local.get $2
-    i32.const 19494
+    i32.const 19496
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -88539,7 +88539,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $2
-    i32.const 20507
+    i32.const 20509
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -88598,7 +88598,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $3
-    i32.const 21290
+    i32.const 21292
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -88706,7 +88706,7 @@
     i32.load8_s offset=12
     if $if
       local.get $4
-      i32.const 20507
+      i32.const 20509
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $4
@@ -88720,7 +88720,7 @@
     i32.const 8
     i32.add
     local.tee $4
-    i32.const 21303
+    i32.const 21305
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -88733,7 +88733,7 @@
     i32.load8_s offset=13
     if $if_0
       local.get $2
-      i32.const 21310
+      i32.const 21312
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $2
@@ -88848,7 +88848,7 @@
     i32.const 16
     i32.add
     local.tee $5
-    i32.const 18761
+    i32.const 18763
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -88862,7 +88862,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 21364
+    i32.const 21366
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -88877,7 +88877,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle9NodeArray14printWithCommaERNS_12OutputStreamE
     local.get $2
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -88987,7 +88987,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 18761
+    i32.const 18763
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -89002,7 +89002,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle9NodeArray14printWithCommaERNS_12OutputStreamE
     local.get $2
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -89037,7 +89037,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $3
-    i32.const 21462
+    i32.const 21464
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -89167,7 +89167,7 @@
     local.get $3
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $4
-    i32.const 18761
+    i32.const 18763
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -89181,7 +89181,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $5
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -89325,14 +89325,14 @@
     i32.const 56
     i32.add
     local.tee $2
-    i32.const 18836
+    i32.const 18838
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $4
     local.get $2
     call $__ZN12_GLOBAL__N_1eqERKNS_10StringViewES2_
     if $if
       local.get $5
-      i32.const 18761
+      i32.const 18763
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $5
@@ -89343,7 +89343,7 @@
       call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     end ;; $if
     local.get $6
-    i32.const 18761
+    i32.const 18763
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $6
@@ -89357,7 +89357,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $7
-    i32.const 21520
+    i32.const 21522
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $7
@@ -89378,7 +89378,7 @@
     local.get $2
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $8
-    i32.const 21523
+    i32.const 21525
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $8
@@ -89392,7 +89392,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $9
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $9
@@ -89402,14 +89402,14 @@
     local.get $2
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $2
-    i32.const 18836
+    i32.const 18838
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $4
     local.get $2
     call $__ZN12_GLOBAL__N_1eqERKNS_10StringViewES2_
     if $if_0
       local.get $10
-      i32.const 18757
+      i32.const 18759
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $10
@@ -89592,7 +89592,7 @@
         local.set $0
       end ;; $if_0
       local.get $6
-      i32.const 21666
+      i32.const 21668
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $6
@@ -89635,7 +89635,7 @@
       local.get $3
       call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
       local.get $4
-      i32.const 21671
+      i32.const 21673
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $4
@@ -89845,7 +89845,7 @@
     i32.const 8
     i32.add
     local.tee $4
-    i32.const 21720
+    i32.const 21722
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -90662,7 +90662,7 @@
       local.get $8
       i32.store offset=8
       local.get $4
-      i32.const 21927
+      i32.const 21929
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $6
       local.get $4
@@ -90674,7 +90674,7 @@
       if $if_4
         local.get $2
         local.get $0
-        i32.const 22245
+        i32.const 22247
         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
         i32.store
       end ;; $if_4
@@ -90994,7 +90994,7 @@
               i32.store
               local.get $2
               local.get $0
-              i32.const 22185
+              i32.const 22187
               call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_8NameTypeEJRA5_KcEEEPNS0_4NodeEDpOT0_
               i32.store
               local.get $0
@@ -91093,7 +91093,7 @@
     local.get $2
     i32.const 8
     i32.add
-    i32.const 21923
+    i32.const 21925
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -91106,7 +91106,7 @@
         call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E9consumeIfENS_10StringViewE
         br_if $block_0
         local.get $2
-        i32.const 21927
+        i32.const 21929
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $3
         local.get $2
@@ -91209,7 +91209,7 @@
               br $block_1
             end ;; $if_1
             local.get $4
-            i32.const 21989
+            i32.const 21991
             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
             local.get $3
             local.get $4
@@ -91349,7 +91349,7 @@
     i32.add
     local.set $3
     local.get $2
-    i32.const 21930
+    i32.const 21932
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -91400,7 +91400,7 @@
     local.get $2
     i32.const 32
     i32.add
-    i32.const 22050
+    i32.const 22052
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     local.get $2
@@ -91429,7 +91429,7 @@
       local.set $0
     else
       local.get $5
-      i32.const 22053
+      i32.const 22055
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $1
       local.get $5
@@ -91461,7 +91461,7 @@
         i32.const 1
         i32.store8 offset=362
         local.get $4
-        i32.const 22056
+        i32.const 22058
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $1
         local.get $4
@@ -91730,7 +91730,7 @@
     i32.const 24
     i32.add
     local.tee $6
-    i32.const 22059
+    i32.const 22061
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $6
@@ -91751,7 +91751,7 @@
     local.get $2
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $4
-    i32.const 22067
+    i32.const 22069
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $4
@@ -91766,7 +91766,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle9NodeArray14printWithCommaERNS_12OutputStreamE
     local.get $5
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $5
@@ -91854,7 +91854,7 @@
     i32.const 16
     i32.add
     local.tee $5
-    i32.const 22122
+    i32.const 22124
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -91875,7 +91875,7 @@
     local.get $3
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $4
-    i32.const 22131
+    i32.const 22133
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -92419,7 +92419,7 @@
     i32.load8_s offset=12
     if $if
       local.get $4
-      i32.const 19494
+      i32.const 19496
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $4
@@ -92545,7 +92545,7 @@
                     $block ;; default
                 end ;; $block_5
                 local.get $4
-                i32.const 18539
+                i32.const 18541
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 local.get $2
                 local.get $4
@@ -92557,7 +92557,7 @@
                 br $block
               end ;; $block_4
               local.get $5
-              i32.const 18554
+              i32.const 18556
               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
               local.get $2
               local.get $5
@@ -92569,7 +92569,7 @@
               br $block
             end ;; $block_3
             local.get $6
-            i32.const 22341
+            i32.const 22343
             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
             local.get $2
             local.get $6
@@ -92581,7 +92581,7 @@
             br $block
           end ;; $block_2
           local.get $7
-          i32.const 22412
+          i32.const 22414
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           local.get $2
           local.get $7
@@ -92593,7 +92593,7 @@
           br $block
         end ;; $block_1
         local.get $8
-        i32.const 22462
+        i32.const 22464
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $8
@@ -92605,7 +92605,7 @@
         br $block
       end ;; $block_0
       local.get $3
-      i32.const 22512
+      i32.const 22514
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $3
@@ -92636,32 +92636,32 @@
                     $block ;; default
                 end ;; $block_5
                 local.get $0
-                i32.const 18484
+                i32.const 18486
                 call $__ZN12_GLOBAL__N_110StringViewC2EPKc
                 br $block
               end ;; $block_4
               local.get $0
-              i32.const 18494
+              i32.const 18496
               call $__ZN12_GLOBAL__N_110StringViewC2EPKc
               br $block
             end ;; $block_3
             local.get $0
-            i32.const 18494
+            i32.const 18496
             call $__ZN12_GLOBAL__N_110StringViewC2EPKc
             br $block
           end ;; $block_2
           local.get $0
-          i32.const 22298
+          i32.const 22300
           call $__ZN12_GLOBAL__N_110StringViewC2EPKc
           br $block
         end ;; $block_1
         local.get $0
-        i32.const 22312
+        i32.const 22314
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         br $block
       end ;; $block_0
       local.get $0
-      i32.const 22326
+      i32.const 22328
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     end ;; $block
     )
@@ -92794,7 +92794,7 @@
         call $__ZNK12_GLOBAL__N_116itanium_demangle4Node11hasFunctionERNS_12OutputStreamE
         br_if $block_0
         local.get $5
-        i32.const 18759
+        i32.const 18761
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $3
         local.get $5
@@ -92806,7 +92806,7 @@
         br $block
       end ;; $block_0
       local.get $4
-      i32.const 18761
+      i32.const 18763
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $4
@@ -92821,7 +92821,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $2
-    i32.const 22674
+    i32.const 22676
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -92864,7 +92864,7 @@
         br $block
       end ;; $block_0
       local.get $2
-      i32.const 18757
+      i32.const 18759
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $2
@@ -93061,7 +93061,7 @@
     i32.ne
     if $if_0
       local.get $4
-      i32.const 18759
+      i32.const 18761
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $4
@@ -93078,7 +93078,7 @@
     local.get $3
     i32.const 16
     i32.add
-    i32.const 22734
+    i32.const 22736
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $3
@@ -93135,7 +93135,7 @@
       end ;; $if_4
     end ;; $if_2
     local.get $3
-    i32.const 18395
+    i32.const 18397
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $3
@@ -93276,7 +93276,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 22784
+    i32.const 22786
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -93333,7 +93333,7 @@
       end ;; $if_2
     end ;; $if_0
     local.get $2
-    i32.const 18395
+    i32.const 18397
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -93481,7 +93481,7 @@
     local.get $2
     i32.const 16
     i32.add
-    i32.const 22840
+    i32.const 22842
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -93508,7 +93508,7 @@
     local.get $3
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $2
-    i32.const 18395
+    i32.const 18397
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -93612,7 +93612,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $1
-    i32.const 22916
+    i32.const 22918
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $1
@@ -93646,7 +93646,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $1
-    i32.const 22923
+    i32.const 22925
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $1
@@ -93680,7 +93680,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $1
-    i32.const 19047
+    i32.const 19049
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $1
@@ -93828,7 +93828,7 @@
     i32.and
     if $if
       local.get $4
-      i32.const 22952
+      i32.const 22954
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $4
@@ -93850,7 +93850,7 @@
     i32.and
     if $if_0
       local.get $4
-      i32.const 22959
+      i32.const 22961
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $4
@@ -93868,7 +93868,7 @@
     i32.and
     if $if_1
       local.get $2
-      i32.const 22969
+      i32.const 22971
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $3
       local.get $2
@@ -93979,7 +93979,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 18759
+    i32.const 18761
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -94105,7 +94105,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 18943
+    i32.const 18945
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -94126,7 +94126,7 @@
     local.get $3
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $5
-    i32.const 18836
+    i32.const 18838
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -94269,7 +94269,7 @@
     i32.add
     call_indirect $28 (type $3)
     local.get $2
-    i32.const 18759
+    i32.const 18761
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -94327,7 +94327,7 @@
     i32.const 48
     i32.add
     local.tee $4
-    i32.const 18761
+    i32.const 18763
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $4
@@ -94342,7 +94342,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle9NodeArray14printWithCommaERNS_12OutputStreamE
     local.get $5
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $5
@@ -94372,7 +94372,7 @@
     i32.and
     if $if
       local.get $6
-      i32.const 22952
+      i32.const 22954
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $6
@@ -94390,7 +94390,7 @@
     i32.and
     if $if_0
       local.get $7
-      i32.const 22959
+      i32.const 22961
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $7
@@ -94408,7 +94408,7 @@
     i32.and
     if $if_1
       local.get $8
-      i32.const 22969
+      i32.const 22971
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $8
@@ -94430,7 +94430,7 @@
             $block ;; default
         end ;; $block_1
         local.get $9
-        i32.const 23154
+        i32.const 23156
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $9
@@ -94442,7 +94442,7 @@
         br $block
       end ;; $block_0
       local.get $3
-      i32.const 23157
+      i32.const 23159
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $3
@@ -94533,7 +94533,7 @@
     i32.add
     local.set $3
     local.get $2
-    i32.const 23210
+    i32.const 23212
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -94611,7 +94611,7 @@
     i32.const 8
     i32.add
     local.tee $4
-    i32.const 23274
+    i32.const 23276
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -94625,7 +94625,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $2
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -94844,7 +94844,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $4
-    i32.const 21523
+    i32.const 21525
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -94865,7 +94865,7 @@
     local.get $3
     call $__ZN12_GLOBAL__N_112OutputStreampLENS_10StringViewE
     local.get $5
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $5
@@ -95159,7 +95159,7 @@
               local.get $1
               if $if_9 (result i32)
                 local.get $0
-                i32.const 23555
+                i32.const 23557
                 local.get $2
                 call $__ZN12_GLOBAL__N_116itanium_demangle22AbstractManglingParserINS0_14ManglingParserINS_16DefaultAllocatorEEES3_E4makeINS0_11SpecialNameEJRA34_KcRPNS0_4NodeEEEESC_DpOT0_
               else
@@ -95676,7 +95676,7 @@
       i32.eqz
       if $if_0
         local.get $2
-        i32.const 18759
+        i32.const 18761
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $3
         local.get $2
@@ -95740,7 +95740,7 @@
     i32.const 48
     i32.add
     local.tee $4
-    i32.const 18761
+    i32.const 18763
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $4
@@ -95755,7 +95755,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle9NodeArray14printWithCommaERNS_12OutputStreamE
     local.get $5
-    i32.const 18757
+    i32.const 18759
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $2
     local.get $5
@@ -95788,7 +95788,7 @@
     i32.and
     if $if_0
       local.get $6
-      i32.const 22952
+      i32.const 22954
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $6
@@ -95806,7 +95806,7 @@
     i32.and
     if $if_1
       local.get $7
-      i32.const 22959
+      i32.const 22961
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $7
@@ -95824,7 +95824,7 @@
     i32.and
     if $if_2
       local.get $8
-      i32.const 22969
+      i32.const 22971
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $8
@@ -95846,7 +95846,7 @@
             $block ;; default
         end ;; $block_1
         local.get $9
-        i32.const 23154
+        i32.const 23156
         call $__ZN12_GLOBAL__N_110StringViewC2EPKc
         local.get $2
         local.get $9
@@ -95858,7 +95858,7 @@
         br $block
       end ;; $block_0
       local.get $3
-      i32.const 23157
+      i32.const 23159
       call $__ZN12_GLOBAL__N_110StringViewC2EPKc
       local.get $2
       local.get $3
@@ -95946,7 +95946,7 @@
     i32.add
     local.set $3
     local.get $2
-    i32.const 23493
+    i32.const 23495
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -96078,7 +96078,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23589
+    i32.const 23591
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -96117,7 +96117,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23614
+    i32.const 23616
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -96156,7 +96156,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23634
+    i32.const 23636
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -96195,7 +96195,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23656
+    i32.const 23658
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -96234,7 +96234,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23674
+    i32.const 23676
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -96302,7 +96302,7 @@
     i32.const 8
     i32.add
     local.tee $4
-    i32.const 23715
+    i32.const 23717
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $4
@@ -96316,7 +96316,7 @@
     local.get $1
     call $__ZNK12_GLOBAL__N_116itanium_demangle4Node5printERNS_12OutputStreamE
     local.get $2
-    i32.const 23740
+    i32.const 23742
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $3
     local.get $2
@@ -96354,7 +96354,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23803
+    i32.const 23805
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -96393,7 +96393,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23830
+    i32.const 23832
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -96432,7 +96432,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23849
+    i32.const 23851
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -96471,7 +96471,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23863
+    i32.const 23865
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -96510,7 +96510,7 @@
     call $__ZN12_GLOBAL__N_120BumpPointerAllocator8allocateEm
     local.set $0
     local.get $2
-    i32.const 23872
+    i32.const 23874
     call $__ZN12_GLOBAL__N_110StringViewC2EPKc
     local.get $1
     i32.load
@@ -98352,5 +98352,5 @@
     call_indirect $28 (type $9)
     )
   ;; User section "emscripten_metadata":
-    ;; "\00\01\00\03\80\02\bf\03\80\08\e0\d5\c1\02\c0\d5\01\d0\d5\01"
+    ;; "\00\02\00\04\00\80\02\bf\03\80\08\e0\d5\c1\02\c0\d5\01\d0\d5\01"
   )
