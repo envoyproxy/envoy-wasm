@@ -197,7 +197,7 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("NaN nan")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("inf inf")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("inf inf"))).Times(3);
   EXPECT_TRUE(wasm->initialize(code, "<test>", false));
   wasm->startForTesting(std::move(context));
 }
