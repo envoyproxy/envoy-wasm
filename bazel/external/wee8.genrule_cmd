@@ -45,8 +45,8 @@ fi
 WEE8_BUILD_ARGS+=" is_debug=false"
 # Clang or not Clang, that is the question.
 WEE8_BUILD_ARGS+=" is_clang=$$IS_CLANG"
-# Disable custom compiler plugins.
-WEE8_BUILD_ARGS+=" clang_use_chrome_plugins=false"
+# Hack to disable bleeding-edge compiler flags.
+WEE8_BUILD_ARGS+=" use_xcode_clang=true"
 # Use local toolchain.
 WEE8_BUILD_ARGS+=" custom_toolchain=\"//build/toolchain/linux/unbundle:default\""
 # Use local stdlibc++ / libc++.
@@ -62,6 +62,9 @@ WEE8_BUILD_ARGS+=" is_component_build=false"
 WEE8_BUILD_ARGS+=" v8_enable_i18n_support=false"
 WEE8_BUILD_ARGS+=" v8_enable_gdbjit=false"
 WEE8_BUILD_ARGS+=" v8_use_external_startup_data=false"
+# Disable read-only heap, since it's leaky and HEAPCHECK complains about it.
+# TODO(PiotrSikora): remove when fixed upstream.
+WEE8_BUILD_ARGS+=" v8_enable_shared_ro_heap=false"
 
 # Build wee8.
 third_party/depot_tools/gn gen out/wee8 --args="$$WEE8_BUILD_ARGS"
