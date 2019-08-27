@@ -1044,10 +1044,10 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
   using Filters::Common::Expr::CelValue;
   switch (value.type()) {
   case CelValue::Type::kMessage:
-    if (value.MessageOrDie() != nullptr) {
-      value.MessageOrDie()->SerializeToString(result);
+    if (value.MessageOrDie() != nullptr && value.MessageOrDie()->SerializeToString(result)) {
       return WasmResult::Ok;
     }
+    return WasmResult::SerializationFailure;
   case CelValue::Type::kString:
     result->assign(value.StringOrDie().value().data(), value.StringOrDie().value().size());
     return WasmResult::Ok;
