@@ -12,6 +12,7 @@ namespace Wasm {
 namespace Null {
 namespace Plugin {
 using LogLevel = Envoy::Logger::Logger::levels;
+using FilterStatus = Network::FilterStatus;
 using FilterHeadersStatus = Http::FilterHeadersStatus;
 using FilterMetadataStatus = Http::FilterMetadataStatus;
 using FilterTrailersStatus = Http::FilterTrailersStatus;
@@ -70,6 +71,11 @@ public:
   void onQueueReady(uint64_t root_context_id, uint64_t token);
 
   void onCreate(uint64_t context_id, uint64_t root_context_id);
+
+  uint64_t onNewConnection(uint64_t context_id);
+  uint64_t onDownstreamData(uint64_t context_id, uint64_t data_length, uint64_t end_of_stream);
+  uint64_t onUpstreamData(uint64_t context_id, uint64_t data_length, uint64_t end_of_stream);
+  void onConnectionClosed(uint64_t context_id);
 
   uint64_t onRequestHeaders(uint64_t context_id);
   uint64_t onRequestBody(uint64_t context_id, uint64_t body_buffer_length, uint64_t end_of_stream);

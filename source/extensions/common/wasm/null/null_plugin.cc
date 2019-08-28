@@ -50,6 +50,12 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCall1Void* f) 
       SaveRestoreContext saved_context(context);
       plugin->onTick(context_id.u64);
     };
+  } else if (function_name == "_proxy_onConnectionClosed") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id) {
+      SaveRestoreContext saved_context(context);
+      plugin->onConnectionClosed(context_id.u64);
+    };
   } else if (function_name == "_proxy_onDone") {
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id) {
@@ -177,6 +183,12 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCall1Word* f) 
     *f = [](Common::Wasm::Context*, Word size) -> Word {
       return Word(reinterpret_cast<uint64_t>(::malloc(size.u64)));
     };
+  } else if (function_name == "_proxy_onNewConnection") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onNewConnection(context_id.u64));
+    };
   } else if (function_name == "_proxy_onRequestHeaders") {
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
@@ -219,7 +231,23 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCall1Word* f) 
 }
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCall3Word* f) {
-  if (function_name == "_proxy_onRequestBody") {
+  if (function_name == "_proxy_onDownstreamData") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
+                  Word end_of_stream) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(
+          plugin->onDownstreamData(context_id.u64, body_buffer_length.u64, end_of_stream.u64));
+    };
+  } else if (function_name == "_proxy_onUpstreamData") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
+                  Word end_of_stream) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(
+          plugin->onUpstreamData(context_id.u64, body_buffer_length.u64, end_of_stream.u64));
+    };
+  } else if (function_name == "_proxy_onRequestBody") {
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
                   Word end_of_stream) -> Word {
@@ -326,6 +354,27 @@ void NullPlugin::onTick(uint64_t root_context_id) { getRootContext(root_context_
 
 void NullPlugin::onCreate(uint64_t context_id, uint64_t root_context_id) {
   ensureContext(context_id, root_context_id)->onCreate();
+}
+
+uint64_t NullPlugin::onNewConnection(uint64_t context_id) {
+  return static_cast<uint64_t>(getContext(context_id)->onNewConnection());
+}
+
+uint64_t NullPlugin::onDownstreamData(uint64_t context_id, uint64_t data_length,
+                                      uint64_t end_of_stream) {
+  return static_cast<uint64_t>(
+      getContext(context_id)
+          ->onDownstreamData(static_cast<size_t>(data_length), end_of_stream != 0));
+}
+
+uint64_t NullPlugin::onUpstreamData(uint64_t context_id, uint64_t data_length,
+                                    uint64_t end_of_stream) {
+  return static_cast<uint64_t>(
+      getContext(context_id)->onUpstreamData(static_cast<size_t>(data_length), end_of_stream != 0));
+}
+
+void NullPlugin::onConnectionClosed(uint64_t context_id) {
+  getContext(context_id)->onConnectionClosed();
 }
 
 uint64_t NullPlugin::onRequestHeaders(uint64_t context_id) {

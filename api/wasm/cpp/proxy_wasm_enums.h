@@ -6,6 +6,7 @@
 #pragma once
 
 enum class LogLevel : int32_t { trace, debug, info, warn, error, critical };
+enum class FilterStatus : int32_t { Continue = 0, StopIteration = 1 };
 enum class FilterHeadersStatus : int32_t { Continue = 0, StopIteration = 1 };
 enum class FilterMetadataStatus : int32_t { Continue = 0 };
 enum class FilterTrailersStatus : int32_t { Continue = 0, StopIteration = 1 };

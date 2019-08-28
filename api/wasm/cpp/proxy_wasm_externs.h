@@ -108,6 +108,10 @@ extern "C" WasmResult proxy_dequeueSharedQueue(uint32_t token, const char** data
 // Returns false if the queue was not found and the data was not enqueued.
 extern "C" WasmResult proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr, size_t data_size);
 
+// Network
+extern "C" WasmResult proxy_getDownstreamDataBufferBytes(uint32_t start, uint32_t length, const char** ptr, size_t* size);
+extern "C" WasmResult proxy_getUpstreamDataBufferBytes(uint32_t start, uint32_t length, const char** ptr, size_t* size);
+
 // Headers/Trailers/Metadata Maps
 extern "C" WasmResult proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char* value_ptr, size_t value_size);
 extern "C" WasmResult proxy_getHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size, const char** value_ptr, size_t* value_size);

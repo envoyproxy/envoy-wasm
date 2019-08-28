@@ -634,6 +634,23 @@ Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Wor
   return wasmResultToWord(context->enqueueSharedQueue(token.u32(), data.value()));
 }
 
+// Network
+Word getDownstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                         Word size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto result = context->getDownstreamDataBufferBytes(start, length);
+  context->wasm()->copyToPointerSize(result, ptr_ptr, size_ptr);
+  return wasmResultToWord(WasmResult::Ok);
+}
+
+Word getUpstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                       Word size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto result = context->getUpstreamDataBufferBytes(start, length);
+  context->wasm()->copyToPointerSize(result, ptr_ptr, size_ptr);
+  return wasmResultToWord(WasmResult::Ok);
+}
+
 // Header/Trailer/Metadata Maps
 Word addHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                               Word value_ptr, Word value_size) {
@@ -1220,6 +1237,27 @@ WasmResult Context::dequeueSharedQueue(uint32_t token, std::string* data) {
 
 WasmResult Context::enqueueSharedQueue(uint32_t token, absl::string_view value) {
   return global_shared_data.enqueue(token, value);
+}
+
+// Network bytes.
+
+absl::string_view Context::getDownstreamDataBufferBytes(uint32_t start, uint32_t length) {
+  if (!network_downstream_data_buffer_)
+    return "";
+  if (network_downstream_data_buffer_->length() < static_cast<uint64_t>((start + length)))
+    return "";
+  return absl::string_view(
+      static_cast<char*>(network_downstream_data_buffer_->linearize(start + length)) + start,
+      length);
+}
+
+absl::string_view Context::getUpstreamDataBufferBytes(uint32_t start, uint32_t length) {
+  if (!network_upstream_data_buffer_)
+    return "";
+  if (network_upstream_data_buffer_->length() < static_cast<uint64_t>((start + length)))
+    return "";
+  return absl::string_view(
+      static_cast<char*>(network_upstream_data_buffer_->linearize(start + length)) + start, length);
 }
 
 // Header/Trailer/Metadata Maps.
@@ -1941,6 +1979,45 @@ void Context::onCreate(uint32_t root_context_id) {
   }
 }
 
+Network::FilterStatus Context::onNetworkNewConnection() {
+  onCreate(root_context_id_);
+  if (!wasm_->onNewConnection_) {
+    return Network::FilterStatus::Continue;
+  }
+  if (wasm_->onNewConnection_(this, id_) == 0) {
+    return Network::FilterStatus::Continue;
+  }
+  return Network::FilterStatus::StopIteration;
+}
+
+Network::FilterStatus Context::onDownstreamData(int data_length, bool end_of_stream) {
+  if (!wasm_->onDownstreamData_) {
+    return Network::FilterStatus::Continue;
+  }
+  if (wasm_->onDownstreamData_(this, id_, static_cast<uint32_t>(data_length),
+                               static_cast<uint32_t>(end_of_stream)) == 0) {
+    return Network::FilterStatus::Continue;
+  }
+  return Network::FilterStatus::StopIteration;
+}
+
+Network::FilterStatus Context::onUpstreamData(int data_length, bool end_of_stream) {
+  if (!wasm_->onUpstreamData_) {
+    return Network::FilterStatus::Continue;
+  }
+  if (wasm_->onUpstreamData_(this, id_, static_cast<uint32_t>(data_length),
+                             static_cast<uint32_t>(end_of_stream)) == 0) {
+    return Network::FilterStatus::Continue;
+  }
+  return Network::FilterStatus::StopIteration;
+}
+
+void Context::onConnectionClosed() {
+  if (wasm_->onConnectionClosed_) {
+    wasm_->onConnectionClosed_(this, id_);
+  }
+}
+
 Http::FilterHeadersStatus Context::onRequestHeaders() {
   onCreate(root_context_id_);
   // Store the stream id so that we can use it in log().
@@ -2281,6 +2358,9 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(dequeueSharedQueue);
   _REGISTER_PROXY(enqueueSharedQueue);
 
+  _REGISTER_PROXY(getDownstreamDataBufferBytes);
+  _REGISTER_PROXY(getUpstreamDataBufferBytes);
+
   _REGISTER_PROXY(getHeaderMapValue);
   _REGISTER_PROXY(addHeaderMapValue);
   _REGISTER_PROXY(replaceHeaderMapValue);
@@ -2341,6 +2421,12 @@ void Wasm::getFunctions() {
   _GET_PROXY(onTick);
 
   _GET_PROXY(onCreate);
+
+  _GET_PROXY(onNewConnection);
+  _GET_PROXY(onDownstreamData);
+  _GET_PROXY(onUpstreamData);
+  _GET_PROXY(onConnectionClosed);
+
   _GET_PROXY(onRequestHeaders);
   _GET_PROXY(onRequestBody);
   _GET_PROXY(onRequestTrailers);
@@ -2512,6 +2598,38 @@ void Wasm::queueReady(uint32_t root_context_id, uint32_t token) {
     return;
   }
   it->second->onQueueReady(token);
+}
+
+Network::FilterStatus Context::onNewConnection() { return onNetworkNewConnection(); };
+
+Network::FilterStatus Context::onData(Buffer::Instance& data, bool end_stream) {
+  network_downstream_data_buffer_ = &data;
+  auto result = onDownstreamData(data.length(), end_stream);
+  network_downstream_data_buffer_ = nullptr;
+  return result;
+}
+
+Network::FilterStatus Context::onWrite(Buffer::Instance& data, bool end_stream) {
+  network_upstream_data_buffer_ = &data;
+  auto result = onUpstreamData(data.length(), end_stream);
+  network_upstream_data_buffer_ = nullptr;
+  return result;
+}
+
+void Context::onEvent(Network::ConnectionEvent event) {
+  if (event == Network::ConnectionEvent::LocalClose ||
+      event == Network::ConnectionEvent::RemoteClose) {
+    onConnectionClosed();
+  }
+}
+
+void Context::initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) {
+  network_read_filter_callbacks_ = &callbacks;
+  network_read_filter_callbacks_->connection().addConnectionCallbacks(*this);
+}
+
+void Context::initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& callbacks) {
+  network_write_filter_callbacks_ = &callbacks;
 }
 
 void Wasm::log(absl::string_view root_id, const Http::HeaderMap* request_headers,

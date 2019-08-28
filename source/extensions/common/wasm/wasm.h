@@ -71,6 +71,10 @@ Word resolveSharedQueueHandler(void* raw_context, Word vm_id_ptr, Word vm_id_siz
 Word dequeueSharedQueueHandler(void* raw_context, Word token, Word data_ptr_ptr,
                                Word data_size_ptr);
 Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Word data_size);
+Word getDownstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                         Word size_ptr);
+Word getUpstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                       Word size_ptr);
 Word addHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                               Word value_ptr, Word value_size);
 Word getHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
@@ -152,9 +156,11 @@ struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
 
 // A context which will be the target of callbacks for a particular session
 // e.g. a handler of a stream.
-class Context : public Http::StreamFilter,
+class Context : public Logger::Loggable<Logger::Id::wasm>,
                 public AccessLog::Instance,
-                public Logger::Loggable<Logger::Id::wasm>,
+                public Http::StreamFilter,
+                public Network::ConnectionCallbacks,
+                public Network::Filter,
                 public std::enable_shared_from_this<Context> {
 public:
   Context();                                      // Testing.
@@ -186,6 +192,11 @@ public:
   //
   // General stream downcall on a new stream.
   virtual void onCreate(uint32_t root_context_id);
+  // Network
+  virtual Network::FilterStatus onNetworkNewConnection();
+  virtual Network::FilterStatus onDownstreamData(int data_length, bool end_of_stream);
+  virtual Network::FilterStatus onUpstreamData(int data_length, bool end_of_stream);
+  virtual void onConnectionClosed();
   // HTTP Filter Stream Request Downcalls.
   virtual Http::FilterHeadersStatus onRequestHeaders();
   virtual Http::FilterDataStatus onRequestBody(int body_buffer_length, bool end_of_stream);
@@ -220,6 +231,26 @@ public:
   void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
            const Http::HeaderMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override;
+
+  //
+  // Network::ConnectionCallbacks
+  //
+  void onEvent(Network::ConnectionEvent event) override;
+  void onAboveWriteBufferHighWatermark() override {}
+  void onBelowWriteBufferLowWatermark() override {}
+
+  //
+  // Network::ReadFilter
+  //
+  Network::FilterStatus onNewConnection() override;
+  Network::FilterStatus onData(Buffer::Instance& data, bool end_stream) override;
+  void initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) override;
+
+  //
+  // Network::WriteFilter
+  //
+  Network::FilterStatus onWrite(Buffer::Instance& data, bool end_stream) override;
+  void initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& callbacks) override;
 
   //
   // Http::StreamFilterBase
@@ -306,6 +337,10 @@ public:
                                         uint32_t* token);
   virtual WasmResult dequeueSharedQueue(uint32_t token, std::string* data);
   virtual WasmResult enqueueSharedQueue(uint32_t token, absl::string_view value);
+
+  // Network
+  virtual absl::string_view getDownstreamDataBufferBytes(uint32_t start, uint32_t length);
+  virtual absl::string_view getUpstreamDataBufferBytes(uint32_t start, uint32_t length);
 
   // Header/Trailer/Metadata Maps
   virtual void addHeaderMapValue(HeaderMapType type, absl::string_view key,
@@ -408,6 +443,12 @@ protected:
   std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};
   Envoy::Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
+
+  // Network filter state.
+  Network::ReadFilterCallbacks* network_read_filter_callbacks_{};
+  Network::WriteFilterCallbacks* network_write_filter_callbacks_{};
+  Buffer::Instance* network_downstream_data_buffer_{};
+  Buffer::Instance* network_upstream_data_buffer_{};
 
   // HTTP Filter state.
   Http::HeaderMap* request_headers_{};
@@ -584,6 +625,11 @@ private:
   WasmCall1Void onTick_;
 
   WasmCall2Void onCreate_;
+
+  WasmCall1Word onNewConnection_;
+  WasmCall3Word onDownstreamData_;
+  WasmCall3Word onUpstreamData_;
+  WasmCall1Void onConnectionClosed_;
 
   WasmCall1Word onRequestHeaders_;
   WasmCall3Word onRequestBody_;
