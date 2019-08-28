@@ -13,7 +13,7 @@ public:
   NullVmPlugin() {}
   virtual ~NullVmPlugin() {}
 
-#define _DECLARE_PURE(_t) virtual void getFunction(absl::string_view functionName, _t* f) PURE;
+#define _DECLARE_PURE(_t) virtual void getFunction(absl::string_view function_name, _t* f) PURE;
   FOR_ALL_WASM_VM_EXPORTS(_DECLARE_PURE)
 #undef _DECLARE_PURE
 

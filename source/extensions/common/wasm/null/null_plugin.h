@@ -59,7 +59,7 @@ public:
 
   void start() override {}
 
-#define _DECLARE_OVERRIDE(_t) void getFunction(absl::string_view functionName, _t* f) override;
+#define _DECLARE_OVERRIDE(_t) void getFunction(absl::string_view function_name, _t* f) override;
   FOR_ALL_WASM_VM_EXPORTS(_DECLARE_OVERRIDE)
 #undef _DECLARE_OVERRIDE
 

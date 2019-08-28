@@ -142,13 +142,13 @@ public:
   virtual absl::string_view getUserSection(absl::string_view name) PURE;
 
   // Get typed function exported by the WASM module.
-#define _GET_FUNCTION(_T) virtual void getFunction(absl::string_view functionName, _T* f) PURE;
+#define _GET_FUNCTION(_T) virtual void getFunction(absl::string_view function_name, _T* f) PURE;
   FOR_ALL_WASM_VM_EXPORTS(_GET_FUNCTION)
 #undef _GET_FUNCTION
 
   // Register typed callbacks exported by the host environment.
 #define _REGISTER_CALLBACK(_T)                                                                     \
-  virtual void registerCallback(absl::string_view moduleName, absl::string_view functionName,      \
+  virtual void registerCallback(absl::string_view module_name, absl::string_view function_name,    \
                                 _T f, typename ConvertFunctionTypeWordToUint32<_T>::type) PURE;
   FOR_ALL_WASM_VM_IMPORTS(_REGISTER_CALLBACK)
 #undef _REGISTER_CALLBACK
