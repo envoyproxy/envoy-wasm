@@ -25,7 +25,6 @@ public:
     scriptLog_(level, message);
   }
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
-  MOCK_METHOD1(getProtocol, std::string(Envoy::Extensions::Common::Wasm::StreamType));
 };
 
 class TestRoot : public Envoy::Extensions::Common::Wasm::Context {
