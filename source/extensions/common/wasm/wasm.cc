@@ -1979,7 +1979,7 @@ void Context::onCreate(uint32_t root_context_id) {
   }
 }
 
-Network::FilterStatus Context::onNetworkNewConnection() {
+Network::FilterStatus Context::onNewConnection() {
   onCreate(root_context_id_);
   if (!wasm_->onNewConnection_) {
     return Network::FilterStatus::Continue;
@@ -1990,26 +1990,28 @@ Network::FilterStatus Context::onNetworkNewConnection() {
   return Network::FilterStatus::StopIteration;
 }
 
-Network::FilterStatus Context::onDownstreamData(int data_length, bool end_of_stream) {
+Network::FilterStatus Context::onDownstreamData(Buffer::Instance& data, bool end_of_stream) {
   if (!wasm_->onDownstreamData_) {
     return Network::FilterStatus::Continue;
   }
-  if (wasm_->onDownstreamData_(this, id_, static_cast<uint32_t>(data_length),
-                               static_cast<uint32_t>(end_of_stream)) == 0) {
-    return Network::FilterStatus::Continue;
-  }
-  return Network::FilterStatus::StopIteration;
+  network_downstream_data_buffer_ = &data;
+  auto result = wasm_->onDownstreamData_(this, id_, static_cast<uint32_t>(data.length()),
+                                         static_cast<uint32_t>(end_of_stream));
+  network_downstream_data_buffer_ = nullptr;
+  // TODO(PiotrSikora): pull Proxy-WASM's FilterStatus values.
+  return (result == 0) ? Network::FilterStatus::Continue : Network::FilterStatus::StopIteration;
 }
 
-Network::FilterStatus Context::onUpstreamData(int data_length, bool end_of_stream) {
+Network::FilterStatus Context::onUpstreamData(Buffer::Instance& data, bool end_of_stream) {
   if (!wasm_->onUpstreamData_) {
     return Network::FilterStatus::Continue;
   }
-  if (wasm_->onUpstreamData_(this, id_, static_cast<uint32_t>(data_length),
-                             static_cast<uint32_t>(end_of_stream)) == 0) {
-    return Network::FilterStatus::Continue;
-  }
-  return Network::FilterStatus::StopIteration;
+  network_upstream_data_buffer_ = &data;
+  auto result = wasm_->onUpstreamData_(this, id_, static_cast<uint32_t>(data.length()),
+                                       static_cast<uint32_t>(end_of_stream));
+  network_upstream_data_buffer_ = nullptr;
+  // TODO(PiotrSikora): pull Proxy-WASM's FilterStatus values.
+  return (result == 0) ? Network::FilterStatus::Continue : Network::FilterStatus::StopIteration;
 }
 
 void Context::onConnectionClosed() {
@@ -2598,38 +2600,6 @@ void Wasm::queueReady(uint32_t root_context_id, uint32_t token) {
     return;
   }
   it->second->onQueueReady(token);
-}
-
-Network::FilterStatus Context::onNewConnection() { return onNetworkNewConnection(); };
-
-Network::FilterStatus Context::onData(Buffer::Instance& data, bool end_stream) {
-  network_downstream_data_buffer_ = &data;
-  auto result = onDownstreamData(data.length(), end_stream);
-  network_downstream_data_buffer_ = nullptr;
-  return result;
-}
-
-Network::FilterStatus Context::onWrite(Buffer::Instance& data, bool end_stream) {
-  network_upstream_data_buffer_ = &data;
-  auto result = onUpstreamData(data.length(), end_stream);
-  network_upstream_data_buffer_ = nullptr;
-  return result;
-}
-
-void Context::onEvent(Network::ConnectionEvent event) {
-  if (event == Network::ConnectionEvent::LocalClose ||
-      event == Network::ConnectionEvent::RemoteClose) {
-    onConnectionClosed();
-  }
-}
-
-void Context::initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) {
-  network_read_filter_callbacks_ = &callbacks;
-  network_read_filter_callbacks_->connection().addConnectionCallbacks(*this);
-}
-
-void Context::initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& callbacks) {
-  network_write_filter_callbacks_ = &callbacks;
 }
 
 void Wasm::log(absl::string_view root_id, const Http::HeaderMap* request_headers,

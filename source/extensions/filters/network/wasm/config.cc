@@ -19,7 +19,8 @@ Network::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
     Server::Configuration::FactoryContext& context) {
   auto filter_config = std::make_shared<FilterConfig>(proto_config, context);
   return [filter_config](Network::FilterManager& filter_manager) -> void {
-    auto filter = filter_config->createFilter();
+    auto wasm_context = filter_config->getWasmContext();
+    auto filter = std::make_shared<Filter>(wasm_context);
     filter_manager.addFilter(filter);
   };
 }

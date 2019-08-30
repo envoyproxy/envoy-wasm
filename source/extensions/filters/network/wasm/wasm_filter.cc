@@ -40,6 +40,32 @@ FilterConfig::FilterConfig(const envoy::config::filter::network::wasm::v2::Wasm&
   }
 }
 
+Network::FilterStatus Filter::onNewConnection() { return wasm_context_->onNewConnection(); };
+
+Network::FilterStatus Filter::onData(Buffer::Instance& data, bool end_stream) {
+  return wasm_context_->onDownstreamData(data, end_stream);
+}
+
+Network::FilterStatus Filter::onWrite(Buffer::Instance& data, bool end_stream) {
+  return wasm_context_->onUpstreamData(data, end_stream);
+}
+
+void Filter::onEvent(Network::ConnectionEvent event) {
+  if (event == Network::ConnectionEvent::LocalClose ||
+      event == Network::ConnectionEvent::RemoteClose) {
+    wasm_context_->onConnectionClosed();
+  }
+}
+
+void Filter::initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) {
+  read_filter_callbacks_ = &callbacks;
+  read_filter_callbacks_->connection().addConnectionCallbacks(*this);
+}
+
+void Filter::initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& callbacks) {
+  write_filter_callbacks_ = &callbacks;
+}
+
 } // namespace Wasm
 } // namespace NetworkFilters
 } // namespace Extensions

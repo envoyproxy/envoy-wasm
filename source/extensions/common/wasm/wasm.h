@@ -159,8 +159,6 @@ struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
 class Context : public Logger::Loggable<Logger::Id::wasm>,
                 public AccessLog::Instance,
                 public Http::StreamFilter,
-                public Network::ConnectionCallbacks,
-                public Network::Filter,
                 public std::enable_shared_from_this<Context> {
 public:
   Context();                                      // Testing.
@@ -193,9 +191,9 @@ public:
   // General stream downcall on a new stream.
   virtual void onCreate(uint32_t root_context_id);
   // Network
-  virtual Network::FilterStatus onNetworkNewConnection();
-  virtual Network::FilterStatus onDownstreamData(int data_length, bool end_of_stream);
-  virtual Network::FilterStatus onUpstreamData(int data_length, bool end_of_stream);
+  virtual Network::FilterStatus onNewConnection();
+  virtual Network::FilterStatus onDownstreamData(Buffer::Instance& data, bool end_of_stream);
+  virtual Network::FilterStatus onUpstreamData(Buffer::Instance& data, bool end_of_stream);
   virtual void onConnectionClosed();
   // HTTP Filter Stream Request Downcalls.
   virtual Http::FilterHeadersStatus onRequestHeaders();
@@ -231,26 +229,6 @@ public:
   void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
            const Http::HeaderMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override;
-
-  //
-  // Network::ConnectionCallbacks
-  //
-  void onEvent(Network::ConnectionEvent event) override;
-  void onAboveWriteBufferHighWatermark() override {}
-  void onBelowWriteBufferLowWatermark() override {}
-
-  //
-  // Network::ReadFilter
-  //
-  Network::FilterStatus onNewConnection() override;
-  Network::FilterStatus onData(Buffer::Instance& data, bool end_stream) override;
-  void initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) override;
-
-  //
-  // Network::WriteFilter
-  //
-  Network::FilterStatus onWrite(Buffer::Instance& data, bool end_stream) override;
-  void initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& callbacks) override;
 
   //
   // Http::StreamFilterBase
@@ -445,8 +423,6 @@ protected:
   Envoy::Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
 
   // Network filter state.
-  Network::ReadFilterCallbacks* network_read_filter_callbacks_{};
-  Network::WriteFilterCallbacks* network_write_filter_callbacks_{};
   Buffer::Instance* network_downstream_data_buffer_{};
   Buffer::Instance* network_upstream_data_buffer_{};
 

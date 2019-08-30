@@ -16,9 +16,9 @@ namespace Extensions {
 namespace NetworkFilters {
 namespace Wasm {
 
-class TestFilter : public Envoy::Extensions::Common::Wasm::Context {
+class TestContext : public Envoy::Extensions::Common::Wasm::Context {
 public:
-  TestFilter(Wasm* wasm, uint32_t root_context_id)
+  TestContext(Wasm* wasm, uint32_t root_context_id)
       : Envoy::Extensions::Common::Wasm::Context(wasm, root_context_id) {}
 
   void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
@@ -58,7 +58,8 @@ public:
   }
 
   void setupFilter() {
-    filter_ = std::make_unique<TestFilter>(wasm_.get(), wasm_->getRootContext("")->id());
+    context_ = std::make_shared<TestContext>(wasm_.get(), wasm_->getRootContext("")->id());
+    filter_ = std::make_unique<Filter>(context_);
     filter_->initializeReadFilterCallbacks(read_filter_callbacks_);
   }
 
@@ -67,7 +68,8 @@ public:
   NiceMock<Event::MockDispatcher> dispatcher_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
   std::shared_ptr<Wasm> wasm_;
-  std::unique_ptr<TestFilter> filter_;
+  std::shared_ptr<TestContext> context_;
+  std::unique_ptr<Filter> filter_;
   NiceMock<Network::MockReadFilterCallbacks> read_filter_callbacks_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
   envoy::api::v2::core::Metadata listener_metadata_;
@@ -97,23 +99,23 @@ TEST_P(WasmFilterTest, HappyPath) {
       "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm")));
   setupFilter();
 
-  EXPECT_CALL(*filter_,
+  EXPECT_CALL(*context_,
               scriptLog_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onNewConnection());
 
   Buffer::OwnedImpl fake_downstream_data("Fake");
-  EXPECT_CALL(*filter_,
+  EXPECT_CALL(*context_,
               scriptLog_(spdlog::level::trace,
                          Eq(absl::string_view("onDownstreamData 2 len=4 end_stream=0\nFake"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onData(fake_downstream_data, false));
 
   Buffer::OwnedImpl fake_upstream_data("Done");
-  EXPECT_CALL(*filter_,
+  EXPECT_CALL(*context_,
               scriptLog_(spdlog::level::trace,
                          Eq(absl::string_view("onUpstreamData 2 len=4 end_stream=1\nDone"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onWrite(fake_upstream_data, true));
 
-  EXPECT_CALL(*filter_,
+  EXPECT_CALL(*context_,
               scriptLog_(spdlog::level::trace, Eq(absl::string_view("onConnectionClosed 2"))));
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
 }
