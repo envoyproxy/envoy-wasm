@@ -5,3 +5,57 @@ Dependencies for building WASM modules:
 
 - If want to rebuild the .bc files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm  (note: this is pinned to git tag v3.6.1)
   A pre-patched repo is available at https://github.com/jplevyak/protobuf branch envoy-wasm
+
+Docker
+
+A Dockerfile for the C++ SDK is provided in Dockerfile-sdk.
+
+It can build built with (in this directory):
+
+docker build -t wasmsdk:v1 -f Dockerfile-sdk .
+
+The docker image can be used for compiling wasm files.
+
+Create a directory parallel to envoy with your source files and a Makefile:
+
+```
+DOCKER_SDK=1
+
+all: myproject.wasm
+
+include sdk/Makefile.base_lite
+```
+
+Source file (myproject.cc):
+
+```
+#include <string>
+#include <unordered_map>
+
+#include "proxy_wasm_intrinsics.h"
+
+class ExampleContext : public Context {
+public:
+  explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
+
+  FilterHeadersStatus onRequestHeaders() override;
+  FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
+  void onDone() override;
+};
+static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
+
+FilterHeadersStatus ExampleContext::onRequestHeaders() {
+  logInfo(std::string("onRequestHeaders ") + std::to_string(id()));
+  auto path = getRequestHeader(":path");
+  logInfo(std::string("header path ") + std::string(path->view()));
+  return FilterHeadersStatus::Continue;
+}
+
+void ExampleContext::onDone() { logInfo("onDone " + std::to_string(id())); }
+```
+
+Run docker
+
+```bash
+docker run -v $PWD:/work -v -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasmsdk:v1 bash /build_wasm.sh
+```

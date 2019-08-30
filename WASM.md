@@ -1,5 +1,8 @@
 WebAssembly Extension Support
 
+# SDK
+A build image for the C++ SDK is available. See api/wasm/cpp/Dockerfile-sdk.
+
 # Build Dependencies
 
 ## glib2.0
@@ -12,8 +15,8 @@ apt-get install libglib2.0-dev
 
 git clone https://github.com/emscripten-core/emsdk.git  
 cd emsdk  
-./emsdk install sdk-1.38.25-64bit  
-./emsdk activate sdk-1.38.25-64bit  
+./emsdk install sdk-1.38.42-64bit  
+./emsdk activate sdk-1.38.42-64bit  
 
 . ./emsdk\_env.sh  
 
@@ -22,14 +25,14 @@ It is possible later versions will work, e.g.
 ./emsdk install latest  
 ./emsdk activate latest  
 
-However 1.38.25 is known to work.
+However 1.38.42 is known to work.
 
-## clang-7 or clang-8
+## clang-8
 
 export CC=clang  
 export CXX=clang++  
 
-Note: ensure that you have clang in your path (e.g. /usr/lib/llvm-7/bin).
+Note: ensure that you have clang in your path (e.g. /usr/lib/llvm-8/bin).
 
 ## protobuf v3.6.1
 

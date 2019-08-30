@@ -1,0 +1,6 @@
+FROM ubuntu:bionic
+
+COPY ./sdk_container.sh /
+COPY ./build_wasm.sh /
+
+RUN ./sdk_container.sh
