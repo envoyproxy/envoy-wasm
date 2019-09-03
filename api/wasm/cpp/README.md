@@ -1,6 +1,6 @@
 # Compiling C++ to .wasm files using the SDK
 
-The SDK has dependencies on specific versions of emscription and the protobuf library, therefor use of a Docker image is recomended.
+The SDK has dependencies on specific versions of emscription and the protobuf library, therefor use of a Docker image is recommended.
 
 ## Dependencies for building WASM modules:
 
