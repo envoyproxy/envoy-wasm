@@ -15,8 +15,8 @@ apt-get install libglib2.0-dev
 
 git clone https://github.com/emscripten-core/emsdk.git  
 cd emsdk  
-./emsdk install sdk-1.38.42-64bit  
-./emsdk activate sdk-1.38.42-64bit  
+./emsdk install sdk-1.38.42-64bit
+./emsdk activate sdk-1.38.42-64bit
 
 . ./emsdk\_env.sh  
 
