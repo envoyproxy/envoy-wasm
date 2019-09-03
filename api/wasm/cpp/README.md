@@ -1,12 +1,18 @@
-Dependencies for building WASM modules:
+# Compiling C++ to .wasm files using the SDK
 
-- You must install the version of protobuf on your build system that matches the libprotobuf.bc files (without any patches) so that the generated code matches the .bc library.
+The SDK has dependencies on specific versions of emscription and the protobuf library, therefor use of a Docker image is recomended.
+
+## Dependencies for building WASM modules:
+
+  * You must install the version of protobuf on your build system that matches the libprotobuf.bc files (without any patches) so that the generated code matches the .bc library.
   Currently this is based on tag v3.6.1 of https://github.com/protocolbuffers/protobuf.
 
-- If want to rebuild the .bc files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm  (note: this is pinned to git tag v3.6.1)
-  A pre-patched repo is available at https://github.com/jplevyak/protobuf branch envoy-wasm
+  * If want to rebuild the .bc files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm  (note: this is pinned to git tag v3.6.1).
+  A pre-patched repo is available at https://github.com/jplevyak/protobuf branch envoy-wasm.
 
-Docker
+  * emscripten 1.38.42.
+
+## Docker
 
 A Dockerfile for the C++ SDK is provided in Dockerfile-sdk.
 
@@ -57,5 +63,14 @@ void ExampleContext::onDone() { logInfo("onDone " + std::to_string(id())); }
 Run docker
 
 ```bash
-docker run -v $PWD:/work -v -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasmsdk:v1 bash /build_wasm.sh
+docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasmsdk:v1 bash /build_wasm.sh
 ```
+
+The first time that emscripten runs it will generate the standard libraries.  To cache these in the docker image,
+after the first successful compilation (e.g myproject.cc above), commit the image with the standard libraries:
+
+```bash
+docker commit `docker ps -l | grep wasmsdk:v1 | awk '{print $1}'` wasmsdk:v1
+```
+
+This will save time on subsequent compiles.
