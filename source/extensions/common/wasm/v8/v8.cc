@@ -61,54 +61,54 @@ public:
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool setWord(uint64_t pointer, Word word) override;
 
-#define _REGISTER_HOST_GLOBAL(_type)                                                               \
-  std::unique_ptr<Global<_type>> makeGlobal(absl::string_view moduleName, absl::string_view name,  \
-                                            _type initialValue) override {                         \
-    return registerHostGlobalImpl(moduleName, name, initialValue);                                 \
+#define _REGISTER_HOST_GLOBAL(_T)                                                                  \
+  std::unique_ptr<Global<_T>> makeGlobal(absl::string_view module_name, absl::string_view name,    \
+                                         _T initial_value) override {                              \
+    return registerHostGlobalImpl(module_name, name, initial_value);                               \
   };
   _REGISTER_HOST_GLOBAL(Word);
   _REGISTER_HOST_GLOBAL(double);
 #undef _REGISTER_HOST_GLOBAL
 
-#define _REGISTER_HOST_FUNCTION(_type)                                                             \
-  void registerCallback(absl::string_view moduleName, absl::string_view functionName, _type,       \
-                        typename ConvertFunctionTypeWordToUint32<_type>::type f) override {        \
-    registerHostFunctionImpl(moduleName, functionName, f);                                         \
+#define _REGISTER_HOST_FUNCTION(_T)                                                                \
+  void registerCallback(absl::string_view module_name, absl::string_view function_name, _T,        \
+                        typename ConvertFunctionTypeWordToUint32<_T>::type f) override {           \
+    registerHostFunctionImpl(module_name, function_name, f);                                       \
   };
   FOR_ALL_WASM_VM_IMPORTS(_REGISTER_HOST_FUNCTION)
 #undef _REGISTER_HOST_FUNCTION
 
-#define _GET_MODULE_FUNCTION(_type)                                                                \
-  void getFunction(absl::string_view functionName, _type* f) override {                            \
-    getModuleFunctionImpl(functionName, f);                                                        \
+#define _GET_MODULE_FUNCTION(_T)                                                                   \
+  void getFunction(absl::string_view function_name, _T* f) override {                              \
+    getModuleFunctionImpl(function_name, f);                                                       \
   };
   FOR_ALL_WASM_VM_EXPORTS(_GET_MODULE_FUNCTION)
 #undef _GET_MODULE_FUNCTION
 
 private:
-  void callModuleFunction(Context* context, absl::string_view functionName, const wasm::Val args[],
+  void callModuleFunction(Context* context, absl::string_view function_name, const wasm::Val args[],
                           wasm::Val results[]);
-  void callModuleFunction(Context* context, absl::string_view functionName, const wasm::Func* func,
+  void callModuleFunction(Context* context, absl::string_view function_name, const wasm::Func* func,
                           const wasm::Val args[], wasm::Val results[]);
 
   template <typename T>
-  std::unique_ptr<Global<T>> registerHostGlobalImpl(absl::string_view moduleName,
-                                                    absl::string_view name, T initialValue);
+  std::unique_ptr<Global<T>> registerHostGlobalImpl(absl::string_view module_name,
+                                                    absl::string_view name, T initial_value);
 
   template <typename... Args>
-  void registerHostFunctionImpl(absl::string_view moduleName, absl::string_view functionName,
+  void registerHostFunctionImpl(absl::string_view module_name, absl::string_view function_name,
                                 void (*function)(void*, Args...));
 
   template <typename R, typename... Args>
-  void registerHostFunctionImpl(absl::string_view moduleName, absl::string_view functionName,
+  void registerHostFunctionImpl(absl::string_view module_name, absl::string_view function_name,
                                 R (*function)(void*, Args...));
 
   template <typename... Args>
-  void getModuleFunctionImpl(absl::string_view functionName,
+  void getModuleFunctionImpl(absl::string_view function_name,
                              std::function<void(Context*, Args...)>* function);
 
   template <typename R, typename... Args>
-  void getModuleFunctionImpl(absl::string_view functionName,
+  void getModuleFunctionImpl(absl::string_view function_name,
                              std::function<R(Context*, Args...)>* function);
 
   wasm::vec<byte_t> source_ = wasm::vec<byte_t>::invalid();
@@ -468,23 +468,23 @@ void V8::start(Context* context) {
   callModuleFunction(context, "__post_instantiate", nullptr, nullptr);
 }
 
-void V8::callModuleFunction(Context* context, absl::string_view functionName,
+void V8::callModuleFunction(Context* context, absl::string_view function_name,
                             const wasm::Val args[], wasm::Val results[]) {
-  auto it = module_functions_.find(functionName);
+  auto it = module_functions_.find(function_name);
   if (it != module_functions_.end()) {
-    callModuleFunction(context, functionName, it->second.get(), args, results);
+    callModuleFunction(context, function_name, it->second.get(), args, results);
   }
 }
 
-void V8::callModuleFunction(Context* context, absl::string_view functionName,
+void V8::callModuleFunction(Context* context, absl::string_view function_name,
                             const wasm::Func* func, const wasm::Val args[], wasm::Val results[]) {
-  ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", functionName);
+  ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", function_name);
 
   SaveRestoreContext _saved_context(context);
   auto trap = func->call(args, results);
   if (trap) {
     throw WasmVmException(
-        fmt::format("Function: {} failed: {}", functionName,
+        fmt::format("Function: {} failed: {}", function_name,
                     absl::string_view(trap->message().get(), trap->message().size())));
   }
 }
@@ -536,22 +536,22 @@ bool V8::setWord(uint64_t pointer, Word word) {
 }
 
 template <typename T>
-std::unique_ptr<Global<T>> V8::registerHostGlobalImpl(absl::string_view moduleName,
-                                                      absl::string_view name, T initialValue) {
-  ENVOY_LOG(trace, "[wasm] registerHostGlobal(\"{}.{}\", {})", moduleName, name, initialValue);
-  auto value = makeVal(initialValue);
+std::unique_ptr<Global<T>> V8::registerHostGlobalImpl(absl::string_view module_name,
+                                                      absl::string_view name, T initial_value) {
+  ENVOY_LOG(trace, "[wasm] registerHostGlobal(\"{}.{}\", {})", module_name, name, initial_value);
+  auto value = makeVal(initial_value);
   auto type = wasm::GlobalType::make(wasm::ValType::make(value.kind()), wasm::CONST);
   auto global = wasm::Global::make(store_.get(), type.get(), value);
   auto proxy = std::make_unique<V8ProxyForGlobal<T>>(global.get());
-  host_globals_.emplace(absl::StrCat(moduleName, ".", name), std::move(global));
+  host_globals_.emplace(absl::StrCat(module_name, ".", name), std::move(global));
   return proxy;
 }
 
 template <typename... Args>
-void V8::registerHostFunctionImpl(absl::string_view moduleName, absl::string_view functionName,
+void V8::registerHostFunctionImpl(absl::string_view module_name, absl::string_view function_name,
                                   void (*function)(void*, Args...)) {
-  ENVOY_LOG(trace, "[wasm] registerHostFunction(\"{}.{}\")", moduleName, functionName);
-  auto data = std::make_unique<FuncData>(absl::StrCat(moduleName, ".", functionName));
+  ENVOY_LOG(trace, "[wasm] registerHostFunction(\"{}.{}\")", module_name, function_name);
+  auto data = std::make_unique<FuncData>(absl::StrCat(module_name, ".", function_name));
   auto type = wasm::FuncType::make(convertArgsTupleToValTypes<std::tuple<Args...>>(),
                                    convertArgsTupleToValTypes<std::tuple<>>());
   auto func = wasm::Func::make(
@@ -568,14 +568,14 @@ void V8::registerHostFunctionImpl(absl::string_view moduleName, absl::string_vie
       data.get());
   data.get()->callback = std::move(func);
   data.get()->raw_func = reinterpret_cast<void*>(function);
-  host_functions_.emplace(absl::StrCat(moduleName, ".", functionName), std::move(data));
+  host_functions_.emplace(absl::StrCat(module_name, ".", function_name), std::move(data));
 }
 
 template <typename R, typename... Args>
-void V8::registerHostFunctionImpl(absl::string_view moduleName, absl::string_view functionName,
+void V8::registerHostFunctionImpl(absl::string_view module_name, absl::string_view function_name,
                                   R (*function)(void*, Args...)) {
-  ENVOY_LOG(trace, "[wasm] registerHostFunction(\"{}.{}\")", moduleName, functionName);
-  auto data = std::make_unique<FuncData>(absl::StrCat(moduleName, ".", functionName));
+  ENVOY_LOG(trace, "[wasm] registerHostFunction(\"{}.{}\")", module_name, function_name);
+  auto data = std::make_unique<FuncData>(absl::StrCat(module_name, ".", function_name));
   auto type = wasm::FuncType::make(convertArgsTupleToValTypes<std::tuple<Args...>>(),
                                    convertArgsTupleToValTypes<std::tuple<R>>());
   auto func = wasm::Func::make(
@@ -593,14 +593,14 @@ void V8::registerHostFunctionImpl(absl::string_view moduleName, absl::string_vie
       data.get());
   data.get()->callback = std::move(func);
   data.get()->raw_func = reinterpret_cast<void*>(function);
-  host_functions_.emplace(absl::StrCat(moduleName, ".", functionName), std::move(data));
+  host_functions_.emplace(absl::StrCat(module_name, ".", function_name), std::move(data));
 }
 
 template <typename... Args>
-void V8::getModuleFunctionImpl(absl::string_view functionName,
+void V8::getModuleFunctionImpl(absl::string_view function_name,
                                std::function<void(Context*, Args...)>* function) {
-  ENVOY_LOG(trace, "[wasm] getModuleFunction(\"{}\")", functionName);
-  auto it = module_functions_.find(functionName);
+  ENVOY_LOG(trace, "[wasm] getModuleFunction(\"{}\")", function_name);
+  auto it = module_functions_.find(function_name);
   if (it == module_functions_.end()) {
     *function = nullptr;
     return;
@@ -608,26 +608,26 @@ void V8::getModuleFunctionImpl(absl::string_view functionName,
   const wasm::Func* func = it->second.get();
   if (!equalValTypes(func->type()->params(), convertArgsTupleToValTypes<std::tuple<Args...>>()) ||
       !equalValTypes(func->type()->results(), convertArgsTupleToValTypes<std::tuple<>>())) {
-    throw WasmVmException(fmt::format("Bad function signature for: {}", functionName));
+    throw WasmVmException(fmt::format("Bad function signature for: {}", function_name));
   }
-  *function = [func, functionName](Context* context, Args... args) -> void {
-    ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", functionName);
+  *function = [func, function_name](Context* context, Args... args) -> void {
+    ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", function_name);
     SaveRestoreContext _saved_context(context);
     wasm::Val params[] = {makeVal(args)...};
     auto trap = func->call(params, nullptr);
     if (trap) {
       throw WasmVmException(
-          fmt::format("Function: {} failed: {}", functionName,
+          fmt::format("Function: {} failed: {}", function_name,
                       absl::string_view(trap->message().get(), trap->message().size())));
     }
   };
 }
 
 template <typename R, typename... Args>
-void V8::getModuleFunctionImpl(absl::string_view functionName,
+void V8::getModuleFunctionImpl(absl::string_view function_name,
                                std::function<R(Context*, Args...)>* function) {
-  ENVOY_LOG(trace, "[wasm] getModuleFunction(\"{}\")", functionName);
-  auto it = module_functions_.find(functionName);
+  ENVOY_LOG(trace, "[wasm] getModuleFunction(\"{}\")", function_name);
+  auto it = module_functions_.find(function_name);
   if (it == module_functions_.end()) {
     *function = nullptr;
     return;
@@ -635,17 +635,17 @@ void V8::getModuleFunctionImpl(absl::string_view functionName,
   const wasm::Func* func = it->second.get();
   if (!equalValTypes(func->type()->params(), convertArgsTupleToValTypes<std::tuple<Args...>>()) ||
       !equalValTypes(func->type()->results(), convertArgsTupleToValTypes<std::tuple<R>>())) {
-    throw WasmVmException(fmt::format("Bad function signature for: {}", functionName));
+    throw WasmVmException(fmt::format("Bad function signature for: {}", function_name));
   }
-  *function = [func, functionName](Context* context, Args... args) -> R {
-    ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", functionName);
+  *function = [func, function_name](Context* context, Args... args) -> R {
+    ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", function_name);
     SaveRestoreContext _saved_context(context);
     wasm::Val params[] = {makeVal(args)...};
     wasm::Val results[1];
     auto trap = func->call(params, results);
     if (trap) {
       throw WasmVmException(
-          fmt::format("Function: {} failed: {}", functionName,
+          fmt::format("Function: {} failed: {}", function_name,
                       absl::string_view(trap->message().get(), trap->message().size())));
     }
     R rvalue = results[0].get<typename ConvertWordTypeToUint32<R>::type>();

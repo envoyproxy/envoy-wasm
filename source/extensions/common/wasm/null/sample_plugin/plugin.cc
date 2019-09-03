@@ -50,10 +50,11 @@ void PluginContext::onLog() {
     logWarn("request.path: " + getSelectorExpression({"request", "path"}).value()->toString());
     logWarn("node.metadata: " +
             getSelectorExpression({"node", "metadata", "istio.io/metadata"}).value()->toString());
-    logWarn("metadata: " + getSelectorExpression({"metadata", "filter_metadata", "envoy.wasm",
-                                                  "wasm_request_get_key"})
-                               .value()
-                               ->toString());
+    logWarn("metadata: " +
+            getSelectorExpression(
+                {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"})
+                .value()
+                ->toString());
     auto responseCode = getSelectorExpression({"response", "code"}).value();
     if (responseCode->size() == sizeof(int64_t)) {
       char buf[sizeof(int64_t)];

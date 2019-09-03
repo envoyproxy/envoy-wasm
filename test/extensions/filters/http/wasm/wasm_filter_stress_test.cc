@@ -71,7 +71,7 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
   //
 
   config_helper_.addFilter(fmt::format(R"EOF(
-            name: envoy.wasm
+            name: envoy.filters.http.wasm
             config:
               vm_config:
                 vm: "{}"
@@ -180,7 +180,7 @@ TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
   //
 
   config_helper_.addFilter(fmt::format(R"EOF(
-            name: envoy.wasm
+            name: envoy.filters.http.wasm
             config:
               vm_config:
                 vm: "{}"
@@ -290,7 +290,7 @@ TEST_P(HttpWasmStressTest, DISABLED_CalloutHappyPath) {
   //
 
   config_helper_.addFilter(fmt::format(R"EOF(
-            name: envoy.wasm
+            name: envoy.filters.http.wasm
             config:
               vm_config:
                 vm: "{}"
