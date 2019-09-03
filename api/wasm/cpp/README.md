@@ -67,7 +67,7 @@ This will save time on subsequent compiles.
 
 ## Dependencies for building WASM modules:
 
-If you do not wish to use the Docker file, the dependencies can be installed manually (see the sdk\_container.sh), or by hand.
+If you do not wish to use the Docker file, the dependencies can be installed by script (sdk\_container.sh), or by hand.
 
 ### protobuf v3.6.1
 
