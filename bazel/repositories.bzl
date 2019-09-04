@@ -156,6 +156,9 @@ def envoy_dependencies(skip_targets = []):
     _com_lightstep_tracer_cpp()
     _io_opentracing_cpp()
     _net_zlib()
+    _com_github_kripken_emscripten_toolchain()
+    _com_github_kripken_emscripten_clang()
+    _com_google_protobuf_emscripten()
     _repository_impl("com_googlesource_code_re2")
     _com_google_cel_cpp()
     _repository_impl("bazel_toolchains")
@@ -318,6 +321,58 @@ def _net_zlib():
     native.bind(
         name = "zlib",
         actual = "@envoy//bazel/foreign_cc:zlib",
+    )
+
+def _com_github_kripken_emscripten_toolchain():
+    location = REPOSITORY_LOCATIONS["com_github_kripken_emscripten_toolchain"]
+    http_archive(
+        name = 'com_github_kripken_emscripten_toolchain',
+        build_file = "@envoy//bazel/external:emscripten_toolchain.BUILD",
+        **location
+    )
+    native.bind(
+        name = "emscripten_toolchain_lib",
+        actual = "@com_github_kripken_emscripten_toolchain//:emscripten_toolchain_lib",
+    )
+
+def _com_github_kripken_emscripten_clang():
+    location = REPOSITORY_LOCATIONS["com_github_kripken_emscripten_clang"]
+    http_archive(
+        name = 'com_github_kripken_emscripten_clang',
+        build_file_content = BUILD_ALL_CONTENT,
+        **location
+    )
+
+def _com_google_protobuf_emscripten():
+    _repository_impl(
+        "com_google_protobuf_emscripten",
+        patch_args = ["-p1"],
+        patches = ["@envoy//bazel:protobuf_emscripten.patch"],
+    )
+
+    # Needed for cc_proto_library, Bazel doesn't support aliases today for repos,
+    # see https://groups.google.com/forum/#!topic/bazel-discuss/859ybHQZnuI and
+    # https://github.com/bazelbuild/bazel/issues/3219.
+    _repository_impl(
+        "com_google_protobuf_emscripten_cc",
+        repository_key = "com_google_protobuf_emscripten",
+        patch_args = ["-p1"],
+        patches = ["@envoy//bazel:protobuf_emscripten.patch"],
+    )
+    native.bind(
+        name = "emscripten_protocol_compiler",
+        actual = "@com_google_protobuf_emscripten//:protoc",
+    )
+    native.bind(
+        name = "emscripten_protoc",
+        actual = "@com_google_protobuf__emscripten_cc//:protoc",
+    )
+
+    # Needed for `bazel fetch` to work with @com_google_protobuf
+    # https://github.com/google/protobuf/blob/v3.6.1/util/python/BUILD#L6-L9
+    native.bind(
+        name = "emscripten_python_headers",
+        actual = "@com_google_protobuf_emscripten//util/python:python_headers",
     )
 
 def _com_google_cel_cpp():

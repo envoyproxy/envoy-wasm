@@ -147,6 +147,21 @@ REPOSITORY_LOCATIONS = dict(
         strip_prefix = "zlib-1.2.11",
         urls = ["https://github.com/madler/zlib/archive/v1.2.11.tar.gz"],
     ),
+    com_github_kripken_emscripten_toolchain = dict(
+        sha256 = "2fb0e48b41cb79fab138a278a41241d0f65399c72e364e9da04ed24dc195a74e",
+        strip_prefix = "emscripten-1.38.39",
+        urls = ["https://github.com/kripken/emscripten/archive/1.38.39.tar.gz"],
+    ),
+    com_github_kripken_emscripten_clang = dict(
+        sha256 = "25a1ab15cd9627ebde647ee39494b30f0c5ddc4a7e7b5b61907a05dd6922235d",
+        strip_prefix = "emscripten-llvm-e1.38.30",
+        urls = ["https://s3.amazonaws.com/mozilla-games/emscripten/packages/llvm/tag/linux_64bit/emscripten-llvm-e1.38.30.tar.gz"],
+    ),
+    com_google_protobuf_emscripten = dict(
+        sha256 = "fd65488e618032ac924879a3a94fa68550b3b5bcb445b93b7ddf3c925b1a351f",
+        strip_prefix = "protobuf-3.6.1",
+        urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protobuf-all-3.6.1.tar.gz"],
+    ),
     com_github_jbeder_yaml_cpp = dict(
         sha256 = "53dcffd55f3433b379fcc694f45c54898711c0e29159a7bd02e82a3e0253bac3",
         strip_prefix = "yaml-cpp-0f9a586ca1dc29c2ecb8dd715a315b93e3f40f79",

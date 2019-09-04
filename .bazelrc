@@ -152,3 +152,9 @@ build:asan-fuzzer --config=asan
 build:asan-fuzzer --define=FUZZING_ENGINE=libfuzzer
 build:asan-fuzzer --copt=-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 build:asan-fuzzer --copt=-fsanitize-coverage=trace-pc-guard
+
+# Wasm configuration
+build:wasm --crosstool_top=//toolchain:emscripten
+build:wasm --cpu=wasm
+build:wasm --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+

@@ -22,3 +22,8 @@ envoy_cc_library(
         "proxy_wasm_metadata.h",
     ],
 )
+
+cc_library(
+    name = "emscripten_lib",
+    hdrs = glob(["**/*.h"]),
+)

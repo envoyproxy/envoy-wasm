@@ -1,0 +1,43 @@
+diff --git a/protobuf.bzl b/protobuf.bzl
+index 78f19c6..3b6d183 100644
+--- a/protobuf.bzl
++++ b/protobuf.bzl
+@@ -130,7 +130,7 @@ proto_gen = rule(
+         "protoc": attr.label(
+             cfg = "host",
+             executable = True,
+-            single_file = True,
++            allow_single_file = True,
+             mandatory = True,
+         ),
+         "plugin": attr.label(
+@@ -266,8 +266,8 @@ def internal_gen_well_known_protos_java(srcs):
+   Args:
+     srcs: the well known protos
+   """
+-  root = Label("%s//protobuf_java" % (REPOSITORY_NAME)).workspace_root
+-  pkg = PACKAGE_NAME + "/" if PACKAGE_NAME else ""
++  root = Label("%s//protobuf_java" % (native.repository_name())).workspace_root
++  pkg = native.package_name() + "/" if native.package_name() else ""
+   if root == "":
+     include = " -I%ssrc " % pkg
+   else:
+diff --git a/src/google/protobuf/stubs/strutil.cc b/src/google/protobuf/stubs/strutil.cc
+index 552d416..3af0a80 100644
+--- a/src/google/protobuf/stubs/strutil.cc
++++ b/src/google/protobuf/stubs/strutil.cc
+@@ -1063,10 +1063,12 @@ done:
+ }
+ 
+ char* FastInt32ToBufferLeft(int32 i, char* buffer) {
+-  uint32 u = i;
++  uint32 u = 0;
+   if (i < 0) {
+     *buffer++ = '-';
+-    u = -i;
++    u -= i;
++  } else {
++    u = i;
+   }
+   return FastUInt32ToBufferLeft(u, buffer);
+ }
