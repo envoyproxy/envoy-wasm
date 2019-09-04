@@ -27,3 +27,10 @@ cc_library(
     name = "emscripten_lib",
     hdrs = glob(["**/*.h"]),
 )
+
+filegroup(
+    name = "extern_js",
+    srcs = [
+        "proxy_wasm_intrinsics.js",
+    ],
+)

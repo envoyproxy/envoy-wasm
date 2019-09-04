@@ -17,6 +17,7 @@ filegroup(
        "emcc.sh",
        "@com_github_kripken_emscripten_toolchain//:all",
        "@com_github_kripken_emscripten_clang//:all",
+       "//api/wasm/cpp:extern_js",
         ":emscripten_cache_content",
     ],
 )

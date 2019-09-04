@@ -16,6 +16,9 @@ cc_binary(
       "-g3",
       "-DEMSCRIPTEN_PROTOBUF_LITE=1",
     ],
+    linkopts = [
+      "--js-library api/wasm/cpp/proto_wasm_intrinsics.js",
+    ],
     deps = [
         "//api/wasm/cpp:emscripten_lib",
         "@com_google_protobuf_emscripten//:protobuf_headers",
