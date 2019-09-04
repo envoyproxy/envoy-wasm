@@ -23,7 +23,7 @@ Server::WasmSharedPtr WasmFactory::createWasm(const envoy::config::wasm::v2::Was
   auto root_id = config.root_id();
   auto base_wasm = Common::Wasm::createWasm(
       config.vm_id(), config.vm_config(), root_id, context.clusterManager(), context.dispatcher(),
-      context.api(), context.scope(), Common::Wasm::PluginDirection::Unspecified,
+      context.api(), context.scope(), envoy::api::v2::core::TrafficDirection::UNSPECIFIED,
       context.localInfo(), nullptr /* listener_metadata */, context.owned_scope());
   if (config.singleton()) {
     // Return the WASM VM which will be stored as a singleton by the Server.

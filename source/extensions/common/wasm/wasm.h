@@ -44,13 +44,11 @@ enum class StreamType : int32_t { Request = 0, Response = 1, MAX = 1 };
 Word logHandler(void* raw_context, Word level, Word address, Word size);
 Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                         Word value_ptr_ptr, Word value_size_ptr);
-Word setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
-                        Word value_size);
 Word getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr);
 Word getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
                               Word value_ptr_ptr, Word value_size_ptr);
-Word setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
-                              Word value_ptr, Word value_size);
+Word setStateHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
+                     Word value_size);
 Word getSelectorExpressionHandler(void* raw_context, Word path_ptr, Word path_size,
                                   Word value_ptr_ptr, Word value_size_ptr);
 Word continueRequestHandler(void* raw_context);
@@ -150,6 +148,16 @@ struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
   Grpc::RawAsyncStream* stream;
 };
 
+// A simple wrapper around generic values
+class WasmState : public StreamInfo::FilterState::Object {
+public:
+  WasmState(ProtobufWkt::Value& value) : value_(value) {}
+  const ProtobufWkt::Value& value() const { return value_; }
+
+private:
+  const ProtobufWkt::Value value_;
+};
+
 // A context which will be the target of callbacks for a particular session
 // e.g. a handler of a stream.
 class Context : public Http::StreamFilter,
@@ -172,8 +180,11 @@ public:
   bool isRootContext() { return root_context_id_ == 0; }
   Context* root_context() { return root_context_; }
 
-  const StreamInfo::StreamInfo* getConstStreamInfo(MetadataType type) const;
-  StreamInfo::StreamInfo* getStreamInfo(MetadataType type) const;
+  // Retrieves the stream info associated with the request (a.k.a active stream).
+  // It selects a value based on the following order: encoder callback, decoder
+  // callback, log callback. As long as any one of the callbacks is invoked, the value should be
+  // available.
+  const StreamInfo::StreamInfo* getRequestStreamInfo() const;
 
   //
   // VM level downcalls into the WASM code on Context(id == 0).
@@ -249,12 +260,6 @@ public:
   //
   // HTTP Filter Callbacks
   //
-  // StreamInfo
-  virtual std::string getProtocol(StreamType type);
-  virtual uint32_t getDestinationPort(StreamType type);
-  virtual uint32_t getResponseCode(StreamType type);
-  virtual std::string getTlsVersion(StreamType type);
-  virtual absl::optional<bool> peerCertificatePresented(StreamType type);
 
   // Generic resolver producing a serialized value
   virtual WasmResult getSelectorExpression(absl::string_view path, std::string* result);
@@ -263,15 +268,12 @@ public:
   // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the
   // values are serialized ProtobufWkt::Struct Value
   virtual WasmResult getMetadata(MetadataType type, absl::string_view key, std::string* result);
-  virtual WasmResult setMetadata(MetadataType type, absl::string_view key,
-                                 absl::string_view serialized_proto_struct);
   virtual WasmResult getMetadataPairs(MetadataType type, PairsWithStringValues* result);
   // Name is ignored when the type is not MetadataType::Request/Response: the values are serialized
   // ProtobufWkt::Struct
   virtual WasmResult getMetadataStruct(MetadataType type, absl::string_view name,
                                        std::string* result);
-  virtual WasmResult setMetadataStruct(MetadataType type, absl::string_view key,
-                                       absl::string_view serialized_proto_struct);
+  virtual WasmResult setState(absl::string_view key, absl::string_view serialized_value);
 
   // Continue
   virtual void continueRequest() {
@@ -442,7 +444,8 @@ class Wasm : public Envoy::Server::Wasm,
 public:
   Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_configuration,
        Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-       Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
+       Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
+       const LocalInfo::LocalInfo& local_info,
        const envoy::api::v2::core::Metadata* listener_metadata,
        Stats::ScopeSharedPtr owned_scope = nullptr);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
@@ -465,7 +468,7 @@ public:
   }
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
   Stats::Scope& scope() const { return scope_; }
-  PluginDirection direction() { return direction_; }
+  envoy::api::v2::core::TrafficDirection direction() { return direction_; }
   const LocalInfo::LocalInfo& localInfo() { return local_info_; }
   const envoy::api::v2::core::Metadata* listenerMetadata() { return listener_metadata_; }
 
@@ -558,7 +561,7 @@ private:
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
   Stats::Scope& scope_; // Either an inherited scope or owned_scope_ below.
-  const PluginDirection direction_;
+  const envoy::api::v2::core::TrafficDirection direction_;
   const LocalInfo::LocalInfo& local_info_;
   const envoy::api::v2::core::Metadata* listener_metadata_{};
   std::string id_;
@@ -651,14 +654,13 @@ inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_-
 
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
-std::shared_ptr<Wasm> createWasm(absl::string_view vm_id,
-                                 const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 absl::string_view root_id,
-                                 Upstream::ClusterManager& cluster_manager,
-                                 Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
-                                 PluginDirection direction, const LocalInfo::LocalInfo& local_info,
-                                 const envoy::api::v2::core::Metadata* listener_metadata,
-                                 Stats::ScopeSharedPtr owned_scope);
+std::shared_ptr<Wasm>
+createWasm(absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+           absl::string_view root_id, Upstream::ClusterManager& cluster_manager,
+           Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
+           envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
+           const envoy::api::v2::core::Metadata* listener_metadata,
+           Stats::ScopeSharedPtr owned_scope);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view root_id,
@@ -669,9 +671,9 @@ std::shared_ptr<Wasm> createWasmForTesting(
     absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
     absl::string_view root_id, // e.g. filter instance id
     Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Api::Api& api,
-    Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
-    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
-    std::unique_ptr<Context> root_context_for_testing);
+    Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
+    const LocalInfo::LocalInfo& local_info, const envoy::api::v2::core::Metadata* listener_metadata,
+    Stats::ScopeSharedPtr scope_ptr, std::unique_ptr<Context> root_context_for_testing);
 
 // Get an existing ThreadLocal VM matching 'vm_id'.
 std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_view root_id,
@@ -839,21 +841,6 @@ inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t sta
 
 template <typename T> inline bool Wasm::setDatatype(uint64_t ptr, const T& t) {
   return wasm_vm_->setMemory(ptr, sizeof(T), &t);
-}
-
-inline PluginDirection
-pluginDirectionFromTrafficDirection(envoy::api::v2::core::TrafficDirection direction) {
-  switch (direction) {
-  case envoy::api::v2::core::TrafficDirection::UNSPECIFIED:
-    return PluginDirection::Unspecified;
-  case envoy::api::v2::core::TrafficDirection::INBOUND:
-    return PluginDirection::Inbound;
-  case envoy::api::v2::core::TrafficDirection::OUTBOUND:
-    return PluginDirection::Outbound;
-  default:
-    ASSERT(!"Bad envoy::api::v2::core::TrafficDirection");
-    NOT_REACHED_GCOVR_EXCL_LINE;
-  }
 }
 
 } // namespace Wasm

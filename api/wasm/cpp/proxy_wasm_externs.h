@@ -63,14 +63,12 @@ extern "C" WasmResult proxy_getCurrentTimeNanoseconds(uint64_t* nanoseconds);
 // Metadata
 extern "C" WasmResult proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
                                       const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" WasmResult proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
-                                      const char* value_ptr, size_t value_size);
 extern "C" WasmResult proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
                                            size_t* value_size);
 extern "C" WasmResult proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
                                             const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" WasmResult proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
-                                            const char* value_ptr, size_t value_size);
+extern "C" WasmResult proxy_setState(const char* key_ptr, size_t key_size,
+                                     const char* value_ptr, size_t value_size);
 
 // Generic selector
 extern "C" WasmResult proxy_getSelectorExpression(const char* path_ptr, size_t path_size,

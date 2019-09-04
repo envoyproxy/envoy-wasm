@@ -40,10 +40,10 @@ inline WasmResult proxy_getMetadata(MetadataType type, const char* key_ptr, size
   return wordToWasmResult(getMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size),
                                              WR(value_ptr_ptr), WR(value_size_ptr)));
 }
-inline WasmResult proxy_setMetadata(MetadataType type, const char* key_ptr, size_t key_size,
-                                    const char* value_ptr, size_t value_size) {
-  return wordToWasmResult(setMetadataHandler(current_context_, WS(type), WR(key_ptr), WS(key_size),
-                                             WR(value_ptr), WS(value_size)));
+inline WasmResult proxy_setState(const char* key_ptr, size_t key_size, const char* value_ptr,
+                                 size_t value_size) {
+  return wordToWasmResult(
+      setStateHandler(current_context_, WR(key_ptr), WS(key_size), WR(value_ptr), WS(value_size)));
 }
 inline WasmResult proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
                                          size_t* value_size) {
@@ -55,11 +55,6 @@ inline WasmResult proxy_getMetadataStruct(MetadataType type, const char* name_pt
   return wordToWasmResult(getMetadataStructHandler(current_context_, WS(type), WR(name_ptr),
                                                    WS(name_size), WR(value_ptr_ptr),
                                                    WR(value_size_ptr)));
-}
-inline WasmResult proxy_setMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
-                                          const char* value_ptr, size_t value_size) {
-  return wordToWasmResult(setMetadataStructHandler(current_context_, WS(type), WR(name_ptr),
-                                                   WS(name_size), WR(value_ptr), WS(value_size)));
 }
 
 // Generic selector

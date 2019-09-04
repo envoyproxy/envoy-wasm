@@ -83,8 +83,8 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
         proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, Envoy::Extensions::Common::Wasm::PluginDirection::Inbound,
-        local_info_, &listener_metadata_, nullptr,
+        dispatcher_, *api, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
+        &listener_metadata_, nullptr,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
@@ -98,8 +98,8 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
         proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, Envoy::Extensions::Common::Wasm::PluginDirection::Inbound,
-        local_info_, &listener_metadata_, nullptr,
+        dispatcher_, *api, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
+        &listener_metadata_, nullptr,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
@@ -381,7 +381,7 @@ TEST_F(WasmHttpFilterTest, NullVmResolver) {
           HttpFilters::HttpFilterNames::get().Wasm,
           MessageUtil::keyValueStruct("wasm_request_get_key", "wasm_request_get_value")));
   EXPECT_CALL(request_stream_info_, responseCode()).WillRepeatedly(Return(403));
-  EXPECT_CALL(decoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
+  EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
   EXPECT_CALL(*filter_,
@@ -396,6 +396,8 @@ TEST_F(WasmHttpFilterTest, NullVmResolver) {
                                    Eq(absl::string_view("metadata: wasm_request_get_value"))));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::warn, Eq(absl::string_view("response.code: 403"))));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::warn, Eq(absl::string_view("state: wasm_value"))));
 
   Http::TestHeaderMapImpl request_headers{{":path", "/test_context"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
