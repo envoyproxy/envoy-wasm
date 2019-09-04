@@ -1,5 +1,5 @@
 ifdef DOCKER_SDK
-  CPP_API:=sdk
+  CPP_API:=${DOCKER_SDK}
 else
   CPP_API:=$(shell git rev-parse --show-toplevel)/api/wasm/cpp
 endif

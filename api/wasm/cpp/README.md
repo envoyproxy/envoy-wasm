@@ -6,20 +6,22 @@ The SDK has dependencies on specific versions of emscription and the protobuf li
 
 A Dockerfile for the C++ SDK is provided in Dockerfile-sdk.
 
-It can build built with (in this directory):
+It can built in this directory by:
 
 docker build -t wasmsdk:v1 -f Dockerfile-sdk .
 
 The docker image can be used for compiling wasm files.
 
+### Creating a project for use with the Docker build image
+
 Create a directory parallel to envoy with your source files and a Makefile:
 
 ```
-DOCKER_SDK=1
+DOCKER_SDK=/sdk
 
 all: myproject.wasm
 
-include sdk/Makefile.base_lite
+include ${DOCKER_SDK}/Makefile.base_lite
 ```
 
 Source file (myproject.cc):
@@ -50,11 +52,15 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
 void ExampleContext::onDone() { logInfo("onDone " + std::to_string(id())); }
 ```
 
-Run docker
+### Compiling with the Docker build image
+
+Run docker:
 
 ```bash
-docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasmsdk:v1 bash /build_wasm.sh
+docker run -v $PWD:/work -w /work  wasmsdk:v1 bash /build_wasm.sh
 ```
+
+### Caching the standard libraries
 
 The first time that emscripten runs it will generate the standard libraries.  To cache these in the docker image,
 after the first successful compilation (e.g myproject.cc above), commit the image with the standard libraries:
@@ -64,6 +70,39 @@ docker commit `docker ps -l | grep wasmsdk:v1 | awk '{print $1}'` wasmsdk:v1
 ```
 
 This will save time on subsequent compiles.
+
+### Using the SDK from a newer/specific version of Envoy
+
+To use a newer/specific version of the SDK (e.g. from the version of Enovy you are going to deploy the WebAssembly module to) bind that volume and use it in the Makefile.
+
+Makefile referencing the SDK in the /work directory:
+
+```
+DOCKER_SDK=/work/sdk
+
+all: myproject.wasm
+
+include ${DOCKER_SDK}/Makefile.base_lite
+```
+
+Run docker pointing to Envoy sources in a directory parallel (at the same level) as your project directory:
+
+```bash
+docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasmsdk:v1 bash /build_wasm.sh
+```
+
+## Ownership of the resulting .wasm files
+
+The compiled files may be owned by root.  To chown them add a line in the Makefile where ID is the desired user id (e.g. the result of "id -u"):
+
+```
+DOCKER_SDK=/work/sdk
+
+all: myproject.wasm
+  chown ID.ID $^
+
+include ${DOCKER_SDK}/Makefile.base_lite
+```
 
 ## Dependencies for building WASM modules:
 
