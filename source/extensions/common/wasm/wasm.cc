@@ -1166,7 +1166,7 @@ WasmResult Context::getSelectorExpression(absl::string_view path, std::string* r
         } else {
           return WasmResult::NotFound;
         }
-      } else if (part == "protocol") {
+      } else if (part == "request_protocol") {
         // TODO(kyessenov) move this upstream to CEL context
         if (info->protocol().has_value()) {
           value =
@@ -2083,6 +2083,7 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(getMetadataPairs);
   _REGISTER_PROXY(getMetadataStruct);
   _REGISTER_PROXY(setState);
+  _REGISTER_PROXY(getSelectorExpression);
 
   _REGISTER_PROXY(continueRequest);
   _REGISTER_PROXY(continueResponse);

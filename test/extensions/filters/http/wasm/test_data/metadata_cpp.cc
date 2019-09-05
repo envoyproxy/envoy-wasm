@@ -34,7 +34,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
   if (r != WasmResult::Ok) {
     logDebug(toString(r));
   }
-  r = setMetadataStringValue("wasm_request_set_key", "wasm_request_set_value");
+  r = setStateStringValue("wasm_request_set_key", "wasm_request_set_value");
   if (r != WasmResult::Ok) {
     logDebug(toString(r));
   }

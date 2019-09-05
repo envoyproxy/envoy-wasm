@@ -492,6 +492,15 @@ inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringV
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
+inline WasmResult getRequestProtocol(std::string *result) {
+  auto value = getSelectorExpression({"request_protocol"});
+  if (value.has_value()) {
+    result->assign(value.value()->data(), value.value()->size());
+    return WasmResult::Ok;
+  }
+  return WasmResult::NotFound;
+}
+
 // Metadata
 inline WasmResult getMetadata(MetadataType type, StringView key, WasmDataPtr *wasm_data) {
   const char* value_ptr = nullptr;
