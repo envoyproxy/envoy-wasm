@@ -297,7 +297,6 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
   }
 }
 
-/*
 TEST_P(WasmHttpFilterTest, Metadata) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/metadata_cpp.wasm")));
@@ -327,16 +326,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
 
   wasm_->tickHandler(root_context_->id());
 
-  EXPECT_CALL(decoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
-  std::string serialized_value;
-  ProtobufWkt::Value value;
-  value.set_string_value("wasm_request_set_value");
-  EXPECT_TRUE(value.SerializeToString(&serialized_value));
-  EXPECT_CALL(request_stream_info_,
-              setDynamicMetadata(HttpFilters::HttpFilterNames::get().Wasm,
-                                 MapEq(std::map<std::string, std::string>{
-                                     {"wasm_request_set_key", serialized_value}})));
-
+  EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
@@ -344,8 +334,11 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   filter_->onDestroy();
   StreamInfo::MockStreamInfo log_stream_info;
   filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
+
+  const auto& result = request_stream_info_.filterState().getDataReadOnly<Common::Wasm::WasmState>(
+      "wasm_request_set_key");
+  EXPECT_EQ("wasm_request_set_value", result.value().string_value());
 }
-*/
 
 #endif
 
