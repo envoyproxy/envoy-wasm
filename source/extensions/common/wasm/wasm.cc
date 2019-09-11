@@ -1927,10 +1927,12 @@ void Context::onStart(absl::string_view root_id, absl::string_view vm_configurat
 }
 
 void Context::onConfigure(absl::string_view configuration) {
-  if (!wasm_->onConfigure_)
+  if (!wasm_->onConfigure_) {
     return;
-  if (configuration.empty())
+  }
+  if (configuration.empty()) {
     return;
+  }
   auto address = wasm_->copyString(configuration);
   wasm_->onConfigure_(this, id_, address, configuration.size());
 }
@@ -1983,8 +1985,9 @@ Http::FilterTrailersStatus Context::onRequestTrailers() {
 }
 
 Http::FilterMetadataStatus Context::onRequestMetadata() {
-  if (!wasm_->onRequestMetadata_)
+  if (!wasm_->onRequestMetadata_) {
     return Http::FilterMetadataStatus::Continue;
+  }
   if (wasm_->onRequestMetadata_(this, id_) == 0) {
     return Http::FilterMetadataStatus::Continue;
   }
@@ -1992,8 +1995,9 @@ Http::FilterMetadataStatus Context::onRequestMetadata() {
 }
 
 Http::FilterHeadersStatus Context::onResponseHeaders() {
-  if (!wasm_->onResponseHeaders_)
+  if (!wasm_->onResponseHeaders_) {
     return Http::FilterHeadersStatus::Continue;
+  }
   if (wasm_->onResponseHeaders_(this, id_) == 0) {
     return Http::FilterHeadersStatus::Continue;
   }
