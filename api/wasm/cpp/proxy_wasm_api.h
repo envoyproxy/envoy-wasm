@@ -8,7 +8,13 @@
 #include <utility>
 #include <vector>
 
-#define CHECK_RESULT(_c) do { if ((_c) != WasmResult::Ok) { proxy_log(LogLevel::critical, #_c, sizeof( #_c )-1); abort(); }} while(0)
+#define CHECK_RESULT(_c)                                                                           \
+  do {                                                                                             \
+    if ((_c) != WasmResult::Ok) {                                                                  \
+      proxy_log(LogLevel::critical, #_c, sizeof(#_c) - 1);                                         \
+      abort();                                                                                     \
+    }                                                                                              \
+  } while (0)
 
 //
 // High Level C++ API.
@@ -49,8 +55,9 @@ inline void logAbort(StringView logMessag) {
   abort();
 }
 
-#define LOG(_level, ...)                                                        \
-    log##_level(std::string("[") + __FILE__ + ":" + std::to_string(__LINE__) + "]::" + __FUNCTION__ + "() " + __VA_ARGS__)
+#define LOG(_level, ...)                                                                           \
+  log##_level(std::string("[") + __FILE__ + ":" + std::to_string(__LINE__) +                       \
+              "]::" + __FUNCTION__ + "() " + __VA_ARGS__)
 #define LOG_TRACE(...) LOG(Trace, __VA_ARGS__)
 #define LOG_DEBUG(...) LOG(Debug, __VA_ARGS__)
 #define LOG_INFO(...) LOG(Info, __VA_ARGS__)
@@ -68,7 +75,7 @@ public:
   StringView view() { return {data_, size_}; }
   std::string toString() { return std::string(view()); }
   std::vector<std::pair<StringView, StringView>> pairs();
-  template<typename T> T proto() {
+  template <typename T> T proto() {
     T p;
     p.ParseFromArray(data_, size_);
     return p;
@@ -154,8 +161,10 @@ struct PairHash {
 };
 
 struct Tuple3Hash {
-  template <typename T, typename U, typename V> std::size_t operator()(const std::tuple<T, U, V>& x) const {
-    return std::hash<T>()(std::get<0>(x)) + std::hash<U>()(std::get<1>(x)) + std::hash<V>()(std::get<2>(x));
+  template <typename T, typename U, typename V>
+  std::size_t operator()(const std::tuple<T, U, V>& x) const {
+    return std::hash<T>()(std::get<0>(x)) + std::hash<U>()(std::get<1>(x)) +
+           std::hash<V>()(std::get<2>(x));
   }
 };
 
@@ -181,8 +190,7 @@ private:
   uint32_t token_;
 };
 
-template<typename Message>
-class GrpcCallHandler : public GrpcCallHandlerBase {
+template <typename Message> class GrpcCallHandler : public GrpcCallHandlerBase {
 public:
   GrpcCallHandler() : GrpcCallHandlerBase() {}
   virtual ~GrpcCallHandler() {}
@@ -202,7 +210,8 @@ public:
 
   RootContext* context() { return context_; }
 
-  // NB: with end_of_stream == true, callbacks can still occur: reset() to prevent further callbacks.
+  // NB: with end_of_stream == true, callbacks can still occur: reset() to prevent further
+  // callbacks.
   void send(StringView message, bool end_of_stream);
   void close(); // NB: callbacks can still occur: reset() to prevent further callbacks.
   void reset();
@@ -220,11 +229,11 @@ protected:
 
   bool local_close_{false};
   bool remote_close_{false};
-  RootContext*  context_{nullptr};
+  RootContext* context_{nullptr};
   uint32_t token_;
 };
 
-template<typename Request, typename Response>
+template <typename Request, typename Response>
 class GrpcStreamHandler : public GrpcStreamHandlerBase {
 public:
   GrpcStreamHandler() : GrpcStreamHandlerBase() {}
@@ -262,26 +271,34 @@ public:
   virtual Context* asContext() { return nullptr; }
 
   // Metadata
-  virtual bool isRootCachable(MetadataType type);  // Cache in the root.
-  virtual bool isProactivelyCachable(MetadataType type);  // Cache all keys on any read.
+  virtual bool isRootCachable(MetadataType type);        // Cache in the root.
+  virtual bool isProactivelyCachable(MetadataType type); // Cache all keys on any read.
   WasmResult nodeMetadataValue(StringView key, google::protobuf::Value* value_ptr);
   WasmResult nodeMetadataStruct(google::protobuf::Struct* struct_ptr);
-  WasmResult namedMetadataValue(MetadataType type, StringView name, StringView key,  google::protobuf::Value* value_ptr);
+  WasmResult namedMetadataValue(MetadataType type, StringView name, StringView key,
+                                google::protobuf::Value* value_ptr);
 
-  using HttpCallCallback = std::function<void(std::unique_ptr<WasmData> header_pairs,
-      std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs)>;
-  using GrpcSimpleCallCallback = std::function<void(GrpcStatus status, std::unique_ptr<WasmData> message)>;
+  using HttpCallCallback =
+      std::function<void(std::unique_ptr<WasmData> header_pairs, std::unique_ptr<WasmData> body,
+                         std::unique_ptr<WasmData> trailer_pairs)>;
+  using GrpcSimpleCallCallback =
+      std::function<void(GrpcStatus status, std::unique_ptr<WasmData> message)>;
 
 protected:
   WasmResult metadataValue(MetadataType type, StringView key, google::protobuf::Value* value_ptr);
-  WasmResult metadataStruct(MetadataType type, StringView name, google::protobuf::Struct* struct_ptr);
+  WasmResult metadataStruct(MetadataType type, StringView name,
+                            google::protobuf::Struct* struct_ptr);
   WasmResult metadataStruct(MetadataType type, google::protobuf::Struct* struct_ptr) {
     return metadataStruct(type, "", struct_ptr);
   }
 
-  std::unordered_map<std::pair<int32_t, std::string>, google::protobuf::Value, PairHash> value_cache_;
-  std::unordered_map<std::tuple<int32_t, std::string, std::string>, google::protobuf::Value, Tuple3Hash> name_value_cache_;
-  std::unordered_map<std::pair<int32_t, std::string>, google::protobuf::Struct, PairHash> struct_cache_;
+  std::unordered_map<std::pair<int32_t, std::string>, google::protobuf::Value, PairHash>
+      value_cache_;
+  std::unordered_map<std::tuple<int32_t, std::string, std::string>, google::protobuf::Value,
+                     Tuple3Hash>
+      name_value_cache_;
+  std::unordered_map<std::pair<int32_t, std::string>, google::protobuf::Struct, PairHash>
+      struct_cache_;
 
 private:
   uint32_t id_;
@@ -317,20 +334,24 @@ public:
   virtual void onGrpcReceive(uint32_t token, std::unique_ptr<WasmData> message);
   virtual void onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message);
 
-  // Default high level HTTP/gRPC interface.  NB: overriding the low level interface will disable this interface.
-  // Returns false on setup error.
-  bool httpCall(StringView uri, const HeaderStringPairs& request_headers,
-      StringView request_body, const HeaderStringPairs& request_trailers,
-      uint32_t timeout_milliseconds, HttpCallCallback callback);
+  // Default high level HTTP/gRPC interface.  NB: overriding the low level interface will disable
+  // this interface. Returns false on setup error.
+  bool httpCall(StringView uri, const HeaderStringPairs& request_headers, StringView request_body,
+                const HeaderStringPairs& request_trailers, uint32_t timeout_milliseconds,
+                HttpCallCallback callback);
   // NB: the message is the response if status == OK and an error message otherwise.
   // Returns false on setup error.
   bool grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
-      const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds, GrpcSimpleCallCallback callback);
-  template<typename Response> void grpcSimpleCall(StringView service, StringView service_name,
-      StringView method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
+                      const google::protobuf::MessageLite& request, uint32_t timeout_milliseconds,
+                      GrpcSimpleCallCallback callback);
+  template <typename Response>
+  void grpcSimpleCall(
+      StringView service, StringView service_name, StringView method_name,
+      const google::protobuf::MessageLite& request, uint32_t timeout_milliseconds,
       std::function<void(Response&& response)> success_callback,
       std::function<void(GrpcStatus status, StringView error_message)> failure_callback) {
-    auto callback = [success_callback, failure_callback](GrpcStatus status, std::unique_ptr<WasmData> message) {
+    auto callback = [success_callback, failure_callback](GrpcStatus status,
+                                                         std::unique_ptr<WasmData> message) {
       if (status == GrpcStatus::Ok) {
         success_callback(message->proto<Response>());
       } else {
@@ -340,12 +361,12 @@ public:
     grpcSimpleCall(service, service_name, method_name, request, timeout_milliseconds, callback);
   }
   // Returns false on setup error.
-  bool grpcCallHandler(StringView service, StringView service_name,
-      StringView method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
-      std::unique_ptr<GrpcCallHandlerBase> handler);
+  bool grpcCallHandler(StringView service, StringView service_name, StringView method_name,
+                       const google::protobuf::MessageLite& request, uint32_t timeout_milliseconds,
+                       std::unique_ptr<GrpcCallHandlerBase> handler);
   // Returns false on setup error.
-  bool grpcStreamHandler(StringView service, StringView service_name,
-      StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler);
+  bool grpcStreamHandler(StringView service, StringView service_name, StringView method_name,
+                         std::unique_ptr<GrpcStreamHandlerBase> handler);
 
 private:
   friend class GrpcCallHandlerBase;
@@ -375,19 +396,22 @@ public:
   virtual void onCreate() {}
   virtual FilterHeadersStatus onRequestHeaders() { return FilterHeadersStatus::Continue; }
   virtual FilterMetadataStatus onRequestMetadata() { return FilterMetadataStatus::Continue; }
-  virtual FilterDataStatus onRequestBody(size_t /* body_buffer_length */, bool /* end_of_stream */) {
+  virtual FilterDataStatus onRequestBody(size_t /* body_buffer_length */,
+                                         bool /* end_of_stream */) {
     return FilterDataStatus::Continue;
   }
   virtual FilterTrailersStatus onRequestTrailers() { return FilterTrailersStatus::Continue; }
   virtual FilterHeadersStatus onResponseHeaders() { return FilterHeadersStatus::Continue; }
   virtual FilterMetadataStatus onResponseMetadata() { return FilterMetadataStatus::Continue; }
-  virtual FilterDataStatus onResponseBody(size_t /* body_buffer_length */, bool /* end_of_stream */) {
+  virtual FilterDataStatus onResponseBody(size_t /* body_buffer_length */,
+                                          bool /* end_of_stream */) {
     return FilterDataStatus::Continue;
   }
   virtual FilterTrailersStatus onResponseTrailers() { return FilterTrailersStatus::Continue; }
-  virtual void onDone() {}  // Called when the stream has completed.
+  virtual void onDone() {} // Called when the stream has completed.
   virtual void onLog() {}  // Called after onDone when logging is requested.
-  virtual void onDelete() {}  // Called to indicate that no more calls will come and this context is being deleted.
+  virtual void onDelete() {
+  } // Called to indicate that no more calls will come and this context is being deleted.
 
   // Metadata
   bool isImmutable(MetadataType type);
@@ -397,16 +421,24 @@ public:
   WasmResult logMetadataValue(StringView key, google::protobuf::Value* value_ptr);
   WasmResult requestMetadataValue(StringView key, google::protobuf::Value* value_ptr);
   WasmResult responseMetadataValue(StringView key, google::protobuf::Value* value_ptr);
-  WasmResult requestMetadataValue(StringView name, StringView key, google::protobuf::Value* value_ptr);
-  WasmResult responseMetadataValue(StringView name, StringView key, google::protobuf::Value* value_ptr);
+  WasmResult requestMetadataValue(StringView name, StringView key,
+                                  google::protobuf::Value* value_ptr);
+  WasmResult responseMetadataValue(StringView name, StringView key,
+                                   google::protobuf::Value* value_ptr);
   WasmResult requestRouteMetadataStruct(google::protobuf::Struct* struct_ptr);
   WasmResult responseRouteMetadataStruct(google::protobuf::Struct* struct_ptr);
   WasmResult logMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr);
   WasmResult requestMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr);
   WasmResult responseMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr);
-  WasmResult logMetadataStruct(google::protobuf::Struct* struct_ptr) { return logMetadataStruct("", struct_ptr); }
-  WasmResult requestMetadataStruct(google::protobuf::Struct* struct_ptr) { return requestMetadataStruct("", struct_ptr); }
-  WasmResult responseMetadataStruct(google::protobuf::Struct* struct_ptr) { return responseMetadataStruct("", struct_ptr); }
+  WasmResult logMetadataStruct(google::protobuf::Struct* struct_ptr) {
+    return logMetadataStruct("", struct_ptr);
+  }
+  WasmResult requestMetadataStruct(google::protobuf::Struct* struct_ptr) {
+    return requestMetadataStruct("", struct_ptr);
+  }
+  WasmResult responseMetadataStruct(google::protobuf::Struct* struct_ptr) {
+    return responseMetadataStruct("", struct_ptr);
+  }
   // Uncached Metadata calls.
   WasmResult getRequestMetadataValue(StringView key, google::protobuf::Value* value_ptr);
   WasmResult getResponseMetadataValue(StringView key, google::protobuf::Value* value_ptr);
@@ -424,81 +456,90 @@ using RootFactory = std::function<std::unique_ptr<RootContext>(uint32_t id, Stri
 using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootContext* root)>;
 
 // Create a factory from a class name.
-#define ROOT_FACTORY(_c) [](uint32_t id, StringView root_id) -> std::unique_ptr<RootContext> { \
-  return std::make_unique<_c>(id, root_id); \
-}
-#define CONTEXT_FACTORY(_c) [](uint32_t id, RootContext* root) -> std::unique_ptr<Context> { \
-  return std::make_unique<_c>(id, root); \
-}
+#define ROOT_FACTORY(_c)                                                                           \
+  [](uint32_t id, StringView root_id) -> std::unique_ptr<RootContext> {                            \
+    return std::make_unique<_c>(id, root_id);                                                      \
+  }
+#define CONTEXT_FACTORY(_c)                                                                        \
+  [](uint32_t id, RootContext* root) -> std::unique_ptr<Context> {                                 \
+    return std::make_unique<_c>(id, root);                                                         \
+  }
 
 // Register Context factory.
 // e.g. static RegisterContextFactory register_MyContext(CONTEXT_FACTORY(MyContext));
 struct RegisterContextFactory {
-  explicit RegisterContextFactory(ContextFactory context_factory, RootFactory root_factory = nullptr, StringView root_id = "");
+  explicit RegisterContextFactory(ContextFactory context_factory,
+                                  RootFactory root_factory = nullptr, StringView root_id = "");
 };
 
 inline bool ContextBase::isRootCachable(MetadataType type) {
   switch (type) {
-    case MetadataType::Node:
-      return true;
-    default:
-      return false;
+  case MetadataType::Node:
+    return true;
+  default:
+    return false;
   }
 }
 
 inline bool Context::isImmutable(MetadataType type) {
   switch (type) {
-    case MetadataType::Request:
-    case MetadataType::Response:
-      return false;
-    default:
-      return true;
+  case MetadataType::Request:
+  case MetadataType::Response:
+    return false;
+  default:
+    return true;
   }
 }
 
 // Override in subclasses to proactively cache certain types of metadata.
 inline bool ContextBase::isProactivelyCachable(MetadataType type) {
   switch (type) {
-    case MetadataType::Node:
-      return true;
-    default:
-      return false;
+  case MetadataType::Node:
+    return true;
+  default:
+    return false;
   }
 }
 
 // Expressions
 
-#define PROXY_EXPRESSION_GET_STRING(_expression, _string_ptr) do { \
-  const char* _value_ptr = nullptr; \
-  size_t _value_size = 0; \
-  auto _result = static_cast<WasmResult>(proxy_getMetadata(MetadataType::Expression, _expression, sizeof(_expression)-1, &_value_ptr, &_value_size)); \
-  if (_result != WasmResult::Ok) { \
-    _string_ptr->clear(); \
-    return _result; \
-  } \
-  _string_ptr->assign(_value_ptr, _value_size); \
-  return WasmResult::Ok; \
-} while(0)
+#define PROXY_EXPRESSION_GET_STRING(_expression, _string_ptr)                                      \
+  do {                                                                                             \
+    const char* _value_ptr = nullptr;                                                              \
+    size_t _value_size = 0;                                                                        \
+    auto _result = static_cast<WasmResult>(proxy_getMetadata(MetadataType::Expression,             \
+                                                             _expression, sizeof(_expression) - 1, \
+                                                             &_value_ptr, &_value_size));          \
+    if (_result != WasmResult::Ok) {                                                               \
+      _string_ptr->clear();                                                                        \
+      return _result;                                                                              \
+    }                                                                                              \
+    _string_ptr->assign(_value_ptr, _value_size);                                                  \
+    return WasmResult::Ok;                                                                         \
+  } while (0)
 
-#define PROXY_EXPRESSION_GET(_expression, _data_ptr) do { \
-  const char* _value_ptr = nullptr; \
-  size_t _value_size = 0; \
-  auto _result = static_cast<WasmResult>(proxy_getMetadata(MetadataType::Expression, _expression, sizeof(_expression)-1, &_value_ptr, &_value_size)); \
-  if (_result != WasmResult::Ok) { \
-    return _result; \
-  } \
-  if (_value_size != sizeof(*_data_ptr)) { \
-    return WasmResult::ResultMismatch; \
-  } \
-  memcpy(_data_ptr, _value_ptr, sizeof(*_data_ptr)); \
-  return WasmResult::Ok; \
-} while(0)
+#define PROXY_EXPRESSION_GET(_expression, _data_ptr)                                               \
+  do {                                                                                             \
+    const char* _value_ptr = nullptr;                                                              \
+    size_t _value_size = 0;                                                                        \
+    auto _result = static_cast<WasmResult>(proxy_getMetadata(MetadataType::Expression,             \
+                                                             _expression, sizeof(_expression) - 1, \
+                                                             &_value_ptr, &_value_size));          \
+    if (_result != WasmResult::Ok) {                                                               \
+      return _result;                                                                              \
+    }                                                                                              \
+    if (_value_size != sizeof(*_data_ptr)) {                                                       \
+      return WasmResult::ResultMismatch;                                                           \
+    }                                                                                              \
+    memcpy(_data_ptr, _value_ptr, sizeof(*_data_ptr));                                             \
+    return WasmResult::Ok;                                                                         \
+  } while (0)
 
-inline WasmResult getRequestProtocol(std::string *protocol_ptr) {
+inline WasmResult getRequestProtocol(std::string* protocol_ptr) {
   PROXY_EXPRESSION_GET_STRING("request.protocol", protocol_ptr);
 }
 
-inline WasmResult getResponseProtocol(std::string *protocol_ptr) {
+inline WasmResult getResponseProtocol(std::string* protocol_ptr) {
   PROXY_EXPRESSION_GET_STRING("response.protocol", protocol_ptr);
 }
 
@@ -518,30 +559,30 @@ inline WasmResult getResponseResponseCode(uint32_t* response_code) {
   PROXY_EXPRESSION_GET("response.response_code", response_code);
 }
 
-inline WasmResult getRequestTlsVersion(std::string *tls_version_ptr) {
+inline WasmResult getRequestTlsVersion(std::string* tls_version_ptr) {
   PROXY_EXPRESSION_GET_STRING("request.tls_version", tls_version_ptr);
 }
 
-inline WasmResult getResponseTlsVersion(std::string *tls_version_ptr) {
+inline WasmResult getResponseTlsVersion(std::string* tls_version_ptr) {
   PROXY_EXPRESSION_GET_STRING("response.tls_version", tls_version_ptr);
 }
 
-inline WasmResult getRequestPeerCertificatePresented(bool *peer_certificate_presented) {
+inline WasmResult getRequestPeerCertificatePresented(bool* peer_certificate_presented) {
   PROXY_EXPRESSION_GET("request.peer_certificate_presented", peer_certificate_presented);
 }
 
-inline WasmResult getResponsePeerCertificatePresented(bool *peer_certificate_presented) {
+inline WasmResult getResponsePeerCertificatePresented(bool* peer_certificate_presented) {
   PROXY_EXPRESSION_GET("response.peer_certificate_presented", peer_certificate_presented);
 }
 
-inline WasmResult getPluginDirection(PluginDirection *direction_ptr) {
+inline WasmResult getPluginDirection(PluginDirection* direction_ptr) {
   PROXY_EXPRESSION_GET("plugin.direction", reinterpret_cast<uint32_t*>(direction_ptr));
 }
 
 // Generic selector
 inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringView> parts) {
   size_t size = 0;
-  for (auto part: parts) {
+  for (auto part : parts) {
     size += part.size() + 1; // null terminated string value
   }
 
@@ -565,10 +606,11 @@ inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringV
 }
 
 // Metadata
-inline WasmResult getMetadata(MetadataType type, StringView key, WasmDataPtr *wasm_data) {
+inline WasmResult getMetadata(MetadataType type, StringView key, WasmDataPtr* wasm_data) {
   const char* value_ptr = nullptr;
   size_t value_size = 0;
-  auto result = static_cast<WasmResult>(proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size));
+  auto result = static_cast<WasmResult>(
+      proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size));
   if (result != WasmResult::Ok) {
     wasm_data->reset();
     return result;
@@ -577,10 +619,12 @@ inline WasmResult getMetadata(MetadataType type, StringView key, WasmDataPtr *wa
   return WasmResult::Ok;
 }
 
-inline WasmResult getMetadataValue(MetadataType type, StringView key, google::protobuf::Value* result_ptr) {
+inline WasmResult getMetadataValue(MetadataType type, StringView key,
+                                   google::protobuf::Value* result_ptr) {
   const char* value_ptr = nullptr;
   size_t value_size = 0;
-  WasmResult result = static_cast<WasmResult>(proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size));
+  WasmResult result = static_cast<WasmResult>(
+      proxy_getMetadata(type, key.data(), key.size(), &value_ptr, &value_size));
   if (result != WasmResult::Ok) {
     result_ptr->Clear();
     return result;
@@ -596,7 +640,8 @@ inline WasmResult getMetadataValue(MetadataType type, StringView key, google::pr
   return WasmResult::Ok;
 }
 
-inline WasmResult getMetadataStringValue(MetadataType type, StringView key, std::string* string_ptr) {
+inline WasmResult getMetadataStringValue(MetadataType type, StringView key,
+                                         std::string* string_ptr) {
   google::protobuf::Value value;
   auto result = getMetadataValue(type, key, &value);
   *string_ptr = value.string_value();
@@ -604,16 +649,18 @@ inline WasmResult getMetadataStringValue(MetadataType type, StringView key, std:
 }
 
 inline WasmResult setMetadata(MetadataType type, StringView key, StringView value) {
-  return static_cast<WasmResult>(proxy_setMetadata(type, key.data(), key.size(), value.data(), value.size()));
+  return static_cast<WasmResult>(
+      proxy_setMetadata(type, key.data(), key.size(), value.data(), value.size()));
 }
 
 inline WasmResult setMetadataValue(MetadataType type, StringView key,
-                                       const google::protobuf::Value& value) {
+                                   const google::protobuf::Value& value) {
   std::string output;
   if (!value.SerializeToString(&output)) {
     return WasmResult::SerializationFailure;
   }
-  return static_cast<WasmResult>(proxy_setMetadata(type, key.data(), key.size(), output.data(), output.size()));
+  return static_cast<WasmResult>(
+      proxy_setMetadata(type, key.data(), key.size(), output.data(), output.size()));
 }
 
 inline WasmResult setMetadataStringValue(MetadataType type, StringView key, StringView s) {
@@ -630,11 +677,12 @@ inline WasmResult getMetadataValuePairs(MetadataType type, WasmDataPtr* pairs_pt
     pairs_ptr->reset();
     return result;
   }
-  *pairs_ptr =  std::make_unique<WasmData>(value_ptr, value_size);
+  *pairs_ptr = std::make_unique<WasmData>(value_ptr, value_size);
   return WasmResult::Ok;
 }
 
-inline WasmResult getMetadataStruct(MetadataType type, StringView name, google::protobuf::Struct* struct_ptr) {
+inline WasmResult getMetadataStruct(MetadataType type, StringView name,
+                                    google::protobuf::Struct* struct_ptr) {
   const char* value_ptr = nullptr;
   size_t value_size = 0;
   auto result = proxy_getMetadataStruct(type, name.data(), name.size(), &value_ptr, &value_size);
@@ -651,15 +699,17 @@ inline WasmResult getMetadataStruct(MetadataType type, StringView name, google::
 }
 
 inline WasmResult setMetadataStruct(MetadataType type, StringView name,
-                                        const google::protobuf::Struct& s) {
+                                    const google::protobuf::Struct& s) {
   std::string output;
   if (!s.SerializeToString(&output)) {
     return WasmResult::SerializationFailure;
   }
-  return static_cast<WasmResult>(proxy_setMetadataStruct(type, name.data(), name.size(), output.data(), output.size()));
+  return static_cast<WasmResult>(
+      proxy_setMetadataStruct(type, name.data(), name.size(), output.data(), output.size()));
 }
 
-inline WasmResult ContextBase::metadataValue(MetadataType type, StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult ContextBase::metadataValue(MetadataType type, StringView key,
+                                             google::protobuf::Value* value_ptr) {
   if (isRootCachable(type)) {
     if (auto context = asContext()) {
       return context->root()->metadataValue(type, key, value_ptr);
@@ -677,7 +727,7 @@ inline WasmResult ContextBase::metadataValue(MetadataType type, StringView key, 
     if (result != WasmResult::Ok) {
       return result;
     }
-    for (auto &p : values->pairs()) {
+    for (auto& p : values->pairs()) {
       google::protobuf::Value value;
       if (value.ParseFromArray(p.second.data(), p.second.size())) {
         auto k = std::make_pair(static_cast<int32_t>(type), std::string(p.first));
@@ -701,11 +751,13 @@ inline WasmResult ContextBase::metadataValue(MetadataType type, StringView key, 
   }
 }
 
-inline WasmResult Context::requestRouteMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult Context::requestRouteMetadataValue(StringView key,
+                                                     google::protobuf::Value* value_ptr) {
   return metadataValue(MetadataType::RequestRoute, key, value_ptr);
 }
 
-inline WasmResult Context::responseRouteMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult Context::responseRouteMetadataValue(StringView key,
+                                                      google::protobuf::Value* value_ptr) {
   return metadataValue(MetadataType::ResponseRoute, key, value_ptr);
 }
 
@@ -713,25 +765,29 @@ inline WasmResult Context::logMetadataValue(StringView key, google::protobuf::Va
   return metadataValue(MetadataType::Log, key, value_ptr);
 }
 
-inline WasmResult Context::requestMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult Context::requestMetadataValue(StringView key,
+                                                google::protobuf::Value* value_ptr) {
   return metadataValue(MetadataType::Request, key, value_ptr);
 }
 
-inline WasmResult Context::responseMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult Context::responseMetadataValue(StringView key,
+                                                 google::protobuf::Value* value_ptr) {
   return metadataValue(MetadataType::Response, key, value_ptr);
 }
 
-inline WasmResult ContextBase::nodeMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult ContextBase::nodeMetadataValue(StringView key,
+                                                 google::protobuf::Value* value_ptr) {
   return metadataValue(MetadataType::Node, key, value_ptr);
 }
 
-inline WasmResult ContextBase::metadataStruct(MetadataType type, StringView name, google::protobuf::Struct* struct_ptr) {
+inline WasmResult ContextBase::metadataStruct(MetadataType type, StringView name,
+                                              google::protobuf::Struct* struct_ptr) {
   if (isRootCachable(type)) {
     if (auto context = asContext()) {
       return context->root()->metadataStruct(type, name, struct_ptr);
     }
   }
-  auto cache_key = std::make_pair(static_cast<int32_t>(type),  std::string(name));
+  auto cache_key = std::make_pair(static_cast<int32_t>(type), std::string(name));
   auto it = struct_cache_.find(cache_key);
   if (it != struct_cache_.end()) {
     *struct_ptr = it->second;
@@ -746,15 +802,16 @@ inline WasmResult ContextBase::metadataStruct(MetadataType type, StringView name
   return WasmResult::Ok;
 }
 
-inline WasmResult ContextBase::namedMetadataValue(
-    MetadataType type, StringView name, StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult ContextBase::namedMetadataValue(MetadataType type, StringView name,
+                                                  StringView key,
+                                                  google::protobuf::Value* value_ptr) {
   if (isRootCachable(type)) {
     if (auto context = asContext()) {
       return context->root()->namedMetadataValue(type, name, key, value_ptr);
     }
   }
   auto n = std::string(name);
-  auto cache_key = std::make_tuple(static_cast<int32_t>(type),  n, std::string(key));
+  auto cache_key = std::make_tuple(static_cast<int32_t>(type), n, std::string(key));
   auto it = name_value_cache_.find(cache_key);
   if (it != name_value_cache_.end()) {
     *value_ptr = it->second;
@@ -766,9 +823,9 @@ inline WasmResult ContextBase::namedMetadataValue(
     value_ptr->Clear();
     return result;
   }
-  for (auto &f : s.fields()) {
+  for (auto& f : s.fields()) {
     auto k = std::make_tuple(static_cast<int32_t>(type), n, f.first);
-    name_value_cache_[k] =  f.second;
+    name_value_cache_[k] = f.second;
   }
   struct_cache_[std::make_pair(static_cast<int32_t>(type), n)] = std::move(s);
   it = name_value_cache_.find(cache_key);
@@ -779,11 +836,13 @@ inline WasmResult ContextBase::namedMetadataValue(
   return WasmResult::NotFound;
 }
 
-inline WasmResult Context::requestMetadataValue(StringView name, StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult Context::requestMetadataValue(StringView name, StringView key,
+                                                google::protobuf::Value* value_ptr) {
   return namedMetadataValue(MetadataType::Request, name, key, value_ptr);
 }
 
-inline WasmResult Context::responseMetadataValue(StringView name, StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult Context::responseMetadataValue(StringView name, StringView key,
+                                                 google::protobuf::Value* value_ptr) {
   return namedMetadataValue(MetadataType::Response, name, key, value_ptr);
 }
 
@@ -799,47 +858,56 @@ inline WasmResult ContextBase::nodeMetadataStruct(google::protobuf::Struct* stru
   return metadataStruct(MetadataType::Node, struct_ptr);
 }
 
-inline WasmResult Context::logMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+inline WasmResult Context::logMetadataStruct(StringView name,
+                                             google::protobuf::Struct* struct_ptr) {
   return metadataStruct(MetadataType::Log, name, struct_ptr);
 }
 
-inline WasmResult Context::requestMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+inline WasmResult Context::requestMetadataStruct(StringView name,
+                                                 google::protobuf::Struct* struct_ptr) {
   return metadataStruct(MetadataType::Request, name, struct_ptr);
 }
 
-inline WasmResult Context::responseMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+inline WasmResult Context::responseMetadataStruct(StringView name,
+                                                  google::protobuf::Struct* struct_ptr) {
   return metadataStruct(MetadataType::Response, name, struct_ptr);
 }
 
-inline WasmResult Context::getRequestMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult Context::getRequestMetadataValue(StringView key,
+                                                   google::protobuf::Value* value_ptr) {
   return getMetadataValue(MetadataType::Request, key, value_ptr);
 }
 
-inline WasmResult Context::getResponseMetadataValue(StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult Context::getResponseMetadataValue(StringView key,
+                                                    google::protobuf::Value* value_ptr) {
   return getMetadataValue(MetadataType::Response, key, value_ptr);
 }
 
-inline WasmResult Context::getRequestMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+inline WasmResult Context::getRequestMetadataStruct(StringView name,
+                                                    google::protobuf::Struct* struct_ptr) {
   return getMetadataStruct(MetadataType::Request, name, struct_ptr);
 }
 
-inline WasmResult Context::getResponseMetadataStruct(StringView name, google::protobuf::Struct* struct_ptr) {
+inline WasmResult Context::getResponseMetadataStruct(StringView name,
+                                                     google::protobuf::Struct* struct_ptr) {
   return getMetadataStruct(MetadataType::Response, name, struct_ptr);
 }
 
 // Continue/Respond/Route
 inline WasmResult continueRequest() { return proxy_continueRequest(); }
 inline WasmResult continueResponse() { return proxy_continueResponse(); }
-inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_code_details, StringView body,
-    const HeaderStringPairs& additional_response_headers, GrpcStatus grpc_status = GrpcStatus::InvalidCode) {
+inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_code_details,
+                                    StringView body,
+                                    const HeaderStringPairs& additional_response_headers,
+                                    GrpcStatus grpc_status = GrpcStatus::InvalidCode) {
   const char* ptr = nullptr;
   size_t size = 0;
   exportPairs(additional_response_headers, &ptr, &size);
-  return proxy_sendLocalResponse(response_code, response_code_details.data(), response_code_details.size(),
-      body.data(), body.size(), ptr, size, static_cast<uint32_t>(grpc_status));
+  return proxy_sendLocalResponse(response_code, response_code_details.data(),
+                                 response_code_details.size(), body.data(), body.size(), ptr, size,
+                                 static_cast<uint32_t>(grpc_status));
 }
 inline void clearRouteCache() { proxy_clearRouteCache(); }
-
 
 // SharedData
 inline WasmResult getSharedData(StringView key, WasmDataPtr* value, uint32_t* cas = nullptr) {
@@ -875,7 +943,8 @@ inline WasmResult registerSharedQueue(StringView queue_name, uint32_t* token) {
 }
 
 inline WasmResult resolveSharedQueue(StringView vm_id, StringView queue_name, uint32_t* token) {
-  return proxy_resolveSharedQueue(vm_id.data(), vm_id.size(), queue_name.data(), queue_name.size(), token);
+  return proxy_resolveSharedQueue(vm_id.data(), vm_id.size(), queue_name.data(), queue_name.size(),
+                                  token);
 }
 
 inline WasmResult enqueueSharedQueue(uint32_t token, StringView data) {
@@ -902,12 +971,12 @@ inline WasmDataPtr getHeaderMapValue(HeaderMapType type, StringView key) {
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-inline void replaceHeaderMapValue(HeaderMapType type, StringView key, StringView value) {
-  proxy_replaceHeaderMapValue(type, key.data(), key.size(), value.data(), value.size());
+inline WasmResult replaceHeaderMapValue(HeaderMapType type, StringView key, StringView value) {
+  return proxy_replaceHeaderMapValue(type, key.data(), key.size(), value.data(), value.size());
 }
 
-inline void removeHeaderMapValue(HeaderMapType type, StringView key) {
-  proxy_removeHeaderMapValue(type, key.data(), key.size());
+inline WasmResult removeHeaderMapValue(HeaderMapType type, StringView key) {
+  return proxy_removeHeaderMapValue(type, key.data(), key.size());
 }
 
 inline WasmDataPtr getHeaderMapPairs(HeaderMapType type) {
@@ -917,99 +986,99 @@ inline WasmDataPtr getHeaderMapPairs(HeaderMapType type) {
   return std::make_unique<WasmData>(ptr, size);
 }
 
-inline void setHeaderMapPairs(HeaderMapType type, const HeaderStringPairs &pairs) {
+inline WasmResult setHeaderMapPairs(HeaderMapType type, const HeaderStringPairs& pairs) {
   const char* ptr = nullptr;
   size_t size = 0;
   exportPairs(pairs, &ptr, &size);
-  proxy_setHeaderMapPairs(type, ptr, size);
+  return proxy_setHeaderMapPairs(type, ptr, size);
 }
 
 inline WasmResult getHeaderMapSize(HeaderMapType type, size_t* size) {
   return proxy_getHeaderMapSize(type, size);
 }
 
-inline void addRequestHeader(StringView key, StringView value) {
-  addHeaderMapValue(HeaderMapType::RequestHeaders, key, value);
+inline WasmResult addRequestHeader(StringView key, StringView value) {
+  return addHeaderMapValue(HeaderMapType::RequestHeaders, key, value);
 }
 inline WasmDataPtr getRequestHeader(StringView key) {
   return getHeaderMapValue(HeaderMapType::RequestHeaders, key);
 }
-inline void replaceRequestHeader(StringView key, StringView value) {
-  replaceHeaderMapValue(HeaderMapType::RequestHeaders, key, value);
+inline WasmResult replaceRequestHeader(StringView key, StringView value) {
+  return replaceHeaderMapValue(HeaderMapType::RequestHeaders, key, value);
 }
-inline void removeRequestHeader(StringView key) {
-  removeHeaderMapValue(HeaderMapType::RequestHeaders, key);
+inline WasmResult removeRequestHeader(StringView key) {
+  return removeHeaderMapValue(HeaderMapType::RequestHeaders, key);
 }
 inline WasmDataPtr getRequestHeaderPairs() {
   return getHeaderMapPairs(HeaderMapType::RequestHeaders);
 }
-inline void setRequestHeaderPairs(const HeaderStringPairs &pairs) {
+inline WasmResult setRequestHeaderPairs(const HeaderStringPairs& pairs) {
   return setHeaderMapPairs(HeaderMapType::RequestHeaders, pairs);
 }
 inline WasmResult getRequestHeaderSize(size_t* size) {
   return getHeaderMapSize(HeaderMapType::RequestHeaders, size);
 }
 
-inline void addRequestTrailer(StringView key, StringView value) {
-  addHeaderMapValue(HeaderMapType::RequestTrailers, key, value);
+inline WasmResult addRequestTrailer(StringView key, StringView value) {
+  return addHeaderMapValue(HeaderMapType::RequestTrailers, key, value);
 }
 inline WasmDataPtr getRequestTrailer(StringView key) {
   return getHeaderMapValue(HeaderMapType::RequestTrailers, key);
 }
-inline void replaceRequestTrailer(StringView key, StringView value) {
-  replaceHeaderMapValue(HeaderMapType::RequestTrailers, key, value);
+inline WasmResult replaceRequestTrailer(StringView key, StringView value) {
+  return replaceHeaderMapValue(HeaderMapType::RequestTrailers, key, value);
 }
-inline void removeRequestTrailer(StringView key) {
-  removeHeaderMapValue(HeaderMapType::RequestTrailers, key);
+inline WasmResult removeRequestTrailer(StringView key) {
+  return removeHeaderMapValue(HeaderMapType::RequestTrailers, key);
 }
 inline WasmDataPtr getRequestTrailerPairs() {
   return getHeaderMapPairs(HeaderMapType::RequestTrailers);
 }
-inline void setRequestTrailerPairs(const HeaderStringPairs &pairs) {
+inline WasmResult setRequestTrailerPairs(const HeaderStringPairs& pairs) {
   return setHeaderMapPairs(HeaderMapType::RequestTrailers, pairs);
 }
 inline WasmResult getRequestTrailerSize(size_t* size) {
   return getHeaderMapSize(HeaderMapType::RequestTrailers, size);
 }
 
-inline void addResponseHeader(StringView key, StringView value) {
-  addHeaderMapValue(HeaderMapType::ResponseHeaders, key, value);
+inline WasmResult addResponseHeader(StringView key, StringView value) {
+  return addHeaderMapValue(HeaderMapType::ResponseHeaders, key, value);
 }
 inline WasmDataPtr getResponseHeader(StringView key) {
   return getHeaderMapValue(HeaderMapType::ResponseHeaders, key);
 }
-inline void replaceResponseHeader(StringView key, StringView value) {
-  replaceHeaderMapValue(HeaderMapType::ResponseHeaders, key, value);
+inline WasmResult replaceResponseHeader(StringView key, StringView value) {
+  return replaceHeaderMapValue(HeaderMapType::ResponseHeaders, key, value);
 }
-inline void removeResponseHeader(StringView key) {
-  removeHeaderMapValue(HeaderMapType::ResponseHeaders, key);
+inline WasmResult removeResponseHeader(StringView key) {
+  return removeHeaderMapValue(HeaderMapType::ResponseHeaders, key);
 }
 inline WasmDataPtr getResponseHeaderPairs() {
   return getHeaderMapPairs(HeaderMapType::ResponseHeaders);
 }
-inline void setResponseHeaderPairs(const HeaderStringPairs &pairs) {
+inline WasmResult setResponseHeaderPairs(const HeaderStringPairs& pairs) {
   return setHeaderMapPairs(HeaderMapType::ResponseHeaders, pairs);
 }
 inline WasmResult getResponseHeaderSize(size_t* size) {
   return getHeaderMapSize(HeaderMapType::ResponseHeaders, size);
 }
 
-inline void addResponseTrailer(StringView key, StringView value) {
-  addHeaderMapValue(HeaderMapType::ResponseTrailers, key, value);
+inline WasmResult addResponseTrailer(StringView key, StringView value) {
+  return addHeaderMapValue(HeaderMapType::ResponseTrailers, key, value);
 }
 inline WasmDataPtr getResponseTrailer(StringView key) {
   return getHeaderMapValue(HeaderMapType::ResponseTrailers, key);
 }
-inline void replaceResponseTrailer(StringView key, StringView value) {
-  replaceHeaderMapValue(HeaderMapType::ResponseTrailers, key, value);
+inline WasmResult replaceResponseTrailer(StringView key, StringView value) {
+  return replaceHeaderMapValue(HeaderMapType::ResponseTrailers, key, value);
 }
-inline void removeResponseTrailer(StringView key) {
-  removeHeaderMapValue(HeaderMapType::ResponseTrailers, key);
+inline WasmResult removeResponseTrailer(StringView key) {
+  return removeHeaderMapValue(HeaderMapType::ResponseTrailers, key);
 }
 inline WasmDataPtr getResponseTrailerPairs() {
   return getHeaderMapPairs(HeaderMapType::ResponseTrailers);
 }
-inline void setResponseTrailerPairs(const HeaderStringPairs &pairs) {
+inline WasmResult setResponseTrailerPairs(const HeaderStringPairs& pairs) {
   return setHeaderMapPairs(HeaderMapType::ResponseTrailers, pairs);
 }
 inline WasmResult getResponseTrailerSize(size_t* size) {
@@ -1097,7 +1166,9 @@ inline WasmResult recordMetric(uint32_t metric_id, uint64_t value) {
   return proxy_recordMetric(metric_id, value);
 }
 
-inline WasmResult getMetric(uint32_t metric_id, uint64_t* value) { return proxy_getMetric(metric_id, value); }
+inline WasmResult getMetric(uint32_t metric_id, uint64_t* value) {
+  return proxy_getMetric(metric_id, value);
+}
 
 // Higher level metrics interface.
 
@@ -1114,8 +1185,9 @@ struct MetricTag {
 struct MetricBase {
   MetricBase(MetricType t, const std::string& n) : type(t), name(n) {}
   MetricBase(MetricType t, const std::string& n, std::vector<MetricTag> ts)
-      : type(t), name(n), tags(ts.begin(), ts.end()){}
-  MetricBase(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string  fs, std::string vs)
+      : type(t), name(n), tags(ts.begin(), ts.end()) {}
+  MetricBase(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string fs,
+             std::string vs)
       : type(t), name(n), tags(ts.begin(), ts.end()), field_separator(fs), value_separator(vs) {}
 
   MetricType type;
@@ -1124,8 +1196,8 @@ struct MetricBase {
   std::vector<MetricTag> tags;
   std::unordered_map<std::string, uint32_t> metric_ids;
 
-  std::string field_separator = ".";  // used to separate two fields.
-  std::string value_separator = ".";  // used to separate a field from its value.
+  std::string field_separator = "."; // used to separate two fields.
+  std::string value_separator = "."; // used to separate a field from its value.
 
   std::string prefixWithFields(const std::vector<std::string>& fields);
   uint32_t resolveFullName(const std::string& n);
@@ -1137,7 +1209,9 @@ struct MetricBase {
 struct Metric : public MetricBase {
   Metric(MetricType t, const std::string& n) : MetricBase(t, n) {}
   Metric(MetricType t, const std::string& n, std::vector<MetricTag> ts) : MetricBase(t, n, ts) {}
-  Metric(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string field_separator, std::string value_separator) : MetricBase(t, n, ts, field_separator, value_separator) {}
+  Metric(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string field_separator,
+         std::string value_separator)
+      : MetricBase(t, n, ts, field_separator, value_separator) {}
 
   template <typename... Fields> void increment(int64_t offset, Fields... tags);
   template <typename... Fields> void record(uint64_t value, Fields... tags);
@@ -1149,10 +1223,10 @@ struct Metric : public MetricBase {
 inline std::string MetricBase::prefixWithFields(const std::vector<std::string>& fields) {
   size_t s = prefix.size();
   for (size_t i = 0; i < fields.size(); i++) {
-    s += tags[i].name.size() + 1;  // 1 more for "."
+    s += tags[i].name.size() + 1; // 1 more for "."
   }
   for (auto& f : fields) {
-    s += f.size() + 1;  // 1 more for "."
+    s += f.size() + 1; // 1 more for "."
   }
   std::string n;
   n.reserve(s);
@@ -1186,7 +1260,7 @@ inline void MetricBase::partiallyResolveWithFields(const std::vector<std::string
 #endif
   }
   prefix = prefixWithFields(fields);
-  tags.erase(tags.begin(), tags.begin()+(fields.size()));
+  tags.erase(tags.begin(), tags.begin() + (fields.size()));
 }
 
 template <typename T> inline std::string toString(T t) { return std::to_string(t); }
@@ -1199,13 +1273,9 @@ template <> inline std::string toString(std::string t) { return t; }
 
 template <> inline std::string toString(bool t) { return t ? "true" : "false"; }
 
-template <typename T> struct StringToStringView {
-  typedef T type;
-};
+template <typename T> struct StringToStringView { typedef T type; };
 
-template <> struct StringToStringView<std::string> {
-  typedef StringView type;
-};
+template <> struct StringToStringView<std::string> { typedef StringView type; };
 
 inline uint32_t MetricBase::resolveFullName(const std::string& n) {
   auto it = metric_ids.find(n);
@@ -1326,16 +1396,18 @@ struct SimpleHistogram {
 template <typename... Tags> struct Counter : public MetricBase {
   static Counter<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
 
-  Counter<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors) :
-    Counter<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
+  Counter<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors)
+      : Counter<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {
+  }
 
   SimpleCounter resolve(Tags... f) {
     std::vector<std::string> fields{toString(f)...};
     return SimpleCounter(resolveWithFields(fields));
   }
 
-  template<typename... AdditionalTags>
-  Counter<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
+  template <typename... AdditionalTags>
+  Counter<AdditionalTags...>* extendAndResolve(Tags... f,
+                                               MetricTagDescriptor<AdditionalTags>... fieldnames) {
     std::vector<std::string> fields{toString(f)...};
     auto new_counter = Counter<AdditionalTags...>::New(name, fieldnames...);
     new_counter->prefix = prefixWithFields(fields);
@@ -1373,16 +1445,17 @@ inline Counter<Tags...>* Counter<Tags...>::New(StringView name,
 template <typename... Tags> struct Gauge : public MetricBase {
   static Gauge<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
 
-  Gauge<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors) :
-    Gauge<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
+  Gauge<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors)
+      : Gauge<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleGauge resolve(Tags... f) {
     std::vector<std::string> fields{toString(f)...};
     return SimpleGauge(resolveWithFields(fields));
   }
 
-  template<typename... AdditionalTags>
-  Gauge<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
+  template <typename... AdditionalTags>
+  Gauge<AdditionalTags...>* extendAndResolve(Tags... f,
+                                             MetricTagDescriptor<AdditionalTags>... fieldnames) {
     std::vector<std::string> fields{toString(f)...};
     auto new_gauge = Gauge<AdditionalTags...>::New(name, fieldnames...);
     new_gauge->prefix = prefixWithFields(fields);
@@ -1418,16 +1491,18 @@ inline Gauge<Tags...>* Gauge<Tags...>::New(StringView name,
 template <typename... Tags> struct Histogram : public MetricBase {
   static Histogram<Tags...>* New(StringView name, MetricTagDescriptor<Tags>... fieldnames);
 
-  Histogram<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors) :
-    Histogram<Tags...>(std::string(name), std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
+  Histogram<Tags...>(StringView name, MetricTagDescriptor<Tags>... descriptors)
+      : Histogram<Tags...>(std::string(name),
+                           std::vector<MetricTag>({toMetricTag(descriptors)...})) {}
 
   SimpleHistogram resolve(Tags... f) {
     std::vector<std::string> fields{toString(f)...};
     return SimpleHistogram(resolveWithFields(fields));
   }
 
-  template<typename... AdditionalTags>
-  Histogram<AdditionalTags...>* extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
+  template <typename... AdditionalTags>
+  Histogram<AdditionalTags...>*
+  extendAndResolve(Tags... f, MetricTagDescriptor<AdditionalTags>... fieldnames) {
     std::vector<std::string> fields{toString(f)...};
     auto new_histogram = Histogram<AdditionalTags...>::New(name, fieldnames...);
     new_histogram->prefix = prefixWithFields(fields);
@@ -1453,34 +1528,34 @@ inline Histogram<Tags...>* Histogram<Tags...>::New(StringView name,
 }
 
 inline uint32_t grpcCall(StringView service, StringView service_name, StringView method_name,
-    const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds) {
+                         const google::protobuf::MessageLite& request,
+                         uint32_t timeout_milliseconds) {
   std::string serialized_request;
   request.SerializeToString(&serialized_request);
-  return proxy_grpcCall(service.data(), service.size(), service_name.data(), service_name.size(), method_name.data(), method_name.size(),
-      serialized_request.data(), serialized_request.size(), timeout_milliseconds);
-                         
+  return proxy_grpcCall(service.data(), service.size(), service_name.data(), service_name.size(),
+                        method_name.data(), method_name.size(), serialized_request.data(),
+                        serialized_request.size(), timeout_milliseconds);
 }
 
 inline uint32_t grpcStream(StringView service, StringView service_name, StringView method_name) {
-  return proxy_grpcStream(service.data(), service.size(), service_name.data(), service_name.size(), method_name.data(), method_name.size());
+  return proxy_grpcStream(service.data(), service.size(), service_name.data(), service_name.size(),
+                          method_name.data(), method_name.size());
 }
 
-inline WasmResult grpcCancel(uint32_t token) {
-  return proxy_grpcCancel(token);
-}
+inline WasmResult grpcCancel(uint32_t token) { return proxy_grpcCancel(token); }
 
-inline WasmResult grpcClose(uint32_t token) {
-  return proxy_grpcClose(token);
-}
+inline WasmResult grpcClose(uint32_t token) { return proxy_grpcClose(token); }
 
 inline WasmResult grpcSend(uint32_t token, StringView message, bool end_stream) {
   return proxy_grpcSend(token, message.data(), message.size(), end_stream ? 1 : 0);
 }
 
 inline bool RootContext::httpCall(StringView uri, const HeaderStringPairs& request_headers,
-    StringView request_body, const HeaderStringPairs& request_trailers,
-    uint32_t timeout_milliseconds, HttpCallCallback callback) {
-  auto token = makeHttpCall(uri, request_headers, request_body, request_trailers, timeout_milliseconds);
+                                  StringView request_body,
+                                  const HeaderStringPairs& request_trailers,
+                                  uint32_t timeout_milliseconds, HttpCallCallback callback) {
+  auto token =
+      makeHttpCall(uri, request_headers, request_body, request_trailers, timeout_milliseconds);
   if (token) {
     http_calls_[token] = std::move(callback);
     return true;
@@ -1489,7 +1564,8 @@ inline bool RootContext::httpCall(StringView uri, const HeaderStringPairs& reque
 }
 
 inline void RootContext::onHttpCallResponse(uint32_t token, std::unique_ptr<WasmData> header_pairs,
-    std::unique_ptr<WasmData> body, std::unique_ptr<WasmData> trailer_pairs) {
+                                            std::unique_ptr<WasmData> body,
+                                            std::unique_ptr<WasmData> trailer_pairs) {
   auto it = http_calls_.find(token);
   if (it != http_calls_.end()) {
     it->second(std::move(header_pairs), std::move(body), std::move(trailer_pairs));
@@ -1497,8 +1573,11 @@ inline void RootContext::onHttpCallResponse(uint32_t token, std::unique_ptr<Wasm
   }
 }
 
-inline bool RootContext::grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
-    const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds, Context::GrpcSimpleCallCallback callback) {
+inline bool RootContext::grpcSimpleCall(StringView service, StringView service_name,
+                                        StringView method_name,
+                                        const google::protobuf::MessageLite& request,
+                                        uint32_t timeout_milliseconds,
+                                        Context::GrpcSimpleCallCallback callback) {
   auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
   if (token) {
     asRoot()->simple_grpc_calls_[token] = std::move(callback);
@@ -1601,7 +1680,8 @@ inline void RootContext::onGrpcReceive(uint32_t token, std::unique_ptr<WasmData>
   }
 }
 
-inline void GrpcStreamHandlerBase::doRemoteClose(GrpcStatus status, std::unique_ptr<WasmData> error_message) {
+inline void GrpcStreamHandlerBase::doRemoteClose(GrpcStatus status,
+                                                 std::unique_ptr<WasmData> error_message) {
   auto context = context_;
   auto token = token_;
   this->onRemoteClose(status, std::move(error_message));
@@ -1615,7 +1695,8 @@ inline void GrpcStreamHandlerBase::doRemoteClose(GrpcStatus status, std::unique_
   }
 }
 
-inline void RootContext::onGrpcClose(uint32_t token, GrpcStatus status, std::unique_ptr<WasmData> message) {
+inline void RootContext::onGrpcClose(uint32_t token, GrpcStatus status,
+                                     std::unique_ptr<WasmData> message) {
   {
     auto it = simple_grpc_calls_.find(token);
     if (it != simple_grpc_calls_.end()) {
@@ -1642,8 +1723,10 @@ inline void RootContext::onGrpcClose(uint32_t token, GrpcStatus status, std::uni
 }
 
 inline bool RootContext::grpcCallHandler(StringView service, StringView service_name,
-    StringView method_name, const google::protobuf::MessageLite &request, uint32_t timeout_milliseconds,
-    std::unique_ptr<GrpcCallHandlerBase> handler) {
+                                         StringView method_name,
+                                         const google::protobuf::MessageLite& request,
+                                         uint32_t timeout_milliseconds,
+                                         std::unique_ptr<GrpcCallHandlerBase> handler) {
   auto token = grpcCall(service, service_name, method_name, request, timeout_milliseconds);
   if (token) {
     handler->token_ = token;
@@ -1655,7 +1738,8 @@ inline bool RootContext::grpcCallHandler(StringView service, StringView service_
 }
 
 inline bool RootContext::grpcStreamHandler(StringView service, StringView service_name,
-    StringView method_name, std::unique_ptr<GrpcStreamHandlerBase> handler) {
+                                           StringView method_name,
+                                           std::unique_ptr<GrpcStreamHandlerBase> handler) {
   auto token = grpcStream(service, service_name, method_name);
   if (token) {
     handler->token_ = token;
@@ -1666,9 +1750,7 @@ inline bool RootContext::grpcStreamHandler(StringView service, StringView servic
   return false;
 }
 
-inline WasmResult ContextBase::setEffectiveContext() {
-  return proxy_setEffectiveContext(id_);
-}
+inline WasmResult ContextBase::setEffectiveContext() { return proxy_setEffectiveContext(id_); }
 
 inline uint64_t getCurrentTimeNanoseconds() {
   uint64_t t;
