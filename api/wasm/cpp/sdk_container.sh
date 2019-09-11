@@ -35,6 +35,14 @@ cd emsdk
 source ./emsdk_env.sh
 cd
 
+# abseil (optional)
+git clone https://github.com/abseil/abseil-cpp
+cd abseil-cpp
+git checkout 14550beb3b7b97195e483fb74b5efb906395c31e -b Jul302019 # Jul 30 2019
+emconfigure cmake "."
+emmake make
+cd
+
 # WAVM (optional)
 apt-get install -y --no-install-recommends llvm-6.0-dev
 git clone https://github.com/WAVM/WAVM
