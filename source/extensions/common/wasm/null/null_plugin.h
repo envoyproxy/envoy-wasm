@@ -19,6 +19,7 @@ using FilterDataStatus = Http::FilterDataStatus;
 using GrpcStatus = Envoy::Grpc::Status::GrpcStatus;
 using MetricType = Envoy::Extensions::Common::Wasm::Context::MetricType;
 using MetadataType = Envoy::Extensions::Common::Wasm::MetadataType;
+using WasmResult = Envoy::Extensions::Common::Wasm::WasmResult;
 using StringView = absl::string_view;
 template <typename T> using Optional = absl::optional<T>;
 } // namespace Plugin

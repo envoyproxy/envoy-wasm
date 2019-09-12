@@ -33,7 +33,9 @@ FilterHeadersStatus PluginContext::onRequestHeaders() {
   logDebug(std::string("onRequestHeaders ") + std::to_string(id()));
   auto path = getRequestHeader(":path");
   logInfo(std::string("header path ") + std::string(path->view()));
-  addRequestHeader("newheader", "newheadervalue");
+  if (addRequestHeader("newheader", "newheadervalue") != WasmResult::Ok) {
+    logInfo("addRequestHeader failed");
+  }
   replaceRequestHeader("server", "envoy-wasm");
   return FilterHeadersStatus::Continue;
 }
