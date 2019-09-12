@@ -254,8 +254,9 @@ template <typename Pairs> void marshalPairs(const Pairs& result, char* buffer) {
 Pairs toPairs(absl::string_view buffer) {
   Pairs result;
   const char* b = buffer.data();
-  if (buffer.size() < sizeof(uint32_t))
+  if (buffer.size() < sizeof(uint32_t)) {
     return {};
+  }
   auto size = *reinterpret_cast<const uint32_t*>(b);
   b += sizeof(uint32_t);
   if (sizeof(uint32_t) + size * 2 * sizeof(uint32_t) > buffer.size()) {
@@ -765,8 +766,9 @@ Word httpCallHandler(void* raw_context, Word uri_ptr, Word uri_size, Word header
 
 Word defineMetricHandler(void* raw_context, Word metric_type, Word name_ptr, Word name_size,
                          Word metric_id_ptr) {
-  if (metric_type > static_cast<uint64_t>(Context::MetricType::Max))
+  if (metric_type > static_cast<uint64_t>(Context::MetricType::Max)) {
     return 0;
+  }
   auto context = WASM_CONTEXT(raw_context);
   auto name = context->wasmVm()->getMemory(name_ptr, name_size);
   if (!name) {
@@ -1349,14 +1351,16 @@ void Context::removeHeaderMapValue(HeaderMapType type, absl::string_view key) {
 void Context::replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
                                     absl::string_view value) {
   auto map = getMap(type);
-  if (!map)
+  if (!map) {
     return;
+  }
   const Http::LowerCaseString lower_key(std::move(std::string(key)));
   auto entry = map->get(lower_key);
-  if (entry != nullptr)
+  if (entry != nullptr) {
     entry->value(value.data(), value.size());
-  else
+  } else {
     map->addCopy(lower_key, std::string(value));
+  }
 }
 
 uint32_t Context::getHeaderMapSize(HeaderMapType type) {
@@ -1600,8 +1604,9 @@ std::string Context::getProtocol(StreamType type) {
 
 uint32_t Context::getDestinationPort(StreamType type) {
   auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
-  if (!streamInfo)
+  if (!streamInfo) {
     return 0;
+  }
   auto host = streamInfo->upstreamHost();
   if (!host) {
     return 0;
@@ -1619,8 +1624,9 @@ uint32_t Context::getDestinationPort(StreamType type) {
 
 uint32_t Context::getResponseCode(StreamType type) {
   auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
-  if (!streamInfo)
+  if (!streamInfo) {
     return 0;
+  }
   return streamInfo->responseCode().value_or(0);
 }
 
@@ -1927,10 +1933,12 @@ void Context::onStart(absl::string_view root_id, absl::string_view vm_configurat
 }
 
 void Context::onConfigure(absl::string_view configuration) {
-  if (!wasm_->onConfigure_)
+  if (!wasm_->onConfigure_) {
     return;
-  if (configuration.empty())
+  }
+  if (configuration.empty()) {
     return;
+  }
   auto address = wasm_->copyString(configuration);
   wasm_->onConfigure_(this, id_, address, configuration.size());
 }
@@ -1949,8 +1957,9 @@ Http::FilterHeadersStatus Context::onRequestHeaders() {
                          .mutable_filter_metadata())[HttpFilters::HttpFilterNames::get().Wasm];
   (*metadata.mutable_fields())[std::string("_stream_id_" + std::string(root_id()))]
       .set_number_value(id_);
-  if (!wasm_->onRequestHeaders_)
+  if (!wasm_->onRequestHeaders_) {
     return Http::FilterHeadersStatus::Continue;
+  }
   if (wasm_->onRequestHeaders_(this, id_) == 0) {
     return Http::FilterHeadersStatus::Continue;
   }
@@ -1958,8 +1967,9 @@ Http::FilterHeadersStatus Context::onRequestHeaders() {
 }
 
 Http::FilterDataStatus Context::onRequestBody(int body_buffer_length, bool end_of_stream) {
-  if (!wasm_->onRequestBody_)
+  if (!wasm_->onRequestBody_) {
     return Http::FilterDataStatus::Continue;
+  }
   switch (wasm_->onRequestBody_(this, id_, static_cast<uint32_t>(body_buffer_length),
                                 static_cast<uint32_t>(end_of_stream))) {
   case 0:
@@ -1974,8 +1984,9 @@ Http::FilterDataStatus Context::onRequestBody(int body_buffer_length, bool end_o
 }
 
 Http::FilterTrailersStatus Context::onRequestTrailers() {
-  if (!wasm_->onRequestTrailers_)
+  if (!wasm_->onRequestTrailers_) {
     return Http::FilterTrailersStatus::Continue;
+  }
   if (wasm_->onRequestTrailers_(this, id_) == 0) {
     return Http::FilterTrailersStatus::Continue;
   }
@@ -1983,8 +1994,9 @@ Http::FilterTrailersStatus Context::onRequestTrailers() {
 }
 
 Http::FilterMetadataStatus Context::onRequestMetadata() {
-  if (!wasm_->onRequestMetadata_)
+  if (!wasm_->onRequestMetadata_) {
     return Http::FilterMetadataStatus::Continue;
+  }
   if (wasm_->onRequestMetadata_(this, id_) == 0) {
     return Http::FilterMetadataStatus::Continue;
   }
@@ -1992,8 +2004,9 @@ Http::FilterMetadataStatus Context::onRequestMetadata() {
 }
 
 Http::FilterHeadersStatus Context::onResponseHeaders() {
-  if (!wasm_->onResponseHeaders_)
+  if (!wasm_->onResponseHeaders_) {
     return Http::FilterHeadersStatus::Continue;
+  }
   if (wasm_->onResponseHeaders_(this, id_) == 0) {
     return Http::FilterHeadersStatus::Continue;
   }
@@ -2001,8 +2014,9 @@ Http::FilterHeadersStatus Context::onResponseHeaders() {
 }
 
 Http::FilterDataStatus Context::onResponseBody(int body_buffer_length, bool end_of_stream) {
-  if (!wasm_->onResponseBody_)
+  if (!wasm_->onResponseBody_) {
     return Http::FilterDataStatus::Continue;
+  }
   switch (wasm_->onResponseBody_(this, id_, static_cast<uint32_t>(body_buffer_length),
                                  static_cast<uint32_t>(end_of_stream))) {
   case 0:
@@ -2478,8 +2492,9 @@ void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick
   if (tick_period.count() > 0 && !was_running) {
     timer = dispatcher_.createTimer([weak = std::weak_ptr<Wasm>(shared_from_this()), context_id]() {
       auto shared = weak.lock();
-      if (shared)
+      if (shared) {
         shared->tickHandler(context_id);
+      }
     });
     timer->enableTimer(tick_period);
   }
