@@ -39,7 +39,7 @@ cd
 git clone https://github.com/abseil/abseil-cpp
 cd abseil-cpp
 git checkout 14550beb3b7b97195e483fb74b5efb906395c31e -b Jul302019 # Jul 30 2019
-emconfigure cmake "."
+emconfigure cmake -DCMAKE_CXX_STANDARD=17 "."
 emmake make
 cd
 
