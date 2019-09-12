@@ -45,7 +45,7 @@ FilterDataStatus PluginContext::onRequestBody(size_t body_buffer_length, bool /*
 }
 
 void PluginContext::onLog() {
-  setStateStringValue("wasm_state", "wasm_value");
+  setFilterStateStringValue("wasm_state", "wasm_value");
   auto path = getRequestHeader(":path");
   if (path->view() == "/test_context") {
     logWarn("request.path: " + getSelectorExpression({"request", "path"}).value()->toString());

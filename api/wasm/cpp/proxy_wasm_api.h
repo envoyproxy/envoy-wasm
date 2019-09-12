@@ -540,7 +540,7 @@ inline WasmResult getMetadataStringValue(MetadataType type, StringView key, std:
   return result;
 }
 
-inline WasmResult setStateValue(StringView key, const google::protobuf::Value& value) {
+inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Value& value) {
   std::string output;
   if (!value.SerializeToString(&output)) {
     return WasmResult::SerializationFailure;
@@ -548,10 +548,10 @@ inline WasmResult setStateValue(StringView key, const google::protobuf::Value& v
   return static_cast<WasmResult>(proxy_setState(key.data(), key.size(), output.data(), output.size()));
 }
 
-inline WasmResult setStateStringValue(StringView key, StringView s) {
+inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
   google::protobuf::Value value;
   value.set_string_value(s.data(), s.size());
-  return setStateValue(key, value);
+  return setFilterStateValue(key, value);
 }
 
 inline WasmResult getMetadataValuePairs(MetadataType type, WasmDataPtr* pairs_ptr) {
