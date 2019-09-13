@@ -1,4 +1,8 @@
+ifdef DOCKER_SDK
+CPP_API:=${DOCKER_SDK}
+else
 CPP_API:=$(shell git rev-parse --show-toplevel)/api/wasm/cpp
+endif
 
 ifdef NO_CONTEXT
   CPP_CONTEXT_LIB =
