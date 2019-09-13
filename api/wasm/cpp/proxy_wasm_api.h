@@ -527,13 +527,26 @@ inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringV
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-inline WasmResult getRequestProtocol(std::string *result) {
-  auto value = getSelectorExpression({"request_protocol"});
-  if (value.has_value()) {
-    result->assign(value.value()->data(), value.value()->size());
-    return WasmResult::Ok;
+inline bool getStringValue(std::initializer_list<StringView> parts, std::string* out) {
+  auto buf = getSelectorExpression(parts);
+  if (!buf.has_value()) {
+    return false;
   }
-  return WasmResult::NotFound;
+  out->assign(buf.value()->data(), buf.value()->size());
+  return true;
+}
+
+inline WasmResult getRequestProtocol(std::string *result) {
+  return getStringValue({"request_protocol"}, result) ? WasmResult::Ok : WasmResult::NotFound;
+}
+
+template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T* out) {
+  auto buf = getSelectorExpression(parts);
+  if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
+    return false;
+  }
+  *out = *reinterpret_cast<const T *>(buf.value()->data());
+  return true;
 }
 
 // Metadata
@@ -577,6 +590,11 @@ inline WasmResult getMetadataStringValue(MetadataType type, StringView key,
   auto result = getMetadataValue(type, key, &value);
   *string_ptr = value.string_value();
   return result;
+}
+
+// Requires that the value is a serialized google.protobuf.Value.
+inline WasmResult setFilterState(StringView key, StringView value) {
+  return static_cast<WasmResult>(proxy_setState(key.data(), key.size(), value.data(), value.size()));
 }
 
 inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Value& value) {
