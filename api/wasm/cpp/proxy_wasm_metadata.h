@@ -44,9 +44,3 @@ enum class HeaderMapType : int32_t {
   GrpcReceiveTrailingMetadata = 6,  // Immutable
   MAX = 6,
 };
-
-enum class PluginDirection : int32_t {
-  Unspecified = 0,
-  Inbound = 1,
-  Outbound = 2,
-};

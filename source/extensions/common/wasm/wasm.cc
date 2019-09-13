@@ -35,6 +35,7 @@
 #include "eval/eval/field_access.h"
 #include "eval/eval/field_backed_list_impl.h"
 #include "eval/eval/field_backed_map_impl.h"
+#include "eval/public/cel_value.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -403,19 +404,15 @@ Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_siz
   return wasmResultToWord(result);
 }
 
-Word setMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
-                        Word value_size) {
-  if (type > static_cast<int>(MetadataType::MAX)) {
-    return wasmResultToWord(WasmResult::BadArgument);
-  }
+Word setStateHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
+                     Word value_size) {
   auto context = WASM_CONTEXT(raw_context);
   auto key = context->wasmVm()->getMemory(key_ptr, key_size);
   auto value = context->wasmVm()->getMemory(value_ptr, value_size);
   if (!key || !value) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  return wasmResultToWord(
-      context->setMetadata(static_cast<MetadataType>(type.u64), key.value(), value.value()));
+  return wasmResultToWord(context->setState(key.value(), value.value()));
 }
 
 Word getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
@@ -451,21 +448,6 @@ Word getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word 
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
   return wasmResultToWord(WasmResult::Ok);
-}
-
-Word setMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
-                              Word value_ptr, Word value_size) {
-  if (type > static_cast<int>(MetadataType::MAX)) {
-    return Word(static_cast<uint64_t>(WasmResult::BadArgument));
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  auto name = context->wasmVm()->getMemory(name_ptr, name_size);
-  auto value = context->wasmVm()->getMemory(value_ptr, value_size);
-  if (!name || !value) {
-    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
-  }
-  return Word(static_cast<uint64_t>(context->setMetadataStruct(static_cast<MetadataType>(type.u64),
-                                                               name.value(), value.value())));
 }
 
 // Generic selector
@@ -1087,22 +1069,51 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     return WasmResult::Ok;
   }
   default:
-    // TODO: lists and maps
+    // TODO(kyesenov) lists and maps
     break;
   }
 
   return WasmResult::SerializationFailure;
 }
 
+// An expression wrapper for the WASM state
+class WasmStateWrapper : public google::api::expr::runtime::CelMap {
+public:
+  WasmStateWrapper(const StreamInfo::FilterState& filter_state, ProtobufWkt::Arena* arena)
+      : filter_state_(filter_state), arena_(arena) {}
+  absl::optional<google::api::expr::runtime::CelValue>
+  operator[](google::api::expr::runtime::CelValue key) const override {
+    if (!key.IsString()) {
+      return {};
+    }
+    auto value = key.StringOrDie().value();
+    try {
+      const WasmState& result = filter_state_.getDataReadOnly<WasmState>(value);
+      return google::api::expr::runtime::CelValue::CreateMessage(&result.value(), arena_);
+    } catch (const EnvoyException& e) {
+      return {};
+    }
+  }
+  int size() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  bool empty() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  const google::api::expr::runtime::CelList* ListKeys() const override {
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  }
+
+private:
+  const StreamInfo::FilterState& filter_state_;
+  ProtobufWkt::Arena* arena_;
+};
+
 WasmResult Context::getSelectorExpression(absl::string_view path, std::string* result) {
-  using Filters::Common::Expr::CelValue;
+  using google::api::expr::runtime::CelValue;
   using google::api::expr::runtime::FieldBackedListImpl;
   using google::api::expr::runtime::FieldBackedMapImpl;
 
   bool first = true;
   CelValue value;
   Protobuf::Arena arena;
-  const StreamInfo::StreamInfo& info = decoder_callbacks_->streamInfo();
+  const StreamInfo::StreamInfo* info = getRequestStreamInfo();
   const auto request_headers = request_headers_ ? request_headers_ : access_log_request_headers_;
   const auto response_headers =
       response_headers_ ? response_headers_ : access_log_response_headers_;
@@ -1127,24 +1138,47 @@ WasmResult Context::getSelectorExpression(absl::string_view path, std::string* r
     if (first) {
       first = false;
       if (part == "metadata") {
-        value = CelValue::CreateMessage(&info.dynamicMetadata(), &arena);
+        value = CelValue::CreateMessage(&info->dynamicMetadata(), &arena);
+      } else if (part == "filter_state") {
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState(), &arena));
       } else if (part == "request") {
         value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
-            &arena, request_headers, info));
+            &arena, request_headers, *info));
       } else if (part == "response") {
         value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::ResponseWrapper>(
-            &arena, response_headers, response_trailers, info));
+            &arena, response_headers, response_trailers, *info));
       } else if (part == "connection") {
         value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(&arena, info));
+            Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(&arena, *info));
       } else if (part == "node") {
         value = CelValue::CreateMessage(&wasm_->local_info_.node(), &arena);
       } else if (part == "source") {
         value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, info, false));
+            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, *info, false));
       } else if (part == "destination") {
         value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, info, true));
+            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, *info, true));
+      } else if (part == "tls_version") {
+        // TODO(kyessenov) move this upstream once SSL connection info is refactored to return
+        // references
+        if (info->downstreamSslConnection()) {
+          value = CelValue::CreateString(Protobuf::Arena::Create<std::string>(
+              &arena, info->downstreamSslConnection()->tlsVersion()));
+        } else {
+          return WasmResult::NotFound;
+        }
+      } else if (part == "request_protocol") {
+        // TODO(kyessenov) move this upstream to CEL context
+        if (info->protocol().has_value()) {
+          value =
+              CelValue::CreateString(&Http::Utility::getProtocolString(info->protocol().value()));
+        } else {
+          return WasmResult::NotFound;
+        }
+      } else if (part == "traffic_direction") {
+        // TODO(kyessenov) organize reflective accessors for the config better
+        value = CelValue::CreateInt64(wasm_->direction_);
       } else {
         return WasmResult::NotFound;
       }
@@ -1541,116 +1575,20 @@ void Context::httpRespond(const Pairs& response_headers, absl::string_view body,
 }
 
 // StreamInfo
-StreamInfo::StreamInfo* Context::getStreamInfo(MetadataType type) const {
-  switch (type) {
-  case MetadataType::Request:
-    if (decoder_callbacks_) {
-      return &decoder_callbacks_->streamInfo();
-    }
-    break;
-  case MetadataType::Response:
-    if (encoder_callbacks_) {
-      return &encoder_callbacks_->streamInfo();
-    }
-    break;
-    // Note: Log is always const.
-  default:
-    break;
+const StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
+  if (encoder_callbacks_) {
+    return &encoder_callbacks_->streamInfo();
+  } else if (decoder_callbacks_) {
+    return &decoder_callbacks_->streamInfo();
+  } else if (access_log_stream_info_) {
+    return access_log_stream_info_;
   }
   return nullptr;
-}
-
-const StreamInfo::StreamInfo* Context::getConstStreamInfo(MetadataType type) const {
-  switch (type) {
-  case MetadataType::Request:
-    if (decoder_callbacks_) {
-      return &decoder_callbacks_->streamInfo();
-    }
-    break;
-  case MetadataType::Response:
-    if (encoder_callbacks_) {
-      return &encoder_callbacks_->streamInfo();
-    }
-    break;
-  case MetadataType::Log:
-    if (access_log_stream_info_) {
-      return access_log_stream_info_;
-    }
-    break;
-  case MetadataType::Cluster:
-    if (decoder_callbacks_) {
-      return &decoder_callbacks_->streamInfo();
-    }
-    if (encoder_callbacks_) {
-      return &encoder_callbacks_->streamInfo();
-    }
-    if (access_log_stream_info_) {
-      return access_log_stream_info_;
-    }
-    break;
-  default:
-    break;
-  }
-  return nullptr;
-}
-
-std::string Context::getProtocol(StreamType type) {
-  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
-  if (!streamInfo || !streamInfo->protocol().has_value()) {
-    return "";
-  }
-  return Http::Utility::getProtocolString(streamInfo->protocol().value());
-}
-
-uint32_t Context::getDestinationPort(StreamType type) {
-  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
-  if (!streamInfo) {
-    return 0;
-  }
-  auto host = streamInfo->upstreamHost();
-  if (!host) {
-    return 0;
-  }
-  auto address = host->address();
-  if (!address) {
-    return 0;
-  }
-  auto ip = address->ip();
-  if (!ip) {
-    return 0;
-  }
-  return ip->port();
-}
-
-uint32_t Context::getResponseCode(StreamType type) {
-  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
-  if (!streamInfo) {
-    return 0;
-  }
-  return streamInfo->responseCode().value_or(0);
-}
-
-std::string Context::getTlsVersion(StreamType type) {
-  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
-  if (!streamInfo || !streamInfo->downstreamSslConnection()) {
-    return "";
-  }
-  return streamInfo->downstreamSslConnection()->tlsVersion();
-}
-
-absl::optional<bool> Context::peerCertificatePresented(StreamType type) {
-  auto streamInfo = getConstStreamInfo(StreamType2MetadataType(type));
-  if (!streamInfo || !streamInfo->downstreamSslConnection()) {
-    return absl::nullopt;
-  }
-  return streamInfo->downstreamSslConnection()->peerCertificatePresented();
 }
 
 const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
                                                            absl::string_view name) {
   switch (type) {
-  case MetadataType::Expression:
-    return nullptr;
   case MetadataType::RequestRoute:
     return getRouteMetadataStructProto(decoder_callbacks_);
   case MetadataType::ResponseRoute:
@@ -1680,7 +1618,7 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
     return nullptr;
   case MetadataType::Cluster: {
     std::string cluster_name;
-    auto stream_info = getConstStreamInfo(type);
+    auto stream_info = getRequestStreamInfo();
     if (!stream_info) {
       return nullptr;
     }
@@ -1697,7 +1635,7 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
     return getStructProtoFromMetadata(host->cluster().metadata(), name);
   }
   default: {
-    auto stream_info = getConstStreamInfo(type);
+    auto stream_info = getRequestStreamInfo();
     if (!stream_info) {
       return nullptr;
     }
@@ -1707,118 +1645,6 @@ const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
 }
 
 WasmResult Context::getMetadata(MetadataType type, absl::string_view key, std::string* result_ptr) {
-  if (type == MetadataType::Expression) {
-    static absl::flat_hash_map<std::string, std::function<WasmResult(Context*, std::string*)>>
-        handlers = {
-            {"request.protocol",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto protocol = context->getProtocol(StreamType::Request);
-               *result_ptr = protocol;
-               if (protocol.empty()) {
-                 return WasmResult::NotFound;
-               }
-               return WasmResult::Ok;
-             }},
-            {"response.protocol",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto protocol = context->getProtocol(StreamType::Response);
-               *result_ptr = protocol;
-               if (protocol.empty()) {
-                 return WasmResult::NotFound;
-               }
-               return WasmResult::Ok;
-             }},
-            {"request.destination_port",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto port = context->getDestinationPort(StreamType::Request);
-               result_ptr->assign(reinterpret_cast<const char*>(&port), sizeof(port));
-               if (!port) {
-                 return WasmResult::NotFound;
-               }
-               return WasmResult::Ok;
-             }},
-            {"response.destination_port",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto port = context->getDestinationPort(StreamType::Response);
-               result_ptr->assign(reinterpret_cast<const char*>(&port), sizeof(port));
-               if (!port) {
-                 return WasmResult::NotFound;
-               }
-               return WasmResult::Ok;
-             }},
-            {"request.response_code",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto response_code = context->getResponseCode(StreamType::Request);
-               result_ptr->assign(reinterpret_cast<const char*>(&response_code),
-                                  sizeof(response_code));
-               if (!response_code) {
-                 return WasmResult::NotFound;
-               }
-               return WasmResult::Ok;
-             }},
-            {"response.response_code",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto response_code = context->getResponseCode(StreamType::Response);
-               result_ptr->assign(reinterpret_cast<const char*>(&response_code),
-                                  sizeof(response_code));
-               if (!response_code) {
-                 return WasmResult::NotFound;
-               }
-               return WasmResult::Ok;
-             }},
-            {"request.tls_version",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto tls_version = context->getTlsVersion(StreamType::Request);
-               *result_ptr = tls_version;
-               if (tls_version.empty()) {
-                 return WasmResult::NotFound;
-               }
-               return WasmResult::Ok;
-             }},
-            {"response.tls_version",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto tls_version = context->getTlsVersion(StreamType::Response);
-               *result_ptr = tls_version;
-               if (tls_version.empty()) {
-                 return WasmResult::NotFound;
-               }
-               return WasmResult::Ok;
-             }},
-            {"request.peer_certificate_presented",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto peer_certificate_presented =
-                   context->peerCertificatePresented(StreamType::Request);
-               if (!peer_certificate_presented) {
-                 return WasmResult::NotFound;
-               }
-               bool present = peer_certificate_presented.value();
-               result_ptr->assign(reinterpret_cast<const char*>(&present), sizeof(present));
-               return WasmResult::Ok;
-             }},
-            {"response.peer_certificate_presented",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto peer_certificate_presented =
-                   context->peerCertificatePresented(StreamType::Response);
-               if (!peer_certificate_presented) {
-                 return WasmResult::NotFound;
-               }
-               bool present = peer_certificate_presented.value();
-               result_ptr->assign(reinterpret_cast<const char*>(&present), sizeof(present));
-               return WasmResult::Ok;
-             }},
-            {"plugin.direction",
-             [](Context* context, std::string* result_ptr) -> WasmResult {
-               auto direction = context->wasm_->direction_;
-               result_ptr->assign(reinterpret_cast<const char*>(&direction), sizeof(direction));
-               return WasmResult::Ok;
-             }},
-        };
-    auto it = handlers.find(key);
-    if (it == handlers.end()) {
-      return WasmResult::BadExpression;
-    }
-    return it->second(this, result_ptr);
-  }
   auto proto_struct = getMetadataStructProto(type);
   if (!proto_struct) {
     return WasmResult::NotFound;
@@ -1832,18 +1658,6 @@ WasmResult Context::getMetadata(MetadataType type, absl::string_view key, std::s
     return WasmResult::SerializationFailure;
   }
   *result_ptr = std::move(result);
-  return WasmResult::Ok;
-}
-
-WasmResult Context::setMetadata(MetadataType type, absl::string_view key,
-                                absl::string_view serialized_proto_struct) {
-  auto streamInfo = getStreamInfo(type);
-  if (!streamInfo) {
-    return WasmResult::NotFound;
-  }
-  streamInfo->setDynamicMetadata(
-      HttpFilters::HttpFilterNames::get().Wasm,
-      MessageUtil::keyValueStruct(std::string(key), std::string(serialized_proto_struct)));
   return WasmResult::Ok;
 }
 
@@ -1878,18 +1692,19 @@ WasmResult Context::getMetadataStruct(MetadataType type, absl::string_view name,
   return WasmResult::Ok;
 }
 
-WasmResult Context::setMetadataStruct(MetadataType type, absl::string_view name,
-                                      absl::string_view serialized_proto_struct) {
-  auto streamInfo = getStreamInfo(type);
-  if (!streamInfo) {
-    return WasmResult::NotFound;
-  }
-  ProtobufWkt::Struct proto_struct;
-  if (!proto_struct.ParseFromArray(serialized_proto_struct.data(),
-                                   serialized_proto_struct.size())) {
+WasmResult Context::setState(absl::string_view key, absl::string_view serialized_value) {
+  ProtobufWkt::Value value_struct;
+  if (!value_struct.ParseFromArray(serialized_value.data(), serialized_value.size())) {
     return WasmResult::ParseFailure;
   }
-  streamInfo->setDynamicMetadata(std::string(name), proto_struct);
+  if (decoder_callbacks_ == nullptr && encoder_callbacks_ == nullptr) {
+    return WasmResult::NotFound;
+  }
+  StreamInfo::FilterState& filter_state = encoder_callbacks_
+                                              ? encoder_callbacks_->streamInfo().filterState()
+                                              : decoder_callbacks_->streamInfo().filterState();
+  filter_state.setData(key, std::make_unique<WasmState>(value_struct),
+                       StreamInfo::FilterState::StateType::Mutable);
   return WasmResult::Ok;
 }
 
@@ -2196,7 +2011,8 @@ WasmResult Context::getMetric(uint32_t metric_id, uint64_t* result_uint64_ptr) {
 
 Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_configuration,
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-           Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
+           Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
+           const LocalInfo::LocalInfo& local_info,
            const envoy::api::v2::core::Metadata* listener_metadata,
            Stats::ScopeSharedPtr owned_scope)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
@@ -2276,11 +2092,10 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(log);
 
   _REGISTER_PROXY(getMetadata);
-  _REGISTER_PROXY(setMetadata);
   _REGISTER_PROXY(getMetadataPairs);
-
   _REGISTER_PROXY(getMetadataStruct);
-  _REGISTER_PROXY(setMetadataStruct);
+  _REGISTER_PROXY(setState);
+  _REGISTER_PROXY(getSelectorExpression);
 
   _REGISTER_PROXY(continueRequest);
   _REGISTER_PROXY(continueResponse);
@@ -2814,9 +2629,9 @@ static std::shared_ptr<Wasm> createWasmInternal(
     absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
     absl::string_view root_id, // e.g. filter instance id
     Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Api::Api& api,
-    Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
-    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
-    std::unique_ptr<Context> root_context_for_testing) {
+    Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
+    const LocalInfo::LocalInfo& local_info, const envoy::api::v2::core::Metadata* listener_metadata,
+    Stats::ScopeSharedPtr scope_ptr, std::unique_ptr<Context> root_context_for_testing) {
   auto wasm = std::make_shared<Wasm>(vm_config.vm(), vm_id, vm_config.configuration(),
                                      cluster_manager, dispatcher, scope, direction, local_info,
                                      listener_metadata, scope_ptr);
@@ -2842,7 +2657,8 @@ std::shared_ptr<Wasm> createWasm(absl::string_view vm_id,
                                  absl::string_view root_id, // e.g. filter instance id
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
-                                 PluginDirection direction, const LocalInfo::LocalInfo& local_info,
+                                 envoy::api::v2::core::TrafficDirection direction,
+                                 const LocalInfo::LocalInfo& local_info,
                                  const envoy::api::v2::core::Metadata* listener_metadata,
                                  Stats::ScopeSharedPtr scope_ptr) {
   return createWasmInternal(vm_id, vm_config, root_id, cluster_manager, dispatcher, api, scope,
@@ -2853,9 +2669,9 @@ std::shared_ptr<Wasm> createWasmForTesting(
     absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
     absl::string_view root_id, // e.g. filter instance id
     Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Api::Api& api,
-    Stats::Scope& scope, PluginDirection direction, const LocalInfo::LocalInfo& local_info,
-    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
-    std::unique_ptr<Context> root_context_for_testing) {
+    Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
+    const LocalInfo::LocalInfo& local_info, const envoy::api::v2::core::Metadata* listener_metadata,
+    Stats::ScopeSharedPtr scope_ptr, std::unique_ptr<Context> root_context_for_testing) {
   return createWasmInternal(vm_id, vm_config, root_id, cluster_manager, dispatcher, api, scope,
                             direction, local_info, listener_metadata, scope_ptr,
                             std::move(root_context_for_testing));

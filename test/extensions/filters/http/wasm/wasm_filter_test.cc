@@ -55,7 +55,6 @@ public:
     scriptLog_(level, message);
   }
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
-  MOCK_METHOD1(getProtocol, std::string(Envoy::Extensions::Common::Wasm::StreamType));
 };
 
 class TestRoot : public Envoy::Extensions::Common::Wasm::Context {
@@ -83,8 +82,8 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
         proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, Envoy::Extensions::Common::Wasm::PluginDirection::Inbound,
-        local_info_, &listener_metadata_, nullptr,
+        dispatcher_, *api, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
+        &listener_metadata_, nullptr,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
@@ -98,8 +97,8 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
         proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, Envoy::Extensions::Common::Wasm::PluginDirection::Inbound,
-        local_info_, &listener_metadata_, nullptr,
+        dispatcher_, *api, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
+        &listener_metadata_, nullptr,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
@@ -150,12 +149,14 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm")));
   setupFilter();
-  EXPECT_CALL(*filter_, getProtocol(Common::Wasm::StreamType::Request)).WillOnce(Return("h8"));
+  absl::optional<Http::Protocol> protocol = Http::Protocol::Http11;
+  EXPECT_CALL(request_stream_info_, protocol()).WillRepeatedly(Return(protocol));
+  EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info, Eq(absl::string_view("header path /"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info,
-                                   Eq(absl::string_view("request protocol response h8"))));
+                                   Eq(absl::string_view("request protocol response HTTP/1.1"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
@@ -169,12 +170,9 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm")));
   setupFilter();
-  EXPECT_CALL(*filter_, getProtocol(Common::Wasm::StreamType::Request)).WillOnce(Return("h8"));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info, Eq(absl::string_view("header path /"))));
-  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info,
-                                   Eq(absl::string_view("request protocol response h8"))));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
@@ -190,12 +188,9 @@ TEST_P(WasmHttpFilterTest, AccessLog) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm")));
   setupFilter();
-  EXPECT_CALL(*filter_, getProtocol(Common::Wasm::StreamType::Request)).WillOnce(Return("h8"));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info, Eq(absl::string_view("header path /"))));
-  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info,
-                                   Eq(absl::string_view("request protocol response h8"))));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn, Eq(absl::string_view("onLog 2 /"))));
@@ -331,16 +326,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
 
   wasm_->tickHandler(root_context_->id());
 
-  EXPECT_CALL(decoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
-  std::string serialized_value;
-  ProtobufWkt::Value value;
-  value.set_string_value("wasm_request_set_value");
-  EXPECT_TRUE(value.SerializeToString(&serialized_value));
-  EXPECT_CALL(request_stream_info_,
-              setDynamicMetadata(HttpFilters::HttpFilterNames::get().Wasm,
-                                 MapEq(std::map<std::string, std::string>{
-                                     {"wasm_request_set_key", serialized_value}})));
-
+  EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
@@ -348,6 +334,10 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   filter_->onDestroy();
   StreamInfo::MockStreamInfo log_stream_info;
   filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
+
+  const auto& result = request_stream_info_.filterState().getDataReadOnly<Common::Wasm::WasmState>(
+      "wasm_request_set_key");
+  EXPECT_EQ("wasm_request_set_value", result.value().string_value());
 }
 
 #endif
@@ -381,7 +371,7 @@ TEST_F(WasmHttpFilterTest, NullVmResolver) {
           HttpFilters::HttpFilterNames::get().Wasm,
           MessageUtil::keyValueStruct("wasm_request_get_key", "wasm_request_get_value")));
   EXPECT_CALL(request_stream_info_, responseCode()).WillRepeatedly(Return(403));
-  EXPECT_CALL(decoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
+  EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
   EXPECT_CALL(*filter_,
@@ -396,6 +386,8 @@ TEST_F(WasmHttpFilterTest, NullVmResolver) {
                                    Eq(absl::string_view("metadata: wasm_request_get_value"))));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::warn, Eq(absl::string_view("response.code: 403"))));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::warn, Eq(absl::string_view("state: wasm_value"))));
 
   Http::TestHeaderMapImpl request_headers{{":path", "/test_context"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));

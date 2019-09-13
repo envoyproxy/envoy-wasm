@@ -47,6 +47,7 @@ FilterDataStatus PluginContext::onRequestBody(size_t body_buffer_length, bool /*
 }
 
 void PluginContext::onLog() {
+  setFilterStateStringValue("wasm_state", "wasm_value");
   auto path = getRequestHeader(":path");
   if (path->view() == "/test_context") {
     logWarn("request.path: " + getSelectorExpression({"request", "path"}).value()->toString());
@@ -64,6 +65,7 @@ void PluginContext::onLog() {
       int64_t code = absl::bit_cast<int64_t>(buf);
       logWarn("response.code: " + absl::StrCat(code));
     }
+    logWarn("state: " + getSelectorExpression({"filter_state", "wasm_state"}).value()->toString());
   } else {
     logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
   }

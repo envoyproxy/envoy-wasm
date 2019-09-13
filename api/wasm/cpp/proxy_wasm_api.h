@@ -501,84 +501,6 @@ inline bool ContextBase::isProactivelyCachable(MetadataType type) {
   }
 }
 
-// Expressions
-
-#define PROXY_EXPRESSION_GET_STRING(_expression, _string_ptr)                                      \
-  do {                                                                                             \
-    const char* _value_ptr = nullptr;                                                              \
-    size_t _value_size = 0;                                                                        \
-    auto _result = static_cast<WasmResult>(proxy_getMetadata(MetadataType::Expression,             \
-                                                             _expression, sizeof(_expression) - 1, \
-                                                             &_value_ptr, &_value_size));          \
-    if (_result != WasmResult::Ok) {                                                               \
-      _string_ptr->clear();                                                                        \
-      return _result;                                                                              \
-    }                                                                                              \
-    _string_ptr->assign(_value_ptr, _value_size);                                                  \
-    return WasmResult::Ok;                                                                         \
-  } while (0)
-
-#define PROXY_EXPRESSION_GET(_expression, _data_ptr)                                               \
-  do {                                                                                             \
-    const char* _value_ptr = nullptr;                                                              \
-    size_t _value_size = 0;                                                                        \
-    auto _result = static_cast<WasmResult>(proxy_getMetadata(MetadataType::Expression,             \
-                                                             _expression, sizeof(_expression) - 1, \
-                                                             &_value_ptr, &_value_size));          \
-    if (_result != WasmResult::Ok) {                                                               \
-      return _result;                                                                              \
-    }                                                                                              \
-    if (_value_size != sizeof(*_data_ptr)) {                                                       \
-      return WasmResult::ResultMismatch;                                                           \
-    }                                                                                              \
-    memcpy(_data_ptr, _value_ptr, sizeof(*_data_ptr));                                             \
-    return WasmResult::Ok;                                                                         \
-  } while (0)
-
-inline WasmResult getRequestProtocol(std::string* protocol_ptr) {
-  PROXY_EXPRESSION_GET_STRING("request.protocol", protocol_ptr);
-}
-
-inline WasmResult getResponseProtocol(std::string* protocol_ptr) {
-  PROXY_EXPRESSION_GET_STRING("response.protocol", protocol_ptr);
-}
-
-inline WasmResult getRequestDestinationPort(uint32_t* port) {
-  PROXY_EXPRESSION_GET("request.destination_port", port);
-}
-
-inline WasmResult getResponseDestinationPort(uint32_t* port) {
-  PROXY_EXPRESSION_GET("response.destination_port", port);
-}
-
-inline WasmResult getRequestResponseCode(uint32_t* response_code) {
-  PROXY_EXPRESSION_GET("request.response_code", response_code);
-}
-
-inline WasmResult getResponseResponseCode(uint32_t* response_code) {
-  PROXY_EXPRESSION_GET("response.response_code", response_code);
-}
-
-inline WasmResult getRequestTlsVersion(std::string* tls_version_ptr) {
-  PROXY_EXPRESSION_GET_STRING("request.tls_version", tls_version_ptr);
-}
-
-inline WasmResult getResponseTlsVersion(std::string* tls_version_ptr) {
-  PROXY_EXPRESSION_GET_STRING("response.tls_version", tls_version_ptr);
-}
-
-inline WasmResult getRequestPeerCertificatePresented(bool* peer_certificate_presented) {
-  PROXY_EXPRESSION_GET("request.peer_certificate_presented", peer_certificate_presented);
-}
-
-inline WasmResult getResponsePeerCertificatePresented(bool* peer_certificate_presented) {
-  PROXY_EXPRESSION_GET("response.peer_certificate_presented", peer_certificate_presented);
-}
-
-inline WasmResult getPluginDirection(PluginDirection* direction_ptr) {
-  PROXY_EXPRESSION_GET("plugin.direction", reinterpret_cast<uint32_t*>(direction_ptr));
-}
-
 // Generic selector
 inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringView> parts) {
   size_t size = 0;
@@ -603,6 +525,15 @@ inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringV
     return {};
   }
   return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+inline WasmResult getRequestProtocol(std::string *result) {
+  auto value = getSelectorExpression({"request_protocol"});
+  if (value.has_value()) {
+    result->assign(value.value()->data(), value.value()->size());
+    return WasmResult::Ok;
+  }
+  return WasmResult::NotFound;
 }
 
 // Metadata
@@ -648,25 +579,18 @@ inline WasmResult getMetadataStringValue(MetadataType type, StringView key,
   return result;
 }
 
-inline WasmResult setMetadata(MetadataType type, StringView key, StringView value) {
-  return static_cast<WasmResult>(
-      proxy_setMetadata(type, key.data(), key.size(), value.data(), value.size()));
-}
-
-inline WasmResult setMetadataValue(MetadataType type, StringView key,
-                                   const google::protobuf::Value& value) {
+inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Value& value) {
   std::string output;
   if (!value.SerializeToString(&output)) {
     return WasmResult::SerializationFailure;
   }
-  return static_cast<WasmResult>(
-      proxy_setMetadata(type, key.data(), key.size(), output.data(), output.size()));
+  return static_cast<WasmResult>(proxy_setState(key.data(), key.size(), output.data(), output.size()));
 }
 
-inline WasmResult setMetadataStringValue(MetadataType type, StringView key, StringView s) {
+inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
   google::protobuf::Value value;
   value.set_string_value(s.data(), s.size());
-  return setMetadataValue(type, key, value);
+  return setFilterStateValue(key, value);
 }
 
 inline WasmResult getMetadataValuePairs(MetadataType type, WasmDataPtr* pairs_ptr) {
@@ -698,18 +622,7 @@ inline WasmResult getMetadataStruct(MetadataType type, StringView name,
   return WasmResult::Ok;
 }
 
-inline WasmResult setMetadataStruct(MetadataType type, StringView name,
-                                    const google::protobuf::Struct& s) {
-  std::string output;
-  if (!s.SerializeToString(&output)) {
-    return WasmResult::SerializationFailure;
-  }
-  return static_cast<WasmResult>(
-      proxy_setMetadataStruct(type, name.data(), name.size(), output.data(), output.size()));
-}
-
-inline WasmResult ContextBase::metadataValue(MetadataType type, StringView key,
-                                             google::protobuf::Value* value_ptr) {
+inline WasmResult ContextBase::metadataValue(MetadataType type, StringView key, google::protobuf::Value* value_ptr) {
   if (isRootCachable(type)) {
     if (auto context = asContext()) {
       return context->root()->metadataValue(type, key, value_ptr);

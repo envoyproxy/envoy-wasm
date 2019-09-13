@@ -20,6 +20,9 @@ public:
   // Null sandbox: modules must be compiled into envoy and registered name is given in the
   // DataSource.inline_string.
   const std::string Null = "envoy.wasm.vm.null";
+
+  // Filter state name
+  const std::string FilterState = "envoy.wasm";
 };
 
 typedef ConstSingleton<WasmVmValues> WasmVmNames;
