@@ -28,7 +28,7 @@ public:
     if (!root_context_id_) {
       root_context_id_ = wasm.getRootContext(root_id_)->id();
     }
-    return std::make_shared<Context>(&tls_slot_->getTyped<Wasm>(), root_context_id_);
+    return std::make_shared<Context>(&wasm, root_context_id_);
   }
 
 private:
