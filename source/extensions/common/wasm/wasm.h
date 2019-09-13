@@ -399,6 +399,7 @@ protected:
   Context* root_context_{nullptr}; // set in all contexts.
   const std::string root_id_;      // set only in roots.
   std::string log_prefix_;
+  bool in_vm_context_created_ = false;
   bool destroyed_ = false;
 
   uint32_t next_http_call_token_ = 1;
