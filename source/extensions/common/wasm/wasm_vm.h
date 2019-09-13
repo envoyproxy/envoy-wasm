@@ -61,8 +61,8 @@ using WasmCall6Word = std::function<Word(Context*, Word, Word, Word, Word, Word,
 using WasmCall7Word = std::function<Word(Context*, Word, Word, Word, Word, Word, Word, Word)>;
 using WasmCall8Word = std::function<Word(Context*, Word, Word, Word, Word, Word, Word, Word, Word)>;
 #define FOR_ALL_WASM_VM_EXPORTS(_f)                                                                \
-  _f(WasmCall0Void) _f(WasmCall1Void) _f(WasmCall2Void) _f(WasmCall3Void) _f(WasmCall4Void)        \
-      _f(WasmCall5Void) _f(WasmCall8Void) _f(WasmCall0Word) _f(WasmCall1Word) _f(WasmCall3Word)
+  _f(WasmCall0Void) _f(WasmCall1Void) _f(WasmCall2Void) _f(WasmCall4Void) _f(WasmCall5Void)        \
+      _f(WasmCall8Void) _f(WasmCall0Word) _f(WasmCall1Word) _f(WasmCall3Word)
 
 // Calls out of the WASM VM.
 // 1st arg is always a pointer to raw_context (void*).

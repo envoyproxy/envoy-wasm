@@ -1747,15 +1747,20 @@ void Context::onStart(absl::string_view root_id, absl::string_view vm_configurat
   }
 }
 
-void Context::onConfigure(absl::string_view configuration) {
-  if (!wasm_->onConfigure_) {
-    return;
-  }
-  if (configuration.empty()) {
-    return;
+bool Context::onValidateConfiguration(absl::string_view configuration) {
+  if (!wasm_->onValidateConfiguration_) {
+    return true;
   }
   auto address = wasm_->copyString(configuration);
-  wasm_->onConfigure_(this, id_, address, configuration.size());
+  return wasm_->onValidateConfiguration_(this, id_, address, configuration.size()) != 0;
+}
+
+bool Context::onConfigure(absl::string_view configuration) {
+  if (!wasm_->onConfigure_) {
+    return true;
+  }
+  auto address = wasm_->copyString(configuration);
+  return wasm_->onConfigure_(this, id_, address, configuration.size()) != 0;
 }
 
 void Context::onCreate(uint32_t root_context_id) {
@@ -2165,6 +2170,7 @@ void Wasm::getFunctions() {
 #undef _GET
 
 #define _GET_PROXY(_fn) wasm_vm_->getFunction("_proxy_" #_fn, &_fn##_);
+  _GET_PROXY(onValidateConfiguration);
   _GET_PROXY(onStart);
   _GET_PROXY(onConfigure);
   _GET_PROXY(onTick);
@@ -2258,11 +2264,12 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   return true;
 }
 
-void Wasm::configure(Context* root_context, absl::string_view configuration) {
-  if (onConfigure_ && !configuration.empty()) {
-    auto address = copyString(configuration);
-    onConfigure_(root_context, root_context->id(), address, configuration.size());
+bool Wasm::configure(Context* root_context, absl::string_view configuration) {
+  if (!onConfigure_) {
+    return true;
   }
+  auto address = copyString(configuration);
+  return onConfigure_(root_context, root_context->id(), address, configuration.size());
 }
 
 Context* Wasm::start(absl::string_view root_id, absl::string_view vm_configuration) {
@@ -2695,7 +2702,9 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view r
     }
     root_context = wasm->start(root_id, base_wasm.vm_configuration());
   }
-  wasm->configure(root_context, configuration);
+  if (!wasm->configure(root_context, configuration)) {
+    throw WasmException("Failed to configure WASM code");
+  }
   if (!wasm->id().empty()) {
     local_wasms[wasm->id()] = wasm;
   }
@@ -2710,7 +2719,9 @@ std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_v
   }
   auto wasm = it->second;
   auto root_context = wasm->start(id, wasm->vm_configuration());
-  wasm->configure(root_context, configuration);
+  if (!wasm->configure(root_context, configuration)) {
+    throw WasmException("Failed to configure WASM code");
+  }
   return wasm;
 }
 

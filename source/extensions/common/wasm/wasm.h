@@ -189,8 +189,9 @@ public:
   //
   // VM level downcalls into the WASM code on Context(id == 0).
   //
+  virtual bool onValidateConfiguration(absl::string_view configuration);
   virtual void onStart(absl::string_view root_id, absl::string_view vm_configuration);
-  virtual void onConfigure(absl::string_view configuration);
+  virtual bool onConfigure(absl::string_view configuration);
 
   //
   // Stream downcalls on Context(id > 0).
@@ -452,7 +453,7 @@ public:
   ~Wasm() {}
 
   bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
-  void configure(Context* root_context, absl::string_view configuration);
+  bool configure(Context* root_context, absl::string_view configuration);
   Context* start(absl::string_view root_id,
                  absl::string_view vm_configuration); // returns the root Context.
 
@@ -582,8 +583,9 @@ private:
   WasmCall0Word __errno_location_;
 
   // Calls into the VM.
+  WasmCall3Word onValidateConfiguration_;
   WasmCall5Void onStart_;
-  WasmCall3Void onConfigure_;
+  WasmCall3Word onConfigure_;
   WasmCall1Void onTick_;
 
   WasmCall2Void onCreate_;
@@ -743,10 +745,12 @@ inline bool Wasm::freeMemory(void* pointer) {
 }
 
 inline uint64_t Wasm::copyString(absl::string_view s) {
+  if (s.empty()) {
+    return 0; // nullptr
+  }
   uint64_t pointer;
   uint8_t* m = static_cast<uint8_t*>(allocMemory((s.size() + 1), &pointer));
-  if (s.size() > 0)
-    memcpy(m, s.data(), s.size());
+  memcpy(m, s.data(), s.size());
   m[s.size()] = 0;
   return pointer;
 }

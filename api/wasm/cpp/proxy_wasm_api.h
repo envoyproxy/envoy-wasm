@@ -315,8 +315,14 @@ public:
   RootContext* asRoot() override { return this; }
   Context* asContext() override { return nullptr; }
 
+  // Can be used to validate the configuration (e.g. in the control plane). Returns false if the
+  // configuration is invalid.
+  virtual bool onValidateConfiguration(std::unique_ptr<WasmData> /* configuration */) {
+    return true;
+  }
   // Called once when the VM loads and once when each hook loads and whenever configuration changes.
-  virtual void onConfigure(std::unique_ptr<WasmData> /* configuration */) {}
+  // Returns false if the configuration is invalid.
+  virtual bool onConfigure(std::unique_ptr<WasmData> /* configuration */) { return true; }
   // Called when each hook loads.
   virtual void onStart(WasmDataPtr /* vm_configuration */) {}
   // Called when the timer goes off.
@@ -527,7 +533,7 @@ inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringV
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-inline WasmResult getRequestProtocol(std::string *result) {
+inline WasmResult getRequestProtocol(std::string* result) {
   auto value = getSelectorExpression({"request_protocol"});
   if (value.has_value()) {
     result->assign(value.value()->data(), value.value()->size());
@@ -584,7 +590,8 @@ inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Va
   if (!value.SerializeToString(&output)) {
     return WasmResult::SerializationFailure;
   }
-  return static_cast<WasmResult>(proxy_setState(key.data(), key.size(), output.data(), output.size()));
+  return static_cast<WasmResult>(
+      proxy_setState(key.data(), key.size(), output.data(), output.size()));
 }
 
 inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
@@ -622,7 +629,8 @@ inline WasmResult getMetadataStruct(MetadataType type, StringView name,
   return WasmResult::Ok;
 }
 
-inline WasmResult ContextBase::metadataValue(MetadataType type, StringView key, google::protobuf::Value* value_ptr) {
+inline WasmResult ContextBase::metadataValue(MetadataType type, StringView key,
+                                             google::protobuf::Value* value_ptr) {
   if (isRootCachable(type)) {
     if (auto context = asContext()) {
       return context->root()->metadataValue(type, key, value_ptr);
