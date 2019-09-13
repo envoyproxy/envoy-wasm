@@ -1823,7 +1823,7 @@ Http::FilterHeadersStatus Context::onResponseHeaders() {
   if (!in_vm_context_created_) {
     // If the request is invalid then onRequestHeaders() will not be called and neither will
     // onCreate() then sendLocalReply be called which will call this function. In this case we
-    // need to call onCreate() so that the Context inside the VM is created befor ethe
+    // need to call onCreate() so that the Context inside the VM is created before the
     // onResponseHeaders() call.
     onCreate(root_context_id_);
     in_vm_context_created_ = true;
