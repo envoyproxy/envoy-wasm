@@ -58,12 +58,9 @@ void PluginContext::onLog() {
                 {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"})
                 .value()
                 ->toString());
-    auto responseCode = getSelectorExpression({"response", "code"}).value();
-    if (responseCode->size() == sizeof(int64_t)) {
-      char buf[sizeof(int64_t)];
-      responseCode->view().copy(buf, sizeof(int64_t), 0);
-      int64_t code = absl::bit_cast<int64_t>(buf);
-      logWarn("response.code: " + absl::StrCat(code));
+    int64_t responseCode;
+    if (getValue({"response", "code"}, &responseCode)) {
+      logWarn("response.code: " + absl::StrCat(responseCode));
     }
     logWarn("state: " + getSelectorExpression({"filter_state", "wasm_state"}).value()->toString());
   } else {
