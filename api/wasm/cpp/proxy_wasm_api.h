@@ -536,6 +536,14 @@ inline bool getStringValue(std::initializer_list<StringView> parts, std::string*
   return true;
 }
 
+inline bool getStructValue(std::initializer_list<StringView> parts, google::protobuf::Value* value_ptr) {
+  auto buf = getSelectorExpression(parts);
+  if (!buf.has_value()) {
+    return false;
+  }
+  return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
+}
+
 inline WasmResult getRequestProtocol(std::string *result) {
   return getStringValue({"request_protocol"}, result) ? WasmResult::Ok : WasmResult::NotFound;
 }
