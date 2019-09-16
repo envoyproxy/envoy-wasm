@@ -303,6 +303,8 @@ public:
 
   const std::string& name() const override;
 
+  const Network::ActiveUdpListenerFactory* udpListenerFactory() override;
+
   //
   // Network::FilterChainManager
   //

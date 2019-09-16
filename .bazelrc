@@ -35,7 +35,6 @@ build:sanitizer --build_tag_filters=-no_san
 build:sanitizer --test_tag_filters=-no_san
 
 # Basic ASAN/UBSAN that works for gcc
-<<<<<<< HEAD
 build:asan --action_env=BAZEL_LINKLIBS=
 build:asan --action_env=BAZEL_LINKOPTS=-lstdc++:-lm
 build:asan --action_env=ENVOY_ASAN=1
