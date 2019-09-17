@@ -4,9 +4,12 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/bazelbuild/bazel-gazelle/releases/download/0.18.1/bazel-gazelle-0.18.1.tar.gz"],
     ),
     bazel_toolchains = dict(
-        sha256 = "b72e7a911436b2900b05759a1fcd735070edbd4442f0a3506ef021fdcd6e15b3",
-        strip_prefix = "bazel-toolchains-0.28.5",
-        urls = ["https://github.com/bazelbuild/bazel-toolchains/archive/0.28.5.tar.gz"],
+        sha256 = "ab0d8aaeaeeef413ddb03922dbdb99bbae9e1b2c157a87c77d70d45a830be5b0",
+        strip_prefix = "bazel-toolchains-0.29.1",
+        urls = [
+            "https://github.com/bazelbuild/bazel-toolchains/releases/download/0.29.1/bazel-toolchains-0.29.1.tar.gz",
+            "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/archive/0.29.1.tar.gz",
+        ],
     ),
     boringssl = dict(
         sha256 = "c712766ddc844de2a38e686e1cdd7288795e9a6fe7f699c6636f1b76703db84e",
@@ -158,10 +161,10 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/msgpack/msgpack-c/releases/download/cpp-3.2.0/msgpack-3.2.0.tar.gz"],
     ),
     com_github_google_jwt_verify = dict(
-        sha256 = "8ab9a0b3f8b7eab5f1cd059920e81fdc138cd4ee657c1412af891652929885c5",
-        strip_prefix = "jwt_verify_lib-6356535ae83a3f1820b6b06dae80cd6a0a03e7f2",
-        # 2019-07-01
-        urls = ["https://github.com/google/jwt_verify_lib/archive/6356535ae83a3f1820b6b06dae80cd6a0a03e7f2.tar.gz"],
+        sha256 = "2d57d336239d5fe36a03849ddbea1bff09a1720e1c4a46bbb9743c71732b0d43",
+        strip_prefix = "jwt_verify_lib-0f14d43f20381cfae0469cb2309b2e220c0f0ea3",
+        # 2019-07-08
+        urls = ["https://github.com/google/jwt_verify_lib/archive/0f14d43f20381cfae0469cb2309b2e220c0f0ea3.tar.gz"],
     ),
     com_github_nodejs_http_parser = dict(
         sha256 = "ef26268c54c8084d17654ba2ed5140bffeffd2a040a895ffb22a6cca3f6c613f",
@@ -212,10 +215,10 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v3.8.0/protobuf-all-3.8.0.tar.gz"],
     ),
     grpc_httpjson_transcoding = dict(
-        sha256 = "dedd76b0169eb8c72e479529301a1d9b914a4ccb4d2b5ddb4ebe92d63a7b2152",
-        strip_prefix = "grpc-httpjson-transcoding-64d6ac985360b624d8e95105701b64a3814794cd",
-        # 2018-12-19
-        urls = ["https://github.com/grpc-ecosystem/grpc-httpjson-transcoding/archive/64d6ac985360b624d8e95105701b64a3814794cd.tar.gz"],
+        sha256 = "a447458b47ea4dc1d31499f555769af437c5d129d988ec1e13d5fdd0a6a36b4e",
+        strip_prefix = "grpc-httpjson-transcoding-2feabd5d64436e670084091a937855972ee35161",
+        # 2019-08-28
+        urls = ["https://github.com/grpc-ecosystem/grpc-httpjson-transcoding/archive/2feabd5d64436e670084091a937855972ee35161.tar.gz"],
     ),
     io_bazel_rules_go = dict(
         sha256 = "96b1f81de5acc7658e1f5a86d7dc9e1b89bc935d83799b711363a748652c471a",
@@ -248,10 +251,10 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.8.196.tar.gz"],
     ),
     io_opencensus_cpp = dict(
-        sha256 = "8d6016e47c2e19e7acbadb6f905b8c422748c64299d71101ac8f28151677e195",
-        strip_prefix = "opencensus-cpp-cad0d03ff3474cf14389fc249e16847ab7b6895f",
-        # 2019-07-31
-        urls = ["https://github.com/census-instrumentation/opencensus-cpp/archive/cad0d03ff3474cf14389fc249e16847ab7b6895f.tar.gz"],
+        sha256 = "145e42594db358905737dc07400657be62a2961f4e93ab7f4c9765dd2441033c",
+        strip_prefix = "opencensus-cpp-cc198ff64569bc47beed5384777a4bb563d268e7",
+        # 2019-09-04
+        urls = ["https://github.com/census-instrumentation/opencensus-cpp/archive/cc198ff64569bc47beed5384777a4bb563d268e7.tar.gz"],
     ),
     com_github_curl = dict(
         sha256 = "4376ac72b95572fb6c4fbffefb97c7ea0dd083e1974c0e44cd7e49396f454839",
@@ -259,9 +262,9 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/curl/curl/releases/download/curl-7_65_3/curl-7.65.3.tar.gz"],
     ),
     com_googlesource_quiche = dict(
-        # Static snapshot of https://quiche.googlesource.com/quiche/+archive/2a930469533c3b541443488a629fe25cd8ff53d0.tar.gz
-        sha256 = "fcdebf54c89d839ffa7eefae166c8e4b551c765559db13ff15bff98047f344fb",
-        urls = ["https://storage.googleapis.com/quiche-envoy-integration/2a930469533c3b541443488a629fe25cd8ff53d0.tar.gz"],
+        # Static snapshot of https://quiche.googlesource.com/quiche/+archive/4abb566fbbc63df8fe7c1ac30b21632b9eb18d0c.tar.gz
+        sha256 = "c60bca3cf7f58b91394a89da96080657ff0fbe4d5675be9b21e90da8f68bc06f",
+        urls = ["https://storage.googleapis.com/quiche-envoy-integration/4abb566fbbc63df8fe7c1ac30b21632b9eb18d0c.tar.gz"],
     ),
     com_google_cel_cpp = dict(
         sha256 = "f027c551d57d38fb9f0b5e4f21a2b0b8663987119e23b1fd8dfcc7588e9a2350",
@@ -269,8 +272,8 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/google/cel-cpp/archive/d9d02b20ab85da2444dbdd03410bac6822141364.tar.gz"],
     ),
     com_googlesource_code_re2 = dict(
-        sha256 = "f31db9cd224d018a7e4fe88ef84aaa874b0b3ed91d4d98ee5a1531101d3fdc64",
-        strip_prefix = "re2-87e2ad45e7b18738e1551474f7ee5886ff572059",
-        urls = ["https://github.com/google/re2/archive/87e2ad45e7b18738e1551474f7ee5886ff572059.tar.gz"],
+        sha256 = "38bc0426ee15b5ed67957017fd18201965df0721327be13f60496f2b356e3e01",
+        strip_prefix = "re2-2019-08-01",
+        urls = ["https://github.com/google/re2/archive/2019-08-01.tar.gz"],
     ),
 )

@@ -19,7 +19,7 @@ namespace Plugin {
 #define WS(_x) Word(static_cast<uint64_t>(_x))
 #define WR(_x) Word(reinterpret_cast<uint64_t>(_x))
 
-inline WasmResult wordToWasmResult(Word w) { return static_cast<WasmResult>(w.u64); }
+inline WasmResult wordToWasmResult(Word w) { return static_cast<WasmResult>(w.u64_); }
 
 // Logging
 inline WasmResult proxy_log(LogLevel level, const char* logMessage, size_t messageSize) {
@@ -181,7 +181,8 @@ inline uint64_t proxy_httpCall(const char* uri_ptr, size_t uri_size, void* heade
                                uint64_t timeout_milliseconds) {
   return httpCallHandler(current_context_, WR(uri_ptr), WS(uri_size), WR(header_pairs_ptr),
                          WS(header_pairs_size), WR(body_ptr), WS(body_size), WR(trailer_pairs_ptr),
-                         WS(trailer_pairs_size), WS(timeout_milliseconds));
+                         WS(trailer_pairs_size), WS(timeout_milliseconds))
+      .u64_;
 }
 // gRPC
 // Returns token, used in gRPC callbacks (onGrpc...)
@@ -192,14 +193,16 @@ inline uint64_t proxy_grpcCall(const char* service_ptr, size_t service_size,
                                uint64_t timeout_milliseconds) {
   return grpcCallHandler(current_context_, WR(service_ptr), WS(service_size), WR(service_name_ptr),
                          WS(service_name_size), WR(method_name_ptr), WS(method_name_size),
-                         WR(request_ptr), WS(request_size), WS(timeout_milliseconds));
+                         WR(request_ptr), WS(request_size), WS(timeout_milliseconds))
+      .u64_;
 }
 inline uint64_t proxy_grpcStream(const char* service_ptr, size_t service_size,
                                  const char* service_name_ptr, size_t service_name_size,
                                  const char* method_name_ptr, size_t method_name_size) {
   return grpcStreamHandler(current_context_, WR(service_ptr), WS(service_size),
                            WR(service_name_ptr), WS(service_name_size), WR(method_name_ptr),
-                           WS(method_name_size));
+                           WS(method_name_size))
+      .u64_;
 }
 inline WasmResult proxy_grpcCancel(uint64_t token) {
   return wordToWasmResult(grpcCancelHandler(current_context_, WS(token)));
@@ -221,10 +224,10 @@ inline WasmResult proxy_defineMetric(MetricType type, const char* name_ptr, size
       defineMetricHandler(current_context_, WS(type), WR(name_ptr), WS(name_size), WR(metric_id)));
 }
 inline WasmResult proxy_incrementMetric(uint32_t metric_id, int64_t offset) {
-  return wordToWasmResult(incrementMetricHandler(current_context_, WS(metric_id), WS(offset)));
+  return wordToWasmResult(incrementMetricHandler(current_context_, WS(metric_id), offset));
 }
 inline WasmResult proxy_recordMetric(uint32_t metric_id, uint64_t value) {
-  return wordToWasmResult(recordMetricHandler(current_context_, WS(metric_id), WS(value)));
+  return wordToWasmResult(recordMetricHandler(current_context_, WS(metric_id), value));
 }
 inline WasmResult proxy_getMetric(uint32_t metric_id, uint64_t* value) {
   return wordToWasmResult(getMetricHandler(current_context_, WS(metric_id), WR(value)));

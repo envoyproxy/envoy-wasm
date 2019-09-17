@@ -37,8 +37,21 @@ Usage
     -d,  --details
       Show detailed test execution results. The first line indicates the test name.
 
+    --only-show-failures
+      Displays test results for failed tests. Omits test names for passing tests if the details flag is set.
+
     -p,  --useproto
       Use Proto test file schema
+
+    -f, --fail-under
+      Represents a percent value for route test coverage under which the run should fail.
+
+    --covall
+      Enables comprehensive code coverage percent calculation taking into account all the possible
+      asserts.
+
+    --disable-deprecation-check
+      Disables the deprecation check for RouteConfiguration proto.
 
     -h,  --help
       Displays usage information and exits.
