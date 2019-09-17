@@ -211,13 +211,13 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<3>* f
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word ptr, Word size) {
       SaveRestoreContext saved_context(context);
-      return Word(plugin->onConfigure(context_id.u64, ptr.u64, size.u64));
+      return Word(plugin->onConfigure(context_id.u64_, ptr.u64_, size.u64_));
     };
   } else if (function_name == "_proxy_onConfigure") {
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word ptr, Word size) {
       SaveRestoreContext saved_context(context);
-      return Word(plugin->onConfigure(context_id.u64, ptr.u64, size.u64));
+      return Word(plugin->onConfigure(context_id.u64_, ptr.u64_, size.u64_));
     };
   } else if (function_name == "_proxy_onRequestBody") {
     auto plugin = this;
