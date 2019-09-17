@@ -1,6 +1,8 @@
-load("//bazel:api_build_system.bzl", "api_go_grpc_library", "api_go_proto_library", "api_proto_library_internal")
+load("//bazel:api_build_system.bzl", "api_proto_library_internal", "api_proto_package")
 
 licenses(["notice"])  # Apache 2
+
+api_proto_package()
 
 api_proto_library_internal(
     name = "wasm",
@@ -14,9 +16,4 @@ api_proto_library_internal(
     deps = [
         "//envoy/api/v2/core:base",
     ],
-)
-
-api_go_proto_library(
-    name = "wasm",
-    proto = ":wasm",
 )

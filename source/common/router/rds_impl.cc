@@ -30,8 +30,8 @@ RouteConfigProviderPtr RouteConfigProviderUtil::create(
     return route_config_provider_manager.createStaticRouteConfigProvider(config.route_config(),
                                                                          factory_context);
   case envoy::config::filter::network::http_connection_manager::v2::HttpConnectionManager::kRds:
-    return route_config_provider_manager.createRdsRouteConfigProvider(config.rds(), factory_context,
-                                                                      stat_prefix);
+    return route_config_provider_manager.createRdsRouteConfigProvider(
+        config.rds(), factory_context, stat_prefix, factory_context.initManager());
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
@@ -92,12 +92,16 @@ void RdsRouteConfigSubscription::onConfigUpdate(
   if (!validateUpdateSize(resources.size())) {
     return;
   }
-  auto route_config = MessageUtil::anyConvert<envoy::api::v2::RouteConfiguration>(
-      resources[0], validation_visitor_);
-  MessageUtil::validate(route_config);
+  auto route_config = MessageUtil::anyConvert<envoy::api::v2::RouteConfiguration>(resources[0]);
+  MessageUtil::validate(route_config, validation_visitor_);
   if (route_config.name() != route_config_name_) {
     throw EnvoyException(fmt::format("Unexpected RDS configuration (expecting {}): {}",
                                      route_config_name_, route_config.name()));
+  }
+  for (auto* provider : route_config_providers_) {
+    // This seems inefficient, though it is necessary to validate config in each context,
+    // especially when it comes with per_filter_config,
+    provider->validateConfig(route_config);
   }
 
   if (config_update_info_->onRdsUpdate(route_config, version_info)) {
@@ -120,6 +124,7 @@ void RdsRouteConfigSubscription::onConfigUpdate(
       }
       vhds_subscription_.release();
     }
+    update_callback_manager_.runCallbacks();
   }
 
   init_target_.ready();
@@ -194,8 +199,18 @@ Router::ConfigConstSharedPtr RdsRouteConfigProviderImpl::config() {
 void RdsRouteConfigProviderImpl::onConfigUpdate() {
   ConfigConstSharedPtr new_config(
       new ConfigImpl(config_update_info_->routeConfiguration(), factory_context_, false));
-  tls_->runOnAllThreads(
-      [this, new_config]() -> void { tls_->getTyped<ThreadLocalConfig>().config_ = new_config; });
+  tls_->runOnAllThreads([new_config](ThreadLocal::ThreadLocalObjectSharedPtr previous)
+                            -> ThreadLocal::ThreadLocalObjectSharedPtr {
+    auto prev_config = std::dynamic_pointer_cast<ThreadLocalConfig>(previous);
+    prev_config->config_ = new_config;
+    return previous;
+  });
+}
+
+void RdsRouteConfigProviderImpl::validateConfig(
+    const envoy::api::v2::RouteConfiguration& config) const {
+  // TODO(lizan): consider cache the config here until onConfigUpdate.
+  ConfigImpl validation_config(config, factory_context_, false);
 }
 
 RouteConfigProviderManagerImpl::RouteConfigProviderManagerImpl(Server::Admin& admin) {
@@ -208,8 +223,8 @@ RouteConfigProviderManagerImpl::RouteConfigProviderManagerImpl(Server::Admin& ad
 
 Router::RouteConfigProviderPtr RouteConfigProviderManagerImpl::createRdsRouteConfigProvider(
     const envoy::config::filter::network::http_connection_manager::v2::Rds& rds,
-    Server::Configuration::FactoryContext& factory_context, const std::string& stat_prefix) {
-
+    Server::Configuration::FactoryContext& factory_context, const std::string& stat_prefix,
+    Init::Manager& init_manager) {
   // RdsRouteConfigSubscriptions are unique based on their serialized RDS config.
   const uint64_t manager_identifier = MessageUtil::hash(rds);
 
@@ -222,9 +237,7 @@ Router::RouteConfigProviderPtr RouteConfigProviderManagerImpl::createRdsRouteCon
     // of simplicity.
     subscription.reset(new RdsRouteConfigSubscription(rds, manager_identifier, factory_context,
                                                       stat_prefix, *this));
-
-    factory_context.initManager().add(subscription->init_target_);
-
+    init_manager.add(subscription->init_target_);
     route_config_subscriptions_.insert({manager_identifier, subscription});
   } else {
     // Because the RouteConfigProviderManager's weak_ptrs only get cleaned up

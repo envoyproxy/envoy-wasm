@@ -209,9 +209,7 @@ struct RtdsSubscription : Config::SubscriptionCallbacks, Logger::Loggable<Logger
   void onConfigUpdateFailed(Envoy::Config::ConfigUpdateFailureReason reason,
                             const EnvoyException* e) override;
   std::string resourceName(const ProtobufWkt::Any& resource) override {
-    return MessageUtil::anyConvert<envoy::service::discovery::v2::Runtime>(resource,
-                                                                           validation_visitor_)
-        .name();
+    return MessageUtil::anyConvert<envoy::service::discovery::v2::Runtime>(resource).name();
   }
 
   void start();
@@ -270,7 +268,7 @@ private:
   Upstream::ClusterManager* cm_{};
 
   absl::Mutex snapshot_mutex_;
-  std::shared_ptr<const Snapshot> thread_safe_snapshot_ GUARDED_BY(snapshot_mutex_);
+  std::shared_ptr<const Snapshot> thread_safe_snapshot_ ABSL_GUARDED_BY(snapshot_mutex_);
 };
 
 } // namespace Runtime

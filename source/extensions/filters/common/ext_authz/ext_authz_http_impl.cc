@@ -50,18 +50,28 @@ struct SuccessResponse {
   const MatcherSharedPtr& matchers_;
   ResponsePtr response_;
 };
+
+std::vector<Matchers::LowerCaseStringMatcherPtr>
+createLowerCaseMatchers(const envoy::type::matcher::ListStringMatcher& list) {
+  std::vector<Matchers::LowerCaseStringMatcherPtr> matchers;
+  for (const auto& matcher : list.patterns()) {
+    matchers.push_back(std::make_unique<Matchers::LowerCaseStringMatcher>(matcher));
+  }
+  return matchers;
+}
+
 } // namespace
 
 // Matchers
-HeaderKeyMatcher::HeaderKeyMatcher(std::vector<Matchers::LowerCaseStringMatcher>&& list)
+HeaderKeyMatcher::HeaderKeyMatcher(std::vector<Matchers::LowerCaseStringMatcherPtr>&& list)
     : matchers_(std::move(list)) {}
 
 bool HeaderKeyMatcher::matches(absl::string_view key) const {
   return std::any_of(matchers_.begin(), matchers_.end(),
-                     [&key](auto matcher) { return matcher.match(key); });
+                     [&key](auto& matcher) { return matcher->match(key); });
 }
 
-NotHeaderKeyMatcher::NotHeaderKeyMatcher(std::vector<Matchers::LowerCaseStringMatcher>&& list)
+NotHeaderKeyMatcher::NotHeaderKeyMatcher(std::vector<Matchers::LowerCaseStringMatcherPtr>&& list)
     : matcher_(std::move(list)) {}
 
 bool NotHeaderKeyMatcher::matches(absl::string_view key) const { return !matcher_.matches(key); }
@@ -86,12 +96,11 @@ ClientConfig::toRequestMatchers(const envoy::type::matcher::ListStringMatcher& l
       {Http::Headers::get().Authorization, Http::Headers::get().Method, Http::Headers::get().Path,
        Http::Headers::get().Host}};
 
-  std::vector<Matchers::LowerCaseStringMatcher> matchers{list.patterns().begin(),
-                                                         list.patterns().end()};
+  std::vector<Matchers::LowerCaseStringMatcherPtr> matchers(createLowerCaseMatchers(list));
   for (const auto& key : keys) {
     envoy::type::matcher::StringMatcher matcher;
     matcher.set_exact(key.get());
-    matchers.push_back(matcher);
+    matchers.push_back(std::make_unique<Matchers::LowerCaseStringMatcher>(matcher));
   }
 
   return std::make_shared<HeaderKeyMatcher>(std::move(matchers));
@@ -99,15 +108,14 @@ ClientConfig::toRequestMatchers(const envoy::type::matcher::ListStringMatcher& l
 
 MatcherSharedPtr
 ClientConfig::toClientMatchers(const envoy::type::matcher::ListStringMatcher& list) {
-  std::vector<Matchers::LowerCaseStringMatcher> matchers{list.patterns().begin(),
-                                                         list.patterns().end()};
+  std::vector<Matchers::LowerCaseStringMatcherPtr> matchers(createLowerCaseMatchers(list));
 
   // If list is empty, all authorization response headers, except Host, should be added to
   // the client response.
   if (matchers.empty()) {
     envoy::type::matcher::StringMatcher matcher;
     matcher.set_exact(Http::Headers::get().Host.get());
-    matchers.push_back(matcher);
+    matchers.push_back(std::make_unique<Matchers::LowerCaseStringMatcher>(matcher));
 
     return std::make_shared<NotHeaderKeyMatcher>(std::move(matchers));
   }
@@ -121,7 +129,7 @@ ClientConfig::toClientMatchers(const envoy::type::matcher::ListStringMatcher& li
   for (const auto& key : keys) {
     envoy::type::matcher::StringMatcher matcher;
     matcher.set_exact(key.get());
-    matchers.push_back(matcher);
+    matchers.push_back(std::make_unique<Matchers::LowerCaseStringMatcher>(matcher));
   }
 
   return std::make_shared<HeaderKeyMatcher>(std::move(matchers));
@@ -129,9 +137,7 @@ ClientConfig::toClientMatchers(const envoy::type::matcher::ListStringMatcher& li
 
 MatcherSharedPtr
 ClientConfig::toUpstreamMatchers(const envoy::type::matcher::ListStringMatcher& list) {
-  std::vector<Matchers::LowerCaseStringMatcher> matchers{list.patterns().begin(),
-                                                         list.patterns().end()};
-  return std::make_unique<HeaderKeyMatcher>(std::move(matchers));
+  return std::make_unique<HeaderKeyMatcher>(createLowerCaseMatchers(list));
 }
 
 Http::LowerCaseStrPairVector ClientConfig::toHeadersAdd(
@@ -196,9 +202,20 @@ void RawHttpClientImpl::check(RequestCallbacks& callbacks,
         std::make_unique<Buffer::OwnedImpl>(request.attributes().request().http().body());
   }
 
-  request_ = cm_.httpAsyncClientForCluster(config_->cluster())
-                 .send(std::move(message), *this,
-                       Http::AsyncClient::RequestOptions().setTimeout(config_->timeout()));
+  const std::string& cluster = config_->cluster();
+
+  // It's possible that the cluster specified in the filter configuration no longer exists due to a
+  // CDS removal.
+  if (cm_.get(cluster) == nullptr) {
+    // TODO(dio): Add stats and tracing related to this.
+    ENVOY_LOG(debug, "ext_authz cluster '{}' does not exist", cluster);
+    callbacks_->onComplete(std::make_unique<Response>(errorResponse()));
+    callbacks_ = nullptr;
+  } else {
+    request_ = cm_.httpAsyncClientForCluster(cluster).send(
+        std::move(message), *this,
+        Http::AsyncClient::RequestOptions().setTimeout(config_->timeout()));
+  }
 }
 
 void RawHttpClientImpl::onSuccess(Http::MessagePtr&& message) {

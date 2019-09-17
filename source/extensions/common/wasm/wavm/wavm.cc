@@ -76,7 +76,7 @@ struct WasmUntaggedValue : public WAVM::IR::UntaggedValue {
   WasmUntaggedValue(I32 inI32) { i32 = inI32; }
   WasmUntaggedValue(I64 inI64) { i64 = inI64; }
   WasmUntaggedValue(U32 inU32) { u32 = inU32; }
-  WasmUntaggedValue(Word w) { u32 = static_cast<U32>(w.u64); }
+  WasmUntaggedValue(Word w) { u32 = static_cast<U32>(w.u64_); }
   WasmUntaggedValue(U64 inU64) { u64 = inU64; }
   WasmUntaggedValue(F32 inF32) { f32 = inF32; }
   WasmUntaggedValue(F64 inF64) { f64 = inF64; }
@@ -185,13 +185,17 @@ struct WavmGlobalBase {
 template <typename T> struct NativeWord { using type = T; };
 template <> struct NativeWord<Word> { using type = uint32_t; };
 
+template <typename T> typename NativeWord<T>::type ToNative(const T& t) { return t; }
+template <> typename NativeWord<Word>::type ToNative(const Word& t) { return t.u32(); }
+
 template <typename T>
 struct WavmGlobal : Global<T>,
                     Intrinsics::GenericGlobal<typename NativeWord<T>::type>,
                     WavmGlobalBase {
   WavmGlobal(Common::Wasm::Wavm::Wavm* wavm, Intrinsics::Module& module, const std::string& name,
              T value)
-      : Intrinsics::GenericGlobal<typename NativeWord<T>::type>(module, name.c_str(), value),
+      : Intrinsics::GenericGlobal<typename NativeWord<T>::type>(module, name.c_str(),
+                                                                ToNative(value)),
         wavm_(wavm) {}
   virtual ~WavmGlobal() {}
 
@@ -213,7 +217,7 @@ struct Wavm : public WasmVm {
 
   // WasmVm
   absl::string_view vm() override { return WasmVmNames::get().Wavm; }
-  bool clonable() override { return true; };
+  bool cloneable() override { return true; };
   std::unique_ptr<WasmVm> clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
   void setMemoryLayout(uint64_t, uint64_t, uint64_t) override {}
@@ -223,6 +227,7 @@ struct Wavm : public WasmVm {
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
+  bool getWord(uint64_t pointer, Word* data) override;
   bool setWord(uint64_t pointer, Word data) override;
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name) override;
@@ -427,6 +432,18 @@ bool Wavm::setMemory(uint64_t pointer, uint64_t size, const void* data) {
   }
   auto p = reinterpret_cast<char*>(memory_base_ + pointer);
   memcpy(p, data, size);
+  return true;
+}
+
+bool Wavm::getWord(uint64_t pointer, Word* data) {
+  auto memory_num_bytes = WAVM::Runtime::getMemoryNumPages(memory_) * WasmPageSize;
+  if (pointer + sizeof(uint32_t) > memory_num_bytes) {
+    return false;
+  }
+  auto p = reinterpret_cast<char*>(memory_base_ + pointer);
+  uint32_t data32;
+  memcpy(&data32, p, sizeof(uint32_t));
+  data->u64_ = data32;
   return true;
 }
 
@@ -704,6 +721,10 @@ template <typename T> T WavmGlobal<T>::get() {
 
 template <typename T> void WavmGlobal<T>::set(const T& t) {
   setGlobalValue(wavm_->context_, global_, IR::Value(t));
+}
+
+template <> void WavmGlobal<Word>::set(const Word& t) {
+  setGlobalValue(wavm_->context_, global_, IR::Value(t.u64_));
 }
 
 template <typename T>

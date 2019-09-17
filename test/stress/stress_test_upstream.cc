@@ -585,6 +585,8 @@ uint64_t Server::listenerTag() const { return 0; }
 
 const std::string& Server::name() const { return name_; }
 
+const Network::ActiveUdpListenerFactory* Server::udpListenerFactory() { return nullptr; }
+
 const Network::FilterChain* Server::findFilterChain(const Network::ConnectionSocket&) const {
   return &server_filter_chain_;
 }
