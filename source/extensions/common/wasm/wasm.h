@@ -578,40 +578,40 @@ private:
       owned_scope_; // When scope_ is not owned by a higher level (e.g. for WASM services).
   TimeSource& time_source_;
 
-  WasmCall1Word malloc_;
-  WasmCall1Void free_;
-  WasmCall0Word __errno_location_;
+  WasmCallWord<1> malloc_;
+  WasmCallVoid<1> free_;
+  WasmCallWord<0> __errno_location_;
 
   // Calls into the VM.
-  WasmCall5Void onStart_;
-  WasmCall3Void onConfigure_;
-  WasmCall1Void onTick_;
+  WasmCallVoid<5> onStart_;
+  WasmCallVoid<3> onConfigure_;
+  WasmCallVoid<1> onTick_;
 
-  WasmCall2Void onCreate_;
+  WasmCallVoid<2> onCreate_;
 
-  WasmCall1Word onRequestHeaders_;
-  WasmCall3Word onRequestBody_;
-  WasmCall1Word onRequestTrailers_;
-  WasmCall1Word onRequestMetadata_;
+  WasmCallWord<1> onRequestHeaders_;
+  WasmCallWord<3> onRequestBody_;
+  WasmCallWord<1> onRequestTrailers_;
+  WasmCallWord<1> onRequestMetadata_;
 
-  WasmCall1Word onResponseHeaders_;
-  WasmCall3Word onResponseBody_;
-  WasmCall1Word onResponseTrailers_;
-  WasmCall1Word onResponseMetadata_;
+  WasmCallWord<1> onResponseHeaders_;
+  WasmCallWord<3> onResponseBody_;
+  WasmCallWord<1> onResponseTrailers_;
+  WasmCallWord<1> onResponseMetadata_;
 
-  WasmCall8Void onHttpCallResponse_;
+  WasmCallVoid<8> onHttpCallResponse_;
 
-  WasmCall4Void onGrpcReceive_;
-  WasmCall5Void onGrpcClose_;
-  WasmCall2Void onGrpcCreateInitialMetadata_;
-  WasmCall2Void onGrpcReceiveInitialMetadata_;
-  WasmCall2Void onGrpcReceiveTrailingMetadata_;
+  WasmCallVoid<4> onGrpcReceive_;
+  WasmCallVoid<5> onGrpcClose_;
+  WasmCallVoid<2> onGrpcCreateInitialMetadata_;
+  WasmCallVoid<2> onGrpcReceiveInitialMetadata_;
+  WasmCallVoid<2> onGrpcReceiveTrailingMetadata_;
 
-  WasmCall2Void onQueueReady_;
+  WasmCallVoid<2> onQueueReady_;
 
-  WasmCall1Void onDone_;
-  WasmCall1Void onLog_;
-  WasmCall1Void onDelete_;
+  WasmCallVoid<1> onDone_;
+  WasmCallVoid<1> onLog_;
+  WasmCallVoid<1> onDelete_;
 
   // Used by the base_wasm to enable non-clonable thread local Wasm(s) to be constructed.
   std::string code_;
@@ -721,14 +721,14 @@ inline absl::string_view Context::root_id() const {
 
 inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
   Word a = malloc_(vmContext(), size);
-  if (!a.u64) {
+  if (!a.u64_) {
     throw WasmException("malloc_ returns nullptr (OOM)");
   }
-  auto memory = wasm_vm_->getMemory(a, size);
+  auto memory = wasm_vm_->getMemory(a.u64_, size);
   if (!memory) {
     throw WasmException("malloc_ returned illegal address");
   }
-  *address = a.u64;
+  *address = a.u64_;
   return const_cast<void*>(reinterpret_cast<const void*>(memory.value().data()));
 }
 

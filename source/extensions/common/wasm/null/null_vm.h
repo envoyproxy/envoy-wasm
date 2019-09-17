@@ -17,15 +17,17 @@ namespace Common {
 namespace Wasm {
 namespace Null {
 
+// The NullVm wraps a C++ WASM plugin which has been compiled with the WASM API
+// and linked directly into the Envoy process. This is useful for development
+// in that it permits the debugger to set breakpoints in both Envoy and the plugin.
 struct NullVm : public WasmVm {
   NullVm() = default;
-  NullVm(const NullVm& other) { load(other.plugin_name_, false /* unused */); }
-  ~NullVm() override{};
+  NullVm(const NullVm& other) : plugin_name_(other.plugin_name_) {}
 
   // WasmVm
   absl::string_view vm() override { return WasmVmNames::get().Null; }
-  bool clonable() override { return true; };
-  std::unique_ptr<WasmVm> clone() override;
+  bool cloneable() override { return true; };
+  WasmVmPtr clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
   void link(absl::string_view debug_name, bool needs_emscripten) override;
   void setMemoryLayout(uint64_t, uint64_t, uint64_t) override {}
@@ -35,6 +37,7 @@ struct NullVm : public WasmVm {
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool setWord(uint64_t pointer, Word data) override;
+  bool getWord(uint64_t pointer, Word* data) override;
   void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name) override;
 
@@ -45,14 +48,14 @@ struct NullVm : public WasmVm {
   FOR_ALL_WASM_VM_EXPORTS(_FORWARD_GET_FUNCTION)
 #undef _FORWARD_GET_FUNCTION
 
-  // These are noops for NullVm.
+  // These are not needed for NullVm which invokes the handlers directly.
 #define _REGISTER_CALLBACK(_T)                                                                     \
   void registerCallback(absl::string_view, absl::string_view, _T,                                  \
                         typename ConvertFunctionTypeWordToUint32<_T>::type) override{};
   FOR_ALL_WASM_VM_IMPORTS(_REGISTER_CALLBACK)
 #undef _REGISTER_CALLBACK
 
-  // NullVm does not advertize code as emscripten so this will not get called.
+  // NullVm does not advertise code as emscripten so this will not get called.
   std::unique_ptr<Global<double>> makeGlobal(absl::string_view, absl::string_view,
                                              double) override {
     NOT_REACHED_GCOVR_EXCL_LINE;

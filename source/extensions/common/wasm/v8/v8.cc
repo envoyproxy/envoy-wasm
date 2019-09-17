@@ -50,7 +50,7 @@ public:
   void makeModule(absl::string_view) override {}
 
   // v8 is currently not clonable.
-  bool clonable() override { return false; }
+  bool cloneable() override { return false; }
   std::unique_ptr<WasmVm> clone() override { return nullptr; }
 
   void start(Context* context) override;
@@ -59,6 +59,7 @@ public:
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
+  bool getWord(uint64_t pointer, Word* word) override;
   bool setWord(uint64_t pointer, Word word) override;
 
 #define _REGISTER_HOST_GLOBAL(_T)                                                                  \
@@ -200,7 +201,7 @@ template <typename T> struct ConvertWordType { using type = T; };
 template <> struct ConvertWordType<Word> { using type = uint32_t; };
 
 template <typename T> wasm::Val makeVal(T t) { return wasm::Val::make(t); }
-template <> wasm::Val makeVal(Word t) { return wasm::Val::make(static_cast<uint32_t>(t.u64)); }
+template <> wasm::Val makeVal(Word t) { return wasm::Val::make(static_cast<uint32_t>(t.u64_)); }
 
 template <typename T> constexpr auto convertArgToValKind();
 template <> constexpr auto convertArgToValKind<Word>() { return wasm::I32; };
@@ -524,8 +525,20 @@ bool V8::setMemory(uint64_t pointer, uint64_t size, const void* data) {
   return true;
 }
 
+bool V8::getWord(uint64_t pointer, Word* word) {
+  ENVOY_LOG(trace, "[wasm] getWord({})", pointer);
+  auto size = sizeof(uint32_t);
+  if (pointer + size > memory_->data_size()) {
+    return false;
+  }
+  uint32_t word32;
+  ::memcpy(&word32, memory_->data() + pointer, size);
+  word->u64_ = word32;
+  return true;
+}
+
 bool V8::setWord(uint64_t pointer, Word word) {
-  ENVOY_LOG(trace, "[wasm] setWord({}, {})", pointer, word.u64);
+  ENVOY_LOG(trace, "[wasm] setWord({}, {})", pointer, word.u64_);
   auto size = sizeof(uint32_t);
   if (pointer + size > memory_->data_size()) {
     return false;
@@ -653,7 +666,7 @@ void V8::getModuleFunctionImpl(absl::string_view function_name,
   };
 }
 
-std::unique_ptr<WasmVm> createVm() { return std::make_unique<V8>(); }
+WasmVmPtr createVm() { return std::make_unique<V8>(); }
 
 } // namespace V8
 } // namespace Wasm

@@ -9,13 +9,16 @@ ALPN
 ALS
 AMZ
 API
+ABI
 ASAN
 ASCII
 ASSERTs
 AWS
 BSON
+CAS
 CB
 CBs
+CEL
 CDS
 CHACHA
 CHLO
@@ -88,6 +91,7 @@ EWOULDBLOCK
 EXPECTs
 EXPR
 FAQ
+FCDS
 FDs
 FFFF
 FIN
@@ -120,6 +124,7 @@ HV
 IAM
 IANA
 IDL
+IETF
 INADDR
 INET
 IO
@@ -199,7 +204,10 @@ POSTs
 PREBIND
 PRNG
 PROT
+ProcessBufferedChlos
+PSS
 QPS
+QoS
 QUIC
 RAII
 RANLUX
@@ -269,6 +277,7 @@ TLSv
 TLV
 TMPDIR
 TODO
+TPM
 TPROXY
 TSAN
 TSI
@@ -291,6 +300,9 @@ VC
 VH
 VHDS
 VLOG
+VM
+WASM
+WAVM
 WKT
 WRR
 WS
@@ -411,6 +423,7 @@ decompressor
 decrement
 decrypt
 decrypting
+decls
 dedup
 dedupe
 deduplicate
@@ -448,6 +461,7 @@ dynamodb
 eg
 emplace
 emplaced
+emscripten
 enablement
 encodings
 endian
@@ -774,6 +788,7 @@ uint
 un
 unacked
 unary
+uncomment
 unconfigurable
 unconfigured
 uncontended
@@ -789,6 +804,7 @@ unescaping
 unindexed
 uninsantiated
 uninstantiated
+uniq
 unix
 unlink
 unlinked
