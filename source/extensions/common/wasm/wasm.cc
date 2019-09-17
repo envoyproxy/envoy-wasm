@@ -1024,7 +1024,7 @@ uint64_t Context::getCurrentTimeNanoseconds() {
       .count();
 }
 
-// TODO(kyessenov) this is available but not exposed in the upstream, need to correct this
+// TODO(https://github.com/google/cel-cpp/issues/38)
 bool exportValue(const Filters::Common::Expr::CelValue& value, ProtobufWkt::Value* out) {
   using Filters::Common::Expr::CelValue;
   switch (value.type()) {
