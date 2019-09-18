@@ -1014,7 +1014,7 @@ bool exportValue(const Filters::Common::Expr::CelValue& value, ProtobufWkt::Valu
   }
   default:
     // do nothing for special values
-    break;
+    return false;
   }
   return false;
 }
@@ -1063,13 +1063,22 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
     return WasmResult::Ok;
   }
-  case CelValue::Type::kMap:
+  case CelValue::Type::kMap: {
+    ProtobufWkt::Value out;
+    if (!exportValue(value, &out)) {
+      return WasmResult::SerializationFailure;
+    }
+    if (!out.struct_value().SerializeToString(result)) {
+      return WasmResult::SerializationFailure;
+    }
+    return WasmResult::Ok;
+  }
   case CelValue::Type::kList: {
     ProtobufWkt::Value out;
     if (!exportValue(value, &out)) {
       return WasmResult::SerializationFailure;
     }
-    if (!out.SerializeToString(result)) {
+    if (!out.list_value().SerializeToString(result)) {
       return WasmResult::SerializationFailure;
     }
     return WasmResult::Ok;
@@ -1155,6 +1164,9 @@ WasmResult Context::getSelectorExpression(absl::string_view path, std::string* r
       } else if (part == "connection") {
         value = CelValue::CreateMap(
             Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(&arena, *info));
+      } else if (part == "upstream") {
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<Filters::Common::Expr::UpstreamWrapper>(&arena, *info));
       } else if (part == "node") {
         value = CelValue::CreateMessage(&wasm_->local_info_.node(), &arena);
       } else if (part == "source") {
@@ -1163,15 +1175,6 @@ WasmResult Context::getSelectorExpression(absl::string_view path, std::string* r
       } else if (part == "destination") {
         value = CelValue::CreateMap(
             Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, *info, true));
-      } else if (part == "tls_version") {
-        // TODO(kyessenov) move this upstream once SSL connection info is refactored to return
-        // references
-        if (info->downstreamSslConnection()) {
-          value = CelValue::CreateString(Protobuf::Arena::Create<std::string>(
-              &arena, info->downstreamSslConnection()->tlsVersion()));
-        } else {
-          return WasmResult::NotFound;
-        }
       } else if (part == "request_protocol") {
         // TODO(kyessenov) move this upstream to CEL context
         if (info->protocol().has_value()) {

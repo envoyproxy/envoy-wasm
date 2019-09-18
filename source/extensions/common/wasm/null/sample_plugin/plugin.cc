@@ -71,9 +71,9 @@ void PluginContext::onLog() {
     (*struct_obj.mutable_struct_value()->mutable_fields())["wasm_struct_key"] = val;
     setFilterStateValue("wasm_struct", struct_obj);
 
-    ProtobufWkt::Value got;
+    ProtobufWkt::Struct got;
     if (getStructValue({"filter_state", "wasm_struct"}, &got)) {
-      logWarn("struct state: " + got.struct_value().fields().at("wasm_struct_key").string_value());
+      logWarn("struct state: " + got.fields().at("wasm_struct_key").string_value());
     }
   } else {
     logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
