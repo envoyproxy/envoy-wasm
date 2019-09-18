@@ -1026,6 +1026,77 @@ uint64_t Context::getCurrentTimeNanoseconds() {
       .count();
 }
 
+// TODO(https://github.com/google/cel-cpp/issues/38)
+bool exportValue(const Filters::Common::Expr::CelValue& value, ProtobufWkt::Value* out) {
+  using Filters::Common::Expr::CelValue;
+  switch (value.type()) {
+  case CelValue::Type::kBool:
+    out->set_bool_value(value.BoolOrDie());
+    return true;
+  case CelValue::Type::kInt64:
+    out->set_number_value(static_cast<double>(value.Int64OrDie()));
+    return true;
+  case CelValue::Type::kUint64:
+    out->set_number_value(static_cast<double>(value.Uint64OrDie()));
+    return true;
+  case CelValue::Type::kDouble:
+    out->set_number_value(value.DoubleOrDie());
+    return true;
+  case CelValue::Type::kString:
+    *out->mutable_string_value() = std::string(value.StringOrDie().value());
+    return true;
+  case CelValue::Type::kBytes:
+    *out->mutable_string_value() = std::string(value.BytesOrDie().value());
+    return true;
+  case CelValue::Type::kMessage: {
+    if (value.IsNull()) {
+      out->set_null_value(ProtobufWkt::NullValue::NULL_VALUE);
+    } else {
+      auto msg = value.MessageOrDie();
+      out->mutable_struct_value()->MergeFrom(*msg);
+    }
+    return true;
+  }
+  case CelValue::Type::kDuration:
+    *out->mutable_string_value() = absl::FormatDuration(value.DurationOrDie());
+    return true;
+  case CelValue::Type::kTimestamp:
+    *out->mutable_string_value() = absl::FormatTime(value.TimestampOrDie());
+    return true;
+  case CelValue::Type::kList: {
+    auto list = value.ListOrDie();
+    auto values = out->mutable_list_value();
+    for (int i = 0; i < list->size(); i++) {
+      if (!exportValue((*list)[i], values->add_values())) {
+        return false;
+      }
+    }
+    return true;
+  }
+  case CelValue::Type::kMap: {
+    auto map = value.MapOrDie();
+    auto list = map->ListKeys();
+    auto struct_obj = out->mutable_struct_value();
+    for (int i = 0; i < list->size(); i++) {
+      ProtobufWkt::Value field_key;
+      if (!exportValue((*list)[i], &field_key)) {
+        return false;
+      }
+      ProtobufWkt::Value field_value;
+      if (!exportValue((*map)[(*list)[i]].value(), &field_value)) {
+        return false;
+      }
+      (*struct_obj->mutable_fields())[field_key.string_value()] = field_value;
+    }
+    return true;
+  }
+  default:
+    // do nothing for special values
+    break;
+  }
+  return false;
+}
+
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
   using Filters::Common::Expr::CelValue;
   switch (value.type()) {
@@ -1070,11 +1141,20 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
     return WasmResult::Ok;
   }
-  default:
-    // TODO(kyesenov) lists and maps
-    break;
+  case CelValue::Type::kMap:
+  case CelValue::Type::kList: {
+    ProtobufWkt::Value out;
+    if (!exportValue(value, &out)) {
+      return WasmResult::SerializationFailure;
+    }
+    if (!out.SerializeToString(result)) {
+      return WasmResult::SerializationFailure;
+    }
+    return WasmResult::Ok;
   }
-
+  default:
+    return WasmResult::SerializationFailure;
+  }
   return WasmResult::SerializationFailure;
 }
 

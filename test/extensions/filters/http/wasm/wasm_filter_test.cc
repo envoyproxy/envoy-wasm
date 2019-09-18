@@ -388,6 +388,8 @@ TEST_F(WasmHttpFilterTest, NullVmResolver) {
               scriptLog_(spdlog::level::warn, Eq(absl::string_view("response.code: 403"))));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::warn, Eq(absl::string_view("state: wasm_value"))));
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn,
+                                   Eq(absl::string_view("struct state: wasm_struct_value"))));
 
   Http::TestHeaderMapImpl request_headers{{":path", "/test_context"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));

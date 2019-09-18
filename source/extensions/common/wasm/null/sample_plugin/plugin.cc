@@ -63,6 +63,18 @@ void PluginContext::onLog() {
       logWarn("response.code: " + absl::StrCat(responseCode));
     }
     logWarn("state: " + getSelectorExpression({"filter_state", "wasm_state"}).value()->toString());
+
+    // exercise struct state roundtrip
+    ProtobufWkt::Value struct_obj;
+    ProtobufWkt::Value val;
+    val.set_string_value("wasm_struct_value");
+    (*struct_obj.mutable_struct_value()->mutable_fields())["wasm_struct_key"] = val;
+    setFilterStateValue("wasm_struct", struct_obj);
+
+    ProtobufWkt::Value got;
+    if (getStructValue({"filter_state", "wasm_struct"}, &got)) {
+      logWarn("struct state: " + got.struct_value().fields().at("wasm_struct_key").string_value());
+    }
   } else {
     logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
   }
