@@ -60,13 +60,7 @@ extern "C" WasmResult proxy_setTickPeriodMilliseconds(uint32_t millisecond);
 // Time
 extern "C" WasmResult proxy_getCurrentTimeNanoseconds(uint64_t* nanoseconds);
 
-// Metadata
-extern "C" WasmResult proxy_getMetadata(MetadataType type, const char* key_ptr, size_t key_size,
-                                      const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" WasmResult proxy_getMetadataPairs(MetadataType type, const char** value_ptr,
-                                           size_t* value_size);
-extern "C" WasmResult proxy_getMetadataStruct(MetadataType type, const char* name_ptr, size_t name_size,
-                                            const char** value_ptr_ptr, size_t* value_size_ptr);
+// Shared state
 extern "C" WasmResult proxy_setState(const char* key_ptr, size_t key_size,
                                      const char* value_ptr, size_t value_size);
 
