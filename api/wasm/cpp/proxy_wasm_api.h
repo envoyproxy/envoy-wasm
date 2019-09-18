@@ -317,9 +317,7 @@ public:
 
   // Can be used to validate the configuration (e.g. in the control plane). Returns false if the
   // configuration is invalid.
-  virtual bool onValidateConfiguration(std::unique_ptr<WasmData> /* configuration */) {
-    return true;
-  }
+  virtual bool validateConfiguration(std::unique_ptr<WasmData> /* configuration */) { return true; }
   // Called once when the VM loads and once when each hook loads and whenever configuration changes.
   // Returns false if the configuration is invalid.
   virtual bool onConfigure(std::unique_ptr<WasmData> /* configuration */) { return true; }

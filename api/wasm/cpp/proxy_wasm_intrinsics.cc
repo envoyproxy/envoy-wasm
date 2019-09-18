@@ -108,11 +108,11 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uin
                                            vm_configuration_size));
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onValidateConfiguration(uint32_t root_context_id,
-                                                                       uint32_t ptr,
-                                                                       uint32_t size) {
+extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_validateConfiguration(uint32_t root_context_id,
+                                                                     uint32_t ptr, uint32_t size) {
   return getRootContext(root_context_id)
-                 ->onConfigure(std::make_unique<WasmData>(reinterpret_cast<char*>(ptr), size))
+                 ->validateConfiguration(
+                     std::make_unique<WasmData>(reinterpret_cast<char*>(ptr), size))
              ? 1
              : 0;
 }

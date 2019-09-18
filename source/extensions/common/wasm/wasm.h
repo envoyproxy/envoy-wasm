@@ -189,7 +189,7 @@ public:
   //
   // VM level downcalls into the WASM code on Context(id == 0).
   //
-  virtual bool onValidateConfiguration(absl::string_view configuration);
+  virtual bool validateConfiguration(absl::string_view configuration);
   virtual void onStart(absl::string_view root_id, absl::string_view vm_configuration);
   virtual bool onConfigure(absl::string_view configuration);
 
@@ -584,7 +584,7 @@ private:
   WasmCallWord<0> __errno_location_;
 
   // Calls into the VM.
-  WasmCallWord<3> onValidateConfiguration_;
+  WasmCallWord<3> validateConfiguration_;
   WasmCallVoid<5> onStart_;
   WasmCallWord<3> onConfigure_;
   WasmCallVoid<1> onTick_;

@@ -1749,12 +1749,12 @@ void Context::onStart(absl::string_view root_id, absl::string_view vm_configurat
   }
 }
 
-bool Context::onValidateConfiguration(absl::string_view configuration) {
-  if (!wasm_->onValidateConfiguration_) {
+bool Context::validateConfiguration(absl::string_view configuration) {
+  if (!wasm_->validateConfiguration_) {
     return true;
   }
   auto address = wasm_->copyString(configuration);
-  return wasm_->onValidateConfiguration_(this, id_, address, configuration.size()).u64_ != 0;
+  return wasm_->validateConfiguration_(this, id_, address, configuration.size()).u64_ != 0;
 }
 
 bool Context::onConfigure(absl::string_view configuration) {
@@ -2185,7 +2185,7 @@ void Wasm::getFunctions() {
 #undef _GET
 
 #define _GET_PROXY(_fn) wasm_vm_->getFunction("_proxy_" #_fn, &_fn##_);
-  _GET_PROXY(onValidateConfiguration);
+  _GET_PROXY(validateConfiguration);
   _GET_PROXY(onStart);
   _GET_PROXY(onConfigure);
   _GET_PROXY(onTick);

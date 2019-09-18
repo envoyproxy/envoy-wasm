@@ -207,11 +207,11 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
 }
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<3>* f) {
-  if (function_name == "_proxy_onValidateConfiguration") {
+  if (function_name == "_proxy_validateConfiguration") {
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word ptr, Word size) {
       SaveRestoreContext saved_context(context);
-      return Word(plugin->onConfigure(context_id.u64_, ptr.u64_, size.u64_));
+      return Word(plugin->validateConfiguration(context_id.u64_, ptr.u64_, size.u64_));
     };
   } else if (function_name == "_proxy_onConfigure") {
     auto plugin = this;
@@ -310,9 +310,9 @@ Plugin::RootContext* NullPlugin::getRoot(absl::string_view root_id) {
   return it->second;
 }
 
-bool NullPlugin::onValidateConfiguration(uint64_t root_context_id, uint64_t ptr, uint64_t size) {
+bool NullPlugin::validateConfiguration(uint64_t root_context_id, uint64_t ptr, uint64_t size) {
   return getRootContext(root_context_id)
-      ->onValidateConfiguration(std::make_unique<WasmData>(reinterpret_cast<char*>(ptr), size));
+      ->validateConfiguration(std::make_unique<WasmData>(reinterpret_cast<char*>(ptr), size));
 }
 
 void NullPlugin::onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size,
