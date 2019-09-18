@@ -75,9 +75,9 @@ template <size_t N> using WasmCallVoid = std::function<WasmFuncType<N, void, Con
 template <size_t N> using WasmCallWord = std::function<WasmFuncType<N, Word, Context*, Word>>;
 
 #define FOR_ALL_WASM_VM_EXPORTS(_f)                                                                \
-  _f(WasmCallVoid<0>) _f(WasmCallVoid<1>) _f(WasmCallVoid<2>) _f(WasmCallVoid<3>)                  \
-      _f(WasmCallVoid<4>) _f(WasmCallVoid<5>) _f(WasmCallVoid<8>) _f(WasmCallWord<0>)              \
-          _f(WasmCallWord<1>) _f(WasmCallWord<3>)
+  _f(WasmCallVoid<0>) _f(WasmCallVoid<1>) _f(WasmCallVoid<2>) _f(WasmCallVoid<4>)                  \
+      _f(WasmCallVoid<5>) _f(WasmCallVoid<8>) _f(WasmCallWord<0>) _f(WasmCallWord<1>)              \
+          _f(WasmCallWord<3>)
 
 // Calls out of the WASM VM.
 // 1st arg is always a pointer to raw_context (void*).
