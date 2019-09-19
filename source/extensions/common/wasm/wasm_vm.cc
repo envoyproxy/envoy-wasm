@@ -27,7 +27,7 @@ std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
 #elif defined(ENVOY_WASM_WAVM) && !defined(ENVOY_WASM_V8)
     return Wavm::createVm();
 #else
-    throw WasmException("Failed to create WASM VM with unspecified runtime.");
+    throw WasmVmException("Failed to create WASM VM with unspecified runtime.");
 #endif
   } else if (wasm_vm == WasmVmNames::get().Null) {
     return Null::createVm();
@@ -43,7 +43,7 @@ std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
   } else
 #endif
   {
-    throw WasmException(fmt::format(
+    throw WasmVmException(fmt::format(
         "Failed to create WASM VM using {} runtime. Envoy was compiled without support for it.",
         wasm_vm));
   }

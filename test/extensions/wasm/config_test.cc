@@ -40,10 +40,11 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
-  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
+  envoy::config::wasm::v2::WasmService config;
+  config.mutable_config()->mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
+  config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
+      TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
@@ -62,10 +63,11 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
-  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
+  envoy::config::wasm::v2::WasmService config;
+  config.mutable_config()->mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
+  config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
+      TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
   testing::NiceMock<ThreadLocal::MockInstance> tls;
@@ -83,10 +85,11 @@ TEST_P(WasmFactoryTest, MissingImport) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
-  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/missing_cpp.wasm"));
+  envoy::config::wasm::v2::WasmService config;
+  config.mutable_config()->mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
+  config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
+      TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/wasm/test_data/missing_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
@@ -108,10 +111,11 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm("");
-  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
+  envoy::config::wasm::v2::WasmService config;
+  config.mutable_config()->mutable_vm_config()->set_vm("");
+  config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
+      TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
@@ -124,7 +128,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
                                                         *scope, scope, local_info);
 #if defined(ENVOY_WASM_V8) == defined(ENVOY_WASM_WAVM)
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context),
-                            Extensions::Common::Wasm::WasmException,
+                            Extensions::Common::Wasm::WasmVmException,
                             "Failed to create WASM VM with unspecified runtime.");
 #else
   auto wasm = factory->createWasm(config, context);
@@ -136,10 +140,11 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmConfig config;
-  config.mutable_vm_config()->set_vm("envoy.wasm.vm.invalid");
-  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
+  envoy::config::wasm::v2::WasmService config;
+  config.mutable_config()->mutable_vm_config()->set_vm("envoy.wasm.vm.invalid");
+  config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
+      TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
   Event::MockDispatcher dispatcher;
@@ -151,7 +156,7 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api,
                                                         *scope, scope, local_info);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context),
-                            Extensions::Common::Wasm::WasmException,
+                            Extensions::Common::Wasm::WasmVmException,
                             "Failed to create WASM VM using envoy.wasm.vm.invalid runtime. "
                             "Envoy was compiled without support for it.");
 }

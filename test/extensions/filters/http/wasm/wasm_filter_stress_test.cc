@@ -73,10 +73,11 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
   config_helper_.addFilter(fmt::format(R"EOF(
             name: envoy.filters.http.wasm
             config:
-              vm_config:
-                vm: "{}"
-                code:
-                  filename: "{}"
+              config:
+                vm_config:
+                  vm: "{}"
+                  code:
+                    filename: "{}"
 )EOF",
                                        wasmVM(), wasm_file));
 
@@ -182,11 +183,12 @@ TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
   config_helper_.addFilter(fmt::format(R"EOF(
             name: envoy.filters.http.wasm
             config:
-              vm_config:
-                vm: "{}"
-                code:
-                  filename: "{}"
-                allow_precompiled: true
+              config:
+                vm_config:
+                  vm: "{}"
+                  code:
+                    filename: "{}"
+                  allow_precompiled: true
 )EOF",
                                        wasmVM(), wasm_file));
 
@@ -292,10 +294,11 @@ TEST_P(HttpWasmStressTest, DISABLED_CalloutHappyPath) {
   config_helper_.addFilter(fmt::format(R"EOF(
             name: envoy.filters.http.wasm
             config:
-              vm_config:
-                vm: "{}"
-                code:
-                  filename: "{}"
+              config:
+                vm_config:
+                  vm: "{}"
+                  code:
+                    filename: "{}"
 )EOF",
                                        wasm_vm, wasm_file));
 
