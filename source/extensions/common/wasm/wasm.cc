@@ -1183,9 +1183,19 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
         } else {
           return WasmResult::NotFound;
         }
-      } else if (part == "traffic_direction") {
-        // TODO(kyessenov) organize reflective accessors for the config better
+        // Reflective accessors
+      } else if (part == "listener_direction") {
         value = CelValue::CreateInt64(wasm_->direction_);
+      } else if (part == "listener_metadata") {
+        value = CelValue::CreateMessage(wasm_->listener_metadata_, &arena);
+      } else if (part == "cluster_name" && info->upstreamHost() != nullptr) {
+        value = CelValue::CreateString(info->upstreamHost()->cluster().name());
+      } else if (part == "cluster_metadata" && info->upstreamHost() != nullptr) {
+        value = CelValue::CreateMessage(&info->upstreamHost()->cluster().metadata(), &arena);
+      } else if (part == "route_name") {
+        value = CelValue::CreateString(&info->getRouteName());
+      } else if (part == "route_metadata" && info->routeEntry() != nullptr) {
+        value = CelValue::CreateMessage(&info->routeEntry()->metadata(), &arena);
       } else {
         return WasmResult::NotFound;
       }
