@@ -101,18 +101,6 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f
   }
 }
 
-void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<3>* f) {
-  if (function_name == "_proxy_onConfigure") {
-    auto plugin = this;
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word ptr, Word size) {
-      SaveRestoreContext saved_context(context);
-      plugin->onConfigure(context_id.u64_, ptr.u64_, size.u64_);
-    };
-  } else {
-    throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
-  }
-}
-
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<4>* f) {
   if (function_name == "_proxy_onGrpcReceive") {
     auto plugin = this;
@@ -219,7 +207,19 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
 }
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<3>* f) {
-  if (function_name == "_proxy_onRequestBody") {
+  if (function_name == "_proxy_validateConfiguration") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word ptr, Word size) {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->validateConfiguration(context_id.u64_, ptr.u64_, size.u64_));
+    };
+  } else if (function_name == "_proxy_onConfigure") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word ptr, Word size) {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onConfigure(context_id.u64_, ptr.u64_, size.u64_));
+    };
+  } else if (function_name == "_proxy_onRequestBody") {
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
                   Word end_of_stream) -> Word {
@@ -310,6 +310,11 @@ Plugin::RootContext* NullPlugin::getRoot(absl::string_view root_id) {
   return it->second;
 }
 
+bool NullPlugin::validateConfiguration(uint64_t root_context_id, uint64_t ptr, uint64_t size) {
+  return getRootContext(root_context_id)
+      ->validateConfiguration(std::make_unique<WasmData>(reinterpret_cast<char*>(ptr), size));
+}
+
 void NullPlugin::onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size,
                          uint64_t vm_configuration_ptr, uint64_t vm_configuration_size) {
   ensureRootContext(root_context_id,
@@ -318,8 +323,8 @@ void NullPlugin::onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_
                                            vm_configuration_size));
 }
 
-void NullPlugin::onConfigure(uint64_t root_context_id, uint64_t ptr, uint64_t size) {
-  getRootContext(root_context_id)
+bool NullPlugin::onConfigure(uint64_t root_context_id, uint64_t ptr, uint64_t size) {
+  return getRootContext(root_context_id)
       ->onConfigure(std::make_unique<WasmData>(reinterpret_cast<char*>(ptr), size));
 }
 

@@ -6,8 +6,9 @@ use log::{debug, error, info, trace, warn};
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub fn _proxy_onConfigure(_context_id : u32, message: &str) {
+pub fn _proxy_onConfigure(_context_id : u32, message: &str) -> u32 {
     warn!("warn {}", message);
+    1
 }
 
 #[no_mangle]

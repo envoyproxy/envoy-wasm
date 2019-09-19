@@ -291,8 +291,12 @@ public:
   RootContext* asRoot() override { return this; }
   Context* asContext() override { return nullptr; }
 
+  // Can be used to validate the configuration (e.g. in the control plane). Returns false if the
+  // configuration is invalid.
+  virtual bool validateConfiguration(std::unique_ptr<WasmData> /* configuration */) { return true; }
   // Called once when the VM loads and once when each hook loads and whenever configuration changes.
-  virtual void onConfigure(std::unique_ptr<WasmData> /* configuration */) {}
+  // Returns false if the configuration is invalid.
+  virtual bool onConfigure(std::unique_ptr<WasmData> /* configuration */) { return true; }
   // Called when each hook loads.
   virtual void onStart(WasmDataPtr /* vm_configuration */) {}
   // Called when the timer goes off.
@@ -451,7 +455,8 @@ inline bool getStringValue(std::initializer_list<StringView> parts, std::string*
   return true;
 }
 
-inline bool getStructValue(std::initializer_list<StringView> parts, google::protobuf::Struct* value_ptr) {
+inline bool getStructValue(std::initializer_list<StringView> parts,
+                           google::protobuf::Value* value_ptr) {
   auto buf = getSelectorExpression(parts);
   if (!buf.has_value()) {
     return false;
@@ -459,7 +464,7 @@ inline bool getStructValue(std::initializer_list<StringView> parts, google::prot
   return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
 }
 
-inline WasmResult getRequestProtocol(std::string *result) {
+inline WasmResult getRequestProtocol(std::string* result) {
   return getStringValue({"request_protocol"}, result) ? WasmResult::Ok : WasmResult::NotFound;
 }
 
@@ -468,13 +473,14 @@ template <typename T> inline bool getValue(std::initializer_list<StringView> par
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
     return false;
   }
-  *out = *reinterpret_cast<const T *>(buf.value()->data());
+  *out = *reinterpret_cast<const T*>(buf.value()->data());
   return true;
 }
 
 // Requires that the value is a serialized google.protobuf.Value.
 inline WasmResult setFilterState(StringView key, StringView value) {
-  return static_cast<WasmResult>(proxy_setState(key.data(), key.size(), value.data(), value.size()));
+  return static_cast<WasmResult>(
+      proxy_setState(key.data(), key.size(), value.data(), value.size()));
 }
 
 inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Value& value) {
@@ -482,7 +488,8 @@ inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Va
   if (!value.SerializeToString(&output)) {
     return WasmResult::SerializationFailure;
   }
-  return static_cast<WasmResult>(proxy_setState(key.data(), key.size(), output.data(), output.size()));
+  return static_cast<WasmResult>(
+      proxy_setState(key.data(), key.size(), output.data(), output.size()));
 }
 
 inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
