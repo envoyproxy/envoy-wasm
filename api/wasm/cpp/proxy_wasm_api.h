@@ -456,7 +456,7 @@ inline bool getStringValue(std::initializer_list<StringView> parts, std::string*
 }
 
 inline bool getStructValue(std::initializer_list<StringView> parts,
-                           google::protobuf::Value* value_ptr) {
+                           google::protobuf::Struct* value_ptr) {
   auto buf = getSelectorExpression(parts);
   if (!buf.has_value()) {
     return false;
