@@ -361,27 +361,27 @@ uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_na
 // HTTP Handlers
 //
 
-Word setStateHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
-                     Word value_size) {
+Word setPropertyHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
+                        Word value_size) {
   auto context = WASM_CONTEXT(raw_context);
   auto key = context->wasmVm()->getMemory(key_ptr.u64_, key_size.u64_);
   auto value = context->wasmVm()->getMemory(value_ptr.u64_, value_size.u64_);
   if (!key || !value) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  return wasmResultToWord(context->setState(key.value(), value.value()));
+  return wasmResultToWord(context->setProperty(key.value(), value.value()));
 }
 
 // Generic selector
-Word getSelectorExpressionHandler(void* raw_context, Word path_ptr, Word path_size,
-                                  Word value_ptr_ptr, Word value_size_ptr) {
+Word getPropertyHandler(void* raw_context, Word path_ptr, Word path_size, Word value_ptr_ptr,
+                        Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto path = context->wasmVm()->getMemory(path_ptr.u64_, path_size.u64_);
   if (!path.has_value()) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
   std::string value;
-  auto result = context->getSelectorExpression(path.value(), &value);
+  auto result = context->getProperty(path.value(), &value);
   if (result != WasmResult::Ok) {
     return wasmResultToWord(result);
   }
@@ -1118,7 +1118,7 @@ private:
   ProtobufWkt::Arena* arena_;
 };
 
-WasmResult Context::getSelectorExpression(absl::string_view path, std::string* result) {
+WasmResult Context::getProperty(absl::string_view path, std::string* result) {
   using google::api::expr::runtime::CelValue;
   using google::api::expr::runtime::FieldBackedListImpl;
   using google::api::expr::runtime::FieldBackedMapImpl;
@@ -1593,7 +1593,7 @@ const StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
   return nullptr;
 }
 
-WasmResult Context::setState(absl::string_view key, absl::string_view serialized_value) {
+WasmResult Context::setProperty(absl::string_view key, absl::string_view serialized_value) {
   ProtobufWkt::Value value_struct;
   if (!value_struct.ParseFromArray(serialized_value.data(), serialized_value.size())) {
     return WasmResult::ParseFailure;
@@ -2010,8 +2010,8 @@ void Wasm::registerCallbacks() {
                                    _fn##Handler>::convertFunctionWordToUint32);
   _REGISTER_PROXY(log);
 
-  _REGISTER_PROXY(setState);
-  _REGISTER_PROXY(getSelectorExpression);
+  _REGISTER_PROXY(setProperty);
+  _REGISTER_PROXY(getProperty);
 
   _REGISTER_PROXY(continueRequest);
   _REGISTER_PROXY(continueResponse);

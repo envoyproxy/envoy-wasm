@@ -421,7 +421,7 @@ struct RegisterContextFactory {
 };
 
 // Generic selector
-inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringView> parts) {
+inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts) {
   size_t size = 0;
   for (auto part : parts) {
     size += part.size() + 1; // null terminated string value
@@ -438,7 +438,7 @@ inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringV
 
   const char* value_ptr = nullptr;
   size_t value_size = 0;
-  auto result = proxy_getSelectorExpression(buffer, size, &value_ptr, &value_size);
+  auto result = proxy_getProperty(buffer, size, &value_ptr, &value_size);
   ::free(buffer);
   if (result != WasmResult::Ok) {
     return {};
@@ -447,7 +447,7 @@ inline Optional<WasmDataPtr> getSelectorExpression(std::initializer_list<StringV
 }
 
 inline bool getStringValue(std::initializer_list<StringView> parts, std::string* out) {
-  auto buf = getSelectorExpression(parts);
+  auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
   }
@@ -457,7 +457,7 @@ inline bool getStringValue(std::initializer_list<StringView> parts, std::string*
 
 inline bool getStructValue(std::initializer_list<StringView> parts,
                            google::protobuf::Struct* value_ptr) {
-  auto buf = getSelectorExpression(parts);
+  auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
   }
@@ -469,7 +469,7 @@ inline WasmResult getRequestProtocol(std::string* result) {
 }
 
 template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T* out) {
-  auto buf = getSelectorExpression(parts);
+  auto buf = getProperty(parts);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
     return false;
   }
@@ -480,7 +480,7 @@ template <typename T> inline bool getValue(std::initializer_list<StringView> par
 // Requires that the value is a serialized google.protobuf.Value.
 inline WasmResult setFilterState(StringView key, StringView value) {
   return static_cast<WasmResult>(
-      proxy_setState(key.data(), key.size(), value.data(), value.size()));
+      proxy_setProperty(key.data(), key.size(), value.data(), value.size()));
 }
 
 inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Value& value) {
@@ -489,7 +489,7 @@ inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Va
     return WasmResult::SerializationFailure;
   }
   return static_cast<WasmResult>(
-      proxy_setState(key.data(), key.size(), output.data(), output.size()));
+      proxy_setProperty(key.data(), key.size(), output.data(), output.size()));
 }
 
 inline WasmResult setFilterStateStringValue(StringView key, StringView s) {

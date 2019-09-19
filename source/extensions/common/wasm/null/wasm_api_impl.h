@@ -34,18 +34,16 @@ inline WasmResult proxy_getCurrentTimeNanoseconds(uint64_t* result) {
   return wordToWasmResult(getCurrentTimeNanosecondsHandler(current_context_, WR(result)));
 }
 
-// Shared state
-inline WasmResult proxy_setState(const char* key_ptr, size_t key_size, const char* value_ptr,
-                                 size_t value_size) {
-  return wordToWasmResult(
-      setStateHandler(current_context_, WR(key_ptr), WS(key_size), WR(value_ptr), WS(value_size)));
+// State accessors
+inline WasmResult proxy_getProperty(const char* path_ptr, size_t path_size,
+                                    const char** value_ptr_ptr, size_t* value_size_ptr) {
+  return wordToWasmResult(getPropertyHandler(current_context_, WR(path_ptr), WS(path_size),
+                                             WR(value_ptr_ptr), WR(value_size_ptr)));
 }
-
-// Generic selector
-inline WasmResult proxy_getSelectorExpression(const char* path_ptr, size_t path_size,
-                                              const char** value_ptr_ptr, size_t* value_size_ptr) {
-  return wordToWasmResult(getSelectorExpressionHandler(
-      current_context_, WR(path_ptr), WS(path_size), WR(value_ptr_ptr), WR(value_size_ptr)));
+inline WasmResult proxy_setProperty(const char* key_ptr, size_t key_size, const char* value_ptr,
+                                    size_t value_size) {
+  return wordToWasmResult(setPropertyHandler(current_context_, WR(key_ptr), WS(key_size),
+                                             WR(value_ptr), WS(value_size)));
 }
 
 // Continue

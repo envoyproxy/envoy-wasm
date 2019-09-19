@@ -61,13 +61,11 @@ extern "C" WasmResult proxy_setTickPeriodMilliseconds(uint32_t millisecond);
 // Time
 extern "C" WasmResult proxy_getCurrentTimeNanoseconds(uint64_t* nanoseconds);
 
-// Shared state
-extern "C" WasmResult proxy_setState(const char* key_ptr, size_t key_size,
-                                     const char* value_ptr, size_t value_size);
-// Generic selector
-extern "C" WasmResult proxy_getSelectorExpression(const char* path_ptr, size_t path_size,
-                                                  const char** value_ptr_ptr,
-                                                  size_t* value_size_ptr);
+// State accessors
+extern "C" WasmResult proxy_getProperty(const char* path_ptr, size_t path_size,
+                                        const char** value_ptr_ptr, size_t* value_size_ptr);
+extern "C" WasmResult proxy_setProperty(const char* path_ptr, size_t path_size,
+                                        const char* value_ptr, size_t value_size);
 
 // Continue/Reply/Route
 extern "C" WasmResult proxy_continueRequest();
