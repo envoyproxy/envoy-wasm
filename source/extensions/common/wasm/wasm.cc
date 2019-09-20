@@ -321,27 +321,6 @@ Http::HeaderMapPtr buildHeaderMapFromPairs(const Pairs& pairs) {
   return map;
 }
 
-const ProtobufWkt::Struct*
-getStructProtoFromMetadata(const envoy::api::v2::core::Metadata& metadata,
-                           absl::string_view name = "") {
-  if (name.empty()) {
-    name = HttpFilters::HttpFilterNames::get().Wasm;
-  }
-  const auto filter_it = metadata.filter_metadata().find(std::string(name));
-  if (filter_it == metadata.filter_metadata().end()) {
-    return nullptr;
-  }
-  return &filter_it->second;
-}
-
-const ProtobufWkt::Struct* getRouteMetadataStructProto(Http::StreamFilterCallbacks* callbacks) {
-  if (callbacks == nullptr || callbacks->route() == nullptr ||
-      callbacks->route()->routeEntry() == nullptr) {
-    return nullptr;
-  }
-  return getStructProtoFromMetadata(callbacks->route()->routeEntry()->metadata());
-}
-
 const uint8_t* decodeVarint(const uint8_t* pos, const uint8_t* end, uint32_t* out) {
   uint32_t ret = 0;
   int shift = 0;
@@ -382,84 +361,27 @@ uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_na
 // HTTP Handlers
 //
 
-// Metadata
-Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
-                        Word value_ptr_ptr, Word value_size_ptr) {
-  if (type.u64_ > static_cast<int>(MetadataType::MAX)) {
-    return wasmResultToWord(WasmResult::BadArgument);
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  std::string value;
-  auto key = context->wasmVm()->getMemory(key_ptr.u64_, key_size.u64_);
-  if (!key) {
-    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
-  }
-  auto result = context->getMetadata(static_cast<MetadataType>(type.u64_), key.value(), &value);
-  if (result != WasmResult::Ok) {
-    return wasmResultToWord(result);
-  }
-  if (!context->wasm()->copyToPointerSize(value, value_ptr_ptr.u64_, value_size_ptr.u64_)) {
-    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
-  }
-  return wasmResultToWord(result);
-}
-
-Word setStateHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
-                     Word value_size) {
+Word setPropertyHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
+                        Word value_size) {
   auto context = WASM_CONTEXT(raw_context);
   auto key = context->wasmVm()->getMemory(key_ptr.u64_, key_size.u64_);
   auto value = context->wasmVm()->getMemory(value_ptr.u64_, value_size.u64_);
   if (!key || !value) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  return wasmResultToWord(context->setState(key.value(), value.value()));
-}
-
-Word getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
-  if (type.u64_ > static_cast<int>(MetadataType::MAX)) {
-    return wasmResultToWord(WasmResult::BadArgument);
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  PairsWithStringValues pairs;
-  auto result = context->getMetadataPairs(static_cast<MetadataType>(type.u64_), &pairs);
-  if (!getPairs(context, pairs, ptr_ptr.u64_, size_ptr.u64_)) {
-    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
-  }
-  return wasmResultToWord(result);
-}
-
-Word getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
-                              Word value_ptr_ptr, Word value_size_ptr) {
-  if (type.u64_ > static_cast<int>(MetadataType::MAX)) {
-    return Word(static_cast<uint64_t>(WasmResult::BadArgument));
-  }
-  auto context = WASM_CONTEXT(raw_context);
-  std::string value;
-  auto name = context->wasmVm()->getMemory(name_ptr.u64_, name_size.u64_);
-  if (!name) {
-    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
-  }
-  auto result =
-      context->getMetadataStruct(static_cast<MetadataType>(type.u64_), name.value(), &value);
-  if (result != WasmResult::Ok) {
-    return wasmResultToWord(result);
-  }
-  if (!context->wasm()->copyToPointerSize(value, value_ptr_ptr.u64_, value_size_ptr.u64_)) {
-    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
-  }
-  return wasmResultToWord(WasmResult::Ok);
+  return wasmResultToWord(context->setProperty(key.value(), value.value()));
 }
 
 // Generic selector
-Word getSelectorExpressionHandler(void* raw_context, Word path_ptr, Word path_size,
-                                  Word value_ptr_ptr, Word value_size_ptr) {
+Word getPropertyHandler(void* raw_context, Word path_ptr, Word path_size, Word value_ptr_ptr,
+                        Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto path = context->wasmVm()->getMemory(path_ptr.u64_, path_size.u64_);
   if (!path.has_value()) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
   std::string value;
-  auto result = context->getSelectorExpression(path.value(), &value);
+  auto result = context->getProperty(path.value(), &value);
   if (result != WasmResult::Ok) {
     return wasmResultToWord(result);
   }
@@ -1092,7 +1014,7 @@ bool exportValue(const Filters::Common::Expr::CelValue& value, ProtobufWkt::Valu
   }
   default:
     // do nothing for special values
-    break;
+    return false;
   }
   return false;
 }
@@ -1141,13 +1063,22 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
     return WasmResult::Ok;
   }
-  case CelValue::Type::kMap:
+  case CelValue::Type::kMap: {
+    ProtobufWkt::Value out;
+    if (!exportValue(value, &out)) {
+      return WasmResult::SerializationFailure;
+    }
+    if (!out.struct_value().SerializeToString(result)) {
+      return WasmResult::SerializationFailure;
+    }
+    return WasmResult::Ok;
+  }
   case CelValue::Type::kList: {
     ProtobufWkt::Value out;
     if (!exportValue(value, &out)) {
       return WasmResult::SerializationFailure;
     }
-    if (!out.SerializeToString(result)) {
+    if (!out.list_value().SerializeToString(result)) {
       return WasmResult::SerializationFailure;
     }
     return WasmResult::Ok;
@@ -1187,7 +1118,7 @@ private:
   ProtobufWkt::Arena* arena_;
 };
 
-WasmResult Context::getSelectorExpression(absl::string_view path, std::string* result) {
+WasmResult Context::getProperty(absl::string_view path, std::string* result) {
   using google::api::expr::runtime::CelValue;
   using google::api::expr::runtime::FieldBackedListImpl;
   using google::api::expr::runtime::FieldBackedMapImpl;
@@ -1233,6 +1164,9 @@ WasmResult Context::getSelectorExpression(absl::string_view path, std::string* r
       } else if (part == "connection") {
         value = CelValue::CreateMap(
             Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(&arena, *info));
+      } else if (part == "upstream") {
+        value = CelValue::CreateMap(
+            Protobuf::Arena::Create<Filters::Common::Expr::UpstreamWrapper>(&arena, *info));
       } else if (part == "node") {
         value = CelValue::CreateMessage(&wasm_->local_info_.node(), &arena);
       } else if (part == "source") {
@@ -1241,15 +1175,6 @@ WasmResult Context::getSelectorExpression(absl::string_view path, std::string* r
       } else if (part == "destination") {
         value = CelValue::CreateMap(
             Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, *info, true));
-      } else if (part == "tls_version") {
-        // TODO(kyessenov) move this upstream once SSL connection info is refactored to return
-        // references
-        if (info->downstreamSslConnection()) {
-          value = CelValue::CreateString(Protobuf::Arena::Create<std::string>(
-              &arena, info->downstreamSslConnection()->tlsVersion()));
-        } else {
-          return WasmResult::NotFound;
-        }
       } else if (part == "request_protocol") {
         // TODO(kyessenov) move this upstream to CEL context
         if (info->protocol().has_value()) {
@@ -1258,9 +1183,19 @@ WasmResult Context::getSelectorExpression(absl::string_view path, std::string* r
         } else {
           return WasmResult::NotFound;
         }
-      } else if (part == "traffic_direction") {
-        // TODO(kyessenov) organize reflective accessors for the config better
+        // Reflective accessors
+      } else if (part == "listener_direction") {
         value = CelValue::CreateInt64(wasm_->direction_);
+      } else if (part == "listener_metadata") {
+        value = CelValue::CreateMessage(wasm_->listener_metadata_, &arena);
+      } else if (part == "cluster_name" && info->upstreamHost() != nullptr) {
+        value = CelValue::CreateString(info->upstreamHost()->cluster().name());
+      } else if (part == "cluster_metadata" && info->upstreamHost() != nullptr) {
+        value = CelValue::CreateMessage(&info->upstreamHost()->cluster().metadata(), &arena);
+      } else if (part == "route_name") {
+        value = CelValue::CreateString(&info->getRouteName());
+      } else if (part == "route_metadata" && info->routeEntry() != nullptr) {
+        value = CelValue::CreateMessage(&info->routeEntry()->metadata(), &arena);
       } else {
         return WasmResult::NotFound;
       }
@@ -1668,113 +1603,7 @@ const StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
   return nullptr;
 }
 
-const ProtobufWkt::Struct* Context::getMetadataStructProto(MetadataType type,
-                                                           absl::string_view name) {
-  switch (type) {
-  case MetadataType::RequestRoute:
-    return getRouteMetadataStructProto(decoder_callbacks_);
-  case MetadataType::ResponseRoute:
-    return getRouteMetadataStructProto(encoder_callbacks_);
-  case MetadataType::Node:
-    if (name == ".") {
-      temporary_metadata_.Clear();
-      (*temporary_metadata_.mutable_fields())["id"].set_string_value(
-          wasm_->local_info_.node().id());
-      (*temporary_metadata_.mutable_fields())["cluster"].set_string_value(
-          wasm_->local_info_.node().cluster());
-      (*temporary_metadata_.mutable_fields())["locality.region"].set_string_value(
-          wasm_->local_info_.node().locality().region());
-      (*temporary_metadata_.mutable_fields())["locality.zone"].set_string_value(
-          wasm_->local_info_.node().locality().zone());
-      (*temporary_metadata_.mutable_fields())["locality.sub_zone"].set_string_value(
-          wasm_->local_info_.node().locality().sub_zone());
-      (*temporary_metadata_.mutable_fields())["build_version"].set_string_value(
-          wasm_->local_info_.node().build_version());
-      return &temporary_metadata_;
-    }
-    return &wasm_->local_info_.node().metadata();
-  case MetadataType::Listener:
-    if (wasm_->listener_metadata_) {
-      return getStructProtoFromMetadata(*wasm_->listener_metadata_, name);
-    }
-    return nullptr;
-  case MetadataType::Cluster: {
-    std::string cluster_name;
-    auto stream_info = getRequestStreamInfo();
-    if (!stream_info) {
-      return nullptr;
-    }
-    auto host = stream_info->upstreamHost();
-    if (!host) {
-      return nullptr;
-    }
-    cluster_name = host->cluster().name();
-    if (name == ".") {
-      temporary_metadata_.Clear();
-      (*temporary_metadata_.mutable_fields())["cluster_name"].set_string_value(cluster_name);
-      return &temporary_metadata_;
-    }
-    return getStructProtoFromMetadata(host->cluster().metadata(), name);
-  }
-  default: {
-    auto stream_info = getRequestStreamInfo();
-    if (!stream_info) {
-      return nullptr;
-    }
-    return getStructProtoFromMetadata(stream_info->dynamicMetadata(), name);
-  }
-  }
-}
-
-WasmResult Context::getMetadata(MetadataType type, absl::string_view key, std::string* result_ptr) {
-  auto proto_struct = getMetadataStructProto(type);
-  if (!proto_struct) {
-    return WasmResult::NotFound;
-  }
-  auto it = proto_struct->fields().find(std::string(key));
-  if (it == proto_struct->fields().end()) {
-    return WasmResult::NotFound;
-  }
-  std::string result;
-  if (!it->second.SerializeToString(&result)) {
-    return WasmResult::SerializationFailure;
-  }
-  *result_ptr = std::move(result);
-  return WasmResult::Ok;
-}
-
-WasmResult Context::getMetadataPairs(MetadataType type, PairsWithStringValues* result_ptr) {
-  auto proto_struct = getMetadataStructProto(type);
-  if (!proto_struct) {
-    return WasmResult::NotFound;
-  }
-  PairsWithStringValues result;
-  for (auto& p : proto_struct->fields()) {
-    std::string value;
-    if (!p.second.SerializeToString(&value)) {
-      return WasmResult::SerializationFailure;
-    }
-    result.emplace_back(p.first, std::move(value));
-  }
-  *result_ptr = std::move(result);
-  return WasmResult::Ok;
-}
-
-WasmResult Context::getMetadataStruct(MetadataType type, absl::string_view name,
-                                      std::string* result_ptr) {
-  auto proto_struct = getMetadataStructProto(type, name);
-  if (!proto_struct) {
-    return WasmResult::NotFound;
-  }
-  std::string result;
-  if (!proto_struct->SerializeToString(&result)) {
-    return WasmResult::SerializationFailure;
-  }
-  *result_ptr = std::move(result);
-  return WasmResult::Ok;
-}
-
-WasmResult Context::setState(absl::string_view key, absl::string_view serialized_value) {
+WasmResult Context::setProperty(absl::string_view key, absl::string_view serialized_value) {
   ProtobufWkt::Value value_struct;
   if (!value_struct.ParseFromArray(serialized_value.data(), serialized_value.size())) {
     return WasmResult::ParseFailure;
@@ -2191,11 +2020,8 @@ void Wasm::registerCallbacks() {
                                    _fn##Handler>::convertFunctionWordToUint32);
   _REGISTER_PROXY(log);
 
-  _REGISTER_PROXY(getMetadata);
-  _REGISTER_PROXY(getMetadataPairs);
-  _REGISTER_PROXY(getMetadataStruct);
-  _REGISTER_PROXY(setState);
-  _REGISTER_PROXY(getSelectorExpression);
+  _REGISTER_PROXY(setProperty);
+  _REGISTER_PROXY(getProperty);
 
   _REGISTER_PROXY(continueRequest);
   _REGISTER_PROXY(continueResponse);

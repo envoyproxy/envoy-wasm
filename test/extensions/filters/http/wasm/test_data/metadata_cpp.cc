@@ -21,20 +21,19 @@ public:
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext), ROOT_FACTORY(ExampleRootContext));
 
 void ExampleRootContext::onTick() {
-  google::protobuf::Value value;
-  if (auto r = nodeMetadataValue("wasm_node_get_key", &value); r != WasmResult::Ok) {
-    logDebug(toString(r));
+  std::string value;
+  if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
+    logDebug("missing node metadata");
   }
-  logDebug(std::string("onTick ") + value.string_value());
+  logDebug(std::string("onTick ") + value);
 }
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
-  google::protobuf::Value value;
-  auto r = nodeMetadataValue("wasm_node_get_key", &value);
-  if (r != WasmResult::Ok) {
-    logDebug(toString(r));
+  std::string value;
+  if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
+    logDebug("missing node metadata");
   }
-  r = setFilterStateStringValue("wasm_request_set_key", "wasm_request_set_value");
+  auto r = setFilterStateStringValue("wasm_request_set_key", "wasm_request_set_value");
   if (r != WasmResult::Ok) {
     logDebug(toString(r));
   }
@@ -46,24 +45,20 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
 }
 
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
-  google::protobuf::Value value;
-  auto r = nodeMetadataValue("wasm_node_get_key", &value);
-  if (r != WasmResult::Ok) {
-    logDebug(toString(r));
+  std::string value;
+  if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
+    logDebug("missing node metadata");
   }
-  logError(std::string("onRequestBody ") + value.string_value());
-  google::protobuf::Struct request_struct;
-  google::protobuf::Struct request_struct2;
-  r = requestMetadataStruct(&request_struct);
-  if (r != WasmResult::Ok) { 
-    logDebug(toString(r));
+  logError(std::string("onRequestBody ") + value);
+  std::string request_string;
+  std::string request_string2;
+  if (!getStringValue({"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"}, &request_string)) {
+    logDebug("missing request metadata");
   }
-  r = requestMetadataStruct(&request_struct2);
-  if (r != WasmResult::Ok) { 
-    logDebug(toString(r));
+  if (!getStringValue({"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"}, &request_string2)) {
+    logDebug("missing request metadata");
   }
-  logTrace(std::string("Struct ") + request_struct.fields().at("wasm_request_get_key").string_value() + " " +
-           request_struct2.fields().at("wasm_request_get_key").string_value());
+  logTrace(std::string("Struct ") + request_string + " " + request_string2);
   return FilterDataStatus::Continue;
 }
 

@@ -42,15 +42,10 @@ enum class StreamType : int32_t { Request = 0, Response = 1, MAX = 1 };
 
 // Handlers for functions exported from envoy to wasm.
 Word logHandler(void* raw_context, Word level, Word address, Word size);
-Word getMetadataHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
-                        Word value_ptr_ptr, Word value_size_ptr);
-Word getMetadataPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr);
-Word getMetadataStructHandler(void* raw_context, Word type, Word name_ptr, Word name_size,
-                              Word value_ptr_ptr, Word value_size_ptr);
-Word setStateHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
-                     Word value_size);
-Word getSelectorExpressionHandler(void* raw_context, Word path_ptr, Word path_size,
-                                  Word value_ptr_ptr, Word value_size_ptr);
+Word getPropertyHandler(void* raw_context, Word path_ptr, Word path_size, Word value_ptr_ptr,
+                        Word value_size_ptr);
+Word setPropertyHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
+                        Word value_size);
 Word continueRequestHandler(void* raw_context);
 Word continueResponseHandler(void* raw_context);
 Word sendLocalResponseHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
@@ -262,19 +257,9 @@ public:
   // HTTP Filter Callbacks
   //
 
-  // Generic resolver producing a serialized value
-  virtual WasmResult getSelectorExpression(absl::string_view path, std::string* result);
-
-  // Metadata
-  // When used with MetadataType::Request/Response refers to metadata with name "envoy.wasm": the
-  // values are serialized ProtobufWkt::Struct Value
-  virtual WasmResult getMetadata(MetadataType type, absl::string_view key, std::string* result);
-  virtual WasmResult getMetadataPairs(MetadataType type, PairsWithStringValues* result);
-  // Name is ignored when the type is not MetadataType::Request/Response: the values are serialized
-  // ProtobufWkt::Struct
-  virtual WasmResult getMetadataStruct(MetadataType type, absl::string_view name,
-                                       std::string* result);
-  virtual WasmResult setState(absl::string_view key, absl::string_view serialized_value);
+  // State accessors
+  virtual WasmResult getProperty(absl::string_view path, std::string* result);
+  virtual WasmResult setProperty(absl::string_view key, absl::string_view serialized_value);
 
   // Continue
   virtual void continueRequest() {
@@ -386,8 +371,6 @@ protected:
 
   bool IsGrpcStreamToken(uint32_t token) { return (token & 1) == 0; }
   bool IsGrpcCallToken(uint32_t token) { return (token & 1) == 1; }
-
-  const ProtobufWkt::Struct* getMetadataStructProto(MetadataType type, absl::string_view name = "");
 
   Http::HeaderMap* getMap(HeaderMapType type);
   const Http::HeaderMap* getConstMap(HeaderMapType type);
