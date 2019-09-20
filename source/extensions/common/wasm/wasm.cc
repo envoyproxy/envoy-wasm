@@ -937,6 +937,8 @@ Word logHandler(void* raw_context, Word level, Word address, Word size) {
   return wasmResultToWord(WasmResult::Ok);
 }
 
+double globalMathLogHandler(void*, double f) { return ::log(f); }
+
 WasmResult Context::setTickPeriod(std::chrono::milliseconds tick_period) {
   wasm_->setTickPeriod(root_context_id_ ? root_context_id_ : id_, tick_period);
   return WasmResult::Ok;
@@ -2008,6 +2010,8 @@ void Wasm::registerCallbacks() {
     _REGISTER(_pthread_once);
     _REGISTER(_pthread_setspecific);
     _REGISTER(setTempRet0);
+    wasm_vm_->makeModule("global.Math");
+    wasm_vm_->registerCallback("global.Math", "log", globalMathLogHandler, &globalMathLogHandler);
   }
 #undef _REGISTER
 #undef _REGISTER_ABI
