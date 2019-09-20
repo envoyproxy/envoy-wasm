@@ -93,7 +93,7 @@ docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasms
 
 ### Using abseil form the image
 
-Abseil (optionally) is built in /root/abseil and can be used by customizing the Makefile e.g.:
+Abseil (optionally) is built in /root/abseil and can be used.  Note that the abseil containers (e.g. flat\_hash\_set) excercise many syscalls which are not supported. Consequantally individual files should be pulled in which are relatively self contained (e.g. strings). Example customized Makefile:
 
 ```
 DOCKER_SDK=/sdk
@@ -127,15 +127,22 @@ all: plugin.wasm
 
 ### Ownership of the resulting .wasm files
 
-The compiled files may be owned by root.  To chown them add a line in the Makefile where ID is the desired user id (e.g. the result of "id -u"):
+The compiled files may be owned by root.  To chown them add the follow lines to the Makefile and docker invocation:
 
 ```
-DOCKER_SDK=/work/sdk
+DOCKER_SDK=/sdk
 
 all: myproject.wasm
-  chown ID.ID $^
+  chown ${uid}.${gid} $^
 
-include ${DOCKER_SDK}/Makefile.base_lite
+include /sdk/Makefile.base_lite
+```
+
+Invocation file (e.g. build.sh):
+
+```bash
+#!/bin/bash
+docker run -e uid="$(id -u)" -e gid="$(id -g)" -v $PWD:/work -w /work wasmsdk:v1 /build_wasm.sh
 ```
 
 ## Dependencies for building WASM modules:
