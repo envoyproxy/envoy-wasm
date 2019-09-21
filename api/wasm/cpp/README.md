@@ -93,7 +93,7 @@ docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasms
 
 ### Using abseil form the image
 
-Abseil (optionally) is built in /root/abseil and can be used.  Note that the abseil containers (e.g. flat\_hash\_set) excercise many syscalls which are not supported. Consequantally individual files should be pulled in which are relatively self contained (e.g. strings). Example customized Makefile:
+Abseil (optionally) is built in /root/abseil and can be used.  Note that the abseil containers (e.g. flat\_hash\_set) exercise many syscalls which are not supported. Consequantally individual files should be pulled in which are relatively self contained (e.g. strings). Example customized Makefile:
 
 ```
 DOCKER_SDK=/sdk
