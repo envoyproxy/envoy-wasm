@@ -81,9 +81,6 @@ public:
   void setRejectUnknownFieldsDynamic(bool reject_unknown_dynamic_fields) {
     reject_unknown_dynamic_fields_ = reject_unknown_dynamic_fields;
   }
-  void setFakeSymbolTableEnabled(bool fake_symbol_table_enabled) {
-    fake_symbol_table_enabled_ = fake_symbol_table_enabled;
-  }
 
   // Server::Options
   uint64_t baseId() const override { return base_id_; }
@@ -120,7 +117,6 @@ public:
   bool signalHandlingEnabled() const override { return signal_handling_enabled_; }
   bool mutexTracingEnabled() const override { return mutex_tracing_enabled_; }
   bool libeventBufferEnabled() const override { return libevent_buffer_enabled_; }
-  bool fakeSymbolTableEnabled() const override { return fake_symbol_table_enabled_; }
   Server::CommandLineOptionsPtr toCommandLineOptions() const override;
   void parseComponentLogLevels(const std::string& component_log_levels);
   bool cpusetThreadsEnabled() const override { return cpuset_threads_; }
@@ -156,7 +152,6 @@ private:
   bool mutex_tracing_enabled_;
   bool cpuset_threads_;
   bool libevent_buffer_enabled_;
-  bool fake_symbol_table_enabled_;
   uint32_t count_;
 };
 

@@ -14,9 +14,11 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+using testing::_;
 using testing::NiceMock;
 using testing::Return;
 using testing::ReturnPointee;
+using testing::ReturnRef;
 
 namespace Envoy {
 namespace Extensions {
@@ -34,7 +36,7 @@ public:
 
   ~GrpcHttp1BridgeFilterTest() override { filter_.onDestroy(); }
 
-  Stats::TestSymbolTable symbol_table_;
+  Envoy::Test::Global<Stats::FakeSymbolTableImpl> symbol_table_;
   Grpc::ContextImpl context_;
   Http1BridgeFilter filter_;
   NiceMock<Http::MockStreamDecoderFilterCallbacks> decoder_callbacks_;

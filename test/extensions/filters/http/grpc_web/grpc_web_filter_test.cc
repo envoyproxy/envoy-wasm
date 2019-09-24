@@ -106,7 +106,7 @@ public:
               request_headers.GrpcAcceptEncoding()->value().getStringView());
   }
 
-  Stats::TestSymbolTable symbol_table_;
+  Envoy::Test::Global<Stats::FakeSymbolTableImpl> symbol_table_;
   Grpc::ContextImpl grpc_context_;
   GrpcWebFilter filter_;
   NiceMock<Http::MockStreamDecoderFilterCallbacks> decoder_callbacks_;

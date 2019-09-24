@@ -11,9 +11,12 @@
 #include "test/common/http/common.h"
 #include "test/common/http/http2/http2_frame.h"
 #include "test/mocks/http/mocks.h"
+#include "test/mocks/init/mocks.h"
+#include "test/mocks/local_info/mocks.h"
 #include "test/mocks/network/mocks.h"
+#include "test/mocks/protobuf/mocks.h"
+#include "test/mocks/thread_local/mocks.h"
 #include "test/test_common/printers.h"
-#include "test/test_common/test_runtime.h"
 #include "test/test_common/utility.h"
 
 #include "codec_impl_test_util.h"
@@ -166,7 +169,17 @@ class Http2CodecImplTest : public ::testing::TestWithParam<Http2SettingsTestPara
                            protected Http2CodecImplTestFixture {
 public:
   Http2CodecImplTest()
-      : Http2CodecImplTestFixture(::testing::get<0>(GetParam()), ::testing::get<1>(GetParam())) {}
+      : Http2CodecImplTestFixture(::testing::get<0>(GetParam()), ::testing::get<1>(GetParam())),
+        api_(Api::createApiForTest()) {
+    envoy::config::bootstrap::v2::LayeredRuntime config;
+    config.add_layers()->mutable_admin_layer();
+
+    // Create a runtime loader, so that tests can manually manipulate runtime
+    // guarded features.
+    loader_ = std::make_unique<Runtime::ScopedLoaderSingleton>(
+        std::make_unique<Runtime::LoaderImpl>(dispatcher_, tls_, config, local_info_, init_manager_,
+                                              store_, generator_, validation_visitor_, *api_));
+  }
 
 protected:
   void priorityFlood() {
@@ -229,9 +242,16 @@ protected:
     }
   }
 
-  // Make sure the test fixture has a fake runtime, for the tests which use
-  // Runtime::LoaderSingleton::getExisting()->mergeValues(...)
-  TestScopedRuntime scoped_runtime_;
+private:
+  Event::MockDispatcher dispatcher_;
+  NiceMock<ThreadLocal::MockInstance> tls_;
+  Stats::IsolatedStoreImpl store_;
+  Runtime::MockRandomGenerator generator_;
+  Api::ApiPtr api_;
+  NiceMock<LocalInfo::MockLocalInfo> local_info_;
+  Init::MockManager init_manager_;
+  NiceMock<ProtobufMessage::MockValidationVisitor> validation_visitor_;
+  std::unique_ptr<Runtime::ScopedLoaderSingleton> loader_;
 };
 
 TEST_P(Http2CodecImplTest, ShutdownNotice) {

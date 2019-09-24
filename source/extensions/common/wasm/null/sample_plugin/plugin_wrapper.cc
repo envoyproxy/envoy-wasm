@@ -13,7 +13,7 @@ NullPluginRootRegistry* context_registry_{};
 /**
  * Config registration for a Wasm filter plugin. @see NamedHttpFilterConfigFactory.
  */
-class PluginFactory : public NullVmPluginFactory {
+class PluginFactory : public NullPluginFactory {
 public:
   PluginFactory() {}
 
@@ -27,7 +27,7 @@ public:
 /**
  * Static registration for the null Wasm filter. @see RegisterFactory.
  */
-static Registry::RegisterFactory<PluginFactory, NullVmPluginFactory> register_;
+static Registry::RegisterFactory<PluginFactory, NullPluginFactory> register_;
 
 } // namespace Plugin
 } // namespace Null

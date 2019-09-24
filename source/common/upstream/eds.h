@@ -38,7 +38,9 @@ private:
   void onConfigUpdateFailed(Envoy::Config::ConfigUpdateFailureReason reason,
                             const EnvoyException* e) override;
   std::string resourceName(const ProtobufWkt::Any& resource) override {
-    return MessageUtil::anyConvert<envoy::api::v2::ClusterLoadAssignment>(resource).cluster_name();
+    return MessageUtil::anyConvert<envoy::api::v2::ClusterLoadAssignment>(resource,
+                                                                          validation_visitor_)
+        .cluster_name();
   }
 
   using LocalityWeightsMap =

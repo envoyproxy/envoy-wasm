@@ -79,10 +79,8 @@ class RetryPriorityFactory {
 public:
   virtual ~RetryPriorityFactory() = default;
 
-  virtual RetryPrioritySharedPtr
-  createRetryPriority(const Protobuf::Message& config,
-                      ProtobufMessage::ValidationVisitor& validation_visitor,
-                      uint32_t retry_count) PURE;
+  virtual RetryPrioritySharedPtr createRetryPriority(const Protobuf::Message& config,
+                                                     uint32_t retry_count) PURE;
 
   virtual std::string name() const PURE;
 

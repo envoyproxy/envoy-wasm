@@ -53,7 +53,7 @@ using ClusterMinHealthyPercentages = std::map<std::string, double>;
 using ClusterMinHealthyPercentagesConstSharedPtr =
     std::shared_ptr<const ClusterMinHealthyPercentages>;
 
-using HeaderDataVectorSharedPtr = std::shared_ptr<std::vector<Http::HeaderUtility::HeaderDataPtr>>;
+using HeaderDataVectorSharedPtr = std::shared_ptr<std::vector<Http::HeaderUtility::HeaderData>>;
 
 /**
  * Health check responder filter.

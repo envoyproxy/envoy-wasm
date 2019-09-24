@@ -223,9 +223,8 @@ protected:
 
   /**
    * Pick the host source to use, doing zone aware routing when the hosts are sufficiently healthy.
-   * If no host is chosen (due to fail_traffic_on_panic being set), return absl::nullopt.
    */
-  absl::optional<HostsSource> hostSourceToUse(LoadBalancerContext* context);
+  HostsSource hostSourceToUse(LoadBalancerContext* context);
 
   /**
    * Index into priority_set via hosts source descriptor.
@@ -301,7 +300,6 @@ private:
 
   const uint32_t routing_enabled_;
   const uint64_t min_cluster_size_;
-  const bool fail_traffic_on_panic_;
 
   struct PerPriorityState {
     // The percent of requests which can be routed to the local locality.

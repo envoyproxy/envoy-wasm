@@ -106,7 +106,7 @@ private:
  */
 class SslConnectionWrapper : public BaseLuaObject<SslConnectionWrapper> {
 public:
-  SslConnectionWrapper(const Ssl::ConnectionInfoConstSharedPtr) {}
+  SslConnectionWrapper(const Ssl::ConnectionInfo*) {}
   static ExportedFunctions exportedFunctions() { return {}; }
 
   // TODO(dio): Add more Lua APIs around Ssl::Connection.

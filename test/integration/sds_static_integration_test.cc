@@ -26,6 +26,9 @@
 #include "integration.h"
 #include "utility.h"
 
+using testing::NiceMock;
+using testing::Return;
+
 namespace Envoy {
 namespace Ssl {
 

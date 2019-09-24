@@ -27,6 +27,7 @@ using testing::NiceMock;
 using testing::Property;
 using testing::Return;
 using testing::ReturnRef;
+using testing::SaveArg;
 
 namespace Envoy {
 namespace Http {
@@ -95,7 +96,7 @@ public:
         .WillOnce(Invoke([this](Upstream::Host::CreateConnectionData&) -> CodecClient* {
           return test_clients_.back().codec_client_;
         }));
-    EXPECT_CALL(*test_client.connect_timer_, enableTimer(_, _));
+    EXPECT_CALL(*test_client.connect_timer_, enableTimer(_));
   }
 
   // Connects a pending connection for client with the given index, asserting

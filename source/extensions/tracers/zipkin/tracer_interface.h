@@ -1,9 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "envoy/common/pure.h"
 
 namespace Envoy {
@@ -34,23 +30,6 @@ public:
    */
   virtual void reportSpan(Span&& span) PURE;
 };
-
-/**
- * Buffered pending spans serializer.
- */
-class Serializer {
-public:
-  virtual ~Serializer() = default;
-
-  /**
-   * Serialize buffered pending spans.
-   *
-   * @return std::string serialized buffered pending spans.
-   */
-  virtual std::string serialize(const std::vector<Span>& spans) PURE;
-};
-
-using SerializerPtr = std::unique_ptr<Serializer>;
 
 } // namespace Zipkin
 } // namespace Tracers

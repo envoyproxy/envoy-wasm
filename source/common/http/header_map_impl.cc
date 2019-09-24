@@ -145,9 +145,10 @@ void HeaderString::append(const char* data, uint32_t size) {
     }
   }
   }
-  ASSERT(validHeaderString(absl::string_view(data, size)));
+
   memcpy(buffer_.dynamic_ + string_length_, data, size);
   string_length_ += size;
+  ASSERT(valid());
 }
 
 void HeaderString::clear() {

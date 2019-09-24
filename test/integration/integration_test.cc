@@ -23,6 +23,7 @@ using Envoy::Http::HeaderValueOf;
 using Envoy::Http::HttpStatusIs;
 using testing::EndsWith;
 using testing::HasSubstr;
+using testing::MatchesRegex;
 using testing::Not;
 
 namespace Envoy {

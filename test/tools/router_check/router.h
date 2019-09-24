@@ -54,7 +54,7 @@ struct ToolConfig {
 
 private:
   ToolConfig(std::unique_ptr<Http::TestHeaderMapImpl> headers, int random_value);
-  Stats::TestSymbolTable symbol_table_;
+  Test::Global<Stats::FakeSymbolTableImpl> symbol_table_;
 };
 
 /**
@@ -65,12 +65,10 @@ class RouterCheckTool : Logger::Loggable<Logger::Id::testing> {
 public:
   /**
    * @param router_config_file v2 router config file.
-   * @param disableDeprecationCheck flag to disable the RouteConfig deprecated field check
    * @return RouterCheckTool a RouterCheckTool instance with member variables set by the router
    * config file.
    * */
-  static RouterCheckTool create(const std::string& router_config_file,
-                                const bool disableDeprecationCheck);
+  static RouterCheckTool create(const std::string& router_config_file);
 
   /**
    * TODO(tonya11en): Use a YAML format for the expected routes. This will require a proto.
@@ -90,11 +88,6 @@ public:
    * Set whether to print out match case details.
    */
   void setShowDetails() { details_ = true; }
-
-  /**
-   * Set whether to only print failing match cases.
-   */
-  void setOnlyShowFailures() { only_show_failures_ = true; }
 
   float coverage(bool detailed) {
     return detailed ? coverage_.detailedReport() : coverage_.report();
@@ -142,20 +135,12 @@ private:
   bool compareResults(const std::string& actual, const std::string& expected,
                       const std::string& test_type);
 
-  void printResults();
-
   bool runtimeMock(const std::string& key, const envoy::type::FractionalPercent& default_value,
                    uint64_t random_value);
 
   bool headers_finalized_{false};
 
   bool details_{false};
-
-  bool only_show_failures_{false};
-
-  // The first member of each pair is the name of the test.
-  // The second member is a list of any failing results for that test as strings.
-  std::vector<std::pair<std::string, std::vector<std::string>>> tests_;
 
   // TODO(hennna): Switch away from mocks following work done by @rlazarus in github issue #499.
   std::unique_ptr<NiceMock<Server::Configuration::MockFactoryContext>> factory_context_;
@@ -209,19 +194,9 @@ public:
   bool isProto() const { return is_proto_; }
 
   /**
-   * @return true if detailed test execution results are displayed.
+   * @return true is detailed test execution results are displayed.
    */
   bool isDetailed() const { return is_detailed_; }
-
-  /**
-   * @return true if only test failures are displayed.
-   */
-  bool onlyShowFailures() const { return only_show_failures_; }
-
-  /**
-   * @return true if the deprecated field check for RouteConfiguration is disabled.
-   */
-  bool disableDeprecationCheck() const { return disable_deprecation_check_; }
 
 private:
   std::string test_path_;
@@ -232,7 +207,5 @@ private:
   bool comprehensive_coverage_;
   bool is_proto_;
   bool is_detailed_;
-  bool only_show_failures_;
-  bool disable_deprecation_check_;
 };
 } // namespace Envoy

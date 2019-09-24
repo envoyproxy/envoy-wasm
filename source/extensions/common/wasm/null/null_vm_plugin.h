@@ -8,18 +8,14 @@ namespace Common {
 namespace Wasm {
 namespace Null {
 
-// A wrapper for the natively compiled NullVm plugin which implements the WASM ABI.
 class NullVmPlugin {
 public:
-  NullVmPlugin() = default;
-  virtual ~NullVmPlugin() = default;
+  NullVmPlugin() {}
+  virtual ~NullVmPlugin() {}
 
-  // NB: These are defined rather than declared PURE because gmock uses __LINE__ internally for
-  // uniqueness, making it impossible to use FOR_ALL_WASM_VM_EXPORTS with MOCK_METHOD2.
-#define _DEFINE_GET_FUNCTION(_T)                                                                   \
-  virtual void getFunction(absl::string_view, _T* f) { *f = nullptr; }
-  FOR_ALL_WASM_VM_EXPORTS(_DEFINE_GET_FUNCTION)
-#undef _DEFIN_GET_FUNCTIONE
+#define _DECLARE_PURE(_t) virtual void getFunction(absl::string_view function_name, _t* f) PURE;
+  FOR_ALL_WASM_VM_EXPORTS(_DECLARE_PURE)
+#undef _DECLARE_PURE
 
   virtual void start() PURE;
 };
@@ -28,9 +24,9 @@ public:
  * Pseudo-WASM plugins using the NullVM should implement this factory and register via
  * Registry::registerFactory or the convenience class RegisterFactory.
  */
-class NullVmPluginFactory {
+class NullPluginFactory {
 public:
-  virtual ~NullVmPluginFactory() = default;
+  virtual ~NullPluginFactory() {}
 
   /**
    * Name of the plugin.

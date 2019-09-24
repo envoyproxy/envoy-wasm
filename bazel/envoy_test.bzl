@@ -8,7 +8,6 @@ load(
     "envoy_external_dep_path",
     "envoy_linkstatic",
     "envoy_select_force_libcpp",
-    "envoy_stdlib_deps",
     "tcmalloc_external_dep",
 )
 
@@ -63,15 +62,8 @@ def _envoy_test_linkopts():
     }) + envoy_select_force_libcpp([], ["-lstdc++fs", "-latomic"])
 
 # Envoy C++ fuzz test targets. These are not included in coverage runs.
-def envoy_cc_fuzz_test(
-        name,
-        corpus,
-        repository = "",
-        size = "medium",
-        deps = [],
-        tags = [],
-        **kwargs):
-    if not (corpus.startswith("//") or corpus.startswith(":") or corpus.startswith("@")):
+def envoy_cc_fuzz_test(name, corpus, deps = [], tags = [], **kwargs):
+    if not (corpus.startswith("//") or corpus.startswith(":")):
         corpus_name = name + "_corpus"
         corpus = native.glob([corpus + "/**"])
         native.filegroup(
@@ -88,11 +80,7 @@ def envoy_cc_fuzz_test(
     test_lib_name = name + "_lib"
     envoy_cc_test_library(
         name = test_lib_name,
-        deps = deps + [
-            repository + "//test/fuzz:fuzz_runner_lib",
-            repository + "//bazel:dynamic_stdlib",
-        ],
-        repository = repository,
+        deps = deps + ["//test/fuzz:fuzz_runner_lib"],
         **kwargs
     )
     native.cc_test(
@@ -104,13 +92,12 @@ def envoy_cc_fuzz_test(
         data = [corpus_name],
         # No fuzzing on macOS.
         deps = select({
-            "@envoy//bazel:apple": [repository + "//test:dummy_main"],
+            "@envoy//bazel:apple": ["//test:dummy_main"],
             "//conditions:default": [
                 ":" + test_lib_name,
-                repository + "//test/fuzz:main",
+                "//test/fuzz:main",
             ],
         }),
-        size = size,
         tags = tags,
     )
 
@@ -128,7 +115,7 @@ def envoy_cc_fuzz_test(
         tags = ["manual"] + tags,
     )
 
-    native.cc_test(
+    native.cc_binary(
         name = name + "_with_libfuzzer",
         copts = envoy_copts("@envoy", test = True),
         linkopts = ["-fsanitize=fuzzer"] + _envoy_test_linkopts(),
@@ -136,7 +123,7 @@ def envoy_cc_fuzz_test(
         testonly = 1,
         data = [corpus_name],
         deps = [":" + test_lib_name],
-        tags = ["manual", "fuzzer"] + tags,
+        tags = ["manual"] + tags,
     )
 
 # Envoy C++ test targets should be specified with this function.
@@ -176,7 +163,7 @@ def envoy_cc_test(
         linkopts = _envoy_test_linkopts(),
         linkstatic = envoy_linkstatic(),
         malloc = tcmalloc_external_dep(repository),
-        deps = envoy_stdlib_deps() + [
+        deps = [
             ":" + name + "_lib_internal_only",
             repository + "//test:main",
         ],

@@ -9,12 +9,10 @@ RedisHealthChecker::RedisHealthChecker(
     const Upstream::Cluster& cluster, const envoy::api::v2::core::HealthCheck& config,
     const envoy::config::health_checker::redis::v2::Redis& redis_config,
     Event::Dispatcher& dispatcher, Runtime::Loader& runtime, Runtime::RandomGenerator& random,
-    Upstream::HealthCheckEventLoggerPtr&& event_logger, Api::Api& api,
+    Upstream::HealthCheckEventLoggerPtr&& event_logger,
     Extensions::NetworkFilters::Common::Redis::Client::ClientFactory& client_factory)
     : HealthCheckerImplBase(cluster, config, dispatcher, runtime, random, std::move(event_logger)),
-      client_factory_(client_factory), key_(redis_config.key()),
-      auth_password_(NetworkFilters::RedisProxy::ProtocolOptionsConfigImpl::auth_password(
-          cluster.info(), api)) {
+      client_factory_(client_factory), key_(redis_config.key()) {
   if (!key_.empty()) {
     type_ = Type::Exists;
   } else {
@@ -24,11 +22,7 @@ RedisHealthChecker::RedisHealthChecker(
 
 RedisHealthChecker::RedisActiveHealthCheckSession::RedisActiveHealthCheckSession(
     RedisHealthChecker& parent, const Upstream::HostSharedPtr& host)
-    : ActiveHealthCheckSession(parent, host), parent_(parent) {
-  redis_command_stats_ =
-      Extensions::NetworkFilters::Common::Redis::RedisCommandStats::createRedisCommandStats(
-          parent_.cluster_.info()->statsScope().symbolTable());
-}
+    : ActiveHealthCheckSession(parent, host), parent_(parent) {}
 
 RedisHealthChecker::RedisActiveHealthCheckSession::~RedisActiveHealthCheckSession() {
   ASSERT(current_request_ == nullptr);
@@ -57,9 +51,7 @@ void RedisHealthChecker::RedisActiveHealthCheckSession::onEvent(Network::Connect
 
 void RedisHealthChecker::RedisActiveHealthCheckSession::onInterval() {
   if (!client_) {
-    client_ = parent_.client_factory_.create(
-        host_, parent_.dispatcher_, *this, redis_command_stats_,
-        parent_.cluster_.info()->statsScope(), parent_.auth_password_);
+    client_ = parent_.client_factory_.create(host_, parent_.dispatcher_, *this);
     client_->addConnectionCallbacks(*this);
   }
 

@@ -8,7 +8,9 @@
 
 using testing::_;
 using testing::AnyNumber;
+using testing::Eq;
 using testing::Invoke;
+using testing::ResultOf;
 using testing::Return;
 
 namespace Envoy {

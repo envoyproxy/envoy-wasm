@@ -17,11 +17,6 @@ virtual_hosts:
         route:
           cluster: www2
     virtual_clusters:
-      - headers:
-        - name: :path
-          safe_regex_match:
-            google_re2: {}
-            regex: ^/users/\d+$
-        - name: :method
-          exact_match: PUT
+      - pattern: ^/users/\d+$
+        method: PUT
         name: update_user

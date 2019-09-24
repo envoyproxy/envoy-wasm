@@ -11,6 +11,7 @@
 #include "absl/strings/match.h"
 #include "gtest/gtest.h"
 
+using Envoy::Protobuf::Message;
 using Envoy::Protobuf::TextFormat;
 using Envoy::Protobuf::util::MessageDifferencer;
 using Envoy::ProtobufUtil::Status;

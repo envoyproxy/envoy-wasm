@@ -34,6 +34,7 @@
 
 using testing::_;
 using testing::InSequence;
+using testing::Mock;
 using testing::NiceMock;
 using testing::Return;
 
@@ -856,7 +857,7 @@ TEST(DnsImplUnitTest, PendingTimerEnable) {
   DnsResolverImpl resolver(dispatcher, {});
   Event::FileEvent* file_event = new NiceMock<Event::MockFileEvent>();
   EXPECT_CALL(dispatcher, createFileEvent_(_, _, _, _)).WillOnce(Return(file_event));
-  EXPECT_CALL(*timer, enableTimer(_, _));
+  EXPECT_CALL(*timer, enableTimer(_));
   EXPECT_NE(nullptr, resolver.resolve("some.bad.domain.invalid", DnsLookupFamily::V4Only,
                                       [&](std::list<DnsResponse>&& results) {
                                         UNREFERENCED_PARAMETER(results);

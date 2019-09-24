@@ -20,7 +20,6 @@ namespace Envoy {
   COUNTER(reopen_failed)                                                                           \
   COUNTER(write_buffered)                                                                          \
   COUNTER(write_completed)                                                                         \
-  COUNTER(write_failed)                                                                            \
   GAUGE(write_total_buffered, Accumulate)
 
 struct AccessLogFileStats {
@@ -35,9 +34,9 @@ public:
                        Event::Dispatcher& dispatcher, Thread::BasicLockable& lock,
                        Stats::Store& stats_store)
       : file_flush_interval_msec_(file_flush_interval_msec), api_(api), dispatcher_(dispatcher),
-        lock_(lock), file_stats_{
-                         ACCESS_LOG_FILE_STATS(POOL_COUNTER_PREFIX(stats_store, "filesystem."),
-                                               POOL_GAUGE_PREFIX(stats_store, "filesystem."))} {}
+        lock_(lock), file_stats_{ACCESS_LOG_FILE_STATS(
+                         POOL_COUNTER_PREFIX(stats_store, "access_log_file."),
+                         POOL_GAUGE_PREFIX(stats_store, "access_log_file."))} {}
 
   // AccessLog::AccessLogManager
   void reopen() override;
@@ -114,12 +113,12 @@ private:
   std::atomic<bool> flush_thread_exit_{};
   std::atomic<bool> reopen_file_{};
   Buffer::OwnedImpl
-      flush_buffer_ ABSL_GUARDED_BY(write_lock_); // This buffer is used by multiple threads. It
-                                                  // gets filled and then flushed either when max
-                                                  // size is reached or when a timer fires.
-  // TODO(jmarantz): this should be ABSL_GUARDED_BY(flush_lock_) but the analysis cannot poke
-  // through the std::make_unique assignment. I do not believe it's possible to annotate this
-  // properly now due to limitations in the clang thread annotation analysis.
+      flush_buffer_ GUARDED_BY(write_lock_); // This buffer is used by multiple threads. It gets
+                                             // filled and then flushed either when max size is
+                                             // reached or when a timer fires.
+  // TODO(jmarantz): this should be GUARDED_BY(flush_lock_) but the analysis cannot poke through
+  // the std::make_unique assignment. I do not believe it's possible to annotate this properly now
+  // due to limitations in the clang thread annotation analysis.
   Buffer::OwnedImpl about_to_write_buffer_; // This buffer is used only by the flush thread. Data
                                             // is moved from flush_buffer_ under lock, and then
                                             // the lock is released so that flush_buffer_ can

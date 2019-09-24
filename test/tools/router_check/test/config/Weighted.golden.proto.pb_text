@@ -8,7 +8,7 @@ tests {
     method: "GET"
   }
   validate: {
-    path_redirect: { value: "" }
+    path_redirect: ""
   }
 }
 
@@ -16,12 +16,11 @@ tests {
   test_name: "Test_2"
   input: {
     authority: "www1.lyft.com"
-    path: "/test/123"
+    path: "/foo"
     method: "GET"
     random_value: 115
   }
   validate: {
-    cluster_name: { value: "cluster1"}
-    virtual_cluster_name: { value: "test_virtual_cluster" }
+    cluster_name: "cluster1"
   }
 }

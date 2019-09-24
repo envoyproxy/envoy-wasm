@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 
 using testing::_;
+using testing::Matcher;
 using testing::NiceMock;
 using testing::Return;
 using testing::ReturnRef;

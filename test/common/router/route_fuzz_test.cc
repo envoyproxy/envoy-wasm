@@ -72,7 +72,7 @@ DEFINE_PROTO_FUZZER(const test::common::router::RouteTestCase& input) {
   try {
     NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
     NiceMock<Server::Configuration::MockFactoryContext> factory_context;
-    TestUtility::validate(input.config());
+    MessageUtil::validate(input.config());
     ConfigImpl config(cleanRouteConfig(input.config()), factory_context, true);
     Http::TestHeaderMapImpl headers = Fuzz::fromHeaders(input.headers());
     // It's a precondition of routing that {:authority, :path, x-forwarded-proto} headers exists,

@@ -22,9 +22,11 @@ namespace Router {
 
 RouteEntryImplBase::RouteEntryImplBase(
     const envoy::config::filter::network::thrift_proxy::v2alpha1::Route& route)
-    : cluster_name_(route.route().cluster()),
-      config_headers_(Http::HeaderUtility::buildHeaderDataVector(route.match().headers())),
-      rate_limit_policy_(route.route().rate_limits()) {
+    : cluster_name_(route.route().cluster()), rate_limit_policy_(route.route().rate_limits()) {
+  for (const auto& header_map : route.match().headers()) {
+    config_headers_.push_back(header_map);
+  }
+
   if (route.route().has_metadata_match()) {
     const auto filter_it = route.route().metadata_match().filter_metadata().find(
         Envoy::Config::MetadataFilters::get().ENVOY_LB);

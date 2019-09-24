@@ -17,6 +17,7 @@ namespace {
 using testing::NiceMock;
 using testing::Return;
 using testing::ReturnRef;
+using testing::StrictMock;
 
 class TsiSocketTest : public testing::Test {
 protected:

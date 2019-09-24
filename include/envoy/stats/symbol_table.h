@@ -185,7 +185,7 @@ private:
   virtual StoragePtr encode(absl::string_view name) PURE;
 };
 
-using SymbolTablePtr = std::unique_ptr<SymbolTable>;
+using SharedSymbolTable = std::shared_ptr<SymbolTable>;
 
 } // namespace Stats
 } // namespace Envoy

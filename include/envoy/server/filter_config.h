@@ -180,10 +180,9 @@ public:
   virtual Grpc::Context& grpcContext() PURE;
 
   /**
-   * @return absl::optional<std::reference_wrapper<ProcessContext>> an optional reference to the
-   * process context. Will be unset when running in validation mode.
+   * @return ProcessContext& a reference to the process context.
    */
-  virtual absl::optional<std::reference_wrapper<ProcessContext>> processContext() PURE;
+  virtual ProcessContext& processContext() PURE;
 };
 
 class ListenerFactoryContext : public virtual FactoryContext {
@@ -270,14 +269,11 @@ public:
    * implementation is unable to produce a factory with the provided parameters, it should throw an
    * EnvoyException.
    * @param config supplies the protobuf configuration for the filter
-   * @param validation_visitor message validation visitor instance.
    * @return Upstream::ProtocolOptionsConfigConstSharedPtr the protocol options
    */
   virtual Upstream::ProtocolOptionsConfigConstSharedPtr
-  createProtocolOptionsConfig(const Protobuf::Message& config,
-                              ProtobufMessage::ValidationVisitor& validation_visitor) {
+  createProtocolOptionsConfig(const Protobuf::Message& config) {
     UNREFERENCED_PARAMETER(config);
-    UNREFERENCED_PARAMETER(validation_visitor);
     return nullptr;
   }
 

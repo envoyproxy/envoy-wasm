@@ -25,8 +25,7 @@ TEST(FixedHeapMonitorFactoryTest, CreateMonitor) {
   config.set_max_heap_size_bytes(std::numeric_limits<uint64_t>::max());
   Event::MockDispatcher dispatcher;
   Api::ApiPtr api = Api::createApiForTest();
-  Server::Configuration::ResourceMonitorFactoryContextImpl context(
-      dispatcher, *api, ProtobufMessage::getStrictValidationVisitor());
+  Server::Configuration::ResourceMonitorFactoryContextImpl context(dispatcher, *api);
   auto monitor = factory->createResourceMonitor(config, context);
   EXPECT_NE(monitor, nullptr);
 }

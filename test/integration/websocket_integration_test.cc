@@ -15,6 +15,8 @@
 #include "absl/strings/str_cat.h"
 #include "gtest/gtest.h"
 
+using testing::MatchesRegex;
+
 namespace Envoy {
 namespace {
 

@@ -1,14 +1,6 @@
-load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library_internal", "api_proto_package")
+load("@envoy_api//bazel:api_build_system.bzl", "api_go_proto_library", "api_proto_library_internal")
 
 licenses(["notice"])  # Apache 2
-
-api_proto_package(
-    has_services = True,
-    deps = [
-        "//envoy/api/v2/core",
-        "//envoy/type",
-    ],
-)
 
 api_proto_library_internal(
     name = "attribute_context",

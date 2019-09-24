@@ -8,7 +8,6 @@
 #include "common/common/thread.h"
 #include "common/local_info/local_info_impl.h"
 #include "common/network/utility.h"
-#include "common/stats/symbol_table_creator.h"
 #include "common/stats/thread_local_store.h"
 #include "common/thread_local/thread_local_impl.h"
 
@@ -188,10 +187,10 @@ void IntegrationTestServerImpl::createAndRunEnvoyServer(
     Runtime::RandomGeneratorPtr&& random_generator,
     absl::optional<std::reference_wrapper<ProcessObject>> process_object) {
   {
-    Stats::SymbolTablePtr symbol_table = Stats::SymbolTableCreator::makeSymbolTable();
+    Stats::FakeSymbolTableImpl symbol_table;
     Server::HotRestartNopImpl restarter;
     ThreadLocal::InstanceImpl tls;
-    Stats::AllocatorImpl stats_allocator(*symbol_table);
+    Stats::AllocatorImpl stats_allocator(symbol_table);
     Stats::ThreadLocalStoreImpl stat_store(stats_allocator);
     std::unique_ptr<ProcessContext> process_context;
     if (process_object.has_value()) {

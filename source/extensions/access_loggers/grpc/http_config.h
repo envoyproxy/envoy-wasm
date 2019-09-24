@@ -23,6 +23,8 @@ public:
   std::string name() const override;
 };
 
+// TODO(mattklein123): Add TCP access log.
+
 } // namespace HttpGrpc
 } // namespace AccessLoggers
 } // namespace Extensions

@@ -79,6 +79,27 @@ static_resources:
             catch_all_route:
               cluster: redis
   clusters:
+  - name: cds
+    connect_timeout: 5s
+    hosts:
+    - socket_address:
+        address: {{ ip_loopback_address }}
+        port_value: 4
+    dns_lookup_family: "{{ dns_lookup_family }}"
+  - name: rds
+    connect_timeout: 5s
+    hosts:
+    - socket_address:
+        address: {{ ip_loopback_address }}
+        port_value: 4
+    dns_lookup_family: "{{ dns_lookup_family }}"
+  - name: lds
+    connect_timeout: 5s
+    hosts:
+    - socket_address:
+        address: {{ ip_loopback_address }}
+        port_value: 4
+    dns_lookup_family: "{{ dns_lookup_family }}"
   - name: cluster_1
     connect_timeout: 5s
     hosts:
@@ -120,7 +141,19 @@ static_resources:
         port_value: 4
     dns_lookup_family: "{{ dns_lookup_family }}"
     outlier_detection: {}
-dynamic_resources: {}
+dynamic_resources:
+  lds_config:
+    api_config_source:
+      api_type: REST
+      cluster_names:
+      - lds
+      refresh_delay: 30s
+  cds_config:
+    api_config_source:
+      api_type: REST
+      cluster_names:
+      - cds
+      refresh_delay: 30s
 cluster_manager: {}
 flags_path: "/invalid_flags"
 stats_sinks:
@@ -135,19 +168,10 @@ stats_sinks:
     "@type": type.googleapis.com/envoy.config.metrics.v2.StatsdSink
     tcp_cluster_name: statsd
 watchdog: {}
-layered_runtime:
-  layers:
-    - name: root
-      disk_layer:
-        symlink_root: "{{ test_tmpdir }}/test/common/runtime/test_data/current"
-        subdirectory: envoy
-    - name: override
-      disk_layer:
-        symlink_root: "{{ test_tmpdir }}/test/common/runtime/test_data/current"
-        subdirectory: envoy_override
-        append_service_cluster: true
-    - name: admin
-      admin_layer: {}
+runtime:
+  symlink_root: "{{ test_tmpdir }}/test/common/runtime/test_data/current"
+  subdirectory: envoy
+  override_subdirectory: envoy_override
 admin:
   access_log_path: "/dev/null"
   profile_path: "{{ test_tmpdir }}/envoy.prof"

@@ -49,9 +49,9 @@ public:
   // Returns a certs chain with a fake certificate "Fake cert from [host_name]".
   quic::QuicReferenceCountedPointer<quic::ProofSource::Chain>
   GetCertChain(const quic::QuicSocketAddress& /*server_address*/,
-               const std::string& /*hostname*/) override {
+               const std::string& hostname) override {
     std::vector<std::string> certs;
-    certs.push_back(absl::StrCat("Fake cert"));
+    certs.push_back(absl::StrCat("Fake cert from ", hostname));
     return quic::QuicReferenceCountedPointer<quic::ProofSource::Chain>(
         new quic::ProofSource::Chain(certs));
   }

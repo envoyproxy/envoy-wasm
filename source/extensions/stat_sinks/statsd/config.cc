@@ -20,8 +20,7 @@ Stats::SinkPtr StatsdSinkFactory::createStatsSink(const Protobuf::Message& confi
                                                   Server::Instance& server) {
 
   const auto& statsd_sink =
-      MessageUtil::downcastAndValidate<const envoy::config::metrics::v2::StatsdSink&>(
-          config, server.messageValidationContext().staticValidationVisitor());
+      MessageUtil::downcastAndValidate<const envoy::config::metrics::v2::StatsdSink&>(config);
   switch (statsd_sink.statsd_specifier_case()) {
   case envoy::config::metrics::v2::StatsdSink::kAddress: {
     Network::Address::InstanceConstSharedPtr address =

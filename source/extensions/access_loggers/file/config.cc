@@ -24,8 +24,7 @@ FileAccessLogFactory::createAccessLogInstance(const Protobuf::Message& config,
                                               AccessLog::FilterPtr&& filter,
                                               Server::Configuration::FactoryContext& context) {
   const auto& fal_config =
-      MessageUtil::downcastAndValidate<const envoy::config::accesslog::v2::FileAccessLog&>(
-          config, context.messageValidationVisitor());
+      MessageUtil::downcastAndValidate<const envoy::config::accesslog::v2::FileAccessLog&>(config);
   AccessLog::FormatterPtr formatter;
 
   if (fal_config.access_log_format_case() == envoy::config::accesslog::v2::FileAccessLog::kFormat ||

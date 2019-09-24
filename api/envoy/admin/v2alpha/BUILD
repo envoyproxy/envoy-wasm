@@ -1,17 +1,6 @@
-load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library_internal", "api_proto_package")
+load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library_internal")
 
 licenses(["notice"])  # Apache 2
-
-api_proto_package(
-    deps = [
-        "//envoy/api/v2",
-        "//envoy/api/v2/auth",
-        "//envoy/api/v2/core",
-        "//envoy/config/bootstrap/v2:pkg",
-        "//envoy/service/tap/v2alpha:pkg",
-        "//envoy/type",
-    ],
-)
 
 api_proto_library_internal(
     name = "config_dump",

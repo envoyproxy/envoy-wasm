@@ -15,9 +15,8 @@ public:
   Server::ResourceMonitorPtr
   createResourceMonitor(const Protobuf::Message& config,
                         Server::Configuration::ResourceMonitorFactoryContext& context) override {
-    return createResourceMonitorFromProtoTyped(MessageUtil::downcastAndValidate<const ConfigProto&>(
-                                                   config, context.messageValidationVisitor()),
-                                               context);
+    return createResourceMonitorFromProtoTyped(
+        MessageUtil::downcastAndValidate<const ConfigProto&>(config), context);
   }
 
   ProtobufTypes::MessagePtr createEmptyConfigProto() override {

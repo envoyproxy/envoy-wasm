@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 
 using testing::_;
-using testing::Invoke;
+using testing::Return;
 
 namespace Envoy {
 namespace Api {
@@ -26,12 +26,7 @@ Event::DispatcherPtr MockApi::allocateDispatcher(Buffer::WatermarkFactoryPtr&& w
   return Event::DispatcherPtr{allocateDispatcher_(std::move(watermark_factory), time_system_)};
 }
 
-MockOsSysCalls::MockOsSysCalls() {
-  ON_CALL(*this, close(_)).WillByDefault(Invoke([](int fd) {
-    const int rc = ::close(fd);
-    return SysCallIntResult{rc, errno};
-  }));
-}
+MockOsSysCalls::MockOsSysCalls() = default;
 
 MockOsSysCalls::~MockOsSysCalls() = default;
 

@@ -1,14 +1,6 @@
-load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library_internal", "api_proto_package")
+load("@envoy_api//bazel:api_build_system.bzl", "api_go_proto_library", "api_proto_library_internal")
 
 licenses(["notice"])  # Apache 2
-
-api_proto_package(
-    deps = [
-        "//envoy/api/v2/core",
-        "//envoy/type",
-        "//envoy/type/matcher",
-    ],
-)
 
 api_proto_library_internal(
     name = "route",
@@ -18,7 +10,15 @@ api_proto_library_internal(
         "//envoy/api/v2/core:base",
         "//envoy/type:percent",
         "//envoy/type:range",
-        "//envoy/type/matcher:regex",
-        "//envoy/type/matcher:string",
+    ],
+)
+
+api_go_proto_library(
+    name = "route",
+    proto = ":route",
+    deps = [
+        "//envoy/api/v2/core:base_go_proto",
+        "//envoy/type:percent_go_proto",
+        "//envoy/type:range_go_proto",
     ],
 )

@@ -14,6 +14,8 @@ namespace Extensions {
 namespace NetworkFilters {
 namespace DubboProxy {
 
+using testing::StrictMock;
+
 TEST(DubboProtocolImplTest, NotEnoughData) {
   Buffer::OwnedImpl buffer;
   DubboProtocolImpl dubbo_protocol;

@@ -69,10 +69,6 @@ public:
     return std::any_of(data.begin(), data.end(), absl::ascii_isupper);
   }
 
-  static bool IsAllDigits(QuicStringPieceImpl data) {
-    return std::all_of(data.begin(), data.end(), absl::ascii_isdigit);
-  }
-
   static std::vector<QuicStringPieceImpl> Split(QuicStringPieceImpl data, char delim) {
     return absl::StrSplit(data, delim);
   }

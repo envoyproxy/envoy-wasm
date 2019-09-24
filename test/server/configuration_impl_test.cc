@@ -22,7 +22,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+using testing::InSequence;
 using testing::Return;
+using testing::ReturnRef;
 
 namespace Envoy {
 namespace Server {

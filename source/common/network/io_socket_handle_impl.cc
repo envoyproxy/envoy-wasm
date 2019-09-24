@@ -26,11 +26,9 @@ IoSocketHandleImpl::~IoSocketHandleImpl() {
 
 Api::IoCallUint64Result IoSocketHandleImpl::close() {
   ASSERT(fd_ != -1);
-  auto& os_syscalls = Api::OsSysCallsSingleton::get();
-  const auto& result = os_syscalls.close(fd_);
+  const int rc = ::close(fd_);
   fd_ = -1;
-  return Api::IoCallUint64Result(result.rc_,
-                                 Api::IoErrorPtr(nullptr, IoSocketError::deleteIoError));
+  return Api::IoCallUint64Result(rc, Api::IoErrorPtr(nullptr, IoSocketError::deleteIoError));
 }
 
 bool IoSocketHandleImpl::isOpen() const { return fd_ != -1; }

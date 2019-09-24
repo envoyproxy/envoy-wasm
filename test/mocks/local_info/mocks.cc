@@ -5,6 +5,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+using testing::Invoke;
 using testing::Return;
 using testing::ReturnRef;
 

@@ -10,6 +10,5 @@ Types
   ../type/range.proto
   ../type/matcher/metadata.proto
   ../type/matcher/number.proto
-  ../type/matcher/regex.proto
   ../type/matcher/string.proto
   ../type/matcher/value.proto

@@ -24,7 +24,6 @@ envoy_cc_library(
     external_deps = ["abseil_optional"],
     deps = [
         ":well_known_names",
-        "//source/common/common:minimal_logger_lib",
     ],
 )
 

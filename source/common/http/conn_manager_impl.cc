@@ -12,7 +12,6 @@
 #include "envoy/event/dispatcher.h"
 #include "envoy/network/drain_decision.h"
 #include "envoy/router/router.h"
-#include "envoy/server/admin.h"
 #include "envoy/ssl/connection.h"
 #include "envoy/stats/scope.h"
 #include "envoy/tracing/http_tracer.h"
@@ -34,7 +33,6 @@
 #include "common/http/path_utility.h"
 #include "common/http/utility.h"
 #include "common/network/utility.h"
-#include "common/router/config_impl.h"
 #include "common/runtime/runtime_impl.h"
 
 #include "absl/strings/escaping.h"
@@ -433,27 +431,12 @@ void ConnectionManagerImpl::chargeTracingStats(const Tracing::Reason& tracing_re
 
 ConnectionManagerImpl::ActiveStream::ActiveStream(ConnectionManagerImpl& connection_manager)
     : connection_manager_(connection_manager),
+      snapped_route_config_(connection_manager.config_.routeConfigProvider()->config()),
       stream_id_(connection_manager.random_generator_.random()),
       request_response_timespan_(new Stats::Timespan(
           connection_manager_.stats_.named_.downstream_rq_time_, connection_manager_.timeSource())),
       stream_info_(connection_manager_.codec_->protocol(), connection_manager_.timeSource()),
       upstream_options_(std::make_shared<Network::Socket::Options>()) {
-  // For Server::Admin, no routeConfigProvider or SRDS route provider is used.
-  ASSERT(dynamic_cast<Server::Admin*>(&connection_manager_.config_) != nullptr ||
-             ((connection_manager.config_.routeConfigProvider() == nullptr &&
-               connection_manager.config_.scopedRouteConfigProvider() != nullptr) ||
-              (connection_manager.config_.routeConfigProvider() != nullptr &&
-               connection_manager.config_.scopedRouteConfigProvider() == nullptr)),
-         "Either routeConfigProvider or scopedRouteConfigProvider should be set in "
-         "ConnectionManagerImpl.");
-  if (connection_manager.config_.routeConfigProvider() != nullptr) {
-    snapped_route_config_ = connection_manager.config_.routeConfigProvider()->config();
-  } else if (connection_manager.config_.scopedRouteConfigProvider() != nullptr) {
-    snapped_scoped_routes_config_ =
-        connection_manager_.config_.scopedRouteConfigProvider()->config<Router::ScopedConfig>();
-    ASSERT(snapped_scoped_routes_config_ != nullptr,
-           "Scoped rds provider returns null for scoped routes config.");
-  }
   ScopeTrackerScopeState scope(this,
                                connection_manager_.read_callbacks_->connection().dispatcher());
 
@@ -488,7 +471,7 @@ ConnectionManagerImpl::ActiveStream::ActiveStream(ConnectionManagerImpl& connect
     std::chrono::milliseconds request_timeout_ms_ = connection_manager_.config_.requestTimeout();
     request_timer_ = connection_manager.read_callbacks_->connection().dispatcher().createTimer(
         [this]() -> void { onRequestTimeout(); });
-    request_timer_->enableTimer(request_timeout_ms_, this);
+    request_timer_->enableTimer(request_timeout_ms_);
   }
 
   stream_info_.setRequestedServerName(
@@ -519,9 +502,8 @@ ConnectionManagerImpl::ActiveStream::~ActiveStream() {
   }
 
   if (active_span_) {
-    Tracing::HttpTracerUtility::finalizeSpan(*active_span_, request_headers_.get(),
-                                             response_headers_.get(), response_trailers_.get(),
-                                             stream_info_, *this);
+    Tracing::HttpTracerUtility::finalizeSpan(*active_span_, request_headers_.get(), stream_info_,
+                                             *this);
   }
   if (state_.successful_upgrade_) {
     connection_manager_.stats_.named_.downstream_cx_upgrades_active_.dec();
@@ -630,15 +612,6 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
   ScopeTrackerScopeState scope(this,
                                connection_manager_.read_callbacks_->connection().dispatcher());
   request_headers_ = std::move(headers);
-  // For Admin thread, we don't use routeConfigProvider or SRDS route provider.
-  if (dynamic_cast<Server::Admin*>(&connection_manager_.config_) == nullptr &&
-      connection_manager_.config_.scopedRouteConfigProvider() != nullptr) {
-    ASSERT(snapped_route_config_ == nullptr,
-           "Route config already latched to the active stream when scoped RDS is enabled.");
-    // We need to snap snapped_route_config_ here as it's used in mutateRequestHeaders later.
-    snapScopedRouteConfig();
-  }
-
   if (Http::Headers::get().MethodValues.Head ==
       request_headers_->Method()->value().getStringView()) {
     is_head_request_ = true;
@@ -1246,32 +1219,10 @@ void ConnectionManagerImpl::startDrainSequence() {
   drain_timer_->enableTimer(config_.drainTimeout());
 }
 
-void ConnectionManagerImpl::ActiveStream::snapScopedRouteConfig() {
-  ASSERT(request_headers_ != nullptr,
-         "Try to snap scoped route config when there is no request headers.");
-
-  // NOTE: if a RDS subscription hasn't got a RouteConfiguration back, a Router::NullConfigImpl is
-  // returned, in that case we let it pass.
-  snapped_route_config_ = snapped_scoped_routes_config_->getRouteConfig(*request_headers_);
-  if (snapped_route_config_ == nullptr) {
-    ENVOY_STREAM_LOG(trace, "can't find SRDS scope.", *this);
-    // TODO(stevenzzzz): Consider to pass an error message to router filter, so that it can
-    // send back 404 with some more details.
-    snapped_route_config_ = std::make_shared<Router::NullConfigImpl>();
-  }
-}
-
 void ConnectionManagerImpl::ActiveStream::refreshCachedRoute() {
   Router::RouteConstSharedPtr route;
   if (request_headers_ != nullptr) {
-    if (dynamic_cast<Server::Admin*>(&connection_manager_.config_) == nullptr &&
-        connection_manager_.config_.scopedRouteConfigProvider() != nullptr) {
-      // NOTE: re-select scope as well in case the scope key header has been changed by a filter.
-      snapScopedRouteConfig();
-    }
-    if (snapped_route_config_ != nullptr) {
-      route = snapped_route_config_->route(*request_headers_, stream_id_);
-    }
+    route = snapped_route_config_->route(*request_headers_, stream_id_);
   }
   stream_info_.route_entry_ = route ? route->routeEntry() : nullptr;
   cached_route_ = std::move(route);
@@ -1401,12 +1352,7 @@ void ConnectionManagerImpl::ActiveStream::encodeHeaders(ActiveStreamEncoderFilte
   // Base headers.
   connection_manager_.config_.dateProvider().setDateHeader(headers);
   // Following setReference() is safe because serverName() is constant for the life of the listener.
-  const auto transformation = connection_manager_.config_.serverHeaderTransformation();
-  if (transformation == ConnectionManagerConfig::HttpConnectionManagerProto::OVERWRITE ||
-      (transformation == ConnectionManagerConfig::HttpConnectionManagerProto::APPEND_IF_ABSENT &&
-       headers.Server() == nullptr)) {
-    headers.insertServer().value().setReference(connection_manager_.config_.serverName());
-  }
+  headers.insertServer().value().setReference(connection_manager_.config_.serverName());
   ConnectionManagerUtility::mutateResponseHeaders(headers, request_headers_.get(),
                                                   connection_manager_.config_.via());
 
@@ -1750,10 +1696,6 @@ ConnectionManagerImpl::ActiveStream::requestHeadersForTags() const {
 
 bool ConnectionManagerImpl::ActiveStream::verbose() const {
   return connection_manager_.config_.tracingConfig()->verbose_;
-}
-
-uint32_t ConnectionManagerImpl::ActiveStream::maxPathTagLength() const {
-  return connection_manager_.config_.tracingConfig()->max_path_tag_length_;
 }
 
 void ConnectionManagerImpl::ActiveStream::callHighWatermarkCallbacks() {

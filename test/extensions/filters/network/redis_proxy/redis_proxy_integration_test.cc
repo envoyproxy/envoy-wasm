@@ -7,6 +7,7 @@
 
 #include "gtest/gtest.h"
 
+using testing::Matcher;
 using testing::Return;
 
 namespace RedisCmdSplitter = Envoy::Extensions::NetworkFilters::RedisProxy::CommandSplitter;
@@ -55,9 +56,7 @@ static_resources:
         name: envoy.redis_proxy
         config:
           stat_prefix: redis_stats
-          prefix_routes:
-            catch_all_route:
-              cluster: cluster_0
+          cluster: cluster_0
           settings:
             op_timeout: 5s
 )EOF";
@@ -150,8 +149,7 @@ static_resources:
 
 const std::string CONFIG_WITH_ROUTES = CONFIG_WITH_ROUTES_BASE + R"EOF(
           prefix_routes:
-            catch_all_route:
-              cluster: cluster_0
+            catch_all_cluster: cluster_0
             routes:
             - prefix: "foo:"
               cluster: cluster_1
@@ -252,8 +250,7 @@ static_resources:
           settings:
             op_timeout: 5s
           prefix_routes:
-            catch_all_route:
-              cluster: cluster_0
+            catch_all_cluster: cluster_0
             routes:
             - prefix: "foo:"
               cluster: cluster_1

@@ -178,8 +178,7 @@ private:
         cluster.cluster_type().typed_config(), ProtobufWkt::Struct::default_instance(),
         socket_factory_context.messageValidationVisitor(), *config);
     return createClusterWithConfig(cluster,
-                                   MessageUtil::downcastAndValidate<const ConfigProto&>(
-                                       *config, context.messageValidationVisitor()),
+                                   MessageUtil::downcastAndValidate<const ConfigProto&>(*config),
                                    context, socket_factory_context, std::move(stats_scope));
   }
 

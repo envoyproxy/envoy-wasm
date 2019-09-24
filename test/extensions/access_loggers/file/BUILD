@@ -18,6 +18,5 @@ envoy_extension_cc_test(
     deps = [
         "//source/extensions/access_loggers/file:config",
         "//test/mocks/server:server_mocks",
-        "//test/test_common:environment_lib",
     ],
 )

@@ -20,6 +20,7 @@
 
 using testing::_;
 using testing::NiceMock;
+using testing::Return;
 
 namespace Envoy {
 namespace Config {

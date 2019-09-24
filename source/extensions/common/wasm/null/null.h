@@ -11,7 +11,7 @@ namespace Common {
 namespace Wasm {
 namespace Null {
 
-WasmVmPtr createVm();
+std::unique_ptr<WasmVm> createVm();
 
 } // namespace Null
 } // namespace Wasm

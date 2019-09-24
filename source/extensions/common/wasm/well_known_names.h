@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 #include "common/singleton/const_singleton.h"
 
 namespace Envoy {
@@ -27,7 +25,7 @@ public:
   const std::string FilterState = "envoy.wasm";
 };
 
-using WasmVmNames = ConstSingleton<WasmVmValues>;
+typedef ConstSingleton<WasmVmValues> WasmVmNames;
 
 } // namespace Wasm
 } // namespace Common

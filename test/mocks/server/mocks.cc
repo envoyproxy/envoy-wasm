@@ -10,6 +10,7 @@
 using testing::_;
 using testing::Invoke;
 using testing::Return;
+using testing::ReturnNew;
 using testing::ReturnPointee;
 using testing::ReturnRef;
 using testing::SaveArg;
@@ -76,7 +77,7 @@ MockGuardDog::MockGuardDog() : watch_dog_(new NiceMock<MockWatchDog>()) {
 }
 MockGuardDog::~MockGuardDog() = default;
 
-MockHotRestart::MockHotRestart() : stats_allocator_(*symbol_table_) {
+MockHotRestart::MockHotRestart() : stats_allocator_(symbol_table_.get()) {
   ON_CALL(*this, logLock()).WillByDefault(ReturnRef(log_lock_));
   ON_CALL(*this, accessLogLock()).WillByDefault(ReturnRef(access_log_lock_));
   ON_CALL(*this, statsAllocator()).WillByDefault(ReturnRef(stats_allocator_));
@@ -223,7 +224,6 @@ MockHealthCheckerFactoryContext::MockHealthCheckerFactoryContext() {
   ON_CALL(*this, eventLogger_()).WillByDefault(Return(event_logger_));
   ON_CALL(*this, messageValidationVisitor())
       .WillByDefault(ReturnRef(ProtobufMessage::getStrictValidationVisitor()));
-  ON_CALL(*this, api()).WillByDefault(ReturnRef(api_));
 }
 
 MockHealthCheckerFactoryContext::~MockHealthCheckerFactoryContext() = default;

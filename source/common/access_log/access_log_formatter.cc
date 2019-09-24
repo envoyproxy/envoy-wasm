@@ -1,7 +1,6 @@
 #include "common/access_log/access_log_formatter.h"
 
 #include <cstdint>
-#include <regex>
 #include <string>
 #include <vector>
 

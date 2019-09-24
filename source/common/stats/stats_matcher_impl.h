@@ -33,7 +33,7 @@ private:
   // StatsMatcherImpl::rejects() for much more detail.
   bool is_inclusive_{true};
 
-  std::vector<Matchers::StringMatcherImpl> matchers_;
+  std::vector<Matchers::StringMatcher> matchers_;
 };
 
 } // namespace Stats

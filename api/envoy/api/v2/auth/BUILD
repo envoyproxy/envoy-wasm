@@ -1,4 +1,4 @@
-load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library_internal", "api_proto_package")
+load("@envoy_api//bazel:api_build_system.bzl", "api_go_proto_library", "api_proto_library_internal")
 
 licenses(["notice"])  # Apache 2
 
@@ -15,13 +15,6 @@ package_group(
     ],
 )
 
-api_proto_package(
-    name = "auth",
-    deps = [
-        "//envoy/api/v2/core",
-    ],
-)
-
 api_proto_library_internal(
     name = "cert",
     srcs = ["cert.proto"],
@@ -29,5 +22,14 @@ api_proto_library_internal(
     deps = [
         "//envoy/api/v2/core:base",
         "//envoy/api/v2/core:config_source",
+    ],
+)
+
+api_go_proto_library(
+    name = "cert",
+    proto = ":cert",
+    deps = [
+        "//envoy/api/v2/core:base_go_proto",
+        "//envoy/api/v2/core:config_source_go_proto",
     ],
 )

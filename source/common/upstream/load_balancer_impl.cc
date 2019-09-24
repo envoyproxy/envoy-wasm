@@ -282,8 +282,7 @@ ZoneAwareLoadBalancerBase::ZoneAwareLoadBalancerBase(
       routing_enabled_(PROTOBUF_PERCENT_TO_ROUNDED_INTEGER_OR_DEFAULT(
           common_config.zone_aware_lb_config(), routing_enabled, 100, 100)),
       min_cluster_size_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(common_config.zone_aware_lb_config(),
-                                                        min_cluster_size, 6U)),
-      fail_traffic_on_panic_(common_config.zone_aware_lb_config().fail_traffic_on_panic()) {
+                                                        min_cluster_size, 6U)) {
   ASSERT(!priority_set.hostSetsPerPriority().empty());
   resizePerPriorityState();
   priority_set_.addPriorityUpdateCb(
@@ -540,7 +539,7 @@ uint32_t ZoneAwareLoadBalancerBase::tryChooseLocalLocalityHosts(const HostSet& h
   return i;
 }
 
-absl::optional<ZoneAwareLoadBalancerBase::HostsSource>
+ZoneAwareLoadBalancerBase::HostsSource
 ZoneAwareLoadBalancerBase::hostSourceToUse(LoadBalancerContext* context) {
   auto host_set_and_source = chooseHostSet(context);
 
@@ -550,16 +549,11 @@ ZoneAwareLoadBalancerBase::hostSourceToUse(LoadBalancerContext* context) {
   HostsSource hosts_source;
   hosts_source.priority_ = host_set.priority();
 
-  // If the selected host set has insufficient healthy hosts, return all hosts (unless we should
-  // fail traffic on panic, in which case return no host).
+  // If the selected host set has insufficient healthy hosts, return all hosts.
   if (per_priority_panic_[hosts_source.priority_]) {
     stats_.lb_healthy_panic_.inc();
-    if (fail_traffic_on_panic_) {
-      return absl::nullopt;
-    } else {
-      hosts_source.source_type_ = HostsSource::SourceType::AllHosts;
-      return hosts_source;
-    }
+    hosts_source.source_type_ = HostsSource::SourceType::AllHosts;
+    return hosts_source;
   }
 
   // If we're doing locality weighted balancing, pick locality.
@@ -592,14 +586,10 @@ ZoneAwareLoadBalancerBase::hostSourceToUse(LoadBalancerContext* context) {
 
   if (isGlobalPanic(localHostSet())) {
     stats_.lb_local_cluster_not_ok_.inc();
-    // If the local Envoy instances are in global panic, and we should not fail traffic, do
-    // not do locality based routing.
-    if (fail_traffic_on_panic_) {
-      return absl::nullopt;
-    } else {
-      hosts_source.source_type_ = sourceType(host_availability);
-      return hosts_source;
-    }
+    // If the local Envoy instances are in global panic, do not do locality
+    // based routing.
+    hosts_source.source_type_ = sourceType(host_availability);
+    return hosts_source;
   }
 
   hosts_source.source_type_ = localitySourceType(host_availability);
@@ -709,11 +699,8 @@ void EdfLoadBalancerBase::refresh(uint32_t priority) {
 }
 
 HostConstSharedPtr EdfLoadBalancerBase::chooseHostOnce(LoadBalancerContext* context) {
-  const absl::optional<HostsSource> hosts_source = hostSourceToUse(context);
-  if (!hosts_source) {
-    return nullptr;
-  }
-  auto scheduler_it = scheduler_.find(*hosts_source);
+  const HostsSource hosts_source = hostSourceToUse(context);
+  auto scheduler_it = scheduler_.find(hosts_source);
   // We should always have a scheduler for any return value from
   // hostSourceToUse() via the construction in refresh();
   ASSERT(scheduler_it != scheduler_.end());
@@ -730,11 +717,11 @@ HostConstSharedPtr EdfLoadBalancerBase::chooseHostOnce(LoadBalancerContext* cont
     }
     return host;
   } else {
-    const HostVector& hosts_to_use = hostSourceToHosts(*hosts_source);
+    const HostVector& hosts_to_use = hostSourceToHosts(hosts_source);
     if (hosts_to_use.empty()) {
       return nullptr;
     }
-    return unweightedHostPick(hosts_to_use, *hosts_source);
+    return unweightedHostPick(hosts_to_use, hosts_source);
   }
 }
 
@@ -762,12 +749,7 @@ HostConstSharedPtr LeastRequestLoadBalancer::unweightedHostPick(const HostVector
 }
 
 HostConstSharedPtr RandomLoadBalancer::chooseHostOnce(LoadBalancerContext* context) {
-  const absl::optional<HostsSource> hosts_source = hostSourceToUse(context);
-  if (!hosts_source) {
-    return nullptr;
-  }
-
-  const HostVector& hosts_to_use = hostSourceToHosts(*hosts_source);
+  const HostVector& hosts_to_use = hostSourceToHosts(hostSourceToUse(context));
   if (hosts_to_use.empty()) {
     return nullptr;
   }

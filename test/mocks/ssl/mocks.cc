@@ -18,11 +18,5 @@ MockClientContextConfig::~MockClientContextConfig() = default;
 MockServerContextConfig::MockServerContextConfig() = default;
 MockServerContextConfig::~MockServerContextConfig() = default;
 
-MockPrivateKeyMethodManager::MockPrivateKeyMethodManager() = default;
-MockPrivateKeyMethodManager::~MockPrivateKeyMethodManager() = default;
-
-MockPrivateKeyMethodProvider::MockPrivateKeyMethodProvider() = default;
-MockPrivateKeyMethodProvider::~MockPrivateKeyMethodProvider() = default;
-
 } // namespace Ssl
 } // namespace Envoy

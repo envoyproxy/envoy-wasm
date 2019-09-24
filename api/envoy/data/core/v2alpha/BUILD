@@ -1,10 +1,6 @@
-load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library", "api_proto_package")
+load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library")
 
 licenses(["notice"])  # Apache 2
-
-api_proto_package(
-    deps = ["//envoy/api/v2/core"],
-)
 
 api_proto_library(
     name = "health_check_event",

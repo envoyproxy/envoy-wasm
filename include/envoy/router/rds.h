@@ -48,11 +48,6 @@ public:
    * Callback used to notify RouteConfigProvider about configuration changes.
    */
   virtual void onConfigUpdate() PURE;
-
-  /**
-   * Validate if the route configuration can be applied to the context of the route config provider.
-   */
-  virtual void validateConfig(const envoy::api::v2::RouteConfiguration& config) const PURE;
 };
 
 using RouteConfigProviderPtr = std::unique_ptr<RouteConfigProvider>;

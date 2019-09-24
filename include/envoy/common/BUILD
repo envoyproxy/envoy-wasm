@@ -30,19 +30,6 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "matchers_interface",
-    hdrs = ["matchers.h"],
-)
-
-envoy_cc_library(
-    name = "regex_interface",
-    hdrs = ["regex.h"],
-    deps = [
-        ":matchers_interface",
-    ],
-)
-
-envoy_cc_library(
     name = "token_bucket_interface",
     hdrs = ["token_bucket.h"],
     deps = [

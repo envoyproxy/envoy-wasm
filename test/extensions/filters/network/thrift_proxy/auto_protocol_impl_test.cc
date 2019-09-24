@@ -18,6 +18,7 @@
 using testing::NiceMock;
 using testing::Ref;
 using testing::Return;
+using testing::ReturnRef;
 
 namespace Envoy {
 namespace Extensions {

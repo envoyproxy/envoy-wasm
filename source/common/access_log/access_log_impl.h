@@ -28,8 +28,7 @@ public:
    * Read a filter definition from proto and instantiate a concrete filter class.
    */
   static FilterPtr fromProto(const envoy::config::filter::accesslog::v2::AccessLogFilter& config,
-                             Runtime::Loader& runtime, Runtime::RandomGenerator& random,
-                             ProtobufMessage::ValidationVisitor& validation_visitor);
+                             Runtime::Loader& runtime, Runtime::RandomGenerator& random);
 };
 
 /**
@@ -83,8 +82,7 @@ class OperatorFilter : public Filter {
 public:
   OperatorFilter(const Protobuf::RepeatedPtrField<
                      envoy::config::filter::accesslog::v2::AccessLogFilter>& configs,
-                 Runtime::Loader& runtime, Runtime::RandomGenerator& random,
-                 ProtobufMessage::ValidationVisitor& validation_visitor);
+                 Runtime::Loader& runtime, Runtime::RandomGenerator& random);
 
 protected:
   std::vector<FilterPtr> filters_;
@@ -96,8 +94,7 @@ protected:
 class AndFilter : public OperatorFilter {
 public:
   AndFilter(const envoy::config::filter::accesslog::v2::AndFilter& config, Runtime::Loader& runtime,
-            Runtime::RandomGenerator& random,
-            ProtobufMessage::ValidationVisitor& validation_visitor);
+            Runtime::RandomGenerator& random);
 
   // AccessLog::Filter
   bool evaluate(const StreamInfo::StreamInfo& info, const Http::HeaderMap& request_headers,
@@ -111,8 +108,7 @@ public:
 class OrFilter : public OperatorFilter {
 public:
   OrFilter(const envoy::config::filter::accesslog::v2::OrFilter& config, Runtime::Loader& runtime,
-           Runtime::RandomGenerator& random,
-           ProtobufMessage::ValidationVisitor& validation_visitor);
+           Runtime::RandomGenerator& random);
 
   // AccessLog::Filter
   bool evaluate(const StreamInfo::StreamInfo& info, const Http::HeaderMap& request_headers,
@@ -178,7 +174,7 @@ public:
                 const Http::HeaderMap& response_trailers) override;
 
 private:
-  const Http::HeaderUtility::HeaderDataPtr header_data_;
+  std::vector<Http::HeaderUtility::HeaderData> header_data_;
 };
 
 /**

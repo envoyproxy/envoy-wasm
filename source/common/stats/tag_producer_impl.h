@@ -17,7 +17,6 @@
 #include "common/config/well_known_names.h"
 #include "common/protobuf/protobuf.h"
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace Envoy {
@@ -98,7 +97,8 @@ private:
   // Maps a prefix word extracted out of a regex to a vector of TagExtractors. Note that
   // the storage for the prefix string is owned by the TagExtractor, which, depending on
   // implementation, may need make a copy of the prefix.
-  absl::flat_hash_map<absl::string_view, std::vector<TagExtractorPtr>> tag_extractor_prefix_map_;
+  std::unordered_map<absl::string_view, std::vector<TagExtractorPtr>, StringViewHash>
+      tag_extractor_prefix_map_;
   std::vector<Tag> default_tags_;
 };
 

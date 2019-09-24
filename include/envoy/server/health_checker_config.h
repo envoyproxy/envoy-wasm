@@ -43,11 +43,6 @@ public:
    *         messages.
    */
   virtual ProtobufMessage::ValidationVisitor& messageValidationVisitor() PURE;
-
-  /**
-   * @return Api::Api& the API used by the server.
-   */
-  virtual Api::Api& api() PURE;
 };
 
 /**

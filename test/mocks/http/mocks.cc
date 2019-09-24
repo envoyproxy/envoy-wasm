@@ -8,8 +8,13 @@
 
 using testing::_;
 using testing::Invoke;
+using testing::MakeMatcher;
+using testing::Matcher;
+using testing::MatcherInterface;
+using testing::MatchResultListener;
 using testing::Return;
 using testing::ReturnRef;
+using testing::SaveArg;
 
 namespace Envoy {
 namespace Http {

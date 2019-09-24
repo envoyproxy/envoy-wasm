@@ -111,8 +111,11 @@ void NotMatcher::updateLocalStatus(MatchStatusVector& statuses,
 HttpHeaderMatcherBase::HttpHeaderMatcherBase(
     const envoy::service::tap::v2alpha::HttpHeadersMatch& config,
     const std::vector<MatcherPtr>& matchers)
-    : SimpleMatcher(matchers),
-      headers_to_match_(Http::HeaderUtility::buildHeaderDataVector(config.headers())) {}
+    : SimpleMatcher(matchers) {
+  for (const auto& header_match : config.headers()) {
+    headers_to_match_.emplace_back(header_match);
+  }
+}
 
 void HttpHeaderMatcherBase::matchHeaders(const Http::HeaderMap& headers,
                                          MatchStatusVector& statuses) const {

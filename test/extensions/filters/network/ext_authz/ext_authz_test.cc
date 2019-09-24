@@ -26,6 +26,7 @@ using testing::_;
 using testing::InSequence;
 using testing::Invoke;
 using testing::NiceMock;
+using testing::Return;
 using testing::ReturnRef;
 using testing::WithArgs;
 
@@ -94,7 +95,7 @@ TEST_F(ExtAuthzFilterTest, BadExtAuthzConfig) {
   envoy::config::filter::network::ext_authz::v2::ExtAuthz proto_config{};
   TestUtility::loadFromJson(json_string, proto_config);
 
-  EXPECT_THROW(TestUtility::downcastAndValidate<
+  EXPECT_THROW(MessageUtil::downcastAndValidate<
                    const envoy::config::filter::network::ext_authz::v2::ExtAuthz&>(proto_config),
                ProtoValidationException);
 }

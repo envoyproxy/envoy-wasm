@@ -4,7 +4,6 @@
 #include <string>
 
 #include "envoy/common/pure.h"
-#include "envoy/ssl/private_key/private_key.h"
 
 namespace Envoy {
 namespace Ssl {
@@ -34,11 +33,6 @@ public:
    * key was inlined.
    */
   virtual const std::string& privateKeyPath() const PURE;
-
-  /**
-   * @return private key method provider.
-   */
-  virtual Envoy::Ssl::PrivateKeyMethodProviderSharedPtr privateKeyMethod() const PURE;
 
   /**
    * @return a string of password.

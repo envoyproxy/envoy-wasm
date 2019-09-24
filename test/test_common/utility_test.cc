@@ -4,6 +4,8 @@
 
 #include "gtest/gtest.h"
 
+using Envoy::Http::HeaderMap;
+
 namespace Envoy {
 
 TEST(HeaderMapEqualIgnoreOrder, ActuallyEqual) {

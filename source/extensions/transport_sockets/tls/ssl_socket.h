@@ -6,7 +6,6 @@
 #include "envoy/network/connection.h"
 #include "envoy/network/transport_socket.h"
 #include "envoy/secret/secret_callbacks.h"
-#include "envoy/ssl/private_key/private_key_callbacks.h"
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats_macros.h"
 
@@ -39,20 +38,22 @@ struct SslSocketFactoryStats {
 };
 
 enum class InitialState { Client, Server };
-enum class SocketState { PreHandshake, HandshakeInProgress, HandshakeComplete, ShutdownSent };
 
-class SslSocketInfo : public Envoy::Ssl::ConnectionInfo {
+class SslSocket : public Network::TransportSocket,
+                  public Envoy::Ssl::ConnectionInfo,
+                  protected Logger::Loggable<Logger::Id::connection> {
 public:
-  SslSocketInfo(bssl::UniquePtr<SSL> ssl) : ssl_(std::move(ssl)) {}
+  SslSocket(Envoy::Ssl::ContextSharedPtr ctx, InitialState state,
+            const Network::TransportSocketOptionsSharedPtr& transport_socket_options);
 
   // Ssl::ConnectionInfo
   bool peerCertificatePresented() const override;
   std::vector<std::string> uriSanLocalCertificate() const override;
   const std::string& sha256PeerCertificateDigest() const override;
-  const std::string& serialNumberPeerCertificate() const override;
-  const std::string& issuerPeerCertificate() const override;
-  const std::string& subjectPeerCertificate() const override;
-  const std::string& subjectLocalCertificate() const override;
+  std::string serialNumberPeerCertificate() const override;
+  std::string issuerPeerCertificate() const override;
+  std::string subjectPeerCertificate() const override;
+  std::string subjectLocalCertificate() const override;
   std::vector<std::string> uriSanPeerCertificate() const override;
   const std::string& urlEncodedPemEncodedPeerCertificate() const override;
   const std::string& urlEncodedPemEncodedPeerCertificateChain() const override;
@@ -60,52 +61,23 @@ public:
   std::vector<std::string> dnsSansLocalCertificate() const override;
   absl::optional<SystemTime> validFromPeerCertificate() const override;
   absl::optional<SystemTime> expirationPeerCertificate() const override;
-  const std::string& sessionId() const override;
+  std::string sessionId() const override;
   uint16_t ciphersuiteId() const override;
   std::string ciphersuiteString() const override;
-  const std::string& tlsVersion() const override;
-
-  SSL* rawSslForTest() const { return ssl_.get(); }
-
-  bssl::UniquePtr<SSL> ssl_;
-
-private:
-  mutable std::vector<std::string> cached_uri_san_local_certificate_;
-  mutable std::string cached_sha_256_peer_certificate_digest_;
-  mutable std::string cached_serial_number_peer_certificate_;
-  mutable std::string cached_issuer_peer_certificate_;
-  mutable std::string cached_subject_peer_certificate_;
-  mutable std::string cached_subject_local_certificate_;
-  mutable std::vector<std::string> cached_uri_san_peer_certificate_;
-  mutable std::string cached_url_encoded_pem_encoded_peer_certificate_;
-  mutable std::string cached_url_encoded_pem_encoded_peer_cert_chain_;
-  mutable std::vector<std::string> cached_dns_san_peer_certificate_;
-  mutable std::vector<std::string> cached_dns_san_local_certificate_;
-  mutable std::string cached_session_id_;
-  mutable std::string cached_tls_version_;
-};
-
-class SslSocket : public Network::TransportSocket,
-                  public Envoy::Ssl::PrivateKeyConnectionCallbacks,
-                  protected Logger::Loggable<Logger::Id::connection> {
-public:
-  SslSocket(Envoy::Ssl::ContextSharedPtr ctx, InitialState state,
-            const Network::TransportSocketOptionsSharedPtr& transport_socket_options);
+  std::string tlsVersion() const override;
 
   // Network::TransportSocket
   void setTransportSocketCallbacks(Network::TransportSocketCallbacks& callbacks) override;
   std::string protocol() const override;
   absl::string_view failureReason() const override;
-  bool canFlushClose() override { return state_ == SocketState::HandshakeComplete; }
+  bool canFlushClose() override { return handshake_complete_; }
   void closeSocket(Network::ConnectionEvent close_type) override;
   Network::IoResult doRead(Buffer::Instance& read_buffer) override;
   Network::IoResult doWrite(Buffer::Instance& write_buffer, bool end_stream) override;
   void onConnected() override;
-  Ssl::ConnectionInfoConstSharedPtr ssl() const override;
-  // Ssl::PrivateKeyConnectionCallbacks
-  void onPrivateKeyMethodComplete() override;
+  const Ssl::ConnectionInfo* ssl() const override { return this; }
 
-  SSL* rawSslForTest() const { return ssl_; }
+  SSL* rawSslForTest() const { return ssl_.get(); }
 
 private:
   struct ReadResult {
@@ -117,19 +89,18 @@ private:
   Network::PostIoAction doHandshake();
   void drainErrorQueue();
   void shutdownSsl();
-  bool isThreadSafe() const {
-    return callbacks_ != nullptr && callbacks_->connection().dispatcher().isThreadSafe();
-  }
 
   const Network::TransportSocketOptionsSharedPtr transport_socket_options_;
   Network::TransportSocketCallbacks* callbacks_{};
   ContextImplSharedPtr ctx_;
+  bssl::UniquePtr<SSL> ssl_;
+  bool handshake_complete_{};
+  bool shutdown_sent_{};
   uint64_t bytes_to_retry_{};
   std::string failure_reason_;
-  SocketState state_;
-
-  SSL* ssl_;
-  Ssl::ConnectionInfoConstSharedPtr info_;
+  mutable std::string cached_sha_256_peer_certificate_digest_;
+  mutable std::string cached_url_encoded_pem_encoded_peer_certificate_;
+  mutable std::string cached_url_encoded_pem_encoded_peer_cert_chain_;
 };
 
 class ClientSslSocketFactory : public Network::TransportSocketFactory,
@@ -152,7 +123,7 @@ private:
   SslSocketFactoryStats stats_;
   Envoy::Ssl::ClientContextConfigPtr config_;
   mutable absl::Mutex ssl_ctx_mu_;
-  Envoy::Ssl::ClientContextSharedPtr ssl_ctx_ ABSL_GUARDED_BY(ssl_ctx_mu_);
+  Envoy::Ssl::ClientContextSharedPtr ssl_ctx_ GUARDED_BY(ssl_ctx_mu_);
 };
 
 class ServerSslSocketFactory : public Network::TransportSocketFactory,
@@ -177,7 +148,7 @@ private:
   Envoy::Ssl::ServerContextConfigPtr config_;
   const std::vector<std::string> server_names_;
   mutable absl::Mutex ssl_ctx_mu_;
-  Envoy::Ssl::ServerContextSharedPtr ssl_ctx_ ABSL_GUARDED_BY(ssl_ctx_mu_);
+  Envoy::Ssl::ServerContextSharedPtr ssl_ctx_ GUARDED_BY(ssl_ctx_mu_);
 };
 
 } // namespace Tls

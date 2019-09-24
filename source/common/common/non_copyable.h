@@ -2,19 +2,14 @@
 
 namespace Envoy {
 /**
- * Mixin class that makes derived classes not copyable and not moveable. Like boost::noncopyable
- * without boost.
+ * Mixin class that makes derived classes not copyable. Like boost::noncopyable without boost.
  */
 class NonCopyable {
 protected:
   NonCopyable() = default;
 
-  // Non-moveable.
-  NonCopyable(NonCopyable&&) noexcept = delete;
-  NonCopyable& operator=(NonCopyable&&) noexcept = delete;
-
-  // Non-copyable.
-  NonCopyable(const NonCopyable&) = delete;
-  NonCopyable& operator=(const NonCopyable&) = delete;
+private:
+  NonCopyable(const NonCopyable&);
+  NonCopyable& operator=(const NonCopyable&);
 };
 } // namespace Envoy

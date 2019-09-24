@@ -18,8 +18,10 @@
 #include "gtest/gtest.h"
 
 using testing::_;
+using testing::AtLeast;
 using testing::Ref;
 using testing::Return;
+using testing::ReturnRef;
 
 namespace Envoy {
 namespace Config {

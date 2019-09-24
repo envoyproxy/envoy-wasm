@@ -8,6 +8,7 @@
 #include "test/test_common/utility.h"
 
 using testing::InSequence;
+using testing::Return;
 using testing::ReturnPointee;
 
 namespace Envoy {

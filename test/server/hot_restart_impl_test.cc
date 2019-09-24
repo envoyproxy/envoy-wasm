@@ -20,6 +20,8 @@ using testing::_;
 using testing::AnyNumber;
 using testing::Invoke;
 using testing::InvokeWithoutArgs;
+using testing::Return;
+using testing::ReturnRef;
 using testing::WithArg;
 
 namespace Envoy {

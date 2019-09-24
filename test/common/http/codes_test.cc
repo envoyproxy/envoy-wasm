@@ -8,7 +8,6 @@
 #include "common/common/empty_string.h"
 #include "common/http/codes.h"
 #include "common/http/header_map_impl.h"
-#include "common/stats/symbol_table_creator.h"
 
 #include "test/mocks/stats/mocks.h"
 #include "test/test_common/printers.h"
@@ -17,6 +16,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+using testing::_;
 using testing::Property;
 
 namespace Envoy {
@@ -45,7 +45,7 @@ public:
     code_stats_.chargeResponseStat(info);
   }
 
-  Stats::TestSymbolTable symbol_table_;
+  Envoy::Test::Global<Stats::FakeSymbolTableImpl> symbol_table_;
   Stats::IsolatedStoreImpl global_store_;
   Stats::IsolatedStoreImpl cluster_scope_;
   Http::CodeStatsImpl code_stats_;
@@ -276,14 +276,13 @@ TEST_F(CodeUtilityTest, ResponseTimingTest) {
 
 class CodeStatsTest : public testing::Test {
 protected:
-  CodeStatsTest()
-      : symbol_table_(Stats::SymbolTableCreator::makeSymbolTable()), code_stats_(*symbol_table_) {}
+  CodeStatsTest() : code_stats_(symbol_table_) {}
 
   absl::string_view stripTrailingDot(absl::string_view prefix) {
     return CodeStatsImpl::stripTrailingDot(prefix);
   }
 
-  Stats::SymbolTablePtr symbol_table_;
+  Stats::FakeSymbolTableImpl symbol_table_;
   CodeStatsImpl code_stats_;
 };
 

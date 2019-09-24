@@ -15,7 +15,8 @@ namespace Envoy {
 namespace Upstream {
 namespace {
 
-constexpr static const char* kDefaultStaticClusterTmpl = R"EOF(
+inline std::string defaultStaticClusterJson(const std::string& name) {
+  return fmt::sprintf(R"EOF(
   {
     "name": "%s",
     "connect_timeout": "0.250s",
@@ -23,18 +24,15 @@ constexpr static const char* kDefaultStaticClusterTmpl = R"EOF(
     "lb_policy": "round_robin",
     "hosts": [
       {
-        %s,
+        "socket_address": {
+          "address": "127.0.0.1",
+          "port_value": 11001
+        }
       }
     ]
   }
-  )EOF";
-
-inline std::string defaultStaticClusterJson(const std::string& name) {
-  return fmt::sprintf(kDefaultStaticClusterTmpl, name, R"EOF(
-"socket_address": {
-  "address": "127.0.0.1",
-  "port_value": 11001
-})EOF");
+  )EOF",
+                      name);
 }
 
 inline envoy::config::bootstrap::v2::Bootstrap

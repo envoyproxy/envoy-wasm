@@ -24,7 +24,7 @@ envoy::config::filter::network::dubbo_proxy::v2alpha1::RouteConfiguration
 parseRouteConfigurationFromV2Yaml(const std::string& yaml) {
   envoy::config::filter::network::dubbo_proxy::v2alpha1::RouteConfiguration route_config;
   TestUtility::loadFromYaml(yaml, route_config);
-  TestUtility::validate(route_config);
+  MessageUtil::validate(route_config);
   return route_config;
 }
 
@@ -32,7 +32,7 @@ envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboProxy
 parseDubboProxyFromV2Yaml(const std::string& yaml) {
   envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboProxy config;
   TestUtility::loadFromYaml(yaml, config);
-  TestUtility::validate(config);
+  MessageUtil::validate(config);
   return config;
 }
 
@@ -47,9 +47,7 @@ routes:
   - match:
       method:
         name:
-          safe_regex:
-            google_re2: {}
-            regex: "(.*?)"
+          regex: "(.*?)"
     route:
         cluster: user_service_dubbo_server
 )EOF";
@@ -96,9 +94,7 @@ routes:
   - match:
       method:
         name:
-          safe_regex:
-            google_re2: {}
-            regex: "(.*?)"
+          regex: "(.*?)"
     route:
         cluster: user_service_dubbo_server
 )EOF";
@@ -132,9 +128,7 @@ routes:
   - match:
       method:
         name:
-          safe_regex:
-            google_re2: {}
-            regex: "(.*?)"
+          regex: "(.*?)"
     route:
         cluster: user_service_dubbo_server
 )EOF";
@@ -173,9 +167,7 @@ routes:
   - match:
       method:
         name:
-          safe_regex:
-            google_re2: {}
-            regex: "(.*?)"
+          regex: "(.*?)"
     route:
         cluster: user_service_dubbo_server
 )EOF";
@@ -307,9 +299,7 @@ routes:
   - match:
       method:
         name:
-          safe_regex:
-            google_re2: {}
-            regex: "\\d{3}test"
+          regex: "\\d{3}test"
     route:
         cluster: user_service_dubbo_server
 )EOF";

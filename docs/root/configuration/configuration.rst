@@ -8,12 +8,21 @@ Configuration reference
 
   overview/v2_overview
   listeners/listeners
-  http/http
-  upstream/upstream
-  observability/observability
-  security/security
-  operations/operations
-  other_features/other_features
-  other_protocols/other_protocols
-  advanced/advanced
+  listener_filters/listener_filters
+  network_filters/network_filters
+  http_conn_man/http_conn_man
+  http_filters/http_filters
+  thrift_filters/thrift_filters
+  dubbo_filters/dubbo_filters
+  cluster_manager/cluster_manager
+  health_checkers/health_checkers
+  access_log
+  rate_limit
+  runtime
+  statistics
+  xds_subscription_stats
+  tools/router_check
+  overload_manager/overload_manager
+  secret
+  well_known_dynamic_metadata
   best_practices/best_practices

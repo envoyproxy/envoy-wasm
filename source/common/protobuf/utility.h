@@ -84,15 +84,6 @@ uint64_t fractionalPercentDenominatorToInt(
 } // namespace ProtobufPercentHelper
 } // namespace Envoy
 
-// Convert an envoy::api::v2::core::Percent to a double or a default.
-// @param message supplies the proto message containing the field.
-// @param field_name supplies the field name in the message.
-// @param default_value supplies the default if the field is not present.
-#define PROTOBUF_PERCENT_TO_DOUBLE_OR_DEFAULT(message, field_name, default_value)                  \
-  (!std::isnan((message).field_name().value())                                                     \
-       ? (message).has_##field_name() ? (message).field_name().value() : default_value             \
-       : throw EnvoyException(fmt::format("Value not in the range of 0..100 range.")))
-
 // Convert an envoy::api::v2::core::Percent to a rounded integer or a default.
 // @param message supplies the proto message containing the field.
 // @param field_name supplies the field name in the message.
@@ -215,6 +206,13 @@ public:
     return HashUtil::xxHash64(text);
   }
 
+  static void checkUnknownFields(const Protobuf::Message& message,
+                                 ProtobufMessage::ValidationVisitor& validation_visitor) {
+    if (!message.GetReflection()->GetUnknownFields(message).empty()) {
+      validation_visitor.onUnknownField("type " + message.GetTypeName());
+    }
+  }
+
   static void loadFromJson(const std::string& json, Protobuf::Message& message,
                            ProtobufMessage::ValidationVisitor& validation_visitor);
   static void loadFromJson(const std::string& json, ProtobufWkt::Struct& message);
@@ -231,9 +229,8 @@ public:
    *    in disallowed_features in runtime_features.h
    */
   static void
-  checkForUnexpectedFields(const Protobuf::Message& message,
-                           ProtobufMessage::ValidationVisitor& validation_visitor,
-                           Runtime::Loader* loader = Runtime::LoaderSingleton::getExisting());
+  checkForDeprecation(const Protobuf::Message& message,
+                      Runtime::Loader* loader = Runtime::LoaderSingleton::getExisting());
 
   /**
    * Validate protoc-gen-validate constraints on a given protobuf.
@@ -242,11 +239,9 @@ public:
    * @param message message to validate.
    * @throw ProtoValidationException if the message does not satisfy its type constraints.
    */
-  template <class MessageType>
-  static void validate(const MessageType& message,
-                       ProtobufMessage::ValidationVisitor& validation_visitor) {
-    // Log warnings or throw errors if deprecated fields or unknown fields are in use.
-    checkForUnexpectedFields(message, validation_visitor);
+  template <class MessageType> static void validate(const MessageType& message) {
+    // Log warnings or throw errors if deprecated fields are in use.
+    checkForDeprecation(message);
 
     std::string err;
     if (!Validate(message, &err)) {
@@ -258,14 +253,14 @@ public:
   static void loadFromFileAndValidate(const std::string& path, MessageType& message,
                                       ProtobufMessage::ValidationVisitor& validation_visitor) {
     loadFromFile(path, message, validation_visitor);
-    validate(message, validation_visitor);
+    validate(message);
   }
 
   template <class MessageType>
   static void loadFromYamlAndValidate(const std::string& yaml, MessageType& message,
                                       ProtobufMessage::ValidationVisitor& validation_visitor) {
     loadFromYaml(yaml, message, validation_visitor);
-    validate(message, validation_visitor);
+    validate(message);
   }
 
   /**
@@ -277,11 +272,9 @@ public:
    * @throw ProtoValidationException if the message does not satisfy its type constraints.
    */
   template <class MessageType>
-  static const MessageType&
-  downcastAndValidate(const Protobuf::Message& config,
-                      ProtobufMessage::ValidationVisitor& validation_visitor) {
+  static const MessageType& downcastAndValidate(const Protobuf::Message& config) {
     const auto& typed_config = dynamic_cast<MessageType>(config);
-    validate(typed_config, validation_visitor);
+    validate(typed_config);
     return typed_config;
   }
 
@@ -293,11 +286,13 @@ public:
    * @return MessageType the typed message inside the Any.
    */
   template <class MessageType>
-  static inline MessageType anyConvert(const ProtobufWkt::Any& message) {
+  static inline MessageType anyConvert(const ProtobufWkt::Any& message,
+                                       ProtobufMessage::ValidationVisitor& validation_visitor) {
     MessageType typed_message;
     if (!message.UnpackTo(&typed_message)) {
       throw EnvoyException("Unable to unpack " + message.DebugString());
     }
+    checkUnknownFields(typed_message, validation_visitor);
     return typed_message;
   };
 

@@ -66,8 +66,7 @@ public:
   Http::FilterFactoryCb createFilter(const std::string&,
                                      Server::Configuration::FactoryContext&) override {
     return [&](Http::FilterChainFactoryCallbacks& callbacks) -> void {
-      // ABSL_GUARDED_BY insists the lock be held when the guarded variables are passed by
-      // reference.
+      // GUARDED_BY insists the lock be held when the guarded variables are passed by reference.
       absl::WriterMutexLock m(&encode_lock_);
       callbacks.addStreamFilter(std::make_shared<::Envoy::TestPauseFilter>(
           encode_lock_, number_of_encode_calls_, number_of_decode_calls_));
@@ -75,8 +74,8 @@ public:
   }
 
   absl::Mutex encode_lock_;
-  uint32_t number_of_encode_calls_ ABSL_GUARDED_BY(encode_lock_) = 0;
-  uint32_t number_of_decode_calls_ ABSL_GUARDED_BY(encode_lock_) = 0;
+  uint32_t number_of_encode_calls_ GUARDED_BY(encode_lock_) = 0;
+  uint32_t number_of_decode_calls_ GUARDED_BY(encode_lock_) = 0;
 };
 
 // perform static registration

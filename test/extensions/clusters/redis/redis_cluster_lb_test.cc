@@ -44,7 +44,6 @@ public:
     factory_ = std::make_shared<RedisClusterLoadBalancerFactory>(random_);
     lb_ = std::make_unique<RedisClusterThreadAwareLoadBalancer>(factory_);
     lb_->initialize();
-    factory_->onHostHealthUpdate();
   }
 
   void validateAssignment(Upstream::HostVector& hosts,

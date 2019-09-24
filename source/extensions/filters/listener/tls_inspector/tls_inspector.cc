@@ -72,47 +72,23 @@ Network::FilterStatus Filter::onAccept(Network::ListenerFilterCallbacks& cb) {
   ENVOY_LOG(debug, "tls inspector: new connection accepted");
   Network::ConnectionSocket& socket = cb.socket();
   ASSERT(file_event_ == nullptr);
+
+  file_event_ = cb.dispatcher().createFileEvent(
+      socket.ioHandle().fd(),
+      [this](uint32_t events) {
+        if (events & Event::FileReadyType::Closed) {
+          config_->stats().connection_closed_.inc();
+          done(false);
+          return;
+        }
+
+        ASSERT(events == Event::FileReadyType::Read);
+        onRead();
+      },
+      Event::FileTriggerType::Edge, Event::FileReadyType::Read | Event::FileReadyType::Closed);
+
   cb_ = &cb;
-
-  ParseState parse_state = onRead();
-  switch (parse_state) {
-  case ParseState::Error:
-    // As per discussion in https://github.com/envoyproxy/envoy/issues/7864
-    // we don't add new enum in FilterStatus so we have to signal the caller
-    // the new condition.
-    cb.socket().close();
-    return Network::FilterStatus::StopIteration;
-  case ParseState::Done:
-    return Network::FilterStatus::Continue;
-  case ParseState::Continue:
-    // do nothing but create the event
-    file_event_ = cb.dispatcher().createFileEvent(
-        socket.ioHandle().fd(),
-        [this](uint32_t events) {
-          if (events & Event::FileReadyType::Closed) {
-            config_->stats().connection_closed_.inc();
-            done(false);
-            return;
-          }
-
-          ASSERT(events == Event::FileReadyType::Read);
-          ParseState parse_state = onRead();
-          switch (parse_state) {
-          case ParseState::Error:
-            done(false);
-            break;
-          case ParseState::Done:
-            done(true);
-            break;
-          case ParseState::Continue:
-            // do nothing but wait for the next event
-            break;
-          }
-        },
-        Event::FileTriggerType::Edge, Event::FileReadyType::Read | Event::FileReadyType::Closed);
-    return Network::FilterStatus::StopIteration;
-  }
-  NOT_REACHED_GCOVR_EXCL_LINE
+  return Network::FilterStatus::StopIteration;
 }
 
 void Filter::onALPN(const unsigned char* data, unsigned int len) {
@@ -146,7 +122,7 @@ void Filter::onServername(absl::string_view name) {
   clienthello_success_ = true;
 }
 
-ParseState Filter::onRead() {
+void Filter::onRead() {
   // This receive code is somewhat complicated, because it must be done as a MSG_PEEK because
   // there is no way for a listener-filter to pass payload data to the ConnectionImpl and filters
   // that get created later.
@@ -165,10 +141,11 @@ ParseState Filter::onRead() {
   ENVOY_LOG(trace, "tls inspector: recv: {}", result.rc_);
 
   if (result.rc_ == -1 && result.errno_ == EAGAIN) {
-    return ParseState::Continue;
+    return;
   } else if (result.rc_ < 0) {
     config_->stats().read_error_.inc();
-    return ParseState::Error;
+    done(false);
+    return;
   }
 
   // Because we're doing a MSG_PEEK, data we've seen before gets returned every time, so
@@ -177,9 +154,8 @@ ParseState Filter::onRead() {
     const uint8_t* data = buf_ + read_;
     const size_t len = result.rc_ - read_;
     read_ = result.rc_;
-    return parseClientHello(data, len);
+    parseClientHello(data, len);
   }
-  return ParseState::Continue;
 }
 
 void Filter::done(bool success) {
@@ -188,7 +164,7 @@ void Filter::done(bool success) {
   cb_->continueFilterChain(success);
 }
 
-ParseState Filter::parseClientHello(const void* data, size_t len) {
+void Filter::parseClientHello(const void* data, size_t len) {
   // Ownership is passed to ssl_ in SSL_set_bio()
   bssl::UniquePtr<BIO> bio(BIO_new_mem_buf(data, len));
 
@@ -209,9 +185,9 @@ ParseState Filter::parseClientHello(const void* data, size_t len) {
       // We've hit the specified size limit. This is an unreasonably large ClientHello;
       // indicate failure.
       config_->stats().client_hello_too_large_.inc();
-      return ParseState::Error;
+      done(false);
     }
-    return ParseState::Continue;
+    break;
   case SSL_ERROR_SSL:
     if (clienthello_success_) {
       config_->stats().tls_found_.inc();
@@ -224,9 +200,11 @@ ParseState Filter::parseClientHello(const void* data, size_t len) {
     } else {
       config_->stats().tls_not_found_.inc();
     }
-    return ParseState::Done;
+    done(true);
+    break;
   default:
-    return ParseState::Error;
+    done(false);
+    break;
   }
 }
 

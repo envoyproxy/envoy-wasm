@@ -33,7 +33,7 @@ public:
    *
    * @param span The span that needs action.
    */
-  virtual void reportSpan(Span&& span) PURE;
+  virtual void reportSpan(const Span& span) PURE;
 };
 
 using ReporterPtr = std::unique_ptr<Reporter>;
@@ -72,7 +72,6 @@ public:
    * @param config The tracing configuration
    * @param span_name Name of the new span.
    * @param start_time The time indicating the beginning of the span.
-   * @return SpanPtr The root span.
    */
   SpanPtr startSpan(const Tracing::Config&, const std::string& span_name, SystemTime timestamp);
 
@@ -83,15 +82,12 @@ public:
    * @param span_name Name of the new span.
    * @param start_time The time indicating the beginning of the span.
    * @param previous_context The context of the span preceding the one to be created.
-   * @return SpanPtr The child span.
    */
   SpanPtr startSpan(const Tracing::Config&, const std::string& span_name, SystemTime timestamp,
-                    const SpanContext& previous_context);
+                    SpanContext& previous_context);
 
   /**
    * TracerInterface::reportSpan.
-   *
-   * @param span The span to be reported.
    */
   void reportSpan(Span&& span) override;
 
@@ -107,8 +103,6 @@ public:
 
   /**
    * Associates a Reporter object with this Tracer.
-   *
-   * @param The span reporter.
    */
   void setReporter(ReporterPtr reporter);
 

@@ -121,9 +121,6 @@ public:
     return &scoped_route_config_provider_;
   }
   const std::string& serverName() override { return Http::DefaultServerString::get(); }
-  HttpConnectionManagerProto::ServerHeaderTransformation serverHeaderTransformation() override {
-    return HttpConnectionManagerProto::OVERWRITE;
-  }
   Http::ConnectionManagerStats& stats() override { return stats_; }
   Http::ConnectionManagerTracingStats& tracingStats() override { return tracing_stats_; }
   bool useRemoteAddress() override { return true; }
@@ -175,7 +172,6 @@ private:
     absl::optional<ConfigInfo> configInfo() const override { return {}; }
     SystemTime lastUpdated() const override { return time_source_.systemTime(); }
     void onConfigUpdate() override {}
-    void validateConfig(const envoy::api::v2::RouteConfiguration&) const override {}
 
     Router::ConfigConstSharedPtr config_;
     TimeSource& time_source_;
@@ -323,9 +319,6 @@ private:
     Stats::Scope& listenerScope() override { return *scope_; }
     uint64_t listenerTag() const override { return 0; }
     const std::string& name() const override { return name_; }
-    const Network::ActiveUdpListenerFactory* udpListenerFactory() override {
-      NOT_REACHED_GCOVR_EXCL_LINE;
-    }
 
     AdminImpl& parent_;
     const std::string name_;

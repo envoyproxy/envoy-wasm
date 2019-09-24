@@ -10,9 +10,7 @@ MirrorPolicyImpl::MirrorPolicyImpl(const envoy::config::filter::network::redis_p
                                    const ConnPool::InstanceSharedPtr upstream,
                                    Runtime::Loader& runtime)
     : runtime_key_(config.runtime_fraction().runtime_key()),
-      default_value_(config.has_runtime_fraction() ? absl::optional<envoy::type::FractionalPercent>(
-                                                         config.runtime_fraction().default_value())
-                                                   : absl::nullopt),
+      default_value_(config.runtime_fraction().default_value()),
       exclude_read_commands_(config.exclude_read_commands()), upstream_(upstream),
       runtime_(runtime) {}
 
@@ -25,8 +23,8 @@ bool MirrorPolicyImpl::shouldMirror(const std::string& command) const {
     return false;
   }
 
-  if (default_value_.has_value()) {
-    return runtime_.snapshot().featureEnabled(runtime_key_, default_value_.value());
+  if (default_value_.numerator() > 0) {
+    return runtime_.snapshot().featureEnabled(runtime_key_, default_value_);
   }
 
   return true;

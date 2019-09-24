@@ -1,13 +1,6 @@
-load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library_internal", "api_proto_package")
+load("@envoy_api//bazel:api_build_system.bzl", "api_go_proto_library", "api_proto_library_internal")
 
 licenses(["notice"])  # Apache 2
-
-api_proto_package(
-    deps = [
-        "//envoy/api/v2/auth",
-        "//envoy/api/v2/core",
-    ],
-)
 
 api_proto_library_internal(
     name = "listener",
@@ -20,17 +13,12 @@ api_proto_library_internal(
     ],
 )
 
-api_proto_library_internal(
-    name = "udp_listener_config",
-    srcs = ["udp_listener_config.proto"],
-    visibility = ["//envoy/api/v2:friends"],
+api_go_proto_library(
+    name = "listener",
+    proto = ":listener",
     deps = [
-        "//envoy/api/v2/core:base",
+        "//envoy/api/v2/auth:cert_go_proto",
+        "//envoy/api/v2/core:address_go_proto",
+        "//envoy/api/v2/core:base_go_proto",
     ],
-)
-
-api_proto_library_internal(
-    name = "quic_config",
-    srcs = ["quic_config.proto"],
-    visibility = ["//envoy/api/v2:friends"],
 )

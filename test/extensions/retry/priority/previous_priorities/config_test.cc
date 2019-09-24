@@ -31,8 +31,7 @@ public:
     // by that method is compatible with the downcast in createRetryPriority.
     auto empty = factory->createEmptyConfigProto();
     empty->MergeFrom(config);
-    retry_priority_ =
-        factory->createRetryPriority(*empty, ProtobufMessage::getStrictValidationVisitor(), 3);
+    retry_priority_ = factory->createRetryPriority(*empty, 3);
     original_priority_load_ = Upstream::HealthyAndDegradedLoad{original_healthy_priority_load,
                                                                original_degraded_priority_load};
   }

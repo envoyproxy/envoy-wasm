@@ -110,41 +110,22 @@ absl::optional<CelValue> ConnectionWrapper::operator[](CelValue key) const {
     return {};
   }
   auto value = key.StringOrDie().value();
-  if (value == MTLS) {
-    return CelValue::CreateBool(info_.downstreamSslConnection() != nullptr &&
-                                info_.downstreamSslConnection()->peerCertificatePresented());
-  } else if (value == RequestedServerName) {
-    return CelValue::CreateString(info_.requestedServerName());
-  }
-
-  if (info_.downstreamSslConnection() != nullptr) {
-    if (value == TLSVersion) {
-      return CelValue::CreateString(info_.downstreamSslConnection()->tlsVersion());
-    }
-  }
-
-  return {};
-}
-
-absl::optional<CelValue> UpstreamWrapper::operator[](CelValue key) const {
-  if (!key.IsString()) {
-    return {};
-  }
-  auto value = key.StringOrDie().value();
-  if (value == Address) {
+  if (value == UpstreamAddress) {
     auto upstream_host = info_.upstreamHost();
     if (upstream_host != nullptr && upstream_host->address() != nullptr) {
       return CelValue::CreateString(upstream_host->address()->asStringView());
     }
-  } else if (value == Port) {
+  } else if (value == UpstreamPort) {
     auto upstream_host = info_.upstreamHost();
     if (upstream_host != nullptr && upstream_host->address() != nullptr &&
         upstream_host->address()->ip() != nullptr) {
       return CelValue::CreateInt64(upstream_host->address()->ip()->port());
     }
   } else if (value == MTLS) {
-    return CelValue::CreateBool(info_.upstreamSslConnection() != nullptr &&
-                                info_.upstreamSslConnection()->peerCertificatePresented());
+    return CelValue::CreateBool(info_.downstreamSslConnection() != nullptr &&
+                                info_.downstreamSslConnection()->peerCertificatePresented());
+  } else if (value == RequestedServerName) {
+    return CelValue::CreateString(info_.requestedServerName());
   }
 
   return {};

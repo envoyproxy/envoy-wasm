@@ -10,7 +10,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+using testing::_;
 using testing::Const;
+using testing::Return;
 using testing::ReturnRef;
 
 namespace Envoy {

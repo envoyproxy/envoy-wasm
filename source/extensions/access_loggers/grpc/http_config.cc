@@ -10,7 +10,6 @@
 #include "common/grpc/async_client_impl.h"
 #include "common/protobuf/protobuf.h"
 
-#include "extensions/access_loggers/grpc/config_utils.h"
 #include "extensions/access_loggers/grpc/grpc_access_log_proto_descriptors.h"
 #include "extensions/access_loggers/grpc/http_grpc_access_log_impl.h"
 #include "extensions/access_loggers/well_known_names.h"
@@ -20,23 +19,31 @@ namespace Extensions {
 namespace AccessLoggers {
 namespace HttpGrpc {
 
+// Singleton registration via macro defined in envoy/singleton/manager.h
+SINGLETON_MANAGER_REGISTRATION(grpc_access_logger_cache);
+
 AccessLog::InstanceSharedPtr
 HttpGrpcAccessLogFactory::createAccessLogInstance(const Protobuf::Message& config,
                                                   AccessLog::FilterPtr&& filter,
                                                   Server::Configuration::FactoryContext& context) {
-  GrpcCommon::validateProtoDescriptors();
+  validateProtoDescriptors();
 
   const auto& proto_config = MessageUtil::downcastAndValidate<
-      const envoy::config::accesslog::v2::HttpGrpcAccessLogConfig&>(
-      config, context.messageValidationVisitor());
+      const envoy::config::accesslog::v2::HttpGrpcAccessLogConfig&>(config);
+  std::shared_ptr<GrpcCommon::GrpcAccessLoggerCache> grpc_access_logger_cache =
+      context.singletonManager().getTyped<GrpcCommon::GrpcAccessLoggerCache>(
+          SINGLETON_MANAGER_REGISTERED_NAME(grpc_access_logger_cache), [&context] {
+            return std::make_shared<GrpcCommon::GrpcAccessLoggerCacheImpl>(
+                context.clusterManager().grpcAsyncClientManager(), context.scope(),
+                context.threadLocal(), context.localInfo());
+          });
 
-  return std::make_shared<HttpGrpcAccessLog>(
-      std::move(filter), proto_config, context.threadLocal(),
-      GrpcCommon::getGrpcAccessLoggerCacheSingleton(context));
+  return std::make_shared<HttpGrpcAccessLog>(std::move(filter), proto_config, context.threadLocal(),
+                                             grpc_access_logger_cache);
 }
 
 ProtobufTypes::MessagePtr HttpGrpcAccessLogFactory::createEmptyConfigProto() {
-  return std::make_unique<envoy::config::accesslog::v2::HttpGrpcAccessLogConfig>();
+  return ProtobufTypes::MessagePtr{new envoy::config::accesslog::v2::HttpGrpcAccessLogConfig()};
 }
 
 std::string HttpGrpcAccessLogFactory::name() const { return AccessLogNames::get().HttpGrpc; }
