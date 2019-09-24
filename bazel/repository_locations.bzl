@@ -242,6 +242,22 @@ REPOSITORY_LOCATIONS = dict(
         sha256 = "105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a",
         urls = ["https://files.pythonhosted.org/packages/b3/b2/238e2590826bfdd113244a40d9d3eb26918bd798fc187e2360a8367068db/six-1.10.0.tar.gz"],
     ),
+    org_llvm_llvm = dict(
+        sha256 = "b6d6c324f9c71494c0ccaf3dac1f16236d970002b42bb24a6c9e1634f7d0f4e2",
+        strip_prefix = "llvm-6.0.1.src",
+        urls = ["http://releases.llvm.org/6.0.1/llvm-6.0.1.src.tar.xz"],
+    ),
+    com_github_wavm_wavm = dict(
+        sha256 = "1acb11681657a0f32bb8c3d78117c742318c139d43eae70c6d34bbd9d9638135",
+        strip_prefix = "WAVM-95dbf08c8695b8941e7020c557d8612f9d2af895",
+        urls = ["https://github.com/WAVM/WAVM/archive/95dbf08c8695b8941e7020c557d8612f9d2af895.tar.gz"],
+    ),
+    com_googlesource_chromium_v8 = dict(
+        # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
+        # and contains complete checkout of v8 with all dependencies necessary to build wee8.
+        sha256 = "b717b958b407347dc8c78231b7e400b16f387486fde651be26accdf00681d9dc",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.8.279.6.tar.gz"],
+    ),
     io_opencensus_cpp = dict(
         sha256 = "29b2be0d92523a20daef7045e547c517ca0f6e6a0ddd7e7fcd15d162c13b6d9a",
         strip_prefix = "opencensus-cpp-1bbde06b72e0516b74b6992d204f254073047b10",

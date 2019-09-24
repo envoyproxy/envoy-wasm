@@ -18,3 +18,11 @@ api_proto_library_internal(
     name = "file",
     srcs = ["file.proto"],
 )
+
+api_proto_library_internal(
+    name = "wasm",
+    srcs = ["wasm.proto"],
+    deps = [
+        "//envoy/config/wasm/v2:wasm",
+    ],
+)
