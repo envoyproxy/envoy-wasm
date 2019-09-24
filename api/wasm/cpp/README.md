@@ -1,6 +1,6 @@
 # Compiling C++ to .wasm files using the SDK
 
-The SDK has dependencies on specific versions of emscription and the protobuf library, therefor use of a Docker image is recommended.
+The SDK has dependencies on specific versions of the C++ WebAssembly toolchain Emscripten (https://emscripten.org) and the protobuf library, therefor use of a Docker image is recommended.
 
 ## Docker
 
@@ -14,7 +14,7 @@ The docker image can be used for compiling wasm files.
 
 ### Creating a project for use with the Docker build image
 
-Create a directory parallel to envoy with your source files and a Makefile:
+Create a directory with your source files and a Makefile:
 
 ```
 DOCKER_SDK=/sdk
@@ -57,7 +57,7 @@ void ExampleContext::onDone() { logInfo("onDone " + std::to_string(id())); }
 Run docker:
 
 ```bash
-docker run -v $PWD:/work -w /work  wasmsdk:v1 bash /build_wasm.sh
+docker run -v $PWD:/work -w /work  wasmsdk:v1 /build_wasm.sh
 ```
 
 ### Caching the standard libraries
@@ -75,7 +75,7 @@ This will save time on subsequent compiles.
 
 To use a newer/specific version of the SDK (e.g. from the version of Enovy you are going to deploy the WebAssembly module to) bind that volume and use it in the Makefile.
 
-Makefile referencing the SDK in the /work directory:
+Here is an example Makefile referencing the SDK at ../envoy/api/wasm/cpp and mounted as 'sdk' in the /work directory:
 
 ```
 DOCKER_SDK=/work/sdk
@@ -93,7 +93,7 @@ docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasms
 
 ### Using abseil form the image
 
-Abseil (optionally) is built in /root/abseil and can be used by customizing the Makefile e.g.:
+Abseil (optionally) is built in /root/abseil and can be used. Note that the abseil containers (e.g. absl::flat\_hash\_set) exercise many syscalls which are not supported. Consequantally individual files should be pulled in which are relatively self contained (e.g. strings). Example customized Makefile:
 
 ```
 DOCKER_SDK=/sdk
@@ -127,15 +127,22 @@ all: plugin.wasm
 
 ### Ownership of the resulting .wasm files
 
-The compiled files may be owned by root.  To chown them add a line in the Makefile where ID is the desired user id (e.g. the result of "id -u"):
+The compiled files may be owned by root.  To chown them add the follow lines to the Makefile and docker invocation:
 
 ```
-DOCKER_SDK=/work/sdk
+DOCKER_SDK=/sdk
 
 all: myproject.wasm
-  chown ID.ID $^
+  chown ${uid}.${gid} $^
 
 include ${DOCKER_SDK}/Makefile.base_lite
+```
+
+Invocation file (e.g. build.sh):
+
+```bash
+#!/bin/bash
+docker run -e uid="$(id -u)" -e gid="$(id -g)" -v $PWD:/work -w /work wasmsdk:v1 /build_wasm.sh
 ```
 
 ## Dependencies for building WASM modules:
