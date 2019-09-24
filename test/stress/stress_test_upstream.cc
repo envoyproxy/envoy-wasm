@@ -495,7 +495,7 @@ Server::Server(const std::string& name, Network::Socket& listening_socket,
     : name_(name), stats_(), time_system_(),
       api_(Thread::threadFactoryForTest(), stats_, time_system_, Filesystem::fileSystemForTest()),
       dispatcher_(api_.allocateDispatcher()),
-      connection_handler_(new Envoy::Server::ConnectionHandlerImpl(ENVOY_LOGGER(), *dispatcher_)),
+      connection_handler_(new Envoy::Server::ConnectionHandlerImpl(*dispatcher_, "stress_server")),
       thread_(nullptr), listening_socket_(listening_socket),
       server_filter_chain_(transport_socket_factory), http_type_(http_type) {}
 

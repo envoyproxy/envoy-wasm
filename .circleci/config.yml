@@ -5,7 +5,7 @@ executors:
     description: "A regular build executor based on ubuntu image"
     docker:
       # NOTE: Update bazel/toolchains/rbe_toolchains_config.bzl with sha256 digest to match the image here.
-      - image: piotrsikora/envoy:d799827e285e2f4f42f4ecf284ff4cc999f48e35
+      - image: piotrsikora/envoy:91dace74021400de6c408dbffb33358a1ee24f8d
     resource_class: xlarge
     working_directory: /source
 
@@ -61,7 +61,6 @@ jobs:
 
    format:
      executor: ubuntu-build
-     resource_class: small
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
