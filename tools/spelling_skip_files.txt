@@ -1,1 +1,5 @@
 OWNERS.md
+test/extensions/filters/http/wasm/test_data/*.wat
+test/extensions/wasm/test_data/*.wat
+test/extensions/access_loggers/wasm/test_data/*.wat
+examples/wasm/*.wat

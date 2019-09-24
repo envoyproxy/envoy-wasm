@@ -30,5 +30,6 @@ api_proto_library_internal(
         "//envoy/config/overload/v2alpha:overload",
         "//envoy/config/ratelimit/v2:rls",
         "//envoy/config/trace/v2:trace",
+        "//envoy/config/wasm/v2:wasm",
     ],
 )
