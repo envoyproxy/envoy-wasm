@@ -80,6 +80,10 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
 }
 
 TEST_P(WasmFactoryTest, MissingImport) {
+  if (GetParam() == "wavm") {
+    // WAVM Emscripten support always defines stubs for all unresolved functions.
+    return;
+  }
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);

@@ -20,6 +20,7 @@ envoy_cc_library(
         '-DWASM_API=""',
         '-DWASTPARSE_API=""',
         '-DIR_API=""',
+        '-DWAVM_API=""',
         "-Wno-non-virtual-dtor",
         "-Wno-old-style-cast",
     ],

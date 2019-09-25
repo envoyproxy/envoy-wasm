@@ -276,7 +276,8 @@ envoy_cmake_external(
     static_libraries = select({
         "//conditions:default": [
             "libWAVM.a",
-            "WAVM/libWAVMUnwind.a",
+            "libWAVMUnwind.a",
+            "libWAVMgdtoa.a",
         ],
     }),
     deps = [":llvm"],
