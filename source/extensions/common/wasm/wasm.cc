@@ -892,6 +892,59 @@ Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
   return written;
 }
 
+// Implementation of _wasi_fd_write() syscall that redirects stdout/stderr to Envoy logs.
+// _was_errno_t _wasi_fd_write(_wasi_fd_t fd, const _wasi_ciovec_t *iov, size_t iovs_len, size_t*
+// nwritten);
+Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
+                             Word nwritten_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+
+  // Read syscall args.
+  spdlog::level::level_enum log_level;
+  switch (fd.u64_) {
+  case 1 /* stdout */:
+    log_level = spdlog::level::info;
+    break;
+  case 2 /* stderr */:
+    log_level = spdlog::level::err;
+    break;
+  default:
+    return 8; // __WASI_EBADF
+  }
+
+  std::string s;
+  for (size_t i = 0; i < iovs_len.u64_; i++) {
+    auto memslice =
+        context->wasmVm()->getMemory(iovs.u64_ + i * 2 * sizeof(uint32_t), 2 * sizeof(uint32_t));
+    if (!memslice) {
+      context->wasm()->setErrno(EINVAL);
+      return -1;
+    }
+    const uint32_t* iovec = reinterpret_cast<const uint32_t*>(memslice.value().data());
+    if (iovec[1] /* buf_len */) {
+      memslice = context->wasmVm()->getMemory(iovec[0] /* buf */, iovec[1] /* buf_len */);
+      if (!memslice) {
+        context->wasm()->setErrno(EINVAL);
+        return 21; // __WASI_EFAULT
+      }
+      s.append(memslice.value().data(), memslice.value().size());
+    }
+  }
+
+  size_t written = s.size();
+  if (written) {
+    // Remove trailing newline from the logs, if any.
+    if (s[written - 1] == '\n') {
+      s.erase(written - 1);
+    }
+    context->scriptLog(log_level, s);
+  }
+  if (!context->wasmVm()->setWord(nwritten_ptr.u64_, Word(written))) {
+    return 21; // __WASI_EFAULT
+  }
+  return 0; // __WASI_ESUCCESS
+}
+
 void ___setErrNoHandler(void*, Word) { throw WasmException("emscripten setErrNo"); }
 
 Word _pthread_equalHandler(void*, Word left, Word right) { return left.u64_ == right.u64_; }
@@ -2001,6 +2054,7 @@ void Wasm::registerCallbacks() {
     _REGISTER(___syscall54);
     _REGISTER(___syscall140);
     _REGISTER(___syscall146);
+    _REGISTER(___wasi_fd_write);
     _REGISTER(___setErrNo);
     _REGISTER(_pthread_equal);
     _REGISTER(_pthread_mutex_destroy);
