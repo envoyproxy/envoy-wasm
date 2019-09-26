@@ -2636,7 +2636,6 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
     throw WasmException("Failed to configure WASM code");
   }
   if (!wasm->vm_id().empty()) {
-    std::cerr << "setting wasm->vm_id() '" << wasm->vm_id() << "'\n";
     local_wasms[wasm->vm_id()] = wasm;
   }
   return wasm;
