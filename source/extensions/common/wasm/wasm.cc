@@ -837,21 +837,13 @@ Word ___syscall54Handler(void*, Word, Word) { throw WasmException("emscripten sy
 
 Word ___syscall140Handler(void*, Word, Word) { throw WasmException("emscripten syscall140"); }
 
-// Implementation of writev() syscall that redirects stdout/stderr to Envoy logs.
-// ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
-Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
+// Implementation of writev-like() syscall that redirects stdout/stderr to Envoy logs.
+Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwritten_ptr) {
   auto context = WASM_CONTEXT(raw_context);
 
   // Read syscall args.
-  auto memslice = context->wasmVm()->getMemory(syscall_args_ptr.u64_, 3 * sizeof(uint32_t));
-  if (!memslice) {
-    context->wasm()->setErrno(EINVAL);
-    return -1;
-  }
-  const uint32_t* syscall_args = reinterpret_cast<const uint32_t*>(memslice.value().data());
-
   spdlog::level::level_enum log_level;
-  switch (syscall_args[0] /* fd */) {
+  switch (fd.u64_) {
   case 1 /* stdout */:
     log_level = spdlog::level::info;
     break;
@@ -859,23 +851,23 @@ Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
     log_level = spdlog::level::err;
     break;
   default:
-    throw WasmException("emscripten syscall146 (writev)");
+    return 8; // __WASI_EBADF
   }
 
   std::string s;
-  for (size_t i = 0; i < syscall_args[2] /* iovcnt */; i++) {
-    memslice = context->wasmVm()->getMemory(syscall_args[1] /* iov */ + i * 2 * sizeof(uint32_t),
-                                            2 * sizeof(uint32_t));
+  for (size_t i = 0; i < iovs_len.u64_; i++) {
+    auto memslice =
+        context->wasmVm()->getMemory(iovs.u64_ + i * 2 * sizeof(uint32_t), 2 * sizeof(uint32_t));
     if (!memslice) {
       context->wasm()->setErrno(EINVAL);
-      return -1;
+      return 21; // __WASI_EFAULT
     }
     const uint32_t* iovec = reinterpret_cast<const uint32_t*>(memslice.value().data());
-    if (iovec[1] /* size */) {
-      memslice = context->wasmVm()->getMemory(iovec[0] /* data */, iovec[1] /* size */);
+    if (iovec[1] /* buf_len */) {
+      memslice = context->wasmVm()->getMemory(iovec[0] /* buf */, iovec[1] /* buf_len */);
       if (!memslice) {
         context->wasm()->setErrno(EINVAL);
-        return -1;
+        return 21; // __WASI_EFAULT
       }
       s.append(memslice.value().data(), memslice.value().size());
     }
@@ -889,7 +881,46 @@ Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
     }
     context->scriptLog(log_level, s);
   }
-  return written;
+  *nwritten_ptr = Word(written);
+  return 0; // __WASI_ESUCCESS
+}
+
+// ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
+Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+
+  // Read syscall args.
+  auto memslice = context->wasmVm()->getMemory(syscall_args_ptr.u64_, 3 * sizeof(uint32_t));
+  if (!memslice) {
+    context->wasm()->setErrno(EINVAL);
+    return -1;
+  }
+  const uint32_t* syscall_args = reinterpret_cast<const uint32_t*>(memslice.value().data());
+
+  Word nwritten(0);
+  auto result = writevImpl(raw_context, Word(syscall_args[0]), Word(syscall_args[1]),
+                           Word(syscall_args[2]), &nwritten);
+  if (result.u64_ != 0) { // __WASI_ESUCCESS
+    return -1;
+  }
+  return nwritten;
+}
+
+// _was_errno_t _wasi_fd_write(_wasi_fd_t fd, const _wasi_ciovec_t *iov, size_t iovs_len, size_t*
+// nwritten);
+Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
+                             Word nwritten_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+
+  Word nwritten(0);
+  auto result = writevImpl(raw_context, fd, iovs, iovs_len, &nwritten);
+  if (result.u64_ != 0) { // __WASI_ESUCCESS
+    return result;
+  }
+  if (!context->wasmVm()->setWord(nwritten_ptr.u64_, Word(nwritten))) {
+    return 21; // __WASI_EFAULT
+  }
+  return 0; // __WASI_ESUCCESS
 }
 
 void ___setErrNoHandler(void*, Word) { throw WasmException("emscripten setErrNo"); }
@@ -2001,6 +2032,7 @@ void Wasm::registerCallbacks() {
     _REGISTER(___syscall54);
     _REGISTER(___syscall140);
     _REGISTER(___syscall146);
+    _REGISTER(___wasi_fd_write);
     _REGISTER(___setErrNo);
     _REGISTER(_pthread_equal);
     _REGISTER(_pthread_mutex_destroy);
@@ -2147,6 +2179,7 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   }
   auto metadata = wasm_vm_->getUserSection("emscripten_metadata");
   if (!metadata.empty()) {
+    // See https://github.com/emscripten-core/emscripten/blob/incoming/tools/shared.py#L3059
     is_emscripten_ = true;
     auto start = reinterpret_cast<const uint8_t*>(metadata.data());
     auto end = reinterpret_cast<const uint8_t*>(metadata.data() + metadata.size());
@@ -2167,6 +2200,11 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
       start = decodeVarint(start, end, &emscripten_dynamic_base_);
       start = decodeVarint(start, end, &emscripten_dynamictop_ptr_);
       decodeVarint(start, end, &emscripten_tempdouble_ptr_);
+      if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 2) {
+        // metadata 0.3 - added: standalone_wasm.
+        uint32_t temp;
+        start = decodeVarint(start, end, &temp);
+      }
     } else {
       // Workaround for Emscripten versions without heap (dynamic) base in metadata.
       emscripten_stack_base_ = 64 * 64 * 1024;      // 4MB
