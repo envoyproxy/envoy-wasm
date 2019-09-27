@@ -2201,6 +2201,7 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   }
   auto metadata = wasm_vm_->getUserSection("emscripten_metadata");
   if (!metadata.empty()) {
+    // See https://github.com/emscripten-core/emscripten/blob/incoming/tools/shared.py#L3059
     is_emscripten_ = true;
     auto start = reinterpret_cast<const uint8_t*>(metadata.data());
     auto end = reinterpret_cast<const uint8_t*>(metadata.data() + metadata.size());
@@ -2221,6 +2222,11 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
       start = decodeVarint(start, end, &emscripten_dynamic_base_);
       start = decodeVarint(start, end, &emscripten_dynamictop_ptr_);
       decodeVarint(start, end, &emscripten_tempdouble_ptr_);
+      if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 2) {
+        // metadata 0.3 - added: standalone_wasm.
+        uint32_t temp;
+        start = decodeVarint(start, end, &temp);
+      }
     } else {
       // Workaround for Emscripten versions without heap (dynamic) base in metadata.
       emscripten_stack_base_ = 64 * 64 * 1024;      // 4MB
