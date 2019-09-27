@@ -114,13 +114,14 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
+  Init::MockManager init_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api,
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher, tls, *api,
                                                         *scope, scope, local_info);
 #if defined(ENVOY_WASM_V8) == defined(ENVOY_WASM_WAVM)
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context),
@@ -142,13 +143,14 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
+  Init::MockManager init_manager;
   Event::MockDispatcher dispatcher;
   ThreadLocal::MockInstance tls;
   Stats::IsolatedStoreImpl stats_store;
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, dispatcher, tls, *api,
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher, tls, *api,
                                                         *scope, scope, local_info);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context),
                             Extensions::Common::Wasm::WasmException,
