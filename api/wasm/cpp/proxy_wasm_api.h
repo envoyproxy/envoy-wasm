@@ -789,9 +789,9 @@ struct MetricTag {
 
 struct MetricBase {
   MetricBase(MetricType t, const std::string& n) : type(t), name(n) {}
-  MetricBase(MetricType t, const std::string& n, std::vector<MetricTag> ts)
+  MetricBase(MetricType t, const std::string& n, const std::vector<MetricTag>& ts)
       : type(t), name(n), tags(ts.begin(), ts.end()) {}
-  MetricBase(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string fs,
+  MetricBase(MetricType t, const std::string& n, const std::vector<MetricTag>& ts, std::string fs,
              std::string vs)
       : type(t), name(n), tags(ts.begin(), ts.end()), field_separator(fs), value_separator(vs) {}
 
@@ -813,9 +813,10 @@ struct MetricBase {
 
 struct Metric : public MetricBase {
   Metric(MetricType t, const std::string& n) : MetricBase(t, n) {}
-  Metric(MetricType t, const std::string& n, std::vector<MetricTag> ts) : MetricBase(t, n, ts) {}
-  Metric(MetricType t, const std::string& n, std::vector<MetricTag> ts, std::string field_separator,
-         std::string value_separator)
+  Metric(MetricType t, const std::string& n, const std::vector<MetricTag>& ts)
+      : MetricBase(t, n, ts) {}
+  Metric(MetricType t, const std::string& n, const std::vector<MetricTag>& ts,
+         std::string field_separator, std::string value_separator)
       : MetricBase(t, n, ts, field_separator, value_separator) {}
 
   template <typename... Fields> void increment(int64_t offset, Fields... tags);
@@ -828,10 +829,10 @@ struct Metric : public MetricBase {
 inline std::string MetricBase::prefixWithFields(const std::vector<std::string>& fields) {
   size_t s = prefix.size();
   for (size_t i = 0; i < fields.size(); i++) {
-    s += tags[i].name.size() + 1; // 1 more for "."
+    s += tags[i].name.size() + value_separator.size();
   }
   for (auto& f : fields) {
-    s += f.size() + 1; // 1 more for "."
+    s += f.size() + field_separator.size();
   }
   std::string n;
   n.reserve(s);
@@ -1036,7 +1037,7 @@ template <typename... Tags> struct Counter : public MetricBase {
   }
 
 private:
-  Counter(const std::string& name, std::vector<MetricTag> tags)
+  Counter(const std::string& name, const std::vector<MetricTag>& tags)
       : MetricBase(MetricType::Counter, name, tags) {}
 };
 
@@ -1082,7 +1083,7 @@ template <typename... Tags> struct Gauge : public MetricBase {
   }
 
 private:
-  Gauge(const std::string& name, std::vector<MetricTag> tags)
+  Gauge(const std::string& name, const std::vector<MetricTag>& tags)
       : MetricBase(MetricType::Gauge, name, tags) {}
 };
 
@@ -1121,7 +1122,7 @@ template <typename... Tags> struct Histogram : public MetricBase {
   }
 
 private:
-  Histogram(const std::string& name, std::vector<MetricTag> tags)
+  Histogram(const std::string& name, const std::vector<MetricTag>& tags)
       : MetricBase(MetricType::Histogram, name, tags) {}
 };
 
