@@ -31,8 +31,8 @@ cd
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 1.38.46
-./emsdk activate 1.38.46
+./emsdk install 1.38.45
+./emsdk activate 1.38.45
 source ./emsdk_env.sh
 cd
 

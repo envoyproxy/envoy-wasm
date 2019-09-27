@@ -171,8 +171,8 @@ sudo make install
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 1.38.46
-./emsdk activate 1.38.46
+./emsdk install 1.38.45
+./emsdk activate 1.38.45
 
 source ./emsdk\_env.sh
 ```
@@ -185,7 +185,7 @@ It is possible later versions will work, e.g.
 ./emsdk activate latest
 ```
 
-However 1.38.46 is known to work.
+However 1.38.45 is known to work.
 
 ### rebulding the protobuf.bc files
 
