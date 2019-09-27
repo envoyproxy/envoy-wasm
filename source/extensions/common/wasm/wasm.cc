@@ -918,7 +918,7 @@ Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_le
         context->wasmVm()->getMemory(iovs.u64_ + i * 2 * sizeof(uint32_t), 2 * sizeof(uint32_t));
     if (!memslice) {
       context->wasm()->setErrno(EINVAL);
-      return -1;
+      return 21; // __WASI_EFAULT
     }
     const uint32_t* iovec = reinterpret_cast<const uint32_t*>(memslice.value().data());
     if (iovec[1] /* buf_len */) {
