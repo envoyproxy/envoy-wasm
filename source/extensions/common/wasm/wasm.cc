@@ -837,66 +837,8 @@ Word ___syscall54Handler(void*, Word, Word) { throw WasmException("emscripten sy
 
 Word ___syscall140Handler(void*, Word, Word) { throw WasmException("emscripten syscall140"); }
 
-// Implementation of writev() syscall that redirects stdout/stderr to Envoy logs.
-// ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
-Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
-  auto context = WASM_CONTEXT(raw_context);
-
-  // Read syscall args.
-  auto memslice = context->wasmVm()->getMemory(syscall_args_ptr.u64_, 3 * sizeof(uint32_t));
-  if (!memslice) {
-    context->wasm()->setErrno(EINVAL);
-    return -1;
-  }
-  const uint32_t* syscall_args = reinterpret_cast<const uint32_t*>(memslice.value().data());
-
-  spdlog::level::level_enum log_level;
-  switch (syscall_args[0] /* fd */) {
-  case 1 /* stdout */:
-    log_level = spdlog::level::info;
-    break;
-  case 2 /* stderr */:
-    log_level = spdlog::level::err;
-    break;
-  default:
-    throw WasmException("emscripten syscall146 (writev)");
-  }
-
-  std::string s;
-  for (size_t i = 0; i < syscall_args[2] /* iovcnt */; i++) {
-    memslice = context->wasmVm()->getMemory(syscall_args[1] /* iov */ + i * 2 * sizeof(uint32_t),
-                                            2 * sizeof(uint32_t));
-    if (!memslice) {
-      context->wasm()->setErrno(EINVAL);
-      return -1;
-    }
-    const uint32_t* iovec = reinterpret_cast<const uint32_t*>(memslice.value().data());
-    if (iovec[1] /* size */) {
-      memslice = context->wasmVm()->getMemory(iovec[0] /* data */, iovec[1] /* size */);
-      if (!memslice) {
-        context->wasm()->setErrno(EINVAL);
-        return -1;
-      }
-      s.append(memslice.value().data(), memslice.value().size());
-    }
-  }
-
-  size_t written = s.size();
-  if (written) {
-    // Remove trailing newline from the logs, if any.
-    if (s[written - 1] == '\n') {
-      s.erase(written - 1);
-    }
-    context->scriptLog(log_level, s);
-  }
-  return written;
-}
-
-// Implementation of _wasi_fd_write() syscall that redirects stdout/stderr to Envoy logs.
-// _was_errno_t _wasi_fd_write(_wasi_fd_t fd, const _wasi_ciovec_t *iov, size_t iovs_len, size_t*
-// nwritten);
-Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
-                             Word nwritten_ptr) {
+// Implementation of writev-like() syscall that redirects stdout/stderr to Envoy logs.
+Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwritten_ptr) {
   auto context = WASM_CONTEXT(raw_context);
 
   // Read syscall args.
@@ -939,7 +881,43 @@ Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_le
     }
     context->scriptLog(log_level, s);
   }
-  if (!context->wasmVm()->setWord(nwritten_ptr.u64_, Word(written))) {
+  *nwritten_ptr = Word(written);
+  return 0; // __WASI_ESUCCESS
+}
+
+// ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
+Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+
+  // Read syscall args.
+  auto memslice = context->wasmVm()->getMemory(syscall_args_ptr.u64_, 3 * sizeof(uint32_t));
+  if (!memslice) {
+    context->wasm()->setErrno(EINVAL);
+    return -1;
+  }
+  const uint32_t* syscall_args = reinterpret_cast<const uint32_t*>(memslice.value().data());
+
+  Word nwritten(0);
+  auto result = writevImpl(raw_context, Word(syscall_args[0]), Word(syscall_args[1]),
+                           Word(syscall_args[2]), &nwritten);
+  if (result.u64_ != 0) { // __WASI_ESUCCESS
+    return -1;
+  }
+  return nwritten;
+}
+
+// _was_errno_t _wasi_fd_write(_wasi_fd_t fd, const _wasi_ciovec_t *iov, size_t iovs_len, size_t*
+// nwritten);
+Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
+                             Word nwritten_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+
+  Word nwritten(0);
+  auto result = writevImpl(raw_context, fd, iovs, iovs_len, &nwritten);
+  if (result.u64_ != 0) { // __WASI_ESUCCESS
+    return result;
+  }
+  if (!context->wasmVm()->setWord(nwritten_ptr.u64_, Word(nwritten))) {
     return 21; // __WASI_EFAULT
   }
   return 0; // __WASI_ESUCCESS
