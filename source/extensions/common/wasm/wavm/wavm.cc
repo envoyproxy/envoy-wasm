@@ -217,7 +217,8 @@ struct Wavm : public WasmVm {
   bool cloneable() override { return true; };
   std::unique_ptr<WasmVm> clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
-  void setMemoryLayout(uint64_t, uint64_t, uint64_t) override {}
+  void setMemoryLayout(uint64_t stack_base, uint64_t heap_base,
+                       uint64_t heap_base_pointer) override;
   void link(absl::string_view debug_name, bool needs_emscripten) override;
   void start(Context* context) override;
   uint64_t getMemorySize() override;
@@ -271,6 +272,9 @@ struct Wavm : public WasmVm {
   std::unordered_map<std::pair<std::string, std::string>, WavmGlobalBase*, PairHash>
       intrinsic_globals_;
   uint8_t* memory_base_ = nullptr;
+  uint32_t memory_stack_base_;
+  uint32_t memory_heap_base_;
+  uint32_t memory_heap_base_pointer_;
 };
 
 Wavm::~Wavm() {
@@ -327,6 +331,12 @@ bool Wavm::load(const std::string& code, bool allow_precompiled) {
   return true;
 }
 
+void Wavm::setMemoryLayout(uint64_t stack_base, uint64_t heap_base, uint64_t heap_base_pointer) {
+  memory_stack_base_ = stack_base;
+  memory_heap_base_ = heap_base;
+  memory_heap_base_pointer_ = heap_base_pointer;
+}
+
 void Wavm::link(absl::string_view debug_name, bool needs_emscripten) {
   RootResolver rootResolver(compartment_);
   for (auto& p : intrinsic_modules_) {
@@ -365,6 +375,9 @@ void Wavm::makeModule(absl::string_view name) {
 }
 
 void Wavm::start(Context* context) {
+  if (emscripten_instance_) {
+    setMemory(memory_heap_base_pointer_, sizeof(uint32_t), &memory_heap_base_);
+  }
   try {
     auto f = getStartFunction(module_instance_);
     if (f) {
@@ -719,7 +732,7 @@ template <typename T> void WavmGlobal<T>::set(const T& t) {
 }
 
 template <> void WavmGlobal<Word>::set(const Word& t) {
-  setGlobalValue(wavm_->context_, global_, IR::Value(t.u64_));
+  setGlobalValue(wavm_->context_, global_, IR::Value(t.u32()));
 }
 
 template <typename T>

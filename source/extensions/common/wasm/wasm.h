@@ -617,6 +617,7 @@ private:
   uint32_t emscripten_tempdouble_ptr_ = 0;
 
   std::unique_ptr<Global<Word>> global_table_base_;
+  std::unique_ptr<Global<Word>> global_dynamictop_;
   std::unique_ptr<Global<double>> global_NaN_;
   std::unique_ptr<Global<double>> global_Infinity_;
 

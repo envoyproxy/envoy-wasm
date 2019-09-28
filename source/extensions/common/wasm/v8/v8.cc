@@ -119,8 +119,6 @@ private:
   wasm::own<wasm::Memory> memory_;
   wasm::own<wasm::Table> table_;
 
-  std::unique_ptr<Global<Word>> global_dynamictop_;
-
   absl::flat_hash_map<std::string, wasm::own<wasm::Global>> host_globals_;
   absl::flat_hash_map<std::string, FuncDataPtr> host_functions_;
   absl::flat_hash_map<std::string, wasm::own<wasm::Func>> module_functions_;
@@ -443,7 +441,6 @@ void V8::setMemoryLayout(uint64_t stack_base, uint64_t heap_base, uint64_t heap_
   memory_stack_base_ = stack_base;
   memory_heap_base_ = heap_base;
   memory_heap_base_pointer_ = heap_base_pointer;
-  global_dynamictop_ = makeGlobal("env", "DYNAMICTOP_PTR", Word(heap_base_pointer));
 }
 
 void V8::start(Context* context) {
