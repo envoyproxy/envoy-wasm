@@ -248,9 +248,9 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["http://releases.llvm.org/6.0.1/llvm-6.0.1.src.tar.xz"],
     ),
     com_github_wavm_wavm = dict(
-        sha256 = "1acb11681657a0f32bb8c3d78117c742318c139d43eae70c6d34bbd9d9638135",
-        strip_prefix = "WAVM-95dbf08c8695b8941e7020c557d8612f9d2af895",
-        urls = ["https://github.com/WAVM/WAVM/archive/95dbf08c8695b8941e7020c557d8612f9d2af895.tar.gz"],
+        sha256 = "abebfba303958999ba82aa67075ea7ae1e38388632803d387c6aafbaf67f24c5",
+        strip_prefix = "WAVM-33f4240d44848c52a817730884572d3b4ae39733",
+        urls = ["https://github.com/WAVM/WAVM/archive/33f4240d44848c52a817730884572d3b4ae39733.tar.gz"],
     ),
     com_googlesource_chromium_v8 = dict(
         # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
