@@ -1,3 +1,9 @@
+/**
+ * Simple WASM speed test.
+ *
+ * Run with:
+ * bazel run -c opt  --linkopt -fuse-ld=lld --define wasm=enabled --config=libc++ wasm_speed_test
+ */
 #include <stdio.h>
 
 #include "common/event/dispatcher_impl.h"
