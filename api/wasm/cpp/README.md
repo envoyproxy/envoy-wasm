@@ -189,14 +189,15 @@ However 1.38.46 is known to work.
 
 ### rebulding the protobuf.bc files
 
-If want to rebuild the .bc files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm.
+If want to rebuild the .bc files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm. Commit 4bba8b2f38b5004f87489642b6ca4525ae72fe7f works for protobuf v3.9.x.
 
 ```bash
 git clone https://github.com/protocolbuffers/protobuf protobuf-wasm
 cd protobuf-wasm
 git checkout v3.9.1
-git clone https://github.com/kwonoj/protobuf-wasm patches
-git apply patches/*.patch
+git clone https://github.com/kwonoj/protobuf-wasm wasm-patches
+cd wasm-patches && git checkout 4bba8b2f38b5004f87489642b6ca4525ae72fe7f && cd ..
+git apply wasm-patches/*.patch
 ./autogen.sh
 emconfigure ./configure CXXFLAGS="-O3"
 emmake make
