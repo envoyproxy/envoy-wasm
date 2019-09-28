@@ -2110,7 +2110,7 @@ void Wasm::establishEnvironment() {
 
     global_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
     global_dynamictop_ =
-        wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(emscripten_dynamic_base_));
+        wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(emscripten_dynamictop_ptr_));
 
     wasm_vm_->makeModule("global");
     global_NaN_ = wasm_vm_->makeGlobal("global", "NaN", std::nan("0"));
