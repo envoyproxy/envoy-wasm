@@ -9,13 +9,15 @@ namespace Configuration {
 
 class WasmFactoryContextImpl : public WasmFactoryContext {
 public:
-  WasmFactoryContextImpl(Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-                         ThreadLocal::SlotAllocator& tls, Api::Api& api, Stats::Scope& scope,
-                         Stats::ScopeSharedPtr owned_scope, const LocalInfo::LocalInfo& local_info)
-      : cluster_manager_(cluster_manager), dispatcher_(dispatcher), tls_(tls), api_(api),
-        scope_(scope), owned_scope_(owned_scope), local_info_(local_info) {}
+  WasmFactoryContextImpl(Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                         Event::Dispatcher& dispatcher, ThreadLocal::SlotAllocator& tls,
+                         Api::Api& api, Stats::Scope& scope, Stats::ScopeSharedPtr owned_scope,
+                         const LocalInfo::LocalInfo& local_info)
+      : cluster_manager_(cluster_manager), init_manager_(init_manager), dispatcher_(dispatcher),
+        tls_(tls), api_(api), scope_(scope), owned_scope_(owned_scope), local_info_(local_info) {}
 
   Upstream::ClusterManager& clusterManager() override { return cluster_manager_; }
+  Init::Manager& initManager() override { return init_manager_; }
   Event::Dispatcher& dispatcher() override { return dispatcher_; }
   ThreadLocal::SlotAllocator& threadLocal() override { return tls_; }
   Api::Api& api() override { return api_; }
@@ -25,6 +27,7 @@ public:
 
 private:
   Upstream::ClusterManager& cluster_manager_;
+  Init::Manager& init_manager_;
   Event::Dispatcher& dispatcher_;
   ThreadLocal::SlotAllocator& tls_;
   Api::Api& api_;

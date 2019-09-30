@@ -149,14 +149,14 @@ docker run -e uid="$(id -u)" -e gid="$(id -g)" -v $PWD:/work -w /work wasmsdk:v1
 
 If you do not wish to use the Docker file, the dependencies can be installed by script (sdk\_container.sh), or by hand.
 
-### protobuf v3.6.1
+### protobuf v3.9.1
 
-You must install the version of protobuf on your build system that matches the libprotobuf.bc files (without any patches) so that the generated code matches the .bc library.  Currently this is based on tag v3.6.1 of https://github.com/protocolbuffers/protobuf.
+You must install the version of protobuf on your build system that matches the libprotobuf.bc files (without any patches) so that the generated code matches the .bc library.  Currently this is based on tag v3.9.1 of https://github.com/protocolbuffers/protobuf.
 
 ```bash
 git clone https://github.com/protocolbuffers/protobuf
 cd protobuf
-git checkout v3.6.1
+git checkout v3.9.1
 git submodule update --init --recursive
 ./autogen.sh
 ./configure
@@ -165,29 +165,45 @@ make check
 sudo make install
 ```
 
-### rebulding the protobuf.bc files
-
-If want to rebuild the .bc files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm  (note: this is pinned to git tag v3.6.1).  A pre-patched repo is available at https://github.com/jplevyak/protobuf branch envoy-wasm.
-
 ### emscripten
 
 ```bash
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
-./emsdk install sdk-1.38.42-64bit
-./emsdk activate sdk-1.38.42-64bit
+./emsdk update-tags
+./emsdk install 1.38.46
+./emsdk activate 1.38.46
 
-. ./emsdk\_env.sh
+source ./emsdk\_env.sh
 ```
 
 It is possible later versions will work, e.g.
 
 ```bash
+./emsdk update-tags
 ./emsdk install latest
 ./emsdk activate latest
 ```
 
-However 1.38.42 is known to work.
+However 1.38.46 is known to work.
+
+### rebulding the protobuf.bc files
+
+If want to rebuild the .bc files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm. Commit 4bba8b2f38b5004f87489642b6ca4525ae72fe7f works for protobuf v3.9.x.
+
+```bash
+git clone https://github.com/protocolbuffers/protobuf protobuf-wasm
+cd protobuf-wasm
+git checkout v3.9.1
+git clone https://github.com/kwonoj/protobuf-wasm wasm-patches
+cd wasm-patches && git checkout 4bba8b2f38b5004f87489642b6ca4525ae72fe7f && cd ..
+git apply wasm-patches/*.patch
+./autogen.sh
+emconfigure ./configure CXXFLAGS="-O3"
+emmake make
+cp src/.libs/libprotobuf-lite.so ${CPP_API}/libprotobuf-lite.bc
+cp src/.libs/libprotobuf.so ${CPP_API}/libprotobuf.bc
+```
 
 ### WAVM binaries
 
