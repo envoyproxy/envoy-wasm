@@ -3,6 +3,7 @@
 #include "envoy/api/api.h"
 #include "envoy/common/pure.h"
 #include "envoy/event/dispatcher.h"
+#include "envoy/init/manager.h"
 #include "envoy/server/wasm.h"
 #include "envoy/thread_local/thread_local.h"
 #include "envoy/upstream/cluster_manager.h"
@@ -21,6 +22,11 @@ public:
    * @return Upstream::ClusterManager& singleton for use by the entire server.
    */
   virtual Upstream::ClusterManager& clusterManager() PURE;
+
+  /**
+   * @return Init:Manager& used by synchronizing the WASM initialization.
+   */
+  virtual Init::Manager& initManager() PURE;
 
   /**
    * @return Event::Dispatcher& the main thread's dispatcher. This dispatcher should be used
