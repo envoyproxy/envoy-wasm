@@ -54,6 +54,20 @@ namespace Wasm {
 
 namespace {
 
+// TODO: move to utils during upstreaming.
+std::string base64Sha256(absl::string_view data) {
+  std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
+  EVP_MD_CTX* ctx(EVP_MD_CTX_new());
+  auto rc = EVP_DigestInit(ctx, EVP_sha256());
+  RELEASE_ASSERT(rc == 1, "Failed to init digest context");
+  rc = EVP_DigestUpdate(ctx, data.data(), data.size());
+  RELEASE_ASSERT(rc == 1, "Failed to update digest");
+  rc = EVP_DigestFinal(ctx, digest.data(), nullptr);
+  RELEASE_ASSERT(rc == 1, "Failed to finalize digest");
+  EVP_MD_CTX_free(ctx);
+  return Base64::encode(reinterpret_cast<const char*>(&digest[0]), digest.size());
+}
+
 inline Word wasmResultToWord(WasmResult r) { return Word(static_cast<uint64_t>(r)); }
 
 inline uint32_t convertWordToUint32(Word w) { return static_cast<uint32_t>(w.u64_); }
@@ -2177,16 +2191,7 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
 
   // If the configured_vm_id is empty, then hash the code to create a unique vm_id.
   if (vm_id_.empty()) {
-    std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
-    EVP_MD_CTX* ctx(EVP_MD_CTX_new());
-    auto rc = EVP_DigestInit(ctx, EVP_sha256());
-    RELEASE_ASSERT(rc == 1, "Failed to init digest context");
-    rc = EVP_DigestUpdate(ctx, code.data(), code.size());
-    RELEASE_ASSERT(rc == 1, "Failed to update digest");
-    rc = EVP_DigestFinal(ctx, digest.data(), nullptr);
-    RELEASE_ASSERT(rc == 1, "Failed to finalize digest");
-    EVP_MD_CTX_free(ctx);
-    vm_id_ = Base64::encode(reinterpret_cast<const char*>(&digest[0]), digest.size());
+    vm_id_ = base64Sha256(code);
   }
 
   auto ok = wasm_vm_->load(code, allow_precompiled);
