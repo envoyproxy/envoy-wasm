@@ -18,7 +18,7 @@ export CPP=cpp-7
 # specific version of protobufs to match the pre-compiled support libraries
 git clone https://github.com/protocolbuffers/protobuf
 cd protobuf
-git checkout v3.6.1 -b v3.6.1
+git checkout v3.9.1
 git submodule update --init --recursive
 ./autogen.sh
 ./configure
@@ -30,8 +30,9 @@ cd
 # emscripten
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
-./emsdk install 1.38.42
-./emsdk activate 1.38.42
+./emsdk update-tags
+./emsdk install 1.38.46
+./emsdk activate 1.38.46
 source ./emsdk_env.sh
 cd
 
