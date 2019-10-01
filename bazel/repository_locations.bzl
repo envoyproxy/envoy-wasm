@@ -248,15 +248,15 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["http://releases.llvm.org/6.0.1/llvm-6.0.1.src.tar.xz"],
     ),
     com_github_wavm_wavm = dict(
-        sha256 = "1acb11681657a0f32bb8c3d78117c742318c139d43eae70c6d34bbd9d9638135",
-        strip_prefix = "WAVM-95dbf08c8695b8941e7020c557d8612f9d2af895",
-        urls = ["https://github.com/WAVM/WAVM/archive/95dbf08c8695b8941e7020c557d8612f9d2af895.tar.gz"],
+        sha256 = "abebfba303958999ba82aa67075ea7ae1e38388632803d387c6aafbaf67f24c5",
+        strip_prefix = "WAVM-33f4240d44848c52a817730884572d3b4ae39733",
+        urls = ["https://github.com/WAVM/WAVM/archive/33f4240d44848c52a817730884572d3b4ae39733.tar.gz"],
     ),
     com_googlesource_chromium_v8 = dict(
         # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
         # and contains complete checkout of v8 with all dependencies necessary to build wee8.
-        sha256 = "b717b958b407347dc8c78231b7e400b16f387486fde651be26accdf00681d9dc",
-        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.8.279.6.tar.gz"],
+        sha256 = "6913feddc2f105caa53698fe22ba8a62bbb222a1a123a9b12f613c60525c2ce8",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.8.279.9.tar.gz"],
     ),
     io_opencensus_cpp = dict(
         sha256 = "29b2be0d92523a20daef7045e547c517ca0f6e6a0ddd7e7fcd15d162c13b6d9a",
