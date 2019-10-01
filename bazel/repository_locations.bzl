@@ -243,14 +243,14 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://files.pythonhosted.org/packages/b3/b2/238e2590826bfdd113244a40d9d3eb26918bd798fc187e2360a8367068db/six-1.10.0.tar.gz"],
     ),
     org_llvm_llvm = dict(
-        sha256 = "b6d6c324f9c71494c0ccaf3dac1f16236d970002b42bb24a6c9e1634f7d0f4e2",
-        strip_prefix = "llvm-6.0.1.src",
-        urls = ["http://releases.llvm.org/6.0.1/llvm-6.0.1.src.tar.xz"],
+        sha256 = "44787a6d02f7140f145e2250d56c9f849334e11f9ae379827510ed72f12b75e7",
+        strip_prefix = "llvm-8.0.1.src",
+        urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-8.0.1/llvm-8.0.1.src.tar.xz"],
     ),
     com_github_wavm_wavm = dict(
-        sha256 = "abebfba303958999ba82aa67075ea7ae1e38388632803d387c6aafbaf67f24c5",
-        strip_prefix = "WAVM-33f4240d44848c52a817730884572d3b4ae39733",
-        urls = ["https://github.com/WAVM/WAVM/archive/33f4240d44848c52a817730884572d3b4ae39733.tar.gz"],
+        sha256 = "7afe97f3833dfd58dffe0b525d669e66a30d2a8f4edbeb70924ffb43d01c80e6",
+        strip_prefix = "WAVM-6146b4e95d4b5d80d1fde9bb920791836a9078b4",
+        urls = ["https://github.com/WAVM/WAVM/archive/6146b4e95d4b5d80d1fde9bb920791836a9078b4.tar.gz"],
     ),
     com_googlesource_chromium_v8 = dict(
         # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
