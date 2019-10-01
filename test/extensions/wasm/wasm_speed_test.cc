@@ -4,7 +4,7 @@
  * Run with:
  * TEST_SRCDIR=`pwd` TEST_WORKSPACE=bazel-$(basename `pwd`) bazel run --define wasm=enabled
  * --config=libc++ -c opt //test/extensions/wasm:wasm_speed_test
- * Note: "--linkopt -f--fuse-ld" may be required as well depending on the build environment.
+ * Note: "--linkopt -fuse-ld=ldd" may be required as well depending on the build environment.
  */
 #include <stdio.h>
 
