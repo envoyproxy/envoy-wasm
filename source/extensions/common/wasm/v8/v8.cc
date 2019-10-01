@@ -465,6 +465,11 @@ void V8::start(Context* context) {
       }
     }
   }
+  for (const auto& kv : module_functions_) {
+    if (absl::StartsWith(kv.first, "cwa_main")) {
+      callModuleFunction(context, kv.first, kv.second.get(), nullptr, nullptr);
+    }
+  }
 
   callModuleFunction(context, "__post_instantiate", nullptr, nullptr);
 }
