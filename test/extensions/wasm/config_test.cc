@@ -128,8 +128,8 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher, tls, *api,
-                                                        *scope, scope, local_info);
+  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
+                                                        tls, *api, *scope, scope, local_info);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context),
                             Extensions::Common::Wasm::WasmVmException,
                             "Failed to create WASM VM with unspecified runtime.");
