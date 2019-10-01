@@ -5,6 +5,7 @@
 
 #include "common/common/thread.h"
 #include "common/event/real_time_system.h"
+#include "common/grpc/google_grpc_context.h"
 #include "common/stats/fake_symbol_table_impl.h"
 #include "common/stats/thread_local_store.h"
 #include "common/thread_local/thread_local_impl.h"
@@ -65,12 +66,13 @@ public:
                     const AdminRequestFn& handler);
 
 protected:
-  ProcessWide process_wide_; // Process-wide state setup/teardown.
+  ProcessWide process_wide_; // Process-wide state setup/teardown (excluding grpc).
+  Grpc::GoogleGrpcContext google_grpc_context_;
   const Envoy::OptionsImpl& options_;
-  Stats::FakeSymbolTableImpl symbol_table_;
   Server::ComponentFactory& component_factory_;
   Thread::ThreadFactory& thread_factory_;
   Filesystem::Instance& file_system_;
+  Stats::SymbolTablePtr symbol_table_;
   Stats::AllocatorImpl stats_allocator_;
 
   std::unique_ptr<ThreadLocal::InstanceImpl> tls_;

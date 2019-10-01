@@ -6,6 +6,7 @@
 #include "envoy/server/transport_socket_config.h"
 
 #include "common/common/assert.h"
+#include "common/grpc/google_grpc_context.h"
 #include "common/protobuf/protobuf.h"
 #include "common/protobuf/utility.h"
 
@@ -65,6 +66,9 @@ public:
   AltsSharedState() { grpc_alts_shared_resource_dedicated_init(); }
 
   ~AltsSharedState() override { grpc_alts_shared_resource_dedicated_shutdown(); }
+
+private:
+  Grpc::GoogleGrpcContext google_grpc_context_;
 };
 
 SINGLETON_MANAGER_REGISTRATION(alts_shared_state);
@@ -79,7 +83,7 @@ Network::TransportSocketFactoryPtr createTransportSocketFactoryHelper(
       [] { return std::make_shared<AltsSharedState>(); });
   auto config =
       MessageUtil::downcastAndValidate<const envoy::config::transport_socket::alts::v2alpha::Alts&>(
-          message);
+          message, factory_ctxt.messageValidationVisitor());
   HandshakeValidator validator = createHandshakeValidator(config);
 
   const std::string& handshaker_service = config.handshaker_service();

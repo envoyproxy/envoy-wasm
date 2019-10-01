@@ -28,8 +28,7 @@ VhdsSubscription::VhdsSubscription(RouteConfigUpdatePtr& config_update_info,
       scope_(factory_context.scope().createScope(stat_prefix + "vhds." +
                                                  config_update_info_->routeConfigName() + ".")),
       stats_({ALL_VHDS_STATS(POOL_COUNTER(*scope_))}),
-      route_config_providers_(route_config_providers),
-      validation_visitor_(factory_context.messageValidationVisitor()) {
+      route_config_providers_(route_config_providers) {
   const auto& config_source = config_update_info_->routeConfiguration()
                                   .vhds()
                                   .config_source()
@@ -46,8 +45,9 @@ VhdsSubscription::VhdsSubscription(RouteConfigUpdatePtr& config_update_info,
           *scope_, *this);
 }
 
-void VhdsSubscription::onConfigUpdateFailed(Envoy::Config::ConfigUpdateFailureReason,
+void VhdsSubscription::onConfigUpdateFailed(Envoy::Config::ConfigUpdateFailureReason reason,
                                             const EnvoyException*) {
+  ASSERT(Envoy::Config::ConfigUpdateFailureReason::ConnectionFailure != reason);
   // We need to allow server startup to continue, even if we have a bad
   // config.
   init_target_.ready();

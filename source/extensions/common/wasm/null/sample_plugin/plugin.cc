@@ -33,7 +33,9 @@ FilterHeadersStatus PluginContext::onRequestHeaders() {
   logDebug(std::string("onRequestHeaders ") + std::to_string(id()));
   auto path = getRequestHeader(":path");
   logInfo(std::string("header path ") + std::string(path->view()));
-  addRequestHeader("newheader", "newheadervalue");
+  if (addRequestHeader("newheader", "newheadervalue") != WasmResult::Ok) {
+    logInfo("addRequestHeader failed");
+  }
   replaceRequestHeader("server", "envoy-wasm");
   return FilterHeadersStatus::Continue;
 }
@@ -45,22 +47,32 @@ FilterDataStatus PluginContext::onRequestBody(size_t body_buffer_length, bool /*
 }
 
 void PluginContext::onLog() {
+  setFilterStateStringValue("wasm_state", "wasm_value");
   auto path = getRequestHeader(":path");
   if (path->view() == "/test_context") {
-    logWarn("request.path: " + getSelectorExpression({"request", "path"}).value()->toString());
+    logWarn("request.path: " + getProperty({"request", "path"}).value()->toString());
     logWarn("node.metadata: " +
-            getSelectorExpression({"node", "metadata", "istio.io/metadata"}).value()->toString());
-    logWarn("metadata: " +
-            getSelectorExpression(
-                {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"})
-                .value()
-                ->toString());
-    auto responseCode = getSelectorExpression({"response", "code"}).value();
-    if (responseCode->size() == sizeof(int64_t)) {
-      char buf[sizeof(int64_t)];
-      responseCode->view().copy(buf, sizeof(int64_t), 0);
-      int64_t code = absl::bit_cast<int64_t>(buf);
-      logWarn("response.code: " + absl::StrCat(code));
+            getProperty({"node", "metadata", "istio.io/metadata"}).value()->toString());
+    logWarn("metadata: " + getProperty({"metadata", "filter_metadata", "envoy.filters.http.wasm",
+                                        "wasm_request_get_key"})
+                               .value()
+                               ->toString());
+    int64_t responseCode;
+    if (getValue({"response", "code"}, &responseCode)) {
+      logWarn("response.code: " + absl::StrCat(responseCode));
+    }
+    logWarn("state: " + getProperty({"filter_state", "wasm_state"}).value()->toString());
+
+    // exercise struct state roundtrip
+    ProtobufWkt::Value struct_obj;
+    ProtobufWkt::Value val;
+    val.set_string_value("wasm_struct_value");
+    (*struct_obj.mutable_struct_value()->mutable_fields())["wasm_struct_key"] = val;
+    setFilterStateValue("wasm_struct", struct_obj);
+
+    ProtobufWkt::Struct got;
+    if (getStructValue({"filter_state", "wasm_struct"}, &got)) {
+      logWarn("struct state: " + got.fields().at("wasm_struct_key").string_value());
     }
   } else {
     logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));

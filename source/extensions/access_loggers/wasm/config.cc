@@ -25,7 +25,7 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
                                               Server::Configuration::FactoryContext& context) {
   const auto& config =
       MessageUtil::downcastAndValidate<const envoy::config::accesslog::v2::WasmAccessLog&>(
-          proto_config);
+          proto_config, context.messageValidationVisitor());
   auto vm_id = config.vm_id();
   auto root_id = config.root_id();
   auto configuration = std::make_shared<std::string>(config.configuration());
@@ -35,14 +35,13 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
     // individual threads.
     auto base_wasm = Common::Wasm::createWasm(
         vm_id, config.vm_config(), root_id, context.clusterManager(), context.dispatcher(),
-        context.api(), context.scope(),
-        Common::Wasm::pluginDirectionFromTrafficDirection(context.direction()), context.localInfo(),
+        context.api(), context.scope(), context.direction(), context.localInfo(),
         &context.listenerMetadata(), nullptr /* owned_scope */);
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     tls_slot->set([base_wasm, root_id, configuration](Event::Dispatcher& dispatcher) {
       auto result =
           Common::Wasm::createThreadLocalWasm(*base_wasm, root_id, *configuration, dispatcher);
-      return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
+      return ThreadLocal::ThreadLocalObjectSharedPtr{result};
     });
   } else {
     if (vm_id.empty()) {

@@ -217,6 +217,16 @@ if __name__ == "__main__":
   errors += checkUnfixableError(
       "histogram_from_string.cc",
       "Don't lookup stats by name at runtime; use StatName saved during construction")
+  errors += checkUnfixableError(
+      "regex.cc", "Don't use std::regex in code that handles untrusted input. Use RegexMatcher")
+  errors += checkUnfixableError(
+      "grpc_init.cc",
+      "Don't call grpc_init() or grpc_shutdown() directly, instantiate Grpc::GoogleGrpcContext. " +
+      "See #8282")
+  errors += checkUnfixableError(
+      "grpc_shutdown.cc",
+      "Don't call grpc_init() or grpc_shutdown() directly, instantiate Grpc::GoogleGrpcContext. " +
+      "See #8282")
 
   errors += fixFileExpectingFailure(
       "api/missing_package.proto",
@@ -236,6 +246,7 @@ if __name__ == "__main__":
   errors += checkAndFixError("bad_envoy_build_sys_ref.BUILD", "Superfluous '@envoy//' prefix")
   errors += checkAndFixError("proto_format.proto", "clang-format check failed")
   errors += checkAndFixError("api/java_options.proto", "Java proto option")
+  errors += checkFileExpectingError("api/go_package.proto", "go_package option should not be set")
   errors += checkAndFixError(
       "cpp_std.cc",
       "term absl::make_unique< should be replaced with standard library term std::make_unique<")

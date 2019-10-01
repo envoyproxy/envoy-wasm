@@ -495,7 +495,7 @@ Server::Server(const std::string& name, Network::Socket& listening_socket,
     : name_(name), stats_(), time_system_(),
       api_(Thread::threadFactoryForTest(), stats_, time_system_, Filesystem::fileSystemForTest()),
       dispatcher_(api_.allocateDispatcher()),
-      connection_handler_(new Envoy::Server::ConnectionHandlerImpl(ENVOY_LOGGER(), *dispatcher_)),
+      connection_handler_(new Envoy::Server::ConnectionHandlerImpl(*dispatcher_, "stress_server")),
       thread_(nullptr), listening_socket_(listening_socket),
       server_filter_chain_(transport_socket_factory), http_type_(http_type) {}
 
@@ -584,6 +584,8 @@ Stats::Scope& Server::listenerScope() { return stats_; }
 uint64_t Server::listenerTag() const { return 0; }
 
 const std::string& Server::name() const { return name_; }
+
+const Network::ActiveUdpListenerFactory* Server::udpListenerFactory() { return nullptr; }
 
 const Network::FilterChain* Server::findFilterChain(const Network::ConnectionSocket&) const {
   return &server_filter_chain_;

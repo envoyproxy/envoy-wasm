@@ -19,6 +19,8 @@ using FilterTrailersStatus = Http::FilterTrailersStatus;
 using FilterDataStatus = Http::FilterDataStatus;
 using GrpcStatus = Envoy::Grpc::Status::GrpcStatus;
 using MetricType = Envoy::Extensions::Common::Wasm::Context::MetricType;
+using MetadataType = Envoy::Extensions::Common::Wasm::MetadataType;
+using WasmResult = Envoy::Extensions::Common::Wasm::WasmResult;
 using StringView = absl::string_view;
 template <typename T> using Optional = absl::optional<T>;
 } // namespace Plugin
@@ -64,9 +66,10 @@ public:
   FOR_ALL_WASM_VM_EXPORTS(_DECLARE_OVERRIDE)
 #undef _DECLARE_OVERRIDE
 
+  bool validateConfiguration(uint64_t root_context_id, uint64_t ptr, uint64_t size);
   void onStart(uint64_t root_context_id, uint64_t root_id_ptr, uint64_t root_id_size,
                uint64_t vm_configuration_ptr, uint64_t vm_configuration_size);
-  void onConfigure(uint64_t root_context_id, uint64_t ptr, uint64_t size);
+  bool onConfigure(uint64_t root_context_id, uint64_t ptr, uint64_t size);
   void onTick(uint64_t root_context_id);
   void onQueueReady(uint64_t root_context_id, uint64_t token);
 

@@ -13,8 +13,9 @@
 #include "test/integration/http_integration.h"
 
 namespace Envoy {
-static const std::string& AdsIntegrationConfig() {
-  CONSTRUCT_ON_FIRST_USE(std::string, R"EOF(
+static std::string AdsIntegrationConfig() {
+  // Note: do not use CONSTRUCT_ON_FIRST_USE here!
+  return R"EOF(
 dynamic_resources:
   lds_config: {ads: {}}
   cds_config: {ads: {}}
@@ -38,7 +39,7 @@ admin:
     socket_address:
       address: 127.0.0.1
       port_value: 0
-)EOF");
+)EOF";
 }
 
 class AdsIntegrationTest : public Grpc::GrpcClientIntegrationParamTest, public HttpIntegrationTest {
@@ -49,10 +50,14 @@ public:
 
   envoy::api::v2::Cluster buildCluster(const std::string& name);
 
+  envoy::api::v2::Cluster buildRedisCluster(const std::string& name);
+
   envoy::api::v2::ClusterLoadAssignment buildClusterLoadAssignment(const std::string& name);
 
   envoy::api::v2::Listener buildListener(const std::string& name, const std::string& route_config,
                                          const std::string& stat_prefix = "ads_test");
+
+  envoy::api::v2::Listener buildRedisListener(const std::string& name, const std::string& cluster);
 
   envoy::api::v2::RouteConfiguration buildRouteConfig(const std::string& name,
                                                       const std::string& cluster);

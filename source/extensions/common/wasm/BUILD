@@ -24,6 +24,7 @@ envoy_cc_library(
     external_deps = ["abseil_optional"],
     deps = [
         ":well_known_names",
+        "//source/common/common:minimal_logger_lib",
     ],
 )
 
@@ -79,5 +80,6 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/eval:field_access",
         "@com_google_cel_cpp//eval/eval:field_backed_list_impl",
         "@com_google_cel_cpp//eval/eval:field_backed_map_impl",
+        "@com_google_cel_cpp//eval/public:cel_value",
     ],
 )

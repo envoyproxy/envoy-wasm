@@ -10,6 +10,7 @@
 
 #include "envoy/access_log/access_log.h"
 #include "envoy/api/v2/core/base.pb.h"
+#include "envoy/common/matchers.h"
 #include "envoy/config/typed_metadata.h"
 #include "envoy/http/codec.h"
 #include "envoy/http/codes.h"
@@ -101,14 +102,9 @@ public:
   virtual ~CorsPolicy() = default;
 
   /**
-   * @return std::list<std::string>& access-control-allow-origin values.
+   * @return std::vector<StringMatcherPtr>& access-control-allow-origin matchers.
    */
-  virtual const std::list<std::string>& allowOrigins() const PURE;
-
-  /*
-   * @return std::list<std::regex>& regexes that match allowed origins.
-   */
-  virtual const std::list<std::regex>& allowOriginRegexes() const PURE;
+  virtual const std::vector<Matchers::StringMatcherPtr>& allowOrigins() const PURE;
 
   /**
    * @return std::string access-control-allow-methods value.
@@ -164,6 +160,7 @@ public:
   static const uint32_t RETRY_ON_GRPC_INTERNAL           = 0x200;
   static const uint32_t RETRY_ON_RETRIABLE_STATUS_CODES  = 0x400;
   static const uint32_t RETRY_ON_RESET                   = 0x800;
+  static const uint32_t RETRY_ON_RETRIABLE_HEADERS       = 0x1000;
   // clang-format on
 
   virtual ~RetryPolicy() = default;
@@ -207,6 +204,12 @@ public:
    * policy is enabled.
    */
   virtual const std::vector<uint32_t>& retriableStatusCodes() const PURE;
+
+  /**
+   * @return std::vector<Http::HeaderMatcherSharedPtr>& list of response header matchers that
+   * will be checked when the 'retriable-headers' retry policy is enabled.
+   */
+  virtual const std::vector<Http::HeaderMatcherSharedPtr>& retriableHeaders() const PURE;
 
   /**
    * @return absl::optional<std::chrono::milliseconds> base retry interval
