@@ -378,7 +378,7 @@ public:
   virtual FilterStatus onNewConnection() { return FilterStatus::Continue; }
   virtual FilterStatus onDownstreamData(size_t, bool) { return FilterStatus::Continue; }
   virtual FilterStatus onUpstreamData(size_t, bool) { return FilterStatus::Continue; }
-  virtual void onConnectionClosed() {}
+  virtual void onDownstreamConnectionClose(PeerType) {}
 
   virtual FilterHeadersStatus onRequestHeaders() { return FilterHeadersStatus::Continue; }
   virtual FilterMetadataStatus onRequestMetadata() { return FilterMetadataStatus::Continue; }

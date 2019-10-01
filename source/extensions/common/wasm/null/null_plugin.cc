@@ -42,12 +42,6 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<1>* f
       SaveRestoreContext saved_context(context);
       plugin->onTick(context_id.u64_);
     };
-  } else if (function_name == "_proxy_onConnectionClosed") {
-    auto plugin = this;
-    *f = [plugin](Common::Wasm::Context* context, Word context_id) {
-      SaveRestoreContext saved_context(context);
-      plugin->onConnectionClosed(context_id.u64_);
-    };
   } else if (function_name == "_proxy_onDone") {
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id) {
@@ -77,6 +71,12 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_context_id) {
       SaveRestoreContext saved_context(context);
       plugin->onCreate(context_id.u64_, root_context_id.u64_);
+    };
+  } else if (function_name == "_proxy_onDownstreamConnectionClose") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word peer_type) {
+      SaveRestoreContext saved_context(context);
+      plugin->onDownstreamConnectionClose(context_id.u64_, peer_type.u64_);
     };
   } else if (function_name == "_proxy_onGrpcCreateInitialMetadata") {
     auto plugin = this;
@@ -379,8 +379,8 @@ uint64_t NullPlugin::onUpstreamData(uint64_t context_id, uint64_t data_length,
       getContext(context_id)->onUpstreamData(static_cast<size_t>(data_length), end_of_stream != 0));
 }
 
-void NullPlugin::onConnectionClosed(uint64_t context_id) {
-  getContext(context_id)->onConnectionClosed();
+void NullPlugin::onDownstreamConnectionClose(uint64_t context_id, uint64_t peer_type) {
+  getContext(context_id)->onDownstreamConnectionClose(static_cast<Plugin::PeerType>(peer_type));
 }
 
 uint64_t NullPlugin::onRequestHeaders(uint64_t context_id) {

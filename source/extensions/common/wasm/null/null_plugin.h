@@ -20,6 +20,7 @@ using FilterDataStatus = Http::FilterDataStatus;
 using GrpcStatus = Envoy::Grpc::Status::GrpcStatus;
 using MetricType = Envoy::Extensions::Common::Wasm::Context::MetricType;
 using MetadataType = Envoy::Extensions::Common::Wasm::MetadataType;
+using PeerType = Envoy::Extensions::Common::Wasm::Context::PeerType;
 using WasmResult = Envoy::Extensions::Common::Wasm::WasmResult;
 using StringView = absl::string_view;
 template <typename T> using Optional = absl::optional<T>;
@@ -78,7 +79,7 @@ public:
   uint64_t onNewConnection(uint64_t context_id);
   uint64_t onDownstreamData(uint64_t context_id, uint64_t data_length, uint64_t end_of_stream);
   uint64_t onUpstreamData(uint64_t context_id, uint64_t data_length, uint64_t end_of_stream);
-  void onConnectionClosed(uint64_t context_id);
+  void onDownstreamConnectionClose(uint64_t context_id, uint64_t peer_type);
 
   uint64_t onRequestHeaders(uint64_t context_id);
   uint64_t onRequestBody(uint64_t context_id, uint64_t body_buffer_length, uint64_t end_of_stream);

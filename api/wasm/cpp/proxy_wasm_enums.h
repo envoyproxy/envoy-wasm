@@ -42,3 +42,8 @@ enum class MetricType : int32_t {
   Gauge = 1,
   Histogram = 2,
 };
+enum class PeerType : int32_t {
+  Unknown = 0,
+  Local = 1,
+  Remote = 2,
+};

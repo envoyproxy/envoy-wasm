@@ -203,7 +203,12 @@ public:
   virtual Network::FilterStatus onNetworkNewConnection();
   virtual Network::FilterStatus onDownstreamData(int data_length, bool end_of_stream);
   virtual Network::FilterStatus onUpstreamData(int data_length, bool end_of_stream);
-  virtual void onConnectionClosed();
+  enum class PeerType : uint32_t {
+    Unknown = 0,
+    Local = 1,
+    Remote = 2,
+  };
+  virtual void onDownstreamConnectionClose(PeerType);
   // HTTP Filter Stream Request Downcalls.
   virtual Http::FilterHeadersStatus onRequestHeaders();
   virtual Http::FilterDataStatus onRequestBody(int body_buffer_length, bool end_of_stream);
@@ -618,7 +623,7 @@ private:
   WasmCallWord<1> onNewConnection_;
   WasmCallWord<3> onDownstreamData_;
   WasmCallWord<3> onUpstreamData_;
-  WasmCallVoid<1> onConnectionClosed_;
+  WasmCallVoid<2> onDownstreamConnectionClose_;
 
   WasmCallWord<1> onRequestHeaders_;
   WasmCallWord<3> onRequestBody_;

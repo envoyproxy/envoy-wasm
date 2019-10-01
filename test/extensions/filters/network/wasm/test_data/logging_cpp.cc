@@ -10,7 +10,7 @@ public:
   FilterStatus onNewConnection() override;
   FilterStatus onDownstreamData(size_t data_length, bool end_stream) override;
   FilterStatus onUpstreamData(size_t data_length, bool end_stream) override;
-  void onConnectionClosed() override;
+  void onDownstreamConnectionClose(PeerType peer_type) override;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
@@ -33,6 +33,7 @@ FilterStatus ExampleContext::onUpstreamData(size_t data_length, bool end_stream)
   return FilterStatus::Continue;
 }
 
-void ExampleContext::onConnectionClosed() {
-  logTrace("onConnectionClosed " + std::to_string(id()));
+void ExampleContext::onDownstreamConnectionClose(PeerType peer_type) {
+  logTrace("onDownstreamConnectionClose " + std::to_string(id()) + " " +
+           std::to_string(static_cast<uint32_t>(peer_type)));
 }

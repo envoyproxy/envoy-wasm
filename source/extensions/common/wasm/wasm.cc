@@ -1782,9 +1782,9 @@ Network::FilterStatus Context::onUpstreamData(int data_length, bool end_of_strea
   return result.u64_ == 0 ? Network::FilterStatus::Continue : Network::FilterStatus::StopIteration;
 }
 
-void Context::onConnectionClosed() {
-  if (wasm_->onConnectionClosed_) {
-    wasm_->onConnectionClosed_(this, id_);
+void Context::onDownstreamConnectionClose(PeerType peer_type) {
+  if (wasm_->onDownstreamConnectionClose_) {
+    wasm_->onDownstreamConnectionClose_(this, id_, static_cast<uint32_t>(peer_type));
   }
 }
 
@@ -2215,7 +2215,7 @@ void Wasm::getFunctions() {
   _GET_PROXY(onNewConnection);
   _GET_PROXY(onDownstreamData);
   _GET_PROXY(onUpstreamData);
-  _GET_PROXY(onConnectionClosed);
+  _GET_PROXY(onDownstreamConnectionClose);
 
   _GET_PROXY(onRequestHeaders);
   _GET_PROXY(onRequestBody);
@@ -2415,9 +2415,15 @@ Network::FilterStatus Context::onWrite(Buffer::Instance& data, bool end_stream) 
 }
 
 void Context::onEvent(Network::ConnectionEvent event) {
-  if (event == Network::ConnectionEvent::LocalClose ||
-      event == Network::ConnectionEvent::RemoteClose) {
-    onConnectionClosed();
+  switch (event) {
+  case Network::ConnectionEvent::LocalClose:
+    onDownstreamConnectionClose(PeerType::Local);
+    break;
+  case Network::ConnectionEvent::RemoteClose:
+    onDownstreamConnectionClose(PeerType::Remote);
+    break;
+  default:
+    break;
   }
 }
 
