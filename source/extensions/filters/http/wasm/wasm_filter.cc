@@ -26,7 +26,6 @@ FilterConfig::FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& co
   auto base_wasm =
       Common::Wasm::createWasm(config.config().vm_config(), plugin_, context.clusterManager(),
                                context.dispatcher(), context.api());
-  // NB: An empty 'vm_id' will be updated with a unique ID based on the WASM file.
   auto configuration = std::make_shared<std::string>(config.config().configuration());
   // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
   tls_slot_->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {

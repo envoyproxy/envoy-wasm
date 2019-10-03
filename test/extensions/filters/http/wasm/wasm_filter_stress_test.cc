@@ -34,11 +34,11 @@ class HttpWasmStressTest : public WasmStressTest {};
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, GrpcWasmStressTest,
                          testing::Combine(testing::Values(
 #if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                                              "envoy.wasm.vm.v8", "envoy.wasm.vm.wavm"
+                                              "envoy.wasm.runtime.v8", "envoy.wasm.runtime.wavm"
 #elif defined(ENVOY_WASM_V8)
-                                              "envoy.wasm.vm.v8"
+                                              "envoy.wasm.runtime.v8"
 #elif defined(ENVOY_WASM_WAVM)
-                                              "envoy.wasm.vm.wavm"
+                                              "envoy.wasm.runtime.wavm"
 #endif
                                               ),
                                           testing::Values("cpp"), testing::Values("http2"),
@@ -47,11 +47,11 @@ INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, GrpcWasmStressTest,
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, HttpWasmStressTest,
                          testing::Combine(testing::Values(
 #if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                                              "envoy.wasm.vm.v8", "envoy.wasm.vm.wavm"
+                                              "envoy.wasm.runtime.v8", "envoy.wasm.runtime.wavm"
 #elif defined(ENVOY_WASM_V8)
-                                              "envoy.wasm.vm.v8"
+                                              "envoy.wasm.runtime.v8"
 #elif defined(ENVOY_WASM_WAVM)
-                                              "envoy.wasm.vm.wavm"
+                                              "envoy.wasm.runtime.wavm"
 #endif
                                               ),
                                           testing::Values("cpp"), testing::Values("http1", "http2"),
@@ -75,7 +75,7 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
             config:
               config:
                 vm_config:
-                  vm: "{}"
+                  runtime: "{}"
                   code:
                     filename: "{}"
 )EOF",
@@ -185,7 +185,7 @@ TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
             config:
               config:
                 vm_config:
-                  vm: "{}"
+                  runtime: "{}"
                   code:
                     filename: "{}"
                   allow_precompiled: true
@@ -296,7 +296,7 @@ TEST_P(HttpWasmStressTest, DISABLED_CalloutHappyPath) {
             config:
               config:
                 vm_config:
-                  vm: "{}"
+                  runtime: "{}"
                   code:
                     filename: "{}"
 )EOF",

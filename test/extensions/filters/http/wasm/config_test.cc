@@ -50,7 +50,7 @@ TEST_P(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   {
   "config" : {
   "vm_config": {
-    "vm": "envoy.wasm.vm.)EOF",
+    "runtime": "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF(",
     "code": {
       "filename": "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"
@@ -72,7 +72,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
-      vm: "envoy.wasm.vm.)EOF",
+      runtime: "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF("
       code: { filename: "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm" }
   )EOF"));
@@ -94,7 +94,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
   const std::string yaml = absl::StrCat(R"EOF(
   config:
     vm_config:
-      vm: "envoy.wasm.vm.)EOF",
+      runtime: "envoy.wasm.runtime.)EOF",
                                         GetParam(), R"EOF("
       code: { inline_bytes: ")EOF",
                                         Base64::encode(code.data(), code.size()), R"EOF(" }
@@ -114,7 +114,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   const std::string yaml = absl::StrCat(R"EOF(
   config:
     vm_config:
-      vm: "envoy.wasm.vm.)EOF",
+      runtime: "envoy.wasm.runtime.)EOF",
                                         GetParam(), R"EOF("
       code: { inline_string: "bad code" }
   )EOF");

@@ -513,7 +513,6 @@ public:
   Context* start(); // returns the root Context.
 
   absl::string_view vm_id() const { return vm_id_; }
-  absl::string_view configured_vm_id() const { return configured_vm_id_; }
   const PluginSharedPtr& creating_plugin() const { return creating_plugin_; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
   Context* vmContext() const { return vm_context_.get(); }
@@ -611,8 +610,7 @@ private:
   void establishEnvironment(); // Language specific environments.
   void getFunctions();         // Get functions call into WASM.
 
-  const std::string configured_vm_id_; // The vm_id specified in the configuration
-  std::string vm_id_;                  // The effective vm_id (may be a hash).
+  std::string vm_id_; // The effective vm_id (may be a hash).
   std::unique_ptr<WasmVm> wasm_vm_;
 
   const PluginSharedPtr creating_plugin_;

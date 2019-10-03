@@ -41,7 +41,8 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmService config;
-  config.mutable_config()->mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
+  config.mutable_config()->mutable_vm_config()->set_runtime(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
@@ -65,7 +66,8 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmService config;
-  config.mutable_config()->mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
+  config.mutable_config()->mutable_vm_config()->set_runtime(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
@@ -88,7 +90,8 @@ TEST_P(WasmFactoryTest, MissingImport) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmService config;
-  config.mutable_config()->mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
+  config.mutable_config()->mutable_vm_config()->set_runtime(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/missing_cpp.wasm"));
@@ -115,7 +118,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmService config;
-  config.mutable_config()->mutable_vm_config()->set_vm("");
+  config.mutable_config()->mutable_vm_config()->set_runtime("");
   config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
@@ -140,7 +143,7 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
   envoy::config::wasm::v2::WasmService config;
-  config.mutable_config()->mutable_vm_config()->set_vm("envoy.wasm.vm.invalid");
+  config.mutable_config()->mutable_vm_config()->set_runtime("envoy.wasm.runtime.invalid");
   config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
@@ -157,7 +160,7 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
                                                         tls, *api, *scope, scope, local_info);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context),
                             Extensions::Common::Wasm::WasmVmException,
-                            "Failed to create WASM VM using envoy.wasm.vm.invalid runtime. "
+                            "Failed to create WASM VM using envoy.wasm.runtime.invalid runtime. "
                             "Envoy was compiled without support for it.");
 }
 

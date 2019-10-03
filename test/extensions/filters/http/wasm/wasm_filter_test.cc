@@ -77,8 +77,8 @@ public:
     root_context_ = new TestRoot();
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
     proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
-    proto_config.mutable_config()->mutable_vm_config()->set_vm(
-        absl::StrCat("envoy.wasm.vm.", GetParam()));
+    proto_config.mutable_config()->mutable_vm_config()->set_runtime(
+        absl::StrCat("envoy.wasm.runtime.", GetParam()));
     proto_config.mutable_config()->mutable_vm_config()->mutable_code()->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
@@ -97,7 +97,7 @@ public:
     root_context_ = new TestRoot();
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
     proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
-    proto_config.mutable_config()->mutable_vm_config()->set_vm("envoy.wasm.vm.null");
+    proto_config.mutable_config()->mutable_vm_config()->set_runtime("envoy.wasm.runtime.null");
     proto_config.mutable_config()->mutable_vm_config()->mutable_code()->set_inline_bytes(name);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));

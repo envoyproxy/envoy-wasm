@@ -21,8 +21,8 @@ message VmConfig {
   // otherwise the VM will not be reloaded if the Wasm code changes.
   string vm_id = 1;
 
-  // The Wasm VM type (see source/extensions/commmon/wasm/well_known_names.h).
-  string vm = 2;
+  // The Wasm runtime type (see source/extensions/commmon/wasm/well_known_names.h).
+  string runtime = 2;
 
   // The Wasm code that Envoy will execute.
   api.v2.core.DataSource code = 3;
