@@ -21,18 +21,31 @@ FilterConfig::FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& co
   auto root_id = config.root_id();
   auto configuration = std::make_shared<std::string>(config.configuration());
   if (config.has_vm_config()) {
-    // Create a base WASM to verify that the code loads before setting/cloning the for the
-    // individual threads.
-    auto base_wasm = Common::Wasm::createWasm(
-        vm_id, config.vm_config(), root_id, context.clusterManager(), context.dispatcher(),
-        context.api(), context.scope(), context.direction(), context.localInfo(),
-        &context.listenerMetadata(), nullptr /* owned_scope */);
-    // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
-    tls_slot_->set([base_wasm, root_id, configuration](Event::Dispatcher& dispatcher) {
-      auto result = Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, root_id,
-                                                                    *configuration, dispatcher);
-      return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
-    });
+    auto callback = [&config, &context, this, vm_id, root_id,
+                     configuration](const std::string& code) {
+      // Create a base WASM to verify that the code loads before setting/cloning the for the
+      // individual threads.
+      auto base_wasm = Common::Wasm::createWasm(
+          vm_id, config.vm_config(), code, root_id, context.clusterManager(), context.dispatcher(),
+          context.scope(), context.direction(), context.localInfo(), &context.listenerMetadata(),
+          nullptr /* owned_scope */);
+      // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
+      tls_slot_->set([base_wasm, root_id, configuration](Event::Dispatcher& dispatcher) {
+        auto result = Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, root_id,
+                                                                      *configuration, dispatcher);
+        return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
+      });
+    };
+
+    if (config.vm_config().code().has_local()) {
+      local_data_provider_ = std::make_unique<Config::DataSource::LocalAsyncDataProvider>(
+          context.initManager(), config.vm_config().code().local(), true, context.api(),
+          std::move(callback));
+    } else {
+      remote_data_provider_ = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
+          context.clusterManager(), context.initManager(), config.vm_config().code().remote(), true,
+          std::move(callback));
+    }
   } else {
     if (vm_id.empty()) {
       throw Common::Wasm::WasmVmException("No WASM VM Id or vm_config specified");

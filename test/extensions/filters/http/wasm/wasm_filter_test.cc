@@ -77,13 +77,13 @@ public:
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
     proto_config.set_vm_id("vm_id");
     proto_config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
-    proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(code);
+    proto_config.mutable_vm_config()->mutable_code()->mutable_local()->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
-        &listener_metadata_, nullptr,
+        proto_config.vm_id(), proto_config.vm_config(), code, proto_config.root_id(),
+        cluster_manager_, dispatcher_, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND,
+        local_info_, &listener_metadata_, nullptr,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
@@ -92,13 +92,13 @@ public:
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
     proto_config.set_vm_id("vm_id");
     proto_config.mutable_vm_config()->set_vm("envoy.wasm.vm.null");
-    proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(name);
+    proto_config.mutable_vm_config()->mutable_code()->mutable_local()->set_inline_bytes(name);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
-        &listener_metadata_, nullptr,
+        proto_config.vm_id(), proto_config.vm_config(), name, proto_config.root_id(),
+        cluster_manager_, dispatcher_, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND,
+        local_info_, &listener_metadata_, nullptr,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 

@@ -35,6 +35,8 @@ private:
   std::string root_id_;
   uint32_t root_context_id_{0};
   ThreadLocal::SlotPtr tls_slot_;
+  Config::DataSource::LocalAsyncDataProviderPtr local_data_provider_;
+  Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
 
 typedef std::shared_ptr<FilterConfig> FilterConfigSharedPtr;

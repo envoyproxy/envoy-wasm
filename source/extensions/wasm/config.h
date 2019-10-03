@@ -13,8 +13,13 @@ class WasmFactory : public Server::Configuration::WasmFactory {
 public:
   ~WasmFactory() override {}
   std::string name() override { return "envoy.wasm"; }
-  Server::WasmSharedPtr createWasm(const envoy::config::wasm::v2::WasmConfig& config,
-                                   Server::Configuration::WasmFactoryContext& context) override;
+  void createWasm(const envoy::config::wasm::v2::WasmConfig& config,
+                  Server::Configuration::WasmFactoryContext& context,
+                  Server::CreateWasmCallback&& cb) override;
+
+private:
+  Config::DataSource::LocalAsyncDataProviderPtr local_data_provider_;
+  Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
 
 } // namespace Wasm

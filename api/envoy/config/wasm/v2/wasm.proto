@@ -17,7 +17,7 @@ message VmConfig {
   string vm = 1;
 
   // The Wasm code that Envoy will execute.
-  api.v2.core.DataSource code = 2;
+  api.v2.core.AsyncDataSource code = 2;
 
   // The Wasm configuration string used on initialization of a new VM.
   string configuration = 3;

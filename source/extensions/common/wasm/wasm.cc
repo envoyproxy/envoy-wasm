@@ -19,7 +19,6 @@
 #include "common/common/empty_string.h"
 #include "common/common/enum_to_int.h"
 #include "common/common/logger.h"
-#include "common/config/datasource.h"
 #include "common/http/header_map_impl.h"
 #include "common/http/message_impl.h"
 #include "common/http/utility.h"
@@ -2597,22 +2596,28 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
 
 static std::shared_ptr<Wasm> createWasmInternal(
     absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+    const std::string& code,
     absl::string_view root_id, // e.g. filter instance id
-    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Api::Api& api,
-    Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
-    const LocalInfo::LocalInfo& local_info, const envoy::api::v2::core::Metadata* listener_metadata,
-    Stats::ScopeSharedPtr scope_ptr, std::unique_ptr<Context> root_context_for_testing) {
+    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Stats::Scope& scope,
+    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
+    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
+    std::unique_ptr<Context> root_context_for_testing) {
   auto wasm = std::make_shared<Wasm>(vm_config.vm(), vm_id, vm_config.configuration(),
                                      cluster_manager, dispatcher, scope, direction, local_info,
                                      listener_metadata, scope_ptr);
-  const auto& code = Config::DataSource::read(vm_config.code(), true, api);
-  const auto& path = Config::DataSource::getPath(vm_config.code())
-                         .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
+  std::string source;
+  if (vm_config.code().has_remote()) {
+    source = vm_config.code().remote().http_uri().uri();
+  } else {
+    source = Config::DataSource::getPath(vm_config.code().local())
+                 .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
+  }
+
   if (code.empty()) {
-    throw WasmException(fmt::format("Failed to load WASM code from {}", path));
+    throw WasmException(fmt::format("Failed to load WASM code from {}", source));
   }
   if (!wasm->initialize(code, vm_id, vm_config.allow_precompiled())) {
-    throw WasmException(fmt::format("Failed to initialize WASM code from {}", path));
+    throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
   }
   if (!root_context_for_testing) {
     wasm->start(root_id, vm_config.configuration());
@@ -2622,27 +2627,26 @@ static std::shared_ptr<Wasm> createWasmInternal(
   return wasm;
 }
 
-std::shared_ptr<Wasm> createWasm(absl::string_view vm_id,
-                                 const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 absl::string_view root_id, // e.g. filter instance id
-                                 Upstream::ClusterManager& cluster_manager,
-                                 Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
-                                 envoy::api::v2::core::TrafficDirection direction,
-                                 const LocalInfo::LocalInfo& local_info,
-                                 const envoy::api::v2::core::Metadata* listener_metadata,
-                                 Stats::ScopeSharedPtr scope_ptr) {
-  return createWasmInternal(vm_id, vm_config, root_id, cluster_manager, dispatcher, api, scope,
+std::shared_ptr<Wasm> createWasm(
+    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+    const std::string& code,
+    absl::string_view root_id, // e.g. filter instance id
+    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Stats::Scope& scope,
+    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
+    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr) {
+  return createWasmInternal(vm_id, vm_config, code, root_id, cluster_manager, dispatcher, scope,
                             direction, local_info, listener_metadata, scope_ptr, nullptr);
 }
 
 std::shared_ptr<Wasm> createWasmForTesting(
     absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+    const std::string& code,
     absl::string_view root_id, // e.g. filter instance id
-    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Api::Api& api,
-    Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
-    const LocalInfo::LocalInfo& local_info, const envoy::api::v2::core::Metadata* listener_metadata,
-    Stats::ScopeSharedPtr scope_ptr, std::unique_ptr<Context> root_context_for_testing) {
-  return createWasmInternal(vm_id, vm_config, root_id, cluster_manager, dispatcher, api, scope,
+    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Stats::Scope& scope,
+    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
+    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
+    std::unique_ptr<Context> root_context_for_testing) {
+  return createWasmInternal(vm_id, vm_config, code, root_id, cluster_manager, dispatcher, scope,
                             direction, local_info, listener_metadata, scope_ptr,
                             std::move(root_context_for_testing));
 }

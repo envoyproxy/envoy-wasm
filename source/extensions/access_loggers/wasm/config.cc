@@ -29,30 +29,47 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   auto vm_id = config.vm_id();
   auto root_id = config.root_id();
   auto configuration = std::make_shared<std::string>(config.configuration());
-  auto tls_slot = context.threadLocal().allocateSlot();
   if (config.has_vm_config()) {
-    // Create a base WASM to verify that the code loads before setting/cloning the for the
-    // individual threads.
-    auto base_wasm = Common::Wasm::createWasm(
-        vm_id, config.vm_config(), root_id, context.clusterManager(), context.dispatcher(),
-        context.api(), context.scope(), context.direction(), context.localInfo(),
-        &context.listenerMetadata(), nullptr /* owned_scope */);
-    // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
-    tls_slot->set([base_wasm, root_id, configuration](Event::Dispatcher& dispatcher) {
-      auto result =
-          Common::Wasm::createThreadLocalWasm(*base_wasm, root_id, *configuration, dispatcher);
-      return ThreadLocal::ThreadLocalObjectSharedPtr{result};
-    });
+    auto access_log = std::make_shared<WasmAccessLog>(root_id, nullptr, std::move(filter));
+    auto callback = [&context, config, access_log, root_id, vm_id,
+                     configuration](const std::string& code) {
+      // Create a base WASM to verify that the code loads before setting/cloning the for the
+      // individual threads.
+      auto tls_slot = context.threadLocal().allocateSlot();
+      auto base_wasm = Common::Wasm::createWasm(
+          vm_id, config.vm_config(), root_id, code, context.clusterManager(), context.dispatcher(),
+          context.scope(), context.direction(), context.localInfo(), &context.listenerMetadata(),
+          nullptr /* owned_scope */);
+      // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
+      tls_slot->set([base_wasm, root_id, configuration](Event::Dispatcher& dispatcher) {
+        auto result =
+            Common::Wasm::createThreadLocalWasm(*base_wasm, root_id, *configuration, dispatcher);
+        return ThreadLocal::ThreadLocalObjectSharedPtr{result};
+      });
+      access_log->setTlsSlot(std::move(tls_slot));
+    };
+
+    if (config.vm_config().code().has_local()) {
+      local_data_provider_ = std::make_unique<Config::DataSource::LocalAsyncDataProvider>(
+          context.initManager(), config.vm_config().code().local(), true, context.api(),
+          std::move(callback));
+    } else {
+      remote_data_provider_ = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
+          context.clusterManager(), context.initManager(), config.vm_config().code().remote(), true,
+          std::move(callback));
+    }
+    return access_log;
   } else {
     if (vm_id.empty()) {
       throw Common::Wasm::WasmVmException("No WASM VM Id or vm_config specified");
     }
+    auto tls_slot = context.threadLocal().allocateSlot();
     tls_slot->set([vm_id, root_id, configuration](Event::Dispatcher&) {
       auto result = Common::Wasm::getThreadLocalWasm(vm_id, root_id, *configuration);
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(result);
     });
+    return std::make_shared<WasmAccessLog>(root_id, std::move(tls_slot), std::move(filter));
   }
-  return std::make_shared<WasmAccessLog>(root_id, std::move(tls_slot), std::move(filter));
 }
 
 ProtobufTypes::MessagePtr WasmAccessLogFactory::createEmptyConfigProto() {

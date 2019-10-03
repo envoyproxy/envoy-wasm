@@ -76,8 +76,9 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
 
   envoy::config::accesslog::v2::WasmAccessLog config;
   config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
-  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging.wasm"));
+  config.mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
+      TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging.wasm"));
 
   AccessLog::FilterPtr filter;
   Stats::IsolatedStoreImpl stats_store;

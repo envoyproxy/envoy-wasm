@@ -17,6 +17,7 @@
 #include "common/common/assert.h"
 #include "common/common/logger.h"
 #include "common/common/stack_array.h"
+#include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
 
 #include "extensions/common/wasm/wasm_vm.h"
@@ -640,13 +641,12 @@ inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_-
 
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
-std::shared_ptr<Wasm>
-createWasm(absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
-           absl::string_view root_id, Upstream::ClusterManager& cluster_manager,
-           Event::Dispatcher& dispatcher, Api::Api& api, Stats::Scope& scope,
-           envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
-           const envoy::api::v2::core::Metadata* listener_metadata,
-           Stats::ScopeSharedPtr owned_scope);
+std::shared_ptr<Wasm> createWasm(
+    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+    const std::string& code, absl::string_view root_id, Upstream::ClusterManager& cluster_manager,
+    Event::Dispatcher& dispatcher, Stats::Scope& scope,
+    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
+    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr owned_scope);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view root_id,
@@ -655,11 +655,12 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view r
 
 std::shared_ptr<Wasm> createWasmForTesting(
     absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
+    const std::string& code,
     absl::string_view root_id, // e.g. filter instance id
-    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Api::Api& api,
-    Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
-    const LocalInfo::LocalInfo& local_info, const envoy::api::v2::core::Metadata* listener_metadata,
-    Stats::ScopeSharedPtr scope_ptr, std::unique_ptr<Context> root_context_for_testing);
+    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Stats::Scope& scope,
+    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
+    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
+    std::unique_ptr<Context> root_context_for_testing);
 
 // Get an existing ThreadLocal VM matching 'vm_id'.
 std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_view root_id,
