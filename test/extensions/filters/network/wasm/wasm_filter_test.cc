@@ -111,6 +111,8 @@ TEST_P(WasmFilterTest, HappyPath) {
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::trace,
                          Eq(absl::string_view("onUpstreamData 2 len=4 end_stream=1\nDone"))));
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::trace,
+                                   Eq(absl::string_view("onUpstreamConnectionClose 2 0"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onWrite(fake_upstream_data, true));
 
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::trace,

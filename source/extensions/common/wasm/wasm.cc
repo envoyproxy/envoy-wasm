@@ -1788,6 +1788,12 @@ void Context::onDownstreamConnectionClose(PeerType peer_type) {
   }
 }
 
+void Context::onUpstreamConnectionClose(PeerType peer_type) {
+  if (wasm_->onUpstreamConnectionClose_) {
+    wasm_->onUpstreamConnectionClose_(this, id_, static_cast<uint32_t>(peer_type));
+  }
+}
+
 Http::FilterHeadersStatus Context::onRequestHeaders() {
   onCreate(root_context_id_);
   in_vm_context_created_ = true;
@@ -2216,6 +2222,7 @@ void Wasm::getFunctions() {
   _GET_PROXY(onDownstreamData);
   _GET_PROXY(onUpstreamData);
   _GET_PROXY(onDownstreamConnectionClose);
+  _GET_PROXY(onUpstreamConnectionClose);
 
   _GET_PROXY(onRequestHeaders);
   _GET_PROXY(onRequestBody);
@@ -2411,6 +2418,11 @@ Network::FilterStatus Context::onWrite(Buffer::Instance& data, bool end_stream) 
   network_upstream_data_buffer_ = &data;
   auto result = onUpstreamData(data.length(), end_stream);
   network_upstream_data_buffer_ = nullptr;
+  if (end_stream) {
+    // This is called when seeing end_stream=true and not on an upstream connection event,
+    // because registering for latter requires replicating the whole TCP proxy extension.
+    onUpstreamConnectionClose(PeerType::Unknown);
+  }
   return result;
 }
 

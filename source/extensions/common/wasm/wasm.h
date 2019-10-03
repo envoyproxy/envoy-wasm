@@ -209,6 +209,7 @@ public:
     Remote = 2,
   };
   virtual void onDownstreamConnectionClose(PeerType);
+  virtual void onUpstreamConnectionClose(PeerType);
   // HTTP Filter Stream Request Downcalls.
   virtual Http::FilterHeadersStatus onRequestHeaders();
   virtual Http::FilterDataStatus onRequestBody(int body_buffer_length, bool end_of_stream);
@@ -624,6 +625,7 @@ private:
   WasmCallWord<3> onDownstreamData_;
   WasmCallWord<3> onUpstreamData_;
   WasmCallVoid<2> onDownstreamConnectionClose_;
+  WasmCallVoid<2> onUpstreamConnectionClose_;
 
   WasmCallWord<1> onRequestHeaders_;
   WasmCallWord<3> onRequestBody_;

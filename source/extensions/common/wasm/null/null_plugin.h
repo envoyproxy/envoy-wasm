@@ -80,6 +80,7 @@ public:
   uint64_t onDownstreamData(uint64_t context_id, uint64_t data_length, uint64_t end_of_stream);
   uint64_t onUpstreamData(uint64_t context_id, uint64_t data_length, uint64_t end_of_stream);
   void onDownstreamConnectionClose(uint64_t context_id, uint64_t peer_type);
+  void onUpstreamConnectionClose(uint64_t context_id, uint64_t peer_type);
 
   uint64_t onRequestHeaders(uint64_t context_id);
   uint64_t onRequestBody(uint64_t context_id, uint64_t body_buffer_length, uint64_t end_of_stream);
