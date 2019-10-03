@@ -12,6 +12,7 @@ namespace Wasm {
 namespace Null {
 namespace Plugin {
 using LogLevel = Envoy::Logger::Logger::levels;
+using FilterStatus = Network::FilterStatus;
 using FilterHeadersStatus = Http::FilterHeadersStatus;
 using FilterMetadataStatus = Http::FilterMetadataStatus;
 using FilterTrailersStatus = Http::FilterTrailersStatus;
@@ -19,6 +20,7 @@ using FilterDataStatus = Http::FilterDataStatus;
 using GrpcStatus = Envoy::Grpc::Status::GrpcStatus;
 using MetricType = Envoy::Extensions::Common::Wasm::Context::MetricType;
 using MetadataType = Envoy::Extensions::Common::Wasm::MetadataType;
+using PeerType = Envoy::Extensions::Common::Wasm::Context::PeerType;
 using WasmResult = Envoy::Extensions::Common::Wasm::WasmResult;
 using StringView = absl::string_view;
 template <typename T> using Optional = absl::optional<T>;
@@ -73,6 +75,12 @@ public:
   void onQueueReady(uint64_t root_context_id, uint64_t token);
 
   void onCreate(uint64_t context_id, uint64_t root_context_id);
+
+  uint64_t onNewConnection(uint64_t context_id);
+  uint64_t onDownstreamData(uint64_t context_id, uint64_t data_length, uint64_t end_of_stream);
+  uint64_t onUpstreamData(uint64_t context_id, uint64_t data_length, uint64_t end_of_stream);
+  void onDownstreamConnectionClose(uint64_t context_id, uint64_t peer_type);
+  void onUpstreamConnectionClose(uint64_t context_id, uint64_t peer_type);
 
   uint64_t onRequestHeaders(uint64_t context_id);
   uint64_t onRequestBody(uint64_t context_id, uint64_t body_buffer_length, uint64_t end_of_stream);

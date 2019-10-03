@@ -33,4 +33,6 @@ mergeInto(LibraryManager.library, {
     proxy_grpcCancel : function () {},
     proxy_sendLocalResponse : function () {},
     proxy_setEffectiveContext : function () {},
+    proxy_getDownstreamDataBufferBytes: function () {},
+    proxy_getUpstreamDataBufferBytes: function () {},
 });
