@@ -543,16 +543,24 @@ Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Wor
 Word getDownstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
                                          Word size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
-  auto result = context->getDownstreamDataBufferBytes(start.u64_, length.u64_);
-  context->wasm()->copyToPointerSize(result, ptr_ptr.u64_, size_ptr.u64_);
+  absl::string_view data;
+  auto result = context->getDownstreamDataBufferBytes(start.u64_, length.u64_, &data);
+  if (result != WasmResult::Ok) {
+    return wasmResultToWord(result);
+  }
+  context->wasm()->copyToPointerSize(data, ptr_ptr.u64_, size_ptr.u64_);
   return wasmResultToWord(WasmResult::Ok);
 }
 
 Word getUpstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
                                        Word size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
-  auto result = context->getUpstreamDataBufferBytes(start.u64_, length.u64_);
-  context->wasm()->copyToPointerSize(result, ptr_ptr.u64_, size_ptr.u64_);
+  absl::string_view data;
+  auto result = context->getUpstreamDataBufferBytes(start.u64_, length.u64_, &data);
+  if (result != WasmResult::Ok) {
+    return wasmResultToWord(result);
+  }
+  context->wasm()->copyToPointerSize(data, ptr_ptr.u64_, size_ptr.u64_);
   return wasmResultToWord(WasmResult::Ok);
 }
 
@@ -1327,23 +1335,27 @@ WasmResult Context::enqueueSharedQueue(uint32_t token, absl::string_view value) 
 
 // Network bytes.
 
-absl::string_view Context::getDownstreamDataBufferBytes(uint32_t start, uint32_t length) {
+WasmResult Context::getDownstreamDataBufferBytes(uint32_t start, uint32_t length,
+                                                 absl::string_view* data) {
   if (!network_downstream_data_buffer_)
-    return "";
-  if (network_downstream_data_buffer_->length() < static_cast<uint64_t>((start + length)))
-    return "";
-  return absl::string_view(
+    return WasmResult::NotFound;
+  if (network_downstream_data_buffer_->length() < static_cast<uint64_t>(start + length))
+    return WasmResult::InvalidMemoryAccess;
+  *data = absl::string_view(
       static_cast<char*>(network_downstream_data_buffer_->linearize(start + length)) + start,
       length);
+  return WasmResult::Ok;
 }
 
-absl::string_view Context::getUpstreamDataBufferBytes(uint32_t start, uint32_t length) {
+WasmResult Context::getUpstreamDataBufferBytes(uint32_t start, uint32_t length,
+                                               absl::string_view* data) {
   if (!network_upstream_data_buffer_)
-    return "";
-  if (network_upstream_data_buffer_->length() < static_cast<uint64_t>((start + length)))
-    return "";
-  return absl::string_view(
+    return WasmResult::NotFound;
+  if (network_upstream_data_buffer_->length() < static_cast<uint64_t>(start + length))
+    return WasmResult::InvalidMemoryAccess;
+  *data = absl::string_view(
       static_cast<char*>(network_upstream_data_buffer_->linearize(start + length)) + start, length);
+  return WasmResult::Ok;
 }
 
 // Header/Trailer/Metadata Maps.

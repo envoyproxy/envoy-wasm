@@ -572,18 +572,20 @@ inline WasmResult dequeueSharedQueue(uint32_t token, WasmDataPtr* data) {
 }
 
 // Network
-inline WasmDataPtr getDownstreamDataBufferBytes(size_t start, size_t length) {
-  const char* ptr = nullptr;
-  size_t size = 0;
-  proxy_getDownstreamDataBufferBytes(start, length, &ptr, &size);
-  return std::make_unique<WasmData>(ptr, size);
+inline WasmResult getDownstreamDataBufferBytes(size_t start, size_t length, WasmDataPtr* data) {
+  const char* data_ptr = nullptr;
+  size_t data_size = 0;
+  auto result = proxy_getDownstreamDataBufferBytes(start, length, &data_ptr, &data_size);
+  *data = std::make_unique<WasmData>(data_ptr, data_size);
+  return result;
 }
 
-inline WasmDataPtr getUpstreamDataBufferBytes(size_t start, size_t length) {
-  const char* ptr = nullptr;
-  size_t size = 0;
-  proxy_getUpstreamDataBufferBytes(start, length, &ptr, &size);
-  return std::make_unique<WasmData>(ptr, size);
+inline WasmResult getUpstreamDataBufferBytes(size_t start, size_t length, WasmDataPtr* data) {
+  const char* data_ptr = nullptr;
+  size_t data_size = 0;
+  auto result = proxy_getUpstreamDataBufferBytes(start, length, &data_ptr, &data_size);
+  *data = std::make_unique<WasmData>(data_ptr, data_size);
+  return result;
 }
 
 // Headers/Trailers

@@ -333,8 +333,10 @@ public:
   virtual WasmResult enqueueSharedQueue(uint32_t token, absl::string_view value);
 
   // Network
-  virtual absl::string_view getDownstreamDataBufferBytes(uint32_t start, uint32_t length);
-  virtual absl::string_view getUpstreamDataBufferBytes(uint32_t start, uint32_t length);
+  virtual WasmResult getDownstreamDataBufferBytes(uint32_t start, uint32_t length,
+                                                  absl::string_view* data);
+  virtual WasmResult getUpstreamDataBufferBytes(uint32_t start, uint32_t length,
+                                                absl::string_view* data);
 
   // Header/Trailer/Metadata Maps
   virtual void addHeaderMapValue(HeaderMapType type, absl::string_view key,
