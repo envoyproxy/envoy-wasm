@@ -374,6 +374,13 @@ public:
 
   // Called on individual requests/response streams.
   virtual void onCreate() {}
+
+  virtual FilterStatus onNewConnection() { return FilterStatus::Continue; }
+  virtual FilterStatus onDownstreamData(size_t, bool) { return FilterStatus::Continue; }
+  virtual FilterStatus onUpstreamData(size_t, bool) { return FilterStatus::Continue; }
+  virtual void onDownstreamConnectionClose(PeerType) {}
+  virtual void onUpstreamConnectionClose(PeerType) {}
+
   virtual FilterHeadersStatus onRequestHeaders() { return FilterHeadersStatus::Continue; }
   virtual FilterMetadataStatus onRequestMetadata() { return FilterMetadataStatus::Continue; }
   virtual FilterDataStatus onRequestBody(size_t /* body_buffer_length */,
@@ -560,6 +567,23 @@ inline WasmResult dequeueSharedQueue(uint32_t token, WasmDataPtr* data) {
   const char* data_ptr = nullptr;
   size_t data_size = 0;
   auto result = proxy_dequeueSharedQueue(token, &data_ptr, &data_size);
+  *data = std::make_unique<WasmData>(data_ptr, data_size);
+  return result;
+}
+
+// Network
+inline WasmResult getDownstreamDataBufferBytes(size_t start, size_t length, WasmDataPtr* data) {
+  const char* data_ptr = nullptr;
+  size_t data_size = 0;
+  auto result = proxy_getDownstreamDataBufferBytes(start, length, &data_ptr, &data_size);
+  *data = std::make_unique<WasmData>(data_ptr, data_size);
+  return result;
+}
+
+inline WasmResult getUpstreamDataBufferBytes(size_t start, size_t length, WasmDataPtr* data) {
+  const char* data_ptr = nullptr;
+  size_t data_size = 0;
+  auto result = proxy_getUpstreamDataBufferBytes(start, length, &data_ptr, &data_size);
   *data = std::make_unique<WasmData>(data_ptr, data_size);
   return result;
 }

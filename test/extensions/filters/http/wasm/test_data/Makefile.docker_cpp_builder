@@ -1,0 +1,6 @@
+DOCKER_SDK=/external_sdk
+
+all: headers_cpp.wasm async_call_cpp.wasm metadata_cpp.wasm grpc_call_cpp.wasm shared_cpp.wasm queue_cpp.wasm http_callout_cpp.wasm grpc_callout_cpp.wasm
+	chown ${uid}.${gid} *.wasm
+
+include ${DOCKER_SDK}/Makefile.base_lite

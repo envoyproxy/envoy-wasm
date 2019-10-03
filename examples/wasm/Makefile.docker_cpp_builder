@@ -1,0 +1,6 @@
+DOCKER_SDK=/external_sdk
+
+all: envoy_filter_http_wasm_example.wasm
+	chown ${uid}.${gid} *.wasm
+
+include ${DOCKER_SDK}/Makefile.base_lite

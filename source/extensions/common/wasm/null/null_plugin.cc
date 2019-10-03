@@ -72,6 +72,18 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f
       SaveRestoreContext saved_context(context);
       plugin->onCreate(context_id.u64_, root_context_id.u64_);
     };
+  } else if (function_name == "_proxy_onDownstreamConnectionClose") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word peer_type) {
+      SaveRestoreContext saved_context(context);
+      plugin->onDownstreamConnectionClose(context_id.u64_, peer_type.u64_);
+    };
+  } else if (function_name == "_proxy_onUpstreamConnectionClose") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word peer_type) {
+      SaveRestoreContext saved_context(context);
+      plugin->onUpstreamConnectionClose(context_id.u64_, peer_type.u64_);
+    };
   } else if (function_name == "_proxy_onGrpcCreateInitialMetadata") {
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token) {
@@ -165,6 +177,12 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
     *f = [](Common::Wasm::Context*, Word size) -> Word {
       return Word(reinterpret_cast<uint64_t>(::malloc(size.u64_)));
     };
+  } else if (function_name == "_proxy_onNewConnection") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onNewConnection(context_id.u64_));
+    };
   } else if (function_name == "_proxy_onRequestHeaders") {
     auto plugin = this;
     *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
@@ -218,6 +236,22 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<3>* f
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word ptr, Word size) {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onConfigure(context_id.u64_, ptr.u64_, size.u64_));
+    };
+  } else if (function_name == "_proxy_onDownstreamData") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
+                  Word end_of_stream) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(
+          plugin->onDownstreamData(context_id.u64_, body_buffer_length.u64_, end_of_stream.u64_));
+    };
+  } else if (function_name == "_proxy_onUpstreamData") {
+    auto plugin = this;
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
+                  Word end_of_stream) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(
+          plugin->onUpstreamData(context_id.u64_, body_buffer_length.u64_, end_of_stream.u64_));
     };
   } else if (function_name == "_proxy_onRequestBody") {
     auto plugin = this;
@@ -332,6 +366,31 @@ void NullPlugin::onTick(uint64_t root_context_id) { getRootContext(root_context_
 
 void NullPlugin::onCreate(uint64_t context_id, uint64_t root_context_id) {
   ensureContext(context_id, root_context_id)->onCreate();
+}
+
+uint64_t NullPlugin::onNewConnection(uint64_t context_id) {
+  return static_cast<uint64_t>(getContext(context_id)->onNewConnection());
+}
+
+uint64_t NullPlugin::onDownstreamData(uint64_t context_id, uint64_t data_length,
+                                      uint64_t end_of_stream) {
+  return static_cast<uint64_t>(
+      getContext(context_id)
+          ->onDownstreamData(static_cast<size_t>(data_length), end_of_stream != 0));
+}
+
+uint64_t NullPlugin::onUpstreamData(uint64_t context_id, uint64_t data_length,
+                                    uint64_t end_of_stream) {
+  return static_cast<uint64_t>(
+      getContext(context_id)->onUpstreamData(static_cast<size_t>(data_length), end_of_stream != 0));
+}
+
+void NullPlugin::onDownstreamConnectionClose(uint64_t context_id, uint64_t peer_type) {
+  getContext(context_id)->onDownstreamConnectionClose(static_cast<Plugin::PeerType>(peer_type));
+}
+
+void NullPlugin::onUpstreamConnectionClose(uint64_t context_id, uint64_t peer_type) {
+  getContext(context_id)->onUpstreamConnectionClose(static_cast<Plugin::PeerType>(peer_type));
 }
 
 uint64_t NullPlugin::onRequestHeaders(uint64_t context_id) {
