@@ -33,10 +33,12 @@ FilterConfig::FilterConfig(const envoy::config::filter::network::wasm::v2::Wasm&
     local_data_provider_ = std::make_unique<Config::DataSource::LocalAsyncDataProvider>(
         context.initManager(), config.config().vm_config().code().local(), true, context.api(),
         std::move(callback));
-  } else {
+  } else if (config.config().vm_config().code().has_remote()) {
     remote_data_provider_ = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
         context.clusterManager(), context.initManager(),
         config.config().vm_config().code().remote(), true, std::move(callback));
+  } else {
+    callback(EMPTY_STRING);
   }
 }
 
