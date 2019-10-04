@@ -65,6 +65,10 @@ Word resolveSharedQueueHandler(void* raw_context, Word vm_id_ptr, Word vm_id_siz
 Word dequeueSharedQueueHandler(void* raw_context, Word token, Word data_ptr_ptr,
                                Word data_size_ptr);
 Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Word data_size);
+Word getDownstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                         Word size_ptr);
+Word getUpstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                       Word size_ptr);
 Word addHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                               Word value_ptr, Word value_size);
 Word getHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
@@ -154,27 +158,61 @@ private:
   const ProtobufWkt::Value value_;
 };
 
+// Plugin contains the information for a filter/service.
+struct Plugin {
+  Plugin(absl::string_view name, absl::string_view root_id, absl::string_view vm_id,
+         absl::string_view code, envoy::api::v2::core::TrafficDirection direction,
+         const LocalInfo::LocalInfo& local_info,
+         const envoy::api::v2::core::Metadata* listener_metadata, Stats::Scope& scope,
+         Stats::ScopeSharedPtr owned_scope = nullptr)
+      : name_(std::string(name)), root_id_(std::string(root_id)), vm_id_(std::string(vm_id)),
+        code_(std::string(code)), direction_(direction), local_info_(local_info),
+        listener_metadata_(listener_metadata), scope_(scope), owned_scope_(owned_scope),
+        log_prefix_(makeLogPrefix()) {}
+
+  std::string makeLogPrefix() const;
+
+  const std::string name_;
+  const std::string root_id_;
+  const std::string vm_id_;
+  const std::string code_;
+  envoy::api::v2::core::TrafficDirection direction_;
+  const LocalInfo::LocalInfo& local_info_;
+  const envoy::api::v2::core::Metadata* listener_metadata_;
+  Stats::Scope& scope_; // Either an inherited scope or owned_scope_ below.
+  Stats::ScopeSharedPtr
+      owned_scope_; // When scope_ is not owned by a higher level (e.g. for WASM services).
+
+  std::string log_prefix_;
+};
+using PluginSharedPtr = std::shared_ptr<Plugin>;
+
 // A context which will be the target of callbacks for a particular session
 // e.g. a handler of a stream.
-class Context : public Http::StreamFilter,
+class Context : public Logger::Loggable<Logger::Id::wasm>,
                 public AccessLog::Instance,
-                public Logger::Loggable<Logger::Id::wasm>,
+                public Http::StreamFilter,
+                public Network::ConnectionCallbacks,
+                public Network::Filter,
                 public std::enable_shared_from_this<Context> {
 public:
-  Context();                                      // Testing.
-  explicit Context(Wasm* wasm);                   // General Context.
-  Context(Wasm* wasm, absl::string_view root_id); // Root Context.
-  Context(Wasm* wasm, uint32_t root_context_id);  // Stream/Filter context.
+  Context();                                                              // Testing.
+  Context(Wasm* wasm);                                                    // Vm Context.
+  Context(Wasm* wasm, absl::string_view root_id, PluginSharedPtr plugin); // Root Context.
+  Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin);  // Stream context.
   ~Context();
 
   Wasm* wasm() const { return wasm_; }
-  WasmVm* wasmVm() const;
-  Upstream::ClusterManager& clusterManager() const;
   uint32_t id() const { return id_; }
-  absl::string_view root_id() const;
   bool isVmContext() { return id_ == 0; }
   bool isRootContext() { return root_context_id_ == 0; }
   Context* root_context() { return root_context_; }
+
+  absl::string_view root_id() const { return plugin_->root_id_; }
+  absl::string_view log_prefix() const { return plugin_->log_prefix_; }
+
+  WasmVm* wasmVm() const;
+  Upstream::ClusterManager& clusterManager() const;
 
   // Retrieves the stream info associated with the request (a.k.a active stream).
   // It selects a value based on the following order: encoder callback, decoder
@@ -194,6 +232,17 @@ public:
   //
   // General stream downcall on a new stream.
   virtual void onCreate(uint32_t root_context_id);
+  // Network
+  virtual Network::FilterStatus onNetworkNewConnection();
+  virtual Network::FilterStatus onDownstreamData(int data_length, bool end_of_stream);
+  virtual Network::FilterStatus onUpstreamData(int data_length, bool end_of_stream);
+  enum class PeerType : uint32_t {
+    Unknown = 0,
+    Local = 1,
+    Remote = 2,
+  };
+  virtual void onDownstreamConnectionClose(PeerType);
+  virtual void onUpstreamConnectionClose(PeerType);
   // HTTP Filter Stream Request Downcalls.
   virtual Http::FilterHeadersStatus onRequestHeaders();
   virtual Http::FilterDataStatus onRequestBody(int body_buffer_length, bool end_of_stream);
@@ -228,6 +277,26 @@ public:
   void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
            const Http::HeaderMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override;
+
+  //
+  // Network::ConnectionCallbacks
+  //
+  void onEvent(Network::ConnectionEvent event) override;
+  void onAboveWriteBufferHighWatermark() override {}
+  void onBelowWriteBufferLowWatermark() override {}
+
+  //
+  // Network::ReadFilter
+  //
+  Network::FilterStatus onNewConnection() override;
+  Network::FilterStatus onData(Buffer::Instance& data, bool end_stream) override;
+  void initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) override;
+
+  //
+  // Network::WriteFilter
+  //
+  Network::FilterStatus onWrite(Buffer::Instance& data, bool end_stream) override;
+  void initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& callbacks) override;
 
   //
   // Http::StreamFilterBase
@@ -295,6 +364,12 @@ public:
                                         uint32_t* token);
   virtual WasmResult dequeueSharedQueue(uint32_t token, std::string* data);
   virtual WasmResult enqueueSharedQueue(uint32_t token, absl::string_view value);
+
+  // Network
+  virtual WasmResult getDownstreamDataBufferBytes(uint32_t start, uint32_t length,
+                                                  absl::string_view* data);
+  virtual WasmResult getUpstreamDataBufferBytes(uint32_t start, uint32_t length,
+                                                absl::string_view* data);
 
   // Header/Trailer/Metadata Maps
   virtual void addHeaderMapValue(HeaderMapType type, absl::string_view key,
@@ -376,14 +451,11 @@ protected:
   Http::HeaderMap* getMap(HeaderMapType type);
   const Http::HeaderMap* getConstMap(HeaderMapType type);
 
-  std::string makeLogPrefix() const;
-
-  Wasm* wasm_;
-  uint32_t id_;
-  uint32_t root_context_id_;       // 0 for roots and the general context.
+  Wasm* wasm_{nullptr};
+  uint32_t id_{0};
+  uint32_t root_context_id_{0};    // 0 for roots and the general context.
   Context* root_context_{nullptr}; // set in all contexts.
-  const std::string root_id_;      // set only in roots.
-  std::string log_prefix_;
+  PluginSharedPtr plugin_;
   bool in_vm_context_created_ = false;
   bool destroyed_ = false;
 
@@ -396,6 +468,12 @@ protected:
   std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};
   Envoy::Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
+
+  // Network filter state.
+  Network::ReadFilterCallbacks* network_read_filter_callbacks_{};
+  Network::WriteFilterCallbacks* network_write_filter_callbacks_{};
+  Buffer::Instance* network_downstream_data_buffer_{};
+  Buffer::Instance* network_upstream_data_buffer_{};
 
   // HTTP Filter state.
   Http::HeaderMap* request_headers_{};
@@ -428,21 +506,18 @@ class Wasm : public Envoy::Server::Wasm,
              public Logger::Loggable<Logger::Id::wasm>,
              public std::enable_shared_from_this<Wasm> {
 public:
-  Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_configuration,
-       Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-       Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
-       const LocalInfo::LocalInfo& local_info,
-       const envoy::api::v2::core::Metadata* listener_metadata,
-       Stats::ScopeSharedPtr owned_scope = nullptr);
+  Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_configuration,
+       PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
+       Event::Dispatcher& dispatcher);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
   ~Wasm() {}
 
-  bool initialize(const std::string& code, absl::string_view name, bool allow_precompiled);
+  bool initialize(const std::string& code, bool allow_precompiled = false);
   bool configure(Context* root_context, absl::string_view configuration);
-  Context* start(absl::string_view root_id,
-                 absl::string_view vm_configuration); // returns the root Context.
+  Context* start(); // returns the root Context.
 
-  absl::string_view id() const { return id_; }
+  absl::string_view vm_id() const { return vm_id_; }
+  const PluginSharedPtr& creating_plugin() const { return creating_plugin_; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
   Context* vmContext() const { return vm_context_.get(); }
   Context* getRootContext(absl::string_view root_id) { return root_contexts_[root_id].get(); }
@@ -453,11 +528,6 @@ public:
     return nullptr;
   }
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
-  Stats::Scope& scope() const { return scope_; }
-  envoy::api::v2::core::TrafficDirection direction() { return direction_; }
-  const LocalInfo::LocalInfo& localInfo() { return local_info_; }
-  const envoy::api::v2::core::Metadata* listenerMetadata() { return listener_metadata_; }
-
   void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
   void tickHandler(uint32_t root_context_id);
   void queueReady(uint32_t root_context_id, uint32_t token);
@@ -544,23 +614,22 @@ private:
   void establishEnvironment(); // Language specific environments.
   void getFunctions();         // Get functions call into WASM.
 
+  std::string vm_id_; // The effective vm_id (may be a hash).
+  std::unique_ptr<WasmVm> wasm_vm_;
+
+  const PluginSharedPtr creating_plugin_;
+
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
-  Stats::Scope& scope_; // Either an inherited scope or owned_scope_ below.
-  const envoy::api::v2::core::TrafficDirection direction_;
-  const LocalInfo::LocalInfo& local_info_;
-  const envoy::api::v2::core::Metadata* listener_metadata_{};
-  std::string id_;
-  uint32_t next_context_id_ = 1; // 0 is reserved for the VM context.
-  std::unique_ptr<WasmVm> wasm_vm_;
+
+  uint32_t next_context_id_ = 1;        // 0 is reserved for the VM context.
   std::shared_ptr<Context> vm_context_; // Context unrelated to any specific root or stream
                                         // (e.g. for global constructors).
   absl::flat_hash_map<std::string, std::unique_ptr<Context>> root_contexts_;
   absl::flat_hash_map<uint32_t, Context*> contexts_;                    // Contains all contexts.
   std::unordered_map<uint32_t, std::chrono::milliseconds> tick_period_; // per root_id.
   std::unordered_map<uint32_t, Event::TimerPtr> timer_;                 // per root_id.
-  Stats::ScopeSharedPtr
-      owned_scope_; // When scope_ is not owned by a higher level (e.g. for WASM services).
+
   TimeSource& time_source_;
 
   WasmCallWord<1> malloc_;
@@ -574,6 +643,12 @@ private:
   WasmCallVoid<1> onTick_;
 
   WasmCallVoid<2> onCreate_;
+
+  WasmCallWord<1> onNewConnection_;
+  WasmCallWord<3> onDownstreamData_;
+  WasmCallWord<3> onUpstreamData_;
+  WasmCallVoid<2> onDownstreamConnectionClose_;
+  WasmCallVoid<2> onUpstreamConnectionClose_;
 
   WasmCallWord<1> onRequestHeaders_;
   WasmCallWord<3> onRequestBody_;
@@ -636,73 +711,59 @@ private:
   absl::flat_hash_map<uint32_t, Stats::Histogram*> histograms_;
 };
 
+// These accessors require Wasm.
 inline WasmVm* Context::wasmVm() const { return wasm_->wasmVm(); }
 inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_->clusterManager(); }
 
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
-std::shared_ptr<Wasm> createWasm(
-    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
-    const std::string& code, absl::string_view root_id, Upstream::ClusterManager& cluster_manager,
-    Event::Dispatcher& dispatcher, Stats::Scope& scope,
-    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
-    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr owned_scope);
+std::shared_ptr<Wasm> createWasm(const envoy::config::wasm::v2::VmConfig& vm_config,
+                                 PluginSharedPtr plugin_config,
+                                 Upstream::ClusterManager& cluster_manager,
+                                 Event::Dispatcher& dispatcher);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
-std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view root_id,
-                                            absl::string_view configuration,
+std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
                                             Event::Dispatcher& dispatcher);
 
-std::shared_ptr<Wasm> createWasmForTesting(
-    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
-    const std::string& code,
-    absl::string_view root_id, // e.g. filter instance id
-    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Stats::Scope& scope,
-    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
-    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
-    std::unique_ptr<Context> root_context_for_testing);
+std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
+                                           PluginSharedPtr plugin,
+                                           Upstream::ClusterManager& cluster_manager,
+                                           Event::Dispatcher& dispatcher,
+                                           std::unique_ptr<Context> root_context_for_testing);
 
-// Get an existing ThreadLocal VM matching 'vm_id'.
-std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_view root_id,
-                                         absl::string_view configuration);
-std::shared_ptr<Wasm> getThreadLocalWasmOrNull(absl::string_view vm_id);
+// Get an existing ThreadLocal VM matching 'vm_id' or nullptr if there isn't one.
+std::shared_ptr<Wasm> getThreadLocalWasmPtr(absl::string_view vm_id);
+// Get an existing ThreadLocal VM matching 'vm_id' or create one using 'base_wavm' by cloning or by
+// using it it as a template.
+std::shared_ptr<Wasm> getOrCreateThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
+                                                 Event::Dispatcher& dispatcher);
 
 uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_name);
 
-inline Context::Context()
-    : wasm_(nullptr), id_(0), root_context_id_(0), root_context_(this), root_id_("") {}
+inline Context::Context() : root_context_(this) {}
 
 inline Context::Context(Wasm* wasm)
-    : wasm_(wasm), id_(0), root_context_id_(0), root_context_(this), root_id_(""),
-      log_prefix_(makeLogPrefix()) {
+    : wasm_(wasm), root_context_(this), plugin_(wasm->creating_plugin()) {
   wasm_->contexts_[id_] = this;
 }
 
-inline Context::Context(Wasm* wasm, uint32_t root_context_id)
-    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(root_context_id), root_id_(""),
-      log_prefix_(makeLogPrefix()) {
+inline Context::Context(Wasm* wasm, absl::string_view root_id, PluginSharedPtr plugin)
+    : wasm_(wasm), id_(wasm->allocContextId()), root_context_(this), plugin_(plugin) {
+  RELEASE_ASSERT(root_id == plugin->root_id_, "");
+  wasm_->contexts_[id_] = this;
+}
+
+inline Context::Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
+    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(root_context_id), plugin_(plugin) {
   wasm_->contexts_[id_] = this;
   root_context_ = wasm_->contexts_[root_context_id_];
-}
-
-inline Context::Context(Wasm* wasm, absl::string_view root_id)
-    : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(0), root_context_(this),
-      root_id_(root_id), log_prefix_(makeLogPrefix()) {
-  wasm_->contexts_[id_] = this;
 }
 
 // Do not remove vm or root contexts which have the same lifetime as wasm_.
 inline Context::~Context() {
   if (root_context_id_)
     wasm_->contexts_.erase(id_);
-}
-
-inline absl::string_view Context::root_id() const {
-  if (root_context_id_) {
-    return wasm_->getContext(root_context_id_)->root_id_;
-  } else {
-    return root_id_;
-  }
 }
 
 inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {

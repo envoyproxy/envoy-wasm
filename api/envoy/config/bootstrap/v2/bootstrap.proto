@@ -151,7 +151,7 @@ message Bootstrap {
   string header_prefix = 18;
 
   // Configuration for an wasm service provider(s).
-  repeated wasm.v2.WasmConfig wasm_service = 19;
+  repeated wasm.v2.WasmService wasm_service = 19;
 }
 
 // Administration interface :ref:`operations documentation

@@ -213,7 +213,7 @@ struct Wavm : public WasmVm {
   ~Wavm() override;
 
   // WasmVm
-  absl::string_view vm() override { return WasmVmNames::get().Wavm; }
+  absl::string_view runtime() override { return WasmRuntimeNames::get().Wavm; }
   bool cloneable() override { return true; };
   std::unique_ptr<WasmVm> clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;

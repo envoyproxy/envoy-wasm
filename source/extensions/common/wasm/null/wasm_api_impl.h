@@ -111,6 +111,18 @@ inline WasmResult proxy_enqueueSharedQueue(uint32_t token, const char* data_ptr,
       enqueueSharedQueueHandler(current_context_, WS(token), WR(data_ptr), WS(data_size)));
 }
 
+// Network
+inline WasmResult proxy_getDownstreamDataBufferBytes(uint64_t start, uint64_t length,
+                                                     const char** ptr, size_t* size) {
+  return wordToWasmResult(getDownstreamDataBufferBytesHandler(current_context_, WS(start),
+                                                              WS(length), WR(ptr), WR(size)));
+}
+inline WasmResult proxy_getUpstreamDataBufferBytes(uint64_t start, uint64_t length,
+                                                   const char** ptr, size_t* size) {
+  return wordToWasmResult(getUpstreamDataBufferBytesHandler(current_context_, WS(start), WS(length),
+                                                            WR(ptr), WR(size)));
+}
+
 // Headers/Trailers/Metadata Maps
 inline WasmResult proxy_addHeaderMapValue(HeaderMapType type, const char* key_ptr, size_t key_size,
                                           const char* value_ptr, size_t value_size) {

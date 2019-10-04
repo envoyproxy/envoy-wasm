@@ -16,50 +16,48 @@ namespace Wasm {
 
 static const std::string INLINE_STRING = "<inline>";
 
-void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmConfig& config,
+void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmService& config,
                              Server::Configuration::WasmFactoryContext& context,
                              Server::CreateWasmCallback&& cb) {
-  // Create a base WASM to verify that the code loads before setting/cloning the for the individual
-  // threads.
-  auto root_id = config.root_id();
 
-  auto callback = [&config, &context, cb](const std::string& code) {
+  auto callback = [&context, &config, cb](const std::string& code) {
     // Create a base WASM to verify that the code loads before setting/cloning the for the
     // individual
     // threads.
-    auto root_id = config.root_id();
-    auto base_wasm = Common::Wasm::createWasm(
-        config.vm_id(), config.vm_config(), code, root_id, context.clusterManager(),
-        context.dispatcher(), context.scope(), envoy::api::v2::core::TrafficDirection::UNSPECIFIED,
-        context.localInfo(), nullptr /* listener_metadata */, context.owned_scope());
+    auto plugin = std::make_shared<Common::Wasm::Plugin>(
+        config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
+        code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
+        nullptr /* listener_metadata */, context.scope(), context.owned_scope());
+    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin,
+                                              context.clusterManager(), context.dispatcher());
     if (config.singleton()) {
       // Return the WASM VM which will be stored as a singleton by the Server.
-      auto root_context = base_wasm->start(root_id, config.vm_config().configuration());
-      base_wasm->configure(root_context, config.configuration());
+      auto root_context = base_wasm->start();
+      base_wasm->configure(root_context, config.config().configuration());
       return cb(base_wasm);
     }
     // Per-thread WASM VM.
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     // NB: no need to keep the resulting slot as Wasm is cached on each thread.
-    auto configuration = std::make_shared<std::string>(config.configuration());
+    auto configuration = std::make_shared<std::string>(config.config().configuration());
     context.threadLocal().allocateSlot()->set(
-        [base_wasm, configuration, root_id](Event::Dispatcher& dispatcher) {
-          return Extensions::Common::Wasm::createThreadLocalWasm(*base_wasm, root_id,
-                                                                 *configuration, dispatcher);
+        [base_wasm, configuration](Event::Dispatcher& dispatcher) {
+          return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
+              Common::Wasm::getOrCreateThreadLocalWasm(*base_wasm, *configuration, dispatcher));
         });
     // Do not return this WASM VM since this is per-thread. Returning it would indicate that this is
     // a singleton.
-    return cb(nullptr);
+    cb(nullptr);
   };
 
-  if (config.vm_config().code().has_local()) {
+  if (config.config().vm_config().code().has_local()) {
     local_data_provider_ = std::make_unique<Config::DataSource::LocalAsyncDataProvider>(
-        context.initManager(), config.vm_config().code().local(), true, context.api(),
+        context.initManager(), config.config().vm_config().code().local(), true, context.api(),
         std::move(callback));
   } else {
     remote_data_provider_ = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
-        context.clusterManager(), context.initManager(), config.vm_config().code().remote(), true,
-        std::move(callback));
+        context.clusterManager(), context.initManager(),
+        config.config().vm_config().code().remote(), true, std::move(callback));
   }
 }
 

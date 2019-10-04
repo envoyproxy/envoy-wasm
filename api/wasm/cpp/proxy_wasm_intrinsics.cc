@@ -133,6 +133,34 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onCreate(uint32_t context_id, uint32_
   ensureContext(context_id, root_context_id)->onCreate();
 }
 
+extern "C" EMSCRIPTEN_KEEPALIVE FilterStatus proxy_onNewConnection(uint32_t context_id) {
+  return getContext(context_id)->onNewConnection();
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE FilterStatus proxy_onDownstreamData(uint32_t context_id,
+                                                                    uint32_t data_length,
+                                                                    uint32_t end_of_stream) {
+  return getContext(context_id)
+      ->onDownstreamData(static_cast<size_t>(data_length), end_of_stream != 0);
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE FilterStatus proxy_onUpstreamData(uint32_t context_id,
+                                                                  uint32_t data_length,
+                                                                  uint32_t end_of_stream) {
+  return getContext(context_id)
+      ->onUpstreamData(static_cast<size_t>(data_length), end_of_stream != 0);
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onDownstreamConnectionClose(uint32_t context_id,
+                                                                       uint32_t peer_type) {
+  return getContext(context_id)->onDownstreamConnectionClose(static_cast<PeerType>(peer_type));
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onUpstreamConnectionClose(uint32_t context_id,
+                                                                     uint32_t peer_type) {
+  return getContext(context_id)->onUpstreamConnectionClose(static_cast<PeerType>(peer_type));
+}
+
 extern "C" EMSCRIPTEN_KEEPALIVE FilterHeadersStatus proxy_onRequestHeaders(uint32_t context_id) {
   return getContext(context_id)->onRequestHeaders();
 }

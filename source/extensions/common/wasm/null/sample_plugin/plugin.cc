@@ -18,6 +18,20 @@ namespace ExamplePlugin {
 NULL_PLUGIN_ROOT_REGISTRY;
 #endif
 
+// For performance testing: see wasm_speed_test.cc.
+class PluginRootContext : public RootContext {
+public:
+  PluginRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
+  void onTick() override;
+};
+
+void PluginRootContext::onTick() {
+  uint64_t t;
+  if (WasmResult::Ok != proxy_getCurrentTimeNanoseconds(&t)) {
+    logError(std::string("bad proxy_getCurrentTimeNanoseconds result"));
+  }
+}
+
 class PluginContext : public Context {
 public:
   explicit PluginContext(uint32_t id, RootContext* root) : Context(id, root) {}
@@ -27,7 +41,8 @@ public:
   void onLog() override;
   void onDone() override;
 };
-static RegisterContextFactory register_PluginContext(CONTEXT_FACTORY(PluginContext));
+static RegisterContextFactory register_PluginContext(CONTEXT_FACTORY(PluginContext),
+                                                     ROOT_FACTORY(PluginRootContext));
 
 FilterHeadersStatus PluginContext::onRequestHeaders() {
   logDebug(std::string("onRequestHeaders ") + std::to_string(id()));

@@ -16,6 +16,7 @@
 
 #include "common/buffer/buffer_impl.h"
 #include "common/common/assert.h"
+#include "common/common/base64.h"
 #include "common/common/empty_string.h"
 #include "common/common/enum_to_int.h"
 #include "common/common/logger.h"
@@ -35,6 +36,9 @@
 #include "eval/eval/field_backed_list_impl.h"
 #include "eval/eval/field_backed_map_impl.h"
 #include "eval/public/cel_value.h"
+#include "openssl/bytestring.h"
+#include "openssl/hmac.h"
+#include "openssl/sha.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -48,6 +52,20 @@ namespace Wasm {
 // above.
 
 namespace {
+
+// TODO: move to utils during upstreaming.
+std::string base64Sha256(absl::string_view data) {
+  std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
+  EVP_MD_CTX* ctx(EVP_MD_CTX_new());
+  auto rc = EVP_DigestInit(ctx, EVP_sha256());
+  RELEASE_ASSERT(rc == 1, "Failed to init digest context");
+  rc = EVP_DigestUpdate(ctx, data.data(), data.size());
+  RELEASE_ASSERT(rc == 1, "Failed to update digest");
+  rc = EVP_DigestFinal(ctx, digest.data(), nullptr);
+  RELEASE_ASSERT(rc == 1, "Failed to finalize digest");
+  EVP_MD_CTX_free(ctx);
+  return Base64::encode(reinterpret_cast<const char*>(&digest[0]), digest.size());
+}
 
 inline Word wasmResultToWord(WasmResult r) { return Word(static_cast<uint64_t>(r)); }
 
@@ -161,7 +179,7 @@ public:
     auto vm_id = it->second.vm_id;
     auto context_id = it->second.context_id;
     it->second.dispatcher->post([vm_id, context_id, token] {
-      auto wasm = getThreadLocalWasmOrNull(vm_id);
+      auto wasm = getThreadLocalWasmPtr(vm_id);
       if (wasm) {
         wasm->queueReady(context_id, token);
       }
@@ -217,7 +235,7 @@ private:
 SharedData global_shared_data;
 
 // Map from Wasm ID to the local Wasm instance.
-thread_local absl::flat_hash_map<std::string, std::shared_ptr<Wasm>> local_wasms;
+thread_local absl::flat_hash_map<std::string, std::weak_ptr<Wasm>> local_wasms;
 
 const std::string INLINE_STRING = "<inline>";
 
@@ -536,6 +554,31 @@ Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Wor
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
   return wasmResultToWord(context->enqueueSharedQueue(token.u32(), data.value()));
+}
+
+// Network
+Word getDownstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                         Word size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  absl::string_view data;
+  auto result = context->getDownstreamDataBufferBytes(start.u64_, length.u64_, &data);
+  if (result != WasmResult::Ok) {
+    return wasmResultToWord(result);
+  }
+  context->wasm()->copyToPointerSize(data, ptr_ptr.u64_, size_ptr.u64_);
+  return wasmResultToWord(WasmResult::Ok);
+}
+
+Word getUpstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
+                                       Word size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  absl::string_view data;
+  auto result = context->getUpstreamDataBufferBytes(start.u64_, length.u64_, &data);
+  if (result != WasmResult::Ok) {
+    return wasmResultToWord(result);
+  }
+  context->wasm()->copyToPointerSize(data, ptr_ptr.u64_, size_ptr.u64_);
+  return wasmResultToWord(WasmResult::Ok);
 }
 
 // Header/Trailer/Metadata Maps
@@ -1200,7 +1243,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
         value = CelValue::CreateMap(
             Protobuf::Arena::Create<Filters::Common::Expr::UpstreamWrapper>(&arena, *info));
       } else if (part == "node") {
-        value = CelValue::CreateMessage(&wasm_->local_info_.node(), &arena);
+        value = CelValue::CreateMessage(&plugin_->local_info_.node(), &arena);
       } else if (part == "source") {
         value = CelValue::CreateMap(
             Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, *info, false));
@@ -1217,9 +1260,9 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
         }
         // Reflective accessors
       } else if (part == "listener_direction") {
-        value = CelValue::CreateInt64(wasm_->direction_);
+        value = CelValue::CreateInt64(plugin_->direction_);
       } else if (part == "listener_metadata") {
-        value = CelValue::CreateMessage(wasm_->listener_metadata_, &arena);
+        value = CelValue::CreateMessage(plugin_->listener_metadata_, &arena);
       } else if (part == "cluster_name" && info->upstreamHost() != nullptr) {
         value = CelValue::CreateString(info->upstreamHost()->cluster().name());
       } else if (part == "cluster_metadata" && info->upstreamHost() != nullptr) {
@@ -1274,11 +1317,11 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
 
 // Shared Data
 WasmResult Context::getSharedData(absl::string_view key, std::pair<std::string, uint32_t>* data) {
-  return global_shared_data.get(wasm_->id(), key, data);
+  return global_shared_data.get(wasm_->vm_id(), key, data);
 }
 
 WasmResult Context::setSharedData(absl::string_view key, absl::string_view value, uint32_t cas) {
-  return global_shared_data.set(wasm_->id(), key, value, cas);
+  return global_shared_data.set(wasm_->vm_id(), key, value, cas);
 }
 
 // Shared Queue
@@ -1286,7 +1329,7 @@ WasmResult Context::setSharedData(absl::string_view key, absl::string_view value
 uint32_t Context::registerSharedQueue(absl::string_view queue_name) {
   // Get the id of the root context if this is a stream context because onQueueReady is on the root.
   return global_shared_data.registerQueue(
-      wasm_->id(), queue_name, isRootContext() ? id_ : root_context_id_, wasm_->dispatcher_);
+      wasm_->vm_id(), queue_name, isRootContext() ? id_ : root_context_id_, wasm_->dispatcher_);
 }
 
 WasmResult Context::resolveSharedQueue(absl::string_view vm_id, absl::string_view queue_name,
@@ -1305,6 +1348,31 @@ WasmResult Context::dequeueSharedQueue(uint32_t token, std::string* data) {
 
 WasmResult Context::enqueueSharedQueue(uint32_t token, absl::string_view value) {
   return global_shared_data.enqueue(token, value);
+}
+
+// Network bytes.
+
+WasmResult Context::getDownstreamDataBufferBytes(uint32_t start, uint32_t length,
+                                                 absl::string_view* data) {
+  if (!network_downstream_data_buffer_)
+    return WasmResult::NotFound;
+  if (network_downstream_data_buffer_->length() < static_cast<uint64_t>(start + length))
+    return WasmResult::InvalidMemoryAccess;
+  *data = absl::string_view(
+      static_cast<char*>(network_downstream_data_buffer_->linearize(start + length)) + start,
+      length);
+  return WasmResult::Ok;
+}
+
+WasmResult Context::getUpstreamDataBufferBytes(uint32_t start, uint32_t length,
+                                               absl::string_view* data) {
+  if (!network_upstream_data_buffer_)
+    return WasmResult::NotFound;
+  if (network_upstream_data_buffer_->length() < static_cast<uint64_t>(start + length))
+    return WasmResult::InvalidMemoryAccess;
+  *data = absl::string_view(
+      static_cast<char*>(network_upstream_data_buffer_->linearize(start + length)) + start, length);
+  return WasmResult::Ok;
 }
 
 // Header/Trailer/Metadata Maps.
@@ -1562,7 +1630,7 @@ uint32_t Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_service
   auto grpc_client =
       clusterManager()
           .grpcAsyncClientManager()
-          .factoryForGrpcService(grpc_service, wasm_->scope_, true /* skip_cluster_check */)
+          .factoryForGrpcService(grpc_service, plugin_->scope_, true /* skip_cluster_check */)
           ->create();
   // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
   // returns. Consequently the grpc_request is not available. Attempting to close or reset from that
@@ -1601,7 +1669,7 @@ uint32_t Context::grpcStream(const envoy::api::v2::core::GrpcService& grpc_servi
   auto grpc_client =
       clusterManager()
           .grpcAsyncClientManager()
-          .factoryForGrpcService(grpc_service, wasm_->scope_, true /* skip_cluster_check */)
+          .factoryForGrpcService(grpc_service, plugin_->scope_, true /* skip_cluster_check */)
           ->create();
   // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
   // returns. Consequently the grpc_stream is not available. Attempting to close or reset from that
@@ -1654,22 +1722,22 @@ WasmResult Context::setProperty(absl::string_view key, absl::string_view seriali
 void Context::scriptLog(spdlog::level::level_enum level, absl::string_view message) {
   switch (level) {
   case spdlog::level::trace:
-    ENVOY_LOG(trace, "wasm log{}: {}", log_prefix_, message);
+    ENVOY_LOG(trace, "wasm log{}: {}", log_prefix(), message);
     return;
   case spdlog::level::debug:
-    ENVOY_LOG(debug, "wasm log{}: {}", log_prefix_, message);
+    ENVOY_LOG(debug, "wasm log{}: {}", log_prefix(), message);
     return;
   case spdlog::level::info:
-    ENVOY_LOG(info, "wasm log{}: {}", log_prefix_, message);
+    ENVOY_LOG(info, "wasm log{}: {}", log_prefix(), message);
     return;
   case spdlog::level::warn:
-    ENVOY_LOG(warn, "wasm log{}: {}", log_prefix_, message);
+    ENVOY_LOG(warn, "wasm log{}: {}", log_prefix(), message);
     return;
   case spdlog::level::err:
-    ENVOY_LOG(error, "wasm log{}: {}", log_prefix_, message);
+    ENVOY_LOG(error, "wasm log{}: {}", log_prefix(), message);
     return;
   case spdlog::level::critical:
-    ENVOY_LOG(critical, "wasm log{}: {}", log_prefix_, message);
+    ENVOY_LOG(critical, "wasm log{}: {}", log_prefix(), message);
     return;
   case spdlog::level::off:
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
@@ -1709,6 +1777,49 @@ bool Context::onConfigure(absl::string_view configuration) {
 void Context::onCreate(uint32_t root_context_id) {
   if (wasm_->onCreate_) {
     wasm_->onCreate_(this, id_, root_context_id);
+  }
+}
+
+Network::FilterStatus Context::onNetworkNewConnection() {
+  onCreate(root_context_id_);
+  if (!wasm_->onNewConnection_) {
+    return Network::FilterStatus::Continue;
+  }
+  if (wasm_->onNewConnection_(this, id_).u64_ == 0) {
+    return Network::FilterStatus::Continue;
+  }
+  return Network::FilterStatus::StopIteration;
+}
+
+Network::FilterStatus Context::onDownstreamData(int data_length, bool end_of_stream) {
+  if (!wasm_->onDownstreamData_) {
+    return Network::FilterStatus::Continue;
+  }
+  auto result = wasm_->onDownstreamData_(this, id_, static_cast<uint32_t>(data_length),
+                                         static_cast<uint32_t>(end_of_stream));
+  // TODO(PiotrSikora): pull Proxy-WASM's FilterStatus values.
+  return result.u64_ == 0 ? Network::FilterStatus::Continue : Network::FilterStatus::StopIteration;
+}
+
+Network::FilterStatus Context::onUpstreamData(int data_length, bool end_of_stream) {
+  if (!wasm_->onUpstreamData_) {
+    return Network::FilterStatus::Continue;
+  }
+  auto result = wasm_->onUpstreamData_(this, id_, static_cast<uint32_t>(data_length),
+                                       static_cast<uint32_t>(end_of_stream));
+  // TODO(PiotrSikora): pull Proxy-WASM's FilterStatus values.
+  return result.u64_ == 0 ? Network::FilterStatus::Continue : Network::FilterStatus::StopIteration;
+}
+
+void Context::onDownstreamConnectionClose(PeerType peer_type) {
+  if (wasm_->onDownstreamConnectionClose_) {
+    wasm_->onDownstreamConnectionClose_(this, id_, static_cast<uint32_t>(peer_type));
+  }
+}
+
+void Context::onUpstreamConnectionClose(PeerType peer_type) {
+  if (wasm_->onUpstreamConnectionClose_) {
+    wasm_->onUpstreamConnectionClose_(this, id_, static_cast<uint32_t>(peer_type));
   }
 }
 
@@ -1877,19 +1988,19 @@ WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32
   auto stat_name = wasm_->stat_name_set_.getDynamic(name);
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
-    auto c = &wasm_->scope_.counterFromStatName(stat_name);
+    auto c = &plugin_->scope_.counterFromStatName(stat_name);
     wasm_->counters_.emplace(id, c);
     *metric_id_ptr = id;
     return WasmResult::Ok;
   } else if (type == MetricType::Gauge) {
     auto id = wasm_->nextGaugeMetricId();
-    auto g = &wasm_->scope_.gaugeFromStatName(stat_name, Stats::Gauge::ImportMode::Accumulate);
+    auto g = &plugin_->scope_.gaugeFromStatName(stat_name, Stats::Gauge::ImportMode::Accumulate);
     wasm_->gauges_.emplace(id, g);
     *metric_id_ptr = id;
     return WasmResult::Ok;
   } else if (type == MetricType::Histogram) {
     auto id = wasm_->nextHistogramMetricId();
-    auto h = &wasm_->scope_.histogramFromStatName(stat_name);
+    auto h = &plugin_->scope_.histogramFromStatName(stat_name);
     wasm_->histograms_.emplace(id, h);
     *metric_id_ptr = id;
     return WasmResult::Ok;
@@ -1970,29 +2081,26 @@ WasmResult Context::getMetric(uint32_t metric_id, uint64_t* result_uint64_ptr) {
   return WasmResult::BadArgument;
 }
 
-Wasm::Wasm(absl::string_view vm, absl::string_view id, absl::string_view vm_configuration,
-           Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher,
-           Stats::Scope& scope, envoy::api::v2::core::TrafficDirection direction,
-           const LocalInfo::LocalInfo& local_info,
-           const envoy::api::v2::core::Metadata* listener_metadata,
-           Stats::ScopeSharedPtr owned_scope)
-    : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
-      direction_(direction), local_info_(local_info), listener_metadata_(listener_metadata),
-      owned_scope_(owned_scope), time_source_(dispatcher.timeSource()),
-      vm_configuration_(vm_configuration), stat_name_set_(scope_.symbolTable()) {
-  wasm_vm_ = Common::Wasm::createWasmVm(vm);
-  id_ = std::string(id);
-}
+Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_configuration,
+           PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
+           Event::Dispatcher& dispatcher)
+    : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)),
+      creating_plugin_(plugin), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
+      time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
+      stat_name_set_(creating_plugin_->scope_.symbolTable()) {}
 
-std::string Context::makeLogPrefix() const {
-  std::string id;
-  if (!wasm()->id().empty()) {
-    id = id + " " + std::string(wasm()->id());
+std::string Plugin::makeLogPrefix() const {
+  std::string prefix;
+  if (!name_.empty()) {
+    prefix = prefix + " " + name_;
   }
-  if (!root_id().empty()) {
-    id = id + " " + std::string(root_id());
+  if (!root_id_.empty()) {
+    prefix = prefix + " " + std::string(root_id_);
   }
-  return id;
+  if (vm_id_.empty()) {
+    prefix = prefix + " " + std::string(vm_id_);
+  }
+  return prefix;
 }
 
 void Wasm::registerCallbacks() {
@@ -2002,7 +2110,6 @@ void Wasm::registerCallbacks() {
       &ConvertFunctionWordToUint32<decltype(_fn##_abi##Handler),                                   \
                                    _fn##_abi##Handler>::convertFunctionWordToUint32)
 #define _REGISTER(_fn) _REGISTER_ABI(_fn, )
-
   if (is_emscripten_) {
     if (emscripten_abi_major_version_ > 0 || emscripten_abi_minor_version_ > 1) {
       // abi 0.2 - abortOnCannotGrowMemory() changed signature to (param i32) (result i32).
@@ -2071,6 +2178,9 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(dequeueSharedQueue);
   _REGISTER_PROXY(enqueueSharedQueue);
 
+  _REGISTER_PROXY(getDownstreamDataBufferBytes);
+  _REGISTER_PROXY(getUpstreamDataBufferBytes);
+
   _REGISTER_PROXY(getHeaderMapValue);
   _REGISTER_PROXY(addHeaderMapValue);
   _REGISTER_PROXY(replaceHeaderMapValue);
@@ -2132,6 +2242,13 @@ void Wasm::getFunctions() {
   _GET_PROXY(onTick);
 
   _GET_PROXY(onCreate);
+
+  _GET_PROXY(onNewConnection);
+  _GET_PROXY(onDownstreamData);
+  _GET_PROXY(onUpstreamData);
+  _GET_PROXY(onDownstreamConnectionClose);
+  _GET_PROXY(onUpstreamConnectionClose);
+
   _GET_PROXY(onRequestHeaders);
   _GET_PROXY(onRequestBody);
   _GET_PROXY(onRequestTrailers);
@@ -2158,20 +2275,25 @@ void Wasm::getFunctions() {
 }
 
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
-    : std::enable_shared_from_this<Wasm>(wasm), cluster_manager_(wasm.cluster_manager_),
-      dispatcher_(dispatcher), scope_(wasm.scope_), direction_(wasm.direction_),
-      local_info_(wasm.local_info_), listener_metadata_(wasm.listener_metadata_), id_(wasm.id_),
-      owned_scope_(wasm.owned_scope_), time_source_(dispatcher.timeSource()),
-      stat_name_set_(scope_.symbolTable()) {
+    : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
+      creating_plugin_(wasm.creating_plugin_), cluster_manager_(wasm.cluster_manager_),
+      dispatcher_(dispatcher), time_source_(dispatcher.timeSource()),
+      stat_name_set_(creating_plugin_->scope_.symbolTable()) {
   wasm_vm_ = wasm.wasmVm()->clone();
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
 }
 
-bool Wasm::initialize(const std::string& code, absl::string_view name, bool allow_precompiled) {
+bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
   if (!wasm_vm_) {
     return false;
   }
+
+  // If the configured_vm_id is empty, then hash the code to create a unique vm_id.
+  if (vm_id_.empty()) {
+    vm_id_ = base64Sha256(code);
+  }
+
   auto ok = wasm_vm_->load(code, allow_precompiled);
   if (!ok) {
     return false;
@@ -2213,7 +2335,7 @@ bool Wasm::initialize(const std::string& code, absl::string_view name, bool allo
   }
   registerCallbacks();
   establishEnvironment();
-  wasm_vm_->link(name, is_emscripten_);
+  wasm_vm_->link(vm_id_, is_emscripten_);
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
   wasm_vm_->start(vm_context_.get());
@@ -2234,16 +2356,17 @@ bool Wasm::configure(Context* root_context, absl::string_view configuration) {
   return onConfigure_(root_context, root_context->id(), address, configuration.size()).u64_ != 0;
 }
 
-Context* Wasm::start(absl::string_view root_id, absl::string_view vm_configuration) {
+Context* Wasm::start() {
+  auto root_id = creating_plugin_->root_id_;
   auto it = root_contexts_.find(root_id);
   if (it != root_contexts_.end()) {
-    it->second->onStart(root_id, vm_configuration);
+    it->second->onStart(root_id, vm_configuration());
     return it->second.get();
   }
-  auto context = std::make_unique<Context>(this, root_id);
+  auto context = std::make_unique<Context>(this, root_id, creating_plugin_);
   auto context_ptr = context.get();
   root_contexts_[root_id] = std::move(context);
-  context_ptr->onStart(root_id, vm_configuration);
+  context_ptr->onStart(root_id, vm_configuration());
   return context_ptr;
 };
 
@@ -2252,8 +2375,8 @@ void Wasm::startForTesting(std::unique_ptr<Context> context) {
   if (!context->wasm_) {
     // Initialization was delayed till the Wasm object was created.
     context->wasm_ = this;
+    context->plugin_ = creating_plugin_;
     context->id_ = allocContextId();
-    context->makeLogPrefix();
     contexts_[context->id_] = context.get();
   }
   root_contexts_[""] = std::move(context);
@@ -2311,6 +2434,49 @@ void Wasm::queueReady(uint32_t root_context_id, uint32_t token) {
     return;
   }
   it->second->onQueueReady(token);
+}
+
+Network::FilterStatus Context::onNewConnection() { return onNetworkNewConnection(); };
+
+Network::FilterStatus Context::onData(Buffer::Instance& data, bool end_stream) {
+  network_downstream_data_buffer_ = &data;
+  auto result = onDownstreamData(data.length(), end_stream);
+  network_downstream_data_buffer_ = nullptr;
+  return result;
+}
+
+Network::FilterStatus Context::onWrite(Buffer::Instance& data, bool end_stream) {
+  network_upstream_data_buffer_ = &data;
+  auto result = onUpstreamData(data.length(), end_stream);
+  network_upstream_data_buffer_ = nullptr;
+  if (end_stream) {
+    // This is called when seeing end_stream=true and not on an upstream connection event,
+    // because registering for latter requires replicating the whole TCP proxy extension.
+    onUpstreamConnectionClose(PeerType::Unknown);
+  }
+  return result;
+}
+
+void Context::onEvent(Network::ConnectionEvent event) {
+  switch (event) {
+  case Network::ConnectionEvent::LocalClose:
+    onDownstreamConnectionClose(PeerType::Local);
+    break;
+  case Network::ConnectionEvent::RemoteClose:
+    onDownstreamConnectionClose(PeerType::Remote);
+    break;
+  default:
+    break;
+  }
+}
+
+void Context::initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) {
+  network_read_filter_callbacks_ = &callbacks;
+  network_read_filter_callbacks_->connection().addConnectionCallbacks(*this);
+}
+
+void Context::initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& callbacks) {
+  network_write_filter_callbacks_ = &callbacks;
 }
 
 void Wasm::log(absl::string_view root_id, const Http::HeaderMap* request_headers,
@@ -2594,110 +2760,101 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
   context->onGrpcClose(token, status, message);
 }
 
-static std::shared_ptr<Wasm> createWasmInternal(
-    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
-    const std::string& code,
-    absl::string_view root_id, // e.g. filter instance id
-    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Stats::Scope& scope,
-    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
-    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
-    std::unique_ptr<Context> root_context_for_testing) {
-  auto wasm = std::make_shared<Wasm>(vm_config.vm(), vm_id, vm_config.configuration(),
-                                     cluster_manager, dispatcher, scope, direction, local_info,
-                                     listener_metadata, scope_ptr);
-  std::string source;
+static std::shared_ptr<Wasm> createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
+                                                PluginSharedPtr plugin,
+                                                Upstream::ClusterManager& cluster_manager,
+                                                Event::Dispatcher& dispatcher,
+                                                std::unique_ptr<Context> root_context_for_testing) {
+  auto wasm =
+      std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(),
+                             plugin, cluster_manager, dispatcher);
+
+  std::string source, code = plugin->code_;
   if (vm_config.code().has_remote()) {
     source = vm_config.code().remote().http_uri().uri();
   } else {
     source = Config::DataSource::getPath(vm_config.code().local())
                  .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
   }
-
   if (code.empty()) {
     throw WasmException(fmt::format("Failed to load WASM code from {}", source));
   }
-  if (!wasm->initialize(code, vm_id, vm_config.allow_precompiled())) {
+  if (!wasm->initialize(code, vm_config.allow_precompiled())) {
     throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
   }
   if (!root_context_for_testing) {
-    wasm->start(root_id, vm_config.configuration());
+    wasm->start();
   } else {
     wasm->startForTesting(std::move(root_context_for_testing));
   }
   return wasm;
 }
 
-std::shared_ptr<Wasm> createWasm(
-    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
-    const std::string& code,
-    absl::string_view root_id, // e.g. filter instance id
-    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Stats::Scope& scope,
-    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
-    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr) {
-  return createWasmInternal(vm_id, vm_config, code, root_id, cluster_manager, dispatcher, scope,
-                            direction, local_info, listener_metadata, scope_ptr, nullptr);
+std::shared_ptr<Wasm> createWasm(const envoy::config::wasm::v2::VmConfig& vm_config,
+                                 PluginSharedPtr plugin_config,
+                                 Upstream::ClusterManager& cluster_manager,
+                                 Event::Dispatcher& dispatcher) {
+  return createWasmInternal(vm_config, plugin_config, cluster_manager, dispatcher,
+                            nullptr /* root_context_for_testing */);
 }
 
-std::shared_ptr<Wasm> createWasmForTesting(
-    absl::string_view vm_id, const envoy::config::wasm::v2::VmConfig& vm_config,
-    const std::string& code,
-    absl::string_view root_id, // e.g. filter instance id
-    Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher, Stats::Scope& scope,
-    envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
-    const envoy::api::v2::core::Metadata* listener_metadata, Stats::ScopeSharedPtr scope_ptr,
-    std::unique_ptr<Context> root_context_for_testing) {
-  return createWasmInternal(vm_id, vm_config, code, root_id, cluster_manager, dispatcher, scope,
-                            direction, local_info, listener_metadata, scope_ptr,
+std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
+                                           PluginSharedPtr plugin,
+                                           Upstream::ClusterManager& cluster_manager,
+                                           Event::Dispatcher& dispatcher,
+                                           std::unique_ptr<Context> root_context_for_testing) {
+  return createWasmInternal(vm_config, plugin, cluster_manager, dispatcher,
                             std::move(root_context_for_testing));
 }
 
-std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view root_id,
-                                            absl::string_view configuration,
+std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
                                             Event::Dispatcher& dispatcher) {
   std::shared_ptr<Wasm> wasm;
   Context* root_context;
   if (base_wasm.wasmVm()->cloneable()) {
     wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
-    root_context = wasm->start(root_id, base_wasm.vm_configuration());
+    root_context = wasm->start();
   } else {
-    wasm = std::make_shared<Wasm>(
-        base_wasm.wasmVm()->vm(), base_wasm.id(), base_wasm.vm_configuration(),
-        base_wasm.clusterManager(), dispatcher, base_wasm.scope(), base_wasm.direction(),
-        base_wasm.localInfo(), base_wasm.listenerMetadata(), nullptr /* owned scope */);
-    if (!wasm->initialize(base_wasm.code(), base_wasm.id(), base_wasm.allow_precompiled())) {
+    wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->runtime(), base_wasm.vm_id(),
+                                  base_wasm.vm_configuration(), base_wasm.creating_plugin(),
+                                  base_wasm.clusterManager(), dispatcher);
+    if (!wasm->initialize(base_wasm.code(), base_wasm.allow_precompiled())) {
       throw WasmException("Failed to initialize WASM code");
     }
-    root_context = wasm->start(root_id, base_wasm.vm_configuration());
+    root_context = wasm->start();
   }
   if (!wasm->configure(root_context, configuration)) {
     throw WasmException("Failed to configure WASM code");
   }
-  if (!wasm->id().empty()) {
-    local_wasms[wasm->id()] = wasm;
+  if (!wasm->vm_id().empty()) {
+    local_wasms[wasm->vm_id()] = wasm;
   }
   return wasm;
 }
 
-std::shared_ptr<Wasm> getThreadLocalWasm(absl::string_view vm_id, absl::string_view id,
-                                         absl::string_view configuration) {
+std::shared_ptr<Wasm> getThreadLocalWasmPtr(absl::string_view vm_id) {
   auto it = local_wasms.find(vm_id);
-  if (it == local_wasms.end()) {
-    throw WasmException(fmt::format("Failed to find WASM vm_id {}", vm_id));
-  }
-  auto wasm = it->second;
-  auto root_context = wasm->start(id, wasm->vm_configuration());
-  if (!wasm->configure(root_context, configuration)) {
-    throw WasmException("Failed to configure WASM code");
-  }
-  return wasm;
-}
-
-std::shared_ptr<Wasm> getThreadLocalWasmOrNull(absl::string_view id) {
-  auto it = local_wasms.find(id);
   if (it == local_wasms.end()) {
     return nullptr;
   }
-  return it->second;
+  auto wasm = it->second.lock();
+  if (!wasm) {
+    local_wasms.erase(vm_id);
+  }
+  return wasm;
+}
+
+std::shared_ptr<Wasm> getOrCreateThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
+                                                 Event::Dispatcher& dispatcher) {
+  auto wasm = getThreadLocalWasmPtr(base_wasm.vm_id());
+  if (wasm) {
+    auto root_context = wasm->start();
+    if (!wasm->configure(root_context, configuration)) {
+      throw WasmException("Failed to configure WASM code");
+    }
+    return wasm;
+  }
+  return createThreadLocalWasm(base_wasm, configuration, dispatcher);
 }
 
 } // namespace Wasm
