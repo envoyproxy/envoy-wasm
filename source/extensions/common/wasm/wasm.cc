@@ -1986,7 +1986,7 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
 }
 
 WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
-  auto stat_name = wasm_->stat_name_set_.getDynamic(name);
+  auto stat_name = wasm_->stat_name_set_->getDynamic(name);
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
     auto c = &plugin_->scope_.counterFromStatName(stat_name);
@@ -2084,11 +2084,18 @@ WasmResult Context::getMetric(uint32_t metric_id, uint64_t* result_uint64_ptr) {
 
 Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_configuration,
            PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
-           Event::Dispatcher& dispatcher)
+           Event::Dispatcher& dispatcher, std::shared_ptr<Stats::StatNameSet> stat_name_set)
     : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)),
       creating_plugin_(plugin), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
-      time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(creating_plugin_->scope_.symbolTable()) {}
+      time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration) {
+  // The base Wasm creates the StatNameSet, but thread local Wasm(s) for non-cloneable runtimes
+  // share the StatNameSet by passing it into this contructor as 'stat_name_set'.
+  if (!stat_name_set) {
+    stat_name_set_ = std::make_shared<Stats::StatNameSet>(creating_plugin_->scope_.symbolTable());
+  } else {
+    stat_name_set_ = stat_name_set;
+  }
+}
 
 std::string Plugin::makeLogPrefix() const {
   std::string prefix;
@@ -2279,7 +2286,7 @@ Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
       creating_plugin_(wasm.creating_plugin_), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), time_source_(dispatcher.timeSource()),
-      stat_name_set_(creating_plugin_->scope_.symbolTable()) {
+      stat_name_set_(wasm.stat_name_set_) {
   wasm_vm_ = wasm.wasmVm()->clone();
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
@@ -2811,9 +2818,10 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
     wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
     root_context = wasm->start();
   } else {
-    wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->runtime(), base_wasm.vm_id(),
-                                  base_wasm.vm_configuration(), base_wasm.creating_plugin(),
-                                  base_wasm.clusterManager(), dispatcher);
+    wasm =
+        std::make_shared<Wasm>(base_wasm.wasmVm()->runtime(), base_wasm.vm_id(),
+                               base_wasm.vm_configuration(), base_wasm.creating_plugin(),
+                               base_wasm.clusterManager(), dispatcher, base_wasm.stat_name_set());
     if (!wasm->initialize(base_wasm.code(), base_wasm.allow_precompiled())) {
       throw WasmException("Failed to initialize WASM code");
     }
