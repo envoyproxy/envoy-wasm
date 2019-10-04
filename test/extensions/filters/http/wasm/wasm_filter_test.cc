@@ -48,8 +48,9 @@ namespace Wasm {
 
 class TestFilter : public Envoy::Extensions::Common::Wasm::Context {
 public:
-  TestFilter(Wasm* wasm, uint32_t root_context_id)
-      : Envoy::Extensions::Common::Wasm::Context(wasm, root_context_id) {}
+  TestFilter(Wasm* wasm, uint32_t root_context_id,
+             Envoy::Extensions::Common::Wasm::PluginSharedPtr plugin)
+      : Envoy::Extensions::Common::Wasm::Context(wasm, root_context_id, plugin) {}
 
   void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
     scriptLog_(level, message);
@@ -75,35 +76,43 @@ public:
   void setupConfig(const std::string& code) {
     root_context_ = new TestRoot();
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
-    proto_config.set_vm_id("vm_id");
-    proto_config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
-    proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(code);
+    proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
+    proto_config.mutable_config()->mutable_vm_config()->set_runtime(
+        absl::StrCat("envoy.wasm.runtime.", GetParam()));
+    proto_config.mutable_config()->mutable_vm_config()->mutable_code()->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
+    auto name = "";
+    auto root_id = "";
+    auto vm_id = "";
+    plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
+        name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
+        &listener_metadata_, *scope_, nullptr /* owned_scope */);
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
-        &listener_metadata_, nullptr,
+        proto_config.config().vm_config(), plugin_, cluster_manager_, dispatcher_, *api,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
   void setupNullConfig(const std::string& name) {
     root_context_ = new TestRoot();
     envoy::config::filter::http::wasm::v2::Wasm proto_config;
-    proto_config.set_vm_id("vm_id");
-    proto_config.mutable_vm_config()->set_vm("envoy.wasm.vm.null");
-    proto_config.mutable_vm_config()->mutable_code()->set_inline_bytes(name);
+    proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
+    proto_config.mutable_config()->mutable_vm_config()->set_runtime("envoy.wasm.runtime.null");
+    proto_config.mutable_config()->mutable_vm_config()->mutable_code()->set_inline_bytes(name);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
+    auto root_id = "";
+    auto vm_id = "";
+    plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
+        name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
+        &listener_metadata_, *scope_, nullptr /* owned_scope */);
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.vm_id(), proto_config.vm_config(), proto_config.root_id(), cluster_manager_,
-        dispatcher_, *api, *scope_, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
-        &listener_metadata_, nullptr,
+        proto_config.config().vm_config(), plugin_, cluster_manager_, dispatcher_, *api,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
   void setupFilter() {
-    filter_ = std::make_unique<TestFilter>(wasm_.get(), wasm_->getRootContext("")->id());
+    filter_ = std::make_unique<TestFilter>(wasm_.get(), wasm_->getRootContext("")->id(), plugin_);
     filter_->setDecoderFilterCallbacks(decoder_callbacks_);
     filter_->setEncoderFilterCallbacks(encoder_callbacks_);
   }
@@ -114,6 +123,7 @@ public:
   NiceMock<Event::MockDispatcher> dispatcher_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
   std::shared_ptr<Wasm> wasm_;
+  std::shared_ptr<Common::Wasm::Plugin> plugin_;
   std::unique_ptr<TestFilter> filter_;
   NiceMock<Envoy::Ssl::MockConnectionInfo> ssl_;
   NiceMock<Envoy::Network::MockConnection> connection_;

@@ -46,10 +46,11 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest,
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
-  vm_config:
-    vm: "envoy.wasm.vm.)EOF",
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF("
-    code: { filename: "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm" }
+      code: { filename: "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm" }
   )EOF"));
 
   envoy::config::filter::network::wasm::v2::Wasm proto_config;
@@ -66,10 +67,11 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
       "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   const std::string yaml = absl::StrCat(R"EOF(
-  vm_config:
-    vm: "envoy.wasm.vm.)EOF",
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
                                         GetParam(), R"EOF("
-    code: { inline_bytes: ")EOF",
+      code: { inline_bytes: ")EOF",
                                         Base64::encode(code.data(), code.size()), R"EOF(" }
   )EOF");
 
@@ -84,10 +86,11 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
 
 TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   const std::string yaml = absl::StrCat(R"EOF(
-  vm_config:
-    vm: "envoy.wasm.vm.)EOF",
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
                                         GetParam(), R"EOF("
-    code: { inline_string: "bad code" }
+      code: { inline_string: "bad code" }
   )EOF");
 
   envoy::config::filter::network::wasm::v2::Wasm proto_config;

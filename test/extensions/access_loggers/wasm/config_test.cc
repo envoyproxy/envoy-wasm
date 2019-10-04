@@ -65,7 +65,7 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
   AccessLog::InstanceSharedPtr instance;
   EXPECT_THROW_WITH_MESSAGE(
       instance = factory->createAccessLogInstance(*message, std::move(filter), context),
-      Common::Wasm::WasmVmException, "No WASM VM Id or vm_config specified");
+      Common::Wasm::WasmVmException, "Failed to create WASM VM with unspecified runtime.");
 }
 
 TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
@@ -75,9 +75,11 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
   ASSERT_NE(factory, nullptr);
 
   envoy::config::accesslog::v2::WasmAccessLog config;
-  config.mutable_vm_config()->set_vm(absl::StrCat("envoy.wasm.vm.", GetParam()));
-  config.mutable_vm_config()->mutable_code()->set_filename(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging.wasm"));
+  config.mutable_config()->mutable_vm_config()->set_runtime(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()));
+  config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
+      TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging.wasm"));
 
   AccessLog::FilterPtr filter;
   Stats::IsolatedStoreImpl stats_store;

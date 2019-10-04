@@ -26,14 +26,14 @@ public:
   std::shared_ptr<Context> createFilter() {
     auto& wasm = tls_slot_->getTyped<Wasm>();
     if (!root_context_id_) {
-      root_context_id_ = wasm.getRootContext(root_id_)->id();
+      root_context_id_ = wasm.getRootContext(plugin_->root_id_)->id();
     }
-    return std::make_shared<Context>(&tls_slot_->getTyped<Wasm>(), root_context_id_);
+    return std::make_shared<Context>(&wasm, root_context_id_, plugin_);
   }
 
 private:
-  std::string root_id_;
   uint32_t root_context_id_{0};
+  Envoy::Extensions::Common::Wasm::PluginSharedPtr plugin_;
   ThreadLocal::SlotPtr tls_slot_;
 };
 

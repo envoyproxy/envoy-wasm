@@ -38,7 +38,7 @@ public:
   V8() = default;
 
   // Extensions::Common::Wasm::WasmVm
-  absl::string_view vm() override { return WasmVmNames::get().v8; }
+  absl::string_view runtime() override { return WasmRuntimeNames::get().v8; }
 
   bool load(const std::string& code, bool allow_precompiled) override;
   absl::string_view getUserSection(absl::string_view name) override;
