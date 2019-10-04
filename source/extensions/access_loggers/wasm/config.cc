@@ -29,7 +29,6 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   auto vm_id = config.config().vm_config().vm_id();
   auto root_id = config.config().root_id();
   auto configuration = std::make_shared<std::string>(config.config().configuration());
-
   auto access_log = std::make_shared<WasmAccessLog>(root_id, nullptr, std::move(filter));
 
   auto callback = [access_log, &context, &config, configuration](const std::string& code) {
@@ -38,11 +37,10 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
     // individual threads.
     auto plugin = std::make_shared<Common::Wasm::Plugin>(
         config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-        envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
+        code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
         nullptr /* listener_metadata */, context.scope());
-    auto base_wasm =
-        Common::Wasm::createWasm(config.config().vm_config(), plugin, context.clusterManager(),
-                                 context.dispatcher(), context.api());
+    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin,
+                                              context.clusterManager(), context.dispatcher());
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     tls_slot->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
@@ -55,10 +53,12 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
     local_data_provider_ = std::make_unique<Config::DataSource::LocalAsyncDataProvider>(
         context.initManager(), config.config().vm_config().code().local(), true, context.api(),
         std::move(callback));
-  } else {
+  } else if (config.config().vm_config().code().has_remote()) {
     remote_data_provider_ = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
         context.clusterManager(), context.initManager(),
         config.config().vm_config().code().remote(), true, std::move(callback));
+  } else {
+    callback(EMPTY_STRING);
   }
 
   return access_log;

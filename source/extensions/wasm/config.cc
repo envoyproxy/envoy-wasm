@@ -19,7 +19,6 @@ static const std::string INLINE_STRING = "<inline>";
 void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmService& config,
                              Server::Configuration::WasmFactoryContext& context,
                              Server::CreateWasmCallback&& cb) {
-
   auto callback = [&context, &config, cb](const std::string& code) {
     // Create a base WASM to verify that the code loads before setting/cloning the for the
     // individual

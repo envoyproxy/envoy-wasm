@@ -155,20 +155,19 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASM) {
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
   const std::string sha256 =
       Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
-
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
-  vm_config:
-    vm: "envoy.wasm.vm.)EOF",
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF("
-    code:
-      remote:
-        http_uri:
-          uri: https://example.com/data
-          cluster: cluster_1
-          timeout: 5s
-        sha256: )EOF",
+      code:
+        remote:
+          http_uri:
+            uri: https://example.com/data
+            cluster: cluster_1
+            timeout: 5s
+          sha256: )EOF",
                                                                     sha256));
-
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
@@ -201,20 +200,19 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
   const std::string sha256 =
       Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
-
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
-  vm_config:
-    vm: "envoy.wasm.vm.)EOF",
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF("
-    code:
-      remote:
-        http_uri:
-          uri: https://example.com/data
-          cluster: cluster_1
-          timeout: 5s
-        sha256: )EOF",
+      code:
+        remote:
+          http_uri:
+            uri: https://example.com/data
+            cluster: cluster_1
+            timeout: 5s
+          sha256: )EOF",
                                                                     sha256));
-
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
@@ -241,20 +239,19 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
   const std::string sha256 =
       Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
-
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
-  vm_config:
-    vm: "envoy.wasm.vm.)EOF",
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF("
-    code:
-      remote:
-        http_uri:
-          uri: https://example.com/data
-          cluster: cluster_1
-          timeout: 5s
-        sha256: )EOF",
+      code:
+        remote:
+          http_uri:
+            uri: https://example.com/data
+            cluster: cluster_1
+            timeout: 5s
+          sha256: )EOF",
                                                                     sha256));
-
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
@@ -282,19 +279,18 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
   const std::string sha256 =
       Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
-
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
-  vm_config:
-    vm: "envoy.wasm.vm.)EOF",
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF("
-    code:
-      remote:
-        http_uri:
-          uri: https://example.com/data
-          cluster: cluster_1
-          timeout: 5s
-        sha256: xxxx )EOF"));
-
+      code:
+        remote:
+          http_uri:
+            uri: https://example.com/data
+            cluster: cluster_1
+            timeout: 5s
+          sha256: xxxx )EOF"));
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
@@ -323,20 +319,19 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
   const std::string code = "foo";
   const std::string sha256 =
       Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
-
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
-  vm_config:
-    vm: "envoy.wasm.vm.)EOF",
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF("
-    code:
-      remote:
-        http_uri:
-          uri: https://example.com/data
-          cluster: cluster_1
-          timeout: 5s
-        sha256: )EOF",
+      code:
+        remote:
+          http_uri:
+            uri: https://example.com/data
+            cluster: cluster_1
+            timeout: 5s
+          sha256: )EOF",
                                                                     sha256));
-
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;

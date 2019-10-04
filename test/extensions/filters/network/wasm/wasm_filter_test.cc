@@ -49,7 +49,11 @@ public:
     proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
     proto_config.mutable_config()->mutable_vm_config()->set_runtime(
         absl::StrCat("envoy.wasm.runtime.", GetParam()));
-    proto_config.mutable_config()->mutable_vm_config()->mutable_code()->set_inline_bytes(code);
+    proto_config.mutable_config()
+        ->mutable_vm_config()
+        ->mutable_code()
+        ->mutable_local()
+        ->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
