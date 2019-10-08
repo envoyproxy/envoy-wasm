@@ -1986,7 +1986,7 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
 }
 
 WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
-  auto stat_name = wasm_->stat_name_set_.getDynamic(name);
+  auto stat_name = wasm_->stat_name_set_->getDynamic(name);
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
     auto c = &plugin_->scope_.counterFromStatName(stat_name);
@@ -2088,7 +2088,7 @@ Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_c
     : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)),
       creating_plugin_(plugin), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(creating_plugin_->scope_.symbolTable()) {}
+      stat_name_set_(creating_plugin_->scope_.symbolTable().makeSet("wasm")) {}
 
 std::string Plugin::makeLogPrefix() const {
   std::string prefix;
@@ -2279,7 +2279,7 @@ Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
       creating_plugin_(wasm.creating_plugin_), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), time_source_(dispatcher.timeSource()),
-      stat_name_set_(creating_plugin_->scope_.symbolTable()) {
+      stat_name_set_(creating_plugin_->scope_.symbolTable().makeSet("wasm")) {
   wasm_vm_ = wasm.wasmVm()->clone();
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();

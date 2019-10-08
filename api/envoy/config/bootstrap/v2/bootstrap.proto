@@ -19,6 +19,7 @@ import "envoy/config/wasm/v2/wasm.proto";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
 
 import "validate/validate.proto";
 
@@ -150,8 +151,13 @@ message Bootstrap {
   // extensions which are not upstream.
   string header_prefix = 18;
 
+  // Optional proxy version which will be used to set the value of :ref:`server.version statistic
+  // <server_statistics>` if specified. Envoy will not process this value, it will be sent as is to
+  // :ref:<stats sinks <envoy_api_msg_config.metrics.v2.StatsSink>.
+  google.protobuf.UInt64Value stats_server_version_override = 19;
+
   // Configuration for an wasm service provider(s).
-  repeated wasm.v2.WasmService wasm_service = 19;
+  repeated wasm.v2.WasmService wasm_service = 20;
 }
 
 // Administration interface :ref:`operations documentation
