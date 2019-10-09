@@ -18,6 +18,7 @@ jobs:
       BAZEL_REMOTE_CACHE: grpcs://remotebuildexecution.googleapis.com
       BAZEL_REMOTE_INSTANCE: projects/envoy-ci/instances/default_instance
       GCP_SERVICE_ACCOUNT_KEY: $(GcpServiceAccountKey)
+      IMAGE_ID: 1500b75cb9bc2184a26f72f63631e926cd05d6ee628e6fd005f069d2f9756ac7
     displayName: "Run check format scripts"
 
 - job: bazel
