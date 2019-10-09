@@ -113,7 +113,7 @@ public:
   virtual ~WasmVm() = default;
   /**
    * Return the runtime identifier.
-   * @return one of WasmRuntimeValues from well_known_names.h e.g. "envoy.wasm.vm.null".
+   * @return one of WasmRuntimeValues from well_known_names.h e.g. "envoy.wasm.runtime.null".
    */
   virtual absl::string_view runtime() PURE;
 
@@ -327,7 +327,7 @@ struct SaveRestoreContext {
   uint32_t saved_effective_context_id_;
 };
 
-// Create a new low-level WASM VM of the give type (e.g. "envoy.wasm.vm.wavm").
+// Create a new low-level WASM VM of the give type (e.g. "envoy.wasm.runtime.wavm").
 WasmVmPtr createWasmVm(absl::string_view vm);
 
 } // namespace Wasm
