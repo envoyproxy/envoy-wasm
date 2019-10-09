@@ -2088,8 +2088,7 @@ Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_c
     : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)),
       creating_plugin_(plugin), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(std::make_shared<Stats::StatNameSet>(creating_plugin_->scope_.symbolTable())) {
-}
+      stat_name_set_(creating_plugin_->scope_.symbolTable().makeSet("Wasm").release()) {}
 
 std::string Plugin::makeLogPrefix() const {
   std::string prefix;
