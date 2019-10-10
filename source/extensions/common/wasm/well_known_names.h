@@ -15,9 +15,16 @@ namespace Wasm {
  */
 class WasmRuntimeValues {
 public:
+  // V8 (https://v8.dev) WASM VM.
+  const std::string v8 = "envoy.wasm.runtime.v8";
+  // WAVM (https://github.com/WAVM/WAVM) Wasm VM.
+  const std::string Wavm = "envoy.wasm.runtime.wavm";
   // Null sandbox: modules must be compiled into envoy and registered name is given in the
   // DataSource.inline_string.
   const std::string Null = "envoy.wasm.runtime.null";
+
+  // Filter state name
+  const std::string FilterState = "envoy.wasm";
 };
 
 using WasmRuntimeNames = ConstSingleton<WasmRuntimeValues>;

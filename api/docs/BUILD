@@ -70,6 +70,7 @@ proto_library(
         "//envoy/config/resource_monitor/injected_resource/v2alpha:pkg",
         "//envoy/config/trace/v2:pkg",
         "//envoy/config/transport_socket/tap/v2alpha:pkg",
+        "//envoy/config/wasm/v2:pkg",
         "//envoy/data/accesslog/v2:pkg",
         "//envoy/data/cluster/v2alpha:pkg",
         "//envoy/data/core/v2alpha:pkg",

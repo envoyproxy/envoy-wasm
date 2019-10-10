@@ -212,7 +212,7 @@ def SyncBuildFiles(cmd):
   Args:
     cmd: 'check' or 'fix'.
   """
-  for root, dirs, files in os.walk('api/'):
+  for root, dirs, files in os.walk('api/envoy/'):
     is_proto_dir = any(f.endswith('.proto') for f in files)
     if not is_proto_dir:
       continue
