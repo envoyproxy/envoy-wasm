@@ -2088,7 +2088,7 @@ Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_c
     : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)),
       creating_plugin_(plugin), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(creating_plugin_->scope_.symbolTable().makeSet("wasm")) {}
+      stat_name_set_(creating_plugin_->scope_.symbolTable().makeSet("Wasm").release()) {}
 
 std::string Plugin::makeLogPrefix() const {
   std::string prefix;
@@ -2279,10 +2279,17 @@ Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
       creating_plugin_(wasm.creating_plugin_), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), time_source_(dispatcher.timeSource()),
-      stat_name_set_(creating_plugin_->scope_.symbolTable().makeSet("wasm")) {
-  wasm_vm_ = wasm.wasmVm()->clone();
-  vm_context_ = std::make_shared<Context>(this);
-  getFunctions();
+      stat_name_set_(wasm.stat_name_set_) {
+  if (wasm.wasmVm()->cloneable()) {
+    wasm_vm_ = wasm.wasmVm()->clone();
+    vm_context_ = std::make_shared<Context>(this);
+    getFunctions();
+  } else {
+    wasm_vm_ = Common::Wasm::createWasmVm(wasm.wasmVm()->runtime());
+    if (!initialize(wasm.code(), wasm.allow_precompiled())) {
+      throw WasmException("Failed to initialize WASM code");
+    }
+  }
 }
 
 bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
@@ -2805,20 +2812,8 @@ std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConf
 
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
                                             Event::Dispatcher& dispatcher) {
-  std::shared_ptr<Wasm> wasm;
-  Context* root_context;
-  if (base_wasm.wasmVm()->cloneable()) {
-    wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
-    root_context = wasm->start();
-  } else {
-    wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->runtime(), base_wasm.vm_id(),
-                                  base_wasm.vm_configuration(), base_wasm.creating_plugin(),
-                                  base_wasm.clusterManager(), dispatcher);
-    if (!wasm->initialize(base_wasm.code(), base_wasm.allow_precompiled())) {
-      throw WasmException("Failed to initialize WASM code");
-    }
-    root_context = wasm->start();
-  }
+  auto wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
+  Context* root_context = wasm->start();
   if (!wasm->configure(root_context, configuration)) {
     throw WasmException("Failed to configure WASM code");
   }
