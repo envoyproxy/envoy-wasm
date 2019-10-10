@@ -34,6 +34,7 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
+#include "api/wasm/cpp/proxy_wasm_state.h"
 #include "api/wasm/cpp/proxy_wasm_result.h"
 #include "api/wasm/cpp/proxy_wasm_metadata.h"
 
@@ -151,16 +152,6 @@ struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
   uint32_t token;
   Grpc::RawAsyncClientPtr client;
   Grpc::RawAsyncStream* stream;
-};
-
-// A simple wrapper around generic values
-class WasmState : public StreamInfo::FilterState::Object {
-public:
-  WasmState(ProtobufWkt::Value& value) : value_(value) {}
-  const ProtobufWkt::Value& value() const { return value_; }
-
-private:
-  const ProtobufWkt::Value value_;
 };
 
 // Plugin contains the information for a filter/service.
