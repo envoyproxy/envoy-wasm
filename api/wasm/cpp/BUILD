@@ -24,5 +24,6 @@ envoy_cc_library(
     ],
     deps = [
             "//include/envoy/stream_info:filter_state_interface",
+            "//source/common/protobuf"
         ],
 )

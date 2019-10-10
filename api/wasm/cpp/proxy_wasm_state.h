@@ -8,6 +8,10 @@
 #include <string>
 
 #include "envoy/stream_info/filter_state.h"
+#include "common/protobuf/protobuf.h"
+
+namespace Envoy {
+namespace Wasm {
 
 // A simple wrapper around generic values
 class WasmState : public StreamInfo::FilterState::Object {
@@ -18,3 +22,5 @@ public:
 private:
   const ProtobufWkt::Value value_;
 };
+}
+}

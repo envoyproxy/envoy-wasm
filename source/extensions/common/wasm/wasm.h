@@ -3,6 +3,8 @@
 #include <map>
 #include <memory>
 
+#include "api/wasm/cpp/proxy_wasm_state.h"
+
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/exception.h"
@@ -34,7 +36,6 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-#include "api/wasm/cpp/proxy_wasm_state.h"
 #include "api/wasm/cpp/proxy_wasm_result.h"
 #include "api/wasm/cpp/proxy_wasm_metadata.h"
 
