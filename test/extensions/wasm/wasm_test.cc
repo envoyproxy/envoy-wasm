@@ -75,7 +75,7 @@ TEST_P(WasmTestMatrix, Logging) {
                    std::get<1>(GetParam()), ".wasm")));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", std::get<0>(GetParam())), vm_id, vm_configuration, plugin,
@@ -113,7 +113,7 @@ TEST_P(WasmTest, BadSignature) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin,
@@ -169,7 +169,7 @@ TEST_P(WasmTest, DivByZero) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin,
@@ -199,7 +199,7 @@ TEST_P(WasmTest, EmscriptenVersion) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin,
@@ -231,7 +231,7 @@ TEST_P(WasmTest, IntrinsicGlobals) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin,
@@ -265,7 +265,7 @@ TEST_P(WasmTest, Asm2Wasm) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin,
@@ -292,7 +292,7 @@ TEST_P(WasmTest, Stats) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin,
@@ -327,7 +327,7 @@ TEST_P(WasmTest, StatsHigherLevel) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin,
@@ -367,7 +367,7 @@ TEST_P(WasmTest, StatsHighLevel) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin,
