@@ -509,7 +509,7 @@ void V8::callModuleFunction(Context* context, absl::string_view function_name,
 
 void V8::callModuleFunction(Context* context, absl::string_view function_name,
                             const wasm::Func* func, const wasm::Val args[], wasm::Val results[]) {
-  // TODO(PiotrSikora): print params when/if needed.
+  // TODO(PiotrSikora): print params when/if needed (all relevant callers are void(void)).
   ENVOY_LOG(trace, "[wasm] [host->vm] {}({})", function_name, args ? "???" : "");
 
   SaveRestoreContext _saved_context(context);
@@ -520,7 +520,7 @@ void V8::callModuleFunction(Context* context, absl::string_view function_name,
                     absl::string_view(trap->message().get(), trap->message().size())));
   }
 
-  // TODO(PiotrSikora): print return values when/if needed.
+  // TODO(PiotrSikora): print return values when/if needed (all relevant callers are void(void)).
   ENVOY_LOG(trace, "[wasm] [host<-vm] {} return: {}", function_name, results ? "???" : "void");
 }
 
