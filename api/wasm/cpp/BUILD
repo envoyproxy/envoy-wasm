@@ -20,10 +20,5 @@ envoy_cc_library(
     hdrs = [
         "proxy_wasm_result.h",
         "proxy_wasm_metadata.h",
-        "proxy_wasm_state.h",
     ],
-    deps = [
-            "//include/envoy/stream_info:filter_state_interface",
-            "//source/common/protobuf"
-        ],
 )

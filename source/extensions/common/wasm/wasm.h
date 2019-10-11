@@ -23,8 +23,6 @@
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/http/well_known_names.h"
 
-#include "api/wasm/cpp/proxy_wasm_state.h"
-
 namespace Envoy {
 
 // TODO: move to source/common/stats/symbol_table_impl.h when upstreaming.

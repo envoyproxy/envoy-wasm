@@ -26,6 +26,7 @@
 #include "common/http/utility.h"
 #include "common/tracing/http_tracer_impl.h"
 
+#include "extensions/common/wasm/wasm_state.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/common/expr/context.h"
 
@@ -1177,8 +1178,7 @@ public:
     }
     auto value = key.StringOrDie().value();
     try {
-      const ::Envoy::Wasm::WasmState& result =
-          filter_state_.getDataReadOnly<::Envoy::Wasm::WasmState>(value);
+      const WasmState& result = filter_state_.getDataReadOnly<WasmState>(value);
       return google::api::expr::runtime::CelValue::CreateMessage(&result.value(), arena_);
     } catch (const EnvoyException& e) {
       return {};
@@ -1716,7 +1716,7 @@ WasmResult Context::setProperty(absl::string_view key, absl::string_view seriali
   StreamInfo::FilterState& filter_state = encoder_callbacks_
                                               ? encoder_callbacks_->streamInfo().filterState()
                                               : decoder_callbacks_->streamInfo().filterState();
-  filter_state.setData(key, std::make_unique<::Envoy::Wasm::WasmState>(value_struct),
+  filter_state.setData(key, std::make_unique<WasmState>(value_struct),
                        StreamInfo::FilterState::StateType::Mutable);
   return WasmResult::Ok;
 }

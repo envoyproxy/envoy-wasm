@@ -1,16 +1,18 @@
 /*
- * Wasm State Class available to WASM modules.
+ * Wasm State Class available to WASM/Non-WASM modules.
  */
-// NOLINT(namespace-envoy)
 
 #pragma once
 
 #include <string>
 
 #include "envoy/stream_info/filter_state.h"
+
 #include "common/protobuf/protobuf.h"
 
 namespace Envoy {
+namespace Extensions {
+namespace Common {
 namespace Wasm {
 
 // A simple wrapper around generic values
@@ -22,5 +24,8 @@ public:
 private:
   const ProtobufWkt::Value value_;
 };
-}
-}
+
+} // namespace Wasm
+} // namespace Common
+} // namespace Extensions
+} // namespace Envoy
