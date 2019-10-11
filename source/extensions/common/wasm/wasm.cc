@@ -2761,7 +2761,7 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
 }
 
 static std::shared_ptr<Wasm> createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                                PluginSharedPtr plugin,
+                                                PluginSharedPtr plugin, const std::string& code,
                                                 Upstream::ClusterManager& cluster_manager,
                                                 Event::Dispatcher& dispatcher,
                                                 std::unique_ptr<Context> root_context_for_testing) {
@@ -2769,7 +2769,7 @@ static std::shared_ptr<Wasm> createWasmInternal(const envoy::config::wasm::v2::V
       std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(),
                              plugin, cluster_manager, dispatcher);
 
-  std::string source, code = plugin->code_;
+  std::string source;
   if (vm_config.code().has_remote()) {
     source = vm_config.code().remote().http_uri().uri();
   } else {
@@ -2791,19 +2791,19 @@ static std::shared_ptr<Wasm> createWasmInternal(const envoy::config::wasm::v2::V
 }
 
 std::shared_ptr<Wasm> createWasm(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 PluginSharedPtr plugin_config,
+                                 PluginSharedPtr plugin_config, const std::string& code,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher) {
-  return createWasmInternal(vm_config, plugin_config, cluster_manager, dispatcher,
+  return createWasmInternal(vm_config, plugin_config, code, cluster_manager, dispatcher,
                             nullptr /* root_context_for_testing */);
 }
 
 std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                           PluginSharedPtr plugin,
+                                           PluginSharedPtr plugin, const std::string& code,
                                            Upstream::ClusterManager& cluster_manager,
                                            Event::Dispatcher& dispatcher,
                                            std::unique_ptr<Context> root_context_for_testing) {
-  return createWasmInternal(vm_config, plugin, cluster_manager, dispatcher,
+  return createWasmInternal(vm_config, plugin, code, cluster_manager, dispatcher,
                             std::move(root_context_for_testing));
 }
 

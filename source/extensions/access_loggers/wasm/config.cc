@@ -31,15 +31,17 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   auto configuration = std::make_shared<std::string>(config.config().configuration());
   auto access_log = std::make_shared<WasmAccessLog>(root_id, nullptr, std::move(filter));
 
-  auto callback = [access_log, &context, &config, configuration](const std::string& code) {
+  // Create a base WASM to verify that the code loads before setting/cloning the for the
+  // individual threads.
+  auto plugin = std::make_shared<Common::Wasm::Plugin>(
+      config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
+      envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
+      nullptr /* listener_metadata */, context.scope());
+
+  auto callback = [access_log, &context, &config, configuration, plugin](const std::string& code) {
     auto tls_slot = context.threadLocal().allocateSlot();
-    // Create a base WASM to verify that the code loads before setting/cloning the for the
-    // individual threads.
-    auto plugin = std::make_shared<Common::Wasm::Plugin>(
-        config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-        code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
-        nullptr /* listener_metadata */, context.scope());
-    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin,
+
+    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin, code,
                                               context.clusterManager(), context.dispatcher());
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     tls_slot->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {

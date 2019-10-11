@@ -19,15 +19,15 @@ static const std::string INLINE_STRING = "<inline>";
 void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmService& config,
                              Server::Configuration::WasmFactoryContext& context,
                              Server::CreateWasmCallback&& cb) {
-  auto callback = [&context, &config, cb](const std::string& code) {
+  auto plugin = std::make_shared<Common::Wasm::Plugin>(
+      config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
+      envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
+      nullptr /* listener_metadata */, context.scope(), context.owned_scope());
+
+  auto callback = [&context, &config, cb, plugin](const std::string& code) {
     // Create a base WASM to verify that the code loads before setting/cloning the for the
-    // individual
-    // threads.
-    auto plugin = std::make_shared<Common::Wasm::Plugin>(
-        config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-        code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
-        nullptr /* listener_metadata */, context.scope(), context.owned_scope());
-    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin,
+    // individual threads.
+    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin, code,
                                               context.clusterManager(), context.dispatcher());
     if (config.singleton()) {
       // Return the WASM VM which will be stored as a singleton by the Server.

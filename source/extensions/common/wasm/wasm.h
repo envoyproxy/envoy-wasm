@@ -161,21 +161,18 @@ private:
 // Plugin contains the information for a filter/service.
 struct Plugin {
   Plugin(absl::string_view name, absl::string_view root_id, absl::string_view vm_id,
-         absl::string_view code, envoy::api::v2::core::TrafficDirection direction,
-         const LocalInfo::LocalInfo& local_info,
+         envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
          const envoy::api::v2::core::Metadata* listener_metadata, Stats::Scope& scope,
          Stats::ScopeSharedPtr owned_scope = nullptr)
       : name_(std::string(name)), root_id_(std::string(root_id)), vm_id_(std::string(vm_id)),
-        code_(std::string(code)), direction_(direction), local_info_(local_info),
-        listener_metadata_(listener_metadata), scope_(scope), owned_scope_(owned_scope),
-        log_prefix_(makeLogPrefix()) {}
+        direction_(direction), local_info_(local_info), listener_metadata_(listener_metadata),
+        scope_(scope), owned_scope_(owned_scope), log_prefix_(makeLogPrefix()) {}
 
   std::string makeLogPrefix() const;
 
   const std::string name_;
   const std::string root_id_;
   const std::string vm_id_;
-  const std::string code_;
   envoy::api::v2::core::TrafficDirection direction_;
   const LocalInfo::LocalInfo& local_info_;
   const envoy::api::v2::core::Metadata* listener_metadata_;
@@ -718,7 +715,7 @@ inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_-
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
 std::shared_ptr<Wasm> createWasm(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 PluginSharedPtr plugin_config,
+                                 PluginSharedPtr plugin_config, const std::string& code,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher);
 
@@ -727,7 +724,7 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
                                             Event::Dispatcher& dispatcher);
 
 std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                           PluginSharedPtr plugin,
+                                           PluginSharedPtr plugin, const std::string& code,
                                            Upstream::ClusterManager& cluster_manager,
                                            Event::Dispatcher& dispatcher,
                                            std::unique_ptr<Context> root_context_for_testing);

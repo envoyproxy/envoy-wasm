@@ -17,15 +17,15 @@ namespace Wasm {
 FilterConfig::FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& config,
                            Server::Configuration::FactoryContext& context)
     : tls_slot_(context.threadLocal().allocateSlot()) {
+  plugin_ = std::make_shared<Common::Wasm::Plugin>(
+      config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
+      context.direction(), context.localInfo(), &context.listenerMetadata(), context.scope(),
+      nullptr /* owned_scope */);
 
   auto callback = [this, &config, &context](const std::string& code) {
     // Create a base Wasm to verify that the code loads before setting/cloning the for the
     // individual threads.
-    plugin_ = std::make_shared<Common::Wasm::Plugin>(
-        config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-        code, context.direction(), context.localInfo(), &context.listenerMetadata(),
-        context.scope(), nullptr /* owned_scope */);
-    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin_,
+    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin_, code,
                                               context.clusterManager(), context.dispatcher());
     auto configuration = std::make_shared<std::string>(config.config().configuration());
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
