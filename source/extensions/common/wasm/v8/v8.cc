@@ -132,6 +132,21 @@ private:
 
 // Helper functions.
 
+static std::string printValue(const wasm::Val& value) {
+  switch (value.kind()) {
+  case wasm::I32:
+    return std::to_string(value.get<uint32_t>());
+  case wasm::I64:
+    return std::to_string(value.get<uint64_t>());
+  case wasm::F32:
+    return std::to_string(value.get<float>());
+  case wasm::F64:
+    return std::to_string(value.get<double>());
+  default:
+    return "unknown";
+  }
+}
+
 static std::string printValues(const wasm::Val values[], size_t size) {
   if (size == 0) {
     return "";
@@ -142,7 +157,7 @@ static std::string printValues(const wasm::Val values[], size_t size) {
     if (i) {
       s.append(", ");
     }
-    s.append(std::to_string(values[i].get<uint32_t>()));
+    s.append(printValue(values[i]));
   }
   return s;
 }
@@ -494,7 +509,8 @@ void V8::callModuleFunction(Context* context, absl::string_view function_name,
 
 void V8::callModuleFunction(Context* context, absl::string_view function_name,
                             const wasm::Func* func, const wasm::Val args[], wasm::Val results[]) {
-  ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", function_name);
+  // TODO(PiotrSikora): print params when/if needed (all relevant callers are void(void)).
+  ENVOY_LOG(trace, "[wasm] [host->vm] {}({})", function_name, args ? "???" : "");
 
   SaveRestoreContext _saved_context(context);
   auto trap = func->call(args, results);
@@ -503,6 +519,9 @@ void V8::callModuleFunction(Context* context, absl::string_view function_name,
         fmt::format("Function: {} failed: {}", function_name,
                     absl::string_view(trap->message().get(), trap->message().size())));
   }
+
+  // TODO(PiotrSikora): print return values when/if needed (all relevant callers are void(void)).
+  ENVOY_LOG(trace, "[wasm] [host<-vm] {} return: {}", function_name, results ? "???" : "void");
 }
 
 uint64_t V8::getMemorySize() {
