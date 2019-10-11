@@ -201,7 +201,7 @@ static uint32_t parseVarint(const byte_t*& pos, const byte_t* end) {
   byte_t b;
   do {
     if (pos + 1 > end) {
-      throw WasmException("Failed to parse corrupted WASM module");
+      throw WasmVmException("Failed to parse corrupted WASM module");
     }
     b = *pos++;
     n += (b & 0x7f) << shift;
@@ -281,18 +281,18 @@ absl::string_view V8::getUserSection(absl::string_view name) {
   const byte_t* pos = source_.get() + 8; // skip header
   while (pos < end) {
     if (pos + 1 > end) {
-      throw WasmException("Failed to parse corrupted WASM module");
+      throw WasmVmException("Failed to parse corrupted WASM module");
     }
     auto type = *pos++;
     auto rest = parseVarint(pos, end);
     if (pos + rest > end) {
-      throw WasmException("Failed to parse corrupted WASM module");
+      throw WasmVmException("Failed to parse corrupted WASM module");
     }
     if (type == 0 /* custom section */) {
       auto start = pos;
       auto len = parseVarint(pos, end);
       if (pos + len > end) {
-        throw WasmException("Failed to parse corrupted WASM module");
+        throw WasmVmException("Failed to parse corrupted WASM module");
       }
       pos += len;
       rest -= (pos - start);
@@ -340,7 +340,7 @@ void V8::link(absl::string_view debug_name, bool needs_emscripten) {
             equalValTypes(import_type->func()->results(), func->type()->results())) {
           imports.push_back(func);
         } else {
-          throw WasmException(fmt::format(
+          throw WasmVmException(fmt::format(
               "Failed to load WASM module due to an import type mismatch: {}.{}, "
               "want: {} -> {}, but host exports: {} -> {}",
               module, name, printValTypes(import_type->func()->params()),
@@ -348,7 +348,7 @@ void V8::link(absl::string_view debug_name, bool needs_emscripten) {
               printValTypes(func->type()->results())));
         }
       } else {
-        throw WasmException(
+        throw WasmVmException(
             fmt::format("Failed to load WASM module due to a missing import: {}.{}", module, name));
       }
     } break;
@@ -370,7 +370,7 @@ void V8::link(absl::string_view debug_name, bool needs_emscripten) {
       if (global) {
         imports.push_back(global);
       } else {
-        throw WasmException(
+        throw WasmVmException(
             fmt::format("Failed to load WASM module due to a missing import: {}.{}", module, name));
       }
     } break;

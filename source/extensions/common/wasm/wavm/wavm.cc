@@ -127,7 +127,7 @@ public:
         if (isA(out_object, type)) {
           return true;
         } else {
-          throw WasmException(fmt::format(
+          throw WasmVmException(fmt::format(
               "Failed to load WASM module due to a type mismatch in an import: {}.{} {}, "
               "but was expecting type: {}",
               module_name, export_name, asString(WAVM::Runtime::getExternType(out_object)),
@@ -140,8 +140,9 @@ public:
         return true;
       }
     }
-    throw WasmException(fmt::format("Failed to load WASM module due to a missing import: {}.{} {}",
-                                    module_name, export_name, asString(type)));
+    throw WasmVmException(
+        fmt::format("Failed to load WASM module due to a missing import: {}.{} {}", module_name,
+                    export_name, asString(type)));
   }
 
   HashMap<std::string, WAVM::Runtime::ModuleInstance*>& moduleNameToInstanceMap() {

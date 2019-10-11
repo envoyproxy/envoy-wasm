@@ -107,7 +107,7 @@ TEST_P(WasmFactoryTest, MissingImport) {
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, *scope, scope, local_info);
   EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context),
-                          Extensions::Common::Wasm::WasmException,
+                          Extensions::Common::Wasm::WasmVmException,
                           "Failed to load WASM module due to a missing import: env._missing.*");
 }
 
