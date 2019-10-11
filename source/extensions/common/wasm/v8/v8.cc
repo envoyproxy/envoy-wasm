@@ -132,6 +132,21 @@ private:
 
 // Helper functions.
 
+static std::string printValues(const wasm::Val values[], size_t size) {
+  if (size == 0) {
+    return "";
+  }
+
+  std::string s;
+  for (size_t i = 0; i < size; i++) {
+    if (i) {
+      s.append(", ");
+    }
+    s.append(std::to_string(values[i].get<uint32_t>()));
+  }
+  return s;
+}
+
 static const char* printValKind(wasm::ValKind kind) {
   switch (kind) {
   case wasm::I32:
@@ -571,11 +586,13 @@ void V8::registerHostFunctionImpl(absl::string_view module_name, absl::string_vi
       store_.get(), type.get(),
       [](void* data, const wasm::Val params[], wasm::Val[]) -> wasm::own<wasm::Trap> {
         auto func_data = reinterpret_cast<FuncData*>(data);
-        ENVOY_LOG(trace, "[wasm] callHostFunction(\"{}\")", func_data->name);
+        ENVOY_LOG(trace, "[wasm] [vm->host] {}({})", func_data->name,
+                  printValues(params, std::tuple_size<std::tuple<Args...>>::value));
         auto args_tuple = convertValTypesToArgsTuple<std::tuple<Args...>>(params);
         auto args = std::tuple_cat(std::make_tuple(current_context_), args_tuple);
         auto function = reinterpret_cast<void (*)(void*, Args...)>(func_data->raw_func);
         absl::apply(function, args);
+        ENVOY_LOG(trace, "[wasm] [vm<-host] {} return: void", func_data->name);
         return nullptr;
       },
       data.get());
@@ -595,12 +612,14 @@ void V8::registerHostFunctionImpl(absl::string_view module_name, absl::string_vi
       store_.get(), type.get(),
       [](void* data, const wasm::Val params[], wasm::Val results[]) -> wasm::own<wasm::Trap> {
         auto func_data = reinterpret_cast<FuncData*>(data);
-        ENVOY_LOG(trace, "[wasm] callHostFunction(\"{}\")", func_data->name);
+        ENVOY_LOG(trace, "[wasm] [vm->host] {}({})", func_data->name,
+                  printValues(params, sizeof...(Args)));
         auto args_tuple = convertValTypesToArgsTuple<std::tuple<Args...>>(params);
         auto args = std::tuple_cat(std::make_tuple(current_context_), args_tuple);
         auto function = reinterpret_cast<R (*)(void*, Args...)>(func_data->raw_func);
         R rvalue = absl::apply(function, args);
         results[0] = makeVal(rvalue);
+        ENVOY_LOG(trace, "[wasm] [vm<-host] {} return: {}", func_data->name, rvalue);
         return nullptr;
       },
       data.get());
@@ -624,15 +643,17 @@ void V8::getModuleFunctionImpl(absl::string_view function_name,
     throw WasmVmException(fmt::format("Bad function signature for: {}", function_name));
   }
   *function = [func, function_name](Context* context, Args... args) -> void {
-    ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", function_name);
-    SaveRestoreContext _saved_context(context);
     wasm::Val params[] = {makeVal(args)...};
+    ENVOY_LOG(trace, "[wasm] [host->vm] {}({})", function_name,
+              printValues(params, sizeof...(Args)));
+    SaveRestoreContext _saved_context(context);
     auto trap = func->call(params, nullptr);
     if (trap) {
       throw WasmVmException(
           fmt::format("Function: {} failed: {}", function_name,
                       absl::string_view(trap->message().get(), trap->message().size())));
     }
+    ENVOY_LOG(trace, "[wasm] [host<-vm] {} return: void", function_name);
   };
 }
 
@@ -651,9 +672,10 @@ void V8::getModuleFunctionImpl(absl::string_view function_name,
     throw WasmVmException(fmt::format("Bad function signature for: {}", function_name));
   }
   *function = [func, function_name](Context* context, Args... args) -> R {
-    ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", function_name);
-    SaveRestoreContext _saved_context(context);
     wasm::Val params[] = {makeVal(args)...};
+    ENVOY_LOG(trace, "[wasm] [host->vm] {}({})", function_name,
+              printValues(params, sizeof...(Args)));
+    SaveRestoreContext _saved_context(context);
     wasm::Val results[1];
     auto trap = func->call(params, results);
     if (trap) {
@@ -662,6 +684,7 @@ void V8::getModuleFunctionImpl(absl::string_view function_name,
                       absl::string_view(trap->message().get(), trap->message().size())));
     }
     R rvalue = results[0].get<typename ConvertWordTypeToUint32<R>::type>();
+    ENVOY_LOG(trace, "[wasm] [host<-vm] {} return: {}", function_name, rvalue);
     return rvalue;
   };
 }
