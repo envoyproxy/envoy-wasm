@@ -3,8 +3,6 @@
 #include <map>
 #include <memory>
 
-#include "api/wasm/cpp/proxy_wasm_state.h"
-
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/exception.h"
@@ -24,6 +22,8 @@
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/http/well_known_names.h"
+
+#include "api/wasm/cpp/proxy_wasm_state.h"
 
 namespace Envoy {
 

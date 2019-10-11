@@ -1177,7 +1177,8 @@ public:
     }
     auto value = key.StringOrDie().value();
     try {
-      const ::Envoy::Wasm::WasmState& result = filter_state_.getDataReadOnly<::Envoy::Wasm::WasmState>(value);
+      const ::Envoy::Wasm::WasmState& result =
+          filter_state_.getDataReadOnly<::Envoy::Wasm::WasmState>(value);
       return google::api::expr::runtime::CelValue::CreateMessage(&result.value(), arena_);
     } catch (const EnvoyException& e) {
       return {};
