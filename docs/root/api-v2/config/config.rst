@@ -13,5 +13,6 @@ Extensions
   resource_monitor/resource_monitor
   common/common
   cluster/cluster
+  listener/listener
   grpc_credential/grpc_credential
   wasm/wasm
