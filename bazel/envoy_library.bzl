@@ -43,7 +43,8 @@ def envoy_cc_library(
         tags = [],
         deps = [],
         strip_include_prefix = None,
-        textual_hdrs = None):
+        textual_hdrs = None,
+        **kargs):
     if tcmalloc_dep:
         deps += _tcmalloc_external_deps(repository)
 
@@ -72,6 +73,7 @@ def envoy_cc_library(
             "//conditions:default": linkstamp,
         }),
         strip_include_prefix = strip_include_prefix,
+        **kargs
     )
 
     # Intended for usage by external consumers. This allows them to disambiguate

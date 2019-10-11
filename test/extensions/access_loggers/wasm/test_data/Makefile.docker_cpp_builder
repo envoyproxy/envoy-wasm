@@ -1,0 +1,6 @@
+DOCKER_SDK=/external_sdk
+
+all: logging.wasm
+	chown ${uid}.${gid} *.wasm
+
+include ${DOCKER_SDK}/Makefile.base_lite
