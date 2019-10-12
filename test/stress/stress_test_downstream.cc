@@ -361,8 +361,9 @@ void ClientConnection::sendRequest(const Http::HeaderMap& headers, ClientRespons
 }
 
 Client::Client(const std::string& name)
-    : name_(name), stats_(), thread_(nullptr), time_system_(),
-      api_(Thread::threadFactoryForTest(), stats_, time_system_, Filesystem::fileSystemForTest()),
+    : name_(name), stats_store_(), thread_(nullptr), time_system_(),
+      api_(Thread::threadFactoryForTest(), stats_store_, time_system_,
+           Filesystem::fileSystemForTest()),
       dispatcher_{api_.allocateDispatcher()} {}
 
 Client::~Client() {
@@ -425,6 +426,8 @@ void Client::start() {
   promise.get_future().get();
 }
 
+void Client::post(std::function<void()> callback) { dispatcher_->post(callback); }
+
 void Client::stop() {
   ENVOY_LOG(debug, "Client({}) stop requested", name_);
 
@@ -473,11 +476,13 @@ LoadGenerator::LoadGenerator(Client& client, Network::TransportSocketFactory& so
       ENVOY_LOG(error, "Connection({}:{}) received response with bad status", connection.name(),
                 connection.id());
     } else if (200 <= status && status < 300) {
-      ++class_2xx_;
+      stats_->class_2xx_.inc();
+    } else if (300 <= status && status < 400) {
+      stats_->class_3xx_.inc();
     } else if (400 <= status && status < 500) {
-      ++class_4xx_;
+      stats_->class_4xx_.inc();
     } else if (500 <= status && status < 600) {
-      ++class_5xx_;
+      stats_->class_5xx_.inc();
     }
 
     if (0 >= requests_remaining_--) {
@@ -532,6 +537,8 @@ LoadGenerator::LoadGenerator(Client& client, Network::TransportSocketFactory& so
   };
 }
 
+Stats::Store& Client::store() { return stats_store_; }
+
 void LoadGenerator::run(uint32_t connections, uint32_t requests, Http::HeaderMapPtr&& request,
                         std::chrono::milliseconds timeout) {
   connections_to_initiate_ = connections;
@@ -546,11 +553,13 @@ void LoadGenerator::run(uint32_t connections, uint32_t requests, Http::HeaderMap
   response_timeouts_ = 0;
   local_closes_ = 0;
   remote_closes_ = 0;
-  class_2xx_ = 0;
-  class_4xx_ = 0;
-  class_5xx_ = 0;
 
   client_.start(); // idempotent
+
+  client_.post([this]() {
+    stats_ = std::make_unique<Stats>(Stats{
+        ALL_LOAD_GENERATOR_STATS(POOL_COUNTER_PREFIX(client_.store(), client_.name() + "."))});
+  });
 
   for (uint32_t i = 0; i < connections_to_initiate_; ++i) {
     client_.connect(socket_factory_, http_version_, address_, sockopts_, connect_callback_,
@@ -566,9 +575,7 @@ uint32_t LoadGenerator::responsesReceived() const { return responses_received_; 
 uint32_t LoadGenerator::responseTimeouts() const { return response_timeouts_; }
 uint32_t LoadGenerator::localCloses() const { return local_closes_; }
 uint32_t LoadGenerator::remoteCloses() const { return remote_closes_; }
-uint32_t LoadGenerator::class2xxResponses() const { return class_2xx_; }
-uint32_t LoadGenerator::class4xxResponses() const { return class_4xx_; }
-uint32_t LoadGenerator::class5xxResponses() const { return class_5xx_; }
+const LoadGenerator::Stats& LoadGenerator::stats() const { return *stats_; }
 
 } // namespace Stress
 } // namespace Envoy

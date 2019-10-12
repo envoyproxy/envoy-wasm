@@ -98,9 +98,9 @@ TEST_P(StressTestSelfTest, HappyPath) {
     // Client response callback is called for every request sent
     EXPECT_EQ(load_generator.responsesReceived(), requests_to_send);
     // Every response was a 2xx class
-    EXPECT_EQ(load_generator.class2xxResponses(), requests_to_send);
-    EXPECT_EQ(0, load_generator.class4xxResponses());
-    EXPECT_EQ(0, load_generator.class5xxResponses());
+    EXPECT_EQ(requests_to_send, load_generator.stats().class_2xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
     // No client sockets are rudely closed by server / no client sockets are
     // reset.
     EXPECT_EQ(0, load_generator.remoteCloses());
@@ -171,9 +171,9 @@ TEST_P(StressTestSelfTest, AcceptAndClose) {
     EXPECT_EQ(load_generator.remoteCloses(), connections_to_initiate);
     EXPECT_EQ(0, load_generator.localCloses());
     EXPECT_EQ(0, load_generator.responsesReceived());
-    EXPECT_EQ(0, load_generator.class2xxResponses());
-    EXPECT_EQ(0, load_generator.class4xxResponses());
-    EXPECT_EQ(0, load_generator.class5xxResponses());
+    EXPECT_EQ(0, load_generator.stats().class_2xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
     EXPECT_EQ(0, load_generator.responseTimeouts());
 
     // Server accept callback is called for every client connection initiated.
@@ -241,9 +241,9 @@ TEST_P(StressTestSelfTest, SlowResponse) {
     EXPECT_EQ(load_generator.localCloses(), connections_to_initiate);
     EXPECT_EQ(0, load_generator.remoteCloses());
     EXPECT_EQ(0, load_generator.responsesReceived());
-    EXPECT_EQ(0, load_generator.class2xxResponses());
-    EXPECT_EQ(0, load_generator.class4xxResponses());
-    EXPECT_EQ(0, load_generator.class5xxResponses());
+    EXPECT_EQ(0, load_generator.stats().class_2xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
 
     // Server accept callback is called for every client connection initiated.
     EXPECT_EQ(server_callbacks.connectionsAccepted(), connections_to_initiate);
@@ -299,9 +299,9 @@ TEST_P(StressTestSelfTest, NoServer) {
     EXPECT_EQ(0, load_generator.localCloses());
     EXPECT_EQ(0, load_generator.responseTimeouts());
     EXPECT_EQ(0, load_generator.responsesReceived());
-    EXPECT_EQ(0, load_generator.class2xxResponses());
-    EXPECT_EQ(0, load_generator.class4xxResponses());
-    EXPECT_EQ(0, load_generator.class5xxResponses());
+    EXPECT_EQ(0, load_generator.stats().class_2xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
     EXPECT_EQ(0, load_generator.remoteCloses());
   } catch (Network::SocketBindException& ex) {
     if (Network::Address::IpVersion::v6 == ip_version_) {
@@ -356,9 +356,9 @@ TEST_P(StressTestSelfTest, NoAccept) {
     EXPECT_EQ(load_generator.localCloses(), connections_to_initiate);
     EXPECT_EQ(0, load_generator.remoteCloses());
     EXPECT_EQ(0, load_generator.responsesReceived());
-    EXPECT_EQ(0, load_generator.class2xxResponses());
-    EXPECT_EQ(0, load_generator.class4xxResponses());
-    EXPECT_EQ(0, load_generator.class5xxResponses());
+    EXPECT_EQ(0, load_generator.stats().class_2xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
+    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
 
     // From the server point of view, nothing happened
     EXPECT_EQ(0, server_callbacks.connectionsAccepted());

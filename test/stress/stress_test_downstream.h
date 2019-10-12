@@ -170,6 +170,13 @@ public:
   void start();
 
   /**
+   * Execute something on the client's dispatcher's background thread.
+   *
+   * @param callback The callback to execute
+   */
+  void post(std::function<void()> callback);
+
+  /**
    * Stop the client's dispatcher and join the background thread. This will
    * block until the background thread exits.
    */
@@ -198,10 +205,12 @@ public:
                const Network::ConnectionSocket::OptionsSharedPtr& sockopts,
                ClientConnectCallback& connect_callback, ClientCloseCallback& close_callback);
 
+  Stats::Store& store();
+
 private:
   std::atomic<bool> is_running_{false};
   std::string name_;
-  Stats::IsolatedStoreImpl stats_;
+  Stats::IsolatedStoreImpl stats_store_;
   Thread::ThreadPtr thread_;
   Event::TestRealTimeSystem time_system_;
   Api::Impl api_;
@@ -212,8 +221,18 @@ private:
   uint32_t connection_counter_{0U};
 };
 
+#define ALL_LOAD_GENERATOR_STATS(COUNTER)                                                          \
+  COUNTER(class_2xx)                                                                               \
+  COUNTER(class_3xx)                                                                               \
+  COUNTER(class_4xx)                                                                               \
+  COUNTER(class_5xx)
+
 class LoadGenerator : Logger::Loggable<Logger::Id::testing> {
 public:
+  struct Stats {
+    ALL_LOAD_GENERATOR_STATS(GENERATE_COUNTER_STRUCT)
+  };
+
   /**
    *  A wrapper around Client and its callbacks that implements a simple load
    * generator.
@@ -251,9 +270,7 @@ public:
   uint32_t responseTimeouts() const;
   uint32_t localCloses() const;
   uint32_t remoteCloses() const;
-  uint32_t class2xxResponses() const;
-  uint32_t class4xxResponses() const;
-  uint32_t class5xxResponses() const;
+  const Stats &stats() const;
 
 private:
   uint32_t connections_to_initiate_{0};
@@ -269,6 +286,7 @@ private:
   ClientResponseCallback response_callback_;
   ClientCloseCallback close_callback_;
   std::chrono::milliseconds timeout_{std::chrono::milliseconds(0)};
+  // Stats used for control flow do not used stats system.  Other stats do.
   std::atomic<int32_t> requests_remaining_{0};
   std::atomic<uint32_t> connect_failures_{0};
   std::atomic<uint32_t> connect_successes_{0};
@@ -276,10 +294,8 @@ private:
   std::atomic<uint32_t> response_timeouts_{0};
   std::atomic<uint32_t> local_closes_{0};
   std::atomic<uint32_t> remote_closes_{0};
-  std::atomic<uint32_t> class_2xx_{0};
-  std::atomic<uint32_t> class_4xx_{0};
-  std::atomic<uint32_t> class_5xx_{0};
   std::promise<bool> promise_all_connections_closed_;
+  std::unique_ptr<Stats> stats_;
 };
 
 typedef std::unique_ptr<LoadGenerator> LoadGeneratorPtr;
