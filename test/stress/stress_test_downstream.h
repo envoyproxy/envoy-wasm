@@ -225,7 +225,13 @@ private:
   COUNTER(class_2xx)                                                                               \
   COUNTER(class_3xx)                                                                               \
   COUNTER(class_4xx)                                                                               \
-  COUNTER(class_5xx)
+  COUNTER(class_5xx)                                                                               \
+  COUNTER(connect_failures)                                                                        \
+  COUNTER(connect_successes)                                                                       \
+  COUNTER(responses_received)                                                                      \
+  COUNTER(response_timeouts)                                                                       \
+  COUNTER(local_closes)                                                                            \
+  COUNTER(remote_closes)
 
 class LoadGenerator : Logger::Loggable<Logger::Id::testing> {
 public:
@@ -264,18 +270,19 @@ public:
   void run(uint32_t connections, uint32_t requests, Http::HeaderMapPtr&& request,
            std::chrono::milliseconds timeout = std::chrono::milliseconds(5'000));
 
-  uint32_t connectFailures() const;
-  uint32_t connectSuccesses() const;
-  uint32_t responsesReceived() const;
-  uint32_t responseTimeouts() const;
-  uint32_t localCloses() const;
-  uint32_t remoteCloses() const;
-  const Stats &stats() const;
+  uint32_t connectionsEstablished() const;
+
+  /**
+   * Access the metrics maintained by the load generator.
+   *
+   * @return The load generator's metrics
+   */
+  const Stats& stats() const;
 
 private:
   uint32_t connections_to_initiate_{0};
   uint32_t requests_to_send_{0};
-  Http::HeaderMapPtr request_{};
+  Http::HeaderMapPtr request_;
   Client& client_;
   Network::TransportSocketFactory& socket_factory_;
   Http::CodecClient::Type http_version_;
@@ -286,14 +293,9 @@ private:
   ClientResponseCallback response_callback_;
   ClientCloseCallback close_callback_;
   std::chrono::milliseconds timeout_{std::chrono::milliseconds(0)};
-  // Stats used for control flow do not used stats system.  Other stats do.
   std::atomic<int32_t> requests_remaining_{0};
-  std::atomic<uint32_t> connect_failures_{0};
-  std::atomic<uint32_t> connect_successes_{0};
-  std::atomic<uint32_t> responses_received_{0};
-  std::atomic<uint32_t> response_timeouts_{0};
-  std::atomic<uint32_t> local_closes_{0};
-  std::atomic<uint32_t> remote_closes_{0};
+  std::atomic<uint32_t> connections_established_{0};
+  std::atomic<uint32_t> connections_closed_{0};
   std::promise<bool> promise_all_connections_closed_;
   std::unique_ptr<Stats> stats_;
 };

@@ -10,8 +10,7 @@ namespace Envoy {
 namespace Stress {
 
 /**
- * Test of the StressTest::Client against the StressTest::Server without an
- * Envoy intermediary.
+ * Test of the StressTest::Client against the StressTest::Server without an Envoy intermediary.
  */
 class StressTestSelfTest
     : public testing::TestWithParam<std::tuple<std::string, std::string, std::string>>,
@@ -84,34 +83,33 @@ TEST_P(StressTestSelfTest, HappyPath) {
     load_generator.run(connections_to_initiate, requests_to_send, std::move(request));
 
     // wait until the server has closed all connections created by the client
-    server_callbacks.wait(load_generator.connectSuccesses());
+    server_callbacks.wait(load_generator.connectionsEstablished());
 
     //
     // Evaluate test
     //
 
     // All client connections are successfully established.
-    EXPECT_EQ(load_generator.connectSuccesses(), connections_to_initiate);
-    EXPECT_EQ(0, load_generator.connectFailures());
+    EXPECT_EQ(load_generator.stats().connect_successes_.value(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().connect_failures_.value(), 0);
     // Client close callback called for every client connection.
-    EXPECT_EQ(load_generator.localCloses(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().local_closes_.value(), connections_to_initiate);
     // Client response callback is called for every request sent
-    EXPECT_EQ(load_generator.responsesReceived(), requests_to_send);
+    EXPECT_EQ(load_generator.stats().responses_received_.value(), requests_to_send);
     // Every response was a 2xx class
-    EXPECT_EQ(requests_to_send, load_generator.stats().class_2xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
-    // No client sockets are rudely closed by server / no client sockets are
-    // reset.
-    EXPECT_EQ(0, load_generator.remoteCloses());
-    EXPECT_EQ(0, load_generator.responseTimeouts());
+    EXPECT_EQ(load_generator.stats().class_2xx_.value(), requests_to_send);
+    EXPECT_EQ(load_generator.stats().class_3xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_4xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_5xx_.value(), 0);
+    // No client sockets are rudely closed by server / no client sockets are reset.
+    EXPECT_EQ(load_generator.stats().remote_closes_.value(), 0);
+    EXPECT_EQ(load_generator.stats().response_timeouts_.value(), 0);
 
     // Server accept callback is called for every client connection initiated.
     EXPECT_EQ(server_callbacks.connectionsAccepted(), connections_to_initiate);
     // Server request callback is called for every client request sent
     EXPECT_EQ(server_callbacks.requestsReceived(), requests_to_send);
-    // Server does not close its own sockets but instead relies on the client to
-    // initate the close
+    // Server does not close its own sockets but instead relies on the client to initiate the close
     EXPECT_EQ(0, server_callbacks.localCloses());
     // Server sees a client-initiated close for every socket it accepts
     EXPECT_EQ(server_callbacks.remoteCloses(), server_callbacks.connectionsAccepted());
@@ -158,31 +156,32 @@ TEST_P(StressTestSelfTest, AcceptAndClose) {
     load_generator.run(connections_to_initiate, requests_to_send, std::move(request));
 
     // wait until the server has closed all connections created by the client
-    server_callbacks.wait(load_generator.connectSuccesses());
+    server_callbacks.wait(load_generator.connectionsEstablished());
 
     //
     // Evaluate test
     //
 
-    // Assert that all connections succeed but no responses are received and the
-    // server closes the connections.
-    EXPECT_EQ(load_generator.connectSuccesses(), connections_to_initiate);
-    EXPECT_EQ(0, load_generator.connectFailures());
-    EXPECT_EQ(load_generator.remoteCloses(), connections_to_initiate);
-    EXPECT_EQ(0, load_generator.localCloses());
-    EXPECT_EQ(0, load_generator.responsesReceived());
-    EXPECT_EQ(0, load_generator.stats().class_2xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
-    EXPECT_EQ(0, load_generator.responseTimeouts());
+    // Assert that all connections succeed but no responses are received and the server closes the
+    // connections.
+    EXPECT_EQ(load_generator.stats().connect_successes_.value(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().connect_failures_.value(), 0);
+    EXPECT_EQ(load_generator.stats().remote_closes_.value(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().local_closes_.value(), 0);
+    EXPECT_EQ(load_generator.stats().responses_received_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_2xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_3xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_4xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_5xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().response_timeouts_.value(), 0);
 
     // Server accept callback is called for every client connection initiated.
     EXPECT_EQ(server_callbacks.connectionsAccepted(), connections_to_initiate);
     // Server request callback is never called
-    EXPECT_EQ(0, server_callbacks.requestsReceived());
+    EXPECT_EQ(server_callbacks.requestsReceived(), 0);
     // Server closes every connection
     EXPECT_EQ(server_callbacks.connectionsAccepted(), server_callbacks.localCloses());
-    EXPECT_EQ(0, server_callbacks.remoteCloses());
+    EXPECT_EQ(server_callbacks.remoteCloses(), 0);
   } catch (Network::SocketBindException& ex) {
     if (Network::Address::IpVersion::v6 == ip_version_) {
       ENVOY_LOG(info, "Environment does not support IPv6, skipping test");
@@ -227,23 +226,24 @@ TEST_P(StressTestSelfTest, SlowResponse) {
                        std::chrono::milliseconds(250));
 
     // wait until the server has closed all connections created by the client
-    server_callbacks.wait(load_generator.connectSuccesses());
+    server_callbacks.wait(load_generator.connectionsEstablished());
 
     //
     // Evaluate test
     //
 
-    // Assert that all connections succeed but all responses timeout leading to
-    // local closing of all connections.
-    EXPECT_EQ(load_generator.connectSuccesses(), connections_to_initiate);
-    EXPECT_EQ(0, load_generator.connectFailures());
-    EXPECT_EQ(load_generator.responseTimeouts(), connections_to_initiate);
-    EXPECT_EQ(load_generator.localCloses(), connections_to_initiate);
-    EXPECT_EQ(0, load_generator.remoteCloses());
-    EXPECT_EQ(0, load_generator.responsesReceived());
-    EXPECT_EQ(0, load_generator.stats().class_2xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
+    // Assert that all connections succeed but all responses timeout leading to local closing of all
+    // connections.
+    EXPECT_EQ(load_generator.stats().connect_successes_.value(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().connect_failures_.value(), 0);
+    EXPECT_EQ(load_generator.stats().response_timeouts_.value(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().local_closes_.value(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().remote_closes_.value(), 0);
+    EXPECT_EQ(load_generator.stats().responses_received_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_2xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_3xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_4xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_5xx_.value(), 0);
 
     // Server accept callback is called for every client connection initiated.
     EXPECT_EQ(server_callbacks.connectionsAccepted(), connections_to_initiate);
@@ -265,9 +265,9 @@ TEST_P(StressTestSelfTest, NoServer) {
   constexpr uint32_t connections_to_initiate = 30;
   constexpr uint32_t requests_to_send = 30 * connections_to_initiate;
 
-  // Create a listening socket bound to an ephemeral port picked by the kernel,
-  // but don't create a server to call listen() on it. Result will be
-  // ECONNREFUSEDs and we won't accidentally send connects to another process.
+  // Create a listening socket bound to an ephemeral port picked by the kernel, but don't create a
+  // server to call listen() on it. Result will be ECONNREFUSEDs and we won't accidentally send
+  // connects to another process.
 
   try {
     Network::TcpListenSocket listening_socket(loopbackAddress(ip_version_, 0), nullptr, true);
@@ -293,16 +293,17 @@ TEST_P(StressTestSelfTest, NoServer) {
     //
 
     // All client connections fail
-    EXPECT_EQ(load_generator.connectFailures(), connections_to_initiate);
-    // Nothing else happened
-    EXPECT_EQ(0, load_generator.connectSuccesses());
-    EXPECT_EQ(0, load_generator.localCloses());
-    EXPECT_EQ(0, load_generator.responseTimeouts());
-    EXPECT_EQ(0, load_generator.responsesReceived());
-    EXPECT_EQ(0, load_generator.stats().class_2xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
-    EXPECT_EQ(0, load_generator.remoteCloses());
+    EXPECT_EQ(load_generator.stats().connect_failures_.value(), connections_to_initiate);
+    // And nothing else happens
+    EXPECT_EQ(load_generator.stats().connect_successes_.value(), 0);
+    EXPECT_EQ(load_generator.stats().local_closes_.value(), 0);
+    EXPECT_EQ(load_generator.stats().response_timeouts_.value(), 0);
+    EXPECT_EQ(load_generator.stats().responses_received_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_2xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_3xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_4xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_5xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().remote_closes_.value(), 0);
   } catch (Network::SocketBindException& ex) {
     if (Network::Address::IpVersion::v6 == ip_version_) {
       ENVOY_LOG(info, "Environment does not support IPv6, skipping test");
@@ -348,24 +349,25 @@ TEST_P(StressTestSelfTest, NoAccept) {
     // Evaluate test
     //
 
-    // Assert that all connections succeed but all responses timeout leading to
-    // local closing of all connections.
-    EXPECT_EQ(load_generator.connectSuccesses(), connections_to_initiate);
-    EXPECT_EQ(0, load_generator.connectFailures());
-    EXPECT_EQ(load_generator.responseTimeouts(), connections_to_initiate);
-    EXPECT_EQ(load_generator.localCloses(), connections_to_initiate);
-    EXPECT_EQ(0, load_generator.remoteCloses());
-    EXPECT_EQ(0, load_generator.responsesReceived());
-    EXPECT_EQ(0, load_generator.stats().class_2xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_4xx_.value());
-    EXPECT_EQ(0, load_generator.stats().class_5xx_.value());
+    // Assert that all connections succeed but all responses timeout leading to local closing of all
+    // connections.
+    EXPECT_EQ(load_generator.stats().connect_successes_.value(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().connect_failures_.value(), 0);
+    EXPECT_EQ(load_generator.stats().response_timeouts_.value(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().local_closes_.value(), connections_to_initiate);
+    EXPECT_EQ(load_generator.stats().remote_closes_.value(), 0);
+    EXPECT_EQ(load_generator.stats().responses_received_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_2xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_3xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_4xx_.value(), 0);
+    EXPECT_EQ(load_generator.stats().class_5xx_.value(), 0);
 
     // From the server point of view, nothing happened
-    EXPECT_EQ(0, server_callbacks.connectionsAccepted());
-    EXPECT_EQ(0, server_callbacks.requestsReceived());
-    EXPECT_EQ(0, server_callbacks.connectionsAccepted());
-    EXPECT_EQ(0, server_callbacks.remoteCloses());
-    EXPECT_EQ(0, server_callbacks.localCloses());
+    EXPECT_EQ(server_callbacks.connectionsAccepted(), 0);
+    EXPECT_EQ(server_callbacks.requestsReceived(), 0);
+    EXPECT_EQ(server_callbacks.connectionsAccepted(), 0);
+    EXPECT_EQ(server_callbacks.remoteCloses(), 0);
+    EXPECT_EQ(server_callbacks.localCloses(), 0);
   } catch (Network::SocketBindException& ex) {
     if (Network::Address::IpVersion::v6 == ip_version_) {
       ENVOY_LOG(info, "Environment does not support IPv6, skipping test");

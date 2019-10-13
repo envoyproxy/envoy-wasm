@@ -141,29 +141,27 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
   //
 
   // All client connections are successfully established.
-  EXPECT_EQ(client->connectSuccesses(), connections_to_initiate);
-  EXPECT_EQ(client->connectFailures(), 0);
+  EXPECT_EQ(client->stats().connect_successes_.value(), connections_to_initiate);
+  EXPECT_EQ(client->stats().connect_failures_.value(), 0);
   // Client close callback called for every client connection.
-  EXPECT_EQ(client->localCloses(), connections_to_initiate);
+  EXPECT_EQ(client->stats().local_closes_.value(), connections_to_initiate);
   // Client response callback is called for every request sent
-  EXPECT_EQ(client->responsesReceived(), requests_to_send);
+  EXPECT_EQ(client->stats().responses_received_.value(), requests_to_send);
   // Every response was a 2xx class
-  EXPECT_EQ(client->class2xxResponses(), requests_to_send);
-  EXPECT_EQ(client->class4xxResponses(), 0);
-  EXPECT_EQ(client->class5xxResponses(), 0);
-  EXPECT_EQ(client->responseTimeouts(), 0);
-  // No client sockets are rudely closed by server / no client sockets are
-  // reset.
-  EXPECT_EQ(client->remoteCloses(), 0);
+  EXPECT_EQ(client->stats().class_2xx_.value(), requests_to_send);
+  EXPECT_EQ(client->stats().class_3xx_.value(), 0);
+  EXPECT_EQ(client->stats().class_4xx_.value(), 0);
+  EXPECT_EQ(client->stats().class_5xx_.value(), 0);
+  EXPECT_EQ(client->stats().response_timeouts_.value(), 0);
+  // No client sockets are rudely closed by server / no client sockets are reset.
+  EXPECT_EQ(client->stats().remote_closes_.value(), 0);
 
   // assert that the callout server and origin server see every request
   EXPECT_EQ(findCluster(StressTest::ORIGIN_CLUSTER_NAME).requestsReceived(), requests_to_send);
   EXPECT_EQ(findCluster(callout_cluster_name).requestsReceived(), requests_to_send);
 
-  // dumpCounters(counters);
-
-  // And the wasm filter should have successfully created the callout_successes
-  // counter and received a successful gRPC response for every inbound request.
+  // And the wasm filter should have successfully created the callout_successes counter and received
+  // a successful gRPC response for every inbound request.
   EXPECT_EQ(counters["test_callout_successes"], requests_to_send);
 }
 
@@ -194,8 +192,8 @@ TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
   //
   // This test first sends a request from wasm to a callout cluster:
   //    Client -> Envoy -> Wasm -> Callout Cluster
-  // The callout cluster sends an error response which prevents Envoy from
-  // forwarding the data plane request to the origin cluster.
+  // The callout cluster sends an error response which prevents Envoy from forwarding the data plane
+  // request to the origin cluster.
   //
 
   addCluster(std::make_unique<ClusterHelper>(StressTest::ORIGIN_CLUSTER_NAME))
@@ -248,28 +246,28 @@ TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
   //
 
   // All client connections are successfully established.
-  EXPECT_EQ(client->connectSuccesses(), connections_to_initiate);
-  EXPECT_EQ(client->connectFailures(), 0);
+  EXPECT_EQ(client->stats().connect_successes_.value(), connections_to_initiate);
+  EXPECT_EQ(client->stats().connect_failures_.value(), 0);
   // Client close callback called for every client connection.
-  EXPECT_EQ(client->localCloses(), connections_to_initiate);
+  EXPECT_EQ(client->stats().local_closes_.value(), connections_to_initiate);
   // Client response callback is called for every request sent
-  EXPECT_EQ(client->responsesReceived(), requests_to_send);
+  EXPECT_EQ(client->stats().responses_received_.value(), requests_to_send);
   // Every response was a 5xx class
-  EXPECT_EQ(client->class2xxResponses(), 0);
-  EXPECT_EQ(client->class4xxResponses(), 0);
-  EXPECT_EQ(client->class5xxResponses(), requests_to_send);
-  EXPECT_EQ(client->responseTimeouts(), 0);
-  // No client sockets are rudely closed by server / no client sockets are
-  // reset.
-  EXPECT_EQ(client->remoteCloses(), 0);
+  EXPECT_EQ(client->stats().class_2xx_.value(), 0);
+  EXPECT_EQ(client->stats().class_3xx_.value(), 0);
+  EXPECT_EQ(client->stats().class_4xx_.value(), 0);
+  EXPECT_EQ(client->stats().class_5xx_.value(), requests_to_send);
+  EXPECT_EQ(client->stats().response_timeouts_.value(), 0);
+  // No client sockets are rudely closed by server / no client sockets are reset.
+  EXPECT_EQ(client->stats().remote_closes_.value(), 0);
 
-  // assert that the callout server saw every request and prevented the
-  // origin server from seeing it.
+  // assert that the callout server saw every request and prevented the origin server from seeing
+  // it.
   EXPECT_EQ(findCluster(StressTest::ORIGIN_CLUSTER_NAME).requestsReceived(), 0);
   EXPECT_EQ(findCluster(callout_cluster_name).requestsReceived(), requests_to_send);
 
-  // And the wasm filter should have successfully created the failure
-  // counter and received a gRPC error response for every inbound request.
+  // And the wasm filter should have successfully created the failure counter and received a gRPC
+  // error response for every inbound request.
   EXPECT_EQ(counters["test_callout_failures"], requests_to_send);
 }
 
@@ -363,20 +361,20 @@ TEST_P(HttpWasmStressTest, DISABLED_CalloutHappyPath) {
   //
 
   // All client connections are successfully established.
-  EXPECT_EQ(client->connectSuccesses(), connections_to_initiate);
-  EXPECT_EQ(client->connectFailures(), 0);
+  EXPECT_EQ(client->stats().connect_successes_.value(), connections_to_initiate);
+  EXPECT_EQ(client->stats().connect_failures_.value(), 0);
   // Client close callback called for every client connection.
-  EXPECT_EQ(client->localCloses(), connections_to_initiate);
+  EXPECT_EQ(client->stats().local_closes_.value(), connections_to_initiate);
   // Client response callback is called for every request sent
-  EXPECT_EQ(client->responsesReceived(), requests_to_send);
+  EXPECT_EQ(client->stats().responses_received_.value(), requests_to_send);
   // Every response was a 2xx class
-  EXPECT_EQ(client->class2xxResponses(), requests_to_send);
-  EXPECT_EQ(client->class4xxResponses(), 0);
-  EXPECT_EQ(client->class5xxResponses(), 0);
-  EXPECT_EQ(client->responseTimeouts(), 0);
-  // No client sockets are rudely closed by server / no client sockets are
-  // reset.
-  EXPECT_EQ(client->remoteCloses(), 0);
+  EXPECT_EQ(client->stats().class_2xx_.value(), requests_to_send);
+  EXPECT_EQ(client->stats().class_3xx_.value(), 0);
+  EXPECT_EQ(client->stats().class_4xx_.value(), 0);
+  EXPECT_EQ(client->stats().class_5xx_.value(), 0);
+  EXPECT_EQ(client->stats().response_timeouts_.value(), 0);
+  // No client sockets are rudely closed by server / no client sockets are reset.
+  EXPECT_EQ(client->stats().remote_closes_.value(), 0);
 
   // assert that the callout server and origin server see every request
   EXPECT_EQ(findCluster(StressTest::ORIGIN_CLUSTER_NAME).requestsReceived(), requests_to_send);

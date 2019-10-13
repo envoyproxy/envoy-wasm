@@ -464,11 +464,11 @@ LoadGenerator::LoadGenerator(Client& client, Network::TransportSocketFactory& so
     if (!response) {
       ENVOY_LOG(debug, "Connection({}:{}) timedout waiting for response", connection.name(),
                 connection.id());
-      ++response_timeouts_;
+      stats_->response_timeouts_.inc();
       return;
     }
 
-    ++responses_received_;
+    stats_->responses_received_.inc();
 
     uint64_t status = 0;
     auto str = std::string(response->Status()->value().getStringView());
@@ -496,17 +496,17 @@ LoadGenerator::LoadGenerator(Client& client, Network::TransportSocketFactory& so
   connect_callback_ = [this](ClientConnection& connection,
                              ClientConnectionState state) -> ClientCallbackResult {
     if (state == ClientConnectionState::IDLE) {
-      // This will result in a CloseReason::LOCAL_CLOSE passed to the
-      // close_callback
+      // This will result in a CloseReason::LOCAL_CLOSE passed to the close_callback
       return ClientCallbackResult::CLOSE;
     }
     // If ConnectionResult::SUCCESS:
 
-    ++connect_successes_;
+    stats_->connect_successes_.inc();
+    ++connections_established_;
 
     if (0 >= requests_remaining_--) {
-      // This will result in a ConnectionState::IDLE passed to this callback
-      // once all active streams have finished.
+      // This will result in a ConnectionState::IDLE passed to this callback once all active streams
+      // have finished.
       return ClientCallbackResult::CONTINUE;
     }
 
@@ -518,20 +518,19 @@ LoadGenerator::LoadGenerator(Client& client, Network::TransportSocketFactory& so
   close_callback_ = [this](ClientConnection&, ClientCloseReason reason) {
     switch (reason) {
     case ClientCloseReason::CONNECT_FAILED:
-      ++connect_failures_;
+      stats_->connect_failures_.inc();
       break;
     case ClientCloseReason::REMOTE_CLOSE:
-      ++remote_closes_;
+      stats_->remote_closes_.inc();
       break;
     case ClientCloseReason::LOCAL_CLOSE:
-      // We initiated this by responding to ConnectionState::IDLE with a
-      // CallbackResult::Close
-      ++local_closes_;
+      // We initiated this by responding to ConnectionState::IDLE with a CallbackResult::Close
+      stats_->local_closes_.inc();
       break;
     }
 
     // Unblock run() once we've seen a close for every connection initiated.
-    if (remote_closes_ + local_closes_ + connect_failures_ >= connections_to_initiate_) {
+    if (++connections_closed_ >= connections_to_initiate_) {
       promise_all_connections_closed_.set_value(true);
     }
   };
@@ -547,12 +546,8 @@ void LoadGenerator::run(uint32_t connections, uint32_t requests, Http::HeaderMap
   promise_all_connections_closed_ = std::promise<bool>();
   timeout_ = timeout;
   requests_remaining_ = requests_to_send_;
-  connect_failures_ = 0;
-  connect_successes_ = 0;
-  responses_received_ = 0;
-  response_timeouts_ = 0;
-  local_closes_ = 0;
-  remote_closes_ = 0;
+  connections_established_ = 0;
+  connections_closed_ = 0;
 
   client_.start(); // idempotent
 
@@ -569,12 +564,7 @@ void LoadGenerator::run(uint32_t connections, uint32_t requests, Http::HeaderMap
   promise_all_connections_closed_.get_future().get();
 }
 
-uint32_t LoadGenerator::connectFailures() const { return connect_failures_; }
-uint32_t LoadGenerator::connectSuccesses() const { return connect_successes_; }
-uint32_t LoadGenerator::responsesReceived() const { return responses_received_; }
-uint32_t LoadGenerator::responseTimeouts() const { return response_timeouts_; }
-uint32_t LoadGenerator::localCloses() const { return local_closes_; }
-uint32_t LoadGenerator::remoteCloses() const { return remote_closes_; }
+uint32_t LoadGenerator::connectionsEstablished() const { return connections_established_; }
 const LoadGenerator::Stats& LoadGenerator::stats() const { return *stats_; }
 
 } // namespace Stress
