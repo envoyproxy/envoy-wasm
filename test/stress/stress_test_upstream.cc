@@ -401,12 +401,12 @@ ServerCallbackHelper::ServerCallbackHelper(ServerRequestCallback&& request_callb
     request_callback_ = [this, request_callback = std::move(request_callback)](
                             ServerConnection& connection, ServerStream& stream,
                             Http::HeaderMapPtr&& request_headers) {
-      ++requests_received_;
+      stats_->requests_received_.inc();
       request_callback(connection, stream, std::move(request_headers));
     };
   } else {
     request_callback_ = [this](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
-      ++requests_received_;
+      stats_->requests_received_.inc();
       Http::TestHeaderMapImpl response{{":status", "200"}};
       stream.sendResponseHeaders(response);
     };
@@ -415,12 +415,20 @@ ServerCallbackHelper::ServerCallbackHelper(ServerRequestCallback&& request_callb
   if (accept_callback) {
     accept_callback_ = [this, accept_callback = std::move(accept_callback)](
                            ServerConnection& connection) -> ServerCallbackResult {
-      ++accepts_;
+      {
+        absl::MutexLock lock(&mutex_);
+        ++connections_accepted_;
+      }
+      stats_->accepts_.inc();
       return accept_callback(connection);
     };
   } else {
     accept_callback_ = [this](ServerConnection&) -> ServerCallbackResult {
-      ++accepts_;
+      {
+        absl::MutexLock lock(&mutex_);
+        ++connections_accepted_;
+      }
+      stats_->accepts_.inc();
       return ServerCallbackResult::CONTINUE;
     };
   }
@@ -428,14 +436,17 @@ ServerCallbackHelper::ServerCallbackHelper(ServerRequestCallback&& request_callb
   if (close_callback) {
     close_callback_ = [this, close_callback = std::move(close_callback)](
                           ServerConnection& connection, ServerCloseReason reason) {
-      absl::MutexLock lock(&mutex_);
+      {
+        absl::MutexLock lock(&mutex_);
+        ++connections_closed_;
+      }
 
       switch (reason) {
       case ServerCloseReason::REMOTE_CLOSE:
-        ++remote_closes_;
+        stats_->remote_closes_.inc();
         break;
       case ServerCloseReason::LOCAL_CLOSE:
-        ++local_closes_;
+        stats_->local_closes_.inc();
         break;
       }
 
@@ -443,32 +454,21 @@ ServerCallbackHelper::ServerCallbackHelper(ServerRequestCallback&& request_callb
     };
   } else {
     close_callback_ = [this](ServerConnection&, ServerCloseReason reason) {
-      absl::MutexLock lock(&mutex_);
+      {
+        absl::MutexLock lock(&mutex_);
+        ++connections_closed_;
+      }
 
       switch (reason) {
       case ServerCloseReason::REMOTE_CLOSE:
-        ++remote_closes_;
+        stats_->remote_closes_.inc();
         break;
       case ServerCloseReason::LOCAL_CLOSE:
-        ++local_closes_;
+        stats_->local_closes_.inc();
         break;
       }
     };
   }
-}
-
-uint32_t ServerCallbackHelper::connectionsAccepted() const { return accepts_; }
-
-uint32_t ServerCallbackHelper::requestsReceived() const { return requests_received_; }
-
-uint32_t ServerCallbackHelper::localCloses() const {
-  absl::MutexLock lock(&mutex_);
-  return local_closes_;
-}
-
-uint32_t ServerCallbackHelper::remoteCloses() const {
-  absl::MutexLock lock(&mutex_);
-  return remote_closes_;
 }
 
 ServerAcceptCallback ServerCallbackHelper::acceptCallback() const { return accept_callback_; }
@@ -477,9 +477,9 @@ ServerRequestCallback ServerCallbackHelper::requestCallback() const { return req
 
 ServerCloseCallback ServerCallbackHelper::closeCallback() const { return close_callback_; }
 
-void ServerCallbackHelper::wait(uint32_t connections_closed) {
-  auto constraints = [connections_closed, this]() {
-    return connections_closed <= local_closes_ + remote_closes_;
+void ServerCallbackHelper::wait(uint32_t connections_to_close) {
+  auto constraints = [connections_to_close, this]() {
+    return connections_to_close <= connections_closed_;
   };
 
   absl::MutexLock lock(&mutex_);
@@ -487,17 +487,22 @@ void ServerCallbackHelper::wait(uint32_t connections_closed) {
 }
 
 void ServerCallbackHelper::wait() {
-  auto constraints = [this]() { return accepts_ <= local_closes_ + remote_closes_; };
+  auto constraints = [this]() { return connections_accepted_ <= connections_closed_; };
 
   absl::MutexLock lock(&mutex_);
   mutex_.Await(absl::Condition(&constraints));
 }
 
+const ServerCallbackHelper::Stats& ServerCallbackHelper::stats() const { return *stats_; }
+
+void ServerCallbackHelper::initStats(std::unique_ptr<Stats>&& stats) { stats_ = std::move(stats); }
+
 Server::Server(const std::string& name, Network::Socket& listening_socket,
                Network::TransportSocketFactory& transport_socket_factory,
                Http::CodecClient::Type http_type)
-    : name_(name), stats_(), time_system_(),
-      api_(Thread::threadFactoryForTest(), stats_, time_system_, Filesystem::fileSystemForTest()),
+    : name_(name), stats_store_(), time_system_(),
+      api_(Thread::threadFactoryForTest(), stats_store_, time_system_,
+           Filesystem::fileSystemForTest()),
       dispatcher_(api_.allocateDispatcher()),
       connection_handler_(new Envoy::Server::ConnectionHandlerImpl(*dispatcher_, "stress_server")),
       thread_(nullptr), listening_socket_(listening_socket),
@@ -532,6 +537,11 @@ void Server::start(ServerAcceptCallback&& accept_callback, ServerRequestCallback
 
 void Server::start(ServerCallbackHelper& helper) {
   start(helper.acceptCallback(), helper.requestCallback(), helper.closeCallback());
+
+  post([this, &helper]() {
+    helper.initStats(std::make_unique<ServerCallbackHelper::Stats>(ServerCallbackHelper::Stats{
+        ALL_SERVER_HELPER_STATS(POOL_COUNTER_PREFIX(stats_store_, name_ + "."))}));
+  });
 }
 
 void Server::stop() {
@@ -553,11 +563,13 @@ void Server::startAcceptingConnections() {
   connection_handler_->enableListeners();
 }
 
-const Stats::Store& Server::statsStore() const { return stats_; }
+const Stats::Store& Server::statsStore() const { return stats_store_; }
 
 void Server::setPerConnectionBufferLimitBytes(uint32_t limit) {
   connection_buffer_limit_bytes_ = limit;
 }
+
+void Server::post(std::function<void()> callback) { dispatcher_->post(callback); }
 
 //
 // Network::ListenerConfig
@@ -583,7 +595,7 @@ std::chrono::milliseconds Server::listenerFiltersTimeout() const {
 
 bool Server::continueOnListenerFiltersTimeout() const { return false; }
 
-Stats::Scope& Server::listenerScope() { return stats_; }
+Stats::Scope& Server::listenerScope() { return stats_store_; }
 
 uint64_t Server::listenerTag() const { return 0; }
 
@@ -600,9 +612,9 @@ bool Server::createNetworkFilterChain(Network::Connection& network_connection,
   uint32_t id = connection_counter_++;
   ENVOY_LOG(debug, "Server({}) accepted new Connection({}:{})", name_, name_, id);
 
-  ServerConnectionSharedPtr connection =
-      std::make_shared<ServerConnection>(name_, id, request_callback_, close_callback_,
-                                         network_connection, *dispatcher_, http_type_, stats_);
+  ServerConnectionSharedPtr connection = std::make_shared<ServerConnection>(
+      name_, id, request_callback_, close_callback_, network_connection, *dispatcher_, http_type_,
+      stats_store_);
   network_connection.addReadFilter(connection);
   network_connection.addConnectionCallbacks(*connection);
 
@@ -629,50 +641,18 @@ const std::vector<ServerCallbackHelperPtr>& ClusterHelper::servers() const {
 
 std::vector<ServerCallbackHelperPtr>& ClusterHelper::servers() { return server_callback_helpers_; }
 
-uint32_t ClusterHelper::connectionsAccepted() const {
-  uint32_t total = 0U;
-
-  for (const auto& server_callback_helper : server_callback_helpers_) {
-    total += server_callback_helper->connectionsAccepted();
-  }
-
-  return total;
-}
-
-uint32_t ClusterHelper::requestsReceived() const {
-  uint32_t total = 0U;
-
-  for (const auto& server_callback_helper : server_callback_helpers_) {
-    total += server_callback_helper->requestsReceived();
-  }
-
-  return total;
-}
-
-uint32_t ClusterHelper::localCloses() const {
-  uint32_t total = 0U;
-
-  for (const auto& server_callback_helper : server_callback_helpers_) {
-    total += server_callback_helper->localCloses();
-  }
-
-  return total;
-}
-
-uint32_t ClusterHelper::remoteCloses() const {
-  uint32_t total = 0U;
-
-  for (const auto& server_callback_helper : server_callback_helpers_) {
-    total += server_callback_helper->remoteCloses();
-  }
-
-  return total;
-}
-
 void ClusterHelper::wait() {
   for (auto& server_callback_helper : server_callback_helpers_) {
     server_callback_helper->wait();
   }
+}
+
+uint64_t ClusterHelper::requestsReceived() const {
+  uint64_t requests_received = 0UL;
+  for (auto& server_callback_helper : server_callback_helpers_) {
+    requests_received += server_callback_helper->stats().requests_received_.value();
+  }
+  return requests_received;
 }
 
 } // namespace Stress

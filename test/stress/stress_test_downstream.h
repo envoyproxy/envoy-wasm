@@ -293,11 +293,12 @@ private:
   ClientResponseCallback response_callback_;
   ClientCloseCallback close_callback_;
   std::chrono::milliseconds timeout_{std::chrono::milliseconds(0)};
+  // Counters needed for control flow are not implemented as stats.
   std::atomic<int32_t> requests_remaining_{0};
   std::atomic<uint32_t> connections_established_{0};
   std::atomic<uint32_t> connections_closed_{0};
-  std::promise<bool> promise_all_connections_closed_;
   std::unique_ptr<Stats> stats_;
+  std::promise<bool> promise_all_connections_closed_;
 };
 
 typedef std::unique_ptr<LoadGenerator> LoadGeneratorPtr;

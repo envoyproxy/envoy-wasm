@@ -198,14 +198,23 @@ public:
   void operator=(const LocalListenSocket&) = delete;
 };
 
+#define ALL_SERVER_HELPER_STATS(COUNTER)                                                           \
+  COUNTER(accepts)                                                                                 \
+  COUNTER(requests_received)                                                                       \
+  COUNTER(local_closes)                                                                            \
+  COUNTER(remote_closes)
+
 /**
- * A convenience class for passing callbacks to a Server. If no callbacks are
- * provided, default callbacks that track some simple metrics will be used. If
- * callbacks are provided, they will be wrapped with callbacks that maintain the
- * same simple set of metrics.
+ * A convenience class for passing callbacks to a Server. If no callbacks are provided, default
+ * callbacks that track some simple metrics will be used. If callbacks are provided, they will be
+ * wrapped with callbacks that maintain the same simple set of metrics.
  */
 class ServerCallbackHelper {
 public:
+  struct Stats {
+    ALL_SERVER_HELPER_STATS(GENERATE_COUNTER_STRUCT)
+  };
+
   explicit ServerCallbackHelper(ServerRequestCallback&& request_callback = nullptr,
                                 ServerAcceptCallback&& accept_callback = nullptr,
                                 ServerCloseCallback&& close_callback = nullptr);
@@ -213,19 +222,17 @@ public:
   ServerCallbackHelper& operator=(const ServerCallbackHelper&) = delete;
   virtual ~ServerCallbackHelper() = default;
 
-  uint32_t connectionsAccepted() const;
-  uint32_t requestsReceived() const;
-  uint32_t localCloses() const;
-  uint32_t remoteCloses() const;
   ServerAcceptCallback acceptCallback() const;
   ServerRequestCallback requestCallback() const;
   ServerCloseCallback closeCallback() const;
 
   /*
-   * Wait until the server has accepted n connections and seen them closed (due
-   * to error or client close)
+   * Wait until the server has accepted n connections and seen them closed (due to error or client
+   * close)
+   *
+   * @param connections_to_close Wait for this number of connections to close before returning.
    */
-  void wait(uint32_t connections);
+  void wait(uint32_t connections_to_close);
 
   /*
    * Wait until the server has seen a close for every connection it has
@@ -233,15 +240,23 @@ public:
    */
   void wait();
 
+  /**
+   * Access the metrics maintained by the server.
+   *
+   * @return The server's metrics
+   */
+  const Stats& stats() const;
+
+  void initStats(std::unique_ptr<Stats>&& stats);
+
 private:
   ServerAcceptCallback accept_callback_;
   ServerRequestCallback request_callback_;
   ServerCloseCallback close_callback_;
-
-  std::atomic<uint32_t> accepts_{0};
-  std::atomic<uint32_t> requests_received_{0};
-  uint32_t local_closes_{0};
-  uint32_t remote_closes_{0};
+  // Counters needed for control flow are not implemented as stats.
+  uint32_t connections_accepted_{0};
+  uint32_t connections_closed_{0};
+  std::unique_ptr<Stats> stats_;
   mutable absl::Mutex mutex_;
 };
 
@@ -274,6 +289,13 @@ public:
   const Stats::Store& statsStore() const;
 
   void setPerConnectionBufferLimitBytes(uint32_t limit);
+
+  /**
+   * Execute something on the server's dispatcher's background thread.
+   *
+   * @param callback The callback to execute
+   */
+  void post(std::function<void()> callback);
 
   //
   // Network::ListenerConfig
@@ -325,7 +347,7 @@ public:
 
 private:
   std::string name_;
-  Stats::IsolatedStoreImpl stats_;
+  Stats::IsolatedStoreImpl stats_store_;
   Event::TestRealTimeSystem time_system_;
   Api::Impl api_;
   Event::DispatcherPtr dispatcher_;
@@ -375,12 +397,9 @@ public:
 
   inline const std::string& name() const { return name_; }
 
-  uint32_t connectionsAccepted() const;
-  uint32_t requestsReceived() const;
-  uint32_t localCloses() const;
-  uint32_t remoteCloses() const;
-
   void wait();
+
+  uint64_t requestsReceived() const;
 
 private:
   std::string name_;

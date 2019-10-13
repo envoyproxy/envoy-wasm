@@ -106,13 +106,14 @@ TEST_P(StressTestSelfTest, HappyPath) {
     EXPECT_EQ(load_generator.stats().response_timeouts_.value(), 0);
 
     // Server accept callback is called for every client connection initiated.
-    EXPECT_EQ(server_callbacks.connectionsAccepted(), connections_to_initiate);
+    EXPECT_EQ(server_callbacks.stats().accepts_.value(), connections_to_initiate);
     // Server request callback is called for every client request sent
-    EXPECT_EQ(server_callbacks.requestsReceived(), requests_to_send);
+    EXPECT_EQ(server_callbacks.stats().requests_received_.value(), requests_to_send);
     // Server does not close its own sockets but instead relies on the client to initiate the close
-    EXPECT_EQ(0, server_callbacks.localCloses());
+    EXPECT_EQ(server_callbacks.stats().local_closes_.value(), 0);
     // Server sees a client-initiated close for every socket it accepts
-    EXPECT_EQ(server_callbacks.remoteCloses(), server_callbacks.connectionsAccepted());
+    EXPECT_EQ(server_callbacks.stats().remote_closes_.value(),
+              server_callbacks.stats().accepts_.value());
   } catch (Network::SocketBindException& ex) {
     if (Network::Address::IpVersion::v6 == ip_version_) {
       ENVOY_LOG(info, "Environment does not support IPv6, skipping test");
@@ -176,12 +177,13 @@ TEST_P(StressTestSelfTest, AcceptAndClose) {
     EXPECT_EQ(load_generator.stats().response_timeouts_.value(), 0);
 
     // Server accept callback is called for every client connection initiated.
-    EXPECT_EQ(server_callbacks.connectionsAccepted(), connections_to_initiate);
+    EXPECT_EQ(server_callbacks.stats().accepts_.value(), connections_to_initiate);
     // Server request callback is never called
-    EXPECT_EQ(server_callbacks.requestsReceived(), 0);
+    EXPECT_EQ(server_callbacks.stats().requests_received_.value(), 0);
     // Server closes every connection
-    EXPECT_EQ(server_callbacks.connectionsAccepted(), server_callbacks.localCloses());
-    EXPECT_EQ(server_callbacks.remoteCloses(), 0);
+    EXPECT_EQ(server_callbacks.stats().accepts_.value(),
+              server_callbacks.stats().local_closes_.value());
+    EXPECT_EQ(server_callbacks.stats().remote_closes_.value(), 0);
   } catch (Network::SocketBindException& ex) {
     if (Network::Address::IpVersion::v6 == ip_version_) {
       ENVOY_LOG(info, "Environment does not support IPv6, skipping test");
@@ -246,12 +248,13 @@ TEST_P(StressTestSelfTest, SlowResponse) {
     EXPECT_EQ(load_generator.stats().class_5xx_.value(), 0);
 
     // Server accept callback is called for every client connection initiated.
-    EXPECT_EQ(server_callbacks.connectionsAccepted(), connections_to_initiate);
+    EXPECT_EQ(server_callbacks.stats().accepts_.value(), connections_to_initiate);
     // Server receives a request on each connection
-    EXPECT_EQ(server_callbacks.requestsReceived(), connections_to_initiate);
+    EXPECT_EQ(server_callbacks.stats().requests_received_.value(), connections_to_initiate);
     // Server sees that the client closes each connection after it gives up
-    EXPECT_EQ(server_callbacks.connectionsAccepted(), server_callbacks.remoteCloses());
-    EXPECT_EQ(0, server_callbacks.localCloses());
+    EXPECT_EQ(server_callbacks.stats().accepts_.value(),
+              server_callbacks.stats().remote_closes_.value());
+    EXPECT_EQ(server_callbacks.stats().local_closes_.value(), 0);
   } catch (Network::SocketBindException& ex) {
     if (Network::Address::IpVersion::v6 == ip_version_) {
       ENVOY_LOG(info, "Environment does not support IPv6, skipping test");
@@ -363,11 +366,10 @@ TEST_P(StressTestSelfTest, NoAccept) {
     EXPECT_EQ(load_generator.stats().class_5xx_.value(), 0);
 
     // From the server point of view, nothing happened
-    EXPECT_EQ(server_callbacks.connectionsAccepted(), 0);
-    EXPECT_EQ(server_callbacks.requestsReceived(), 0);
-    EXPECT_EQ(server_callbacks.connectionsAccepted(), 0);
-    EXPECT_EQ(server_callbacks.remoteCloses(), 0);
-    EXPECT_EQ(server_callbacks.localCloses(), 0);
+    EXPECT_EQ(server_callbacks.stats().accepts_.value(), 0);
+    EXPECT_EQ(server_callbacks.stats().requests_received_.value(), 0);
+    EXPECT_EQ(server_callbacks.stats().remote_closes_.value(), 0);
+    EXPECT_EQ(server_callbacks.stats().local_closes_.value(), 0);
   } catch (Network::SocketBindException& ex) {
     if (Network::Address::IpVersion::v6 == ip_version_) {
       ENVOY_LOG(info, "Environment does not support IPv6, skipping test");
