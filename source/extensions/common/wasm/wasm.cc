@@ -2790,17 +2790,17 @@ static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_confi
   auto callback = [wasm, cb, source, allow_precompiled = vm_config.allow_precompiled(),
                    context_ptr = root_context_for_testing ? root_context_for_testing.release()
                                                           : nullptr](const std::string& code) {
+    std::unique_ptr<Context> context(context_ptr);
     if (code.empty()) {
       throw WasmException(fmt::format("Failed to load WASM code from {}", source));
     }
     if (!wasm->initialize(code, allow_precompiled)) {
       throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
     }
-    if (!context_ptr) {
+    if (!context) {
       wasm->start();
     } else {
-      std::unique_ptr<Context> ctx(context_ptr);
-      wasm->startForTesting(std::move(ctx));
+      wasm->startForTesting(std::move(context));
     }
     cb(wasm);
   };
