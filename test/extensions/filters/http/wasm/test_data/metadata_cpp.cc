@@ -23,7 +23,7 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
 void ExampleRootContext::onTick() {
   std::string value;
   if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
-    logDebug("missing node metadata");
+    logDebug("missing node metadata in onTick");
   }
   logDebug(std::string("onTick ") + value);
 }
@@ -31,7 +31,7 @@ void ExampleRootContext::onTick() {
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
   std::string value;
   if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
-    logDebug("missing node metadata");
+    logDebug("missing node metadata in onRequestHeaders");
   }
   auto r = setFilterStateStringValue("wasm_request_set_key", "wasm_request_set_value");
   if (r != WasmResult::Ok) {
@@ -47,7 +47,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
   std::string value;
   if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
-    logDebug("missing node metadata");
+    logDebug("missing node metadata in onRequestBody");
   }
   logError(std::string("onRequestBody ") + value);
   std::string request_string;
