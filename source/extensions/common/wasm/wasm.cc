@@ -2787,12 +2787,9 @@ static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_confi
                  .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
   }
 
-  Context* context_ptr = nullptr;
-  if (root_context_for_testing) {
-    context_ptr = root_context_for_testing.release();
-  }
   auto callback = [wasm, cb, source, allow_precompiled = vm_config.allow_precompiled(),
-                   context_ptr](const std::string& code) {
+                   context_ptr = root_context_for_testing ? root_context_for_testing.release()
+                                                          : nullptr](const std::string& code) {
     if (code.empty()) {
       throw WasmException(fmt::format("Failed to load WASM code from {}", source));
     }
