@@ -20,26 +20,26 @@ namespace Wasm {
 thread_local Envoy::Extensions::Common::Wasm::Context* current_context_ = nullptr;
 thread_local uint32_t effective_context_id_ = 0;
 
-std::unique_ptr<WasmVm> createWasmVm(absl::string_view wasm_vm) {
-  if (wasm_vm.empty()) {
+WasmVmPtr createWasmVm(absl::string_view runtime) {
+  if (runtime.empty()) {
     throw WasmVmException("Failed to create WASM VM with unspecified runtime.");
-  } else if (wasm_vm == WasmRuntimeNames::get().Null) {
+  } else if (runtime == WasmRuntimeNames::get().Null) {
     return Null::createVm();
   } else
 #ifdef ENVOY_WASM_V8
-      if (wasm_vm == WasmRuntimeNames::get().v8) {
+      if (runtime == WasmRuntimeNames::get().v8) {
     return V8::createVm();
   } else
 #endif
 #ifdef ENVOY_WASM_WAVM
-      if (wasm_vm == WasmRuntimeNames::get().Wavm) {
+      if (runtime == WasmRuntimeNames::get().Wavm) {
     return Wavm::createVm();
   } else
 #endif
   {
     throw WasmVmException(fmt::format(
         "Failed to create WASM VM using {} runtime. Envoy was compiled without support for it.",
-        wasm_vm));
+        runtime));
   }
 }
 

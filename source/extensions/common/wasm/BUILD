@@ -57,7 +57,7 @@ envoy_cc_library(
         "//source/common/config:datasource_lib",
         "//source/common/stats:symbol_table_lib",
         "//source/extensions/filters/http:well_known_names",
-        "@envoy_api//envoy/config/filter/http/wasm/v2:wasm_cc",
+        "@envoy_api//envoy/config/filter/http/wasm/v2:pkg_cc_proto",
     ],
 )
 

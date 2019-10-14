@@ -1519,7 +1519,7 @@ uint32_t Context::getHeaderMapSize(HeaderMapType type) {
   if (!map) {
     return 0;
   }
-  return map->byteSize();
+  return map->refreshByteSize();
 }
 
 // Body Buffer
@@ -1635,9 +1635,9 @@ uint32_t Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_service
   // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
   // returns. Consequently the grpc_request is not available. Attempting to close or reset from that
   // callback will fail.
-  auto grpc_request =
-      grpc_client->sendRaw(service_name, method_name, std::make_unique<Buffer::OwnedImpl>(request),
-                           handler, Tracing::NullSpan::instance(), timeout);
+  auto grpc_request = grpc_client->sendRaw(
+      service_name, method_name, std::make_unique<Buffer::OwnedImpl>(request), handler,
+      Tracing::NullSpan::instance(), Http::AsyncClient::RequestOptions().setTimeout(timeout));
   if (!grpc_request) {
     grpc_call_request_.erase(token);
     return 0;
@@ -1674,7 +1674,8 @@ uint32_t Context::grpcStream(const envoy::api::v2::core::GrpcService& grpc_servi
   // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
   // returns. Consequently the grpc_stream is not available. Attempting to close or reset from that
   // callback will fail.
-  auto grpc_stream = grpc_client->startRaw(service_name, method_name, handler);
+  auto grpc_stream = grpc_client->startRaw(service_name, method_name, handler,
+                                           Http::AsyncClient::RequestOptions());
   if (!grpc_stream) {
     grpc_stream_.erase(token);
     return 0;
@@ -1985,7 +1986,7 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
 }
 
 WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
-  auto stat_name = wasm_->stat_name_set_.getDynamic(name);
+  auto stat_name = wasm_->stat_name_set_->getDynamic(name);
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
     auto c = &plugin_->scope_.counterFromStatName(stat_name);
@@ -2087,7 +2088,7 @@ Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_c
     : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)),
       creating_plugin_(plugin), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(creating_plugin_->scope_.symbolTable()) {}
+      stat_name_set_(creating_plugin_->scope_.symbolTable().makeSet("Wasm").release()) {}
 
 std::string Plugin::makeLogPrefix() const {
   std::string prefix;
@@ -2278,10 +2279,17 @@ Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
       creating_plugin_(wasm.creating_plugin_), cluster_manager_(wasm.cluster_manager_),
       dispatcher_(dispatcher), time_source_(dispatcher.timeSource()),
-      stat_name_set_(creating_plugin_->scope_.symbolTable()) {
-  wasm_vm_ = wasm.wasmVm()->clone();
-  vm_context_ = std::make_shared<Context>(this);
-  getFunctions();
+      stat_name_set_(wasm.stat_name_set_) {
+  if (wasm.wasmVm()->cloneable()) {
+    wasm_vm_ = wasm.wasmVm()->clone();
+    vm_context_ = std::make_shared<Context>(this);
+    getFunctions();
+  } else {
+    wasm_vm_ = Common::Wasm::createWasmVm(wasm.wasmVm()->runtime());
+    if (!initialize(wasm.code(), wasm.allow_precompiled())) {
+      throw WasmException("Failed to initialize WASM code");
+    }
+  }
 }
 
 bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
@@ -2827,20 +2835,8 @@ void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
 
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
                                             Event::Dispatcher& dispatcher) {
-  std::shared_ptr<Wasm> wasm;
-  Context* root_context;
-  if (base_wasm.wasmVm()->cloneable()) {
-    wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
-    root_context = wasm->start();
-  } else {
-    wasm = std::make_shared<Wasm>(base_wasm.wasmVm()->runtime(), base_wasm.vm_id(),
-                                  base_wasm.vm_configuration(), base_wasm.creating_plugin(),
-                                  base_wasm.clusterManager(), dispatcher);
-    if (!wasm->initialize(base_wasm.code(), base_wasm.allow_precompiled())) {
-      throw WasmException("Failed to initialize WASM code");
-    }
-    root_context = wasm->start();
-  }
+  auto wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
+  Context* root_context = wasm->start();
   if (!wasm->configure(root_context, configuration)) {
     throw WasmException("Failed to configure WASM code");
   }

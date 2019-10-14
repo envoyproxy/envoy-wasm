@@ -6,9 +6,11 @@ option java_outer_classname = "WasmProto";
 option java_multiple_files = true;
 option java_package = "io.envoyproxy.envoy.config.accesslog.v2";
 
-import "validate/validate.proto";
-import "google/protobuf/struct.proto";
 import "envoy/config/wasm/v2/wasm.proto";
+
+import "google/protobuf/struct.proto";
+
+import "validate/validate.proto";
 
 // [#protodoc-title: Wasm access log]
 
@@ -16,5 +18,5 @@ import "envoy/config/wasm/v2/wasm.proto";
 // that calls into a WASM VM. Configures the built-in *envoy.wasm_access_log*
 // AccessLog.
 message WasmAccessLog {
-  envoy.config.wasm.v2.PluginConfig config = 1;
+  wasm.v2.PluginConfig config = 1;
 }

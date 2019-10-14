@@ -11,7 +11,7 @@ namespace Common {
 namespace Wasm {
 namespace Null {
 namespace Plugin {
-using LogLevel = Envoy::Logger::Logger::levels;
+using LogLevel = Envoy::Logger::Logger::Levels;
 using FilterStatus = Network::FilterStatus;
 using FilterHeadersStatus = Http::FilterHeadersStatus;
 using FilterMetadataStatus = Http::FilterMetadataStatus;

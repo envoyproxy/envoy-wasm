@@ -132,6 +132,36 @@ private:
 
 // Helper functions.
 
+static std::string printValue(const wasm::Val& value) {
+  switch (value.kind()) {
+  case wasm::I32:
+    return std::to_string(value.get<uint32_t>());
+  case wasm::I64:
+    return std::to_string(value.get<uint64_t>());
+  case wasm::F32:
+    return std::to_string(value.get<float>());
+  case wasm::F64:
+    return std::to_string(value.get<double>());
+  default:
+    return "unknown";
+  }
+}
+
+static std::string printValues(const wasm::Val values[], size_t size) {
+  if (size == 0) {
+    return "";
+  }
+
+  std::string s;
+  for (size_t i = 0; i < size; i++) {
+    if (i) {
+      s.append(", ");
+    }
+    s.append(printValue(values[i]));
+  }
+  return s;
+}
+
 static const char* printValKind(wasm::ValKind kind) {
   switch (kind) {
   case wasm::I32:
@@ -186,7 +216,7 @@ static uint32_t parseVarint(const byte_t*& pos, const byte_t* end) {
   byte_t b;
   do {
     if (pos + 1 > end) {
-      throw WasmException("Failed to parse corrupted WASM module");
+      throw WasmVmException("Failed to parse corrupted WASM module");
     }
     b = *pos++;
     n += (b & 0x7f) << shift;
@@ -266,18 +296,18 @@ absl::string_view V8::getUserSection(absl::string_view name) {
   const byte_t* pos = source_.get() + 8; // skip header
   while (pos < end) {
     if (pos + 1 > end) {
-      throw WasmException("Failed to parse corrupted WASM module");
+      throw WasmVmException("Failed to parse corrupted WASM module");
     }
     auto type = *pos++;
     auto rest = parseVarint(pos, end);
     if (pos + rest > end) {
-      throw WasmException("Failed to parse corrupted WASM module");
+      throw WasmVmException("Failed to parse corrupted WASM module");
     }
     if (type == 0 /* custom section */) {
       auto start = pos;
       auto len = parseVarint(pos, end);
       if (pos + len > end) {
-        throw WasmException("Failed to parse corrupted WASM module");
+        throw WasmVmException("Failed to parse corrupted WASM module");
       }
       pos += len;
       rest -= (pos - start);
@@ -325,7 +355,7 @@ void V8::link(absl::string_view debug_name, bool needs_emscripten) {
             equalValTypes(import_type->func()->results(), func->type()->results())) {
           imports.push_back(func);
         } else {
-          throw WasmException(fmt::format(
+          throw WasmVmException(fmt::format(
               "Failed to load WASM module due to an import type mismatch: {}.{}, "
               "want: {} -> {}, but host exports: {} -> {}",
               module, name, printValTypes(import_type->func()->params()),
@@ -333,7 +363,7 @@ void V8::link(absl::string_view debug_name, bool needs_emscripten) {
               printValTypes(func->type()->results())));
         }
       } else {
-        throw WasmException(
+        throw WasmVmException(
             fmt::format("Failed to load WASM module due to a missing import: {}.{}", module, name));
       }
     } break;
@@ -355,7 +385,7 @@ void V8::link(absl::string_view debug_name, bool needs_emscripten) {
       if (global) {
         imports.push_back(global);
       } else {
-        throw WasmException(
+        throw WasmVmException(
             fmt::format("Failed to load WASM module due to a missing import: {}.{}", module, name));
       }
     } break;
@@ -479,7 +509,8 @@ void V8::callModuleFunction(Context* context, absl::string_view function_name,
 
 void V8::callModuleFunction(Context* context, absl::string_view function_name,
                             const wasm::Func* func, const wasm::Val args[], wasm::Val results[]) {
-  ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", function_name);
+  // TODO(PiotrSikora): print params when/if needed (all relevant callers are void(void)).
+  ENVOY_LOG(trace, "[wasm] [host->vm] {}({})", function_name, args ? "???" : "");
 
   SaveRestoreContext _saved_context(context);
   auto trap = func->call(args, results);
@@ -488,6 +519,9 @@ void V8::callModuleFunction(Context* context, absl::string_view function_name,
         fmt::format("Function: {} failed: {}", function_name,
                     absl::string_view(trap->message().get(), trap->message().size())));
   }
+
+  // TODO(PiotrSikora): print return values when/if needed (all relevant callers are void(void)).
+  ENVOY_LOG(trace, "[wasm] [host<-vm] {} return: {}", function_name, results ? "???" : "void");
 }
 
 uint64_t V8::getMemorySize() {
@@ -571,11 +605,13 @@ void V8::registerHostFunctionImpl(absl::string_view module_name, absl::string_vi
       store_.get(), type.get(),
       [](void* data, const wasm::Val params[], wasm::Val[]) -> wasm::own<wasm::Trap> {
         auto func_data = reinterpret_cast<FuncData*>(data);
-        ENVOY_LOG(trace, "[wasm] callHostFunction(\"{}\")", func_data->name);
+        ENVOY_LOG(trace, "[wasm] [vm->host] {}({})", func_data->name,
+                  printValues(params, std::tuple_size<std::tuple<Args...>>::value));
         auto args_tuple = convertValTypesToArgsTuple<std::tuple<Args...>>(params);
         auto args = std::tuple_cat(std::make_tuple(current_context_), args_tuple);
         auto function = reinterpret_cast<void (*)(void*, Args...)>(func_data->raw_func);
         absl::apply(function, args);
+        ENVOY_LOG(trace, "[wasm] [vm<-host] {} return: void", func_data->name);
         return nullptr;
       },
       data.get());
@@ -595,12 +631,14 @@ void V8::registerHostFunctionImpl(absl::string_view module_name, absl::string_vi
       store_.get(), type.get(),
       [](void* data, const wasm::Val params[], wasm::Val results[]) -> wasm::own<wasm::Trap> {
         auto func_data = reinterpret_cast<FuncData*>(data);
-        ENVOY_LOG(trace, "[wasm] callHostFunction(\"{}\")", func_data->name);
+        ENVOY_LOG(trace, "[wasm] [vm->host] {}({})", func_data->name,
+                  printValues(params, sizeof...(Args)));
         auto args_tuple = convertValTypesToArgsTuple<std::tuple<Args...>>(params);
         auto args = std::tuple_cat(std::make_tuple(current_context_), args_tuple);
         auto function = reinterpret_cast<R (*)(void*, Args...)>(func_data->raw_func);
         R rvalue = absl::apply(function, args);
         results[0] = makeVal(rvalue);
+        ENVOY_LOG(trace, "[wasm] [vm<-host] {} return: {}", func_data->name, rvalue);
         return nullptr;
       },
       data.get());
@@ -624,15 +662,17 @@ void V8::getModuleFunctionImpl(absl::string_view function_name,
     throw WasmVmException(fmt::format("Bad function signature for: {}", function_name));
   }
   *function = [func, function_name](Context* context, Args... args) -> void {
-    ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", function_name);
-    SaveRestoreContext _saved_context(context);
     wasm::Val params[] = {makeVal(args)...};
+    ENVOY_LOG(trace, "[wasm] [host->vm] {}({})", function_name,
+              printValues(params, sizeof...(Args)));
+    SaveRestoreContext _saved_context(context);
     auto trap = func->call(params, nullptr);
     if (trap) {
       throw WasmVmException(
           fmt::format("Function: {} failed: {}", function_name,
                       absl::string_view(trap->message().get(), trap->message().size())));
     }
+    ENVOY_LOG(trace, "[wasm] [host<-vm] {} return: void", function_name);
   };
 }
 
@@ -651,9 +691,10 @@ void V8::getModuleFunctionImpl(absl::string_view function_name,
     throw WasmVmException(fmt::format("Bad function signature for: {}", function_name));
   }
   *function = [func, function_name](Context* context, Args... args) -> R {
-    ENVOY_LOG(trace, "[wasm] callModuleFunction(\"{}\")", function_name);
-    SaveRestoreContext _saved_context(context);
     wasm::Val params[] = {makeVal(args)...};
+    ENVOY_LOG(trace, "[wasm] [host->vm] {}({})", function_name,
+              printValues(params, sizeof...(Args)));
+    SaveRestoreContext _saved_context(context);
     wasm::Val results[1];
     auto trap = func->call(params, results);
     if (trap) {
@@ -662,6 +703,7 @@ void V8::getModuleFunctionImpl(absl::string_view function_name,
                       absl::string_view(trap->message().get(), trap->message().size())));
     }
     R rvalue = results[0].get<typename ConvertWordTypeToUint32<R>::type>();
+    ENVOY_LOG(trace, "[wasm] [host<-vm] {} return: {}", function_name, rvalue);
     return rvalue;
   };
 }

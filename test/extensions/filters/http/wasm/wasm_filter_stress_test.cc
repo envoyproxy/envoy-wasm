@@ -190,7 +190,6 @@ TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
                   code:
                     local:
                       filename: "{}"
-                  allow_precompiled: true
 )EOF",
                                        wasmVM(), wasm_file));
 

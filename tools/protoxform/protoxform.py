@@ -16,7 +16,13 @@ import re
 import subprocess
 
 from tools.api_proto_plugin import plugin
+from tools.api_proto_plugin import traverse
 from tools.api_proto_plugin import visitor
+from tools.protoxform import migrate
+from tools.protoxform import options
+from tools.protoxform import utils
+from tools.type_whisperer import type_whisperer
+from tools.type_whisperer.types_pb2 import Types
 
 from google.api import annotations_pb2
 from google.protobuf import text_format
@@ -112,6 +118,20 @@ def FormatHeaderFromFile(source_code_info, file_proto):
   Returns:
     Formatted proto header as a string.
   """
+  # Load the type database.
+  typedb = utils.LoadTypeDb()
+  # Figure out type dependencies in this .proto.
+  types = Types()
+  text_format.Merge(traverse.TraverseFile(file_proto, type_whisperer.TypeWhispererVisitor()), types)
+  type_dependencies = sum([list(t.type_dependencies) for t in types.types.values()], [])
+  for service in file_proto.service:
+    for m in service.method:
+      type_dependencies.extend([m.input_type[1:], m.output_type[1:]])
+  # Determine the envoy/ import paths from type deps.
+  envoy_proto_paths = set(
+      typedb.types[t].proto_path
+      for t in type_dependencies
+      if t.startswith('envoy.') and typedb.types[t].proto_path != file_proto.name)
 
   def CamelCase(s):
     return ''.join(t.capitalize() for t in re.split('[\._]', s))
@@ -138,14 +158,16 @@ def FormatHeaderFromFile(source_code_info, file_proto):
     options += ['option java_generic_services = true;']
   options_block = FormatBlock('\n'.join(options))
 
-  envoy_imports = []
+  envoy_imports = list(envoy_proto_paths)
   google_imports = []
   infra_imports = []
   misc_imports = []
 
   for d in file_proto.dependency:
     if d.startswith('envoy/'):
-      envoy_imports.append(d)
+      # We ignore existing envoy/ imports, since these are computed explicitly
+      # from type_dependencies.
+      pass
     elif d.startswith('google/'):
       google_imports.append(d)
     elif d.startswith('validate/'):
@@ -316,6 +338,8 @@ def FormatField(type_context, field):
   Returns:
     Formatted proto field as a string.
   """
+  if options.HasHideOption(field.options):
+    return ''
   leading_comment, trailing_comment = FormatTypeContextComments(type_context)
   annotations = []
   if field.options.HasExtension(validate_pb2.rules):
@@ -338,6 +362,8 @@ def FormatEnumValue(type_context, value):
   Returns:
     Formatted proto enum value as a string.
   """
+  if options.HasHideOption(value.options):
+    return ''
   leading_comment, trailing_comment = FormatTypeContextComments(type_context)
   annotations = []
   if value.options.deprecated:
@@ -345,6 +371,38 @@ def FormatEnumValue(type_context, value):
   formatted_annotations = '[ %s]' % ','.join(annotations) if annotations else ''
   return '%s%s = %d%s;\n%s' % (leading_comment, value.name, value.number, formatted_annotations,
                                trailing_comment)
+
+
+def FormatOptions(options):
+  """Format MessageOptions/EnumOptions message.
+
+  Args:
+    options: A MessageOptions/EnumOptions message.
+
+  Returns:
+    Formatted options as a string.
+  """
+  if options.deprecated:
+    return FormatBlock('option deprecated = true;\n')
+  return ''
+
+
+def FormatReserved(enum_or_msg_proto):
+  """Format reserved values/names in a [Enum]DescriptorProto.
+
+  Args:
+    enum_or_msg_proto: [Enum]DescriptorProto message.
+
+  Returns:
+    Formatted enum_or_msg_proto as a string.
+  """
+  reserved_fields = FormatBlock('reserved %s;\n' % ','.join(
+      map(str, sum([list(range(rr.start, rr.end)) for rr in enum_or_msg_proto.reserved_range],
+                   [])))) if enum_or_msg_proto.reserved_range else ''
+  if enum_or_msg_proto.reserved_name:
+    reserved_fields += FormatBlock('reserved %s;\n' %
+                                   ', '.join('"%s"' % n for n in enum_or_msg_proto.reserved_name))
+  return reserved_fields
 
 
 class ProtoFormatVisitor(visitor.Visitor):
@@ -363,22 +421,27 @@ class ProtoFormatVisitor(visitor.Visitor):
 
   def VisitEnum(self, enum_proto, type_context):
     leading_comment, trailing_comment = FormatTypeContextComments(type_context)
+    formatted_options = FormatOptions(enum_proto.options)
+    reserved_fields = FormatReserved(enum_proto)
     values = [
         FormatEnumValue(type_context.ExtendField(index, value.name), value)
         for index, value in enumerate(enum_proto.value)
     ]
     joined_values = ('\n' if any('//' in v for v in values) else '').join(values)
-    return '%senum %s {\n%s%s\n}\n' % (leading_comment, enum_proto.name, trailing_comment,
-                                       joined_values)
+    return '%senum %s {\n%s%s%s%s\n}\n' % (leading_comment, enum_proto.name, trailing_comment,
+                                           formatted_options, reserved_fields, joined_values)
 
   def VisitMessage(self, msg_proto, type_context, nested_msgs, nested_enums):
+    # Skip messages synthesized to represent map types.
+    if msg_proto.options.map_entry:
+      return ''
+    if options.HasHideOption(msg_proto.options):
+      return ''
     leading_comment, trailing_comment = FormatTypeContextComments(type_context)
+    formatted_options = FormatOptions(msg_proto.options)
     formatted_enums = FormatBlock('\n'.join(nested_enums))
     formatted_msgs = FormatBlock('\n'.join(nested_msgs))
-    # Reserved fields.
-    reserved_fields = FormatBlock('reserved %s;\n' % ','.join(
-        map(str, sum([list(range(rr.start, rr.end)) for rr in msg_proto.reserved_range],
-                     [])))) if msg_proto.reserved_range else ''
+    reserved_fields = FormatReserved(msg_proto)
     # Recover the oneof structure. This needs some extra work, since
     # DescriptorProto just gives use fields and a oneof_index that can allow
     # recovery of the original oneof placement.
@@ -403,9 +466,9 @@ class ProtoFormatVisitor(visitor.Visitor):
       fields += FormatBlock(FormatField(type_context.ExtendField(index, field.name), field))
     if oneof_index is not None:
       fields += '}\n\n'
-    return '%smessage %s {\n%s%s%s%s%s\n}\n' % (leading_comment, msg_proto.name, trailing_comment,
-                                                formatted_enums, formatted_msgs, reserved_fields,
-                                                fields)
+    return '%smessage %s {\n%s%s%s%s%s%s\n}\n' % (leading_comment, msg_proto.name, trailing_comment,
+                                                  formatted_options, formatted_enums,
+                                                  formatted_msgs, reserved_fields, fields)
 
   def VisitFile(self, file_proto, type_context, services, msgs, enums):
     header = FormatHeaderFromFile(type_context.source_code_info, file_proto)
@@ -416,7 +479,10 @@ class ProtoFormatVisitor(visitor.Visitor):
 
 
 def Main():
-  plugin.Plugin('.proto', ProtoFormatVisitor())
+  plugin.Plugin([
+      plugin.DirectOutputDescriptor('.v2.proto', ProtoFormatVisitor()),
+      plugin.OutputDescriptor('.v3alpha.proto', ProtoFormatVisitor(), migrate.V3MigrationXform)
+  ])
 
 
 if __name__ == '__main__':

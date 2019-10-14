@@ -199,6 +199,9 @@ private:
 typedef std::unique_ptr<HttpClientReadFilter> HttpClientReadFilterPtr;
 typedef std::shared_ptr<HttpClientReadFilter> HttpClientReadFilterSharedPtr;
 
+static constexpr uint32_t max_request_headers_kb = 2U;
+static constexpr uint32_t max_request_headers_count = 100U;
+
 class Http1ClientConnection : public ClientConnection {
 public:
   Http1ClientConnection(Client& client, uint32_t id, ClientConnectCallback& connect_callback,
@@ -207,7 +210,7 @@ public:
                         Network::ClientConnectionPtr&& network_connection)
       : ClientConnection(client, id, connect_callback, close_callback, dispatcher), stats_(),
         network_connection_(std::move(network_connection)),
-        http_connection_(*network_connection_, stats_, *this),
+        http_connection_(*network_connection_, stats_, *this, max_request_headers_count),
         read_filter_{std::make_shared<HttpClientReadFilter>(client.name(), id, http_connection_)} {
     network_connection_->addReadFilter(read_filter_);
     network_connection_->addConnectionCallbacks(*this);
@@ -227,8 +230,6 @@ private:
   HttpClientReadFilterSharedPtr read_filter_;
 };
 
-static constexpr uint32_t max_request_headers_kb = 2U;
-
 class Http2ClientConnection : public ClientConnection {
 public:
   Http2ClientConnection(Client& client, uint32_t id, ClientConnectCallback& connect_callback,
@@ -237,7 +238,8 @@ public:
                         Network::ClientConnectionPtr&& network_connection)
       : ClientConnection(client, id, connect_callback, close_callback, dispatcher), stats_(),
         settings_(), network_connection_(std::move(network_connection)),
-        http_connection_(*network_connection_, *this, stats_, settings_, max_request_headers_kb),
+        http_connection_(*network_connection_, *this, stats_, settings_, max_request_headers_kb,
+                         max_request_headers_count),
         read_filter_{std::make_shared<HttpClientReadFilter>(client.name(), id, http_connection_)} {
     network_connection_->addReadFilter(read_filter_);
     network_connection_->addConnectionCallbacks(*this);

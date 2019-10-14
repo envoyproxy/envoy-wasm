@@ -4,7 +4,7 @@ from tools.api_proto_plugin import type_context
 
 
 def TraverseService(type_context, service_proto, visitor):
-  """Traverse an enum definition.
+  """Traverse a service definition.
 
   Args:
     type_context: type_context.TypeContext for service type.
@@ -42,9 +42,6 @@ def TraverseMessage(type_context, msg_proto, visitor):
   Returns:
     Plugin specific output.
   """
-  # Skip messages synthesized to represent map types.
-  if msg_proto.options.map_entry:
-    return ''
   # We need to do some extra work to recover the map type annotation from the
   # synthesized messages.
   type_context.map_typenames = {
