@@ -18,7 +18,6 @@ public:
                   Server::CreateWasmCallback&& cb) override;
 
 private:
-  Config::DataSource::LocalAsyncDataProviderPtr local_data_provider_;
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
 

@@ -24,7 +24,6 @@ public:
 
 private:
   std::unordered_map<std::string, std::string> convertJsonFormatToMap(ProtobufWkt::Struct config);
-  Config::DataSource::LocalAsyncDataProviderPtr local_data_provider_;
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
 
