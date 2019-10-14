@@ -1203,9 +1203,6 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
   CelValue value;
   Protobuf::Arena arena;
   const StreamInfo::StreamInfo* info = getRequestStreamInfo();
-  if (info == nullptr) {
-    return WasmResult::NotFound;
-  }
   const auto request_headers = request_headers_ ? request_headers_ : access_log_request_headers_;
   const auto response_headers =
       response_headers_ ? response_headers_ : access_log_response_headers_;
