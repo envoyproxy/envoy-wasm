@@ -38,11 +38,10 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
       envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
       nullptr /* listener_metadata */, context.scope());
 
-  auto callback = [access_log, &context, &config, configuration, plugin](const std::string& code) {
+  auto callback = [access_log, &context,
+                   configuration](std::shared_ptr<Common::Wasm::Wasm> base_wasm) {
     auto tls_slot = context.threadLocal().allocateSlot();
 
-    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin, code,
-                                              context.clusterManager(), context.dispatcher());
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     tls_slot->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
@@ -51,17 +50,9 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
     access_log->setTlsSlot(std::move(tls_slot));
   };
 
-  if (config.config().vm_config().code().has_local()) {
-    local_data_provider_ = std::make_unique<Config::DataSource::LocalAsyncDataProvider>(
-        context.initManager(), config.config().vm_config().code().local(), true, context.api(),
-        std::move(callback));
-  } else if (config.config().vm_config().code().has_remote()) {
-    remote_data_provider_ = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
-        context.clusterManager(), context.initManager(),
-        config.config().vm_config().code().remote(), true, std::move(callback));
-  } else {
-    callback(EMPTY_STRING);
-  }
+  Common::Wasm::createWasm(config.config().vm_config(), plugin, context.clusterManager(),
+                           context.initManager(), context.dispatcher(), context.api(),
+                           remote_data_provider_, std::move(callback));
 
   return access_log;
 }

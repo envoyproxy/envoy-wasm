@@ -24,11 +24,7 @@ void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmService& config,
       envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
       nullptr /* listener_metadata */, context.scope(), context.owned_scope());
 
-  auto callback = [&context, &config, cb, plugin](const std::string& code) {
-    // Create a base WASM to verify that the code loads before setting/cloning the for the
-    // individual threads.
-    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin, code,
-                                              context.clusterManager(), context.dispatcher());
+  auto callback = [&context, &config, cb](std::shared_ptr<Common::Wasm::Wasm> base_wasm) {
     if (config.singleton()) {
       // Return the WASM VM which will be stored as a singleton by the Server.
       auto root_context = base_wasm->start();
@@ -44,20 +40,16 @@ void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmService& config,
           return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
               Common::Wasm::getOrCreateThreadLocalWasm(*base_wasm, *configuration, dispatcher));
         });
-    // Do not return this WASM VM since this is per-thread. Returning it would indicate that this is
-    // a singleton.
+    // Do not return this WASM VM since this is per-thread. Returning it would indicate that
+    // this is a singleton.
     cb(nullptr);
   };
 
-  if (config.config().vm_config().code().has_local()) {
-    local_data_provider_ = std::make_unique<Config::DataSource::LocalAsyncDataProvider>(
-        context.initManager(), config.config().vm_config().code().local(), true, context.api(),
-        std::move(callback));
-  } else {
-    remote_data_provider_ = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
-        context.clusterManager(), context.initManager(),
-        config.config().vm_config().code().remote(), true, std::move(callback));
-  }
+  // Create a base WASM to verify that the code loads before setting/cloning the for the
+  // individual threads.
+  Common::Wasm::createWasm(config.config().vm_config(), plugin, context.clusterManager(),
+                           context.initManager(), context.dispatcher(), context.api(),
+                           remote_data_provider_, std::move(callback));
 }
 
 /**

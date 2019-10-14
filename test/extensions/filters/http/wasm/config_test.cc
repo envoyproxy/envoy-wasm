@@ -143,9 +143,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   envoy::config::filter::http::wasm::v2::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
-  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
-  EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(context_.initManager().initialize(init_watcher_),
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
                             "Failed to initialize WASM code from <inline>");
 }

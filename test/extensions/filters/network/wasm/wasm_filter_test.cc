@@ -60,9 +60,10 @@ public:
         "", proto_config.config().root_id(), proto_config.config().vm_config().vm_id(),
         envoy::api::v2::core::TrafficDirection::INBOUND, local_info_, &listener_metadata_, *scope_,
         nullptr /* owned_scope */);
-    wasm_ = Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.config().vm_config(), plugin_, code, cluster_manager_, dispatcher_,
-        std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
+    Extensions::Common::Wasm::createWasmForTesting(
+        proto_config.config().vm_config(), plugin_, cluster_manager_, init_manager_, dispatcher_,
+        *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
+        remote_data_provider_, [this](std::shared_ptr<Wasm> wasm) { wasm_ = wasm; });
   }
 
   void setupFilter() {
@@ -74,6 +75,7 @@ public:
   Stats::ScopeSharedPtr scope_;
   NiceMock<Event::MockDispatcher> dispatcher_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
+  NiceMock<Init::MockManager> init_manager_;
   std::shared_ptr<Wasm> wasm_;
   std::shared_ptr<Common::Wasm::Plugin> plugin_;
   std::unique_ptr<TestFilter> filter_;
@@ -81,6 +83,7 @@ public:
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
   envoy::api::v2::core::Metadata listener_metadata_;
   TestRoot* root_context_ = nullptr;
+  Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 }; // namespace Wasm
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterTest,

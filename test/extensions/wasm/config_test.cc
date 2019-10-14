@@ -114,10 +114,8 @@ TEST_P(WasmFactoryTest, MissingImport) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, *scope, scope, local_info);
-
-  factory->createWasm(config, context, [](Server::WasmSharedPtr) {});
-  EXPECT_THROW_WITH_REGEX(init_manager.initialize(init_watcher),
-                          Extensions::Common::Wasm::WasmException,
+  EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context, [](Server::WasmSharedPtr) {});
+                          , Extensions::Common::Wasm::WasmException,
                           "Failed to load WASM module due to a missing import: env._missing.*");
 }
 
@@ -144,8 +142,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, *scope, scope, local_info);
-  factory->createWasm(config, context, [](Server::WasmSharedPtr) {});
-  EXPECT_THROW_WITH_MESSAGE(init_manager.initialize(init_watcher),
+  EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmSharedPtr) {}),
                             Extensions::Common::Wasm::WasmVmException,
                             "Failed to create WASM VM with unspecified runtime.");
 }
@@ -171,8 +168,7 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, *scope, scope, local_info);
-  factory->createWasm(config, context, [](Server::WasmSharedPtr) {});
-  EXPECT_THROW_WITH_MESSAGE(init_manager.initialize(init_watcher),
+  EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmSharedPtr) {}),
                             Extensions::Common::Wasm::WasmVmException,
                             "Failed to create WASM VM using envoy.wasm.runtime.invalid runtime. "
                             "Envoy was compiled without support for it.");

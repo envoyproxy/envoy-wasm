@@ -22,11 +22,7 @@ FilterConfig::FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& co
       context.direction(), context.localInfo(), &context.listenerMetadata(), context.scope(),
       nullptr /* owned_scope */);
 
-  auto callback = [this, &config, &context](const std::string& code) {
-    // Create a base Wasm to verify that the code loads before setting/cloning the for the
-    // individual threads.
-    auto base_wasm = Common::Wasm::createWasm(config.config().vm_config(), plugin_, code,
-                                              context.clusterManager(), context.dispatcher());
+  auto callback = [&config, this](std::shared_ptr<Common::Wasm::Wasm> base_wasm) {
     auto configuration = std::make_shared<std::string>(config.config().configuration());
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     tls_slot_->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {
@@ -35,17 +31,9 @@ FilterConfig::FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& co
     });
   };
 
-  if (config.config().vm_config().code().has_local()) {
-    local_data_provider_ = std::make_unique<Config::DataSource::LocalAsyncDataProvider>(
-        context.initManager(), config.config().vm_config().code().local(), true, context.api(),
-        std::move(callback));
-  } else if (config.config().vm_config().code().has_remote()) {
-    remote_data_provider_ = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
-        context.clusterManager(), context.initManager(),
-        config.config().vm_config().code().remote(), true, std::move(callback));
-  } else {
-    callback(EMPTY_STRING);
-  }
+  Common::Wasm::createWasm(config.config().vm_config(), plugin_, context.clusterManager(),
+                           context.initManager(), context.dispatcher(), context.api(),
+                           remote_data_provider_, std::move(callback));
 }
 
 } // namespace Wasm

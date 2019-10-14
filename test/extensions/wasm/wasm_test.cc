@@ -142,7 +142,7 @@ TEST(WasmTestWavmOnly, Segv) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, code, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
+      name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       "envoy.wasm.runtime.wavm", vm_id, vm_configuration, plugin, cluster_manager, *dispatcher);
