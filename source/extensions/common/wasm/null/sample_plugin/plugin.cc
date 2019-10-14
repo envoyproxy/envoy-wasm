@@ -62,7 +62,9 @@ FilterDataStatus PluginContext::onRequestBody(size_t body_buffer_length, bool /*
 }
 
 void PluginContext::onLog() {
-  setFilterStateStringValue("wasm_state", "wasm_value");
+  if (setFilterStateStringValue("wasm_state", "wasm_value") != WasmResult::Ok) {
+    logInfo("setFilterState failed");
+  }
   auto path = getRequestHeader(":path");
   if (path->view() == "/test_context") {
     logWarn("request.path: " + getProperty({"request", "path"}).value()->toString());

@@ -44,13 +44,15 @@ class WasmVm;
 using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
 using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::string>>;
 
+constexpr absl::string_view FilterStateSymbol = "filter_state";
+
 enum class StreamType : int32_t { Request = 0, Response = 1, MAX = 1 };
 
 // Handlers for functions exported from envoy to wasm.
 Word logHandler(void* raw_context, Word level, Word address, Word size);
 Word getPropertyHandler(void* raw_context, Word path_ptr, Word path_size, Word value_ptr_ptr,
                         Word value_size_ptr);
-Word setPropertyHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
+Word setPropertyHandler(void* raw_context, Word path_ptr, Word path_size, Word value_ptr,
                         Word value_size);
 Word continueRequestHandler(void* raw_context);
 Word continueResponseHandler(void* raw_context);
@@ -221,6 +223,7 @@ public:
   // callback, log callback. As long as any one of the callbacks is invoked, the value should be
   // available.
   const StreamInfo::StreamInfo* getRequestStreamInfo() const;
+  StreamInfo::StreamInfo* getRequestStreamInfo();
 
   //
   // VM level downcalls into the WASM code on Context(id == 0).
@@ -331,7 +334,7 @@ public:
 
   // State accessors
   virtual WasmResult getProperty(absl::string_view path, std::string* result);
-  virtual WasmResult setProperty(absl::string_view key, absl::string_view serialized_value);
+  virtual WasmResult setProperty(absl::string_view path, absl::string_view value);
 
   // Continue
   virtual void continueRequest() {

@@ -486,8 +486,20 @@ template <typename T> inline bool getValue(std::initializer_list<StringView> par
 
 // Requires that the value is a serialized google.protobuf.Value.
 inline WasmResult setFilterState(StringView key, StringView value) {
-  return static_cast<WasmResult>(
-      proxy_setProperty(key.data(), key.size(), value.data(), value.size()));
+  const std::string filter_state = "filter_state";
+  size_t size = key.size() + filter_state.size() + 2;
+  char* buffer = static_cast<char*>(::malloc(size));
+  char* b = buffer;
+  memcpy(b, filter_state.data(), filter_state.size());
+  b += filter_state.size();
+  *b++ = 0;
+  memcpy(b, key.data(), key.size());
+  b += key.size();
+  *b++ = 0;
+  WasmResult result =  static_cast<WasmResult>(
+      proxy_setProperty(buffer, size, value.data(), value.size()));
+  ::free(buffer);
+  return result;
 }
 
 inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Value& value) {
@@ -495,14 +507,39 @@ inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Va
   if (!value.SerializeToString(&output)) {
     return WasmResult::SerializationFailure;
   }
-  return static_cast<WasmResult>(
-      proxy_setProperty(key.data(), key.size(), output.data(), output.size()));
+  return setFilterState(key, output);
 }
 
 inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
   google::protobuf::Value value;
   value.set_string_value(s.data(), s.size());
   return setFilterStateValue(key, value);
+}
+
+// Requires that the value is a serizlied google.protobuf.Value with a struct value.
+inline WasmResult setMetadata(StringView key, StringView value) {
+  const std::string metadata = "metadata";
+  size_t size = key.size() + metadata.size() + 2;
+  char* buffer = static_cast<char*>(::malloc(size));
+  char* b = buffer;
+  memcpy(b, metadata.data(), metadata.size());
+  b += metadata.size();
+  *b++ = 0;
+  memcpy(b, key.data(), key.size());
+  b += key.size();
+  *b++ = 0;
+  WasmResult result = static_cast<WasmResult>(
+      proxy_setProperty(buffer, size, value.data(), value.size()));
+  ::free(buffer);
+  return result;
+}
+
+inline WasmResult setMetadataValue(StringView key, const google::protobuf::Value& struct_value) {
+  std::string output;
+  if (!struct_value.SerializeToString(&output)) {
+    return WasmResult::SerializationFailure;
+  }
+  return setMetadata(key, output);
 }
 
 // Continue/Respond/Route
