@@ -153,16 +153,6 @@ struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
   Grpc::RawAsyncStream* stream;
 };
 
-// A simple wrapper around generic values
-class WasmState : public StreamInfo::FilterState::Object {
-public:
-  WasmState(ProtobufWkt::Value& value) : value_(value) {}
-  const ProtobufWkt::Value& value() const { return value_; }
-
-private:
-  const ProtobufWkt::Value value_;
-};
-
 // Plugin contains the information for a filter/service.
 struct Plugin {
   Plugin(absl::string_view name, absl::string_view root_id, absl::string_view vm_id,

@@ -6,6 +6,7 @@
 #include "common/stream_info/stream_info_impl.h"
 
 #include "extensions/common/wasm/wasm.h"
+#include "extensions/common/wasm/wasm_state.h"
 #include "extensions/filters/http/wasm/wasm_filter.h"
 
 #include "test/mocks/grpc/mocks.h"
