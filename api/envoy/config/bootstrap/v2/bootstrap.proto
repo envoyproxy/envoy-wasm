@@ -15,6 +15,7 @@ import "envoy/api/v2/lds.proto";
 import "envoy/config/metrics/v2/stats.proto";
 import "envoy/config/overload/v2alpha/overload.proto";
 import "envoy/config/trace/v2/trace.proto";
+import "envoy/config/wasm/v2/wasm.proto";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
@@ -154,6 +155,9 @@ message Bootstrap {
   // <server_statistics>` if specified. Envoy will not process this value, it will be sent as is to
   // :ref:<stats sinks <envoy_api_msg_config.metrics.v2.StatsSink>.
   google.protobuf.UInt64Value stats_server_version_override = 19;
+
+  // Configuration for an wasm service provider(s).
+  repeated wasm.v2.WasmService wasm_service = 20;
 }
 
 // Administration interface :ref:`operations documentation

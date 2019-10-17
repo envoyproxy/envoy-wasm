@@ -10,10 +10,10 @@ set -e
 USER=root
 USER_GROUP=root
 
-[[ -z "${IMAGE_NAME}" ]] && IMAGE_NAME="envoyproxy/envoy-build-ubuntu@sha256"
+[[ -z "${IMAGE_NAME}" ]] && IMAGE_NAME="piotrsikora/envoy-build-ubuntu@sha256"
 # The IMAGE_ID defaults to the CI hash but can be set to an arbitrary image ID (found with 'docker
 # images').
-[[ -z "${IMAGE_ID}" ]] && IMAGE_ID="${ENVOY_BUILD_SHA}"
+[[ -z "${IMAGE_ID}" ]] && IMAGE_ID="0611332c1a96f2ea745c8f484e9f50df454150dab9513589460c52066b093ef2"
 [[ -z "${ENVOY_DOCKER_BUILD_DIR}" ]] && ENVOY_DOCKER_BUILD_DIR=/tmp/envoy-docker-build
 
 [[ -f .git ]] && [[ ! -d .git ]] && GIT_VOLUME_OPTION="-v $(git rev-parse --git-common-dir):$(git rev-parse --git-common-dir)"

@@ -3301,6 +3301,14 @@ types {
   }
 }
 types {
+  key: "envoy.config.accesslog.v2.WasmAccessLog"
+  value {
+    qualified_package: "envoy.config.accesslog.v2"
+    proto_path: "envoy/config/accesslog/v2/wasm.proto"
+    next_version_type_name: "envoy.config.accesslog.v3alpha.WasmAccessLog"
+  }
+}
+types {
   key: "envoy.config.accesslog.v3alpha.CommonGrpcAccessLogConfig"
   value {
     qualified_package: "envoy.config.accesslog.v3alpha"
@@ -3326,6 +3334,13 @@ types {
   value {
     qualified_package: "envoy.config.accesslog.v3alpha"
     proto_path: "envoy/config/accesslog/v3alpha/als.proto"
+  }
+}
+types {
+  key: "envoy.config.accesslog.v3alpha.WasmAccessLog"
+  value {
+    qualified_package: "envoy.config.accesslog.v3alpha"
+    proto_path: "envoy/config/accesslog/v3alpha/wasm.proto"
   }
 }
 types {
@@ -4040,7 +4055,22 @@ types {
   }
 }
 types {
+  key: "envoy.config.filter.http.dynamic_forward_proxy.v2alpha.PerRouteConfig"
+  value {
+    qualified_package: "envoy.config.filter.http.dynamic_forward_proxy.v2alpha"
+    proto_path: "envoy/config/filter/http/dynamic_forward_proxy/v2alpha/dynamic_forward_proxy.proto"
+    next_version_type_name: "envoy.config.filter.http.dynamic_forward_proxy.v3alpha.PerRouteConfig"
+  }
+}
+types {
   key: "envoy.config.filter.http.dynamic_forward_proxy.v3alpha.FilterConfig"
+  value {
+    qualified_package: "envoy.config.filter.http.dynamic_forward_proxy.v3alpha"
+    proto_path: "envoy/config/filter/http/dynamic_forward_proxy/v3alpha/dynamic_forward_proxy.proto"
+  }
+}
+types {
+  key: "envoy.config.filter.http.dynamic_forward_proxy.v3alpha.PerRouteConfig"
   value {
     qualified_package: "envoy.config.filter.http.dynamic_forward_proxy.v3alpha"
     proto_path: "envoy/config/filter/http/dynamic_forward_proxy/v3alpha/dynamic_forward_proxy.proto"
@@ -6066,6 +6096,51 @@ types {
   }
 }
 types {
+  key: "envoy.config.wasm.v2.PluginConfig"
+  value {
+    qualified_package: "envoy.config.wasm.v2"
+    proto_path: "envoy/config/wasm/v2/wasm.proto"
+    next_version_type_name: "envoy.config.wasm.v3alpha.PluginConfig"
+  }
+}
+types {
+  key: "envoy.config.wasm.v2.VmConfig"
+  value {
+    qualified_package: "envoy.config.wasm.v2"
+    proto_path: "envoy/config/wasm/v2/wasm.proto"
+    next_version_type_name: "envoy.config.wasm.v3alpha.VmConfig"
+  }
+}
+types {
+  key: "envoy.config.wasm.v2.WasmService"
+  value {
+    qualified_package: "envoy.config.wasm.v2"
+    proto_path: "envoy/config/wasm/v2/wasm.proto"
+    next_version_type_name: "envoy.config.wasm.v3alpha.WasmService"
+  }
+}
+types {
+  key: "envoy.config.wasm.v3alpha.PluginConfig"
+  value {
+    qualified_package: "envoy.config.wasm.v3alpha"
+    proto_path: "envoy/config/wasm/v3alpha/wasm.proto"
+  }
+}
+types {
+  key: "envoy.config.wasm.v3alpha.VmConfig"
+  value {
+    qualified_package: "envoy.config.wasm.v3alpha"
+    proto_path: "envoy/config/wasm/v3alpha/wasm.proto"
+  }
+}
+types {
+  key: "envoy.config.wasm.v3alpha.WasmService"
+  value {
+    qualified_package: "envoy.config.wasm.v3alpha"
+    proto_path: "envoy/config/wasm/v3alpha/wasm.proto"
+  }
+}
+types {
   key: "envoy.data.accesslog.v2.AccessLogCommon"
   value {
     qualified_package: "envoy.data.accesslog.v2"
@@ -7953,6 +8028,10 @@ next_version_packages {
   value: "envoy.config.transport_socket.tap.v3alpha"
 }
 next_version_packages {
+  key: "envoy.config.wasm.v2"
+  value: "envoy.config.wasm.v3alpha"
+}
+next_version_packages {
   key: "envoy.data.accesslog.v2"
   value: "envoy.data.accesslog.v3alpha"
 }
@@ -8145,6 +8224,10 @@ next_version_proto_paths {
   value: "envoy/config/accesslog/v3alpha/file.proto"
 }
 next_version_proto_paths {
+  key: "envoy/config/accesslog/v2/wasm.proto"
+  value: "envoy/config/accesslog/v3alpha/wasm.proto"
+}
+next_version_proto_paths {
   key: "envoy/config/bootstrap/v2/bootstrap.proto"
   value: "envoy/config/bootstrap/v3alpha/bootstrap.proto"
 }
@@ -8299,6 +8382,10 @@ next_version_proto_paths {
 next_version_proto_paths {
   key: "envoy/config/transport_socket/tap/v2alpha/tap.proto"
   value: "envoy/config/transport_socket/tap/v3alpha/tap.proto"
+}
+next_version_proto_paths {
+  key: "envoy/config/wasm/v2/wasm.proto"
+  value: "envoy/config/wasm/v3alpha/wasm.proto"
 }
 next_version_proto_paths {
   key: "envoy/data/accesslog/v2/accesslog.proto"
