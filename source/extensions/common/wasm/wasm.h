@@ -677,18 +677,7 @@ private:
   uint32_t emscripten_metadata_minor_version_ = 0;
   uint32_t emscripten_abi_major_version_ = 0;
   uint32_t emscripten_abi_minor_version_ = 0;
-  uint32_t emscripten_memory_size_ = 0;
-  uint32_t emscripten_table_size_ = 0;
-  uint32_t emscripten_global_base_ = 0;
-  uint32_t emscripten_stack_base_ = 0;
-  uint32_t emscripten_dynamic_base_ = 0;
-  uint32_t emscripten_dynamictop_ptr_ = 0;
-  uint32_t emscripten_tempdouble_ptr_ = 0;
-
-  std::unique_ptr<Global<Word>> global_table_base_;
-  std::unique_ptr<Global<Word>> global_dynamictop_;
-  std::unique_ptr<Global<double>> global_NaN_;
-  std::unique_ptr<Global<double>> global_Infinity_;
+  uint32_t emscripten_standalone_wasm_ = 0;
 
   // Stats/Metrics
   Stats::StatNameSetSharedPtr stat_name_set_;

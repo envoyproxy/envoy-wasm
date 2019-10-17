@@ -8,7 +8,7 @@ A Dockerfile for the C++ SDK is provided in Dockerfile-sdk.
 
 It can built in this directory by:
 
-docker build -t wasmsdk:v1 -f Dockerfile-sdk .
+docker build -t wasmsdk:v2 -f Dockerfile-sdk .
 
 The docker image can be used for compiling wasm files.
 
@@ -57,7 +57,7 @@ void ExampleContext::onDone() { logInfo("onDone " + std::to_string(id())); }
 Run docker:
 
 ```bash
-docker run -v $PWD:/work -w /work  wasmsdk:v1 /build_wasm.sh
+docker run -v $PWD:/work -w /work  wasmsdk:v2 /build_wasm.sh
 ```
 
 ### Caching the standard libraries
@@ -66,7 +66,7 @@ The first time that emscripten runs it will generate the standard libraries.  To
 after the first successful compilation (e.g myproject.cc above), commit the image with the standard libraries:
 
 ```bash
-docker commit `docker ps -l | grep wasmsdk:v1 | awk '{print $1}'` wasmsdk:v1
+docker commit `docker ps -l | grep wasmsdk:v2 | awk '{print $1}'` wasmsdk:v2
 ```
 
 This will save time on subsequent compiles.
@@ -88,7 +88,7 @@ include ${DOCKER_SDK}/Makefile.base_lite
 Run docker pointing to Envoy sources in a directory parallel (at the same level) as your project directory:
 
 ```bash
-docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasmsdk:v1 bash /build_wasm.sh
+docker run -v $PWD:/work -v $PWD/../envoy/api/wasm/cpp:/work/sdk -w /work  wasmsdk:v2 bash /build_wasm.sh
 ```
 
 ### Using abseil form the image
@@ -106,7 +106,7 @@ all: plugin.wasm
 
 %.wasm %.wat: %.cc ${CPP_API}/proxy_wasm_intrinsics.h ${CPP_API}/proxy_wasm_enums.h ${CPP_API}/proxy_wasm_externs.h ${CPP_API}/proxy_wasm_api.h ${CPP_API}/proxy_wasm_intrinsics.js ${CPP_CONTEXT_LIB}
         ls /root
-                em++ -s WASM=1 -s BINARYEN_TRAP_MODE='clamp' -s LEGALIZE_JS_FFI=0 -s EMIT_EMSCRIPTEN_METADATA=1 --std=c++17 -O3 -g3 -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js ${ABSL_CPP} $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.bc -o $*.js
+                em++ -s STANDALONE_WASM=1 -s EMIT_EMSCRIPTEN_METADATA=1 --std=c++17 -O3 -g3 -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js ${ABSL_CPP} $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.a -o $*.wasm
 ```
 
 Precompiled abseil libraries are also available, so the above can also be done as:
@@ -122,7 +122,7 @@ all: plugin.wasm
 
 %.wasm %.wat: %.cc ${CPP_API}/proxy_wasm_intrinsics.h ${CPP_API}/proxy_wasm_enums.h ${CPP_API}/proxy_wasm_externs.h ${CPP_API}/proxy_wasm_api.h ${CPP_API}/proxy_wasm_intrinsics.js ${CPP_CONTEXT_LIB}
         ls /root
-                em++ -s WASM=1 -s BINARYEN_TRAP_MODE='clamp' -s LEGALIZE_JS_FFI=0 -s EMIT_EMSCRIPTEN_METADATA=1 --std=c++17 -O3 -g3 -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js  $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.bc ${ABSL_LIBS} -o $*.js
+                em++ -s STANDALONE_WASM=1 -s EMIT_EMSCRIPTEN_METADATA=1 --std=c++17 -O3 -g3 -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include -I${ABSL} --js-library ${CPP_API}/proxy_wasm_intrinsics.js  $*.cc ${CPP_API}/proxy_wasm_intrinsics.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf.a ${ABSL_LIBS} -o $*.wasm
 ```
 
 ### Ownership of the resulting .wasm files
@@ -142,7 +142,7 @@ Invocation file (e.g. build.sh):
 
 ```bash
 #!/bin/bash
-docker run -e uid="$(id -u)" -e gid="$(id -g)" -v $PWD:/work -w /work wasmsdk:v1 /build_wasm.sh
+docker run -e uid="$(id -u)" -e gid="$(id -g)" -v $PWD:/work -w /work wasmsdk:v2 /build_wasm.sh
 ```
 
 ## Dependencies for building WASM modules:
@@ -151,7 +151,7 @@ If you do not wish to use the Docker file, the dependencies can be installed by 
 
 ### protobuf v3.9.1
 
-You must install the version of protobuf on your build system that matches the libprotobuf.bc files (without any patches) so that the generated code matches the .bc library.  Currently this is based on tag v3.9.1 of https://github.com/protocolbuffers/protobuf.
+You must install the version of protobuf on your build system that matches the libprotobuf.a files (without any patches) so that the generated code matches the .a library.  Currently this is based on tag v3.9.1 of https://github.com/protocolbuffers/protobuf.
 
 ```bash
 git clone https://github.com/protocolbuffers/protobuf
@@ -171,8 +171,8 @@ sudo make install
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 1.38.46
-./emsdk activate 1.38.46
+./emsdk install 1.38.48-upstream
+./emsdk activate 1.38.48-upstream
 
 source ./emsdk\_env.sh
 ```
@@ -181,15 +181,15 @@ It is possible later versions will work, e.g.
 
 ```bash
 ./emsdk update-tags
-./emsdk install latest
-./emsdk activate latest
+./emsdk install latest-upstream
+./emsdk activate latest-upstream
 ```
 
-However 1.38.46 is known to work.
+However 1.38.48-upstream is known to work.
 
-### Rebuilding the protobuf.bc files
+### Rebuilding the libprotobuf.a files
 
-If want to rebuild the .bc files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm. Commit 4bba8b2f38b5004f87489642b6ca4525ae72fe7f works for protobuf v3.9.x.
+If want to rebuild the libprotobuf.a files or use a different version see the instructions at https://github.com/kwonoj/protobuf-wasm. Commit 4bba8b2f38b5004f87489642b6ca4525ae72fe7f works for protobuf v3.9.x.
 
 ```bash
 git clone https://github.com/protocolbuffers/protobuf protobuf-wasm
@@ -199,10 +199,10 @@ git clone https://github.com/kwonoj/protobuf-wasm wasm-patches
 cd wasm-patches && git checkout 4bba8b2f38b5004f87489642b6ca4525ae72fe7f && cd ..
 git apply wasm-patches/*.patch
 ./autogen.sh
-emconfigure ./configure CXXFLAGS="-O3"
+emconfigure ./configure --disable-shared CXXFLAGS="-O3"
 emmake make
-cp src/.libs/libprotobuf-lite.so ${CPP_API}/libprotobuf-lite.bc
-cp src/.libs/libprotobuf.so ${CPP_API}/libprotobuf.bc
+cp src/.libs/libprotobuf-lite.a ${CPP_API}/libprotobuf-lite.a
+cp src/.libs/libprotobuf.a ${CPP_API}/libprotobuf.a
 ```
 
 ### WAVM binaries

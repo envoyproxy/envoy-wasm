@@ -277,7 +277,6 @@ envoy_cmake_external(
         "//conditions:default": [
             "libWAVM.a",
             "libWAVMUnwind.a",
-            "libWAVMgdtoa.a",
         ],
     }),
     deps = [":llvm"],
