@@ -2841,8 +2841,10 @@ std::shared_ptr<Wasm> getOrCreateThreadLocalWasm(Wasm& base_wasm, absl::string_v
   if (wasm) {
     auto root_context = wasm->start();
     // NB: we are reusing this VM with the new configuration so we need to replace the plugin which
-    // contains a Scope& which is in a ListenerImpl which may be deleted. Currently the Scope is
-    // always identical and has no prefix (""), so this is safe.
+    // contains a Scope& which is in a ListenerImpl which may be deleted. The Scope has no prefix
+    // (""), and does nothing but provide a layer of caching and forward to the underlying
+    // Stats::ThreadLocalStoreImpl.
+    // TODO(jplevyak): this will go away after https://github.com/envoyproxy/envoy-wasm/issues/258
     wasm->setPlugin(base_wasm.plugin());
     if (!wasm->configure(root_context, configuration)) {
       throw WasmException("Failed to configure WASM code");
