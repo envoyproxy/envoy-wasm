@@ -1594,10 +1594,16 @@ uint32_t Context::httpCall(absl::string_view cluster, const Pairs& request_heade
     token = next_http_call_token_++;
   }
   auto& handler = http_request_[token];
+
+  // set default hash policy to be based on :authority to enable consistent hash
+  Http::AsyncClient::RequestOptions options;
+  options.setTimeout(timeout);
+  Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy> hash_policy;
+  hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
+  options.setHashPolicy(hash_policy);
   auto http_request = clusterManager()
                           .httpAsyncClientForCluster(cluster_string)
-                          .send(std::move(message), handler,
-                                Http::AsyncClient::RequestOptions().setTimeout(timeout));
+                          .send(std::move(message), handler, options);
   if (!http_request) {
     http_request_.erase(token);
     return 0;
@@ -1634,12 +1640,20 @@ uint32_t Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_service
           .grpcAsyncClientManager()
           .factoryForGrpcService(grpc_service, plugin_->scope_, true /* skip_cluster_check */)
           ->create();
+
+  // set default hash policy to be based on :authority to enable consistent hash
+  Http::AsyncClient::RequestOptions options;
+  options.setTimeout(timeout);
+  Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy> hash_policy;
+  hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
+  options.setHashPolicy(hash_policy);
+
   // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
   // returns. Consequently the grpc_request is not available. Attempting to close or reset from that
   // callback will fail.
-  auto grpc_request = grpc_client->sendRaw(
-      service_name, method_name, std::make_unique<Buffer::OwnedImpl>(request), handler,
-      Tracing::NullSpan::instance(), Http::AsyncClient::RequestOptions().setTimeout(timeout));
+  auto grpc_request =
+      grpc_client->sendRaw(service_name, method_name, std::make_unique<Buffer::OwnedImpl>(request),
+                           handler, Tracing::NullSpan::instance(), options);
   if (!grpc_request) {
     grpc_call_request_.erase(token);
     return 0;
@@ -1673,11 +1687,17 @@ uint32_t Context::grpcStream(const envoy::api::v2::core::GrpcService& grpc_servi
           .grpcAsyncClientManager()
           .factoryForGrpcService(grpc_service, plugin_->scope_, true /* skip_cluster_check */)
           ->create();
+
+  // set default hash policy to be based on :authority to enable consistent hash
+  Http::AsyncClient::StreamOptions options;
+  Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy> hash_policy;
+  hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
+  options.setHashPolicy(hash_policy);
+
   // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
   // returns. Consequently the grpc_stream is not available. Attempting to close or reset from that
   // callback will fail.
-  auto grpc_stream = grpc_client->startRaw(service_name, method_name, handler,
-                                           Http::AsyncClient::RequestOptions());
+  auto grpc_stream = grpc_client->startRaw(service_name, method_name, handler, options);
   if (!grpc_stream) {
     grpc_stream_.erase(token);
     return 0;
