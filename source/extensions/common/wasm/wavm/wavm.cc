@@ -11,7 +11,6 @@
 
 #include "extensions/common/wasm/well_known_names.h"
 
-#include "WAVM/Emscripten/Emscripten.h"
 #include "WAVM/IR/Module.h"
 #include "WAVM/IR/Operators.h"
 #include "WAVM/IR/Types.h"
@@ -216,7 +215,7 @@ struct Wavm : public WasmVm {
   bool cloneable() override { return true; };
   std::unique_ptr<WasmVm> clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
-  void link(absl::string_view debug_name, bool needs_emscripten) override;
+  void link(absl::string_view debug_name) override;
   void start(Context* context) override;
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
@@ -258,7 +257,6 @@ struct Wavm : public WasmVm {
   WAVM::Runtime::ModuleRef module_ = nullptr;
   WAVM::Runtime::GCPointer<WAVM::Runtime::ModuleInstance> module_instance_;
   WAVM::Runtime::Memory* memory_;
-  std::shared_ptr<Emscripten::Instance> emscripten_instance_;
   WAVM::Runtime::GCPointer<WAVM::Runtime::Compartment> compartment_;
   WAVM::Runtime::GCPointer<WAVM::Runtime::Context> context_;
   absl::node_hash_map<std::string, Intrinsics::Module> intrinsic_modules_;
@@ -277,7 +275,6 @@ Wavm::~Wavm() {
   intrinsic_module_instances_.clear();
   intrinsic_modules_.clear();
   envoyFunctions_.clear();
-  emscripten_instance_ = nullptr;
   if (compartment_) {
     ASSERT(tryCollectCompartment(std::move(compartment_)));
   }
@@ -325,17 +322,13 @@ bool Wavm::load(const std::string& code, bool allow_precompiled) {
   return true;
 }
 
-void Wavm::link(absl::string_view debug_name, bool needs_emscripten) {
+void Wavm::link(absl::string_view debug_name) {
   RootResolver rootResolver(compartment_);
   for (auto& p : intrinsic_modules_) {
     auto instance = Intrinsics::instantiateModule(compartment_, {&intrinsic_modules_[p.first]},
                                                   std::string(p.first));
     intrinsic_module_instances_.emplace(p.first, instance);
     rootResolver.moduleNameToInstanceMap().set(p.first, instance);
-  }
-  if (needs_emscripten) {
-    emscripten_instance_ = Emscripten::instantiate(compartment_);
-    rootResolver.addResolver(&WAVM::Emscripten::getInstanceResolver(emscripten_instance_));
   }
   WAVM::Runtime::LinkResult link_result = linkModule(ir_module_, rootResolver);
   module_instance_ = instantiateModule(
@@ -371,10 +364,10 @@ void Wavm::start(Context* context) {
       CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
     }
 
-    if (emscripten_instance_) {
-      CALL_WITH_CONTEXT(Emscripten::initializeModuleInstance(emscripten_instance_, context_,
-                                                             ir_module_, module_instance_),
-                        context);
+    f = asFunctionNullable(getInstanceExport(module_instance_, "__wasm_call_ctors"));
+    if (f) {
+      function_name = "__wasm_call_ctors";
+      CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
     }
 
     f = asFunctionNullable(getInstanceExport(module_instance_, "__post_instantiate"));

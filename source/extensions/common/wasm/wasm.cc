@@ -2238,7 +2238,7 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
     }
   }
   registerCallbacks();
-  wasm_vm_->link(vm_id_, is_emscripten_);
+  wasm_vm_->link(vm_id_);
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
   wasm_vm_->start(vm_context_.get());

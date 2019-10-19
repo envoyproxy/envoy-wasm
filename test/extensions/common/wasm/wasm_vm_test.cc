@@ -89,7 +89,7 @@ TEST(WasmVmTest, NullVmMemory) {
 TEST(WasmVmTest, NullVmStart) {
   auto wasm_vm = createWasmVm("envoy.wasm.runtime.null");
   EXPECT_TRUE(wasm_vm->load("test_null_vm_plugin", true));
-  wasm_vm->link("test", false);
+  wasm_vm->link("test");
   // Test that context argument to start is pushed and that the effective_context_id_ is reset.
   // Test that the original values are restored.
   Context* context1 = reinterpret_cast<Context*>(1);

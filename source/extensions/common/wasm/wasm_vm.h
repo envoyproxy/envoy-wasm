@@ -155,11 +155,8 @@ public:
    * linking, the module should be loaded and the ABI callbacks registered (see above). Linking
    * should be done once between load() and start().
    * @param debug_name user-provided name for use in log and error messages.
-   * @param needs_emscripten whether emscripten support should be provided (e.g.
-   * _emscripten_memcpy_bigHandler). Emscripten (http://https://emscripten.org/) is
-   * a C++ WebAssembly tool chain.
    */
-  virtual void link(absl::string_view debug_name, bool needs_emscripten) PURE;
+  virtual void link(absl::string_view debug_name) PURE;
 
   /**
    * Initialize globals (including calling global constructors) and call the 'start' function.

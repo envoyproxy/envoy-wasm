@@ -42,7 +42,7 @@ public:
 
   bool load(const std::string& code, bool allow_precompiled) override;
   absl::string_view getUserSection(absl::string_view name) override;
-  void link(absl::string_view debug_name, bool needs_emscripten) override;
+  void link(absl::string_view debug_name) override;
 
   // We don't care about this.
   void makeModule(absl::string_view) override {}
@@ -313,7 +313,7 @@ absl::string_view V8::getUserSection(absl::string_view name) {
   return "";
 }
 
-void V8::link(absl::string_view debug_name, bool) {
+void V8::link(absl::string_view debug_name) {
   ENVOY_LOG(trace, "[wasm] link(\"{}\")", debug_name);
   ASSERT(module_ != nullptr);
 

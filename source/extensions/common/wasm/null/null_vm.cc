@@ -34,7 +34,7 @@ bool NullVm::load(const std::string& name, bool /* allow_precompiled */) {
   return true;
 }
 
-void NullVm::link(absl::string_view /* name */, bool /* needs_emscripten */) {}
+void NullVm::link(absl::string_view /* name */) {}
 
 void NullVm::makeModule(absl::string_view /* name */) {
   // NullVm does not advertise code as emscripten so this will not get called.
