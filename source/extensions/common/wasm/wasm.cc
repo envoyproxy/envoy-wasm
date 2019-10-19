@@ -2028,10 +2028,10 @@ WasmResult Context::getMetric(uint32_t metric_id, uint64_t* result_uint64_ptr) {
 Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_configuration,
            PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
            Event::Dispatcher& dispatcher)
-    : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)),
-      creating_plugin_(plugin), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
+    : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)), plugin_(plugin),
+      cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(creating_plugin_->scope_.symbolTable().makeSet("Wasm").release()) {}
+      stat_name_set_(plugin_->scope_.symbolTable().makeSet("Wasm").release()) {}
 
 std::string Plugin::makeLogPrefix() const {
   std::string prefix;
@@ -2178,10 +2178,9 @@ void Wasm::getFunctions() {
 }
 
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
-    : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
-      creating_plugin_(wasm.creating_plugin_), cluster_manager_(wasm.cluster_manager_),
-      dispatcher_(dispatcher), time_source_(dispatcher.timeSource()),
-      stat_name_set_(wasm.stat_name_set_) {
+    : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_), plugin_(wasm.plugin_),
+      cluster_manager_(wasm.cluster_manager_), dispatcher_(dispatcher),
+      time_source_(dispatcher.timeSource()), stat_name_set_(wasm.stat_name_set_) {
   if (wasm.wasmVm()->cloneable()) {
     wasm_vm_ = wasm.wasmVm()->clone();
     vm_context_ = std::make_shared<Context>(this);
@@ -2256,13 +2255,13 @@ bool Wasm::configure(Context* root_context, absl::string_view configuration) {
 }
 
 Context* Wasm::start() {
-  auto root_id = creating_plugin_->root_id_;
+  auto root_id = plugin_->root_id_;
   auto it = root_contexts_.find(root_id);
   if (it != root_contexts_.end()) {
     it->second->onStart(root_id, vm_configuration());
     return it->second.get();
   }
-  auto context = std::make_unique<Context>(this, root_id, creating_plugin_);
+  auto context = std::make_unique<Context>(this, root_id, plugin_);
   auto context_ptr = context.get();
   root_contexts_[root_id] = std::move(context);
   context_ptr->onStart(root_id, vm_configuration());
@@ -2274,7 +2273,7 @@ void Wasm::startForTesting(std::unique_ptr<Context> context) {
   if (!context->wasm_) {
     // Initialization was delayed till the Wasm object was created.
     context->wasm_ = this;
-    context->plugin_ = creating_plugin_;
+    context->plugin_ = plugin_;
     context->id_ = allocContextId();
     contexts_[context->id_] = context.get();
   }
@@ -2731,6 +2730,12 @@ std::shared_ptr<Wasm> getOrCreateThreadLocalWasm(Wasm& base_wasm, absl::string_v
   auto wasm = getThreadLocalWasmPtr(base_wasm.vm_id());
   if (wasm) {
     auto root_context = wasm->start();
+    // NB: we are reusing this VM with the new configuration so we need to replace the plugin which
+    // contains a Scope& which is in a ListenerImpl which may be deleted. The Scope has no prefix
+    // (""), and does nothing but provide a layer of caching and forward to the underlying
+    // Stats::ThreadLocalStoreImpl.
+    // TODO(jplevyak): this will go away after https://github.com/envoyproxy/envoy-wasm/issues/258
+    wasm->setPlugin(base_wasm.plugin());
     if (!wasm->configure(root_context, configuration)) {
       throw WasmException("Failed to configure WASM code");
     }
