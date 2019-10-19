@@ -30,7 +30,6 @@ struct NullVm : public WasmVm {
   WasmVmPtr clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
   void link(absl::string_view debug_name) override;
-  void start(Common::Wasm::Context* context) override;
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
