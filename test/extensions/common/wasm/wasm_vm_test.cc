@@ -56,7 +56,7 @@ TEST(WasmVmTest, NullVmStartup) {
   EXPECT_TRUE(wasm_vm->cloneable());
   auto wasm_vm_clone = wasm_vm->clone();
   EXPECT_TRUE(wasm_vm_clone != nullptr);
-  EXPECT_TRUE(wasm_vm->getUserSection("user").empty());
+  EXPECT_TRUE(wasm_vm->getCustomSection("user").empty());
 }
 
 TEST(WasmVmTest, NullVmMemory) {

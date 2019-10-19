@@ -38,7 +38,7 @@ struct NullVm : public WasmVm {
   bool setWord(uint64_t pointer, Word data) override;
   bool getWord(uint64_t pointer, Word* data) override;
   void makeModule(absl::string_view name) override;
-  absl::string_view getUserSection(absl::string_view name) override;
+  absl::string_view getCustomSection(absl::string_view name) override;
 
 #define _FORWARD_GET_FUNCTION(_T)                                                                  \
   void getFunction(absl::string_view function_name, _T* f) override {                              \
