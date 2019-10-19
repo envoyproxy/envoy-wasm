@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # basics
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
@@ -7,7 +9,7 @@ apt-get upgrade -y
 apt-get install -y --no-install-recommends apt-utils ca-certificates
 apt-get autoremove -y
 apt-get clean
-apt-get install -y --no-install-recommends software-properties-common apt-transport-https git wget curl libglib2.0-dev autoconf autotools-dev automake libtool cmake python
+apt-get install -y --no-install-recommends software-properties-common apt-transport-https git wget curl pkg-config autoconf autotools-dev automake libtool cmake python zlib1g-dev
 
 # gcc-7
 apt-get install -y --no-install-recommends gcc-7 g++-7 cpp-7
@@ -31,8 +33,8 @@ cd
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 1.38.46
-./emsdk activate 1.38.46
+./emsdk install 1.38.48-upstream
+./emsdk activate 1.38.48-upstream
 source ./emsdk_env.sh
 cd
 
@@ -48,7 +50,7 @@ cd
 apt-get install -y --no-install-recommends llvm-6.0-dev
 git clone https://github.com/WAVM/WAVM
 cd WAVM
-git checkout 5e69711c074d16e717e476e3e7365505ebb0c42b -b Aug292019 # Aug 29 2019
+git checkout 1ec06cd202a922015c9041c5ed84f875453c4dc7 -b Oct152019 # Oct 15 2019
 cmake "."
 make
 make install

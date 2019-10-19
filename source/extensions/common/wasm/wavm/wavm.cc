@@ -11,7 +11,6 @@
 
 #include "extensions/common/wasm/well_known_names.h"
 
-#include "WAVM/Emscripten/Emscripten.h"
 #include "WAVM/IR/Module.h"
 #include "WAVM/IR/Operators.h"
 #include "WAVM/IR/Types.h"
@@ -24,8 +23,6 @@
 #include "WAVM/Inline/HashMap.h"
 #include "WAVM/Inline/IndexMap.h"
 #include "WAVM/Inline/IntrusiveSharedPtr.h"
-#include "WAVM/Inline/Lock.h"
-#include "WAVM/Inline/Serialization.h"
 #include "WAVM/Platform/Mutex.h"
 #include "WAVM/Platform/Thread.h"
 #include "WAVM/Runtime/Intrinsics.h"
@@ -162,8 +159,8 @@ bool loadModule(const std::string& code, IR::Module& out_module) {
   // If the code starts with the WASM binary magic number, load it as a binary IR::Module.
   static const uint8_t WasmMagicNumber[4] = {0x00, 0x61, 0x73, 0x6d};
   if (code.size() >= 4 && !memcmp(code.data(), WasmMagicNumber, 4)) {
-    WAVM::Serialization::MemoryInputStream input(code.data(), code.size());
-    return WASM::loadBinaryModule(input, out_module);
+    return WASM::loadBinaryModule(reinterpret_cast<const unsigned char*>(code.data()), code.size(),
+                                  out_module);
   } else {
     // Load it as a text IR::Module.
     std::vector<WAST::Error> parseErrors;
@@ -218,9 +215,7 @@ struct Wavm : public WasmVm {
   bool cloneable() override { return true; };
   std::unique_ptr<WasmVm> clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
-  void setMemoryLayout(uint64_t stack_base, uint64_t heap_base,
-                       uint64_t heap_base_pointer) override;
-  void link(absl::string_view debug_name, bool needs_emscripten) override;
+  void link(absl::string_view debug_name) override;
   void start(Context* context) override;
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
@@ -262,7 +257,6 @@ struct Wavm : public WasmVm {
   WAVM::Runtime::ModuleRef module_ = nullptr;
   WAVM::Runtime::GCPointer<WAVM::Runtime::ModuleInstance> module_instance_;
   WAVM::Runtime::Memory* memory_;
-  std::shared_ptr<Emscripten::Instance> emscripten_instance_;
   WAVM::Runtime::GCPointer<WAVM::Runtime::Compartment> compartment_;
   WAVM::Runtime::GCPointer<WAVM::Runtime::Context> context_;
   absl::node_hash_map<std::string, Intrinsics::Module> intrinsic_modules_;
@@ -273,9 +267,6 @@ struct Wavm : public WasmVm {
   std::unordered_map<std::pair<std::string, std::string>, WavmGlobalBase*, PairHash>
       intrinsic_globals_;
   uint8_t* memory_base_ = nullptr;
-  uint32_t memory_stack_base_;
-  uint32_t memory_heap_base_;
-  uint32_t memory_heap_base_pointer_;
 };
 
 Wavm::~Wavm() {
@@ -284,7 +275,6 @@ Wavm::~Wavm() {
   intrinsic_module_instances_.clear();
   intrinsic_modules_.clear();
   envoyFunctions_.clear();
-  emscripten_instance_ = nullptr;
   if (compartment_) {
     ASSERT(tryCollectCompartment(std::move(compartment_)));
   }
@@ -314,11 +304,11 @@ bool Wavm::load(const std::string& code, bool allow_precompiled) {
     return false;
   }
   // todo check percompiled section is permitted
-  const UserSection* precompiled_object_section = nullptr;
+  const CustomSection* precompiled_object_section = nullptr;
   if (allow_precompiled) {
-    for (const UserSection& userSection : ir_module_.userSections) {
-      if (userSection.name == "wavm.precompiled_object") {
-        precompiled_object_section = &userSection;
+    for (const CustomSection& customSection : ir_module_.customSections) {
+      if (customSection.name == "wavm.precompiled_object") {
+        precompiled_object_section = &customSection;
         break;
       }
     }
@@ -332,23 +322,13 @@ bool Wavm::load(const std::string& code, bool allow_precompiled) {
   return true;
 }
 
-void Wavm::setMemoryLayout(uint64_t stack_base, uint64_t heap_base, uint64_t heap_base_pointer) {
-  memory_stack_base_ = stack_base;
-  memory_heap_base_ = heap_base;
-  memory_heap_base_pointer_ = heap_base_pointer;
-}
-
-void Wavm::link(absl::string_view debug_name, bool needs_emscripten) {
+void Wavm::link(absl::string_view debug_name) {
   RootResolver rootResolver(compartment_);
   for (auto& p : intrinsic_modules_) {
     auto instance = Intrinsics::instantiateModule(compartment_, {&intrinsic_modules_[p.first]},
                                                   std::string(p.first));
     intrinsic_module_instances_.emplace(p.first, instance);
     rootResolver.moduleNameToInstanceMap().set(p.first, instance);
-  }
-  if (needs_emscripten) {
-    emscripten_instance_ = Emscripten::instantiate(compartment_, ir_module_);
-    rootResolver.addResolver(&WAVM::Emscripten::getInstanceResolver(emscripten_instance_));
   }
   WAVM::Runtime::LinkResult link_result = linkModule(ir_module_, rootResolver);
   module_instance_ = instantiateModule(
@@ -376,36 +356,39 @@ void Wavm::makeModule(absl::string_view name) {
 }
 
 void Wavm::start(Context* context) {
-  if (emscripten_instance_) {
-    setMemory(memory_heap_base_pointer_, sizeof(uint32_t), &memory_heap_base_);
-  }
+  std::string function_name;
   try {
     auto f = getStartFunction(module_instance_);
     if (f) {
+      function_name = "<start>";
       CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
     }
 
-    if (emscripten_instance_) {
-      CALL_WITH_CONTEXT(Emscripten::initializeGlobals(emscripten_instance_, context_, ir_module_,
-                                                      module_instance_),
-                        context);
+    f = asFunctionNullable(getInstanceExport(module_instance_, "__wasm_call_ctors"));
+    if (f) {
+      function_name = "__wasm_call_ctors";
+      CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
     }
 
     f = asFunctionNullable(getInstanceExport(module_instance_, "__post_instantiate"));
     if (f) {
+      function_name = "__post_instaniate";
       CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
     }
 
     f = asFunctionNullable(getInstanceExport(module_instance_, "main"));
-    if (!f) {
-      f = asFunctionNullable(getInstanceExport(module_instance_, "_main"));
-    }
     if (f) {
+      function_name = "main";
       CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
+    } else {
+      f = asFunctionNullable(getInstanceExport(module_instance_, "_main"));
+      if (f) {
+        function_name = "_main";
+        CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
+      }
     }
   } catch (const std::exception& e) {
-    std::cerr << "Caught exception \"" << e.what() << "\" in WASM\n";
-    throw;
+    throw WasmException(fmt::format("Function: {} failed: {}", function_name, e.what()));
   }
 }
 
@@ -459,7 +442,7 @@ bool Wavm::setWord(uint64_t pointer, Word data) {
 }
 
 absl::string_view Wavm::getUserSection(absl::string_view name) {
-  for (auto& section : ir_module_.userSections) {
+  for (auto& section : ir_module_.customSections) {
     if (section.name == name) {
       return {reinterpret_cast<char*>(section.data.data()), section.data.size()};
     }
@@ -473,7 +456,8 @@ std::unique_ptr<WasmVm> createVm() { return std::make_unique<Wavm>(); }
 
 template <typename R, typename... Args>
 IR::FunctionType inferEnvoyFunctionType(R (*)(void*, Args...)) {
-  return IR::FunctionType(IR::inferResultType<R>(), IR::TypeTuple({IR::inferValueType<Args>()...}));
+  return IR::FunctionType(IR::inferResultType<R>(), IR::TypeTuple({IR::inferValueType<Args>()...}),
+                          IR::CallingConvention::intrinsic);
 }
 
 using namespace Wavm;
@@ -482,9 +466,9 @@ template <typename R, typename... Args>
 void registerCallbackWavm(WasmVm* vm, absl::string_view module_name,
                           absl::string_view function_name, R (*f)(Args...)) {
   auto wavm = static_cast<Common::Wasm::Wavm::Wavm*>(vm);
-  wavm->envoyFunctions_.emplace_back(new Intrinsics::Function(
-      &wavm->intrinsic_modules_[module_name], function_name.data(), reinterpret_cast<void*>(f),
-      inferEnvoyFunctionType(f), IR::CallingConvention::intrinsic));
+  wavm->envoyFunctions_.emplace_back(
+      new Intrinsics::Function(&wavm->intrinsic_modules_[module_name], function_name.data(),
+                               reinterpret_cast<void*>(f), inferEnvoyFunctionType(f)));
 }
 
 template void registerCallbackWavm<void, void*>(WasmVm* vm, absl::string_view module_name,
@@ -593,7 +577,7 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view function_name,
   if (!checkFunctionType(f, inferStdFunctionType(function))) {
     throw WasmVmException(fmt::format("Bad function signature for: {}", function_name));
   }
-  *function = [wavm, f](Context* context, Args... args) -> R {
+  *function = [wavm, f, function_name](Context* context, Args... args) -> R {
     WasmUntaggedValue values[] = {args...};
     WasmUntaggedValue return_value;
     try {
@@ -602,8 +586,7 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view function_name,
           context);
       return static_cast<uint32_t>(return_value.i32);
     } catch (const std::exception& e) {
-      std::cerr << "Caught exception \"" << e.what() << "\" in WASM\n";
-      throw;
+      throw WasmException(fmt::format("Function: {} failed: {}", function_name, e.what()));
     }
   };
 }
@@ -625,13 +608,12 @@ void getFunctionWavmReturn(WasmVm* vm, absl::string_view function_name,
   if (!checkFunctionType(f, inferStdFunctionType(function))) {
     throw WasmVmException(fmt::format("Bad function signature for: {}", function_name));
   }
-  *function = [wavm, f](Context* context, Args... args) -> R {
+  *function = [wavm, f, function_name](Context* context, Args... args) -> R {
     WasmUntaggedValue values[] = {args...};
     try {
       CALL_WITH_CONTEXT(invokeFunction(wavm->context_, f, getFunctionType(f), &values[0]), context);
     } catch (const std::exception& e) {
-      std::cerr << "Caught exception \"" << e.what() << "\" in WASM\n";
-      throw;
+      throw WasmException(fmt::format("Function: {} failed: {}", function_name, e.what()));
     }
   };
 }

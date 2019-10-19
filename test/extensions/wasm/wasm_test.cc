@@ -120,12 +120,10 @@ TEST_P(WasmTest, BadSignature) {
   EXPECT_FALSE(code.empty());
   EXPECT_THROW_WITH_MESSAGE(wasm->initialize(code, false),
                             Extensions::Common::Wasm::WasmVmException,
-                            "Bad function signature for: _proxy_onConfigure");
+                            "Bad function signature for: proxy_onConfigure");
 }
 
-// TODO(PiotrSikora): catch llvm_trap in v8.
-#ifdef ENVOY_WASM_WAVM
-TEST(WasmTestWavmOnly, Segv) {
+TEST_P(WasmTest, Segv) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -140,17 +138,27 @@ TEST(WasmTestWavmOnly, Segv) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr, *scope, scope);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      "envoy.wasm.runtime.wavm", vm_id, vm_configuration, plugin, cluster_manager, *dispatcher);
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin,
+      cluster_manager, *dispatcher);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("before badptr")));
   EXPECT_TRUE(wasm->initialize(code, false));
-  EXPECT_THROW_WITH_MESSAGE(wasm->startForTesting(std::move(context)),
-                            Extensions::Common::Wasm::WasmException, "emscripten llvm_trap");
+
+  if (GetParam() == "v8") {
+    EXPECT_THROW_WITH_MESSAGE(wasm->startForTesting(std::move(context)),
+                              Extensions::Common::Wasm::WasmException,
+                              "Function: proxy_onStart failed: Uncaught RuntimeError: unreachable");
+  } else if (GetParam() == "wavm") {
+    EXPECT_THROW_WITH_REGEX(wasm->startForTesting(std::move(context)),
+                            Extensions::Common::Wasm::WasmException,
+                            "Function: proxy_onStart failed: wavm.reachedUnreachable.*");
+  } else {
+    ASSERT_FALSE(true); // Neither of the above was matched.
+  }
 }
-#endif
 
 TEST_P(WasmTest, DivByZero) {
   Stats::IsolatedStoreImpl stats_store;
@@ -175,11 +183,19 @@ TEST_P(WasmTest, DivByZero) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("before div by zero")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("divide by zero: 0")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("after div by zero")));
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
-  context->onLog();
+
+  if (GetParam() == "v8") {
+    EXPECT_THROW_WITH_MESSAGE(
+        context->onLog(), Extensions::Common::Wasm::WasmException,
+        "Function: proxy_onLog failed: Uncaught RuntimeError: divide by zero");
+  } else if (GetParam() == "wavm") {
+    EXPECT_THROW_WITH_REGEX(context->onLog(), Extensions::Common::Wasm::WasmException,
+                            "Function: proxy_onLog failed: wavm.integerDivideByZeroOrOverflow.*");
+  } else {
+    ASSERT_FALSE(true); // Neither of the above was matched.
+  }
 }
 
 TEST_P(WasmTest, EmscriptenVersion) {
@@ -209,9 +225,9 @@ TEST_P(WasmTest, EmscriptenVersion) {
   EXPECT_TRUE(wasm->getEmscriptenVersion(&major, &minor, &abi_major, &abi_minor));
   EXPECT_EQ(major, 0);
   EXPECT_LE(minor, 3);
-  // Up to (at least) emsdk 1.38.42.
+  // Up to (at least) emsdk 1.38.48.
   EXPECT_EQ(abi_major, 0);
-  EXPECT_LE(abi_minor, 7);
+  EXPECT_LE(abi_minor, 18);
 }
 
 TEST_P(WasmTest, IntrinsicGlobals) {

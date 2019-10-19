@@ -814,73 +814,6 @@ Word grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word messa
   return wasmResultToWord(context->grpcSend(token.u64_, message.value(), end_stream.u64_));
 }
 
-Word _emscripten_get_heap_sizeHandler(void* raw_context) {
-  auto context = WASM_CONTEXT(raw_context);
-  return context->wasmVm()->getMemorySize();
-}
-
-Word _emscripten_memcpy_bigHandler(void* raw_context, Word dst, Word src, Word size) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto data = context->wasmVm()->getMemory(src.u64_, size.u64_);
-  if (!data) {
-    return 0;
-  }
-  context->wasmVm()->setMemory(dst.u64_, size.u64_, data.value().data());
-  return dst;
-}
-
-Word _emscripten_resize_heapHandler(void*, Word) {
-  throw WasmException("emscripten emscripten_resize_heap");
-}
-
-Word abortOnCannotGrowMemoryAbi00Handler(void*) {
-  throw WasmException("emscripten abortOnCannotGrowMemory");
-}
-
-Word abortOnCannotGrowMemoryAbi02Handler(void*, Word) {
-  throw WasmException("emscripten abortOnCannotGrowMemory");
-}
-
-void abortHandler(void*, Word) { throw WasmException("emscripten abort"); }
-
-void _abortHandler(void*) { throw WasmException("emscripten abort"); }
-
-void _llvm_trapHandler(void*) { throw WasmException("emscripten llvm_trap"); }
-
-void ___assert_failHandler(void*, Word, Word, Word, Word) {
-  throw WasmException("emscripten assert_fail");
-}
-
-void ___cxa_throwHandler(void*, Word, Word, Word) { throw WasmException("emscripten cxa_throw"); }
-
-void ___cxa_pure_virtualHandler(void*) { throw WasmException("emscripten cxa_pure_virtual"); }
-
-Word ___call_mainHandler(void*, Word, Word) { throw WasmException("emscripten call_main"); }
-
-Word ___cxa_allocate_exceptionHandler(void*, Word) {
-  throw WasmException("emscripten cxa_allocate_exception");
-}
-
-Word ___cxa_uncaught_exceptionHandler(void*) {
-  throw WasmException("emscripten cxa_uncaught_exception");
-}
-
-Word ___cxa_uncaught_exceptionsHandler(void*) {
-  throw WasmException("emscripten cxa_uncaught_exceptions");
-}
-
-Word ___clock_gettimeHandler(void*, Word, Word) { throw WasmException("emscripten clock_gettime"); }
-
-void ___lockHandler(void*, Word) { throw WasmException("emscripten lock"); }
-
-void ___unlockHandler(void*, Word) { throw WasmException("emscripten unlock"); }
-
-Word ___syscall6Handler(void*, Word, Word) { throw WasmException("emscripten syscall6"); }
-
-Word ___syscall54Handler(void*, Word, Word) { throw WasmException("emscripten syscall54"); }
-
-Word ___syscall140Handler(void*, Word, Word) { throw WasmException("emscripten syscall140"); }
-
 // Implementation of writev-like() syscall that redirects stdout/stderr to Envoy logs.
 Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwritten_ptr) {
   auto context = WASM_CONTEXT(raw_context);
@@ -929,31 +862,10 @@ Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwri
   return 0; // __WASI_ESUCCESS
 }
 
-// ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
-Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
-  auto context = WASM_CONTEXT(raw_context);
-
-  // Read syscall args.
-  auto memslice = context->wasmVm()->getMemory(syscall_args_ptr.u64_, 3 * sizeof(uint32_t));
-  if (!memslice) {
-    context->wasm()->setErrno(EINVAL);
-    return -1;
-  }
-  const uint32_t* syscall_args = reinterpret_cast<const uint32_t*>(memslice.value().data());
-
-  Word nwritten(0);
-  auto result = writevImpl(raw_context, Word(syscall_args[0]), Word(syscall_args[1]),
-                           Word(syscall_args[2]), &nwritten);
-  if (result.u64_ != 0) { // __WASI_ESUCCESS
-    return -1;
-  }
-  return nwritten;
-}
-
-// _was_errno_t _wasi_fd_write(_wasi_fd_t fd, const _wasi_ciovec_t *iov, size_t iovs_len, size_t*
+// __wasi_errno_t __wasi_fd_write(_wasi_fd_t fd, const _wasi_ciovec_t *iov, size_t iovs_len, size_t*
 // nwritten);
-Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
-                             Word nwritten_ptr) {
+Word wasi_unstable_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
+                                   Word nwritten_ptr) {
   auto context = WASM_CONTEXT(raw_context);
 
   Word nwritten(0);
@@ -967,25 +879,36 @@ Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_le
   return 0; // __WASI_ESUCCESS
 }
 
-void ___setErrNoHandler(void*, Word) { throw WasmException("emscripten setErrNo"); }
+// __wasi_errno_t __wasi_fd_seek(__wasi_fd_t fd, __wasi_filedelta_t offset, __wasi_whence_t
+// whence,__wasi_filesize_t *newoffset);
+Word wasi_unstable_fd_seekHandler(void*, Word, int64_t, Word, Word) {
+  throw WasmException("wasi_unstable fd_seek");
+}
 
-Word _pthread_equalHandler(void*, Word left, Word right) { return left.u64_ == right.u64_; }
-// NB: pthread_mutex_destroy is required to return 0 by the protobuf libarary.
-Word _pthread_mutex_destroyHandler(void*, Word) { return 0; }
-Word _pthread_cond_waitHandler(void*, Word, Word) {
-  throw WasmException("emscripten pthread_cond_wait");
+// __wasi_errno_t __wasi_fd_close(__wasi_fd_t fd);
+Word wasi_unstable_fd_closeHandler(void*, Word) { throw WasmException("wasi_unstable fd_close"); }
+
+// __wasi_errno_t __wasi_environ_get(char **environ, char *environ_buf);
+Word wasi_unstable_environ_getHandler(void*, Word, Word) {
+  return 0; // __WASI_ESUCCESS
 }
-Word _pthread_getspecificHandler(void*, Word) {
-  throw WasmException("emscripten pthread_getspecific");
+
+// __wasi_errno_t __wasi_environ_sizes_get(size_t *environ_count, size_t *environ_buf_size);
+Word wasi_unstable_environ_sizes_getHandler(void* raw_context, Word count_ptr, Word buf_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  if (!context->wasmVm()->setWord(count_ptr.u64_, Word(0))) {
+    return 21; // __WASI_EFAULT
+  }
+  if (!context->wasmVm()->setWord(buf_size_ptr.u64_, Word(0))) {
+    return 21; // __WASI_EFAULT
+  }
+  return 0; // __WASI_ESUCCESS
 }
-Word _pthread_key_createHandler(void*, Word, Word) {
-  throw WasmException("emscripten pthread_key_create");
-}
-Word _pthread_onceHandler(void*, Word, Word) { throw WasmException("emscripten pthread_once"); }
-Word _pthread_setspecificHandler(void*, Word, Word) {
-  throw WasmException("emscripten pthread_setspecific");
-}
-void setTempRet0Handler(void*, Word) { throw WasmException("emscripten setTempRet0"); }
+
+// void __wasi_proc_exit(__wasi_exitcode_t rval);
+void wasi_unstable_proc_exitHandler(void*, Word) { throw WasmException("wasi_unstable proc_exit"); }
+
+Word pthread_equalHandler(void*, Word left, Word right) { return left.u64_ == right.u64_; }
 
 Word setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_milliseconds) {
   return wasmResultToWord(
@@ -1011,8 +934,6 @@ Word logHandler(void* raw_context, Word level, Word address, Word size) {
   context->scriptLog(static_cast<spdlog::level::level_enum>(level.u64_), message.value());
   return wasmResultToWord(WasmResult::Ok);
 }
-
-double globalMathLogHandler(void*, double f) { return ::log(f); }
 
 WasmResult Context::setTickPeriod(std::chrono::milliseconds tick_period) {
   wasm_->setTickPeriod(root_context_id_ ? root_context_id_ : id_, tick_period);
@@ -2127,60 +2048,35 @@ std::string Plugin::makeLogPrefix() const {
 }
 
 void Wasm::registerCallbacks() {
-#define _REGISTER_ABI(_fn, _abi)                                                                   \
+#define _REGISTER(_fn)                                                                             \
   wasm_vm_->registerCallback(                                                                      \
-      "envoy", #_fn, &_fn##_abi##Handler,                                                          \
-      &ConvertFunctionWordToUint32<decltype(_fn##_abi##Handler),                                   \
-                                   _fn##_abi##Handler>::convertFunctionWordToUint32)
-#define _REGISTER(_fn) _REGISTER_ABI(_fn, )
+      "envoy", #_fn, &_fn##Handler,                                                                \
+      &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
+                                   _fn##Handler>::convertFunctionWordToUint32)
   if (is_emscripten_) {
-    if (emscripten_abi_major_version_ > 0 || emscripten_abi_minor_version_ > 1) {
-      // abi 0.2 - abortOnCannotGrowMemory() changed signature to (param i32) (result i32).
-      _REGISTER_ABI(abortOnCannotGrowMemory, Abi02);
-    } else {
-      _REGISTER_ABI(abortOnCannotGrowMemory, Abi00);
-    }
-
-    _REGISTER(_emscripten_memcpy_big);
-    _REGISTER(_emscripten_get_heap_size);
-    _REGISTER(_emscripten_resize_heap);
-    _REGISTER(abort);
-    _REGISTER(_abort);
-    _REGISTER(_llvm_trap);
-    _REGISTER(___assert_fail);
-    _REGISTER(___cxa_throw);
-    _REGISTER(___cxa_pure_virtual);
-    _REGISTER(___cxa_allocate_exception);
-    _REGISTER(___cxa_uncaught_exception);
-    _REGISTER(___cxa_uncaught_exceptions);
-    _REGISTER(___call_main);
-    _REGISTER(___clock_gettime);
-    _REGISTER(___lock);
-    _REGISTER(___unlock);
-    _REGISTER(___syscall6);
-    _REGISTER(___syscall54);
-    _REGISTER(___syscall140);
-    _REGISTER(___syscall146);
-    _REGISTER(___wasi_fd_write);
-    _REGISTER(___setErrNo);
-    _REGISTER(_pthread_equal);
-    _REGISTER(_pthread_mutex_destroy);
-    _REGISTER(_pthread_cond_wait);
-    _REGISTER(_pthread_getspecific);
-    _REGISTER(_pthread_key_create);
-    _REGISTER(_pthread_once);
-    _REGISTER(_pthread_setspecific);
-    _REGISTER(setTempRet0);
-    wasm_vm_->makeModule("global.Math");
-    wasm_vm_->registerCallback("global.Math", "log", globalMathLogHandler, &globalMathLogHandler);
+    _REGISTER(pthread_equal);
   }
 #undef _REGISTER
-#undef _REGISTER_ABI
 
-  // Calls with the "_proxy_" prefix.
+#define _REGISTER_WASI(_fn)                                                                        \
+  wasm_vm_->registerCallback(                                                                      \
+      "wasi_unstable", #_fn, &wasi_unstable_##_fn##Handler,                                        \
+      &ConvertFunctionWordToUint32<decltype(wasi_unstable_##_fn##Handler),                         \
+                                   wasi_unstable_##_fn##Handler>::convertFunctionWordToUint32)
+  if (is_emscripten_) {
+    _REGISTER_WASI(fd_write);
+    _REGISTER_WASI(fd_seek);
+    _REGISTER_WASI(fd_close);
+    _REGISTER_WASI(environ_get);
+    _REGISTER_WASI(environ_sizes_get);
+    _REGISTER_WASI(proc_exit);
+  }
+#undef _REGISTER_WASI
+
+  // Calls with the "proxy_" prefix.
 #define _REGISTER_PROXY(_fn)                                                                       \
   wasm_vm_->registerCallback(                                                                      \
-      "envoy", "_proxy_" #_fn, &_fn##Handler,                                                      \
+      "envoy", "proxy_" #_fn, &_fn##Handler,                                                       \
       &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
                                    _fn##Handler>::convertFunctionWordToUint32);
   _REGISTER_PROXY(log);
@@ -2235,30 +2131,14 @@ void Wasm::registerCallbacks() {
 #undef _REGISTER_PROXY
 }
 
-void Wasm::establishEnvironment() {
-  if (is_emscripten_) {
-    wasm_vm_->setMemoryLayout(emscripten_stack_base_, emscripten_dynamic_base_,
-                              emscripten_dynamictop_ptr_);
-
-    global_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
-    global_dynamictop_ =
-        wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(emscripten_dynamictop_ptr_));
-
-    wasm_vm_->makeModule("global");
-    global_NaN_ = wasm_vm_->makeGlobal("global", "NaN", std::nan("0"));
-    global_Infinity_ =
-        wasm_vm_->makeGlobal("global", "Infinity", std::numeric_limits<double>::infinity());
-  }
-}
-
 void Wasm::getFunctions() {
-#define _GET(_fn) wasm_vm_->getFunction("_" #_fn, &_fn##_);
+#define _GET(_fn) wasm_vm_->getFunction(#_fn, &_fn##_);
   _GET(malloc);
   _GET(free);
   _GET(__errno_location);
 #undef _GET
 
-#define _GET_PROXY(_fn) wasm_vm_->getFunction("_proxy_" #_fn, &_fn##_);
+#define _GET_PROXY(_fn) wasm_vm_->getFunction("proxy_" #_fn, &_fn##_);
   _GET_PROXY(validateConfiguration);
   _GET_PROXY(onStart);
   _GET_PROXY(onConfigure);
@@ -2338,41 +2218,30 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
     start = decodeVarint(start, end, &emscripten_metadata_minor_version_);
     start = decodeVarint(start, end, &emscripten_abi_major_version_);
     start = decodeVarint(start, end, &emscripten_abi_minor_version_);
+    uint32_t temp;
     if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 1) {
       // metadata 0.2 - added: wasm_backend.
-      uint32_t temp;
       start = decodeVarint(start, end, &temp);
     }
-    start = decodeVarint(start, end, &emscripten_memory_size_);
-    start = decodeVarint(start, end, &emscripten_table_size_);
+    start = decodeVarint(start, end, &temp);
+    start = decodeVarint(start, end, &temp);
     if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 0) {
       // metadata 0.1 - added: global_base, dynamic_base, dynamictop_ptr and tempdouble_ptr.
-      start = decodeVarint(start, end, &emscripten_global_base_);
-      start = decodeVarint(start, end, &emscripten_dynamic_base_);
-      start = decodeVarint(start, end, &emscripten_dynamictop_ptr_);
-      decodeVarint(start, end, &emscripten_tempdouble_ptr_);
+      start = decodeVarint(start, end, &temp);
+      start = decodeVarint(start, end, &temp);
+      start = decodeVarint(start, end, &temp);
+      decodeVarint(start, end, &temp);
       if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 2) {
         // metadata 0.3 - added: standalone_wasm.
-        uint32_t temp;
-        start = decodeVarint(start, end, &temp);
+        start = decodeVarint(start, end, &emscripten_standalone_wasm_);
       }
-    } else {
-      // Workaround for Emscripten versions without heap (dynamic) base in metadata.
-      emscripten_stack_base_ = 64 * 64 * 1024;      // 4MB
-      emscripten_dynamic_base_ = 128 * 64 * 1024;   // 8MB
-      emscripten_dynamictop_ptr_ = 128 * 64 * 1024; // 8MB
     }
   }
   registerCallbacks();
-  establishEnvironment();
-  wasm_vm_->link(vm_id_, is_emscripten_);
+  wasm_vm_->link(vm_id_);
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
   wasm_vm_->start(vm_context_.get());
-  if (is_emscripten_) {
-    ASSERT(std::isnan(global_NaN_->get()));
-    ASSERT(std::isinf(global_Infinity_->get()));
-  }
   code_ = code;
   allow_precompiled_ = allow_precompiled;
   return true;

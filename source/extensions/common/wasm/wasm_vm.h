@@ -94,6 +94,7 @@ template <size_t N> using WasmCallbackWord = WasmFuncType<N, Word, void*, Word>*
 // Extended with W = Word
 // Z = void, j = uint32_t, l = int64_t, m = uint64_t
 using WasmCallback_WWl = Word (*)(void*, Word, int64_t);
+using WasmCallback_WWlWW = Word (*)(void*, Word, int64_t, Word, Word);
 using WasmCallback_WWm = Word (*)(void*, Word, uint64_t);
 using WasmCallback_dd = double (*)(void*, double);
 
@@ -103,7 +104,7 @@ using WasmCallback_dd = double (*)(void*, double);
           _f(WasmCallbackWord<2>) _f(WasmCallbackWord<3>) _f(WasmCallbackWord<4>)                  \
               _f(WasmCallbackWord<5>) _f(WasmCallbackWord<6>) _f(WasmCallbackWord<7>)              \
                   _f(WasmCallbackWord<8>) _f(WasmCallbackWord<9>) _f(WasmCallback_WWl)             \
-                      _f(WasmCallback_WWm) _f(WasmCallback_dd)
+                      _f(WasmCallback_WWlWW) _f(WasmCallback_WWm) _f(WasmCallback_dd)
 
 // Wasm VM instance. Provides the low level WASM interface.
 class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
@@ -154,20 +155,8 @@ public:
    * linking, the module should be loaded and the ABI callbacks registered (see above). Linking
    * should be done once between load() and start().
    * @param debug_name user-provided name for use in log and error messages.
-   * @param needs_emscripten whether emscripten support should be provided (e.g.
-   * _emscripten_memcpy_bigHandler). Emscripten (http://https://emscripten.org/) is
-   * a C++ WebAssembly tool chain.
    */
-  virtual void link(absl::string_view debug_name, bool needs_emscripten) PURE;
-
-  /**
-   * Set memory layout (start of dynamic heap base, etc.) in the VM.
-   * @param stack_base the location in VM memory of the stack.
-   * @param heap_base the location in VM memory of the heap.
-   * @param heap_base_ptr the location in VM memory of a location to store the heap pointer.
-   */
-  virtual void setMemoryLayout(uint64_t stack_base, uint64_t heap_base,
-                               uint64_t heap_base_pointer) PURE;
+  virtual void link(absl::string_view debug_name) PURE;
 
   /**
    * Initialize globals (including calling global constructors) and call the 'start' function.

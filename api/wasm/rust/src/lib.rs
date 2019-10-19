@@ -43,7 +43,7 @@ fn __post_instantiate() {
 
 /// Allow host to allocate memory.
 #[no_mangle]
-fn _malloc(size: usize) -> *mut u8 {
+fn malloc(size: usize) -> *mut u8 {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
     unsafe {
         vec.set_len(size);
@@ -54,7 +54,7 @@ fn _malloc(size: usize) -> *mut u8 {
 
 /// Allow host to free memory.
 #[no_mangle]
-fn _free(ptr: *mut u8) {
+fn free(ptr: *mut u8) {
     if !ptr.is_null() {
         unsafe {
             Box::from_raw(ptr);
@@ -65,7 +65,6 @@ fn _free(ptr: *mut u8) {
 /// Low-level Proxy-WASM APIs for the host functions.
 pub mod host {
     extern "C" {
-        #[link_name = "_proxy_log"]
         pub fn proxy_log(level: u32, message_data: *const u8, message_size: usize) -> u32;
     }
 }

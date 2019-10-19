@@ -29,8 +29,7 @@ struct NullVm : public WasmVm {
   bool cloneable() override { return true; };
   WasmVmPtr clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
-  void link(absl::string_view debug_name, bool needs_emscripten) override;
-  void setMemoryLayout(uint64_t, uint64_t, uint64_t) override {}
+  void link(absl::string_view debug_name) override;
   void start(Common::Wasm::Context* context) override;
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
