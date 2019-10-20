@@ -103,20 +103,6 @@ public:
 
   bool resolve(const std::string& module_name, const std::string& export_name, ExternType type,
                WAVM::Runtime::Object*& out_object) override {
-    if (module_name == "env") {
-      auto envoy_instance = module_name_to_instance_map_.get("envoy");
-      if (envoy_instance) {
-        out_object = getInstanceExport(*envoy_instance, export_name);
-        if (out_object && isA(out_object, type)) {
-          return resolveInternal("envoy", export_name, type, out_object);
-        }
-      }
-    }
-    return resolveInternal(module_name, export_name, type, out_object);
-  }
-
-  bool resolveInternal(const std::string& module_name, const std::string& export_name,
-                       ExternType type, WAVM::Runtime::Object*& out_object) {
     auto named_instance = module_name_to_instance_map_.get(module_name);
     if (named_instance) {
       out_object = getInstanceExport(*named_instance, export_name);
@@ -223,7 +209,6 @@ struct Wavm : public WasmVm {
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool getWord(uint64_t pointer, Word* data) override;
   bool setWord(uint64_t pointer, Word data) override;
-  void makeModule(absl::string_view name) override;
   absl::string_view getUserSection(absl::string_view name) override;
 
   void getInstantiatedGlobals();
@@ -318,7 +303,6 @@ bool Wavm::load(const std::string& code, bool allow_precompiled) {
   } else {
     module_ = WAVM::Runtime::loadPrecompiledModule(ir_module_, precompiled_object_section->data);
   }
-  makeModule("envoy");
   return true;
 }
 
@@ -349,10 +333,6 @@ void Wavm::getInstantiatedGlobals() {
     }
     p.second->global_ = g;
   }
-}
-
-void Wavm::makeModule(absl::string_view name) {
-  intrinsic_modules_.emplace(std::piecewise_construct, std::make_tuple(name), std::make_tuple());
 }
 
 void Wavm::start(Context* context) {

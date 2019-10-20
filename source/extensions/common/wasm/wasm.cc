@@ -2050,7 +2050,7 @@ std::string Plugin::makeLogPrefix() const {
 void Wasm::registerCallbacks() {
 #define _REGISTER(_fn)                                                                             \
   wasm_vm_->registerCallback(                                                                      \
-      "envoy", #_fn, &_fn##Handler,                                                                \
+      "env", #_fn, &_fn##Handler,                                                                  \
       &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
                                    _fn##Handler>::convertFunctionWordToUint32)
   if (is_emscripten_) {
@@ -2076,7 +2076,7 @@ void Wasm::registerCallbacks() {
   // Calls with the "proxy_" prefix.
 #define _REGISTER_PROXY(_fn)                                                                       \
   wasm_vm_->registerCallback(                                                                      \
-      "envoy", "proxy_" #_fn, &_fn##Handler,                                                       \
+      "env", "proxy_" #_fn, &_fn##Handler,                                                         \
       &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
                                    _fn##Handler>::convertFunctionWordToUint32);
   _REGISTER_PROXY(log);

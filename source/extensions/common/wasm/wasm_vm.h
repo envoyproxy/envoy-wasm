@@ -224,12 +224,6 @@ public:
   virtual bool setWord(uint64_t pointer, Word data) PURE;
 
   /**
-   * Make a new intrinsic module (e.g. for Emscripten support).
-   * @param name the name of the module to make.
-   */
-  virtual void makeModule(absl::string_view name) PURE;
-
-  /**
    * Get the contents of the user section with the given name or "" if it does not exist.
    * @param name the name of the user section to get.
    * @return the contents of the user section (if any). The result will be empty() if there

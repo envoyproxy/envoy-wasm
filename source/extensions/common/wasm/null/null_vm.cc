@@ -36,11 +36,6 @@ bool NullVm::load(const std::string& name, bool /* allow_precompiled */) {
 
 void NullVm::link(absl::string_view /* name */) {}
 
-void NullVm::makeModule(absl::string_view /* name */) {
-  // NullVm does not advertise code as emscripten so this will not get called.
-  NOT_REACHED_GCOVR_EXCL_LINE;
-}
-
 void NullVm::start(Common::Wasm::Context* context) {
   SaveRestoreContext saved_context(context);
   plugin_->start();

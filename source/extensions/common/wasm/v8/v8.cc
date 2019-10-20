@@ -44,9 +44,6 @@ public:
   absl::string_view getUserSection(absl::string_view name) override;
   void link(absl::string_view debug_name) override;
 
-  // We don't care about this.
-  void makeModule(absl::string_view) override {}
-
   // v8 is currently not clonable.
   bool cloneable() override { return false; }
   std::unique_ptr<WasmVm> clone() override { return nullptr; }
@@ -332,54 +329,34 @@ void V8::link(absl::string_view debug_name) {
                 printValTypes(import_type->func()->params()),
                 printValTypes(import_type->func()->results()));
 
-      const wasm::Func* func = nullptr;
       auto it = host_functions_.find(absl::StrCat(module, ".", name));
-      if (it != host_functions_.end()) {
-        func = it->second.get()->callback.get();
-      } else {
-        it = host_functions_.find(absl::StrCat("envoy", ".", name));
-        if (it != host_functions_.end()) {
-          func = it->second.get()->callback.get();
-        }
-      }
-      if (func) {
-        if (equalValTypes(import_type->func()->params(), func->type()->params()) &&
-            equalValTypes(import_type->func()->results(), func->type()->results())) {
-          imports.push_back(func);
-        } else {
-          throw WasmVmException(fmt::format(
-              "Failed to load WASM module due to an import type mismatch: {}.{}, "
-              "want: {} -> {}, but host exports: {} -> {}",
-              module, name, printValTypes(import_type->func()->params()),
-              printValTypes(import_type->func()->results()), printValTypes(func->type()->params()),
-              printValTypes(func->type()->results())));
-        }
-      } else {
+      if (it == host_functions_.end()) {
         throw WasmVmException(
             fmt::format("Failed to load WASM module due to a missing import: {}.{}", module, name));
       }
+      auto func = it->second.get()->callback.get();
+      if (!equalValTypes(import_type->func()->params(), func->type()->params()) ||
+          !equalValTypes(import_type->func()->results(), func->type()->results())) {
+        throw WasmVmException(fmt::format(
+            "Failed to load WASM module due to an import type mismatch: {}.{}, "
+            "want: {} -> {}, but host exports: {} -> {}",
+            module, name, printValTypes(import_type->func()->params()),
+            printValTypes(import_type->func()->results()), printValTypes(func->type()->params()),
+            printValTypes(func->type()->results())));
+      }
+      imports.push_back(func);
     } break;
 
     case wasm::EXTERN_GLOBAL: {
       ENVOY_LOG(trace, "[wasm] link(), export host global: {}.{} ({})", module, name,
                 printValKind(import_type->global()->content()->kind()));
 
-      const wasm::Global* global = nullptr;
       auto it = host_globals_.find(absl::StrCat(module, ".", name));
-      if (it != host_globals_.end()) {
-        global = it->second.get();
-      } else {
-        it = host_globals_.find(absl::StrCat("envoy", ".", name));
-        if (it != host_globals_.end()) {
-          global = it->second.get();
-        }
-      }
-      if (global) {
-        imports.push_back(global);
-      } else {
+      if (it == host_globals_.end()) {
         throw WasmVmException(
             fmt::format("Failed to load WASM module due to a missing import: {}.{}", module, name));
       }
+      imports.push_back(it->second.get());
     } break;
 
     case wasm::EXTERN_MEMORY: {
