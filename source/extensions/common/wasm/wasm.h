@@ -509,7 +509,8 @@ public:
   Context* start(); // returns the root Context.
 
   absl::string_view vm_id() const { return vm_id_; }
-  const PluginSharedPtr& creating_plugin() const { return creating_plugin_; }
+  const PluginSharedPtr& plugin() const { return plugin_; }
+  void setPlugin(const PluginSharedPtr plugin) { plugin_ = plugin; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
   Context* vmContext() const { return vm_context_.get(); }
   Stats::StatNameSetSharedPtr stat_name_set() const { return stat_name_set_; }
@@ -610,7 +611,7 @@ private:
   std::string vm_id_; // The effective vm_id (may be a hash).
   std::unique_ptr<WasmVm> wasm_vm_;
 
-  const PluginSharedPtr creating_plugin_;
+  PluginSharedPtr plugin_;
 
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
@@ -721,8 +722,7 @@ uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_na
 
 inline Context::Context() : root_context_(this) {}
 
-inline Context::Context(Wasm* wasm)
-    : wasm_(wasm), root_context_(this), plugin_(wasm->creating_plugin()) {
+inline Context::Context(Wasm* wasm) : wasm_(wasm), root_context_(this), plugin_(wasm->plugin()) {
   wasm_->contexts_[id_] = this;
 }
 
