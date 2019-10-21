@@ -224,12 +224,12 @@ public:
   virtual bool setWord(uint64_t pointer, Word data) PURE;
 
   /**
-   * Get the contents of the user section with the given name or "" if it does not exist.
-   * @param name the name of the user section to get.
-   * @return the contents of the user section (if any). The result will be empty() if there
+   * Get the contents of the custom section with the given name or "" if it does not exist.
+   * @param name the name of the custom section to get.
+   * @return the contents of the custom section (if any). The result will be empty if there
    * is no such section.
    */
-  virtual absl::string_view getUserSection(absl::string_view name) PURE;
+  virtual absl::string_view getCustomSection(absl::string_view name) PURE;
 
   /**
    * Get typed function exported by the WASM module.

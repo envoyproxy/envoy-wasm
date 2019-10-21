@@ -209,7 +209,7 @@ struct Wavm : public WasmVm {
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool getWord(uint64_t pointer, Word* data) override;
   bool setWord(uint64_t pointer, Word data) override;
-  absl::string_view getUserSection(absl::string_view name) override;
+  absl::string_view getCustomSection(absl::string_view name) override;
 
   void getInstantiatedGlobals();
 
@@ -421,7 +421,7 @@ bool Wavm::setWord(uint64_t pointer, Word data) {
   return setMemory(pointer, sizeof(uint32_t), &data32);
 }
 
-absl::string_view Wavm::getUserSection(absl::string_view name) {
+absl::string_view Wavm::getCustomSection(absl::string_view name) {
   for (auto& section : ir_module_.customSections) {
     if (section.name == name) {
       return {reinterpret_cast<char*>(section.data.data()), section.data.size()};

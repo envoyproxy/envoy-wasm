@@ -41,7 +41,7 @@ public:
   absl::string_view runtime() override { return WasmRuntimeNames::get().v8; }
 
   bool load(const std::string& code, bool allow_precompiled) override;
-  absl::string_view getUserSection(absl::string_view name) override;
+  absl::string_view getCustomSection(absl::string_view name) override;
   void link(absl::string_view debug_name) override;
 
   // v8 is currently not clonable.
@@ -277,8 +277,8 @@ bool V8::load(const std::string& code, bool /* allow_precompiled */) {
   return module_ != nullptr;
 }
 
-absl::string_view V8::getUserSection(absl::string_view name) {
-  ENVOY_LOG(trace, "[wasm] getUserSection(\"{}\")", name);
+absl::string_view V8::getCustomSection(absl::string_view name) {
+  ENVOY_LOG(trace, "[wasm] getCustomSection(\"{}\")", name);
   ASSERT(source_.get() != nullptr);
 
   const byte_t* end = source_.get() + source_.size();
@@ -301,7 +301,7 @@ absl::string_view V8::getUserSection(absl::string_view name) {
       pos += len;
       rest -= (pos - start);
       if (len == name.size() && ::memcmp(pos - len, name.data(), len) == 0) {
-        ENVOY_LOG(trace, "[wasm] getUserSection(\"{}\") found, size: {}", name, rest);
+        ENVOY_LOG(trace, "[wasm] getCustomSection(\"{}\") found, size: {}", name, rest);
         return absl::string_view(pos, rest);
       }
     }

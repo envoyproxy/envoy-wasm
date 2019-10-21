@@ -87,7 +87,7 @@ bool NullVm::getWord(uint64_t pointer, Word* data) {
   return true;
 }
 
-absl::string_view NullVm::getUserSection(absl::string_view /* name */) {
+absl::string_view NullVm::getCustomSection(absl::string_view /* name */) {
   // Return nothing: there is no WASM file.
   return {};
 }

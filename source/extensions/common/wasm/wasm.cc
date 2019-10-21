@@ -2207,7 +2207,7 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
   if (!ok) {
     return false;
   }
-  auto metadata = wasm_vm_->getUserSection("emscripten_metadata");
+  auto metadata = wasm_vm_->getCustomSection("emscripten_metadata");
   if (!metadata.empty()) {
     // See https://github.com/emscripten-core/emscripten/blob/incoming/tools/shared.py#L3059
     is_emscripten_ = true;
