@@ -33,8 +33,8 @@ cd
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 1.38.48-upstream
-./emsdk activate 1.38.48-upstream
+./emsdk install 1.39.0-upstream
+./emsdk activate 1.39.0-upstream
 source ./emsdk_env.sh
 cd
 
