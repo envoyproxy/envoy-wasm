@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package envoy.config.filter.http.wasm.v3alpha;
+
+option java_outer_classname = "WasmProto";
+option java_multiple_files = true;
+option java_package = "io.envoyproxy.envoy.config.filter.http.wasm.v3alpha";
+import "validate/validate.proto";
+import "envoy/config/wasm/v3alpha/wasm.proto";
+
+// [#protodoc-title: Wasm]
+// Wasm :ref:`configuration overview <config_http_filters_wasm>`.
+
+message Wasm {
+  // General Plugin configuration.
+  envoy.config.wasm.v3alpha.PluginConfig config = 1;
+}

@@ -28,3 +28,4 @@ TAGS
 .vimrc
 .vs
 .vscode
+**/Cargo.lock
