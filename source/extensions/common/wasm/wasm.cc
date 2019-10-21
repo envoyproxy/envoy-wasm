@@ -836,14 +836,12 @@ Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwri
     auto memslice =
         context->wasmVm()->getMemory(iovs.u64_ + i * 2 * sizeof(uint32_t), 2 * sizeof(uint32_t));
     if (!memslice) {
-      context->wasm()->setErrno(EINVAL);
       return 21; // __WASI_EFAULT
     }
     const uint32_t* iovec = reinterpret_cast<const uint32_t*>(memslice.value().data());
     if (iovec[1] /* buf_len */) {
       memslice = context->wasmVm()->getMemory(iovec[0] /* buf */, iovec[1] /* buf_len */);
       if (!memslice) {
-        context->wasm()->setErrno(EINVAL);
         return 21; // __WASI_EFAULT
       }
       s.append(memslice.value().data(), memslice.value().size());
@@ -2135,7 +2133,6 @@ void Wasm::getFunctions() {
 #define _GET(_fn) wasm_vm_->getFunction(#_fn, &_fn##_);
   _GET(malloc);
   _GET(free);
-  _GET(__errno_location);
 #undef _GET
 
 #define _GET_PROXY(_fn) wasm_vm_->getFunction("proxy_" #_fn, &_fn##_);
@@ -2279,14 +2276,6 @@ void Wasm::startForTesting(std::unique_ptr<Context> context) {
   }
   root_contexts_[""] = std::move(context);
   context_ptr->onStart("", "");
-}
-
-void Wasm::setErrno(int32_t err) {
-  if (!__errno_location_) {
-    return;
-  }
-  Word location = __errno_location_(vmContext());
-  setDatatype(location.u64_, err);
 }
 
 void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {

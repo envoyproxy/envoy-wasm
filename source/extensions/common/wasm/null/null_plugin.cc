@@ -164,12 +164,8 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<8>* f
   }
 }
 
-void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<0>* f) {
-  if (function_name == "__errno_location") {
-    *f = [](Common::Wasm::Context*) -> Word { return Word(reinterpret_cast<uintptr_t>(&errno)); };
-  } else {
-    throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
-  }
+void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<0>* /* f */) {
+  throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
 }
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f) {

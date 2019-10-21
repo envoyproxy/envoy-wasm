@@ -573,8 +573,6 @@ public:
     return true;
   }
 
-  void setErrno(int32_t err);
-
 private:
   friend class Context;
   // These are the same as the values of the Context::MetricType enum, here separately for
@@ -628,7 +626,6 @@ private:
 
   WasmCallWord<1> malloc_;
   WasmCallVoid<1> free_;
-  WasmCallWord<0> __errno_location_;
 
   // Calls into the VM.
   WasmCallWord<3> validateConfiguration_;
