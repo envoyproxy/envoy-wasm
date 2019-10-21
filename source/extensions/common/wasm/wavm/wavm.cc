@@ -202,7 +202,6 @@ struct Wavm : public WasmVm {
   std::unique_ptr<WasmVm> clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
   void link(absl::string_view debug_name) override;
-  void start(Context* context) override;
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
@@ -332,43 +331,6 @@ void Wavm::getInstantiatedGlobals() {
           fmt::format("Unable to resolve intrinsic global {} {}", p.first.first, p.first.second));
     }
     p.second->global_ = g;
-  }
-}
-
-void Wavm::start(Context* context) {
-  std::string function_name;
-  try {
-    auto f = getStartFunction(module_instance_);
-    if (f) {
-      function_name = "<start>";
-      CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
-    }
-
-    f = asFunctionNullable(getInstanceExport(module_instance_, "__wasm_call_ctors"));
-    if (f) {
-      function_name = "__wasm_call_ctors";
-      CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
-    }
-
-    f = asFunctionNullable(getInstanceExport(module_instance_, "__post_instantiate"));
-    if (f) {
-      function_name = "__post_instaniate";
-      CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
-    }
-
-    f = asFunctionNullable(getInstanceExport(module_instance_, "main"));
-    if (f) {
-      function_name = "main";
-      CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
-    } else {
-      f = asFunctionNullable(getInstanceExport(module_instance_, "_main"));
-      if (f) {
-        function_name = "_main";
-        CALL_WITH_CONTEXT(invokeFunction(context_, f, getFunctionType(f)), context);
-      }
-    }
-  } catch (const std::exception& e) {
-    throw WasmException(fmt::format("Function: {} failed: {}", function_name, e.what()));
   }
 }
 

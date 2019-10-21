@@ -29,8 +29,14 @@ namespace Null {
 using Plugin::Context;
 using Plugin::WasmData;
 
-void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<0>* /* f */) {
-  throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
+void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<0>* f) {
+  if (function_name == "_start") {
+    *f = nullptr;
+  } else if (function_name == "__wasm_call_ctors") {
+    *f = nullptr;
+  } else {
+    throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
+  }
 }
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<1>* f) {

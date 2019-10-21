@@ -505,6 +505,7 @@ public:
   ~Wasm() {}
 
   bool initialize(const std::string& code, bool allow_precompiled = false);
+  void startVm(Context* root_context);
   bool configure(Context* root_context, absl::string_view configuration);
   Context* start(); // returns the root Context.
 
@@ -623,6 +624,9 @@ private:
   std::unordered_map<uint32_t, Event::TimerPtr> timer_;                 // per root_id.
 
   TimeSource& time_source_;
+
+  WasmCallVoid<0> _start_; /* Emscripten v1.39.0+ */
+  WasmCallVoid<0> __wasm_call_ctors_;
 
   WasmCallWord<1> malloc_;
   WasmCallVoid<1> free_;

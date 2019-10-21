@@ -153,19 +153,10 @@ public:
   /**
    * Link the WASM code to the host-provided functions and globals, e.g. the ABI. Prior to
    * linking, the module should be loaded and the ABI callbacks registered (see above). Linking
-   * should be done once between load() and start().
+   * should be done once after load().
    * @param debug_name user-provided name for use in log and error messages.
    */
   virtual void link(absl::string_view debug_name) PURE;
-
-  /**
-   * Initialize globals (including calling global constructors) and call the 'start' function.
-   * Prior to calling start() the module should be load()ed, ABI callbacks should be registered
-   * (registerCallback), the module link()ed, and any exported functions should be gotten
-   * (getFunction).
-   * @param vm_context a context which represents the caller: in this case Envoy itself.
-   */
-  virtual void start(Context* vm_context) PURE;
 
   /**
    * Get size of the currently allocated memory in the VM.

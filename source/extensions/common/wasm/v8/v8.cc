@@ -48,8 +48,6 @@ public:
   bool cloneable() override { return false; }
   std::unique_ptr<WasmVm> clone() override { return nullptr; }
 
-  void start(Context* context) override;
-
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
   bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
@@ -82,11 +80,6 @@ public:
 #undef _GET_MODULE_FUNCTION
 
 private:
-  void callModuleFunction(Context* context, absl::string_view function_name, const wasm::Val args[],
-                          wasm::Val results[]);
-  void callModuleFunction(Context* context, absl::string_view function_name, const wasm::Func* func,
-                          const wasm::Val args[], wasm::Val results[]);
-
   template <typename T>
   std::unique_ptr<Global<T>> registerHostGlobalImpl(absl::string_view module_name,
                                                     absl::string_view name, T initial_value);
@@ -431,38 +424,6 @@ void V8::link(absl::string_view debug_name) {
     } break;
     }
   }
-}
-
-void V8::start(Context* context) {
-  ENVOY_LOG(trace, "[wasm] start()");
-
-  callModuleFunction(context, "__wasm_call_ctors", nullptr, nullptr);
-  callModuleFunction(context, "__post_instantiate", nullptr, nullptr);
-}
-
-void V8::callModuleFunction(Context* context, absl::string_view function_name,
-                            const wasm::Val args[], wasm::Val results[]) {
-  auto it = module_functions_.find(function_name);
-  if (it != module_functions_.end()) {
-    callModuleFunction(context, function_name, it->second.get(), args, results);
-  }
-}
-
-void V8::callModuleFunction(Context* context, absl::string_view function_name,
-                            const wasm::Func* func, const wasm::Val args[], wasm::Val results[]) {
-  // TODO(PiotrSikora): print params when/if needed (all relevant callers are void(void)).
-  ENVOY_LOG(trace, "[wasm] [host->vm] {}({})", function_name, args ? "???" : "");
-
-  SaveRestoreContext _saved_context(context);
-  auto trap = func->call(args, results);
-  if (trap) {
-    throw WasmException(
-        fmt::format("Function: {} failed: {}", function_name,
-                    absl::string_view(trap->message().get(), trap->message().size())));
-  }
-
-  // TODO(PiotrSikora): print return values when/if needed (all relevant callers are void(void)).
-  ENVOY_LOG(trace, "[wasm] [host<-vm] {} return: {}", function_name, results ? "???" : "void");
 }
 
 uint64_t V8::getMemorySize() {

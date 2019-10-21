@@ -2131,6 +2131,9 @@ void Wasm::registerCallbacks() {
 
 void Wasm::getFunctions() {
 #define _GET(_fn) wasm_vm_->getFunction(#_fn, &_fn##_);
+  _GET(_start);
+  _GET(__wasm_call_ctors);
+
   _GET(malloc);
   _GET(free);
 #undef _GET
@@ -2237,10 +2240,19 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
   wasm_vm_->link(vm_id_);
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
-  wasm_vm_->start(vm_context_.get());
+  startVm(vm_context_.get());
   code_ = code;
   allow_precompiled_ = allow_precompiled;
   return true;
+}
+
+void Wasm::startVm(Context* root_context) {
+  /* Call "_start" function, and fallback to "__wasm_call_ctors" if the former is not available. */
+  if (_start_) {
+    _start_(root_context);
+  } else if (__wasm_call_ctors_) {
+    __wasm_call_ctors_(root_context);
+  }
 }
 
 bool Wasm::configure(Context* root_context, absl::string_view configuration) {
