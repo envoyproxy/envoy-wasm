@@ -36,11 +36,6 @@ bool NullVm::load(const std::string& name, bool /* allow_precompiled */) {
 
 void NullVm::link(absl::string_view /* name */) {}
 
-void NullVm::start(Common::Wasm::Context* context) {
-  SaveRestoreContext saved_context(context);
-  plugin_->start();
-}
-
 uint64_t NullVm::getMemorySize() { return std::numeric_limits<uint64_t>::max(); }
 
 // NulVm pointers are just native pointers.

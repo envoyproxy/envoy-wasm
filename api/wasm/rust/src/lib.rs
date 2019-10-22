@@ -37,7 +37,7 @@ impl log::Log for Logger {
 
 /// Always hook into host's logging system.
 #[no_mangle]
-fn __post_instantiate() {
+fn _start() {
     Logger::init().unwrap();
 }
 

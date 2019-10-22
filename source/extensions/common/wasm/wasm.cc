@@ -836,14 +836,12 @@ Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwri
     auto memslice =
         context->wasmVm()->getMemory(iovs.u64_ + i * 2 * sizeof(uint32_t), 2 * sizeof(uint32_t));
     if (!memslice) {
-      context->wasm()->setErrno(EINVAL);
       return 21; // __WASI_EFAULT
     }
     const uint32_t* iovec = reinterpret_cast<const uint32_t*>(memslice.value().data());
     if (iovec[1] /* buf_len */) {
       memslice = context->wasmVm()->getMemory(iovec[0] /* buf */, iovec[1] /* buf_len */);
       if (!memslice) {
-        context->wasm()->setErrno(EINVAL);
         return 21; // __WASI_EFAULT
       }
       s.append(memslice.value().data(), memslice.value().size());
@@ -1944,7 +1942,7 @@ WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32
     return WasmResult::Ok;
   } else if (type == MetricType::Histogram) {
     auto id = wasm_->nextHistogramMetricId();
-    auto h = &wasm_->scope_->histogramFromStatName(stat_name);
+    auto h = &wasm_->scope_->histogramFromStatName(stat_name, Stats::Histogram::Unit::Unspecified);
     wasm_->histograms_.emplace(id, h);
     *metric_id_ptr = id;
     return WasmResult::Ok;
@@ -2133,9 +2131,11 @@ void Wasm::registerCallbacks() {
 
 void Wasm::getFunctions() {
 #define _GET(_fn) wasm_vm_->getFunction(#_fn, &_fn##_);
+  _GET(_start);
+  _GET(__wasm_call_ctors);
+
   _GET(malloc);
   _GET(free);
-  _GET(__errno_location);
 #undef _GET
 
 #define _GET_PROXY(_fn) wasm_vm_->getFunction("proxy_" #_fn, &_fn##_);
@@ -2240,10 +2240,19 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
   wasm_vm_->link(vm_id_);
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
-  wasm_vm_->start(vm_context_.get());
+  startVm(vm_context_.get());
   code_ = code;
   allow_precompiled_ = allow_precompiled;
   return true;
+}
+
+void Wasm::startVm(Context* root_context) {
+  /* Call "_start" function, and fallback to "__wasm_call_ctors" if the former is not available. */
+  if (_start_) {
+    _start_(root_context);
+  } else if (__wasm_call_ctors_) {
+    __wasm_call_ctors_(root_context);
+  }
 }
 
 bool Wasm::configure(Context* root_context, absl::string_view configuration) {
@@ -2279,14 +2288,6 @@ void Wasm::startForTesting(std::unique_ptr<Context> context) {
   }
   root_contexts_[""] = std::move(context);
   context_ptr->onStart("", "");
-}
-
-void Wasm::setErrno(int32_t err) {
-  if (!__errno_location_) {
-    return;
-  }
-  Word location = __errno_location_(vmContext());
-  setDatatype(location.u64_, err);
 }
 
 void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {

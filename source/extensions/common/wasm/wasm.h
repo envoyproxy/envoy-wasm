@@ -501,6 +501,7 @@ public:
   ~Wasm() {}
 
   bool initialize(const std::string& code, bool allow_precompiled = false);
+  void startVm(Context* root_context);
   bool configure(Context* root_context, absl::string_view configuration);
   Context* start(); // returns the root Context.
 
@@ -569,8 +570,6 @@ public:
     return true;
   }
 
-  void setErrno(int32_t err);
-
 private:
   friend class Context;
   // These are the same as the values of the Context::MetricType enum, here separately for
@@ -623,9 +622,11 @@ private:
 
   TimeSource& time_source_;
 
+  WasmCallVoid<0> _start_; /* Emscripten v1.39.0+ */
+  WasmCallVoid<0> __wasm_call_ctors_;
+
   WasmCallWord<1> malloc_;
   WasmCallVoid<1> free_;
-  WasmCallWord<0> __errno_location_;
 
   // Calls into the VM.
   WasmCallWord<3> validateConfiguration_;
