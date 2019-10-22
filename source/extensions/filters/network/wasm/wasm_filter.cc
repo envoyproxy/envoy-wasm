@@ -16,11 +16,10 @@ FilterConfig::FilterConfig(const envoy::config::filter::network::wasm::v2::Wasm&
   // individual threads.
   plugin_ = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      context.direction(), context.localInfo(), &context.listenerMetadata(), context.scope(),
-      nullptr /* owned_scope */);
-  auto base_wasm =
-      Common::Wasm::createWasm(config.config().vm_config(), plugin_, context.clusterManager(),
-                               context.dispatcher(), context.api());
+      context.direction(), context.localInfo(), &context.listenerMetadata());
+  auto base_wasm = Common::Wasm::createWasm(
+      config.config().vm_config(), plugin_, context.scope().createScope(""),
+      context.clusterManager(), context.dispatcher(), context.api());
   auto configuration = std::make_shared<std::string>(config.config().configuration());
   // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
   tls_slot_->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {

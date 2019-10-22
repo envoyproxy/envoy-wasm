@@ -35,10 +35,10 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
       envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
-      nullptr /* listener_metadata */, context.scope());
+      nullptr /* listener_metadata */);
   auto base_wasm =
-      Common::Wasm::createWasm(config.config().vm_config(), plugin, context.clusterManager(),
-                               context.dispatcher(), context.api());
+      Common::Wasm::createWasm(config.config().vm_config(), plugin, context.scope().createScope(""),
+                               context.clusterManager(), context.dispatcher(), context.api());
   // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
   tls_slot->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {
     return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(

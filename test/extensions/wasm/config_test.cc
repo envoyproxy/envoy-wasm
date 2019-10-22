@@ -56,7 +56,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, *scope, scope, local_info);
+                                                        tls, *api, scope, local_info);
   auto wasm = factory->createWasm(config, context);
   EXPECT_NE(wasm, nullptr);
 }
@@ -80,7 +80,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, *scope, scope, local_info);
+                                                        tls, *api, scope, local_info);
   auto wasm = factory->createWasm(config, context);
   EXPECT_EQ(wasm, nullptr);
 }
@@ -105,7 +105,7 @@ TEST_P(WasmFactoryTest, MissingImport) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, *scope, scope, local_info);
+                                                        tls, *api, scope, local_info);
   EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context),
                           Extensions::Common::Wasm::WasmVmException,
                           "Failed to load WASM module due to a missing import: env.missing.*");
@@ -132,7 +132,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, *scope, scope, local_info);
+                                                        tls, *api, scope, local_info);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context),
                             Extensions::Common::Wasm::WasmVmException,
                             "Failed to create WASM VM with unspecified runtime.");
@@ -157,7 +157,7 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, *scope, scope, local_info);
+                                                        tls, *api, scope, local_info);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context),
                             Extensions::Common::Wasm::WasmVmException,
                             "Failed to create WASM VM using envoy.wasm.runtime.invalid runtime. "
