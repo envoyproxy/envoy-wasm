@@ -88,9 +88,9 @@ public:
     auto vm_id = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
         name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
-        &listener_metadata_, *scope_, nullptr /* owned_scope */);
+        &listener_metadata_);
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.config().vm_config(), plugin_, cluster_manager_, dispatcher_, *api,
+        proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, dispatcher_, *api,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 
@@ -106,9 +106,9 @@ public:
     auto vm_id = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
         name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
-        &listener_metadata_, *scope_, nullptr /* owned_scope */);
+        &listener_metadata_);
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.config().vm_config(), plugin_, cluster_manager_, dispatcher_, *api,
+        proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, dispatcher_, *api,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 

@@ -54,10 +54,9 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
         "", proto_config.config().root_id(), proto_config.config().vm_config().vm_id(),
-        envoy::api::v2::core::TrafficDirection::INBOUND, local_info_, &listener_metadata_, *scope_,
-        nullptr /* owned_scope */);
+        envoy::api::v2::core::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     wasm_ = Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.config().vm_config(), plugin_, cluster_manager_, dispatcher_, *api,
+        proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, dispatcher_, *api,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
   }
 

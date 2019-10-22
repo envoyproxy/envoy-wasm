@@ -157,11 +157,10 @@ struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
 struct Plugin {
   Plugin(absl::string_view name, absl::string_view root_id, absl::string_view vm_id,
          envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
-         const envoy::api::v2::core::Metadata* listener_metadata, Stats::Scope& scope,
-         Stats::ScopeSharedPtr owned_scope = nullptr)
+         const envoy::api::v2::core::Metadata* listener_metadata)
       : name_(std::string(name)), root_id_(std::string(root_id)), vm_id_(std::string(vm_id)),
         direction_(direction), local_info_(local_info), listener_metadata_(listener_metadata),
-        scope_(scope), owned_scope_(owned_scope), log_prefix_(makeLogPrefix()) {}
+        log_prefix_(makeLogPrefix()) {}
 
   std::string makeLogPrefix() const;
 
@@ -171,9 +170,6 @@ struct Plugin {
   envoy::api::v2::core::TrafficDirection direction_;
   const LocalInfo::LocalInfo& local_info_;
   const envoy::api::v2::core::Metadata* listener_metadata_;
-  Stats::Scope& scope_; // Either an inherited scope or owned_scope_ below.
-  Stats::ScopeSharedPtr
-      owned_scope_; // When scope_ is not owned by a higher level (e.g. for WASM services).
 
   std::string log_prefix_;
 };
@@ -499,8 +495,8 @@ class Wasm : public Envoy::Server::Wasm,
              public std::enable_shared_from_this<Wasm> {
 public:
   Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
-       PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
-       Event::Dispatcher& dispatcher);
+       PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+       Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
   ~Wasm() {}
 
@@ -611,6 +607,7 @@ private:
   std::unique_ptr<WasmVm> wasm_vm_;
 
   PluginSharedPtr plugin_;
+  Stats::ScopeSharedPtr scope_;
 
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
@@ -698,7 +695,7 @@ inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_-
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
 std::shared_ptr<Wasm> createWasm(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 PluginSharedPtr plugin_config,
+                                 PluginSharedPtr plugin_config, Stats::ScopeSharedPtr scope,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api);
 
@@ -707,7 +704,7 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
                                             Event::Dispatcher& dispatcher);
 
 std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                           PluginSharedPtr plugin,
+                                           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
                                            Upstream::ClusterManager& cluster_manager,
                                            Event::Dispatcher& dispatcher, Api::Api& api,
                                            std::unique_ptr<Context> root_context_for_testing);

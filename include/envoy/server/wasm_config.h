@@ -44,14 +44,9 @@ public:
    */
   virtual Api::Api& api() PURE;
   /**
-   * @return Stats::Scope the service's stats scope.
+   * @return Stats::ScopeSharedPtr the service's stats scope.
    */
-  virtual Stats::Scope& scope() PURE;
-  /**
-   * @return Stats::ScopeSharedPtr the service's owned Stats::Scope if stats_prefix was provided or
-   * nullptr if not.
-   */
-  virtual Stats::ScopeSharedPtr owned_scope() PURE;
+  virtual Stats::ScopeSharedPtr& scope() PURE;
   /**
    * @return information about the local environment the server is running in.
    */

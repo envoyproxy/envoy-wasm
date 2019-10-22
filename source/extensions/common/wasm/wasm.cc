@@ -1557,7 +1557,7 @@ uint32_t Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_service
   auto grpc_client =
       clusterManager()
           .grpcAsyncClientManager()
-          .factoryForGrpcService(grpc_service, plugin_->scope_, true /* skip_cluster_check */)
+          .factoryForGrpcService(grpc_service, *wasm()->scope_, true /* skip_cluster_check */)
           ->create();
 
   // set default hash policy to be based on :authority to enable consistent hash
@@ -1604,7 +1604,7 @@ uint32_t Context::grpcStream(const envoy::api::v2::core::GrpcService& grpc_servi
   auto grpc_client =
       clusterManager()
           .grpcAsyncClientManager()
-          .factoryForGrpcService(grpc_service, plugin_->scope_, true /* skip_cluster_check */)
+          .factoryForGrpcService(grpc_service, *wasm()->scope_, true /* skip_cluster_check */)
           ->create();
 
   // set default hash policy to be based on :authority to enable consistent hash
@@ -1930,19 +1930,19 @@ WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32
   auto stat_name = wasm_->stat_name_set_->getDynamic(name);
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
-    auto c = &plugin_->scope_.counterFromStatName(stat_name);
+    auto c = &wasm_->scope_->counterFromStatName(stat_name);
     wasm_->counters_.emplace(id, c);
     *metric_id_ptr = id;
     return WasmResult::Ok;
   } else if (type == MetricType::Gauge) {
     auto id = wasm_->nextGaugeMetricId();
-    auto g = &plugin_->scope_.gaugeFromStatName(stat_name, Stats::Gauge::ImportMode::Accumulate);
+    auto g = &wasm_->scope_->gaugeFromStatName(stat_name, Stats::Gauge::ImportMode::Accumulate);
     wasm_->gauges_.emplace(id, g);
     *metric_id_ptr = id;
     return WasmResult::Ok;
   } else if (type == MetricType::Histogram) {
     auto id = wasm_->nextHistogramMetricId();
-    auto h = &plugin_->scope_.histogramFromStatName(stat_name, Stats::Histogram::Unit::Unspecified);
+    auto h = &wasm_->scope_->histogramFromStatName(stat_name, Stats::Histogram::Unit::Unspecified);
     wasm_->histograms_.emplace(id, h);
     *metric_id_ptr = id;
     return WasmResult::Ok;
@@ -2024,12 +2024,12 @@ WasmResult Context::getMetric(uint32_t metric_id, uint64_t* result_uint64_ptr) {
 }
 
 Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_configuration,
-           PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
-           Event::Dispatcher& dispatcher)
+           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+           Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher)
     : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)), plugin_(plugin),
-      cluster_manager_(cluster_manager), dispatcher_(dispatcher),
+      scope_(scope), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(plugin_->scope_.symbolTable().makeSet("Wasm").release()) {}
+      stat_name_set_(scope_->symbolTable().makeSet("Wasm").release()) {}
 
 std::string Plugin::makeLogPrefix() const {
   std::string prefix;
@@ -2179,7 +2179,7 @@ void Wasm::getFunctions() {
 
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_), plugin_(wasm.plugin_),
-      cluster_manager_(wasm.cluster_manager_), dispatcher_(dispatcher),
+      scope_(wasm.scope_), cluster_manager_(wasm.cluster_manager_), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), stat_name_set_(wasm.stat_name_set_) {
   if (wasm.wasmVm()->cloneable()) {
     wasm_vm_ = wasm.wasmVm()->clone();
@@ -2660,13 +2660,13 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
 }
 
 static std::shared_ptr<Wasm> createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                                PluginSharedPtr plugin,
+                                                PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
                                                 Upstream::ClusterManager& cluster_manager,
                                                 Event::Dispatcher& dispatcher, Api::Api& api,
                                                 std::unique_ptr<Context> root_context_for_testing) {
   auto wasm =
       std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(),
-                             plugin, cluster_manager, dispatcher);
+                             plugin, scope, cluster_manager, dispatcher);
   const auto& code = Config::DataSource::read(vm_config.code(), true, api);
   const auto& path = Config::DataSource::getPath(vm_config.code())
                          .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
@@ -2685,19 +2685,19 @@ static std::shared_ptr<Wasm> createWasmInternal(const envoy::config::wasm::v2::V
 }
 
 std::shared_ptr<Wasm> createWasm(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 PluginSharedPtr plugin_config,
+                                 PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
                                  Upstream::ClusterManager& cluster_manager,
                                  Event::Dispatcher& dispatcher, Api::Api& api) {
-  return createWasmInternal(vm_config, plugin_config, cluster_manager, dispatcher, api,
+  return createWasmInternal(vm_config, plugin, scope, cluster_manager, dispatcher, api,
                             nullptr /* root_context_for_testing */);
 } // namespace Wasm
 
 std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                           PluginSharedPtr plugin,
+                                           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
                                            Upstream::ClusterManager& cluster_manager,
                                            Event::Dispatcher& dispatcher, Api::Api& api,
                                            std::unique_ptr<Context> root_context_for_testing) {
-  return createWasmInternal(vm_config, plugin, cluster_manager, dispatcher, api,
+  return createWasmInternal(vm_config, plugin, scope, cluster_manager, dispatcher, api,
                             std::move(root_context_for_testing));
 }
 
@@ -2731,12 +2731,6 @@ std::shared_ptr<Wasm> getOrCreateThreadLocalWasm(Wasm& base_wasm, absl::string_v
   auto wasm = getThreadLocalWasmPtr(base_wasm.vm_id());
   if (wasm) {
     auto root_context = wasm->start();
-    // NB: we are reusing this VM with the new configuration so we need to replace the plugin which
-    // contains a Scope& which is in a ListenerImpl which may be deleted. The Scope has no prefix
-    // (""), and does nothing but provide a layer of caching and forward to the underlying
-    // Stats::ThreadLocalStoreImpl.
-    // TODO(jplevyak): this will go away after https://github.com/envoyproxy/envoy-wasm/issues/258
-    wasm->setPlugin(base_wasm.plugin());
     if (!wasm->configure(root_context, configuration)) {
       throw WasmException("Failed to configure WASM code");
     }
