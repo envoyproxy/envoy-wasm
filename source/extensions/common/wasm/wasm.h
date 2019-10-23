@@ -736,12 +736,6 @@ inline Context::Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr pl
   root_context_ = wasm_->contexts_[root_context_id_];
 }
 
-// Do not remove vm or root contexts which have the same lifetime as wasm_.
-inline Context::~Context() {
-  if (root_context_id_)
-    wasm_->contexts_.erase(id_);
-}
-
 inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
   Word a = malloc_(vmContext(), size);
   if (!a.u64_) {
