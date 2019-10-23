@@ -255,6 +255,51 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
   }
 }
 
+TEST_P(WasmHttpFilterTest, AsyncCallAfterDestroyed) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/async_call_cpp.wasm")));
+  setupFilter();
+
+  Http::TestHeaderMapImpl request_headers{{":path", "/"}};
+  Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);
+  Http::AsyncClient::Callbacks* callbacks = nullptr;
+  EXPECT_CALL(cluster_manager_, get(Eq("cluster")));
+  EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster"));
+  EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
+      .WillOnce(
+          Invoke([&](Http::MessagePtr& message, Http::AsyncClient::Callbacks& cb,
+                     const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
+            EXPECT_EQ((Http::TestHeaderMapImpl{{":method", "POST"},
+                                               {":path", "/"},
+                                               {":authority", "foo"},
+                                               {"content-length", "11"}}),
+                      message->headers());
+            EXPECT_EQ((Http::TestHeaderMapImpl{{"trail", "cow"}}), *message->trailers());
+            callbacks = &cb;
+            return &request;
+          }));
+
+  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter_->decodeHeaders(request_headers, false));
+
+  EXPECT_CALL(request, cancel()).WillOnce([&]() { callbacks = nullptr; });
+
+  // Destroy the Context, Plugin and VM.
+  filter_.reset();
+  plugin_.reset();
+  wasm_.reset();
+
+  Http::MessagePtr response_message(new Http::ResponseMessageImpl(
+      Http::HeaderMapPtr{new Http::TestHeaderMapImpl{{":status", "200"}}}));
+  response_message->body().reset(new Buffer::OwnedImpl("response"));
+
+  // (Don't) Make the callback on the destroyed VM.
+  EXPECT_EQ(callbacks, nullptr);
+  if (callbacks) {
+    callbacks->onSuccess(std::move(response_message));
+  }
+}
+
 TEST_P(WasmHttpFilterTest, GrpcCall) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/grpc_call_cpp.wasm")));

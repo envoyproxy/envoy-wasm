@@ -2045,6 +2045,23 @@ std::string Plugin::makeLogPrefix() const {
   return prefix;
 }
 
+Context::~Context() {
+  // Cancel any outstanding requests.
+  for (auto& p : http_request_) {
+    p.second.request->cancel();
+  }
+  for (auto& p : grpc_call_request_) {
+    p.second.request->cancel();
+  }
+  for (auto& p : grpc_stream_) {
+    p.second.stream->resetStream();
+  }
+  // Do not remove vm or root contexts which have the same lifetime as wasm_.
+  if (root_context_id_) {
+    wasm_->contexts_.erase(id_);
+  }
+}
+
 void Wasm::registerCallbacks() {
 #define _REGISTER(_fn)                                                                             \
   wasm_vm_->registerCallback(                                                                      \
