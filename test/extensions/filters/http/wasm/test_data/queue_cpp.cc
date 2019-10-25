@@ -15,13 +15,14 @@ class ExampleRootContext : public RootContext {
 public:
   explicit ExampleRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
 
-  void onStart(WasmDataPtr) override;
+  void onStart(size_t configuration_size) override;
   void onQueueReady(uint32_t token) override;
 
   uint32_t token_;
 };
 
-static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext), ROOT_FACTORY(ExampleRootContext));
+static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
+                                                      ROOT_FACTORY(ExampleRootContext));
 
 FilterHeadersStatus ExampleContext::onRequestHeaders() {
   uint32_t token;
@@ -32,7 +33,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
   return FilterHeadersStatus::Continue;
 }
 
-void ExampleRootContext::onStart(WasmDataPtr) {
+void ExampleRootContext::onStart(size_t) {
   CHECK_RESULT(registerSharedQueue("my_shared_queue", &token_));
 }
 

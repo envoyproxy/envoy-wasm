@@ -30,7 +30,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
 }
 
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
-  auto body = getRequestBodyBufferBytes(0, body_buffer_length);
+  auto body = getBufferBytes(BufferType::HttpRequestBody, 0, body_buffer_length);
   logError(std::string("onRequestBody ") + std::string(body->view()));
   return FilterDataStatus::Continue;
 }

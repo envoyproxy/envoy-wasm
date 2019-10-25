@@ -16,9 +16,8 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "shared_lib",
+    name = "common_lib",
     hdrs = [
-        "proxy_wasm_result.h",
-        "proxy_wasm_metadata.h",
+        "proxy_wasm_common.h",
     ],
 )

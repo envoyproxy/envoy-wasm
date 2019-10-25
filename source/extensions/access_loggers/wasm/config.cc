@@ -40,9 +40,9 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
       Common::Wasm::createWasm(config.config().vm_config(), plugin, context.scope().createScope(""),
                                context.clusterManager(), context.dispatcher(), context.api());
   // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
-  tls_slot->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {
+  tls_slot->set([base_wasm, plugin, configuration](Event::Dispatcher& dispatcher) {
     return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
-        Common::Wasm::getOrCreateThreadLocalWasm(*base_wasm, *configuration, dispatcher));
+        Common::Wasm::getOrCreateThreadLocalWasm(*base_wasm, plugin, *configuration, dispatcher));
   });
   return std::make_shared<WasmAccessLog>(root_id, std::move(tls_slot), std::move(filter));
 }

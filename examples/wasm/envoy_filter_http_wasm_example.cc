@@ -8,7 +8,7 @@ class ExampleRootContext : public RootContext {
 public:
   explicit ExampleRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
 
-  void onStart(WasmDataPtr) override;
+  void onStart(size_t) override;
 };
 
 class ExampleContext : public Context {
@@ -27,7 +27,7 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
                                                       ROOT_FACTORY(ExampleRootContext),
                                                       "my_root_id");
 
-void ExampleRootContext::onStart(WasmDataPtr) { LOG_TRACE("onStart"); }
+void ExampleRootContext::onStart(size_t) { LOG_TRACE("onStart"); }
 
 void ExampleContext::onCreate() { LOG_WARN(std::string("onCreate " + std::to_string(id()))); }
 
@@ -56,7 +56,7 @@ FilterHeadersStatus ExampleContext::onResponseHeaders() {
 }
 
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
-  auto body = getRequestBodyBufferBytes(0, body_buffer_length);
+  auto body = getBufferBytes(BufferType::HttpRequestBody, 0, body_buffer_length);
   LOG_ERROR(std::string("onRequestBody ") + std::string(body->view()));
   return FilterDataStatus::Continue;
 }

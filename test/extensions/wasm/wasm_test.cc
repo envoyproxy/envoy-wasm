@@ -74,8 +74,8 @@ TEST_P(WasmTestMatrix, Logging) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", std::get<0>(GetParam())), vm_id, vm_configuration, plugin,
-      scope, cluster_manager, *dispatcher);
+      absl::StrCat("envoy.wasm.runtime.", std::get<0>(GetParam())), vm_id, vm_configuration, scope,
+      cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
@@ -92,7 +92,7 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
   auto root_context = context.get();
-  wasm->startForTesting(std::move(context));
+  wasm->startForTesting(std::move(context), plugin);
   wasm->configure(root_context, "configure-test");
   wasm->tickHandler(root_context->id());
 }
@@ -112,7 +112,7 @@ TEST_P(WasmTest, BadSignature) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -138,7 +138,7 @@ TEST_P(WasmTest, Segv) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
@@ -148,11 +148,11 @@ TEST_P(WasmTest, Segv) {
   EXPECT_TRUE(wasm->initialize(code, false));
 
   if (GetParam() == "v8") {
-    EXPECT_THROW_WITH_MESSAGE(wasm->startForTesting(std::move(context)),
+    EXPECT_THROW_WITH_MESSAGE(wasm->startForTesting(std::move(context), plugin),
                               Extensions::Common::Wasm::WasmException,
                               "Function: proxy_onStart failed: Uncaught RuntimeError: unreachable");
   } else if (GetParam() == "wavm") {
-    EXPECT_THROW_WITH_REGEX(wasm->startForTesting(std::move(context)),
+    EXPECT_THROW_WITH_REGEX(wasm->startForTesting(std::move(context), plugin),
                             Extensions::Common::Wasm::WasmException,
                             "Function: proxy_onStart failed: wavm.reachedUnreachable.*");
   } else {
@@ -175,7 +175,7 @@ TEST_P(WasmTest, DivByZero) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -213,7 +213,7 @@ TEST_P(WasmTest, EmscriptenVersion) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -245,7 +245,7 @@ TEST_P(WasmTest, IntrinsicGlobals) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -255,7 +255,7 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("NaN nan")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("inf inf"))).Times(3);
   EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->startForTesting(std::move(context));
+  wasm->startForTesting(std::move(context), plugin);
 }
 
 // The asm2wasm.wasm file uses operations which would require the asm2wasm Emscripten module *if*
@@ -279,7 +279,7 @@ TEST_P(WasmTest, Asm2Wasm) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -288,7 +288,7 @@ TEST_P(WasmTest, Asm2Wasm) {
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("out 0 0 0")));
   EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->startForTesting(std::move(context));
+  wasm->startForTesting(std::move(context), plugin);
 }
 
 TEST_P(WasmTest, Stats) {
@@ -306,7 +306,7 @@ TEST_P(WasmTest, Stats) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -323,7 +323,7 @@ TEST_P(WasmTest, Stats) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("get histogram = Unsupported")));
 
   EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->startForTesting(std::move(context));
+  wasm->startForTesting(std::move(context), plugin);
 }
 
 TEST_P(WasmTest, StatsHigherLevel) {
@@ -341,7 +341,7 @@ TEST_P(WasmTest, StatsHigherLevel) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -381,7 +381,7 @@ TEST_P(WasmTest, StatsHighLevel) {
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
