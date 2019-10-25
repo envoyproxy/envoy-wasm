@@ -465,7 +465,7 @@ protected:
 
   // HTTP filter state.
   // NB: this are only available (non-nullptr) during the calls corresponding to when the data is
-  // live.  For example, request_headers_ is available during the onRequestHeaders() call.
+  // live. For example, request_headers_ is available during the onRequestHeaders() call.
   Http::HeaderMap* request_headers_{};
   Http::HeaderMap* response_headers_{};
   Buffer::Instance* requestBodyBuffer_{};

@@ -15,7 +15,9 @@ import "validate/validate.proto";
 // Configuration for a Wasm VM.
 // [#next-free-field: 6]
 message VmConfig {
-  // An ID which will be used along with a hash of the wasm code (or null_vm_id) to determine which VM will be used for the plugin. All plugins which use the same vm_id and code will use the same VM.  May be left blank.
+  // An ID which will be used along with a hash of the wasm code (or null_vm_id) to determine which
+  // VM will be used for the plugin. All plugins which use the same vm_id and code will use the same
+  // VM. May be left blank.
   string vm_id = 1;
 
   // The Wasm runtime type (see source/extensions/commmon/wasm/well_known_names.h).
@@ -34,7 +36,9 @@ message VmConfig {
 // Base Configuration for Wasm Plugins e.g. fiters and services.
 message PluginConfig {
   // A unique name for a filters/services in a VM for use in identifiying the filter/service if
-  // multiple filters/services are handled by the same vm_id and root_id and for logging/debugging.  If left blank the plugin will be assigned an integer name corresponding to when it registers with the VM (i.e. the first plugin to register with the VM will be "0").
+  // multiple filters/services are handled by the same vm_id and root_id and for logging/debugging.
+  // If left blank the plugin will be assigned an integer name corresponding to when it registers
+  // with the VM (i.e. the first plugin to register with the VM will be "0").
   string name = 1;
 
   // A unique ID for a set of filters/services in a VM which will share a RootContext and Contexts
