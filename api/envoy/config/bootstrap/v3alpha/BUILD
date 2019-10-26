@@ -12,5 +12,6 @@ api_proto_package(
         "//envoy/config/metrics/v3alpha:pkg",
         "//envoy/config/overload/v2alpha:pkg",
         "//envoy/config/trace/v3alpha:pkg",
+        "//envoy/config/wasm/v3alpha:pkg",
     ],
 )

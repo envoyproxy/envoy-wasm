@@ -884,6 +884,13 @@ std::string PrometheusStatsFormatter::formattedTags(const std::vector<Stats::Tag
 }
 
 std::string PrometheusStatsFormatter::metricName(const std::string& extracted_name) {
+  // Offer a way to opt out of automatic namespacing.
+  // If metric name starts with "_" it will be trimmed but not namespaced.
+  // It is the responsibility of the metric creator to ensure proper namespacing.
+  if (extracted_name.size() > 1 && extracted_name[0] == '_') {
+    return sanitizeName(extracted_name.substr(1));
+  }
+
   // Add namespacing prefix to avoid conflicts, as per best practice:
   // https://prometheus.io/docs/practices/naming/#metric-names
   // Also, naming conventions on https://prometheus.io/docs/concepts/data_model/
