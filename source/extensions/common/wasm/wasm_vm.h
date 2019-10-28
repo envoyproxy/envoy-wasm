@@ -174,15 +174,6 @@ public:
   virtual absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) PURE;
 
   /**
-   * Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).
-   * @param host_pointer a pointer to host memory to be converted into a VM offset (pointer).
-   * @param vm_pointer a pointer to an uint64_t to be filled with the offset in VM memory
-   * corresponding to 'host_pointer'.
-   * @return whether or not the host_pointer was a valid VM memory offset.
-   */
-  virtual bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) PURE;
-
-  /**
    * Set a block of memory in the VM, returns true on success, false if the pointer/size is
    * invalid.
    * @param pointer the offset into VM memory describing the start of a region of VM memory.

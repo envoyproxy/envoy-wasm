@@ -204,7 +204,6 @@ struct Wavm : public WasmVm {
   void link(absl::string_view debug_name) override;
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
-  bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool getWord(uint64_t pointer, Word* data) override;
   bool setWord(uint64_t pointer, Word data) override;
@@ -342,18 +341,6 @@ absl::optional<absl::string_view> Wavm::getMemory(uint64_t pointer, uint64_t siz
     return absl::nullopt;
   }
   return absl::string_view(reinterpret_cast<char*>(memory_base_ + pointer), size);
-}
-
-bool Wavm::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
-  intptr_t offset = (static_cast<uint8_t*>(host_pointer) - memory_base_);
-  if (offset < 0) {
-    return false;
-  }
-  if (static_cast<size_t>(offset) > WAVM::Runtime::getMemoryNumPages(memory_) * WasmPageSize) {
-    return false;
-  }
-  *vm_pointer = static_cast<uint64_t>(offset);
-  return true;
 }
 
 bool Wavm::setMemory(uint64_t pointer, uint64_t size, const void* data) {

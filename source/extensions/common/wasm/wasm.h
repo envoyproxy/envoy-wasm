@@ -542,8 +542,6 @@ public:
 
   // Support functions.
   void* allocMemory(uint64_t size, uint64_t* address);
-  bool freeMemory(void* pointer);
-  void freeMemoryOffset(uint64_t address);
   // Allocate a null-terminated string in the VM and return the pointer to use as a call arguments.
   uint64_t copyString(absl::string_view s);
   uint64_t copyBuffer(const Buffer::Instance& buffer);
@@ -748,17 +746,6 @@ inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
   }
   *address = a.u64_;
   return const_cast<void*>(reinterpret_cast<const void*>(memory.value().data()));
-}
-
-inline void Wasm::freeMemoryOffset(uint64_t address) { free_(vmContext(), address); }
-
-inline bool Wasm::freeMemory(void* pointer) {
-  uint64_t offset;
-  if (!wasm_vm_->getMemoryOffset(pointer, &offset)) {
-    return false;
-  }
-  freeMemoryOffset(offset);
-  return true;
 }
 
 inline uint64_t Wasm::copyString(absl::string_view s) {
