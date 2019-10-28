@@ -449,7 +449,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
 
   const auto& result = request_stream_info_.filterState().getDataReadOnly<Common::Wasm::WasmState>(
       "wasm_request_set_key");
-  EXPECT_EQ("wasm_request_set_value", result.value().string_value());
+  EXPECT_EQ("wasm_request_set_value", result.value());
 }
 
 #endif
