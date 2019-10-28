@@ -206,7 +206,8 @@ public:
   // It selects a value based on the following order: encoder callback, decoder
   // callback, log callback. As long as any one of the callbacks is invoked, the value should be
   // available.
-  const StreamInfo::StreamInfo* getRequestStreamInfo() const;
+  const StreamInfo::StreamInfo* getConstRequestStreamInfo() const;
+  StreamInfo::StreamInfo* getRequestStreamInfo() const;
 
   //
   // VM level downcalls into the WASM code on Context(id == 0).
