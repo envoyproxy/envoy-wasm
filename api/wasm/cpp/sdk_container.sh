@@ -27,8 +27,8 @@ git submodule update --init --recursive
 make
 make check
 make install
-make clean
 cd
+rm -rf protobuf
 
 # emscripten
 git clone https://github.com/emscripten-core/emsdk.git
@@ -55,5 +55,5 @@ git checkout 1ec06cd202a922015c9041c5ed84f875453c4dc7 -b Oct152019 # Oct 15 2019
 cmake "."
 make
 make install
-make clean
 cd
+rm -rf WAVM
