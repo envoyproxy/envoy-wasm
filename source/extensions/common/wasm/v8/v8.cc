@@ -54,15 +54,6 @@ public:
   bool getWord(uint64_t pointer, Word* word) override;
   bool setWord(uint64_t pointer, Word word) override;
 
-#define _REGISTER_HOST_GLOBAL(_T)                                                                  \
-  std::unique_ptr<Global<_T>> makeGlobal(absl::string_view module_name, absl::string_view name,    \
-                                         _T initial_value) override {                              \
-    return registerHostGlobalImpl(module_name, name, initial_value);                               \
-  };
-  _REGISTER_HOST_GLOBAL(Word);
-  _REGISTER_HOST_GLOBAL(double);
-#undef _REGISTER_HOST_GLOBAL
-
 #define _REGISTER_HOST_FUNCTION(_T)                                                                \
   void registerCallback(absl::string_view module_name, absl::string_view function_name, _T,        \
                         typename ConvertFunctionTypeWordToUint32<_T>::type f) override {           \
@@ -79,10 +70,6 @@ public:
 #undef _GET_MODULE_FUNCTION
 
 private:
-  template <typename T>
-  std::unique_ptr<Global<T>> registerHostGlobalImpl(absl::string_view module_name,
-                                                    absl::string_view name, T initial_value);
-
   template <typename... Args>
   void registerHostFunctionImpl(absl::string_view module_name, absl::string_view function_name,
                                 void (*function)(void*, Args...));
@@ -106,7 +93,6 @@ private:
   wasm::own<wasm::Memory> memory_;
   wasm::own<wasm::Table> table_;
 
-  absl::flat_hash_map<std::string, wasm::own<wasm::Global>> host_globals_;
   absl::flat_hash_map<std::string, FuncDataPtr> host_functions_;
   absl::flat_hash_map<std::string, wasm::own<wasm::Func>> module_functions_;
 };
@@ -223,15 +209,6 @@ template <> constexpr auto convertArgToValKind<uint64_t>() { return wasm::I64; }
 template <> constexpr auto convertArgToValKind<float>() { return wasm::F32; };
 template <> constexpr auto convertArgToValKind<double>() { return wasm::F64; };
 
-template <typename T> struct V8ProxyForGlobal : Global<T> {
-  V8ProxyForGlobal(wasm::Global* value) : global_(value) {}
-
-  T get() override { return global_->get().get<typename ConvertWordTypeToUint32<T>::type>(); };
-  void set(const T& value) override { global_->set(makeVal(static_cast<T>(value))); };
-
-  wasm::Global* global_;
-};
-
 template <typename T, std::size_t... I>
 constexpr auto convertArgsTupleToValTypesImpl(absl::index_sequence<I...>) {
   return wasm::ownvec<wasm::ValType>::make(
@@ -343,12 +320,8 @@ void V8::link(absl::string_view debug_name) {
       ENVOY_LOG(trace, "[wasm] link(), export host global: {}.{} ({})", module, name,
                 printValKind(import_type->global()->content()->kind()));
 
-      auto it = host_globals_.find(absl::StrCat(module, ".", name));
-      if (it == host_globals_.end()) {
-        throw WasmVmException(
-            fmt::format("Failed to load WASM module due to a missing import: {}.{}", module, name));
-      }
-      imports.push_back(it->second.get());
+      throw WasmVmException(
+          fmt::format("Failed to load WASM module due to a missing import: {}.{}", module, name));
     } break;
 
     case wasm::EXTERN_MEMORY: {
@@ -470,18 +443,6 @@ bool V8::setWord(uint64_t pointer, Word word) {
   uint32_t word32 = word.u32();
   ::memcpy(memory_->data() + pointer, &word32, size);
   return true;
-}
-
-template <typename T>
-std::unique_ptr<Global<T>> V8::registerHostGlobalImpl(absl::string_view module_name,
-                                                      absl::string_view name, T initial_value) {
-  ENVOY_LOG(trace, "[wasm] registerHostGlobal(\"{}.{}\", {})", module_name, name, initial_value);
-  auto value = makeVal(initial_value);
-  auto type = wasm::GlobalType::make(wasm::ValType::make(value.kind()), wasm::CONST);
-  auto global = wasm::Global::make(store_.get(), type.get(), value);
-  auto proxy = std::make_unique<V8ProxyForGlobal<T>>(global.get());
-  host_globals_.emplace(absl::StrCat(module_name, ".", name), std::move(global));
-  return proxy;
 }
 
 template <typename... Args>
