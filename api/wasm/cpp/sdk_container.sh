@@ -17,6 +17,9 @@ export CC=gcc-7
 export CXX=g++-7
 export CPP=cpp-7
 
+# get $HOME
+cd
+
 # specific version of protobufs to match the pre-compiled support libraries
 git clone https://github.com/protocolbuffers/protobuf
 cd protobuf
@@ -27,7 +30,6 @@ git submodule update --init --recursive
 make
 make check
 make install
-make clean
 cd
 rm -rf protobuf
 
@@ -56,6 +58,5 @@ git checkout 1ec06cd202a922015c9041c5ed84f875453c4dc7 -b Oct152019 # Oct 15 2019
 cmake "."
 make
 make install
-make clean
 cd
 rm -rf WAVM
