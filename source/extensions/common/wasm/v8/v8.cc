@@ -50,7 +50,6 @@ public:
 
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
-  bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool getWord(uint64_t pointer, Word* word) override;
   bool setWord(uint64_t pointer, Word word) override;
@@ -438,17 +437,6 @@ absl::optional<absl::string_view> V8::getMemory(uint64_t pointer, uint64_t size)
     return absl::nullopt;
   }
   return absl::string_view(memory_->data() + pointer, size);
-}
-
-bool V8::getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) {
-  ENVOY_LOG(trace, "[wasm] getMemoryOffset({})", host_pointer);
-  ASSERT(memory_ != nullptr);
-  if (static_cast<char*>(host_pointer) >= memory_->data() ||
-      static_cast<char*>(host_pointer) <= memory_->data() + memory_->data_size()) {
-    return false;
-  }
-  *vm_pointer = static_cast<char*>(host_pointer) - memory_->data();
-  return true;
 }
 
 bool V8::setMemory(uint64_t pointer, uint64_t size, const void* data) {

@@ -449,7 +449,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
 
   const auto& result = request_stream_info_.filterState().getDataReadOnly<Common::Wasm::WasmState>(
       "wasm_request_set_key");
-  EXPECT_EQ("wasm_request_set_value", result.value().string_value());
+  EXPECT_EQ("wasm_request_set_value", result.value());
 }
 
 #endif
@@ -500,8 +500,6 @@ TEST_F(WasmHttpFilterTest, NullVmResolver) {
               scriptLog_(spdlog::level::warn, Eq(absl::string_view("response.code: 403"))));
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::warn, Eq(absl::string_view("state: wasm_value"))));
-  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn,
-                                   Eq(absl::string_view("struct state: wasm_struct_value"))));
 
   Http::TestHeaderMapImpl request_headers{{":path", "/test_context"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
