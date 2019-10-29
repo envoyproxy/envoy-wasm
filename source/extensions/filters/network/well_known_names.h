@@ -40,6 +40,8 @@ public:
   const std::string SniCluster = "envoy.filters.network.sni_cluster";
   // ZooKeeper proxy filter
   const std::string ZooKeeperProxy = "envoy.filters.network.zookeeper_proxy";
+  // WebAssembly filter
+  const std::string Wasm = "envoy.filters.network.wasm";
 
   // Converts names from v1 to v2
   const Config::V1Converter v1_converter_;
