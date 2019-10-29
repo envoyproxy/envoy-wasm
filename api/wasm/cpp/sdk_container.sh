@@ -28,6 +28,7 @@ make
 make check
 make install
 cd
+rm -rf protobuf
 
 # emscripten
 git clone https://github.com/emscripten-core/emsdk.git
@@ -55,3 +56,4 @@ cmake "."
 make
 make install
 cd
+rm -rf WAVM
