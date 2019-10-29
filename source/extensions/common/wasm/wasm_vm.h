@@ -151,9 +151,9 @@ public:
   virtual bool load(const std::string& code, bool allow_precompiled) PURE;
 
   /**
-   * Link the WASM code to the host-provided functions and globals, e.g. the ABI. Prior to
-   * linking, the module should be loaded and the ABI callbacks registered (see above). Linking
-   * should be done once after load().
+   * Link the WASM code to the host-provided functions and globals, e.g. the ABI. Prior to linking,
+   * the module should be loaded and the ABI callbacks registered (see above). Linking should be
+   * done once after load().
    * @param debug_name user-provided name for use in log and error messages.
    */
   virtual void link(absl::string_view debug_name) PURE;
@@ -172,15 +172,6 @@ public:
    * a host string_view pointing to the pointer/size pair in VM memory.
    */
   virtual absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) PURE;
-
-  /**
-   * Convert a host pointer to memory in the VM into a VM "pointer" (an offset into the Memory).
-   * @param host_pointer a pointer to host memory to be converted into a VM offset (pointer).
-   * @param vm_pointer a pointer to an uint64_t to be filled with the offset in VM memory
-   * corresponding to 'host_pointer'.
-   * @return whether or not the host_pointer was a valid VM memory offset.
-   */
-  virtual bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) PURE;
 
   /**
    * Set a block of memory in the VM, returns true on success, false if the pointer/size is

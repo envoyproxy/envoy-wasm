@@ -17,6 +17,9 @@ export CC=gcc-7
 export CXX=g++-7
 export CPP=cpp-7
 
+# get $HOME
+cd
+
 # specific version of protobufs to match the pre-compiled support libraries
 git clone https://github.com/protocolbuffers/protobuf
 cd protobuf
@@ -28,6 +31,7 @@ make
 make check
 make install
 cd
+rm -rf protobuf
 
 # emscripten
 git clone https://github.com/emscripten-core/emsdk.git
@@ -55,3 +59,4 @@ cmake "."
 make
 make install
 cd
+rm -rf WAVM

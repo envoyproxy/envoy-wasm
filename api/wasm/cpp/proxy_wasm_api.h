@@ -484,25 +484,13 @@ template <typename T> inline bool getValue(std::initializer_list<StringView> par
   return true;
 }
 
-// Requires that the value is a serialized google.protobuf.Value.
 inline WasmResult setFilterState(StringView key, StringView value) {
   return static_cast<WasmResult>(
       proxy_setProperty(key.data(), key.size(), value.data(), value.size()));
 }
 
-inline WasmResult setFilterStateValue(StringView key, const google::protobuf::Value& value) {
-  std::string output;
-  if (!value.SerializeToString(&output)) {
-    return WasmResult::SerializationFailure;
-  }
-  return static_cast<WasmResult>(
-      proxy_setProperty(key.data(), key.size(), output.data(), output.size()));
-}
-
 inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
-  google::protobuf::Value value;
-  value.set_string_value(s.data(), s.size());
-  return setFilterStateValue(key, value);
+  return setFilterState(key, s);
 }
 
 // Continue/Respond/Route

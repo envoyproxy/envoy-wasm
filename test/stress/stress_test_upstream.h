@@ -308,6 +308,10 @@ public:
 
   Network::ConnectionBalancer& connectionBalancer() override { return connection_balancer_; }
 
+  envoy::api::v2::core::TrafficDirection direction() const override {
+    return envoy::api::v2::core::TrafficDirection::UNSPECIFIED;
+  }
+
   //
   // Network::FilterChainManager
   //

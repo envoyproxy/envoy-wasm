@@ -1136,8 +1136,7 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
 // An expression wrapper for the WASM state
 class WasmStateWrapper : public google::api::expr::runtime::CelMap {
 public:
-  WasmStateWrapper(const StreamInfo::FilterState& filter_state, ProtobufWkt::Arena* arena)
-      : filter_state_(filter_state), arena_(arena) {}
+  WasmStateWrapper(const StreamInfo::FilterState& filter_state) : filter_state_(filter_state) {}
   absl::optional<google::api::expr::runtime::CelValue>
   operator[](google::api::expr::runtime::CelValue key) const override {
     if (!key.IsString()) {
@@ -1146,7 +1145,7 @@ public:
     auto value = key.StringOrDie().value();
     try {
       const WasmState& result = filter_state_.getDataReadOnly<WasmState>(value);
-      return google::api::expr::runtime::CelValue::CreateMessage(&result.value(), arena_);
+      return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
     } catch (const EnvoyException& e) {
       return {};
     }
@@ -1159,7 +1158,6 @@ public:
 
 private:
   const StreamInfo::FilterState& filter_state_;
-  ProtobufWkt::Arena* arena_;
 };
 
 #define PROPERTY_TOKENS(_f)                                                                        \
@@ -1189,7 +1187,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
   bool first = true;
   CelValue value;
   Protobuf::Arena arena;
-  const StreamInfo::StreamInfo* info = getRequestStreamInfo();
+  const StreamInfo::StreamInfo* info = getConstRequestStreamInfo();
   const auto request_headers = request_headers_ ? request_headers_ : access_log_request_headers_;
   const auto response_headers =
       response_headers_ ? response_headers_ : access_log_response_headers_;
@@ -1223,7 +1221,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
         break;
       case PropertyToken::FILTER_STATE:
         value = CelValue::CreateMap(
-            Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState(), &arena));
+            Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState()));
         break;
       case PropertyToken::REQUEST:
         value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
@@ -1275,11 +1273,19 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
           return WasmResult::NotFound;
         }
         value = CelValue::CreateMessage(plugin_->listener_metadata_, &arena);
+<<<<<<< HEAD
         break;
       case PropertyToken::CLUSTER_NAME:
         value = CelValue::CreateString(info->upstreamHost()->cluster().name());
         break;
       case PropertyToken::CLUSTER_METADATA:
+=======
+      }
+      else if (part == "cluster_name" && info->upstreamHost() != nullptr) {
+        value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
+      }
+      else if (part == "cluster_metadata" && info->upstreamHost() != nullptr) {
+>>>>>>> eff4fdeb06d389500d27543edeb94da241a4b548
         value = CelValue::CreateMessage(&info->upstreamHost()->cluster().metadata(), &arena);
         break;
       case PropertyToken::ROUTE_NAME:
@@ -1730,7 +1736,7 @@ void Context::httpRespond(const Pairs& response_headers, absl::string_view body,
 }
 
 // StreamInfo
-const StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
+const StreamInfo::StreamInfo* Context::getConstRequestStreamInfo() const {
   if (encoder_callbacks_) {
     return &encoder_callbacks_->streamInfo();
   } else if (decoder_callbacks_) {
@@ -1741,19 +1747,22 @@ const StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
   return nullptr;
 }
 
-WasmResult Context::setProperty(absl::string_view key, absl::string_view serialized_value) {
-  ProtobufWkt::Value value_struct;
-  if (!value_struct.ParseFromArray(serialized_value.data(), serialized_value.size())) {
-    return WasmResult::ParseFailure;
+StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
+  if (encoder_callbacks_) {
+    return &encoder_callbacks_->streamInfo();
+  } else if (decoder_callbacks_) {
+    return &decoder_callbacks_->streamInfo();
   }
-  if (decoder_callbacks_ == nullptr && encoder_callbacks_ == nullptr) {
+  return nullptr;
+}
+
+WasmResult Context::setProperty(absl::string_view key, absl::string_view serialized_value) {
+  auto* stream_info = getRequestStreamInfo();
+  if (!stream_info) {
     return WasmResult::NotFound;
   }
-  StreamInfo::FilterState& filter_state = encoder_callbacks_
-                                              ? encoder_callbacks_->streamInfo().filterState()
-                                              : decoder_callbacks_->streamInfo().filterState();
-  filter_state.setData(key, std::make_unique<WasmState>(value_struct),
-                       StreamInfo::FilterState::StateType::Mutable);
+  stream_info->filterState().setData(key, std::make_unique<WasmState>(serialized_value),
+                                     StreamInfo::FilterState::StateType::Mutable);
   return WasmResult::Ok;
 }
 

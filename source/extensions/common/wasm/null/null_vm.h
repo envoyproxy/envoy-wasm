@@ -32,7 +32,6 @@ struct NullVm : public WasmVm {
   void link(absl::string_view debug_name) override;
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
-  bool getMemoryOffset(void* host_pointer, uint64_t* vm_pointer) override;
   bool setMemory(uint64_t pointer, uint64_t size, const void* data) override;
   bool setWord(uint64_t pointer, Word data) override;
   bool getWord(uint64_t pointer, Word* data) override;

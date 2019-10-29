@@ -18,11 +18,11 @@ namespace Wasm {
 // A simple wrapper around generic values
 class WasmState : public StreamInfo::FilterState::Object {
 public:
-  WasmState(ProtobufWkt::Value& value) : value_(value) {}
-  const ProtobufWkt::Value& value() const { return value_; }
+  WasmState(absl::string_view value) : value_(value) {}
+  const std::string& value() const { return value_; }
 
 private:
-  const ProtobufWkt::Value value_;
+  const std::string value_;
 };
 
 } // namespace Wasm
