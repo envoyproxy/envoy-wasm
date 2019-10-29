@@ -1273,19 +1273,11 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
           return WasmResult::NotFound;
         }
         value = CelValue::CreateMessage(plugin_->listener_metadata_, &arena);
-<<<<<<< HEAD
         break;
       case PropertyToken::CLUSTER_NAME:
-        value = CelValue::CreateString(info->upstreamHost()->cluster().name());
+        value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
         break;
       case PropertyToken::CLUSTER_METADATA:
-=======
-      }
-      else if (part == "cluster_name" && info->upstreamHost() != nullptr) {
-        value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
-      }
-      else if (part == "cluster_metadata" && info->upstreamHost() != nullptr) {
->>>>>>> eff4fdeb06d389500d27543edeb94da241a4b548
         value = CelValue::CreateMessage(&info->upstreamHost()->cluster().metadata(), &arena);
         break;
       case PropertyToken::ROUTE_NAME:
