@@ -40,13 +40,6 @@ template <typename R, typename... Args> struct ConvertFunctionTypeWordToUint32<R
       typename ConvertWordTypeToUint32<Args>::type...);
 };
 
-// A wrapper for a global variable within the VM.
-template <typename T> struct Global {
-  virtual ~Global() = default;
-  virtual T get() PURE;
-  virtual void set(const T& t) PURE;
-};
-
 // These are templates and its helper for constructing signatures of functions calling into and
 // out of WASM VMs.
 // - WasmFuncTypeHelper is a helper for WasmFuncType and shouldn't be used anywhere else than
@@ -228,26 +221,6 @@ public:
                                 _T f, typename ConvertFunctionTypeWordToUint32<_T>::type) PURE;
   FOR_ALL_WASM_VM_IMPORTS(_REGISTER_CALLBACK)
 #undef _REGISTER_CALLBACK
-
-  /**
-   * Register typed value exported by the host environment.
-   * @param module_name the name of the module to which to export the global.
-   * @param name the name of the global variable to export.
-   * @param initial_value the initial value of the global.
-   * @return a Global object which can be used to access the exported global.
-   */
-  virtual std::unique_ptr<Global<Word>> makeGlobal(absl::string_view module_name,
-                                                   absl::string_view name, Word initial_value) PURE;
-
-  /**
-   * Register typed value exported by the host environment.
-   * @param module_name the name of the module to which to export the global.
-   * @param name the name of the global variable to export.
-   * @param initial_value the initial value of the global.
-   * @return a Global object which can be used to access the exported global.
-   */
-  virtual std::unique_ptr<Global<double>>
-  makeGlobal(absl::string_view module_name, absl::string_view name, double initial_value) PURE;
 };
 using WasmVmPtr = std::unique_ptr<WasmVm>;
 

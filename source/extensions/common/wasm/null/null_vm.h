@@ -51,15 +51,6 @@ struct NullVm : public WasmVm {
   FOR_ALL_WASM_VM_IMPORTS(_REGISTER_CALLBACK)
 #undef _REGISTER_CALLBACK
 
-  // NullVm does not advertise code as emscripten so this will not get called.
-  std::unique_ptr<Global<double>> makeGlobal(absl::string_view, absl::string_view,
-                                             double) override {
-    NOT_REACHED_GCOVR_EXCL_LINE;
-  };
-  std::unique_ptr<Global<Word>> makeGlobal(absl::string_view, absl::string_view, Word) override {
-    NOT_REACHED_GCOVR_EXCL_LINE;
-  };
-
   std::string plugin_name_;
   std::unique_ptr<NullVmPlugin> plugin_;
 };
