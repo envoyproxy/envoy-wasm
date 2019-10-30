@@ -13,7 +13,7 @@
 
 
    // Non-stream calls.
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t root_context_id, uint32_t configuration_size);
+   extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onStart(uint32_t root_context_id, uint32_t configuration_size);
    extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_validateConfiguration(uint32_t root_context_id, uint32_t configuration_size);
    extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onConfigure(uint32_t root_context_id, uint32_t configuration_size);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick(uint32_t root_context_id);
@@ -21,15 +21,15 @@
 
    // Stream calls.
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onCreate(uint32_t context_id, root_context_id);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestHeaders(uint32_t context_id);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestHeaders(uint32_t context_id, uint32_t headers);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestBody(uint32_t context_id,  uint32_t body_buffer_length, uint32_t end_of_stream);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestTrailers(uint32_t context_id);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestMetadata(uint32_t context_id);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onResponseHeaders(uint32_t context_id);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestTrailers(uint32_t context_id, uint32_t trailers);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onRequestMetadata(uint32_t context_id, uint32_t nelements);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onResponseHeaders(uint32_t context_id, uint32_t headers);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onResponseBody(uint32_t context_id,  uint32_t body_buffer_length, uint32_t end_of_stream);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onResponseTrailers(uint32_t context_id);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onResponseMetadata(uint32_t context_id);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onHttpCallResponse(uint32_t context_id, uint32_t token, uint32_t body_size);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onResponseTrailers(uint32_t context_id, uint32_t trailers);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onResponseMetadata(uint32_t context_id, uint32_t nelements);
+   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onHttpCallResponse(uint32_t context_id, uint32_t token, uint32_t headers, uint32_t body_size, uint32_t trailers);
    // The stream has completed.
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onDone(uint32_t context_id);
    // onLog occurs after onDone.

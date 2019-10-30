@@ -8,13 +8,13 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders() override;
+  FilterHeadersStatus onRequestHeaders(uint32_t) override;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
-FilterHeadersStatus ExampleContext::onRequestHeaders() {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   auto context_id = id();
-  auto callback = [context_id](size_t body_size) {
+  auto callback = [context_id](uint32_t, size_t body_size, uint32_t) {
     auto response_headers = getHeaderMapPairs(HeaderMapType::HttpCallResponseHeaders);
     auto body = getBufferBytes(BufferType::HttpCallResponseBody, 0, body_size);
     auto response_trailers = getHeaderMapPairs(HeaderMapType::HttpCallResponseTrailers);

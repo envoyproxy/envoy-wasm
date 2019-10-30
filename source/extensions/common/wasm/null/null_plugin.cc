@@ -70,12 +70,7 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<1>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f) {
   auto plugin = this;
-  if (function_name == "proxy_onStart") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word configuration_size) {
-      SaveRestoreContext saved_context(context);
-      plugin->onStart(context_id.u64_, configuration_size.u64_);
-    };
-  } else if (function_name == "proxy_onCreate") {
+  if (function_name == "proxy_onCreate") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_context_id) {
       SaveRestoreContext saved_context(context);
       plugin->onCreate(context_id.u64_, root_context_id.u64_);
@@ -90,21 +85,6 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f
       SaveRestoreContext saved_context(context);
       plugin->onUpstreamConnectionClose(context_id.u64_, peer_type.u64_);
     };
-  } else if (function_name == "proxy_onGrpcCreateInitialMetadata") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token) {
-      SaveRestoreContext saved_context(context);
-      plugin->onGrpcCreateInitialMetadata(context_id.u64_, token.u64_);
-    };
-  } else if (function_name == "proxy_onGrpcReceiveInitialMetadata") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token) {
-      SaveRestoreContext saved_context(context);
-      plugin->onGrpcReceiveInitialMetadata(context_id.u64_, token.u64_);
-    };
-  } else if (function_name == "proxy_onGrpcReceiveTrailingMetadata") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token) {
-      SaveRestoreContext saved_context(context);
-      plugin->onGrpcReceiveTrailingMetadata(context_id.u64_, token.u64_);
-    };
   } else if (function_name == "proxy_onQueueReady") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token) {
       SaveRestoreContext saved_context(context);
@@ -117,12 +97,7 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<3>* f) {
   auto plugin = this;
-  if (function_name == "proxy_onHttpCallResponse") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word body_size) {
-      SaveRestoreContext saved_context(context);
-      plugin->onHttpCallResponse(context_id.u64_, token.u64_, body_size.u64_);
-    };
-  } else if (function_name == "proxy_onGrpcClose") {
+  if (function_name == "proxy_onGrpcClose") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word status_code) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcClose(context_id.u64_, token.u64_, status_code.u64_);
@@ -131,6 +106,35 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<3>* f
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word body_size) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcReceive(context_id.u64_, token.u64_, body_size.u64_);
+    };
+  } else if (function_name == "proxy_onGrpcCreateInitialMetadata") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers) {
+      SaveRestoreContext saved_context(context);
+      plugin->onGrpcCreateInitialMetadata(context_id.u64_, token.u64_, headers.u64_);
+    };
+  } else if (function_name == "proxy_onGrpcReceiveInitialMetadata") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers) {
+      SaveRestoreContext saved_context(context);
+      plugin->onGrpcReceiveInitialMetadata(context_id.u64_, token.u64_, headers.u64_);
+    };
+  } else if (function_name == "proxy_onGrpcReceiveTrailingMetadata") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word trailers) {
+      SaveRestoreContext saved_context(context);
+      plugin->onGrpcReceiveTrailingMetadata(context_id.u64_, token.u64_, trailers.u64_);
+    };
+  } else {
+    throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
+  }
+}
+
+void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<5>* f) {
+  auto plugin = this;
+  if (function_name == "proxy_onHttpCallResponse") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers,
+                  Word body_size, Word trailers) {
+      SaveRestoreContext saved_context(context);
+      plugin->onHttpCallResponse(context_id.u64_, token.u64_, headers.u64_, body_size.u64_,
+                                 trailers.u64_);
     };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
@@ -148,36 +152,6 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
       SaveRestoreContext saved_context(context);
       return Word(plugin->onNewConnection(context_id.u64_));
     };
-  } else if (function_name == "proxy_onRequestHeaders") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
-      SaveRestoreContext saved_context(context);
-      return Word(plugin->onRequestHeaders(context_id.u64_));
-    };
-  } else if (function_name == "proxy_onRequestTrailers") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
-      SaveRestoreContext saved_context(context);
-      return Word(plugin->onRequestTrailers(context_id.u64_));
-    };
-  } else if (function_name == "proxy_onRequestMetadata") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
-      SaveRestoreContext saved_context(context);
-      return Word(plugin->onRequestMetadata(context_id.u64_));
-    };
-  } else if (function_name == "proxy_onResponseHeaders") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
-      SaveRestoreContext saved_context(context);
-      return Word(plugin->onResponseHeaders(context_id.u64_));
-    };
-  } else if (function_name == "proxy_onResponseTrailers") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
-      SaveRestoreContext saved_context(context);
-      return Word(plugin->onResponseTrailers(context_id.u64_));
-    };
-  } else if (function_name == "proxy_onResponseMetadata") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
-      SaveRestoreContext saved_context(context);
-      return Word(plugin->onResponseMetadata(context_id.u64_));
-    };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
   }
@@ -185,7 +159,12 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<2>* f) {
   auto plugin = this;
-  if (function_name == "proxy_onConfigure") {
+  if (function_name == "proxy_onStart") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word configuration_size) {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onStart(context_id.u64_, configuration_size.u64_));
+    };
+  } else if (function_name == "proxy_onConfigure") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word configuration_size) {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onConfigure(context_id.u64_, configuration_size.u64_));
@@ -194,6 +173,36 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<2>* f
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word configuration_size) {
       SaveRestoreContext saved_context(context);
       return Word(plugin->validateConfiguration(context_id.u64_, configuration_size.u64_));
+    };
+  } else if (function_name == "proxy_onRequestHeaders") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word headers) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onRequestHeaders(context_id.u64_, headers.u64_));
+    };
+  } else if (function_name == "proxy_onRequestTrailers") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word trailers) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onRequestTrailers(context_id.u64_, trailers.u64_));
+    };
+  } else if (function_name == "proxy_onRequestMetadata") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word elements) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onRequestMetadata(context_id.u64_, elements.u64_));
+    };
+  } else if (function_name == "proxy_onResponseHeaders") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word headers) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onResponseHeaders(context_id.u64_, headers.u64_));
+    };
+  } else if (function_name == "proxy_onResponseTrailers") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word trailers) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onResponseTrailers(context_id.u64_, trailers.u64_));
+    };
+  } else if (function_name == "proxy_onResponseMetadata") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word elements) -> Word {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onResponseMetadata(context_id.u64_, elements.u64_));
     };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
@@ -313,8 +322,12 @@ bool NullPlugin::validateConfiguration(uint64_t root_context_id, uint64_t config
   return getRootContext(root_context_id)->validateConfiguration(configuration_size);
 }
 
-void NullPlugin::onStart(uint64_t root_context_id, uint64_t vm_configuration_size) {
-  ensureRootContext(root_context_id)->onStart(vm_configuration_size);
+bool NullPlugin::onStart(uint64_t root_context_id, uint64_t vm_configuration_size) {
+  auto context = ensureRootContext(root_context_id);
+  if (!context) {
+    return false;
+  }
+  return context->onStart(vm_configuration_size) != 0;
 }
 
 bool NullPlugin::onConfigure(uint64_t root_context_id, uint64_t plugin_configuration_size) {
@@ -352,8 +365,8 @@ void NullPlugin::onUpstreamConnectionClose(uint64_t context_id, uint64_t peer_ty
   getContext(context_id)->onUpstreamConnectionClose(static_cast<Plugin::PeerType>(peer_type));
 }
 
-uint64_t NullPlugin::onRequestHeaders(uint64_t context_id) {
-  return static_cast<uint64_t>(getContext(context_id)->onRequestHeaders());
+uint64_t NullPlugin::onRequestHeaders(uint64_t context_id, uint64_t headers) {
+  return static_cast<uint64_t>(getContext(context_id)->onRequestHeaders(headers));
 }
 
 uint64_t NullPlugin::onRequestBody(uint64_t context_id, uint64_t body_buffer_length,
@@ -363,16 +376,16 @@ uint64_t NullPlugin::onRequestBody(uint64_t context_id, uint64_t body_buffer_len
           ->onRequestBody(static_cast<size_t>(body_buffer_length), end_of_stream != 0));
 }
 
-uint64_t NullPlugin::onRequestTrailers(uint64_t context_id) {
-  return static_cast<uint64_t>(getContext(context_id)->onRequestTrailers());
+uint64_t NullPlugin::onRequestTrailers(uint64_t context_id, uint64_t trailers) {
+  return static_cast<uint64_t>(getContext(context_id)->onRequestTrailers(trailers));
 }
 
-uint64_t NullPlugin::onRequestMetadata(uint64_t context_id) {
-  return static_cast<uint64_t>(getContext(context_id)->onRequestMetadata());
+uint64_t NullPlugin::onRequestMetadata(uint64_t context_id, uint64_t elements) {
+  return static_cast<uint64_t>(getContext(context_id)->onRequestMetadata(elements));
 }
 
-uint64_t NullPlugin::onResponseHeaders(uint64_t context_id) {
-  return static_cast<uint64_t>(getContext(context_id)->onResponseHeaders());
+uint64_t NullPlugin::onResponseHeaders(uint64_t context_id, uint64_t headers) {
+  return static_cast<uint64_t>(getContext(context_id)->onResponseHeaders(headers));
 }
 
 uint64_t NullPlugin::onResponseBody(uint64_t context_id, uint64_t body_buffer_length,
@@ -382,16 +395,17 @@ uint64_t NullPlugin::onResponseBody(uint64_t context_id, uint64_t body_buffer_le
           ->onResponseBody(static_cast<size_t>(body_buffer_length), end_of_stream != 0));
 }
 
-uint64_t NullPlugin::onResponseTrailers(uint64_t context_id) {
-  return static_cast<uint64_t>(getContext(context_id)->onResponseTrailers());
+uint64_t NullPlugin::onResponseTrailers(uint64_t context_id, uint64_t trailers) {
+  return static_cast<uint64_t>(getContext(context_id)->onResponseTrailers(trailers));
 }
 
-uint64_t NullPlugin::onResponseMetadata(uint64_t context_id) {
-  return static_cast<uint64_t>(getContext(context_id)->onResponseMetadata());
+uint64_t NullPlugin::onResponseMetadata(uint64_t context_id, uint64_t elements) {
+  return static_cast<uint64_t>(getContext(context_id)->onResponseMetadata(elements));
 }
 
-void NullPlugin::onHttpCallResponse(uint64_t context_id, uint64_t token, uint64_t body_size) {
-  getRootContext(context_id)->onHttpCallResponse(token, body_size);
+void NullPlugin::onHttpCallResponse(uint64_t context_id, uint64_t token, uint64_t headers,
+                                    uint64_t body_size, uint64_t trailers) {
+  getRootContext(context_id)->onHttpCallResponse(token, headers, body_size, trailers);
 }
 
 void NullPlugin::onGrpcReceive(uint64_t context_id, uint64_t token, size_t body_size) {
@@ -402,16 +416,19 @@ void NullPlugin::onGrpcClose(uint64_t context_id, uint64_t token, uint64_t statu
   getRootContext(context_id)->onGrpcClose(token, static_cast<Plugin::GrpcStatus>(status_code));
 }
 
-void NullPlugin::onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t token) {
-  getRootContext(context_id)->onGrpcCreateInitialMetadata(token);
+void NullPlugin::onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t token,
+                                             uint64_t headers) {
+  getRootContext(context_id)->onGrpcCreateInitialMetadata(token, headers);
 }
 
-void NullPlugin::onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t token) {
-  getRootContext(context_id)->onGrpcReceiveInitialMetadata(token);
+void NullPlugin::onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t token,
+                                              uint64_t headers) {
+  getRootContext(context_id)->onGrpcReceiveInitialMetadata(token, headers);
 }
 
-void NullPlugin::onGrpcReceiveTrailingMetadata(uint64_t context_id, uint64_t token) {
-  getRootContext(context_id)->onGrpcReceiveTrailingMetadata(token);
+void NullPlugin::onGrpcReceiveTrailingMetadata(uint64_t context_id, uint64_t token,
+                                               uint64_t trailers) {
+  getRootContext(context_id)->onGrpcReceiveTrailingMetadata(token, trailers);
 }
 
 void NullPlugin::onQueueReady(uint64_t context_id, uint64_t token) {

@@ -9,16 +9,16 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeadersSimple();
-  FilterHeadersStatus onRequestHeadersStream();
-  FilterHeadersStatus onRequestHeaders() override;
+  FilterHeadersStatus onRequestHeadersSimple(uint32_t);
+  FilterHeadersStatus onRequestHeadersStream(uint32_t);
+  FilterHeadersStatus onRequestHeaders(uint32_t) override;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
 class MyGrpcCallHandler : public GrpcCallHandler<google::protobuf::Value> {
 public:
   MyGrpcCallHandler() : GrpcCallHandler<google::protobuf::Value>() {}
-  void onCreateInitialMetadata() override {}
+  void onCreateInitialMetadata(uint32_t) override {}
   void onSuccess(size_t body_size) override {
     auto response = getBufferBytes(BufferType::GrpcReceiveBuffer, 0, body_size);
     logDebug(response->proto<google::protobuf::Value>().string_value());
@@ -35,13 +35,13 @@ class MyGrpcStreamHandler
     : public GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value> {
 public:
   MyGrpcStreamHandler() : GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value>() {}
-  void onCreateInitialMetadata() override {
+  void onCreateInitialMetadata(uint32_t) override {
     google::protobuf::Value value;
     value.set_string_value("request");
     send(value, false);
   }
-  void onReceiveInitialMetadata() override {}
-  void onReceiveTrailingMetadata() override {}
+  void onReceiveInitialMetadata(uint32_t) override {}
+  void onReceiveTrailingMetadata(uint32_t) override {}
   void onReceive(size_t body_size) override {
     auto response = getBufferBytes(BufferType::GrpcReceiveBuffer, 0, body_size);
     logDebug(response->proto<google::protobuf::Value>().string_value());
@@ -55,7 +55,7 @@ public:
 };
 
 // Currently unused.
-FilterHeadersStatus ExampleContext::onRequestHeadersSimple() {
+FilterHeadersStatus ExampleContext::onRequestHeadersSimple(uint32_t) {
   std::function<void(size_t body_size)> success_callback = [](size_t body_size) {
     auto response = getBufferBytes(BufferType::GrpcReceiveBuffer, 0, body_size);
     logDebug(response->proto<google::protobuf::Value>().string_value());
@@ -77,7 +77,7 @@ FilterHeadersStatus ExampleContext::onRequestHeadersSimple() {
 }
 
 // Currently unused.
-FilterHeadersStatus ExampleContext::onRequestHeadersStream() {
+FilterHeadersStatus ExampleContext::onRequestHeadersStream(uint32_t) {
   GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
   std::string grpc_service_string;
@@ -87,7 +87,7 @@ FilterHeadersStatus ExampleContext::onRequestHeadersStream() {
   return FilterHeadersStatus::StopIteration;
 }
 
-FilterHeadersStatus ExampleContext::onRequestHeaders() {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
   std::string grpc_service_string;

@@ -8,11 +8,12 @@ class ServiceContext : public RootContext {
 public:
   explicit ServiceContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
 
-  void onStart(size_t /* vm_configuration */) override {
+  bool onStart(size_t /* vm_configuration */) override {
     CHECK_RESULT(
         defineMetric(MetricType::Counter, "test_callout_successes", &callout_success_counter_));
     CHECK_RESULT(
         defineMetric(MetricType::Counter, "test_callout_failures", &callout_failure_counter_));
+    return true;
   }
 
   void incrementCalloutSuccesses(uint32_t inc_amount = 1U) {
@@ -34,7 +35,7 @@ public:
 
   ServiceContext* serviceContext() { return static_cast<ServiceContext*>(root()); }
 
-  FilterHeadersStatus onRequestHeaders() override;
+  FilterHeadersStatus onRequestHeaders(uint32_t) override;
 };
 
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(RequestContext),
@@ -45,7 +46,7 @@ public:
   CalloutResponseHandler(RequestContext* request_context, ServiceContext* service_context)
       : GrpcCallHandler(), request_context_(request_context), service_context_(service_context) {}
 
-  void onCreateInitialMetadata() override {}
+  void onCreateInitialMetadata(uint32_t) override {}
   void onSuccess(size_t body_size) override {
     auto response = getBufferBytes(BufferType::GrpcReceiveBuffer, 0, body_size);
     request_context_->setEffectiveContext();
@@ -72,7 +73,7 @@ private:
   ServiceContext* const service_context_;
 };
 
-FilterHeadersStatus RequestContext::onRequestHeaders() {
+FilterHeadersStatus RequestContext::onRequestHeaders(uint32_t) {
   GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name("callout_cluster");
   std::string grpc_service_string;

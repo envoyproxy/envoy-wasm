@@ -211,7 +211,7 @@ public:
   // VM level downcalls into the WASM code on Context(id == 0).
   //
   virtual bool validateConfiguration(absl::string_view configuration);
-  virtual void onStart(absl::string_view vm_configuration);
+  virtual bool onStart(absl::string_view vm_configuration);
   virtual bool onConfigure(absl::string_view plugin_configuration);
 
   //
@@ -241,7 +241,8 @@ public:
   virtual Http::FilterTrailersStatus onResponseTrailers();
   virtual Http::FilterMetadataStatus onResponseMetadata();
   // Async Response Downcalls on any Context.
-  virtual void onHttpCallResponse(uint32_t token, uint32_t body_size);
+  virtual void onHttpCallResponse(uint32_t token, uint32_t headers, uint32_t body_size,
+                                  uint32_t trailers);
   virtual void onQueueReady(uint32_t token);
   // General stream downcall when the stream has ended.
   virtual void onDone();
@@ -469,8 +470,8 @@ protected:
   // live. For example, request_headers_ is available during the onRequestHeaders() call.
   Http::HeaderMap* request_headers_{};
   Http::HeaderMap* response_headers_{};
-  Buffer::Instance* requestBodyBuffer_{};
-  Buffer::Instance* responseBodyBuffer_{};
+  Buffer::Instance* request_body_buffer_{};
+  Buffer::Instance* response_body_buffer_{};
   Http::HeaderMap* request_trailers_{};
   Http::HeaderMap* response_trailers_{};
   Http::MetadataMap* request_metadata_{};
@@ -640,7 +641,7 @@ private:
 
   // Calls into the VM.
   WasmCallWord<2> validateConfiguration_;
-  WasmCallVoid<2> onStart_;
+  WasmCallWord<2> onStart_;
   WasmCallWord<2> onConfigure_;
   WasmCallVoid<1> onTick_;
 
@@ -652,23 +653,23 @@ private:
   WasmCallVoid<2> onDownstreamConnectionClose_;
   WasmCallVoid<2> onUpstreamConnectionClose_;
 
-  WasmCallWord<1> onRequestHeaders_;
+  WasmCallWord<2> onRequestHeaders_;
   WasmCallWord<3> onRequestBody_;
-  WasmCallWord<1> onRequestTrailers_;
-  WasmCallWord<1> onRequestMetadata_;
+  WasmCallWord<2> onRequestTrailers_;
+  WasmCallWord<2> onRequestMetadata_;
 
-  WasmCallWord<1> onResponseHeaders_;
+  WasmCallWord<2> onResponseHeaders_;
   WasmCallWord<3> onResponseBody_;
-  WasmCallWord<1> onResponseTrailers_;
-  WasmCallWord<1> onResponseMetadata_;
+  WasmCallWord<2> onResponseTrailers_;
+  WasmCallWord<2> onResponseMetadata_;
 
-  WasmCallVoid<3> onHttpCallResponse_;
+  WasmCallVoid<5> onHttpCallResponse_;
 
   WasmCallVoid<3> onGrpcReceive_;
   WasmCallVoid<3> onGrpcClose_;
-  WasmCallVoid<2> onGrpcCreateInitialMetadata_;
-  WasmCallVoid<2> onGrpcReceiveInitialMetadata_;
-  WasmCallVoid<2> onGrpcReceiveTrailingMetadata_;
+  WasmCallVoid<3> onGrpcCreateInitialMetadata_;
+  WasmCallVoid<3> onGrpcReceiveInitialMetadata_;
+  WasmCallVoid<3> onGrpcReceiveTrailingMetadata_;
 
   WasmCallVoid<2> onQueueReady_;
 

@@ -13,10 +13,11 @@ pub fn proxy_onConfigure(_context_id : u32, _plugin_configuration_size: u32) -> 
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub fn proxy_onStart(_context_id : u32, _vm_configuration_size : u32) {
+pub fn proxy_onStart(_context_id : u32, _vm_configuration_size : u32) -> u32 {
     trace!("test trace logging");
     debug!("test debug logging");
     error!("test error logging");
+    1
 }
 
 #[no_mangle]

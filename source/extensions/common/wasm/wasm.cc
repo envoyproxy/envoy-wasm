@@ -1536,9 +1536,9 @@ uint32_t Context::getHeaderMapSize(HeaderMapType type) {
 Buffer::Instance* Context::getBuffer(BufferType type) {
   switch (type) {
   case BufferType::HttpRequestBody:
-    return requestBodyBuffer_;
+    return request_body_buffer_;
   case BufferType::HttpResponseBody:
-    return responseBodyBuffer_;
+    return response_body_buffer_;
   case BufferType::NetworkDownstreamData:
     return network_downstream_data_buffer_;
   case BufferType::NetworkUpstreamData:
@@ -1789,12 +1789,14 @@ bool Context::isSsl() { return decoder_callbacks_->connection()->ssl() != nullpt
 //
 // Calls into the WASM code.
 //
-void Context::onStart(absl::string_view vm_configuration) {
+bool Context::onStart(absl::string_view vm_configuration) {
+  bool result = 0;
   if (wasm_->onStart_) {
     configuration_ = vm_configuration;
-    wasm_->onStart_(this, id_, static_cast<uint32_t>(vm_configuration.size()));
+    result = wasm_->onStart_(this, id_, static_cast<uint32_t>(vm_configuration.size())).u64_ != 0;
     configuration_ = "";
   }
+  return result;
 }
 
 bool Context::validateConfiguration(absl::string_view configuration) {
@@ -1877,13 +1879,16 @@ void Context::onUpstreamConnectionClose(PeerType peer_type) {
   }
 }
 
+// Empty headers/trailers have zero size.
+template <typename P> static uint32_t headerSize(const P& p) { return p ? p->size() : 0; }
+
 Http::FilterHeadersStatus Context::onRequestHeaders() {
   onCreate(root_context_id_);
   in_vm_context_created_ = true;
   if (!wasm_->onRequestHeaders_) {
     return Http::FilterHeadersStatus::Continue;
   }
-  if (wasm_->onRequestHeaders_(this, id_).u64_ == 0) {
+  if (wasm_->onRequestHeaders_(this, id_, headerSize(request_headers_)).u64_ == 0) {
     return Http::FilterHeadersStatus::Continue;
   }
   return Http::FilterHeadersStatus::StopIteration;
@@ -1912,7 +1917,7 @@ Http::FilterTrailersStatus Context::onRequestTrailers() {
   if (!wasm_->onRequestTrailers_) {
     return Http::FilterTrailersStatus::Continue;
   }
-  if (wasm_->onRequestTrailers_(this, id_).u64_ == 0) {
+  if (wasm_->onRequestTrailers_(this, id_, headerSize(request_trailers_)).u64_ == 0) {
     return Http::FilterTrailersStatus::Continue;
   }
   return Http::FilterTrailersStatus::StopIteration;
@@ -1922,7 +1927,7 @@ Http::FilterMetadataStatus Context::onRequestMetadata() {
   if (!wasm_->onRequestMetadata_) {
     return Http::FilterMetadataStatus::Continue;
   }
-  if (wasm_->onRequestMetadata_(this, id_).u64_ == 0) {
+  if (wasm_->onRequestMetadata_(this, id_, headerSize(request_metadata_)).u64_ == 0) {
     return Http::FilterMetadataStatus::Continue;
   }
   return Http::FilterMetadataStatus::Continue; // This is currently the only return code.
@@ -1940,7 +1945,7 @@ Http::FilterHeadersStatus Context::onResponseHeaders() {
   if (!wasm_->onResponseHeaders_) {
     return Http::FilterHeadersStatus::Continue;
   }
-  if (wasm_->onResponseHeaders_(this, id_).u64_ == 0) {
+  if (wasm_->onResponseHeaders_(this, id_, headerSize(response_headers_)).u64_ == 0) {
     return Http::FilterHeadersStatus::Continue;
   }
   return Http::FilterHeadersStatus::StopIteration;
@@ -1969,7 +1974,7 @@ Http::FilterTrailersStatus Context::onResponseTrailers() {
   if (!wasm_->onResponseTrailers_) {
     return Http::FilterTrailersStatus::Continue;
   }
-  if (wasm_->onResponseTrailers_(this, id_).u64_ == 0) {
+  if (wasm_->onResponseTrailers_(this, id_, headerSize(response_trailers_)).u64_ == 0) {
     return Http::FilterTrailersStatus::Continue;
   }
   return Http::FilterTrailersStatus::StopIteration;
@@ -1979,17 +1984,18 @@ Http::FilterMetadataStatus Context::onResponseMetadata() {
   if (!wasm_->onResponseMetadata_) {
     return Http::FilterMetadataStatus::Continue;
   }
-  if (wasm_->onResponseMetadata_(this, id_).u64_ == 0) {
+  if (wasm_->onResponseMetadata_(this, id_, headerSize(response_metadata_)).u64_ == 0) {
     return Http::FilterMetadataStatus::Continue;
   }
   return Http::FilterMetadataStatus::Continue; // This is currently the only return code.
 }
 
-void Context::onHttpCallResponse(uint32_t token, uint32_t body_size) {
+void Context::onHttpCallResponse(uint32_t token, uint32_t headers, uint32_t body_size,
+                                 uint32_t trailers) {
   if (!wasm_->onHttpCallResponse_) {
     return;
   }
-  wasm_->onHttpCallResponse_(this, id_, token, body_size);
+  wasm_->onHttpCallResponse_(this, id_, token, headers, body_size, trailers);
 }
 
 void Context::onQueueReady(uint32_t token) {
@@ -2003,7 +2009,7 @@ void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metad
     return;
   }
   grpc_create_initial_metadata_ = &metadata;
-  wasm_->onGrpcCreateInitialMetadata_(this, id_, token);
+  wasm_->onGrpcCreateInitialMetadata_(this, id_, token, headerSize(grpc_create_initial_metadata_));
   grpc_create_initial_metadata_ = nullptr;
 }
 
@@ -2012,7 +2018,8 @@ void Context::onGrpcReceiveInitialMetadata(uint32_t token, Http::HeaderMapPtr&& 
     return;
   }
   grpc_receive_initial_metadata_ = std::move(metadata);
-  wasm_->onGrpcReceiveInitialMetadata_(this, id_, token);
+  wasm_->onGrpcReceiveInitialMetadata_(this, id_, token,
+                                       headerSize(grpc_receive_initial_metadata_));
   grpc_receive_initial_metadata_ = nullptr;
 }
 
@@ -2021,7 +2028,8 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
     return;
   }
   grpc_receive_trailing_metadata_ = std::move(metadata);
-  wasm_->onGrpcReceiveTrailingMetadata_(this, id_, token);
+  wasm_->onGrpcReceiveTrailingMetadata_(this, id_, token,
+                                        headerSize(grpc_receive_trailing_metadata_));
   grpc_receive_trailing_metadata_ = nullptr;
 }
 
@@ -2552,10 +2560,10 @@ Http::FilterHeadersStatus Context::decodeHeaders(Http::HeaderMap& headers, bool 
 }
 
 Http::FilterDataStatus Context::decodeData(Buffer::Instance& data, bool end_stream) {
-  requestBodyBuffer_ = &data;
+  request_body_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = onRequestBody(data.length(), end_stream);
-  requestBodyBuffer_ = nullptr;
+  request_body_buffer_ = nullptr;
   return result;
 }
 
@@ -2566,10 +2574,10 @@ Http::FilterTrailersStatus Context::decodeTrailers(Http::HeaderMap& trailers) {
   return result;
 }
 
-Http::FilterMetadataStatus Context::decodeMetadata(Http::MetadataMap& response_metadata) {
-  response_metadata_ = &response_metadata;
+Http::FilterMetadataStatus Context::decodeMetadata(Http::MetadataMap& request_metadata) {
+  request_metadata_ = &request_metadata;
   auto result = onRequestMetadata();
-  response_metadata_ = nullptr;
+  request_metadata_ = nullptr;
   return result;
 }
 
@@ -2590,10 +2598,10 @@ Http::FilterHeadersStatus Context::encodeHeaders(Http::HeaderMap& headers, bool 
 }
 
 Http::FilterDataStatus Context::encodeData(Buffer::Instance& data, bool end_stream) {
-  responseBodyBuffer_ = &data;
+  response_body_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = onResponseBody(data.length(), end_stream);
-  responseBodyBuffer_ = nullptr;
+  response_body_buffer_ = nullptr;
   return result;
 }
 
@@ -2619,7 +2627,8 @@ void Context::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallback
 
 void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::MessagePtr& response) {
   http_call_response_ = &response;
-  onHttpCallResponse(token, response->body()->length());
+  onHttpCallResponse(token, response->headers().size(), response->body()->length(),
+                     headerSize(response->trailers()));
   http_call_response_ = nullptr;
   http_request_.erase(token);
 }
@@ -2629,7 +2638,7 @@ void Context::onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason
   // This is the only value currently.
   ASSERT(reason == Http::AsyncClient::FailureReason::Reset);
   status_message_ = "reset";
-  onHttpCallResponse(token, 0);
+  onHttpCallResponse(token, 0, 0, 0);
   status_message_ = "";
   http_request_.erase(token);
 }

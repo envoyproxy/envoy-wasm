@@ -179,7 +179,7 @@ public:
 
   void cancel();
 
-  virtual void onCreateInitialMetadata() {}
+  virtual void onCreateInitialMetadata(uint32_t /* headers */) {}
   virtual void onSuccess(size_t body_size) = 0;
   virtual void onFailure(GrpcStatus status) = 0;
 
@@ -211,9 +211,9 @@ public:
   void close(); // NB: callbacks can still occur: reset() to prevent further callbacks.
   void reset();
 
-  virtual void onCreateInitialMetadata() {}
-  virtual void onReceiveInitialMetadata() {}
-  virtual void onReceiveTrailingMetadata() {}
+  virtual void onCreateInitialMetadata(uint32_t /* headers */) {}
+  virtual void onReceiveInitialMetadata(uint32_t /* headers */) {}
+  virtual void onReceiveTrailingMetadata(uint32_t /* trailers */) {}
   virtual void onReceive(size_t body_size) = 0;
   virtual void onRemoteClose(GrpcStatus status) = 0;
 
@@ -260,7 +260,8 @@ public:
   virtual RootContext* asRoot() { return nullptr; }
   virtual Context* asContext() { return nullptr; }
 
-  using HttpCallCallback = std::function<void(size_t)>; // body_size
+  using HttpCallCallback =
+      std::function<void(uint32_t, size_t, uint32_t)>; // headers, body_size, trailers
   using GrpcSimpleCallCallback = std::function<void(GrpcStatus status, size_t body_size)>;
 
 private:
@@ -284,18 +285,19 @@ public:
   // Called once when the VM loads and once when each hook loads and whenever configuration changes.
   // Returns false if the configuration is invalid.
   virtual bool onConfigure(size_t /* configuration_size */) { return true; }
-  // Called when each hook loads.
-  virtual void onStart(size_t /* vm_configuration_size */) {}
+  // Called when each hook loads.  Returns false if the configuration is invalid.
+  virtual bool onStart(size_t /* vm_configuration_size */) { return true; }
   // Called when the timer goes off.
   virtual void onTick() {}
   // Called when data arrives on a SharedQueue.
   virtual void onQueueReady(uint32_t /* token */) {}
 
   // Low level HTTP/gRPC interface.
-  virtual void onHttpCallResponse(uint32_t token, size_t body_size);
-  virtual void onGrpcCreateInitialMetadata(uint32_t token);
-  virtual void onGrpcReceiveInitialMetadata(uint32_t token);
-  virtual void onGrpcReceiveTrailingMetadata(uint32_t token);
+  virtual void onHttpCallResponse(uint32_t token, uint32_t headers, size_t body_size,
+                                  uint32_t trailers);
+  virtual void onGrpcCreateInitialMetadata(uint32_t token, uint32_t headers);
+  virtual void onGrpcReceiveInitialMetadata(uint32_t token, uint32_t headers);
+  virtual void onGrpcReceiveTrailingMetadata(uint32_t token, uint32_t trailers);
   virtual void onGrpcReceive(uint32_t token, size_t body_size);
   virtual void onGrpcClose(uint32_t token, GrpcStatus status);
 
@@ -366,20 +368,28 @@ public:
   virtual void onDownstreamConnectionClose(PeerType) {}
   virtual void onUpstreamConnectionClose(PeerType) {}
 
-  virtual FilterHeadersStatus onRequestHeaders() { return FilterHeadersStatus::Continue; }
-  virtual FilterMetadataStatus onRequestMetadata() { return FilterMetadataStatus::Continue; }
+  virtual FilterHeadersStatus onRequestHeaders(uint32_t) { return FilterHeadersStatus::Continue; }
+  virtual FilterMetadataStatus onRequestMetadata(uint32_t) {
+    return FilterMetadataStatus::Continue;
+  }
   virtual FilterDataStatus onRequestBody(size_t /* body_buffer_length */,
                                          bool /* end_of_stream */) {
     return FilterDataStatus::Continue;
   }
-  virtual FilterTrailersStatus onRequestTrailers() { return FilterTrailersStatus::Continue; }
-  virtual FilterHeadersStatus onResponseHeaders() { return FilterHeadersStatus::Continue; }
-  virtual FilterMetadataStatus onResponseMetadata() { return FilterMetadataStatus::Continue; }
+  virtual FilterTrailersStatus onRequestTrailers(uint32_t) {
+    return FilterTrailersStatus::Continue;
+  }
+  virtual FilterHeadersStatus onResponseHeaders(uint32_t) { return FilterHeadersStatus::Continue; }
+  virtual FilterMetadataStatus onResponseMetadata(uint32_t) {
+    return FilterMetadataStatus::Continue;
+  }
   virtual FilterDataStatus onResponseBody(size_t /* body_buffer_length */,
                                           bool /* end_of_stream */) {
     return FilterDataStatus::Continue;
   }
-  virtual FilterTrailersStatus onResponseTrailers() { return FilterTrailersStatus::Continue; }
+  virtual FilterTrailersStatus onResponseTrailers(uint32_t) {
+    return FilterTrailersStatus::Continue;
+  }
   virtual void onDone() {} // Called when the stream has completed.
   virtual void onLog() {}  // Called after onDone when logging is requested.
   virtual void onDelete() {
@@ -1162,10 +1172,11 @@ inline WasmResult RootContext::httpCall(StringView uri, const HeaderStringPairs&
   return result;
 }
 
-inline void RootContext::onHttpCallResponse(uint32_t token, size_t body_size) {
+inline void RootContext::onHttpCallResponse(uint32_t token, uint32_t headers, size_t body_size,
+                                            uint32_t trailers) {
   auto it = http_calls_.find(token);
   if (it != http_calls_.end()) {
-    it->second(body_size);
+    it->second(headers, body_size, trailers);
     http_calls_.erase(token);
   }
 }
@@ -1214,38 +1225,38 @@ inline void GrpcStreamHandlerBase::send(StringView message, bool end_of_stream) 
   }
 }
 
-inline void RootContext::onGrpcCreateInitialMetadata(uint32_t token) {
+inline void RootContext::onGrpcCreateInitialMetadata(uint32_t token, uint32_t headers) {
   {
     auto it = grpc_calls_.find(token);
     if (it != grpc_calls_.end()) {
-      it->second->onCreateInitialMetadata();
+      it->second->onCreateInitialMetadata(headers);
       return;
     }
   }
   {
     auto it = grpc_streams_.find(token);
     if (it != grpc_streams_.end()) {
-      it->second->onCreateInitialMetadata();
-      return;
-    }
-  }
-}
-
-inline void RootContext::onGrpcReceiveInitialMetadata(uint32_t token) {
-  {
-    auto it = grpc_streams_.find(token);
-    if (it != grpc_streams_.end()) {
-      it->second->onReceiveInitialMetadata();
+      it->second->onCreateInitialMetadata(headers);
       return;
     }
   }
 }
 
-inline void RootContext::onGrpcReceiveTrailingMetadata(uint32_t token) {
+inline void RootContext::onGrpcReceiveInitialMetadata(uint32_t token, uint32_t headers) {
   {
     auto it = grpc_streams_.find(token);
     if (it != grpc_streams_.end()) {
-      it->second->onReceiveTrailingMetadata();
+      it->second->onReceiveInitialMetadata(headers);
+      return;
+    }
+  }
+}
+
+inline void RootContext::onGrpcReceiveTrailingMetadata(uint32_t token, uint32_t trailers) {
+  {
+    auto it = grpc_streams_.find(token);
+    if (it != grpc_streams_.end()) {
+      it->second->onReceiveTrailingMetadata(trailers);
       return;
     }
   }

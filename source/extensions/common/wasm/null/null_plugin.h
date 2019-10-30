@@ -65,7 +65,7 @@ public:
 #undef _DECLARE_OVERRIDE
 
   bool validateConfiguration(uint64_t root_context_id, uint64_t plugin_configuration_size);
-  void onStart(uint64_t root_context_id, uint64_t vm_configuration_size);
+  bool onStart(uint64_t root_context_id, uint64_t vm_configuration_size);
   bool onConfigure(uint64_t root_context_id, uint64_t plugin_configuration_size);
   void onTick(uint64_t root_context_id);
   void onQueueReady(uint64_t root_context_id, uint64_t token);
@@ -78,23 +78,24 @@ public:
   void onDownstreamConnectionClose(uint64_t context_id, uint64_t peer_type);
   void onUpstreamConnectionClose(uint64_t context_id, uint64_t peer_type);
 
-  uint64_t onRequestHeaders(uint64_t context_id);
+  uint64_t onRequestHeaders(uint64_t context_id, uint64_t headers);
   uint64_t onRequestBody(uint64_t context_id, uint64_t body_buffer_length, uint64_t end_of_stream);
-  uint64_t onRequestTrailers(uint64_t context_id);
-  uint64_t onRequestMetadata(uint64_t context_id);
+  uint64_t onRequestTrailers(uint64_t context_id, uint64_t trailers);
+  uint64_t onRequestMetadata(uint64_t context_id, uint64_t elements);
 
-  uint64_t onResponseHeaders(uint64_t context_id);
+  uint64_t onResponseHeaders(uint64_t context_id, uint64_t headers);
   uint64_t onResponseBody(uint64_t context_id, uint64_t body_buffer_length, uint64_t end_of_stream);
-  uint64_t onResponseTrailers(uint64_t context_id);
-  uint64_t onResponseMetadata(uint64_t context_id);
+  uint64_t onResponseTrailers(uint64_t context_id, uint64_t trailers);
+  uint64_t onResponseMetadata(uint64_t context_id, uint64_t elements);
 
-  void onHttpCallResponse(uint64_t context_id, uint64_t token, uint64_t body_size);
+  void onHttpCallResponse(uint64_t context_id, uint64_t token, uint64_t headers, uint64_t body_size,
+                          uint64_t trailers);
 
   void onGrpcReceive(uint64_t context_id, uint64_t token, size_t body_size);
   void onGrpcClose(uint64_t context_id, uint64_t token, uint64_t status_code);
-  void onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t token);
-  void onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t token);
-  void onGrpcReceiveTrailingMetadata(uint64_t context_id, uint64_t token);
+  void onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t token, uint64_t headers);
+  void onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t token, uint64_t headers);
+  void onGrpcReceiveTrailingMetadata(uint64_t context_id, uint64_t token, uint64_t trailers);
 
   void onLog(uint64_t context_id);
   void onDone(uint64_t context_id);
