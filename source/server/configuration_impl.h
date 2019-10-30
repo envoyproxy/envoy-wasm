@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "envoy/config/bootstrap/v2/bootstrap.pb.h"
+#include "envoy/config/wasm/v2/wasm.pb.h"
 #include "envoy/http/filter.h"
 #include "envoy/network/filter.h"
 #include "envoy/server/configuration.h"

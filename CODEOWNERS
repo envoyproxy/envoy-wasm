@@ -58,8 +58,14 @@ extensions/filters/common/original_src @snowp @klarose
 /*/extensions/filters/listener/http_inspector @crazyxy @PiotrSikora @lizan
 # attribute context
 /*/extensions/filters/common/expr @kyessenov @yangminzhu
+# webassembly access logger extensions
+/*/extensions/access_loggers/wasm @jplevyak @PiotrSikora
 # webassembly common extension
 /*/extensions/common/wasm @jplevyak @PiotrSikora
+# webassembly http extensions
+/*/extensions/filters/http/wasm @jplevyak @PiotrSikora
+# webassembly network extensions
+/*/extensions/filters/network/wasm @jplevyak @PiotrSikora
 # common crypto extension
 /*/extensions/common/crypto @lizan @PiotrSikora @bdecoste
 /*/extensions/filters/http/grpc_http1_bridge @snowp @jose
