@@ -40,19 +40,12 @@ template <typename R, typename... Args> struct ConvertFunctionTypeWordToUint32<R
       typename ConvertWordTypeToUint32<Args>::type...);
 };
 
-// A wrapper for a global variable within the VM.
-template <typename T> struct Global {
-  virtual ~Global() = default;
-  virtual T get() PURE;
-  virtual void set(const T& t) PURE;
-};
-
-// These are templates and its helper for constructing signatures of functions calling into and
-// out of WASM VMs.
+// These are templates and its helper for constructing signatures of functions calling into and out
+// of WASM VMs.
 // - WasmFuncTypeHelper is a helper for WasmFuncType and shouldn't be used anywhere else than
 // WasmFuncType definition.
-// - WasmFuncType takes 4 template parameter which are number of argument, return type, context
-// type and param type respectively, resolve to a function type.
+// - WasmFuncType takes 4 template parameter which are number of argument, return type, context type
+// and param type respectively, resolve to a function type.
 //   For example `WasmFuncType<3, void, Context*, Word>` resolves to `void(Context*, Word, Word,
 //   Word)`
 template <size_t N, class ReturnType, class ContextType, class ParamType,
@@ -121,10 +114,10 @@ public:
   /**
    * Whether or not the VM implementation supports cloning. Cloning is VM system dependent.
    * When a VM is configured a single VM is instantiated to check that the .wasm file is valid and
-   * to do VM system specific initialization. In the case of WAVM this is potentially
-   * ahead-of-time compilation. Then, if cloning is supported, we clone that VM for each worker,
-   * potentially copying and sharing the initialized data structures for efficiency. Otherwise we
-   * create an new VM from scratch for each worker.
+   * to do VM system specific initialization. In the case of WAVM this is potentially ahead-of-time
+   * compilation. Then, if cloning is supported, we clone that VM for each worker, potentially
+   * copying and sharing the initialized data structures for efficiency. Otherwise we create an new
+   * VM from scratch for each worker.
    * @return true if the VM is cloneable.
    */
   virtual bool cloneable() PURE;
@@ -143,17 +136,17 @@ public:
    * appropriate ABI callbacks can be registered and then the module can be link()ed (see below).
    * @param code the WASM binary code (or registered NullVm plugin name).
    * @param allow_precompiled if true, allows supporting VMs (e.g. WAVM) to load the binary
-   * machine code from a user-defined section of the WASM file. Because that code is not verified
-   * by the envoy process it is up to the user to ensure that the code is both safe and is built
-   * for the linked in version of WAVM.
+   * machine code from a user-defined section of the WASM file. Because that code is not verified by
+   * the envoy process it is up to the user to ensure that the code is both safe and is built for
+   * the linked in version of WAVM.
    * @return whether or not the load was successful.
    */
   virtual bool load(const std::string& code, bool allow_precompiled) PURE;
 
   /**
-   * Link the WASM code to the host-provided functions and globals, e.g. the ABI. Prior to linking,
-   * the module should be loaded and the ABI callbacks registered (see above). Linking should be
-   * done once after load().
+   * Link the WASM code to the host-provided functions, e.g. the ABI. Prior to linking, the module
+   * should be loaded and the ABI callbacks registered (see above). Linking should be done once
+   * after load().
    * @param debug_name user-provided name for use in log and error messages.
    */
   virtual void link(absl::string_view debug_name) PURE;
@@ -174,8 +167,7 @@ public:
   virtual absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) PURE;
 
   /**
-   * Set a block of memory in the VM, returns true on success, false if the pointer/size is
-   * invalid.
+   * Set a block of memory in the VM, returns true on success, false if the pointer/size is invalid.
    * @param pointer the offset into VM memory describing the start of a region of VM memory.
    * @param size the size of the region of VM memory.
    * @return whether or not the pointer/size pair was a valid VM memory block.
@@ -184,9 +176,9 @@ public:
 
   /**
    * Get a VM native Word (e.g. sizeof(void*) or sizeof(size_t)) from VM memory, returns true on
-   * success, false if the pointer is invalid. WASM-32 VMs have 32-bit native words and WASM-64
-   * VMs (not yet supported) will have 64-bit words as does the Null VM (compiled into 64-bit
-   * Envoy). This function can be used to chase pointers in VM memory.
+   * success, false if the pointer is invalid. WASM-32 VMs have 32-bit native words and WASM-64 VMs
+   * (not yet supported) will have 64-bit words as does the Null VM (compiled into 64-bit Envoy).
+   * This function can be used to chase pointers in VM memory.
    * @param pointer the offset into VM memory describing the start of VM native word size block.
    * @param data a pointer to a Word whose contents will be filled from the VM native word at
    * 'pointer'.
@@ -196,9 +188,8 @@ public:
 
   /**
    * Set a Word in the VM, returns true on success, false if the pointer is invalid.
-   * See getWord above for details. This function can be used (for example) to set indirect
-   * pointer return values (e.g. proxy_getHeaderHapValue(... const char** value_ptr, size_t*
-   * value_size).
+   * See getWord above for details. This function can be used (for example) to set indirect pointer
+   * return values (e.g. proxy_getHeaderHapValue(... const char** value_ptr, size_t* value_size).
    * @param pointer the offset into VM memory describing the start of VM native word size block.
    * @param data a Word whose contents will be written in VM native word size at 'pointer'.
    * @return whether or not the pointer was to a valid VM memory block of VM native word size.
@@ -228,26 +219,6 @@ public:
                                 _T f, typename ConvertFunctionTypeWordToUint32<_T>::type) PURE;
   FOR_ALL_WASM_VM_IMPORTS(_REGISTER_CALLBACK)
 #undef _REGISTER_CALLBACK
-
-  /**
-   * Register typed value exported by the host environment.
-   * @param module_name the name of the module to which to export the global.
-   * @param name the name of the global variable to export.
-   * @param initial_value the initial value of the global.
-   * @return a Global object which can be used to access the exported global.
-   */
-  virtual std::unique_ptr<Global<Word>> makeGlobal(absl::string_view module_name,
-                                                   absl::string_view name, Word initial_value) PURE;
-
-  /**
-   * Register typed value exported by the host environment.
-   * @param module_name the name of the module to which to export the global.
-   * @param name the name of the global variable to export.
-   * @param initial_value the initial value of the global.
-   * @return a Global object which can be used to access the exported global.
-   */
-  virtual std::unique_ptr<Global<double>>
-  makeGlobal(absl::string_view module_name, absl::string_view name, double initial_value) PURE;
 };
 using WasmVmPtr = std::unique_ptr<WasmVm>;
 
@@ -265,12 +236,12 @@ public:
 
 // Thread local state set during a call into a WASM VM so that calls coming out of the
 // VM can be attributed correctly to calling Filter. We use thread_local instead of ThreadLocal
-// because this state is live only during the calls and does not need to be initialized
-// consistently over all workers as with ThreadLocal data.
+// because this state is live only during the calls and does not need to be initialized consistently
+// over all workers as with ThreadLocal data.
 extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
 
-// Requested effective context set by code within the VM to request that the calls coming out of
-// the VM be attributed to another filter, for example if a control plane gRPC comes back to the
+// Requested effective context set by code within the VM to request that the calls coming out of the
+// VM be attributed to another filter, for example if a control plane gRPC comes back to the
 // RootContext which effects some set of waiting filters.
 extern thread_local uint32_t effective_context_id_;
 
