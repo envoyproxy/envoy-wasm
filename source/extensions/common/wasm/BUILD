@@ -93,5 +93,6 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/eval:field_backed_list_impl",
         "@com_google_cel_cpp//eval/eval:field_backed_map_impl",
         "@com_google_cel_cpp//eval/public:cel_value",
+        "@com_google_cel_cpp//eval/public:value_export_util",
     ],
 )
