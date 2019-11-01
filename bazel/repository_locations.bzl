@@ -269,8 +269,8 @@ REPOSITORY_LOCATIONS = dict(
     com_googlesource_chromium_v8 = dict(
         # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
         # and contains complete checkout of v8 with all dependencies necessary to build wee8.
-        sha256 = "57758d2bbd7abfe3f18185bd7898e6d0c79e036122559ebaff2b5f02ebb89255",
-        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.8.279.17.tar.gz"],
+        sha256 = "7c897863d31569b4a4e16277d94415f1c42f3e130c1ff3573b048b76b15b635f",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-7.9.317.14.tar.gz"],
     ),
     io_opencensus_cpp = dict(
         sha256 = "c95ab57835182b8b4b17cf5bbfc2406805bc78c5022c17399f3e5c643f22826a",
