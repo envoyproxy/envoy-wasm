@@ -31,3 +31,4 @@ TAGS
 .vscode
 clang.bazelrc
 user.bazelrc
+**/Cargo.lock
