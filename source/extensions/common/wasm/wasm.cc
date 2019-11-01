@@ -985,11 +985,17 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
     return WasmResult::Ok;
   }
-  case CelValue::Type::kMessage:
-    if (value.MessageOrDie() != nullptr && value.MessageOrDie()->SerializeToString(result)) {
+  case CelValue::Type::kMessage: {
+    auto out = value.MessageOrDie();
+    if (out == nullptr) {
+      result->clear();
+      return WasmResult::Ok;
+    }
+    if (out->SerializeToString(result)) {
       return WasmResult::Ok;
     }
     return WasmResult::SerializationFailure;
+  }
   // Slow path using protobuf value conversion
   case CelValue::Type::kMap: {
     ProtobufWkt::Value out;
