@@ -25,6 +25,7 @@
 #include "common/http/utility.h"
 #include "common/tracing/http_tracer_impl.h"
 
+#include "extensions/common/wasm/wasm_state.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/common/expr/context.h"
 
@@ -36,6 +37,7 @@
 #include "eval/eval/field_backed_list_impl.h"
 #include "eval/eval/field_backed_map_impl.h"
 #include "eval/public/cel_value.h"
+#include "eval/public/value_export_util.h"
 #include "openssl/bytestring.h"
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
@@ -812,73 +814,6 @@ Word grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word messa
   return wasmResultToWord(context->grpcSend(token.u64_, message.value(), end_stream.u64_));
 }
 
-Word _emscripten_get_heap_sizeHandler(void* raw_context) {
-  auto context = WASM_CONTEXT(raw_context);
-  return context->wasmVm()->getMemorySize();
-}
-
-Word _emscripten_memcpy_bigHandler(void* raw_context, Word dst, Word src, Word size) {
-  auto context = WASM_CONTEXT(raw_context);
-  auto data = context->wasmVm()->getMemory(src.u64_, size.u64_);
-  if (!data) {
-    return 0;
-  }
-  context->wasmVm()->setMemory(dst.u64_, size.u64_, data.value().data());
-  return dst;
-}
-
-Word _emscripten_resize_heapHandler(void*, Word) {
-  throw WasmException("emscripten emscripten_resize_heap");
-}
-
-Word abortOnCannotGrowMemoryAbi00Handler(void*) {
-  throw WasmException("emscripten abortOnCannotGrowMemory");
-}
-
-Word abortOnCannotGrowMemoryAbi02Handler(void*, Word) {
-  throw WasmException("emscripten abortOnCannotGrowMemory");
-}
-
-void abortHandler(void*, Word) { throw WasmException("emscripten abort"); }
-
-void _abortHandler(void*) { throw WasmException("emscripten abort"); }
-
-void _llvm_trapHandler(void*) { throw WasmException("emscripten llvm_trap"); }
-
-void ___assert_failHandler(void*, Word, Word, Word, Word) {
-  throw WasmException("emscripten assert_fail");
-}
-
-void ___cxa_throwHandler(void*, Word, Word, Word) { throw WasmException("emscripten cxa_throw"); }
-
-void ___cxa_pure_virtualHandler(void*) { throw WasmException("emscripten cxa_pure_virtual"); }
-
-Word ___call_mainHandler(void*, Word, Word) { throw WasmException("emscripten call_main"); }
-
-Word ___cxa_allocate_exceptionHandler(void*, Word) {
-  throw WasmException("emscripten cxa_allocate_exception");
-}
-
-Word ___cxa_uncaught_exceptionHandler(void*) {
-  throw WasmException("emscripten cxa_uncaught_exception");
-}
-
-Word ___cxa_uncaught_exceptionsHandler(void*) {
-  throw WasmException("emscripten cxa_uncaught_exceptions");
-}
-
-Word ___clock_gettimeHandler(void*, Word, Word) { throw WasmException("emscripten clock_gettime"); }
-
-void ___lockHandler(void*, Word) { throw WasmException("emscripten lock"); }
-
-void ___unlockHandler(void*, Word) { throw WasmException("emscripten unlock"); }
-
-Word ___syscall6Handler(void*, Word, Word) { throw WasmException("emscripten syscall6"); }
-
-Word ___syscall54Handler(void*, Word, Word) { throw WasmException("emscripten syscall54"); }
-
-Word ___syscall140Handler(void*, Word, Word) { throw WasmException("emscripten syscall140"); }
-
 // Implementation of writev-like() syscall that redirects stdout/stderr to Envoy logs.
 Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwritten_ptr) {
   auto context = WASM_CONTEXT(raw_context);
@@ -901,14 +836,12 @@ Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwri
     auto memslice =
         context->wasmVm()->getMemory(iovs.u64_ + i * 2 * sizeof(uint32_t), 2 * sizeof(uint32_t));
     if (!memslice) {
-      context->wasm()->setErrno(EINVAL);
       return 21; // __WASI_EFAULT
     }
     const uint32_t* iovec = reinterpret_cast<const uint32_t*>(memslice.value().data());
     if (iovec[1] /* buf_len */) {
       memslice = context->wasmVm()->getMemory(iovec[0] /* buf */, iovec[1] /* buf_len */);
       if (!memslice) {
-        context->wasm()->setErrno(EINVAL);
         return 21; // __WASI_EFAULT
       }
       s.append(memslice.value().data(), memslice.value().size());
@@ -927,31 +860,10 @@ Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwri
   return 0; // __WASI_ESUCCESS
 }
 
-// ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
-Word ___syscall146Handler(void* raw_context, Word, Word syscall_args_ptr) {
-  auto context = WASM_CONTEXT(raw_context);
-
-  // Read syscall args.
-  auto memslice = context->wasmVm()->getMemory(syscall_args_ptr.u64_, 3 * sizeof(uint32_t));
-  if (!memslice) {
-    context->wasm()->setErrno(EINVAL);
-    return -1;
-  }
-  const uint32_t* syscall_args = reinterpret_cast<const uint32_t*>(memslice.value().data());
-
-  Word nwritten(0);
-  auto result = writevImpl(raw_context, Word(syscall_args[0]), Word(syscall_args[1]),
-                           Word(syscall_args[2]), &nwritten);
-  if (result.u64_ != 0) { // __WASI_ESUCCESS
-    return -1;
-  }
-  return nwritten;
-}
-
-// _was_errno_t _wasi_fd_write(_wasi_fd_t fd, const _wasi_ciovec_t *iov, size_t iovs_len, size_t*
+// __wasi_errno_t __wasi_fd_write(_wasi_fd_t fd, const _wasi_ciovec_t *iov, size_t iovs_len, size_t*
 // nwritten);
-Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
-                             Word nwritten_ptr) {
+Word wasi_unstable_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
+                                   Word nwritten_ptr) {
   auto context = WASM_CONTEXT(raw_context);
 
   Word nwritten(0);
@@ -965,25 +877,36 @@ Word ___wasi_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_le
   return 0; // __WASI_ESUCCESS
 }
 
-void ___setErrNoHandler(void*, Word) { throw WasmException("emscripten setErrNo"); }
+// __wasi_errno_t __wasi_fd_seek(__wasi_fd_t fd, __wasi_filedelta_t offset, __wasi_whence_t
+// whence,__wasi_filesize_t *newoffset);
+Word wasi_unstable_fd_seekHandler(void*, Word, int64_t, Word, Word) {
+  throw WasmException("wasi_unstable fd_seek");
+}
 
-Word _pthread_equalHandler(void*, Word left, Word right) { return left.u64_ == right.u64_; }
-// NB: pthread_mutex_destroy is required to return 0 by the protobuf libarary.
-Word _pthread_mutex_destroyHandler(void*, Word) { return 0; }
-Word _pthread_cond_waitHandler(void*, Word, Word) {
-  throw WasmException("emscripten pthread_cond_wait");
+// __wasi_errno_t __wasi_fd_close(__wasi_fd_t fd);
+Word wasi_unstable_fd_closeHandler(void*, Word) { throw WasmException("wasi_unstable fd_close"); }
+
+// __wasi_errno_t __wasi_environ_get(char **environ, char *environ_buf);
+Word wasi_unstable_environ_getHandler(void*, Word, Word) {
+  return 0; // __WASI_ESUCCESS
 }
-Word _pthread_getspecificHandler(void*, Word) {
-  throw WasmException("emscripten pthread_getspecific");
+
+// __wasi_errno_t __wasi_environ_sizes_get(size_t *environ_count, size_t *environ_buf_size);
+Word wasi_unstable_environ_sizes_getHandler(void* raw_context, Word count_ptr, Word buf_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  if (!context->wasmVm()->setWord(count_ptr.u64_, Word(0))) {
+    return 21; // __WASI_EFAULT
+  }
+  if (!context->wasmVm()->setWord(buf_size_ptr.u64_, Word(0))) {
+    return 21; // __WASI_EFAULT
+  }
+  return 0; // __WASI_ESUCCESS
 }
-Word _pthread_key_createHandler(void*, Word, Word) {
-  throw WasmException("emscripten pthread_key_create");
-}
-Word _pthread_onceHandler(void*, Word, Word) { throw WasmException("emscripten pthread_once"); }
-Word _pthread_setspecificHandler(void*, Word, Word) {
-  throw WasmException("emscripten pthread_setspecific");
-}
-void setTempRet0Handler(void*, Word) { throw WasmException("emscripten setTempRet0"); }
+
+// void __wasi_proc_exit(__wasi_exitcode_t rval);
+void wasi_unstable_proc_exitHandler(void*, Word) { throw WasmException("wasi_unstable proc_exit"); }
+
+Word pthread_equalHandler(void*, Word left, Word right) { return left.u64_ == right.u64_; }
 
 Word setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_milliseconds) {
   return wasmResultToWord(
@@ -1010,8 +933,6 @@ Word logHandler(void* raw_context, Word level, Word address, Word size) {
   return wasmResultToWord(WasmResult::Ok);
 }
 
-double globalMathLogHandler(void*, double f) { return ::log(f); }
-
 WasmResult Context::setTickPeriod(std::chrono::milliseconds tick_period) {
   wasm_->setTickPeriod(root_context_id_ ? root_context_id_ : id_, tick_period);
   return WasmResult::Ok;
@@ -1023,85 +944,10 @@ uint64_t Context::getCurrentTimeNanoseconds() {
       .count();
 }
 
-// TODO(https://github.com/google/cel-cpp/issues/38)
-bool exportValue(const Filters::Common::Expr::CelValue& value, ProtobufWkt::Value* out) {
-  using Filters::Common::Expr::CelValue;
-  switch (value.type()) {
-  case CelValue::Type::kBool:
-    out->set_bool_value(value.BoolOrDie());
-    return true;
-  case CelValue::Type::kInt64:
-    out->set_number_value(static_cast<double>(value.Int64OrDie()));
-    return true;
-  case CelValue::Type::kUint64:
-    out->set_number_value(static_cast<double>(value.Uint64OrDie()));
-    return true;
-  case CelValue::Type::kDouble:
-    out->set_number_value(value.DoubleOrDie());
-    return true;
-  case CelValue::Type::kString:
-    *out->mutable_string_value() = std::string(value.StringOrDie().value());
-    return true;
-  case CelValue::Type::kBytes:
-    *out->mutable_string_value() = std::string(value.BytesOrDie().value());
-    return true;
-  case CelValue::Type::kMessage: {
-    if (value.IsNull()) {
-      out->set_null_value(ProtobufWkt::NullValue::NULL_VALUE);
-    } else {
-      auto msg = value.MessageOrDie();
-      out->mutable_struct_value()->MergeFrom(*msg);
-    }
-    return true;
-  }
-  case CelValue::Type::kDuration:
-    *out->mutable_string_value() = absl::FormatDuration(value.DurationOrDie());
-    return true;
-  case CelValue::Type::kTimestamp:
-    *out->mutable_string_value() = absl::FormatTime(value.TimestampOrDie());
-    return true;
-  case CelValue::Type::kList: {
-    auto list = value.ListOrDie();
-    auto values = out->mutable_list_value();
-    for (int i = 0; i < list->size(); i++) {
-      if (!exportValue((*list)[i], values->add_values())) {
-        return false;
-      }
-    }
-    return true;
-  }
-  case CelValue::Type::kMap: {
-    auto map = value.MapOrDie();
-    auto list = map->ListKeys();
-    auto struct_obj = out->mutable_struct_value();
-    for (int i = 0; i < list->size(); i++) {
-      ProtobufWkt::Value field_key;
-      if (!exportValue((*list)[i], &field_key)) {
-        return false;
-      }
-      ProtobufWkt::Value field_value;
-      if (!exportValue((*map)[(*list)[i]].value(), &field_value)) {
-        return false;
-      }
-      (*struct_obj->mutable_fields())[field_key.string_value()] = field_value;
-    }
-    return true;
-  }
-  default:
-    // do nothing for special values
-    return false;
-  }
-  return false;
-}
-
+// Native serializer carrying over bit representation from CEL value to the extension
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
   using Filters::Common::Expr::CelValue;
   switch (value.type()) {
-  case CelValue::Type::kMessage:
-    if (value.MessageOrDie() != nullptr && value.MessageOrDie()->SerializeToString(result)) {
-      return WasmResult::Ok;
-    }
-    return WasmResult::SerializationFailure;
   case CelValue::Type::kString:
     result->assign(value.StringOrDie().value().data(), value.StringOrDie().value().size());
     return WasmResult::Ok;
@@ -1138,9 +984,21 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
     return WasmResult::Ok;
   }
+  case CelValue::Type::kMessage: {
+    auto out = value.MessageOrDie();
+    if (out == nullptr) {
+      result->clear();
+      return WasmResult::Ok;
+    }
+    if (out->SerializeToString(result)) {
+      return WasmResult::Ok;
+    }
+    return WasmResult::SerializationFailure;
+  }
+  // Slow path using protobuf value conversion
   case CelValue::Type::kMap: {
     ProtobufWkt::Value out;
-    if (!exportValue(value, &out)) {
+    if (!google::api::expr::runtime::ExportAsProtoValue(value, &out).ok()) {
       return WasmResult::SerializationFailure;
     }
     if (!out.struct_value().SerializeToString(result)) {
@@ -1150,7 +1008,7 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
   }
   case CelValue::Type::kList: {
     ProtobufWkt::Value out;
-    if (!exportValue(value, &out)) {
+    if (!google::api::expr::runtime::ExportAsProtoValue(value, &out).ok()) {
       return WasmResult::SerializationFailure;
     }
     if (!out.list_value().SerializeToString(result)) {
@@ -1167,8 +1025,7 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
 // An expression wrapper for the WASM state
 class WasmStateWrapper : public google::api::expr::runtime::CelMap {
 public:
-  WasmStateWrapper(const StreamInfo::FilterState& filter_state, ProtobufWkt::Arena* arena)
-      : filter_state_(filter_state), arena_(arena) {}
+  WasmStateWrapper(const StreamInfo::FilterState& filter_state) : filter_state_(filter_state) {}
   absl::optional<google::api::expr::runtime::CelValue>
   operator[](google::api::expr::runtime::CelValue key) const override {
     if (!key.IsString()) {
@@ -1177,7 +1034,7 @@ public:
     auto value = key.StringOrDie().value();
     try {
       const WasmState& result = filter_state_.getDataReadOnly<WasmState>(value);
-      return google::api::expr::runtime::CelValue::CreateMessage(&result.value(), arena_);
+      return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
     } catch (const EnvoyException& e) {
       return {};
     }
@@ -1190,7 +1047,6 @@ public:
 
 private:
   const StreamInfo::FilterState& filter_state_;
-  ProtobufWkt::Arena* arena_;
 };
 
 WasmResult Context::getProperty(absl::string_view path, std::string* result) {
@@ -1201,7 +1057,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
   bool first = true;
   CelValue value;
   Protobuf::Arena arena;
-  const StreamInfo::StreamInfo* info = getRequestStreamInfo();
+  const StreamInfo::StreamInfo* info = getConstRequestStreamInfo();
   const auto request_headers = request_headers_ ? request_headers_ : access_log_request_headers_;
   const auto response_headers =
       response_headers_ ? response_headers_ : access_log_response_headers_;
@@ -1229,7 +1085,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
         value = CelValue::CreateMessage(&info->dynamicMetadata(), &arena);
       } else if (part == "filter_state") {
         value = CelValue::CreateMap(
-            Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState(), &arena));
+            Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState()));
       } else if (part == "request") {
         value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
             &arena, request_headers, *info));
@@ -1264,7 +1120,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
       } else if (part == "listener_metadata") {
         value = CelValue::CreateMessage(plugin_->listener_metadata_, &arena);
       } else if (part == "cluster_name" && info->upstreamHost() != nullptr) {
-        value = CelValue::CreateString(info->upstreamHost()->cluster().name());
+        value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
       } else if (part == "cluster_metadata" && info->upstreamHost() != nullptr) {
         value = CelValue::CreateMessage(&info->upstreamHost()->cluster().metadata(), &arena);
       } else if (part == "route_name") {
@@ -1592,10 +1448,16 @@ uint32_t Context::httpCall(absl::string_view cluster, const Pairs& request_heade
     token = next_http_call_token_++;
   }
   auto& handler = http_request_[token];
+
+  // set default hash policy to be based on :authority to enable consistent hash
+  Http::AsyncClient::RequestOptions options;
+  options.setTimeout(timeout);
+  Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy> hash_policy;
+  hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
+  options.setHashPolicy(hash_policy);
   auto http_request = clusterManager()
                           .httpAsyncClientForCluster(cluster_string)
-                          .send(std::move(message), handler,
-                                Http::AsyncClient::RequestOptions().setTimeout(timeout));
+                          .send(std::move(message), handler, options);
   if (!http_request) {
     http_request_.erase(token);
     return 0;
@@ -1630,14 +1492,22 @@ uint32_t Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_service
   auto grpc_client =
       clusterManager()
           .grpcAsyncClientManager()
-          .factoryForGrpcService(grpc_service, plugin_->scope_, true /* skip_cluster_check */)
+          .factoryForGrpcService(grpc_service, *wasm()->scope_, true /* skip_cluster_check */)
           ->create();
+
+  // set default hash policy to be based on :authority to enable consistent hash
+  Http::AsyncClient::RequestOptions options;
+  options.setTimeout(timeout);
+  Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy> hash_policy;
+  hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
+  options.setHashPolicy(hash_policy);
+
   // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
   // returns. Consequently the grpc_request is not available. Attempting to close or reset from that
   // callback will fail.
-  auto grpc_request = grpc_client->sendRaw(
-      service_name, method_name, std::make_unique<Buffer::OwnedImpl>(request), handler,
-      Tracing::NullSpan::instance(), Http::AsyncClient::RequestOptions().setTimeout(timeout));
+  auto grpc_request =
+      grpc_client->sendRaw(service_name, method_name, std::make_unique<Buffer::OwnedImpl>(request),
+                           handler, Tracing::NullSpan::instance(), options);
   if (!grpc_request) {
     grpc_call_request_.erase(token);
     return 0;
@@ -1669,13 +1539,19 @@ uint32_t Context::grpcStream(const envoy::api::v2::core::GrpcService& grpc_servi
   auto grpc_client =
       clusterManager()
           .grpcAsyncClientManager()
-          .factoryForGrpcService(grpc_service, plugin_->scope_, true /* skip_cluster_check */)
+          .factoryForGrpcService(grpc_service, *wasm()->scope_, true /* skip_cluster_check */)
           ->create();
+
+  // set default hash policy to be based on :authority to enable consistent hash
+  Http::AsyncClient::StreamOptions options;
+  Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy> hash_policy;
+  hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
+  options.setHashPolicy(hash_policy);
+
   // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
   // returns. Consequently the grpc_stream is not available. Attempting to close or reset from that
   // callback will fail.
-  auto grpc_stream = grpc_client->startRaw(service_name, method_name, handler,
-                                           Http::AsyncClient::RequestOptions());
+  auto grpc_stream = grpc_client->startRaw(service_name, method_name, handler, options);
   if (!grpc_stream) {
     grpc_stream_.erase(token);
     return 0;
@@ -1693,7 +1569,7 @@ void Context::httpRespond(const Pairs& response_headers, absl::string_view body,
 }
 
 // StreamInfo
-const StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
+const StreamInfo::StreamInfo* Context::getConstRequestStreamInfo() const {
   if (encoder_callbacks_) {
     return &encoder_callbacks_->streamInfo();
   } else if (decoder_callbacks_) {
@@ -1704,19 +1580,22 @@ const StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
   return nullptr;
 }
 
-WasmResult Context::setProperty(absl::string_view key, absl::string_view serialized_value) {
-  ProtobufWkt::Value value_struct;
-  if (!value_struct.ParseFromArray(serialized_value.data(), serialized_value.size())) {
-    return WasmResult::ParseFailure;
+StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
+  if (encoder_callbacks_) {
+    return &encoder_callbacks_->streamInfo();
+  } else if (decoder_callbacks_) {
+    return &decoder_callbacks_->streamInfo();
   }
-  if (decoder_callbacks_ == nullptr && encoder_callbacks_ == nullptr) {
+  return nullptr;
+}
+
+WasmResult Context::setProperty(absl::string_view key, absl::string_view serialized_value) {
+  auto* stream_info = getRequestStreamInfo();
+  if (!stream_info) {
     return WasmResult::NotFound;
   }
-  StreamInfo::FilterState& filter_state = encoder_callbacks_
-                                              ? encoder_callbacks_->streamInfo().filterState()
-                                              : decoder_callbacks_->streamInfo().filterState();
-  filter_state.setData(key, std::make_unique<WasmState>(value_struct),
-                       StreamInfo::FilterState::StateType::Mutable);
+  stream_info->filterState().setData(key, std::make_unique<WasmState>(serialized_value),
+                                     StreamInfo::FilterState::StateType::Mutable);
   return WasmResult::Ok;
 }
 
@@ -1989,19 +1868,19 @@ WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32
   auto stat_name = wasm_->stat_name_set_->getDynamic(name);
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
-    auto c = &plugin_->scope_.counterFromStatName(stat_name);
+    auto c = &wasm_->scope_->counterFromStatName(stat_name);
     wasm_->counters_.emplace(id, c);
     *metric_id_ptr = id;
     return WasmResult::Ok;
   } else if (type == MetricType::Gauge) {
     auto id = wasm_->nextGaugeMetricId();
-    auto g = &plugin_->scope_.gaugeFromStatName(stat_name, Stats::Gauge::ImportMode::Accumulate);
+    auto g = &wasm_->scope_->gaugeFromStatName(stat_name, Stats::Gauge::ImportMode::Accumulate);
     wasm_->gauges_.emplace(id, g);
     *metric_id_ptr = id;
     return WasmResult::Ok;
   } else if (type == MetricType::Histogram) {
     auto id = wasm_->nextHistogramMetricId();
-    auto h = &plugin_->scope_.histogramFromStatName(stat_name);
+    auto h = &wasm_->scope_->histogramFromStatName(stat_name, Stats::Histogram::Unit::Unspecified);
     wasm_->histograms_.emplace(id, h);
     *metric_id_ptr = id;
     return WasmResult::Ok;
@@ -2083,12 +1962,12 @@ WasmResult Context::getMetric(uint32_t metric_id, uint64_t* result_uint64_ptr) {
 }
 
 Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_configuration,
-           PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
-           Event::Dispatcher& dispatcher)
-    : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)),
-      creating_plugin_(plugin), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
+           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+           Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher)
+    : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)), plugin_(plugin),
+      scope_(scope), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(creating_plugin_->scope_.symbolTable().makeSet("Wasm").release()) {}
+      stat_name_set_(scope_->symbolTable().makeSet("Wasm").release()) {}
 
 std::string Plugin::makeLogPrefix() const {
   std::string prefix;
@@ -2104,61 +1983,53 @@ std::string Plugin::makeLogPrefix() const {
   return prefix;
 }
 
-void Wasm::registerCallbacks() {
-#define _REGISTER_ABI(_fn, _abi)                                                                   \
-  wasm_vm_->registerCallback(                                                                      \
-      "envoy", #_fn, &_fn##_abi##Handler,                                                          \
-      &ConvertFunctionWordToUint32<decltype(_fn##_abi##Handler),                                   \
-                                   _fn##_abi##Handler>::convertFunctionWordToUint32)
-#define _REGISTER(_fn) _REGISTER_ABI(_fn, )
-  if (is_emscripten_) {
-    if (emscripten_abi_major_version_ > 0 || emscripten_abi_minor_version_ > 1) {
-      // abi 0.2 - abortOnCannotGrowMemory() changed signature to (param i32) (result i32).
-      _REGISTER_ABI(abortOnCannotGrowMemory, Abi02);
-    } else {
-      _REGISTER_ABI(abortOnCannotGrowMemory, Abi00);
-    }
+Context::~Context() {
+  // Cancel any outstanding requests.
+  for (auto& p : http_request_) {
+    p.second.request->cancel();
+  }
+  for (auto& p : grpc_call_request_) {
+    p.second.request->cancel();
+  }
+  for (auto& p : grpc_stream_) {
+    p.second.stream->resetStream();
+  }
+  // Do not remove vm or root contexts which have the same lifetime as wasm_.
+  if (root_context_id_) {
+    wasm_->contexts_.erase(id_);
+  }
+}
 
-    _REGISTER(_emscripten_memcpy_big);
-    _REGISTER(_emscripten_get_heap_size);
-    _REGISTER(_emscripten_resize_heap);
-    _REGISTER(abort);
-    _REGISTER(_abort);
-    _REGISTER(_llvm_trap);
-    _REGISTER(___assert_fail);
-    _REGISTER(___cxa_throw);
-    _REGISTER(___cxa_pure_virtual);
-    _REGISTER(___cxa_allocate_exception);
-    _REGISTER(___cxa_uncaught_exception);
-    _REGISTER(___cxa_uncaught_exceptions);
-    _REGISTER(___call_main);
-    _REGISTER(___clock_gettime);
-    _REGISTER(___lock);
-    _REGISTER(___unlock);
-    _REGISTER(___syscall6);
-    _REGISTER(___syscall54);
-    _REGISTER(___syscall140);
-    _REGISTER(___syscall146);
-    _REGISTER(___wasi_fd_write);
-    _REGISTER(___setErrNo);
-    _REGISTER(_pthread_equal);
-    _REGISTER(_pthread_mutex_destroy);
-    _REGISTER(_pthread_cond_wait);
-    _REGISTER(_pthread_getspecific);
-    _REGISTER(_pthread_key_create);
-    _REGISTER(_pthread_once);
-    _REGISTER(_pthread_setspecific);
-    _REGISTER(setTempRet0);
-    wasm_vm_->makeModule("global.Math");
-    wasm_vm_->registerCallback("global.Math", "log", globalMathLogHandler, &globalMathLogHandler);
+void Wasm::registerCallbacks() {
+#define _REGISTER(_fn)                                                                             \
+  wasm_vm_->registerCallback(                                                                      \
+      "env", #_fn, &_fn##Handler,                                                                  \
+      &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
+                                   _fn##Handler>::convertFunctionWordToUint32)
+  if (is_emscripten_) {
+    _REGISTER(pthread_equal);
   }
 #undef _REGISTER
-#undef _REGISTER_ABI
 
-  // Calls with the "_proxy_" prefix.
+#define _REGISTER_WASI(_fn)                                                                        \
+  wasm_vm_->registerCallback(                                                                      \
+      "wasi_unstable", #_fn, &wasi_unstable_##_fn##Handler,                                        \
+      &ConvertFunctionWordToUint32<decltype(wasi_unstable_##_fn##Handler),                         \
+                                   wasi_unstable_##_fn##Handler>::convertFunctionWordToUint32)
+  if (is_emscripten_) {
+    _REGISTER_WASI(fd_write);
+    _REGISTER_WASI(fd_seek);
+    _REGISTER_WASI(fd_close);
+    _REGISTER_WASI(environ_get);
+    _REGISTER_WASI(environ_sizes_get);
+    _REGISTER_WASI(proc_exit);
+  }
+#undef _REGISTER_WASI
+
+  // Calls with the "proxy_" prefix.
 #define _REGISTER_PROXY(_fn)                                                                       \
   wasm_vm_->registerCallback(                                                                      \
-      "envoy", "_proxy_" #_fn, &_fn##Handler,                                                      \
+      "env", "proxy_" #_fn, &_fn##Handler,                                                         \
       &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
                                    _fn##Handler>::convertFunctionWordToUint32);
   _REGISTER_PROXY(log);
@@ -2213,30 +2084,16 @@ void Wasm::registerCallbacks() {
 #undef _REGISTER_PROXY
 }
 
-void Wasm::establishEnvironment() {
-  if (is_emscripten_) {
-    wasm_vm_->setMemoryLayout(emscripten_stack_base_, emscripten_dynamic_base_,
-                              emscripten_dynamictop_ptr_);
-
-    global_table_base_ = wasm_vm_->makeGlobal("env", "__table_base", Word(0));
-    global_dynamictop_ =
-        wasm_vm_->makeGlobal("env", "DYNAMICTOP_PTR", Word(emscripten_dynamictop_ptr_));
-
-    wasm_vm_->makeModule("global");
-    global_NaN_ = wasm_vm_->makeGlobal("global", "NaN", std::nan("0"));
-    global_Infinity_ =
-        wasm_vm_->makeGlobal("global", "Infinity", std::numeric_limits<double>::infinity());
-  }
-}
-
 void Wasm::getFunctions() {
-#define _GET(_fn) wasm_vm_->getFunction("_" #_fn, &_fn##_);
+#define _GET(_fn) wasm_vm_->getFunction(#_fn, &_fn##_);
+  _GET(_start);
+  _GET(__wasm_call_ctors);
+
   _GET(malloc);
   _GET(free);
-  _GET(__errno_location);
 #undef _GET
 
-#define _GET_PROXY(_fn) wasm_vm_->getFunction("_proxy_" #_fn, &_fn##_);
+#define _GET_PROXY(_fn) wasm_vm_->getFunction("proxy_" #_fn, &_fn##_);
   _GET_PROXY(validateConfiguration);
   _GET_PROXY(onStart);
   _GET_PROXY(onConfigure);
@@ -2276,10 +2133,9 @@ void Wasm::getFunctions() {
 }
 
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
-    : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
-      creating_plugin_(wasm.creating_plugin_), cluster_manager_(wasm.cluster_manager_),
-      dispatcher_(dispatcher), time_source_(dispatcher.timeSource()),
-      stat_name_set_(wasm.stat_name_set_) {
+    : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_), plugin_(wasm.plugin_),
+      scope_(wasm.scope_), cluster_manager_(wasm.cluster_manager_), dispatcher_(dispatcher),
+      time_source_(dispatcher.timeSource()), stat_name_set_(wasm.stat_name_set_) {
   if (wasm.wasmVm()->cloneable()) {
     wasm_vm_ = wasm.wasmVm()->clone();
     vm_context_ = std::make_shared<Context>(this);
@@ -2306,7 +2162,7 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
   if (!ok) {
     return false;
   }
-  auto metadata = wasm_vm_->getUserSection("emscripten_metadata");
+  auto metadata = wasm_vm_->getCustomSection("emscripten_metadata");
   if (!metadata.empty()) {
     // See https://github.com/emscripten-core/emscripten/blob/incoming/tools/shared.py#L3059
     is_emscripten_ = true;
@@ -2316,44 +2172,42 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
     start = decodeVarint(start, end, &emscripten_metadata_minor_version_);
     start = decodeVarint(start, end, &emscripten_abi_major_version_);
     start = decodeVarint(start, end, &emscripten_abi_minor_version_);
+    uint32_t temp;
     if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 1) {
       // metadata 0.2 - added: wasm_backend.
-      uint32_t temp;
       start = decodeVarint(start, end, &temp);
     }
-    start = decodeVarint(start, end, &emscripten_memory_size_);
-    start = decodeVarint(start, end, &emscripten_table_size_);
+    start = decodeVarint(start, end, &temp);
+    start = decodeVarint(start, end, &temp);
     if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 0) {
       // metadata 0.1 - added: global_base, dynamic_base, dynamictop_ptr and tempdouble_ptr.
-      start = decodeVarint(start, end, &emscripten_global_base_);
-      start = decodeVarint(start, end, &emscripten_dynamic_base_);
-      start = decodeVarint(start, end, &emscripten_dynamictop_ptr_);
-      decodeVarint(start, end, &emscripten_tempdouble_ptr_);
+      start = decodeVarint(start, end, &temp);
+      start = decodeVarint(start, end, &temp);
+      start = decodeVarint(start, end, &temp);
+      decodeVarint(start, end, &temp);
       if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 2) {
         // metadata 0.3 - added: standalone_wasm.
-        uint32_t temp;
-        start = decodeVarint(start, end, &temp);
+        start = decodeVarint(start, end, &emscripten_standalone_wasm_);
       }
-    } else {
-      // Workaround for Emscripten versions without heap (dynamic) base in metadata.
-      emscripten_stack_base_ = 64 * 64 * 1024;      // 4MB
-      emscripten_dynamic_base_ = 128 * 64 * 1024;   // 8MB
-      emscripten_dynamictop_ptr_ = 128 * 64 * 1024; // 8MB
     }
   }
   registerCallbacks();
-  establishEnvironment();
-  wasm_vm_->link(vm_id_, is_emscripten_);
+  wasm_vm_->link(vm_id_);
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
-  wasm_vm_->start(vm_context_.get());
-  if (is_emscripten_) {
-    ASSERT(std::isnan(global_NaN_->get()));
-    ASSERT(std::isinf(global_Infinity_->get()));
-  }
+  startVm(vm_context_.get());
   code_ = code;
   allow_precompiled_ = allow_precompiled;
   return true;
+}
+
+void Wasm::startVm(Context* root_context) {
+  /* Call "_start" function, and fallback to "__wasm_call_ctors" if the former is not available. */
+  if (_start_) {
+    _start_(root_context);
+  } else if (__wasm_call_ctors_) {
+    __wasm_call_ctors_(root_context);
+  }
 }
 
 bool Wasm::configure(Context* root_context, absl::string_view configuration) {
@@ -2365,13 +2219,13 @@ bool Wasm::configure(Context* root_context, absl::string_view configuration) {
 }
 
 Context* Wasm::start() {
-  auto root_id = creating_plugin_->root_id_;
+  auto root_id = plugin_->root_id_;
   auto it = root_contexts_.find(root_id);
   if (it != root_contexts_.end()) {
     it->second->onStart(root_id, vm_configuration());
     return it->second.get();
   }
-  auto context = std::make_unique<Context>(this, root_id, creating_plugin_);
+  auto context = std::make_unique<Context>(this, root_id, plugin_);
   auto context_ptr = context.get();
   root_contexts_[root_id] = std::move(context);
   context_ptr->onStart(root_id, vm_configuration());
@@ -2383,20 +2237,12 @@ void Wasm::startForTesting(std::unique_ptr<Context> context) {
   if (!context->wasm_) {
     // Initialization was delayed till the Wasm object was created.
     context->wasm_ = this;
-    context->plugin_ = creating_plugin_;
+    context->plugin_ = plugin_;
     context->id_ = allocContextId();
     contexts_[context->id_] = context.get();
   }
   root_contexts_[""] = std::move(context);
   context_ptr->onStart("", "");
-}
-
-void Wasm::setErrno(int32_t err) {
-  if (!__errno_location_) {
-    return;
-  }
-  Word location = __errno_location_(vmContext());
-  setDatatype(location.u64_, err);
 }
 
 void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {
@@ -2769,14 +2615,15 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
 }
 
 static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
-                               PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
+                               PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                               Upstream::ClusterManager& cluster_manager,
                                Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                                Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
                                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                                CreateWasmCallback&& cb) {
   auto wasm =
       std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(),
-                             plugin, cluster_manager, dispatcher);
+                             plugin, scope, cluster_manager, dispatcher);
 
   std::string source, code;
   if (vm_config.code().has_remote()) {
@@ -2815,22 +2662,23 @@ static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_confi
   }
 }
 
-void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin_config,
-                Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
-                Event::Dispatcher& dispatcher, Api::Api& api,
+void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin,
+                Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+                Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb) {
-  createWasmInternal(vm_config, plugin_config, cluster_manager, init_manager, dispatcher, api,
+  createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, api,
                      nullptr /* root_context_for_testing */, remote_data_provider, std::move(cb));
 }
 
 void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                          PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
-                          Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+                          PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                          Event::Dispatcher& dispatcher, Api::Api& api,
                           std::unique_ptr<Context> root_context_for_testing,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                           CreateWasmCallback&& cb) {
-  createWasmInternal(vm_config, plugin, cluster_manager, init_manager, dispatcher, api,
+  createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, api,
                      std::move(root_context_for_testing), remote_data_provider, std::move(cb));
 }
 

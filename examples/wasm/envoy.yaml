@@ -25,13 +25,15 @@ static_resources:
           http_filters:
           - name: envoy.filters.http.wasm
             config:
-              vm_id: "my_vm_id"
-              root_id: "my_root_id"
-              vm_config:
-                vm: "envoy.wasm.runtime.wavm"
-                code:
-                  filename: "/etc/envoy_filter_http_wasm_example.wasm"
-                allow_precompiled: true
+              config:
+                name: "my_plugin"
+                root_id: "my_root_id"
+                vm_config:
+                  vm_id: "my_vm_id"
+                  runtime: "envoy.wasm.runtime.wavm"
+                  code:
+                    filename: "/etc/envoy_filter_http_wasm_example.wasm"
+                  allow_precompiled: true
           - name: envoy.router
             config: {}
   - name: staticreply

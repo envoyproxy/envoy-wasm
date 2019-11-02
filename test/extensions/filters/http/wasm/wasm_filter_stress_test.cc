@@ -72,7 +72,8 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
 
   config_helper_.addFilter(fmt::format(R"EOF(
             name: envoy.filters.http.wasm
-            config:
+            typed_config:
+              "@type": type.googleapis.com/envoy.config.filter.http.wasm.v2.Wasm
               config:
                 vm_config:
                   runtime: "{}"

@@ -26,6 +26,7 @@ envoy_cc_test_library(
         "ads_integration.h",
     ],
     data = [
+        "//test/config/integration:server_xds_files",
         "//test/config/integration/certs",
     ],
     deps = [
@@ -268,6 +269,16 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "header_casing_integration_test",
+    srcs = [
+        "header_casing_integration_test.cc",
+    ],
+    deps = [
+        ":http_integration_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "http_timeout_integration_test",
     srcs = [
         "http_timeout_integration_test.cc",
@@ -306,6 +317,7 @@ envoy_cc_test(
     deps = [
         ":http_integration_lib",
         "//source/common/http:header_map_lib",
+        "//source/extensions/access_loggers/grpc:http_config",
         "//source/extensions/filters/http/buffer:config",
         "//source/extensions/filters/http/dynamo:config",
         "//source/extensions/filters/http/health_check:config",
@@ -326,6 +338,7 @@ envoy_cc_test(
         "//source/common/stats:stats_matcher_lib",
         "//source/extensions/filters/http/buffer:config",
         "//source/extensions/filters/http/health_check:config",
+        "//test/common/stats:stat_test_utility_lib",
         "@envoy_api//envoy/admin/v2alpha:pkg_cc_proto",
         "@envoy_api//envoy/config/metrics/v2:pkg_cc_proto",
     ],

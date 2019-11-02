@@ -4,6 +4,7 @@
 #include "common/common/thread.h"
 #include "common/grpc/common.h"
 #include "common/http/codec_client.h"
+#include "common/network/connection_balancer_impl.h"
 #include "common/network/listen_socket_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
@@ -305,6 +306,12 @@ public:
 
   const Network::ActiveUdpListenerFactory* udpListenerFactory() override;
 
+  Network::ConnectionBalancer& connectionBalancer() override { return connection_balancer_; }
+
+  envoy::api::v2::core::TrafficDirection direction() const override {
+    return envoy::api::v2::core::TrafficDirection::UNSPECIFIED;
+  }
+
   //
   // Network::FilterChainManager
   //
@@ -330,6 +337,7 @@ private:
   Api::Impl api_;
   Event::DispatcherPtr dispatcher_;
   Network::ConnectionHandlerPtr connection_handler_;
+  Network::NopConnectionBalancerImpl connection_balancer_;
   Thread::ThreadPtr thread_;
   std::atomic<bool> is_running{false};
 

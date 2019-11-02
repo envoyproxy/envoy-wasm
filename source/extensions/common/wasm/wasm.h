@@ -154,25 +154,14 @@ struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
   Grpc::RawAsyncStream* stream;
 };
 
-// A simple wrapper around generic values
-class WasmState : public StreamInfo::FilterState::Object {
-public:
-  WasmState(ProtobufWkt::Value& value) : value_(value) {}
-  const ProtobufWkt::Value& value() const { return value_; }
-
-private:
-  const ProtobufWkt::Value value_;
-};
-
 // Plugin contains the information for a filter/service.
 struct Plugin {
   Plugin(absl::string_view name, absl::string_view root_id, absl::string_view vm_id,
          envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
-         const envoy::api::v2::core::Metadata* listener_metadata, Stats::Scope& scope,
-         Stats::ScopeSharedPtr owned_scope = nullptr)
+         const envoy::api::v2::core::Metadata* listener_metadata)
       : name_(std::string(name)), root_id_(std::string(root_id)), vm_id_(std::string(vm_id)),
         direction_(direction), local_info_(local_info), listener_metadata_(listener_metadata),
-        scope_(scope), owned_scope_(owned_scope), log_prefix_(makeLogPrefix()) {}
+        log_prefix_(makeLogPrefix()) {}
 
   std::string makeLogPrefix() const;
 
@@ -182,9 +171,6 @@ struct Plugin {
   envoy::api::v2::core::TrafficDirection direction_;
   const LocalInfo::LocalInfo& local_info_;
   const envoy::api::v2::core::Metadata* listener_metadata_;
-  Stats::Scope& scope_; // Either an inherited scope or owned_scope_ below.
-  Stats::ScopeSharedPtr
-      owned_scope_; // When scope_ is not owned by a higher level (e.g. for WASM services).
 
   std::string log_prefix_;
 };
@@ -221,7 +207,8 @@ public:
   // It selects a value based on the following order: encoder callback, decoder
   // callback, log callback. As long as any one of the callbacks is invoked, the value should be
   // available.
-  const StreamInfo::StreamInfo* getRequestStreamInfo() const;
+  const StreamInfo::StreamInfo* getConstRequestStreamInfo() const;
+  StreamInfo::StreamInfo* getRequestStreamInfo() const;
 
   //
   // VM level downcalls into the WASM code on Context(id == 0).
@@ -510,17 +497,19 @@ class Wasm : public Envoy::Server::Wasm,
              public std::enable_shared_from_this<Wasm> {
 public:
   Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
-       PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
-       Event::Dispatcher& dispatcher);
+       PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+       Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
   ~Wasm() {}
 
   bool initialize(const std::string& code, bool allow_precompiled = false);
+  void startVm(Context* root_context);
   bool configure(Context* root_context, absl::string_view configuration);
   Context* start(); // returns the root Context.
 
   absl::string_view vm_id() const { return vm_id_; }
-  const PluginSharedPtr& creating_plugin() const { return creating_plugin_; }
+  const PluginSharedPtr& plugin() const { return plugin_; }
+  void setPlugin(const PluginSharedPtr plugin) { plugin_ = plugin; }
   WasmVm* wasmVm() const { return wasm_vm_.get(); }
   Context* vmContext() const { return vm_context_.get(); }
   Stats::StatNameSetSharedPtr stat_name_set() const { return stat_name_set_; }
@@ -554,8 +543,6 @@ public:
 
   // Support functions.
   void* allocMemory(uint64_t size, uint64_t* address);
-  bool freeMemory(void* pointer);
-  void freeMemoryOffset(uint64_t address);
   // Allocate a null-terminated string in the VM and return the pointer to use as a call arguments.
   uint64_t copyString(absl::string_view s);
   uint64_t copyBuffer(const Buffer::Instance& buffer);
@@ -582,8 +569,6 @@ public:
     *emscripten_abi_minor_version = emscripten_abi_minor_version_;
     return true;
   }
-
-  void setErrno(int32_t err);
 
 private:
   friend class Context;
@@ -621,7 +606,8 @@ private:
   std::string vm_id_; // The effective vm_id (may be a hash).
   std::unique_ptr<WasmVm> wasm_vm_;
 
-  const PluginSharedPtr creating_plugin_;
+  PluginSharedPtr plugin_;
+  Stats::ScopeSharedPtr scope_;
 
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
@@ -636,9 +622,11 @@ private:
 
   TimeSource& time_source_;
 
+  WasmCallVoid<0> _start_; /* Emscripten v1.39.0+ */
+  WasmCallVoid<0> __wasm_call_ctors_;
+
   WasmCallWord<1> malloc_;
   WasmCallVoid<1> free_;
-  WasmCallWord<0> __errno_location_;
 
   // Calls into the VM.
   WasmCallWord<3> validateConfiguration_;
@@ -688,18 +676,7 @@ private:
   uint32_t emscripten_metadata_minor_version_ = 0;
   uint32_t emscripten_abi_major_version_ = 0;
   uint32_t emscripten_abi_minor_version_ = 0;
-  uint32_t emscripten_memory_size_ = 0;
-  uint32_t emscripten_table_size_ = 0;
-  uint32_t emscripten_global_base_ = 0;
-  uint32_t emscripten_stack_base_ = 0;
-  uint32_t emscripten_dynamic_base_ = 0;
-  uint32_t emscripten_dynamictop_ptr_ = 0;
-  uint32_t emscripten_tempdouble_ptr_ = 0;
-
-  std::unique_ptr<Global<Word>> global_table_base_;
-  std::unique_ptr<Global<Word>> global_dynamictop_;
-  std::unique_ptr<Global<double>> global_NaN_;
-  std::unique_ptr<Global<double>> global_Infinity_;
+  uint32_t emscripten_standalone_wasm_ = 0;
 
   // Stats/Metrics
   Stats::StatNameSetSharedPtr stat_name_set_;
@@ -720,8 +697,8 @@ using CreateWasmCallback = std::function<void(std::shared_ptr<Wasm>)>;
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
 void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin_config,
-                Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
-                Event::Dispatcher& dispatcher, Api::Api& api,
+                Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+                Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb);
 
@@ -730,8 +707,9 @@ std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view c
                                             Event::Dispatcher& dispatcher);
 
 void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                          PluginSharedPtr plugin, Upstream::ClusterManager& cluster_manager,
-                          Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+                          PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                          Event::Dispatcher& dispatcher, Api::Api& api,
                           std::unique_ptr<Context> root_context_for_testing,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                           CreateWasmCallback&& cb);
@@ -747,8 +725,7 @@ uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_na
 
 inline Context::Context() : root_context_(this) {}
 
-inline Context::Context(Wasm* wasm)
-    : wasm_(wasm), root_context_(this), plugin_(wasm->creating_plugin()) {
+inline Context::Context(Wasm* wasm) : wasm_(wasm), root_context_(this), plugin_(wasm->plugin()) {
   wasm_->contexts_[id_] = this;
 }
 
@@ -764,12 +741,6 @@ inline Context::Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr pl
   root_context_ = wasm_->contexts_[root_context_id_];
 }
 
-// Do not remove vm or root contexts which have the same lifetime as wasm_.
-inline Context::~Context() {
-  if (root_context_id_)
-    wasm_->contexts_.erase(id_);
-}
-
 inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
   Word a = malloc_(vmContext(), size);
   if (!a.u64_) {
@@ -781,17 +752,6 @@ inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
   }
   *address = a.u64_;
   return const_cast<void*>(reinterpret_cast<const void*>(memory.value().data()));
-}
-
-inline void Wasm::freeMemoryOffset(uint64_t address) { free_(vmContext(), address); }
-
-inline bool Wasm::freeMemory(void* pointer) {
-  uint64_t offset;
-  if (!wasm_vm_->getMemoryOffset(pointer, &offset)) {
-    return false;
-  }
-  freeMemoryOffset(offset);
-  return true;
 }
 
 inline uint64_t Wasm::copyString(absl::string_view s) {

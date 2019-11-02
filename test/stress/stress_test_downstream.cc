@@ -210,7 +210,8 @@ public:
                         Network::ClientConnectionPtr&& network_connection)
       : ClientConnection(client, id, connect_callback, close_callback, dispatcher), stats_(),
         network_connection_(std::move(network_connection)),
-        http_connection_(*network_connection_, stats_, *this, max_request_headers_count),
+        http_connection_(*network_connection_, stats_, *this, Http::Http1Settings(),
+                         max_request_headers_count),
         read_filter_{std::make_shared<HttpClientReadFilter>(client.name(), id, http_connection_)} {
     network_connection_->addReadFilter(read_filter_);
     network_connection_->addConnectionCallbacks(*this);

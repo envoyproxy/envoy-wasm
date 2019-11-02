@@ -21,8 +21,7 @@ void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmService& config,
                              Server::CreateWasmCallback&& cb) {
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
-      nullptr /* listener_metadata */, context.scope(), context.owned_scope());
+      envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(), nullptr);
 
   auto callback = [&context, &config, cb](std::shared_ptr<Common::Wasm::Wasm> base_wasm) {
     if (config.singleton()) {
@@ -45,11 +44,9 @@ void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmService& config,
     cb(nullptr);
   };
 
-  // Create a base WASM to verify that the code loads before setting/cloning the for the
-  // individual threads.
-  Common::Wasm::createWasm(config.config().vm_config(), plugin, context.clusterManager(),
-                           context.initManager(), context.dispatcher(), context.api(),
-                           remote_data_provider_, std::move(callback));
+  Common::Wasm::createWasm(config.config().vm_config(), plugin, context.scope(),
+                           context.clusterManager(), context.initManager(), context.dispatcher(),
+                           context.api(), remote_data_provider_, std::move(callback));
 }
 
 /**

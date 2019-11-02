@@ -13,6 +13,7 @@ import "validate/validate.proto";
 // [#protodoc-title: Wasm service]
 
 // Configuration for a Wasm VM.
+// [#next-free-field: 6]
 message VmConfig {
   // A unique ID for a VM permitting multiple filters/services can share the same VM.
   // If left blank the 'vm_id' will be a hash of the Wasm code enabling the VM to persist over

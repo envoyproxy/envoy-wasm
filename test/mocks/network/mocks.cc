@@ -127,6 +127,10 @@ MockListenSocket::MockListenSocket()
   ON_CALL(*this, options()).WillByDefault(ReturnRef(options_));
   ON_CALL(*this, ioHandle()).WillByDefault(ReturnRef(*io_handle_));
   ON_CALL(testing::Const(*this), ioHandle()).WillByDefault(ReturnRef(*io_handle_));
+  ON_CALL(*this, close()).WillByDefault(Invoke([this]() { socket_is_open_ = false; }));
+  ON_CALL(testing::Const(*this), isOpen()).WillByDefault(Invoke([this]() {
+    return socket_is_open_;
+  }));
 }
 
 MockSocketOption::MockSocketOption() {
@@ -144,6 +148,8 @@ MockConnectionSocket::MockConnectionSocket()
   ON_CALL(*this, ioHandle()).WillByDefault(ReturnRef(*io_handle_));
   ON_CALL(testing::Const(*this), ioHandle()).WillByDefault(ReturnRef(*io_handle_));
 }
+
+MockConnectionSocket::~MockConnectionSocket() = default;
 
 MockListener::MockListener() = default;
 MockListener::~MockListener() { onDestroy(); }
@@ -176,6 +182,9 @@ MockUdpListenerReadFilter::~MockUdpListenerReadFilter() = default;
 
 MockUdpListenerFilterManager::MockUdpListenerFilterManager() = default;
 MockUdpListenerFilterManager::~MockUdpListenerFilterManager() = default;
+
+MockConnectionBalancer::MockConnectionBalancer() = default;
+MockConnectionBalancer::~MockConnectionBalancer() = default;
 
 } // namespace Network
 } // namespace Envoy

@@ -14,8 +14,7 @@ FilterConfig::FilterConfig(const envoy::config::filter::network::wasm::v2::Wasm&
     : tls_slot_(context.threadLocal().allocateSlot()) {
   plugin_ = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      context.direction(), context.localInfo(), &context.listenerMetadata(), context.scope(),
-      nullptr /* owned_scope */);
+      context.direction(), context.localInfo(), &context.listenerMetadata());
 
   auto callback = [&config, this](std::shared_ptr<Common::Wasm::Wasm> base_wasm) {
     auto configuration = std::make_shared<std::string>(config.config().configuration());
@@ -26,11 +25,9 @@ FilterConfig::FilterConfig(const envoy::config::filter::network::wasm::v2::Wasm&
     });
   };
 
-  // Create a base WASM to verify that the code loads before setting/cloning the for the
-  // individual threads.
-  Common::Wasm::createWasm(config.config().vm_config(), plugin_, context.clusterManager(),
-                           context.initManager(), context.dispatcher(), context.api(),
-                           remote_data_provider_, std::move(callback));
+  Common::Wasm::createWasm(config.config().vm_config(), plugin_, context.scope().createScope(""),
+                           context.clusterManager(), context.initManager(), context.dispatcher(),
+                           context.api(), remote_data_provider_, std::move(callback));
 }
 
 } // namespace Wasm
