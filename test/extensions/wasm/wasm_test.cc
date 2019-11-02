@@ -70,10 +70,6 @@ TEST_P(WasmTestMatrix, Logging) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
-                   std::get<1>(GetParam()), ".wasm")));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -81,7 +77,10 @@ TEST_P(WasmTestMatrix, Logging) {
       absl::StrCat("envoy.wasm.runtime.", std::get<0>(GetParam())), vm_id, vm_configuration, plugin,
       scope, cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
-
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
+                   std::get<1>(GetParam()), ".wasm")));
+  EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
   EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("warn configure-test")));
@@ -109,9 +108,6 @@ TEST_P(WasmTest, BadSignature) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -119,7 +115,9 @@ TEST_P(WasmTest, BadSignature) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
-
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
   EXPECT_THROW_WITH_MESSAGE(wasm->initialize(code, false),
                             Extensions::Common::Wasm::WasmVmException,
                             "Bad function signature for: proxy_onConfigure");
@@ -136,9 +134,6 @@ TEST_P(WasmTest, Segv) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -176,9 +171,6 @@ TEST_P(WasmTest, DivByZero) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -186,6 +178,9 @@ TEST_P(WasmTest, DivByZero) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("before div by zero")));
   EXPECT_TRUE(wasm->initialize(code, false));
@@ -214,9 +209,6 @@ TEST_P(WasmTest, EmscriptenVersion) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -224,6 +216,9 @@ TEST_P(WasmTest, EmscriptenVersion) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_TRUE(wasm->initialize(code, false));
   uint32_t major = 9, minor = 9, abi_major = 9, abi_minor = 9;
@@ -246,9 +241,6 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -256,6 +248,9 @@ TEST_P(WasmTest, IntrinsicGlobals) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("NaN nan")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("inf inf"))).Times(3);
@@ -280,9 +275,6 @@ TEST_P(WasmTest, Asm2Wasm) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -290,6 +282,9 @@ TEST_P(WasmTest, Asm2Wasm) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("out 0 0 0")));
   EXPECT_TRUE(wasm->initialize(code, false));
@@ -307,9 +302,6 @@ TEST_P(WasmTest, Stats) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -317,6 +309,9 @@ TEST_P(WasmTest, Stats) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
   EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("get counter = 1")));
@@ -342,9 +337,6 @@ TEST_P(WasmTest, StatsHigherLevel) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -352,6 +344,9 @@ TEST_P(WasmTest, StatsHigherLevel) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
   EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("get counter = 1")));
@@ -382,9 +377,6 @@ TEST_P(WasmTest, StatsHighLevel) {
   auto root_id = "";
   auto vm_id = "";
   auto vm_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -392,6 +384,9 @@ TEST_P(WasmTest, StatsHighLevel) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, plugin, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
+  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
+  EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
   EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("get counter = 1")));
