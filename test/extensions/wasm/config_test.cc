@@ -116,7 +116,7 @@ TEST_P(WasmFactoryTest, MissingImport) {
                                                         tls, *api, scope, local_info);
   EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context, [](Server::WasmSharedPtr) {});
                           , Extensions::Common::Wasm::WasmVmException,
-                          "Failed to load WASM module due to a missing import: env._missing.*");
+                          "Failed to load WASM module due to a missing import: env._missing");
 }
 
 #endif
