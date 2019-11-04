@@ -1590,8 +1590,6 @@ StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
     return &encoder_callbacks_->streamInfo();
   } else if (decoder_callbacks_) {
     return &decoder_callbacks_->streamInfo();
-  } else if (access_log_stream_info_) {
-    return access_log_stream_info_;
   } else if (network_read_filter_callbacks_) {
     return &network_read_filter_callbacks_->connection().streamInfo();
   } else if (network_write_filter_callbacks_) {
