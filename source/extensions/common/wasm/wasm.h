@@ -210,12 +210,6 @@ public:
   const StreamInfo::StreamInfo* getConstRequestStreamInfo() const;
   StreamInfo::StreamInfo* getRequestStreamInfo() const;
 
-  // Retrieves the filterstate info associated with the request (a.k.a active stream).
-  // It selects a value based on the following order: encoder callback, decoder
-  // callback,  network read filter callback, network write filter callback. As
-  // long as any one of the callbacks is invoked, the value should be available.
-  StreamInfo::FilterState& getFilterState() const;
-
   //
   // VM level downcalls into the WASM code on Context(id == 0).
   //
