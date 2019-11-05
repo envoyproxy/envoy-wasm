@@ -60,9 +60,8 @@ INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, HttpWasmStressTest,
 TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
   constexpr uint32_t connections_to_initiate = 30;
   constexpr uint32_t requests_to_send = 30 * connections_to_initiate;
-  const std::string wasm_file = absl::StrCat(
-      TestEnvironment::runfilesDirectory(),
-      "/test/extensions/filters/http/wasm/test_data/grpc_callout_", wasmLang(), ".wasm");
+  const std::string wasm_file = TestEnvironment::runfilesPath(absl::StrCat(
+      "test/extensions/filters/http/wasm/test_data/grpc_callout_", wasmLang(), ".wasm"));
   // Must match cluster name in the wasm bundle:
   const std::string callout_cluster_name{"callout_cluster"};
 
@@ -171,9 +170,8 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
 TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
   constexpr uint32_t connections_to_initiate = 30;
   constexpr uint32_t requests_to_send = 30 * connections_to_initiate;
-  const std::string wasm_file = absl::StrCat(
-      TestEnvironment::runfilesDirectory(),
-      "/test/extensions/filters/http/wasm/test_data/grpc_callout_", wasmLang(), ".wasm");
+  const std::string wasm_file = TestEnvironment::runfilesPath(absl::StrCat(
+      "test/extensions/filters/http/wasm/test_data/grpc_callout_", wasmLang(), ".wasm"));
   // Must match cluster name in the wasm bundle:
   const std::string callout_cluster_name{"callout_cluster"};
 
@@ -281,10 +279,9 @@ TEST_P(HttpWasmStressTest, DISABLED_CalloutHappyPath) {
   constexpr uint32_t connections_to_initiate = 30;
   constexpr uint32_t requests_to_send = 30 * connections_to_initiate;
   const std::string wasm_vm{std::get<0>(GetParam())};
-  const std::string wasm_file =
-      absl::StrCat(TestEnvironment::runfilesDirectory(),
-                   "/test/extensions/filters/http/wasm/test_data/http_callout_",
-                   std::get<1>(GetParam()), ".wasm");
+  const std::string wasm_file = TestEnvironment::runfilesPath(
+      absl::StrCat("test/extensions/filters/http/wasm/test_data/http_callout_",
+                   std::get<1>(GetParam()), ".wasm"));
   const std::string callout_cluster_name{"callout_cluster"};
 
   //
