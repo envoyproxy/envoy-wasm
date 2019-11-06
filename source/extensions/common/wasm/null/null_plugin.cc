@@ -230,6 +230,10 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
   }
 }
 
+void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<2>* /* f */) {
+  throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
+}
+
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<3>* f) {
   if (function_name == "proxy_validateConfiguration") {
     auto plugin = this;
