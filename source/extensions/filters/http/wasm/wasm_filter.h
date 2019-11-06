@@ -35,6 +35,7 @@ private:
   uint32_t root_context_id_{0};
   Envoy::Extensions::Common::Wasm::PluginSharedPtr plugin_;
   ThreadLocal::SlotPtr tls_slot_;
+  Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
 
 typedef std::shared_ptr<FilterConfig> FilterConfigSharedPtr;

@@ -54,6 +54,7 @@ envoy_cc_library(
         "//include/envoy/server:wasm_interface",
         "//include/envoy/upstream:cluster_manager_interface",
         "//source/common/common:stack_array",
+        "//source/common/config:datasource_lib",
         "//source/common/stats:symbol_table_lib",
         "//source/extensions/filters/http:well_known_names",
         "@envoy_api//envoy/config/filter/http/wasm/v2:pkg_cc_proto",
@@ -83,7 +84,6 @@ envoy_cc_library(
         "//external:abseil_node_hash_map",
         "//source/common/buffer:buffer_lib",
         "//source/common/common:enum_to_int",
-        "//source/common/config:datasource_lib",
         "//source/common/http:message_lib",
         "//source/common/http:utility_lib",
         "//source/common/tracing:http_tracer_lib",
@@ -93,5 +93,6 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/eval:field_backed_list_impl",
         "@com_google_cel_cpp//eval/eval:field_backed_map_impl",
         "@com_google_cel_cpp//eval/public:cel_value",
+        "@com_google_cel_cpp//eval/public:value_export_util",
     ],
 )

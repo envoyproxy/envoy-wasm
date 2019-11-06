@@ -49,15 +49,20 @@ public:
     proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
     proto_config.mutable_config()->mutable_vm_config()->set_runtime(
         absl::StrCat("envoy.wasm.runtime.", GetParam()));
-    proto_config.mutable_config()->mutable_vm_config()->mutable_code()->set_inline_bytes(code);
+    proto_config.mutable_config()
+        ->mutable_vm_config()
+        ->mutable_code()
+        ->mutable_local()
+        ->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
         "", proto_config.config().root_id(), proto_config.config().vm_config().vm_id(),
         envoy::api::v2::core::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
-    wasm_ = Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, dispatcher_, *api,
-        std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_));
+    Extensions::Common::Wasm::createWasmForTesting(
+        proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
+        dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
+        remote_data_provider_, [this](std::shared_ptr<Wasm> wasm) { wasm_ = wasm; });
   }
 
   void setupFilter() {
@@ -69,6 +74,7 @@ public:
   Stats::ScopeSharedPtr scope_;
   NiceMock<Event::MockDispatcher> dispatcher_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
+  NiceMock<Init::MockManager> init_manager_;
   std::shared_ptr<Wasm> wasm_;
   std::shared_ptr<Common::Wasm::Plugin> plugin_;
   std::unique_ptr<TestFilter> filter_;
@@ -76,6 +82,7 @@ public:
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
   envoy::api::v2::core::Metadata listener_metadata_;
   TestRoot* root_context_ = nullptr;
+  Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 }; // namespace Wasm
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterTest,

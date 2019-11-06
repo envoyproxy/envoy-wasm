@@ -22,7 +22,9 @@
 #include "benchmark/benchmark.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "tools/cpp/runfiles/runfiles.h"
 
+using bazel::tools::cpp::runfiles::Runfiles;
 using testing::Eq;
 
 namespace Envoy {
@@ -62,8 +64,8 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string vm) 
   if (vm == "null") {
     code = "null_vm_plugin";
   } else {
-    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-        "{{ test_rundir }}/test/extensions/wasm/test_data/speed_cpp.wasm"));
+    code = TestEnvironment::readFileToStringForTest(
+        TestEnvironment::runfilesPath("test/extensions/wasm/test_data/speed_cpp.wasm"));
   }
   EXPECT_FALSE(code.empty());
   EXPECT_TRUE(wasm->initialize(code, false));
@@ -90,10 +92,14 @@ BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest, std::string("null")
 int main(int argc, char** argv) {
   ::benchmark::Initialize(&argc, argv);
   Envoy::TestEnvironment::initializeOptions(argc, argv);
-  Envoy::TestEnvironment::setEnvVar("TEST_RUNDIR",
-                                    (Envoy::TestEnvironment::getCheckedEnvVar("TEST_SRCDIR") + "/" +
-                                     Envoy::TestEnvironment::getCheckedEnvVar("TEST_WORKSPACE")),
-                                    1);
+  // Create a Runfiles object for runfiles lookup.
+  // https://github.com/bazelbuild/bazel/blob/master/tools/cpp/runfiles/runfiles_src.h#L32
+  std::string error;
+  std::unique_ptr<Runfiles> runfiles(Runfiles::Create(argv[0], &error));
+  RELEASE_ASSERT(Envoy::TestEnvironment::getOptionalEnvVar("NORUNFILES").has_value() ||
+                     runfiles != nullptr,
+                 error);
+  Envoy::TestEnvironment::setRunfiles(runfiles.get());
   Envoy::TestEnvironment::setEnvVar("ENVOY_IP_TEST_VERSIONS", "all", 0);
   Envoy::Event::Libevent::Global::initialize();
   if (::benchmark::ReportUnrecognizedArguments(argc, argv)) {

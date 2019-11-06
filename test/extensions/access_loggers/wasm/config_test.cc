@@ -77,7 +77,7 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
   envoy::config::accesslog::v2::WasmAccessLog config;
   config.mutable_config()->mutable_vm_config()->set_runtime(
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  config.mutable_config()->mutable_vm_config()->mutable_code()->set_filename(
+  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging.wasm"));
 

@@ -22,7 +22,6 @@
 #include "common/common/empty_string.h"
 #include "common/common/enum_to_int.h"
 #include "common/common/logger.h"
-#include "common/config/datasource.h"
 #include "common/http/header_map_impl.h"
 #include "common/http/message_impl.h"
 #include "common/http/utility.h"
@@ -40,6 +39,7 @@
 #include "eval/eval/field_backed_list_impl.h"
 #include "eval/eval/field_backed_map_impl.h"
 #include "eval/public/cel_value.h"
+#include "eval/public/value_export_util.h"
 #include "openssl/bytestring.h"
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
@@ -992,85 +992,10 @@ uint64_t Context::getCurrentTimeNanoseconds() {
       .count();
 }
 
-// TODO(https://github.com/google/cel-cpp/issues/38)
-bool exportValue(const Filters::Common::Expr::CelValue& value, ProtobufWkt::Value* out) {
-  using Filters::Common::Expr::CelValue;
-  switch (value.type()) {
-  case CelValue::Type::kBool:
-    out->set_bool_value(value.BoolOrDie());
-    return true;
-  case CelValue::Type::kInt64:
-    out->set_number_value(static_cast<double>(value.Int64OrDie()));
-    return true;
-  case CelValue::Type::kUint64:
-    out->set_number_value(static_cast<double>(value.Uint64OrDie()));
-    return true;
-  case CelValue::Type::kDouble:
-    out->set_number_value(value.DoubleOrDie());
-    return true;
-  case CelValue::Type::kString:
-    *out->mutable_string_value() = std::string(value.StringOrDie().value());
-    return true;
-  case CelValue::Type::kBytes:
-    *out->mutable_string_value() = std::string(value.BytesOrDie().value());
-    return true;
-  case CelValue::Type::kMessage: {
-    if (value.IsNull()) {
-      out->set_null_value(ProtobufWkt::NullValue::NULL_VALUE);
-    } else {
-      auto msg = value.MessageOrDie();
-      out->mutable_struct_value()->MergeFrom(*msg);
-    }
-    return true;
-  }
-  case CelValue::Type::kDuration:
-    *out->mutable_string_value() = absl::FormatDuration(value.DurationOrDie());
-    return true;
-  case CelValue::Type::kTimestamp:
-    *out->mutable_string_value() = absl::FormatTime(value.TimestampOrDie());
-    return true;
-  case CelValue::Type::kList: {
-    auto list = value.ListOrDie();
-    auto values = out->mutable_list_value();
-    for (int i = 0; i < list->size(); i++) {
-      if (!exportValue((*list)[i], values->add_values())) {
-        return false;
-      }
-    }
-    return true;
-  }
-  case CelValue::Type::kMap: {
-    auto map = value.MapOrDie();
-    auto list = map->ListKeys();
-    auto struct_obj = out->mutable_struct_value();
-    for (int i = 0; i < list->size(); i++) {
-      ProtobufWkt::Value field_key;
-      if (!exportValue((*list)[i], &field_key)) {
-        return false;
-      }
-      ProtobufWkt::Value field_value;
-      if (!exportValue((*map)[(*list)[i]].value(), &field_value)) {
-        return false;
-      }
-      (*struct_obj->mutable_fields())[field_key.string_value()] = field_value;
-    }
-    return true;
-  }
-  default:
-    // do nothing for special values
-    return false;
-  }
-  return false;
-}
-
+// Native serializer carrying over bit representation from CEL value to the extension
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
   using Filters::Common::Expr::CelValue;
   switch (value.type()) {
-  case CelValue::Type::kMessage:
-    if (value.MessageOrDie() != nullptr && value.MessageOrDie()->SerializeToString(result)) {
-      return WasmResult::Ok;
-    }
-    return WasmResult::SerializationFailure;
   case CelValue::Type::kString:
     result->assign(value.StringOrDie().value().data(), value.StringOrDie().value().size());
     return WasmResult::Ok;
@@ -1107,9 +1032,21 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
     return WasmResult::Ok;
   }
+  case CelValue::Type::kMessage: {
+    auto out = value.MessageOrDie();
+    if (out == nullptr) {
+      result->clear();
+      return WasmResult::Ok;
+    }
+    if (out->SerializeToString(result)) {
+      return WasmResult::Ok;
+    }
+    return WasmResult::SerializationFailure;
+  }
+  // Slow path using protobuf value conversion
   case CelValue::Type::kMap: {
     ProtobufWkt::Value out;
-    if (!exportValue(value, &out)) {
+    if (!google::api::expr::runtime::ExportAsProtoValue(value, &out).ok()) {
       return WasmResult::SerializationFailure;
     }
     if (!out.struct_value().SerializeToString(result)) {
@@ -1119,7 +1056,7 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
   }
   case CelValue::Type::kList: {
     ProtobufWkt::Value out;
-    if (!exportValue(value, &out)) {
+    if (!google::api::expr::runtime::ExportAsProtoValue(value, &out).ok()) {
       return WasmResult::SerializationFailure;
     }
     if (!out.list_value().SerializeToString(result)) {
@@ -1735,6 +1672,10 @@ const StreamInfo::StreamInfo* Context::getConstRequestStreamInfo() const {
     return &decoder_callbacks_->streamInfo();
   } else if (access_log_stream_info_) {
     return access_log_stream_info_;
+  } else if (network_read_filter_callbacks_) {
+    return &network_read_filter_callbacks_->connection().streamInfo();
+  } else if (network_write_filter_callbacks_) {
+    return &network_write_filter_callbacks_->connection().streamInfo();
   }
   return nullptr;
 }
@@ -1744,6 +1685,10 @@ StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
     return &encoder_callbacks_->streamInfo();
   } else if (decoder_callbacks_) {
     return &decoder_callbacks_->streamInfo();
+  } else if (network_read_filter_callbacks_) {
+    return &network_read_filter_callbacks_->connection().streamInfo();
+  } else if (network_write_filter_callbacks_) {
+    return &network_write_filter_callbacks_->connection().streamInfo();
   }
   return nullptr;
 }
@@ -2774,45 +2719,71 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
   context->onGrpcClose(token, status, message);
 }
 
-static std::shared_ptr<Wasm> createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                                PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                                                Upstream::ClusterManager& cluster_manager,
-                                                Event::Dispatcher& dispatcher, Api::Api& api,
-                                                std::unique_ptr<Context> root_context_for_testing) {
+static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
+                               PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                               Upstream::ClusterManager& cluster_manager,
+                               Init::Manager& init_manager, Event::Dispatcher& dispatcher,
+                               Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
+                               Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                               CreateWasmCallback&& cb) {
   auto wasm = std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(),
                                      vm_config.configuration(), scope, cluster_manager, dispatcher);
-  const auto& code = Config::DataSource::read(vm_config.code(), true, api);
-  const auto& path = Config::DataSource::getPath(vm_config.code())
-                         .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
-  if (code.empty()) {
-    throw WasmException(fmt::format("Failed to load WASM code from {}", path));
+
+  std::string source, code;
+  if (vm_config.code().has_remote()) {
+    source = vm_config.code().remote().http_uri().uri();
+  } else if (vm_config.code().has_local()) {
+    code = Config::DataSource::read(vm_config.code().local(), true, api);
+    source = Config::DataSource::getPath(vm_config.code().local())
+                 .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
   }
-  if (!wasm->initialize(code, vm_config.allow_precompiled())) {
-    throw WasmException(fmt::format("Failed to initialize WASM code from {}", path));
-  }
-  if (!root_context_for_testing) {
-    wasm->start(plugin);
+
+  auto callback = [wasm, plugin, cb, source, allow_precompiled = vm_config.allow_precompiled(),
+                   context_ptr = root_context_for_testing ? root_context_for_testing.release()
+                                                          : nullptr](const std::string& code) {
+    std::unique_ptr<Context> context(context_ptr);
+    if (code.empty()) {
+      throw WasmException(fmt::format("Failed to load WASM code from {}", source));
+    }
+    if (!wasm->initialize(code, allow_precompiled)) {
+      throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
+    }
+    if (!context) {
+      wasm->start(plugin);
+    } else {
+      wasm->startForTesting(std::move(context), plugin);
+    }
+    cb(wasm);
+  };
+
+  if (vm_config.code().has_remote()) {
+    remote_data_provider = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
+        cluster_manager, init_manager, vm_config.code().remote(), true, std::move(callback));
+  } else if (vm_config.code().has_local()) {
+    callback(code);
   } else {
-    wasm->startForTesting(std::move(root_context_for_testing), plugin);
+    callback(EMPTY_STRING);
   }
-  return wasm;
 }
 
-std::shared_ptr<Wasm> createWasm(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                                 Upstream::ClusterManager& cluster_manager,
-                                 Event::Dispatcher& dispatcher, Api::Api& api) {
-  return createWasmInternal(vm_config, plugin, scope, cluster_manager, dispatcher, api,
-                            nullptr /* root_context_for_testing */);
-} // namespace Wasm
+void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin,
+                Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+                Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                CreateWasmCallback&& cb) {
+  createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, api,
+                     nullptr /* root_context_for_testing */, remote_data_provider, std::move(cb));
+}
 
-std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                                           Upstream::ClusterManager& cluster_manager,
-                                           Event::Dispatcher& dispatcher, Api::Api& api,
-                                           std::unique_ptr<Context> root_context_for_testing) {
-  return createWasmInternal(vm_config, plugin, scope, cluster_manager, dispatcher, api,
-                            std::move(root_context_for_testing));
+void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
+                          PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                          Event::Dispatcher& dispatcher, Api::Api& api,
+                          std::unique_ptr<Context> root_context_for_testing,
+                          Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                          CreateWasmCallback&& cb) {
+  createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, api,
+                     std::move(root_context_for_testing), remote_data_provider, std::move(cb));
 }
 
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, PluginSharedPtr plugin,

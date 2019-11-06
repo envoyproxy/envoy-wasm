@@ -26,8 +26,16 @@ public:
         return;
       }
     }
-    tls_slot_->getTyped<Common::Wasm::Wasm>().log(root_id_, request_headers, response_headers,
-                                                  response_trailers, stream_info);
+
+    if (tls_slot_ != nullptr) {
+      tls_slot_->getTyped<Common::Wasm::Wasm>().log(root_id_, request_headers, response_headers,
+                                                    response_trailers, stream_info);
+    }
+  }
+
+  void setTlsSlot(ThreadLocal::SlotPtr tls_slot) {
+    ASSERT(tls_slot_ == nullptr);
+    tls_slot_ = std::move(tls_slot);
   }
 
 private:
