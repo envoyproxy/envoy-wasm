@@ -17,6 +17,7 @@
 #include "common/common/assert.h"
 #include "common/common/logger.h"
 #include "common/common/stack_array.h"
+#include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
 
 #include "extensions/common/wasm/wasm_vm.h"
@@ -692,22 +693,27 @@ private:
 inline WasmVm* Context::wasmVm() const { return wasm_->wasmVm(); }
 inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_->clusterManager(); }
 
+using CreateWasmCallback = std::function<void(std::shared_ptr<Wasm>)>;
+
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
-std::shared_ptr<Wasm> createWasm(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 PluginSharedPtr plugin_config, Stats::ScopeSharedPtr scope,
-                                 Upstream::ClusterManager& cluster_manager,
-                                 Event::Dispatcher& dispatcher, Api::Api& api);
+void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin_config,
+                Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+                Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                CreateWasmCallback&& cb);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
                                             Event::Dispatcher& dispatcher);
 
-std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                                           Upstream::ClusterManager& cluster_manager,
-                                           Event::Dispatcher& dispatcher, Api::Api& api,
-                                           std::unique_ptr<Context> root_context_for_testing);
+void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
+                          PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                          Event::Dispatcher& dispatcher, Api::Api& api,
+                          std::unique_ptr<Context> root_context_for_testing,
+                          Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                          CreateWasmCallback&& cb);
 
 // Get an existing ThreadLocal VM matching 'vm_id' or nullptr if there isn't one.
 std::shared_ptr<Wasm> getThreadLocalWasmPtr(absl::string_view vm_id);

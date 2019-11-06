@@ -26,7 +26,7 @@ message VmConfig {
   string runtime = 2;
 
   // The Wasm code that Envoy will execute.
-  api.v2.core.DataSource code = 3;
+  api.v2.core.AsyncDataSource code = 3;
 
   // The Wasm configuration string used on initialization of a new VM (proxy_onStart).
   string configuration = 4;

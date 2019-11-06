@@ -20,7 +20,6 @@
 #include "common/common/empty_string.h"
 #include "common/common/enum_to_int.h"
 #include "common/common/logger.h"
-#include "common/config/datasource.h"
 #include "common/http/header_map_impl.h"
 #include "common/http/message_impl.h"
 #include "common/http/utility.h"
@@ -2623,46 +2622,72 @@ void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
   context->onGrpcClose(token, status, message);
 }
 
-static std::shared_ptr<Wasm> createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                                PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                                                Upstream::ClusterManager& cluster_manager,
-                                                Event::Dispatcher& dispatcher, Api::Api& api,
-                                                std::unique_ptr<Context> root_context_for_testing) {
+static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
+                               PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                               Upstream::ClusterManager& cluster_manager,
+                               Init::Manager& init_manager, Event::Dispatcher& dispatcher,
+                               Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
+                               Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                               CreateWasmCallback&& cb) {
   auto wasm =
       std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(),
                              plugin, scope, cluster_manager, dispatcher);
-  const auto& code = Config::DataSource::read(vm_config.code(), true, api);
-  const auto& path = Config::DataSource::getPath(vm_config.code())
-                         .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
-  if (code.empty()) {
-    throw WasmException(fmt::format("Failed to load WASM code from {}", path));
+
+  std::string source, code;
+  if (vm_config.code().has_remote()) {
+    source = vm_config.code().remote().http_uri().uri();
+  } else if (vm_config.code().has_local()) {
+    code = Config::DataSource::read(vm_config.code().local(), true, api);
+    source = Config::DataSource::getPath(vm_config.code().local())
+                 .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
   }
-  if (!wasm->initialize(code, vm_config.allow_precompiled())) {
-    throw WasmException(fmt::format("Failed to initialize WASM code from {}", path));
-  }
-  if (!root_context_for_testing) {
-    wasm->start();
+
+  auto callback = [wasm, cb, source, allow_precompiled = vm_config.allow_precompiled(),
+                   context_ptr = root_context_for_testing ? root_context_for_testing.release()
+                                                          : nullptr](const std::string& code) {
+    std::unique_ptr<Context> context(context_ptr);
+    if (code.empty()) {
+      throw WasmException(fmt::format("Failed to load WASM code from {}", source));
+    }
+    if (!wasm->initialize(code, allow_precompiled)) {
+      throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
+    }
+    if (!context) {
+      wasm->start();
+    } else {
+      wasm->startForTesting(std::move(context));
+    }
+    cb(wasm);
+  };
+
+  if (vm_config.code().has_remote()) {
+    remote_data_provider = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
+        cluster_manager, init_manager, vm_config.code().remote(), true, std::move(callback));
+  } else if (vm_config.code().has_local()) {
+    callback(code);
   } else {
-    wasm->startForTesting(std::move(root_context_for_testing));
+    callback(EMPTY_STRING);
   }
-  return wasm;
 }
 
-std::shared_ptr<Wasm> createWasm(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                 PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                                 Upstream::ClusterManager& cluster_manager,
-                                 Event::Dispatcher& dispatcher, Api::Api& api) {
-  return createWasmInternal(vm_config, plugin, scope, cluster_manager, dispatcher, api,
-                            nullptr /* root_context_for_testing */);
-} // namespace Wasm
+void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin,
+                Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+                Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                CreateWasmCallback&& cb) {
+  createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, api,
+                     nullptr /* root_context_for_testing */, remote_data_provider, std::move(cb));
+}
 
-std::shared_ptr<Wasm> createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                                           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                                           Upstream::ClusterManager& cluster_manager,
-                                           Event::Dispatcher& dispatcher, Api::Api& api,
-                                           std::unique_ptr<Context> root_context_for_testing) {
-  return createWasmInternal(vm_config, plugin, scope, cluster_manager, dispatcher, api,
-                            std::move(root_context_for_testing));
+void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
+                          PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                          Event::Dispatcher& dispatcher, Api::Api& api,
+                          std::unique_ptr<Context> root_context_for_testing,
+                          Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                          CreateWasmCallback&& cb) {
+  createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, api,
+                     std::move(root_context_for_testing), remote_data_provider, std::move(cb));
 }
 
 std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,

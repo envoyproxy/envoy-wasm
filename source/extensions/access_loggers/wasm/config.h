@@ -2,6 +2,8 @@
 
 #include "envoy/server/access_log_config.h"
 
+#include "common/config/datasource.h"
+
 namespace Envoy {
 namespace Extensions {
 namespace AccessLoggers {
@@ -22,6 +24,7 @@ public:
 
 private:
   std::unordered_map<std::string, std::string> convertJsonFormatToMap(ProtobufWkt::Struct config);
+  Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
 
 } // namespace Wasm

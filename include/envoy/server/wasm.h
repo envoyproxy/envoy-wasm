@@ -16,7 +16,8 @@ public:
   virtual ~Wasm() {}
 };
 
-typedef std::shared_ptr<Wasm> WasmSharedPtr;
+using WasmSharedPtr = std::shared_ptr<Wasm>;
+using CreateWasmCallback = std::function<void(WasmSharedPtr)>;
 
 } // namespace Server
 } // namespace Envoy

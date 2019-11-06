@@ -77,7 +77,8 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
                 vm_config:
                   runtime: "{}"
                   code:
-                    filename: "{}"
+                    local:
+                      filename: "{}"
 )EOF",
                                        wasmVM(), wasm_file));
 
@@ -186,7 +187,8 @@ TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
                 vm_config:
                   runtime: "{}"
                   code:
-                    filename: "{}"
+                    local:
+                      filename: "{}"
 )EOF",
                                        wasmVM(), wasm_file));
 

@@ -25,12 +25,16 @@ protected:
     ON_CALL(context_, api()).WillByDefault(ReturnRef(*api_));
     ON_CALL(context_, scope()).WillByDefault(ReturnRef(stats_store_));
     ON_CALL(context_, listenerMetadata()).WillByDefault(ReturnRef(listener_metadata_));
+    ON_CALL(context_, initManager()).WillByDefault(ReturnRef(init_manager_));
   }
 
   NiceMock<Server::Configuration::MockFactoryContext> context_;
   Stats::IsolatedStoreImpl stats_store_;
   Api::ApiPtr api_;
   envoy::api::v2::core::Metadata listener_metadata_;
+  Init::ManagerImpl init_manager_{"init_manager"};
+  NiceMock<Upstream::MockClusterManager> cluster_manager_;
+  Init::ExpectableWatcherImpl init_watcher_;
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest,
@@ -50,13 +54,18 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
     vm_config:
       runtime: "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF("
-      code: { filename: "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm" }
+      code:
+        local:
+          filename: "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm"
   )EOF"));
 
   envoy::config::filter::network::wasm::v2::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Network::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, context_);
+  EXPECT_CALL(init_watcher_, ready());
+  context_.initManager().initialize(init_watcher_);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
   Network::MockConnection connection;
   EXPECT_CALL(connection, addFilter(_));
   cb(connection);
@@ -71,7 +80,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
     vm_config:
       runtime: "envoy.wasm.runtime.)EOF",
                                         GetParam(), R"EOF("
-      code: { inline_bytes: ")EOF",
+      code:
+        local: { inline_bytes: ")EOF",
                                         Base64::encode(code.data(), code.size()), R"EOF(" }
   )EOF");
 
@@ -79,6 +89,9 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Network::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, context_);
+  EXPECT_CALL(init_watcher_, ready());
+  context_.initManager().initialize(init_watcher_);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
   Network::MockConnection connection;
   EXPECT_CALL(connection, addFilter(_));
   cb(connection);
@@ -90,7 +103,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
     vm_config:
       runtime: "envoy.wasm.runtime.)EOF",
                                         GetParam(), R"EOF("
-      code: { inline_string: "bad code" }
+      code:
+        local: { inline_string: "bad code" }
   )EOF");
 
   envoy::config::filter::network::wasm::v2::Wasm proto_config;
