@@ -45,7 +45,10 @@ envoy_cc_library(
 # NB: Used to break the circular dependency between wasm_lib and null_plugin_lib.
 envoy_cc_library(
     name = "wasm_hdr",
-    hdrs = ["wasm.h"],
+    hdrs = [
+        "wasm.h",
+        "wasm_handlers.h",
+    ],
     deps = [
         ":wasm_vm_interface",
         ":well_known_names",
