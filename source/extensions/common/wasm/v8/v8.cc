@@ -38,7 +38,7 @@ using FuncDataPtr = std::unique_ptr<FuncData>;
 
 class V8 : public WasmVmBase {
 public:
-  V8(Stats::ScopeSharedPtr scope) : WasmVmBase(scope, &global_stats_, WasmRuntimeNames::get().v8) {}
+  V8(Stats::ScopeSharedPtr scope) : WasmVmBase(scope, &global_stats_, WasmRuntimeNames::get().V8) {}
 
   // Extensions::Common::Wasm::WasmVm
   absl::string_view runtime() override { return WasmRuntimeNames::get().V8; }
