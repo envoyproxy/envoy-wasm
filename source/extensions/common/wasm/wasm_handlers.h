@@ -9,7 +9,8 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-// Handlers for functions exported from envoy to wasm.
+// Handlers for ABI functions exported from envoy to wasm.
+
 Word getConfigurationHandler(void* raw_context, Word address, Word size);
 Word getStatusHandler(void* raw_context, Word status_code, Word address, Word size);
 Word logHandler(void* raw_context, Word level, Word address, Word size);
@@ -76,6 +77,18 @@ Word setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_millis
 Word getCurrentTimeNanosecondsHandler(void* raw_context, Word result_uint64_ptr);
 
 Word setEffectiveContextHandler(void* raw_context, Word context_id);
+
+// Handlers for runtime environement functions exported from envoy to wasm.
+
+Word wasi_unstable_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
+                                   Word nwritten_ptr);
+Word wasi_unstable_fd_seekHandler(void*, Word, int64_t, Word, Word);
+Word wasi_unstable_fd_closeHandler(void*, Word);
+Word wasi_unstable_environ_getHandler(void*, Word, Word);
+Word wasi_unstable_environ_sizes_getHandler(void* raw_context, Word count_ptr, Word buf_size_ptr);
+void wasi_unstable_proc_exitHandler(void*, Word);
+void wasi_unstable_proc_exitHandler(void*, Word);
+Word pthread_equalHandler(void*, Word left, Word right);
 
 } // namespace Wasm
 } // namespace Common
