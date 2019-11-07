@@ -57,6 +57,7 @@ namespace Wasm {
 
 namespace {
 
+// TODO: move to utils during upstreaming.
 std::string base64Sha256(absl::string_view data) {
   std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
   EVP_MD_CTX* ctx(EVP_MD_CTX_new());
