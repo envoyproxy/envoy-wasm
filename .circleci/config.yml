@@ -10,88 +10,87 @@ executors:
     working_directory: /source
 
 jobs:
-   release:
-     executor: ubuntu-build
-     environment:
-       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - run:
-           environment:
-             BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=enabled" # v8 + WAVM (build only).
-           command: ci/do_circle_ci.sh bazel.release.server_only
-       - run:
-           environment:
-             BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults in tests.
-           command: ci/do_circle_ci.sh bazel.release ${BAZEL_TEST_TARGETS}
-       - store_artifacts:
-           path: /build/envoy/generated
-           destination: /
+  release:
+    executor: ubuntu-build
+    environment:
+      BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
+    steps:
+      - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+      - checkout
+      - run:
+          environment:
+            BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=enabled" # v8 + WAVM (build only).
+          command: ci/do_circle_ci.sh bazel.release.server_only
+      - run:
+          environment:
+            BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults in tests.
+          command: ci/do_circle_ci.sh bazel.release ${BAZEL_TEST_TARGETS}
+      - store_artifacts:
+          path: /build/envoy/generated
+          destination: /
 
-   asan:
-     executor: ubuntu-build
-     environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, ASan detects leaks in WAVM library.
-       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - run: ci/do_circle_ci.sh bazel.asan ${BAZEL_TEST_TARGETS}
-       - store_artifacts:
-           path: /build/envoy/generated
-           destination: /
+  asan:
+    executor: ubuntu-build
+    environment:
+      BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, ASan detects leaks in WAVM library.
+      BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
+    steps:
+      - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+      - checkout
+      - run: ci/do_circle_ci.sh bazel.asan ${BAZEL_TEST_TARGETS}
+      - store_artifacts:
+          path: /build/envoy/generated
+          destination: /
 
-   coverage:
-     executor: ubuntu-build
-     environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, LSan detects leaks in WAVM library.
-       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
-       VALIDATE_COVERAGE: 0
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - run:
-           command:
-             ci/do_circle_ci.sh bazel.coverage ${BAZEL_TEST_TARGETS}
-           no_output_timeout: 60m
-       - store_artifacts:
-           path: /build/envoy/generated
-           destination: /
+  coverage:
+    executor: ubuntu-build
+    environment:
+      BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, LSan detects leaks in WAVM library.
+      BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
+      VALIDATE_COVERAGE: 0
+    steps:
+      - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+      - checkout
+      - run:
+          command: ci/do_circle_ci.sh bazel.coverage ${BAZEL_TEST_TARGETS}
+          no_output_timeout: 60m
+      - store_artifacts:
+          path: /build/envoy/generated
+          destination: /
 
-   format:
-     executor: ubuntu-build
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - run: pip install -r tools/requirements.txt
-       - run: ci/do_circle_ci.sh check_format
-       - run: ci/do_circle_ci.sh check_repositories
-       - run: ci/do_circle_ci.sh check_spelling
-       # TODO(PiotrSikora): re-enable once fixed.
-       # - run: ci/do_circle_ci.sh check_spelling_pedantic
+  format:
+    executor: ubuntu-build
+    steps:
+      - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+      - checkout
+      - run: pip install -r tools/requirements.txt
+      - run: ci/do_circle_ci.sh check_format
+      - run: ci/do_circle_ci.sh check_repositories
+      - run: ci/do_circle_ci.sh check_spelling
+      # TODO(PiotrSikora): re-enable once fixed.
+      # - run: ci/do_circle_ci.sh check_spelling_pedantic
 
-   macos:
-     macos:
-       xcode: "11.0.0"
-     environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults in tests.
-       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
-       CC: clang
-       CXX: clang++
-     steps:
-       - run: sudo sntp -sS time.apple.com
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - restore_cache:
-           keys:
-             - macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
-       - run: ci/mac_ci_setup.sh
-       - run: ci/mac_ci_steps.sh ${BAZEL_TEST_TARGETS}
-       - save_cache:
-           key: macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
-           paths:
-             - /private/var/tmp/_bazel_distiller/
+  macos:
+    macos:
+      xcode: "11.0.0"
+    environment:
+      BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=v8" # v8 only, WAVM segfaults in tests.
+      BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
+      CC: clang
+      CXX: clang++
+    steps:
+      - run: sudo sntp -sS time.apple.com
+      - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+      - checkout
+      - restore_cache:
+          keys:
+            - macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
+      - run: ci/mac_ci_setup.sh
+      - run: ci/mac_ci_steps.sh ${BAZEL_TEST_TARGETS}
+      - save_cache:
+          key: macos-bazel-cache-{{ checksum "bazel/repository_locations.bzl" }}
+          paths:
+            - /private/var/tmp/_bazel_distiller/
 
 workflows:
   version: 2

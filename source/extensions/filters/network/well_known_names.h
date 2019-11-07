@@ -42,14 +42,6 @@ public:
   const std::string ZooKeeperProxy = "envoy.filters.network.zookeeper_proxy";
   // WebAssembly filter
   const std::string Wasm = "envoy.filters.network.wasm";
-
-  // Converts names from v1 to v2
-  const Config::V1Converter v1_converter_;
-
-  // NOTE: Do not add any new filters to this list. All future filters are v2 only.
-  NetworkFilterNameValues()
-      : v1_converter_({ClientSslAuth, Echo, HttpConnectionManager, MongoProxy, RateLimit,
-                       RedisProxy, TcpProxy, ExtAuthorization}) {}
 };
 
 using NetworkFilterNames = ConstSingleton<NetworkFilterNameValues>;
