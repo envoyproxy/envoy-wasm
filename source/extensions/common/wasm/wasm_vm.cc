@@ -27,7 +27,7 @@ WasmVmPtr createWasmVm(absl::string_view runtime) {
     return Null::createVm();
   } else
 #ifdef ENVOY_WASM_V8
-      if (runtime == WasmRuntimeNames::get().v8) {
+      if (runtime == WasmRuntimeNames::get().V8) {
     return V8::createVm();
   } else
 #endif
