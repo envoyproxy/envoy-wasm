@@ -38,6 +38,16 @@ namespace Wasm {
 
 #include "api/wasm/cpp/proxy_wasm_common.h"
 
+// clang-format off
+#define ALL_WASM_STATS(COUNTER, GAUGE)      \
+  COUNTER(created)                             \
+  GAUGE(active, NeverImport)                   \
+// clang-format on
+
+struct WasmStats {
+  ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
+};
+
 class Context;
 class Wasm;
 class WasmVm;
@@ -515,7 +525,7 @@ public:
        Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
        Event::Dispatcher& dispatcher);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
-  ~Wasm() {}
+  ~Wasm();
 
   bool initialize(const std::string& code, bool allow_precompiled = false);
   void startVm(Context* root_context);
@@ -691,7 +701,10 @@ private:
   uint32_t emscripten_abi_minor_version_ = 0;
   uint32_t emscripten_standalone_wasm_ = 0;
 
-  // Stats/Metrics
+  // Host Stats/Metrics
+  WasmStats wasm_stats_;
+
+  // Plulgin Stats/Metrics
   Stats::StatNameSetSharedPtr stat_name_set_;
   uint32_t next_counter_metric_id_ = kMetricTypeCounter;
   uint32_t next_gauge_metric_id_ = kMetricTypeGauge;

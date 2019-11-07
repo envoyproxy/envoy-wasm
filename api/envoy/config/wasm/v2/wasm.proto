@@ -37,6 +37,8 @@ message VmConfig {
 message PluginConfig {
   // A unique name for a filters/services in a VM for use in identifiying the filter/service if
   // multiple filters/services are handled by the same vm_id and root_id and for logging/debugging.
+  // If left blank the plugin will be assigned an integer name corresponding to when it registers
+  // with the VM (i.e. the first plugin to register with the VM will be "0").
   string name = 1;
 
   // A unique ID for a set of filters/services in a VM which will share a RootContext and Contexts

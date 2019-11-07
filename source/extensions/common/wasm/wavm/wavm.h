@@ -10,7 +10,7 @@ namespace Common {
 namespace Wasm {
 namespace Wavm {
 
-std::unique_ptr<WasmVm> createVm();
+std::unique_ptr<WasmVm> createVm(Stats::ScopeSharedPtr scope);
 
 } // namespace Wavm
 } // namespace Wasm

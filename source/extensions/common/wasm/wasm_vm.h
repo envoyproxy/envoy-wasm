@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "envoy/common/exception.h"
+#include "envoy/stats/scope.h"
 
 #include "common/common/logger.h"
 
@@ -264,7 +265,7 @@ struct SaveRestoreContext {
 };
 
 // Create a new low-level WASM VM using runtime of the given type (e.g. "envoy.wasm.runtime.wavm").
-WasmVmPtr createWasmVm(absl::string_view runtime);
+WasmVmPtr createWasmVm(absl::string_view runtime, Stats::ScopeSharedPtr scope);
 
 } // namespace Wasm
 } // namespace Common
