@@ -10,7 +10,7 @@ namespace Common {
 namespace Wasm {
 namespace V8 {
 
-std::unique_ptr<WasmVm> createVm(Stats::ScopeSharedPtr scope);
+WasmVmPtr createVm(Stats::ScopeSharedPtr scope);
 
 } // namespace V8
 } // namespace Wasm
