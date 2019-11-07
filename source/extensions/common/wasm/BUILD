@@ -79,7 +79,7 @@ envoy_cc_library(
     name = "wasm_lib",
     srcs = [
         "wasm.cc",
-        "wasm_handlers.cc"
+        "wasm_handlers.cc",
     ],
     deps = [
         ":wasm_hdr",
