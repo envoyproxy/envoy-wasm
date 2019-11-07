@@ -79,7 +79,7 @@ envoy_cc_library(
         ":wasm_hdr",
         ":wasm_interoperation_lib",
         ":wasm_vm_lib",
-        "//api/wasm/cpp:shared_lib",
+        "//api/wasm/cpp:common_lib",
         "//external:abseil_base",
         "//external:abseil_node_hash_map",
         "//source/common/buffer:buffer_lib",

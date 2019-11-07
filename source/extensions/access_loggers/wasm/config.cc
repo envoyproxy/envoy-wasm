@@ -38,14 +38,14 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
       envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
       nullptr /* listener_metadata */);
 
-  auto callback = [access_log, &context,
+  auto callback = [access_log, &context, plugin,
                    configuration](std::shared_ptr<Common::Wasm::Wasm> base_wasm) {
     auto tls_slot = context.threadLocal().allocateSlot();
 
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
-    tls_slot->set([base_wasm, configuration](Event::Dispatcher& dispatcher) {
+    tls_slot->set([base_wasm, plugin, configuration](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
-          Common::Wasm::getOrCreateThreadLocalWasm(*base_wasm, *configuration, dispatcher));
+          Common::Wasm::getOrCreateThreadLocalWasm(*base_wasm, plugin, *configuration, dispatcher));
     });
     access_log->setTlsSlot(std::move(tls_slot));
   };

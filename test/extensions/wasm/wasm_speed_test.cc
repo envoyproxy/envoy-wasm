@@ -58,8 +58,8 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string vm) 
       name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", vm), vm_id, vm_configuration, plugin, scope,
-      cluster_manager, *dispatcher);
+      absl::StrCat("envoy.wasm.runtime.", vm), vm_id, vm_configuration, scope, cluster_manager,
+      *dispatcher);
   std::string code;
   if (vm == "null") {
     code = "null_vm_plugin";
@@ -70,7 +70,7 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string vm) 
   EXPECT_FALSE(code.empty());
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(root_context);
-  wasm->startForTesting(std::unique_ptr<Common::Wasm::Context>(root_context));
+  wasm->startForTesting(std::unique_ptr<Common::Wasm::Context>(root_context), plugin);
   EXPECT_NE(wasm, nullptr);
   for (auto _ : state) {
     wasm->tickHandler(root_context->id());
