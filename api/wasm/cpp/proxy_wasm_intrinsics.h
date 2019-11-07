@@ -16,8 +16,7 @@ using StringView = std::string_view;
 template <typename T> using Optional = std::optional<T>;
 
 #include "proxy_wasm_enums.h"
-#include "proxy_wasm_result.h"
-#include "proxy_wasm_metadata.h"
+#include "proxy_wasm_common.h"
 #include "proxy_wasm_enums.h"
 #include "proxy_wasm_externs.h"
 #ifndef EMSCRIPTEN_PROTOBUF_LITE

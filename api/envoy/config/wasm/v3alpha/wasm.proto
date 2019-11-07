@@ -15,11 +15,9 @@ import "validate/validate.proto";
 // Configuration for a Wasm VM.
 // [#next-free-field: 6]
 message VmConfig {
-  // A unique ID for a VM permitting multiple filters/services can share the same VM.
-  // If left blank the 'vm_id' will be a hash of the Wasm code enabling the VM to persist over
-  // reconfigurations if the code does not change. This will also result in filters/services running
-  // the same Wasm code sharing the same VM. If set, 'vm_id' should include a version number
-  // otherwise the VM will not be reloaded if the Wasm code changes.
+  // An ID which will be used along with a hash of the wasm code (or null_vm_id) to determine which
+  // VM will be used for the plugin. All plugins which use the same vm_id and code will use the same
+  // VM. May be left blank.
   string vm_id = 1;
 
   // The Wasm runtime type (see source/extensions/commmon/wasm/well_known_names.h).

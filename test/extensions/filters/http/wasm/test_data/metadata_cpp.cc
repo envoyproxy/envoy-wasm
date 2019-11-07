@@ -8,7 +8,7 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders() override;
+  FilterHeadersStatus onRequestHeaders(uint32_t) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
   void onDone() override;
@@ -18,7 +18,8 @@ public:
   explicit ExampleRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
   void onTick() override;
 };
-static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext), ROOT_FACTORY(ExampleRootContext));
+static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
+                                                      ROOT_FACTORY(ExampleRootContext));
 
 void ExampleRootContext::onTick() {
   std::string value;
@@ -28,7 +29,7 @@ void ExampleRootContext::onTick() {
   logDebug(std::string("onTick ") + value);
 }
 
-FilterHeadersStatus ExampleContext::onRequestHeaders() {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   std::string value;
   if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
     logDebug("missing node metadata");
@@ -52,10 +53,14 @@ FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool e
   logError(std::string("onRequestBody ") + value);
   std::string request_string;
   std::string request_string2;
-  if (!getStringValue({"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"}, &request_string)) {
+  if (!getStringValue(
+          {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
+          &request_string)) {
     logDebug("missing request metadata");
   }
-  if (!getStringValue({"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"}, &request_string2)) {
+  if (!getStringValue(
+          {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
+          &request_string2)) {
     logDebug("missing request metadata");
   }
   logTrace(std::string("Struct ") + request_string + " " + request_string2);

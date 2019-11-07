@@ -8,14 +8,16 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders() override;
+  FilterHeadersStatus onRequestHeaders(uint32_t) override;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
-FilterHeadersStatus ExampleContext::onRequestHeaders() {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   auto context_id = id();
-  auto callback = [context_id](std::unique_ptr<WasmData> response_headers, std::unique_ptr<WasmData> body,
-                     std::unique_ptr<WasmData> response_trailers) {
+  auto callback = [context_id](uint32_t, size_t body_size, uint32_t) {
+    auto response_headers = getHeaderMapPairs(HeaderMapType::HttpCallResponseHeaders);
+    auto body = getBufferBytes(BufferType::HttpCallResponseBody, 0, body_size);
+    auto response_trailers = getHeaderMapPairs(HeaderMapType::HttpCallResponseTrailers);
     getContext(context_id)->setEffectiveContext();
     for (auto& p : response_headers->pairs()) {
       logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
@@ -25,7 +27,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
       logWarn(std::string(p.first) + std::string(" -> ") + std::string(p.second));
     }
   };
-  root()->httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}}, "hello world",
-           {{"trail", "cow"}}, 1000, callback);
+  root()->httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}},
+                   "hello world", {{"trail", "cow"}}, 1000, callback);
   return FilterHeadersStatus::StopIteration;
 }

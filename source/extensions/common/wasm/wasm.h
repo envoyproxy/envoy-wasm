@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <map>
 #include <memory>
 
@@ -35,8 +36,7 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-#include "api/wasm/cpp/proxy_wasm_result.h"
-#include "api/wasm/cpp/proxy_wasm_metadata.h"
+#include "api/wasm/cpp/proxy_wasm_common.h"
 
 class Context;
 class Wasm;
@@ -48,6 +48,8 @@ using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::stri
 enum class StreamType : int32_t { Request = 0, Response = 1, MAX = 1 };
 
 // Handlers for functions exported from envoy to wasm.
+Word getConfigurationHandler(void* raw_context, Word address, Word size);
+Word getStatusHandler(void* raw_context, Word status_code, Word address, Word size);
 Word logHandler(void* raw_context, Word level, Word address, Word size);
 Word getPropertyHandler(void* raw_context, Word path_ptr, Word path_size, Word value_ptr_ptr,
                         Word value_size_ptr);
@@ -71,10 +73,9 @@ Word resolveSharedQueueHandler(void* raw_context, Word vm_id_ptr, Word vm_id_siz
 Word dequeueSharedQueueHandler(void* raw_context, Word token, Word data_ptr_ptr,
                                Word data_size_ptr);
 Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Word data_size);
-Word getDownstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
-                                         Word size_ptr);
-Word getUpstreamDataBufferBytesHandler(void* raw_context, Word start, Word length, Word ptr_ptr,
-                                       Word size_ptr);
+Word getBufferBytesHandler(void* raw_context, Word type, Word start, Word length, Word ptr_ptr,
+                           Word size_ptr);
+Word getBufferStatusHandler(void* raw_context, Word type, Word length_ptr, Word flags_ptr);
 Word addHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
                               Word value_ptr, Word value_size);
 Word getHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
@@ -91,7 +92,7 @@ Word getResponseBodyBufferBytesHandler(void* raw_context, Word start, Word lengt
                                        Word size_ptr);
 Word httpCallHandler(void* raw_context, Word uri_ptr, Word uri_size, Word header_pairs_ptr,
                      Word header_pairs_size, Word body_ptr, Word body_size, Word trailer_pairs_ptr,
-                     Word trailer_pairs_size, Word timeout_milliseconds);
+                     Word trailer_pairs_size, Word timeout_milliseconds, Word token_ptr);
 Word defineMetricHandler(void* raw_context, Word metric_type, Word name_ptr, Word name_size,
                          Word result_ptr);
 Word incrementMetricHandler(void* raw_context, Word metric_id, int64_t offset);
@@ -99,10 +100,11 @@ Word recordMetricHandler(void* raw_context, Word metric_id, uint64_t value);
 Word getMetricHandler(void* raw_context, Word metric_id, Word result_uint64_ptr);
 Word grpcCallHandler(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
                      Word service_name_size, Word method_name_ptr, Word method_name_size,
-                     Word request_ptr, Word request_size, Word timeout_milliseconds);
+                     Word request_ptr, Word request_size, Word timeout_milliseconds,
+                     Word token_ptr);
 Word grpcStreamHandler(void* raw_context, Word service_ptr, Word service_size,
                        Word service_name_ptr, Word service_name_size, Word method_name_ptr,
-                       Word method_name_size);
+                       Word method_name_size, Word token_ptr);
 Word grpcCancelHandler(void* raw_context, Word token);
 Word grpcCloseHandler(void* raw_context, Word token);
 Word grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word message_size,
@@ -112,10 +114,6 @@ Word setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_millis
 Word getCurrentTimeNanosecondsHandler(void* raw_context, Word result_uint64_ptr);
 
 Word setEffectiveContextHandler(void* raw_context, Word context_id);
-
-inline MetadataType StreamType2MetadataType(StreamType type) {
-  return static_cast<MetadataType>(type);
-}
 
 struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
   // Http::AsyncClient::Callbacks
@@ -215,8 +213,8 @@ public:
   // VM level downcalls into the WASM code on Context(id == 0).
   //
   virtual bool validateConfiguration(absl::string_view configuration);
-  virtual void onStart(absl::string_view root_id, absl::string_view vm_configuration);
-  virtual bool onConfigure(absl::string_view configuration);
+  virtual bool onStart(absl::string_view vm_configuration);
+  virtual bool onConfigure(absl::string_view plugin_configuration);
 
   //
   // Stream downcalls on Context(id > 0).
@@ -245,8 +243,8 @@ public:
   virtual Http::FilterTrailersStatus onResponseTrailers();
   virtual Http::FilterMetadataStatus onResponseMetadata();
   // Async Response Downcalls on any Context.
-  virtual void onHttpCallResponse(uint32_t token, const Pairs& response_headers,
-                                  absl::string_view response_body, const Pairs& response_trailers);
+  virtual void onHttpCallResponse(uint32_t token, uint32_t headers, uint32_t body_size,
+                                  uint32_t trailers);
   virtual void onQueueReady(uint32_t token);
   // General stream downcall when the stream has ended.
   virtual void onDone();
@@ -261,6 +259,8 @@ public:
   virtual void scriptLog(spdlog::level::level_enum level, absl::string_view message);
   virtual WasmResult setTickPeriod(std::chrono::milliseconds tick_period);
   virtual uint64_t getCurrentTimeNanoseconds();
+  virtual absl::string_view getConfiguration();
+  virtual std::pair<uint32_t, absl::string_view> getStatus();
 
   //
   // AccessLog::Instance
@@ -356,12 +356,6 @@ public:
   virtual WasmResult dequeueSharedQueue(uint32_t token, std::string* data);
   virtual WasmResult enqueueSharedQueue(uint32_t token, absl::string_view value);
 
-  // Network
-  virtual WasmResult getDownstreamDataBufferBytes(uint32_t start, uint32_t length,
-                                                  absl::string_view* data);
-  virtual WasmResult getUpstreamDataBufferBytes(uint32_t start, uint32_t length,
-                                                absl::string_view* data);
-
   // Header/Trailer/Metadata Maps
   virtual void addHeaderMapValue(HeaderMapType type, absl::string_view key,
                                  absl::string_view value);
@@ -375,15 +369,15 @@ public:
 
   virtual uint32_t getHeaderMapSize(HeaderMapType type);
 
-  // Body Buffer
-  virtual absl::string_view getRequestBodyBufferBytes(uint32_t start, uint32_t length);
-  virtual absl::string_view getResponseBodyBufferBytes(uint32_t start, uint32_t length);
+  // Buffer
+  virtual Buffer::Instance* getBuffer(BufferType type);
+  bool end_of_stream() { return end_of_stream_; }
 
   // HTTP
   // Returns a token which will be used with the corresponding onHttpCallResponse.
-  virtual uint32_t httpCall(absl::string_view cluster, const Pairs& request_headers,
-                            absl::string_view request_body, const Pairs& request_trailers,
-                            int timeout_millisconds);
+  virtual WasmResult httpCall(absl::string_view cluster, const Pairs& request_headers,
+                              absl::string_view request_body, const Pairs& request_trailers,
+                              int timeout_millisconds, uint32_t* token_ptr);
   virtual void httpRespond(const Pairs& response_headers, absl::string_view body,
                            const Pairs& response_trailers);
 
@@ -401,12 +395,14 @@ public:
 
   // gRPC
   // Returns a token which will be used with the corresponding onGrpc and grpc calls.
-  virtual uint32_t grpcCall(const envoy::api::v2::core::GrpcService& grpc_service,
-                            absl::string_view service_name, absl::string_view method_name,
-                            absl::string_view request,
-                            const absl::optional<std::chrono::milliseconds>& timeout);
-  virtual uint32_t grpcStream(const envoy::api::v2::core::GrpcService& grpc_service,
-                              absl::string_view service_name, absl::string_view method_name);
+  virtual WasmResult grpcCall(const envoy::api::v2::core::GrpcService& grpc_service,
+                              absl::string_view service_name, absl::string_view method_name,
+                              absl::string_view request,
+                              const absl::optional<std::chrono::milliseconds>& timeout,
+                              uint32_t* token_ptr);
+  virtual WasmResult grpcStream(const envoy::api::v2::core::GrpcService& grpc_service,
+                                absl::string_view service_name, absl::string_view method_name,
+                                uint32_t* token_ptr);
   virtual WasmResult grpcClose(uint32_t token);  // cancel on call, close on stream.
   virtual WasmResult grpcCancel(uint32_t token); // cancel on call, reset on stream.
   virtual WasmResult grpcSend(uint32_t token, absl::string_view message,
@@ -453,34 +449,45 @@ protected:
   uint32_t next_http_call_token_ = 1;
   uint32_t next_grpc_token_ = 1; // Odd tokens are for Calls even for Streams.
 
-  // MB: must be a node-type map as we take persistent references to the entries.
-  std::map<uint32_t, AsyncClientHandler> http_request_;
-  std::map<uint32_t, GrpcCallClientHandler> grpc_call_request_;
-  std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
+  // Network callbacks.
+  Network::ReadFilterCallbacks* network_read_filter_callbacks_{};
+  Network::WriteFilterCallbacks* network_write_filter_callbacks_{};
+
+  // HTTP callbacks.
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};
   Envoy::Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
 
+  // General state.
+  // NB: this are only available (non-nullptr) during the calls requiring it (e.g. onConfigure()).
+  absl::string_view configuration_;
+  uint32_t status_code_{0};
+  absl::string_view status_message_;
+
   // Network filter state.
-  Network::ReadFilterCallbacks* network_read_filter_callbacks_{};
-  Network::WriteFilterCallbacks* network_write_filter_callbacks_{};
   Buffer::Instance* network_downstream_data_buffer_{};
   Buffer::Instance* network_upstream_data_buffer_{};
 
-  // HTTP Filter state.
+  // HTTP filter state.
+  // NB: this are only available (non-nullptr) during the calls corresponding to when the data is
+  // live. For example, request_headers_ is available during the onRequestHeaders() call.
   Http::HeaderMap* request_headers_{};
   Http::HeaderMap* response_headers_{};
-  Buffer::Instance* requestBodyBuffer_{};
-  Buffer::Instance* responseBodyBuffer_{};
-  bool request_end_of_stream_{};
-  bool response_end_of_stream_{};
+  Buffer::Instance* request_body_buffer_{};
+  Buffer::Instance* response_body_buffer_{};
   Http::HeaderMap* request_trailers_{};
   Http::HeaderMap* response_trailers_{};
   Http::MetadataMap* request_metadata_{};
   Http::MetadataMap* response_metadata_{};
 
+  // Only available during onHttpCallResponse.
+  Envoy::Http::MessagePtr* http_call_response_{};
+
   Http::HeaderMap* grpc_create_initial_metadata_{};
   Http::HeaderMapPtr grpc_receive_initial_metadata_{};
   Http::HeaderMapPtr grpc_receive_trailing_metadata_{};
+
+  // NB: this are only available (non-nullptr) during onGrpcReceive.
+  Buffer::InstancePtr grpc_receive_buffer_;
 
   const StreamInfo::StreamInfo* access_log_stream_info_{};
   const Http::HeaderMap* access_log_request_headers_{};
@@ -488,7 +495,14 @@ protected:
   const Http::HeaderMap* access_log_request_trailers_{}; // unused
   const Http::HeaderMap* access_log_response_trailers_{};
 
+  // Temporary state.
   ProtobufWkt::Struct temporary_metadata_;
+  bool end_of_stream_;
+
+  // MB: must be a node-type map as we take persistent references to the entries.
+  std::map<uint32_t, AsyncClientHandler> http_request_;
+  std::map<uint32_t, GrpcCallClientHandler> grpc_call_request_;
+  std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
 };
 
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
@@ -498,21 +512,20 @@ class Wasm : public Envoy::Server::Wasm,
              public std::enable_shared_from_this<Wasm> {
 public:
   Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
-       PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-       Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher);
+       Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+       Event::Dispatcher& dispatcher);
   Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
   ~Wasm() {}
 
   bool initialize(const std::string& code, bool allow_precompiled = false);
   void startVm(Context* root_context);
   bool configure(Context* root_context, absl::string_view configuration);
-  Context* start(); // returns the root Context.
+  Context* start(PluginSharedPtr plugin); // returns the root Context.
 
   absl::string_view vm_id() const { return vm_id_; }
-  const PluginSharedPtr& plugin() const { return plugin_; }
-  void setPlugin(const PluginSharedPtr plugin) { plugin_ = plugin; }
-  WasmVm* wasmVm() const { return wasm_vm_.get(); }
-  Context* vmContext() const { return vm_context_.get(); }
+  absl::string_view vm_id_with_hash() const { return vm_id_with_hash_; }
+  WasmVm* wasm_vm() const { return wasm_vm_.get(); }
+  Context* vm_context() const { return vm_context_.get(); }
   Stats::StatNameSetSharedPtr stat_name_set() const { return stat_name_set_; }
   Context* getRootContext(absl::string_view root_id) { return root_contexts_[root_id].get(); }
   Context* getContext(uint32_t id) {
@@ -555,7 +568,7 @@ public:
 
   // For testing.
   void setContext(Context* context) { contexts_[context->id()] = context; }
-  void startForTesting(std::unique_ptr<Context> root_context);
+  void startForTesting(std::unique_ptr<Context> root_context, PluginSharedPtr plugin);
 
   bool getEmscriptenVersion(uint32_t* emscripten_metadata_major_version,
                             uint32_t* emscripten_metadata_minor_version,
@@ -604,10 +617,9 @@ private:
   void establishEnvironment(); // Language specific environments.
   void getFunctions();         // Get functions call into WASM.
 
-  std::string vm_id_; // The effective vm_id (may be a hash).
+  std::string vm_id_;           // User-provided vm_id.
+  std::string vm_id_with_hash_; // vm_id + hash of code.
   std::unique_ptr<WasmVm> wasm_vm_;
-
-  PluginSharedPtr plugin_;
   Stats::ScopeSharedPtr scope_;
 
   Upstream::ClusterManager& cluster_manager_;
@@ -630,9 +642,9 @@ private:
   WasmCallVoid<1> free_;
 
   // Calls into the VM.
-  WasmCallWord<3> validateConfiguration_;
-  WasmCallVoid<5> onStart_;
-  WasmCallWord<3> onConfigure_;
+  WasmCallWord<2> validateConfiguration_;
+  WasmCallWord<2> onStart_;
+  WasmCallWord<2> onConfigure_;
   WasmCallVoid<1> onTick_;
 
   WasmCallVoid<2> onCreate_;
@@ -643,23 +655,23 @@ private:
   WasmCallVoid<2> onDownstreamConnectionClose_;
   WasmCallVoid<2> onUpstreamConnectionClose_;
 
-  WasmCallWord<1> onRequestHeaders_;
+  WasmCallWord<2> onRequestHeaders_;
   WasmCallWord<3> onRequestBody_;
-  WasmCallWord<1> onRequestTrailers_;
-  WasmCallWord<1> onRequestMetadata_;
+  WasmCallWord<2> onRequestTrailers_;
+  WasmCallWord<2> onRequestMetadata_;
 
-  WasmCallWord<1> onResponseHeaders_;
+  WasmCallWord<2> onResponseHeaders_;
   WasmCallWord<3> onResponseBody_;
-  WasmCallWord<1> onResponseTrailers_;
-  WasmCallWord<1> onResponseMetadata_;
+  WasmCallWord<2> onResponseTrailers_;
+  WasmCallWord<2> onResponseMetadata_;
 
-  WasmCallVoid<8> onHttpCallResponse_;
+  WasmCallVoid<5> onHttpCallResponse_;
 
-  WasmCallVoid<4> onGrpcReceive_;
-  WasmCallVoid<5> onGrpcClose_;
-  WasmCallVoid<2> onGrpcCreateInitialMetadata_;
-  WasmCallVoid<2> onGrpcReceiveInitialMetadata_;
-  WasmCallVoid<2> onGrpcReceiveTrailingMetadata_;
+  WasmCallVoid<3> onGrpcReceive_;
+  WasmCallVoid<3> onGrpcClose_;
+  WasmCallVoid<3> onGrpcCreateInitialMetadata_;
+  WasmCallVoid<3> onGrpcReceiveInitialMetadata_;
+  WasmCallVoid<3> onGrpcReceiveTrailingMetadata_;
 
   WasmCallVoid<2> onQueueReady_;
 
@@ -690,7 +702,7 @@ private:
 };
 
 // These accessors require Wasm.
-inline WasmVm* Context::wasmVm() const { return wasm_->wasmVm(); }
+inline WasmVm* Context::wasmVm() const { return wasm_->wasm_vm(); }
 inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_->clusterManager(); }
 
 using CreateWasmCallback = std::function<void(std::shared_ptr<Wasm>)>;
@@ -704,7 +716,8 @@ void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginShared
                 CreateWasmCallback&& cb);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
-std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
+std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, PluginSharedPtr plugin,
+                                            absl::string_view configuration,
                                             Event::Dispatcher& dispatcher);
 
 void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
@@ -719,14 +732,15 @@ void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
 std::shared_ptr<Wasm> getThreadLocalWasmPtr(absl::string_view vm_id);
 // Get an existing ThreadLocal VM matching 'vm_id' or create one using 'base_wavm' by cloning or by
 // using it it as a template.
-std::shared_ptr<Wasm> getOrCreateThreadLocalWasm(Wasm& base_wasm, absl::string_view configuration,
+std::shared_ptr<Wasm> getOrCreateThreadLocalWasm(Wasm& base_wasm, PluginSharedPtr plugin,
+                                                 absl::string_view configuration,
                                                  Event::Dispatcher& dispatcher);
 
 uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_name);
 
 inline Context::Context() : root_context_(this) {}
 
-inline Context::Context(Wasm* wasm) : wasm_(wasm), root_context_(this), plugin_(wasm->plugin()) {
+inline Context::Context(Wasm* wasm) : wasm_(wasm), root_context_(this) {
   wasm_->contexts_[id_] = this;
 }
 
@@ -743,7 +757,7 @@ inline Context::Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr pl
 }
 
 inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
-  Word a = malloc_(vmContext(), size);
+  Word a = malloc_(vm_context(), size);
   if (!a.u64_) {
     throw WasmException("malloc_ returns nullptr (OOM)");
   }

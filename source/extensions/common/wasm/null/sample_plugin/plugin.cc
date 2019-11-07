@@ -36,7 +36,7 @@ class PluginContext : public Context {
 public:
   explicit PluginContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders() override;
+  FilterHeadersStatus onRequestHeaders(uint32_t headers) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
   void onDone() override;
@@ -44,7 +44,7 @@ public:
 static RegisterContextFactory register_PluginContext(CONTEXT_FACTORY(PluginContext),
                                                      ROOT_FACTORY(PluginRootContext));
 
-FilterHeadersStatus PluginContext::onRequestHeaders() {
+FilterHeadersStatus PluginContext::onRequestHeaders(uint32_t) {
   logDebug(std::string("onRequestHeaders ") + std::to_string(id()));
   auto path = getRequestHeader(":path");
   logInfo(std::string("header path ") + std::string(path->view()));
@@ -56,7 +56,7 @@ FilterHeadersStatus PluginContext::onRequestHeaders() {
 }
 
 FilterDataStatus PluginContext::onRequestBody(size_t body_buffer_length, bool /* end_of_stream */) {
-  auto body = getRequestBodyBufferBytes(0, body_buffer_length);
+  auto body = getBufferBytes(BufferType::HttpRequestBody, 0, body_buffer_length);
   logError(std::string("onRequestBody ") + std::string(body->view()));
   return FilterDataStatus::Continue;
 }

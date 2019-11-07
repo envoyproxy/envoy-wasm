@@ -4,8 +4,7 @@
 #include "proxy_wasm_intrinsics.h"
 
 // Test the low level interface.
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t, uint32_t,
-                                                   uint32_t) {
+extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onStart(uint32_t, uint32_t) {
   uint32_t c, g, h;
   CHECK_RESULT(defineMetric(MetricType::Counter, "test_counter", &c));
   CHECK_RESULT(defineMetric(MetricType::Gauge, "test_gauges", &g));
@@ -30,6 +29,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t,
   if (getMetric(h, &value) != WasmResult::Ok) {
     logError(std::string("get histogram = Unsupported"));
   }
+  return 1;
 }
 
 // Test the higher level interface.

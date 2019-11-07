@@ -5,11 +5,11 @@
 
 static int* badptr = nullptr;
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onStart(uint32_t, uint32_t, uint32_t, uint32_t,
-                                                   uint32_t) {
+extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onStart(uint32_t, uint32_t) {
   logError("before badptr");
   *badptr = 1;
   logError("after badptr");
+  return 1;
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t context_id) {

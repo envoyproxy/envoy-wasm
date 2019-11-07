@@ -74,8 +74,7 @@ template <size_t N> using WasmCallWord = std::function<WasmFuncType<N, Word, Con
 
 #define FOR_ALL_WASM_VM_EXPORTS(_f)                                                                \
   _f(WasmCallVoid<0>) _f(WasmCallVoid<1>) _f(WasmCallVoid<2>) _f(WasmCallVoid<3>)                  \
-      _f(WasmCallVoid<4>) _f(WasmCallVoid<5>) _f(WasmCallVoid<8>) _f(WasmCallWord<0>)              \
-          _f(WasmCallWord<1>) _f(WasmCallWord<3>)
+      _f(WasmCallVoid<5>) _f(WasmCallWord<1>) _f(WasmCallWord<2>) _f(WasmCallWord<3>)
 
 // Calls out of the WASM VM.
 // 1st arg is always a pointer to raw_context (void*).
@@ -96,8 +95,9 @@ using WasmCallback_dd = double (*)(void*, double);
       _f(WasmCallbackVoid<4>) _f(WasmCallbackWord<0>) _f(WasmCallbackWord<1>)                      \
           _f(WasmCallbackWord<2>) _f(WasmCallbackWord<3>) _f(WasmCallbackWord<4>)                  \
               _f(WasmCallbackWord<5>) _f(WasmCallbackWord<6>) _f(WasmCallbackWord<7>)              \
-                  _f(WasmCallbackWord<8>) _f(WasmCallbackWord<9>) _f(WasmCallback_WWl)             \
-                      _f(WasmCallback_WWlWW) _f(WasmCallback_WWm) _f(WasmCallback_dd)
+                  _f(WasmCallbackWord<8>) _f(WasmCallbackWord<9>) _f(WasmCallbackWord<10>)         \
+                      _f(WasmCallback_WWl) _f(WasmCallback_WWlWW) _f(WasmCallback_WWm)             \
+                          _f(WasmCallback_dd)
 
 // Wasm VM instance. Provides the low level WASM interface.
 class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
