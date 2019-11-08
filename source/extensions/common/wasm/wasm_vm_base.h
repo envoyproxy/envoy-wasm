@@ -1,5 +1,7 @@
 #pragma once
 
+#include "absl/strings/str_cat.h"
+
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats.h"
 #include "envoy/stats/stats_macros.h"
@@ -33,9 +35,9 @@ public:
   WasmVmBase(Stats::ScopeSharedPtr scope, VmGlobalStats* global_stats_ptr,
              absl::string_view runtime)
       : scope_(scope), global_stats_ptr_(global_stats_ptr),
-        stats_(VmStats{ALL_VM_STATS(
-            POOL_COUNTER_PREFIX(*scope_, std::string("wasm_vm.") + std::string(runtime) + "."),
-            POOL_GAUGE_PREFIX(*scope_, std::string("wasm_vm.") + std::string(runtime) + "."))}),
+        stats_(VmStats{
+            ALL_VM_STATS(POOL_COUNTER_PREFIX(*scope_, absl::StrCat("wasm_vm.", runtime, ".")),
+                         POOL_GAUGE_PREFIX(*scope_, absl::StrCat("wasm_vm.", runtime, ".")))}),
         runtime_(std::string(runtime)) {
     global_stats_ptr_->active_++;
     stats_.created_.inc();
