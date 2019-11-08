@@ -25,6 +25,15 @@ envoy_cc_library(
     deps = [
         ":well_known_names",
         "//source/common/common:minimal_logger_lib",
+        "//source/common/stats:stats_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "wasm_vm_base",
+    hdrs = ["wasm_vm_base.h"],
+    deps = [
+        "//source/common/stats:stats_lib",
     ],
 )
 
@@ -55,7 +64,7 @@ envoy_cc_library(
         "//include/envoy/upstream:cluster_manager_interface",
         "//source/common/common:stack_array",
         "//source/common/config:datasource_lib",
-        "//source/common/stats:symbol_table_lib",
+        "//source/common/stats:stats_lib",
         "//source/extensions/filters/http:well_known_names",
         "@envoy_api//envoy/config/filter/http/wasm/v2:pkg_cc_proto",
     ],

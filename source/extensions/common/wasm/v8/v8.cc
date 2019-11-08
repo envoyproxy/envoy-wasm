@@ -6,6 +6,7 @@
 
 #include "common/common/assert.h"
 
+#include "extensions/common/wasm/wasm_vm_base.h"
 #include "extensions/common/wasm/well_known_names.h"
 
 #include "absl/container/flat_hash_map.h"
@@ -17,6 +18,8 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 namespace V8 {
+
+VmGlobalStats global_stats_;
 
 wasm::Engine* engine() {
   static const auto engine = wasm::Engine::make();
@@ -33,9 +36,9 @@ struct FuncData {
 
 using FuncDataPtr = std::unique_ptr<FuncData>;
 
-class V8 : public WasmVm {
+class V8 : public WasmVmBase {
 public:
-  V8() = default;
+  V8(Stats::ScopeSharedPtr scope) : WasmVmBase(scope, &global_stats_, WasmRuntimeNames::get().V8) {}
 
   // Extensions::Common::Wasm::WasmVm
   absl::string_view runtime() override { return WasmRuntimeNames::get().V8; }
@@ -562,7 +565,7 @@ void V8::getModuleFunctionImpl(absl::string_view function_name,
   };
 }
 
-WasmVmPtr createVm() { return std::make_unique<V8>(); }
+WasmVmPtr createVm(Stats::ScopeSharedPtr scope) { return std::make_unique<V8>(scope); }
 
 } // namespace V8
 } // namespace Wasm

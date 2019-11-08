@@ -34,6 +34,7 @@
 #include "absl/base/casts.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_map.h"
+#include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 #include "eval/eval/field_access.h"
 #include "eval/eval/field_backed_list_impl.h"
@@ -57,7 +58,8 @@ namespace Wasm {
 
 namespace {
 
-// TODO: move to utils during upstreaming.
+std::atomic<int64_t> active_wasm_;
+
 std::string base64Sha256(absl::string_view data) {
   std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
   EVP_MD_CTX* ctx(EVP_MD_CTX_new());
@@ -2057,13 +2059,21 @@ WasmResult Context::getMetric(uint32_t metric_id, uint64_t* result_uint64_ptr) {
   return WasmResult::BadArgument;
 }
 
-Wasm::Wasm(absl::string_view vm, absl::string_view vm_id, absl::string_view vm_configuration,
+Wasm::Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
            Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
            Event::Dispatcher& dispatcher)
-    : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(vm)), scope_(scope),
-      cluster_manager_(cluster_manager), dispatcher_(dispatcher),
+    : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(runtime, scope)),
+      scope_(scope), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      stat_name_set_(scope_->symbolTable().makeSet("Wasm").release()) {}
+      wasm_stats_(WasmStats{
+          ALL_WASM_STATS(POOL_COUNTER_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")),
+                         POOL_GAUGE_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")))}),
+      stat_name_set_(scope_->symbolTable().makeSet("Wasm").release()) {
+  active_wasm_++;
+  wasm_stats_.active_.set(active_wasm_);
+  wasm_stats_.created_.inc();
+  ENVOY_LOG(debug, "Base Wasm created {} now active", active_wasm_);
+}
 
 std::string Plugin::makeLogPrefix() const {
   std::string prefix;
@@ -2232,17 +2242,28 @@ Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
       vm_id_with_hash_(wasm.vm_id_with_hash_), scope_(wasm.scope_),
       cluster_manager_(wasm.cluster_manager_), dispatcher_(dispatcher),
-      time_source_(dispatcher.timeSource()), stat_name_set_(wasm.stat_name_set_) {
+      time_source_(dispatcher.timeSource()), wasm_stats_(wasm.wasm_stats_),
+      stat_name_set_(wasm.stat_name_set_) {
   if (wasm.wasm_vm()->cloneable()) {
     wasm_vm_ = wasm.wasm_vm()->clone();
     vm_context_ = std::make_shared<Context>(this);
     getFunctions();
   } else {
-    wasm_vm_ = Common::Wasm::createWasmVm(wasm.wasm_vm()->runtime());
+    wasm_vm_ = Common::Wasm::createWasmVm(wasm.wasm_vm()->runtime(), scope_);
     if (!initialize(wasm.code(), wasm.allow_precompiled())) {
       throw WasmException("Failed to initialize WASM code");
     }
   }
+  active_wasm_++;
+  wasm_stats_.active_.set(active_wasm_);
+  wasm_stats_.created_.inc();
+  ENVOY_LOG(debug, "Thread-Local Wasm created {} now active", active_wasm_);
+}
+
+Wasm::~Wasm() {
+  active_wasm_--;
+  wasm_stats_.active_.set(active_wasm_);
+  ENVOY_LOG(debug, "~Wasm {} remaining active", active_wasm_);
 }
 
 bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
