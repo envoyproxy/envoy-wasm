@@ -1,12 +1,12 @@
 #pragma once
 
-#include "absl/strings/str_cat.h"
-
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats.h"
 #include "envoy/stats/stats_macros.h"
 
 #include "extensions/common/wasm/wasm_vm.h"
+
+#include "absl/strings/str_cat.h"
 
 namespace Envoy {
 namespace Extensions {
