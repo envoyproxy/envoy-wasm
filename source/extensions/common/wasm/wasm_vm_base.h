@@ -6,11 +6,8 @@
 
 #include "extensions/common/wasm/wasm_vm.h"
 
-<<<<<<< HEAD
-=======
 #include "absl/strings/str_cat.h"
 
->>>>>>> 3523337b297ba20a73dced499781f7c145d6f0d4
 namespace Envoy {
 namespace Extensions {
 namespace Common {
