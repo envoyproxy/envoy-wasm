@@ -2264,6 +2264,11 @@ Wasm::~Wasm() {
   active_wasm_--;
   wasm_stats_.active_.set(active_wasm_);
   ENVOY_LOG(debug, "~Wasm {} remaining active", active_wasm_);
+  for (auto& p : timer_) {
+    if (p.second && p.second->enabled()) {
+      p.second->disableTimer();
+    }
+  }
 }
 
 bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
