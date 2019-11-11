@@ -34,6 +34,7 @@
 #include "absl/base/casts.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_map.h"
+#include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 #include "eval/eval/field_access.h"
 #include "eval/eval/field_backed_list_impl.h"
@@ -2064,9 +2065,9 @@ Wasm::Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view
     : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(runtime, scope)),
       scope_(scope), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
-      wasm_stats_(WasmStats{ALL_WASM_STATS(
-          POOL_COUNTER_PREFIX(*scope_, std::string("wasm.") + std::string(runtime) + "."),
-          POOL_GAUGE_PREFIX(*scope_, std::string("wasm.") + std::string(runtime) + "."))}),
+      wasm_stats_(WasmStats{
+          ALL_WASM_STATS(POOL_COUNTER_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")),
+                         POOL_GAUGE_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")))}),
       stat_name_set_(scope_->symbolTable().makeSet("Wasm").release()) {
   active_wasm_++;
   wasm_stats_.active_.set(active_wasm_);
