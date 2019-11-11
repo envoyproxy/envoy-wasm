@@ -93,7 +93,7 @@ TEST_P(WasmTestMatrix, Logging) {
   wasm->setContext(context.get());
   auto root_context = context.get();
   wasm->startForTesting(std::move(context), plugin);
-  wasm->configure(root_context, "configure-test");
+  wasm->configure(root_context, plugin, "configure-test");
   wasm->tickHandler(root_context->id());
 }
 
