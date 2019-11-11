@@ -20,20 +20,20 @@ namespace Wasm {
 thread_local Envoy::Extensions::Common::Wasm::Context* current_context_ = nullptr;
 thread_local uint32_t effective_context_id_ = 0;
 
-WasmVmPtr createWasmVm(absl::string_view runtime) {
+WasmVmPtr createWasmVm(absl::string_view runtime, Stats::ScopeSharedPtr scope) {
   if (runtime.empty()) {
     throw WasmVmException("Failed to create WASM VM with unspecified runtime.");
   } else if (runtime == WasmRuntimeNames::get().Null) {
-    return Null::createVm();
+    return Null::createVm(scope);
   } else
 #ifdef ENVOY_WASM_V8
       if (runtime == WasmRuntimeNames::get().V8) {
-    return V8::createVm();
+    return V8::createVm(scope);
   } else
 #endif
 #ifdef ENVOY_WASM_WAVM
       if (runtime == WasmRuntimeNames::get().Wavm) {
-    return Wavm::createVm();
+    return Wavm::createVm(scope);
   } else
 #endif
   {

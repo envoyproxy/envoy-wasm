@@ -9,6 +9,7 @@
 #include "common/common/assert.h"
 #include "common/common/logger.h"
 
+#include "extensions/common/wasm/wasm_vm_base.h"
 #include "extensions/common/wasm/well_known_names.h"
 
 #include "WAVM/IR/Module.h"
@@ -66,6 +67,17 @@ struct Wavm;
 
 namespace {
 
+#define CALL_WITH_CONTEXT(_x, _context)                                                            \
+  do {                                                                                             \
+    SaveRestoreContext _saved_context(static_cast<Context*>(_context));                            \
+    WAVM::Runtime::catchRuntimeExceptions([&] { _x; },                                             \
+                                          [&](WAVM::Runtime::Exception* exception) {               \
+                                            auto description = describeException(exception);       \
+                                            destroyException(exception);                           \
+                                            throw WasmException(description);                      \
+                                          });                                                      \
+  } while (0)
+
 struct WasmUntaggedValue : public WAVM::IR::UntaggedValue {
   WasmUntaggedValue() = default;
   WasmUntaggedValue(I32 inI32) { i32 = inI32; }
@@ -81,16 +93,7 @@ using Context = Common::Wasm::Context; // Shadowing WAVM::Runtime::Context.
 
 const Logger::Id wasmId = Logger::Id::wasm;
 
-#define CALL_WITH_CONTEXT(_x, _context)                                                            \
-  do {                                                                                             \
-    SaveRestoreContext _saved_context(static_cast<Context*>(_context));                            \
-    WAVM::Runtime::catchRuntimeExceptions([&] { _x; },                                             \
-                                          [&](WAVM::Runtime::Exception* exception) {               \
-                                            auto description = describeException(exception);       \
-                                            destroyException(exception);                           \
-                                            throw WasmException(description);                      \
-                                          });                                                      \
-  } while (0)
+VmGlobalStats global_stats_;
 
 class RootResolver : public WAVM::Runtime::Resolver, public Logger::Loggable<wasmId> {
 public:
@@ -168,8 +171,9 @@ struct PairHash {
   }
 };
 
-struct Wavm : public WasmVm {
-  Wavm() = default;
+struct Wavm : public WasmVmBase {
+  Wavm(Stats::ScopeSharedPtr scope)
+      : WasmVmBase(scope, &global_stats_, WasmRuntimeNames::get().Wavm) {}
   ~Wavm() override;
 
   // WasmVm
@@ -226,7 +230,7 @@ Wavm::~Wavm() {
 }
 
 std::unique_ptr<WasmVm> Wavm::clone() {
-  auto wavm = std::make_unique<Wavm>();
+  auto wavm = std::make_unique<Wavm>(scope_);
   wavm->compartment_ = WAVM::Runtime::cloneCompartment(compartment_);
   wavm->memory_ = WAVM::Runtime::remapToClonedCompartment(memory_, wavm->compartment_);
   wavm->memory_base_ = WAVM::Runtime::getMemoryBaseAddress(wavm->memory_);
@@ -327,7 +331,9 @@ absl::string_view Wavm::getCustomSection(absl::string_view name) {
   return {};
 }
 
-std::unique_ptr<WasmVm> createVm() { return std::make_unique<Wavm>(); }
+std::unique_ptr<WasmVm> createVm(Stats::ScopeSharedPtr scope) {
+  return std::make_unique<Wavm>(scope);
+}
 
 } // namespace Wavm
 
