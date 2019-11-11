@@ -2265,7 +2265,7 @@ Wasm::~Wasm() {
   wasm_stats_.active_.set(active_wasm_);
   ENVOY_LOG(debug, "~Wasm {} remaining active", active_wasm_);
   for (auto& p : timer_) {
-    if (p.second->enabled()) {
+    if (p.second && p.second->enabled()) {
       p.second->disableTimer();
     }
   }
