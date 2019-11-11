@@ -1398,9 +1398,9 @@ Context::~Context() {
 void Wasm::registerCallbacks() {
 #define _REGISTER(_fn)                                                                             \
   wasm_vm_->registerCallback(                                                                      \
-      "env", #_fn, &_fn##Handler,                                                                  \
-      &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
-                                   _fn##Handler>::convertFunctionWordToUint32)
+      "env", #_fn, &Exports::_fn,                                                                  \
+      &ConvertFunctionWordToUint32<decltype(Exports::_fn),                                         \
+                                   Exports::_fn>::convertFunctionWordToUint32)
   if (is_emscripten_) {
     _REGISTER(pthread_equal);
   }
@@ -1408,9 +1408,9 @@ void Wasm::registerCallbacks() {
 
 #define _REGISTER_WASI(_fn)                                                                        \
   wasm_vm_->registerCallback(                                                                      \
-      "wasi_unstable", #_fn, &wasi_unstable_##_fn##Handler,                                        \
-      &ConvertFunctionWordToUint32<decltype(wasi_unstable_##_fn##Handler),                         \
-                                   wasi_unstable_##_fn##Handler>::convertFunctionWordToUint32)
+      "wasi_unstable", #_fn, &Exports::wasi_unstable_##_fn,                                        \
+      &ConvertFunctionWordToUint32<decltype(Exports::wasi_unstable_##_fn),                         \
+                                   Exports::wasi_unstable_##_fn>::convertFunctionWordToUint32)
   if (is_emscripten_) {
     _REGISTER_WASI(fd_write);
     _REGISTER_WASI(fd_seek);
@@ -1424,9 +1424,9 @@ void Wasm::registerCallbacks() {
   // Calls with the "proxy_" prefix.
 #define _REGISTER_PROXY(_fn)                                                                       \
   wasm_vm_->registerCallback(                                                                      \
-      "env", "proxy_" #_fn, &_fn##Handler,                                                         \
-      &ConvertFunctionWordToUint32<decltype(_fn##Handler),                                         \
-                                   _fn##Handler>::convertFunctionWordToUint32);
+      "env", "proxy_" #_fn, &Exports::_fn,                                                         \
+      &ConvertFunctionWordToUint32<decltype(Exports::_fn),                                         \
+                                   Exports::_fn>::convertFunctionWordToUint32);
   _REGISTER_PROXY(log);
 
   _REGISTER_PROXY(getStatus);

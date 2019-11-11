@@ -21,7 +21,7 @@
 #include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
 
-#include "extensions/common/wasm/wasm_handlers.h"
+#include "extensions/common/wasm/wasm_exports.h"
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/http/well_known_names.h"

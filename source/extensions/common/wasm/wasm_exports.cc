@@ -4,6 +4,7 @@ namespace Envoy {
 namespace Extensions {
 namespace Common {
 namespace Wasm {
+namespace Exports {
 
 // Any currently executing Wasm call context.
 #define WASM_CONTEXT(_c)                                                                           \
@@ -104,10 +105,9 @@ bool getPairs(Context* context, const Pairs& result, uint64_t ptr_ptr, uint64_t 
 
 } // namespace
 
-// General Handlers.
+// General ABI.
 
-Word setPropertyHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
-                        Word value_size) {
+Word setProperty(void* raw_context, Word key_ptr, Word key_size, Word value_ptr, Word value_size) {
   auto context = WASM_CONTEXT(raw_context);
   auto key = context->wasmVm()->getMemory(key_ptr.u64_, key_size.u64_);
   auto value = context->wasmVm()->getMemory(value_ptr.u64_, value_size.u64_);
@@ -118,8 +118,8 @@ Word setPropertyHandler(void* raw_context, Word key_ptr, Word key_size, Word val
 }
 
 // Generic selector
-Word getPropertyHandler(void* raw_context, Word path_ptr, Word path_size, Word value_ptr_ptr,
-                        Word value_size_ptr) {
+Word getProperty(void* raw_context, Word path_ptr, Word path_size, Word value_ptr_ptr,
+                 Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto path = context->wasmVm()->getMemory(path_ptr.u64_, path_size.u64_);
   if (!path.has_value()) {
@@ -136,7 +136,7 @@ Word getPropertyHandler(void* raw_context, Word path_ptr, Word path_size, Word v
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word getConfigurationHandler(void* raw_context, Word value_ptr_ptr, Word value_size_ptr) {
+Word getConfiguration(void* raw_context, Word value_ptr_ptr, Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto value = context->getConfiguration();
   if (!context->wasm()->copyToPointerSize(value, value_ptr_ptr.u64_, value_size_ptr.u64_)) {
@@ -145,7 +145,7 @@ Word getConfigurationHandler(void* raw_context, Word value_ptr_ptr, Word value_s
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word getStatusHandler(void* raw_context, Word code_ptr, Word value_ptr_ptr, Word value_size_ptr) {
+Word getStatus(void* raw_context, Word code_ptr, Word value_ptr_ptr, Word value_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto status = context->getStatus();
   if (!context->wasm()->setDatatype(code_ptr.u64_, status.first)) {
@@ -157,25 +157,25 @@ Word getStatusHandler(void* raw_context, Word code_ptr, Word value_ptr_ptr, Word
   return wasmResultToWord(WasmResult::Ok);
 }
 
-// HTTP Handlers
+// HTTP
 
 // Continue/Reply/Route
-Word continueRequestHandler(void* raw_context) {
+Word continueRequest(void* raw_context) {
   auto context = WASM_CONTEXT(raw_context);
   context->continueRequest();
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word continueResponseHandler(void* raw_context) {
+Word continueResponse(void* raw_context) {
   auto context = WASM_CONTEXT(raw_context);
   context->continueResponse();
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word sendLocalResponseHandler(void* raw_context, Word response_code, Word response_code_details_ptr,
-                              Word response_code_details_size, Word body_ptr, Word body_size,
-                              Word additional_response_header_pairs_ptr,
-                              Word additional_response_header_pairs_size, Word grpc_code) {
+Word sendLocalResponse(void* raw_context, Word response_code, Word response_code_details_ptr,
+                       Word response_code_details_size, Word body_ptr, Word body_size,
+                       Word additional_response_header_pairs_ptr,
+                       Word additional_response_header_pairs_size, Word grpc_code) {
   auto context = WASM_CONTEXT(raw_context);
   auto details =
       context->wasmVm()->getMemory(response_code_details_ptr.u64_, response_code_details_size.u64_);
@@ -201,7 +201,7 @@ Word sendLocalResponseHandler(void* raw_context, Word response_code, Word respon
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word setEffectiveContextHandler(void* raw_context, Word context_id) {
+Word setEffectiveContext(void* raw_context, Word context_id) {
   auto context = WASM_CONTEXT(raw_context);
   uint32_t cid = static_cast<uint32_t>(context_id.u64_);
   auto c = context->wasm()->getContext(cid);
@@ -212,15 +212,15 @@ Word setEffectiveContextHandler(void* raw_context, Word context_id) {
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word clearRouteCacheHandler(void* raw_context) {
+Word clearRouteCache(void* raw_context) {
   auto context = WASM_CONTEXT(raw_context);
   context->clearRouteCache();
   return wasmResultToWord(WasmResult::Ok);
 }
 
 // SharedData
-Word getSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr_ptr,
-                          Word value_size_ptr, Word cas_ptr) {
+Word getSharedData(void* raw_context, Word key_ptr, Word key_size, Word value_ptr_ptr,
+                   Word value_size_ptr, Word cas_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto key = context->wasmVm()->getMemory(key_ptr.u64_, key_size.u64_);
   if (!key) {
@@ -240,8 +240,8 @@ Word getSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word v
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word setSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
-                          Word value_size, Word cas) {
+Word setSharedData(void* raw_context, Word key_ptr, Word key_size, Word value_ptr, Word value_size,
+                   Word cas) {
   auto context = WASM_CONTEXT(raw_context);
   auto key = context->wasmVm()->getMemory(key_ptr.u64_, key_size.u64_);
   auto value = context->wasmVm()->getMemory(value_ptr.u64_, value_size.u64_);
@@ -251,8 +251,8 @@ Word setSharedDataHandler(void* raw_context, Word key_ptr, Word key_size, Word v
   return wasmResultToWord(context->setSharedData(key.value(), value.value(), cas.u64_));
 }
 
-Word registerSharedQueueHandler(void* raw_context, Word queue_name_ptr, Word queue_name_size,
-                                Word token_ptr) {
+Word registerSharedQueue(void* raw_context, Word queue_name_ptr, Word queue_name_size,
+                         Word token_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto queue_name = context->wasmVm()->getMemory(queue_name_ptr.u64_, queue_name_size.u64_);
   if (!queue_name) {
@@ -265,8 +265,7 @@ Word registerSharedQueueHandler(void* raw_context, Word queue_name_ptr, Word que
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word dequeueSharedQueueHandler(void* raw_context, Word token, Word data_ptr_ptr,
-                               Word data_size_ptr) {
+Word dequeueSharedQueue(void* raw_context, Word token, Word data_ptr_ptr, Word data_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   std::string data;
   WasmResult result = context->dequeueSharedQueue(token.u32(), &data);
@@ -279,8 +278,8 @@ Word dequeueSharedQueueHandler(void* raw_context, Word token, Word data_ptr_ptr,
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word resolveSharedQueueHandler(void* raw_context, Word vm_id_ptr, Word vm_id_size,
-                               Word queue_name_ptr, Word queue_name_size, Word token_ptr) {
+Word resolveSharedQueue(void* raw_context, Word vm_id_ptr, Word vm_id_size, Word queue_name_ptr,
+                        Word queue_name_size, Word token_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto vm_id = context->wasmVm()->getMemory(vm_id_ptr.u64_, vm_id_size.u64_);
   auto queue_name = context->wasmVm()->getMemory(queue_name_ptr.u64_, queue_name_size.u64_);
@@ -298,7 +297,7 @@ Word resolveSharedQueueHandler(void* raw_context, Word vm_id_ptr, Word vm_id_siz
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Word data_size) {
+Word enqueueSharedQueue(void* raw_context, Word token, Word data_ptr, Word data_size) {
   auto context = WASM_CONTEXT(raw_context);
   auto data = context->wasmVm()->getMemory(data_ptr.u64_, data_size.u64_);
   if (!data) {
@@ -308,8 +307,8 @@ Word enqueueSharedQueueHandler(void* raw_context, Word token, Word data_ptr, Wor
 }
 
 // Header/Trailer/Metadata Maps
-Word addHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
-                              Word value_ptr, Word value_size) {
+Word addHeaderMapValue(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
+                       Word value_size) {
   if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -323,8 +322,8 @@ Word addHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word k
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word getHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
-                              Word value_ptr_ptr, Word value_size_ptr) {
+Word getHeaderMapValue(void* raw_context, Word type, Word key_ptr, Word key_size,
+                       Word value_ptr_ptr, Word value_size_ptr) {
   if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -338,8 +337,8 @@ Word getHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word k
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word replaceHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size,
-                                  Word value_ptr, Word value_size) {
+Word replaceHeaderMapValue(void* raw_context, Word type, Word key_ptr, Word key_size,
+                           Word value_ptr, Word value_size) {
   if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -353,7 +352,7 @@ Word replaceHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Wo
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word removeHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Word key_size) {
+Word removeHeaderMapValue(void* raw_context, Word type, Word key_ptr, Word key_size) {
   if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -366,7 +365,7 @@ Word removeHeaderMapValueHandler(void* raw_context, Word type, Word key_ptr, Wor
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word getHeaderMapPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
+Word getHeaderMapPairs(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
   if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -378,7 +377,7 @@ Word getHeaderMapPairsHandler(void* raw_context, Word type, Word ptr_ptr, Word s
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word setHeaderMapPairsHandler(void* raw_context, Word type, Word ptr, Word size) {
+Word setHeaderMapPairs(void* raw_context, Word type, Word ptr, Word size) {
   if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -391,7 +390,7 @@ Word setHeaderMapPairsHandler(void* raw_context, Word type, Word ptr, Word size)
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word getHeaderMapSizeHandler(void* raw_context, Word type, Word result_ptr) {
+Word getHeaderMapSize(void* raw_context, Word type, Word result_ptr) {
   if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -404,8 +403,8 @@ Word getHeaderMapSizeHandler(void* raw_context, Word type, Word result_ptr) {
 }
 
 // Buffer
-Word getBufferBytesHandler(void* raw_context, Word type, Word start, Word length, Word ptr_ptr,
-                           Word size_ptr) {
+Word getBufferBytes(void* raw_context, Word type, Word start, Word length, Word ptr_ptr,
+                    Word size_ptr) {
   if (type.u64_ > static_cast<uint64_t>(BufferType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -436,7 +435,7 @@ Word getBufferBytesHandler(void* raw_context, Word type, Word start, Word length
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word getBufferStatusHandler(void* raw_context, Word type, Word length_ptr, Word flags_ptr) {
+Word getBufferStatus(void* raw_context, Word type, Word length_ptr, Word flags_ptr) {
   if (type.u64_ > static_cast<uint64_t>(BufferType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -456,9 +455,9 @@ Word getBufferStatusHandler(void* raw_context, Word type, Word length_ptr, Word 
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word httpCallHandler(void* raw_context, Word uri_ptr, Word uri_size, Word header_pairs_ptr,
-                     Word header_pairs_size, Word body_ptr, Word body_size, Word trailer_pairs_ptr,
-                     Word trailer_pairs_size, Word timeout_milliseconds, Word token_ptr) {
+Word httpCall(void* raw_context, Word uri_ptr, Word uri_size, Word header_pairs_ptr,
+              Word header_pairs_size, Word body_ptr, Word body_size, Word trailer_pairs_ptr,
+              Word trailer_pairs_size, Word timeout_milliseconds, Word token_ptr) {
   auto context = WASM_CONTEXT(raw_context)->root_context();
   auto uri = context->wasmVm()->getMemory(uri_ptr.u64_, uri_size.u64_);
   auto body = context->wasmVm()->getMemory(body_ptr.u64_, body_size.u64_);
@@ -481,8 +480,8 @@ Word httpCallHandler(void* raw_context, Word uri_ptr, Word uri_size, Word header
   return wasmResultToWord(result);
 }
 
-Word defineMetricHandler(void* raw_context, Word metric_type, Word name_ptr, Word name_size,
-                         Word metric_id_ptr) {
+Word defineMetric(void* raw_context, Word metric_type, Word name_ptr, Word name_size,
+                  Word metric_id_ptr) {
   if (metric_type.u64_ > static_cast<uint64_t>(Context::MetricType::Max)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
@@ -503,17 +502,17 @@ Word defineMetricHandler(void* raw_context, Word metric_type, Word name_ptr, Wor
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word incrementMetricHandler(void* raw_context, Word metric_id, int64_t offset) {
+Word incrementMetric(void* raw_context, Word metric_id, int64_t offset) {
   auto context = WASM_CONTEXT(raw_context);
   return wasmResultToWord(context->incrementMetric(metric_id.u64_, offset));
 }
 
-Word recordMetricHandler(void* raw_context, Word metric_id, uint64_t value) {
+Word recordMetric(void* raw_context, Word metric_id, uint64_t value) {
   auto context = WASM_CONTEXT(raw_context);
   return wasmResultToWord(context->recordMetric(metric_id.u64_, value));
 }
 
-Word getMetricHandler(void* raw_context, Word metric_id, Word result_uint64_ptr) {
+Word getMetric(void* raw_context, Word metric_id, Word result_uint64_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   uint64_t value = 0;
   auto result = context->getMetric(metric_id.u64_, &value);
@@ -526,10 +525,9 @@ Word getMetricHandler(void* raw_context, Word metric_id, Word result_uint64_ptr)
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word grpcCallHandler(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
-                     Word service_name_size, Word method_name_ptr, Word method_name_size,
-                     Word request_ptr, Word request_size, Word timeout_milliseconds,
-                     Word token_ptr) {
+Word grpcCall(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
+              Word service_name_size, Word method_name_ptr, Word method_name_size, Word request_ptr,
+              Word request_size, Word timeout_milliseconds, Word token_ptr) {
   auto context = WASM_CONTEXT(raw_context)->root_context();
   auto service = context->wasmVm()->getMemory(service_ptr.u64_, service_size.u64_);
   auto service_name = context->wasmVm()->getMemory(service_name_ptr.u64_, service_name_size.u64_);
@@ -555,9 +553,9 @@ Word grpcCallHandler(void* raw_context, Word service_ptr, Word service_size, Wor
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word grpcStreamHandler(void* raw_context, Word service_ptr, Word service_size,
-                       Word service_name_ptr, Word service_name_size, Word method_name_ptr,
-                       Word method_name_size, Word token_ptr) {
+Word grpcStream(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
+                Word service_name_size, Word method_name_ptr, Word method_name_size,
+                Word token_ptr) {
   auto context = WASM_CONTEXT(raw_context)->root_context();
   auto service = context->wasmVm()->getMemory(service_ptr.u64_, service_size.u64_);
   auto service_name = context->wasmVm()->getMemory(service_name_ptr.u64_, service_name_size.u64_);
@@ -581,18 +579,17 @@ Word grpcStreamHandler(void* raw_context, Word service_ptr, Word service_size,
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word grpcCancelHandler(void* raw_context, Word token) {
+Word grpcCancel(void* raw_context, Word token) {
   auto context = WASM_CONTEXT(raw_context)->root_context();
   return wasmResultToWord(context->grpcCancel(token.u64_));
 }
 
-Word grpcCloseHandler(void* raw_context, Word token) {
+Word grpcClose(void* raw_context, Word token) {
   auto context = WASM_CONTEXT(raw_context)->root_context();
   return wasmResultToWord(context->grpcClose(token.u64_));
 }
 
-Word grpcSendHandler(void* raw_context, Word token, Word message_ptr, Word message_size,
-                     Word end_stream) {
+Word grpcSend(void* raw_context, Word token, Word message_ptr, Word message_size, Word end_stream) {
   auto context = WASM_CONTEXT(raw_context)->root_context();
   auto message = context->wasmVm()->getMemory(message_ptr.u64_, message_size.u64_);
   if (!message) {
@@ -649,8 +646,8 @@ Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwri
 
 // __wasi_errno_t __wasi_fd_write(_wasi_fd_t fd, const _wasi_ciovec_t *iov, size_t iovs_len, size_t*
 // nwritten);
-Word wasi_unstable_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word iovs_len,
-                                   Word nwritten_ptr) {
+Word wasi_unstable_fd_write(void* raw_context, Word fd, Word iovs, Word iovs_len,
+                            Word nwritten_ptr) {
   auto context = WASM_CONTEXT(raw_context);
 
   Word nwritten(0);
@@ -666,20 +663,20 @@ Word wasi_unstable_fd_writeHandler(void* raw_context, Word fd, Word iovs, Word i
 
 // __wasi_errno_t __wasi_fd_seek(__wasi_fd_t fd, __wasi_filedelta_t offset, __wasi_whence_t
 // whence,__wasi_filesize_t *newoffset);
-Word wasi_unstable_fd_seekHandler(void*, Word, int64_t, Word, Word) {
+Word wasi_unstable_fd_seek(void*, Word, int64_t, Word, Word) {
   throw WasmException("wasi_unstable fd_seek");
 }
 
 // __wasi_errno_t __wasi_fd_close(__wasi_fd_t fd);
-Word wasi_unstable_fd_closeHandler(void*, Word) { throw WasmException("wasi_unstable fd_close"); }
+Word wasi_unstable_fd_close(void*, Word) { throw WasmException("wasi_unstable fd_close"); }
 
 // __wasi_errno_t __wasi_environ_get(char **environ, char *environ_buf);
-Word wasi_unstable_environ_getHandler(void*, Word, Word) {
+Word wasi_unstable_environ_get(void*, Word, Word) {
   return 0; // __WASI_ESUCCESS
 }
 
 // __wasi_errno_t __wasi_environ_sizes_get(size_t *environ_count, size_t *environ_buf_size);
-Word wasi_unstable_environ_sizes_getHandler(void* raw_context, Word count_ptr, Word buf_size_ptr) {
+Word wasi_unstable_environ_sizes_get(void* raw_context, Word count_ptr, Word buf_size_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   if (!context->wasmVm()->setWord(count_ptr.u64_, Word(0))) {
     return 21; // __WASI_EFAULT
@@ -691,17 +688,17 @@ Word wasi_unstable_environ_sizes_getHandler(void* raw_context, Word count_ptr, W
 }
 
 // void __wasi_proc_exit(__wasi_exitcode_t rval);
-void wasi_unstable_proc_exitHandler(void*, Word) { throw WasmException("wasi_unstable proc_exit"); }
+void wasi_unstable_proc_exit(void*, Word) { throw WasmException("wasi_unstable proc_exit"); }
 
-Word pthread_equalHandler(void*, Word left, Word right) { return left.u64_ == right.u64_; }
+Word pthread_equal(void*, Word left, Word right) { return left.u64_ == right.u64_; }
 
-Word setTickPeriodMillisecondsHandler(void* raw_context, Word tick_period_milliseconds) {
+Word setTickPeriodMilliseconds(void* raw_context, Word tick_period_milliseconds) {
   return wasmResultToWord(
       WASM_CONTEXT(raw_context)
           ->setTickPeriod(std::chrono::milliseconds(tick_period_milliseconds.u64_)));
 }
 
-Word getCurrentTimeNanosecondsHandler(void* raw_context, Word result_uint64_ptr) {
+Word getCurrentTimeNanoseconds(void* raw_context, Word result_uint64_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   uint64_t result = context->getCurrentTimeNanoseconds();
   if (!context->wasm()->setDatatype(result_uint64_ptr.u64_, result)) {
@@ -710,7 +707,7 @@ Word getCurrentTimeNanosecondsHandler(void* raw_context, Word result_uint64_ptr)
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word logHandler(void* raw_context, Word level, Word address, Word size) {
+Word log(void* raw_context, Word level, Word address, Word size) {
   auto context = WASM_CONTEXT(raw_context);
   auto message = context->wasmVm()->getMemory(address.u64_, size.u64_);
   if (!message) {
@@ -720,6 +717,7 @@ Word logHandler(void* raw_context, Word level, Word address, Word size) {
   return wasmResultToWord(WasmResult::Ok);
 }
 
+} // namespace Exports
 } // namespace Wasm
 } // namespace Common
 } // namespace Extensions
