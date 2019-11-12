@@ -185,7 +185,7 @@ It is possible later versions will work, e.g.
 ./emsdk activate latest
 ```
 
-However 1.39.0-upstream is known to work.
+However 1.39.2 is known to work.
 
 ### Rebuilding the libprotobuf.a files
 
