@@ -37,8 +37,8 @@ rm -rf protobuf
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 1.39.0-upstream
-./emsdk activate 1.39.0-upstream
+./emsdk install 1.39.2
+./emsdk activate 1.39.2
 source ./emsdk_env.sh
 cd
 
