@@ -171,8 +171,8 @@ sudo make install
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk update-tags
-./emsdk install 1.39.0-upstream
-./emsdk activate 1.39.0-upstream
+./emsdk install 1.39.2
+./emsdk activate 1.39.2
 
 source ./emsdk\_env.sh
 ```
@@ -181,11 +181,11 @@ It is possible later versions will work, e.g.
 
 ```bash
 ./emsdk update-tags
-./emsdk install latest-upstream
-./emsdk activate latest-upstream
+./emsdk install latest
+./emsdk activate latest
 ```
 
-However 1.39.0-upstream is known to work.
+However 1.39.2 is known to work.
 
 ### Rebuilding the libprotobuf.a files
 

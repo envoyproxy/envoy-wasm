@@ -8,7 +8,7 @@ class ExampleRootContext : public RootContext {
 public:
   explicit ExampleRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
 
-  void onStart(size_t) override;
+  bool onStart(size_t) override;
 };
 
 class ExampleContext : public Context {
@@ -16,9 +16,9 @@ public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
   void onCreate() override;
-  FilterHeadersStatus onRequestHeaders() override;
+  FilterHeadersStatus onRequestHeaders(uint32_t headers) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
-  FilterHeadersStatus onResponseHeaders() override;
+  FilterHeadersStatus onResponseHeaders(uint32_t headers) override;
   void onDone() override;
   void onLog() override;
   void onDelete() override;
@@ -27,11 +27,14 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
                                                       ROOT_FACTORY(ExampleRootContext),
                                                       "my_root_id");
 
-void ExampleRootContext::onStart(size_t) { LOG_TRACE("onStart"); }
+bool ExampleRootContext::onStart(size_t) {
+  LOG_TRACE("onStart");
+  return true;
+}
 
 void ExampleContext::onCreate() { LOG_WARN(std::string("onCreate " + std::to_string(id()))); }
 
-FilterHeadersStatus ExampleContext::onRequestHeaders() {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   LOG_DEBUG(std::string("onRequestHeaders ") + std::to_string(id()));
   auto result = getRequestHeaderPairs();
   auto pairs = result->pairs();
@@ -42,7 +45,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders() {
   return FilterHeadersStatus::Continue;
 }
 
-FilterHeadersStatus ExampleContext::onResponseHeaders() {
+FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t) {
   LOG_DEBUG(std::string("onResponseHeaders ") + std::to_string(id()));
   auto result = getResponseHeaderPairs();
   auto pairs = result->pairs();
