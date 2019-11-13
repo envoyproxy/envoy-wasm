@@ -56,43 +56,6 @@ class WasmVm;
 using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
 using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::string>>;
 
-struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
-  // Http::AsyncClient::Callbacks
-  void onSuccess(Envoy::Http::MessagePtr&& response) override;
-  void onFailure(Http::AsyncClient::FailureReason reason) override;
-
-  Context* context;
-  uint32_t token;
-  Http::AsyncClient::Request* request;
-};
-
-struct GrpcCallClientHandler : public Grpc::RawAsyncRequestCallbacks {
-  // Grpc::AsyncRequestCallbacks
-  void onCreateInitialMetadata(Http::HeaderMap& metadata) override;
-  void onSuccessRaw(Buffer::InstancePtr&& response, Tracing::Span& span) override;
-  void onFailure(Grpc::Status::GrpcStatus status, const std::string& message,
-                 Tracing::Span& span) override;
-
-  Context* context;
-  uint32_t token;
-  Grpc::RawAsyncClientPtr client;
-  Grpc::AsyncRequest* request;
-};
-
-struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
-  // Grpc::AsyncStreamCallbacks
-  void onCreateInitialMetadata(Http::HeaderMap& metadata) override;
-  void onReceiveInitialMetadata(Http::HeaderMapPtr&& metadata) override;
-  bool onReceiveMessageRaw(Buffer::InstancePtr&& response) override;
-  void onReceiveTrailingMetadata(Http::HeaderMapPtr&& metadata) override;
-  void onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) override;
-
-  Context* context;
-  uint32_t token;
-  Grpc::RawAsyncClientPtr client;
-  Grpc::RawAsyncStream* stream;
-};
-
 // Plugin contains the information for a filter/service.
 struct Plugin {
   Plugin(absl::string_view name, absl::string_view root_id, absl::string_view vm_id,
@@ -354,9 +317,64 @@ public:
 
 protected:
   friend class Wasm;
-  friend struct AsyncClientHandler;
-  friend struct GrpcCallClientHandler;
-  friend struct GrpcStreamClientHandler;
+
+  struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
+    // Http::AsyncClient::Callbacks
+    void onSuccess(Envoy::Http::MessagePtr&& response) override {
+      context_->onHttpCallSuccess(token_, response);
+    }
+    void onFailure(Http::AsyncClient::FailureReason reason) override {
+      context_->onHttpCallFailure(token_, reason);
+    }
+
+    Context* context_;
+    uint32_t token_;
+    Http::AsyncClient::Request* request_;
+  };
+
+  struct GrpcCallClientHandler : public Grpc::RawAsyncRequestCallbacks {
+    // Grpc::AsyncRequestCallbacks
+    void onCreateInitialMetadata(Http::HeaderMap& metadata) override {
+      context_->onGrpcCreateInitialMetadata(token_, metadata);
+    }
+    void onSuccessRaw(Buffer::InstancePtr&& response, Tracing::Span& /* span */) override {
+      context_->onGrpcReceive(token_, std::move(response));
+    }
+    void onFailure(Grpc::Status::GrpcStatus status, const std::string& message,
+        Tracing::Span& /* span */) override {
+      context_->onGrpcClose(token_, status, message);
+    }
+
+    Context* context_;
+    uint32_t token_;
+    Grpc::RawAsyncClientPtr client_;
+    Grpc::AsyncRequest* request_;
+  };
+
+  struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
+    // Grpc::AsyncStreamCallbacks
+    void onCreateInitialMetadata(Http::HeaderMap& metadata) override {
+      context_->onGrpcCreateInitialMetadata(token_, metadata);
+    }
+    void onReceiveInitialMetadata(Http::HeaderMapPtr&& metadata) override {
+      context_->onGrpcReceiveInitialMetadata(token_, std::move(metadata));
+    }
+    bool onReceiveMessageRaw(Buffer::InstancePtr&& response) override {
+      context_->onGrpcReceive(token_, std::move(response));
+      return true;
+    }
+    void onReceiveTrailingMetadata(Http::HeaderMapPtr&& metadata) override {
+      context_->onGrpcReceiveTrailingMetadata(token_, std::move(metadata));
+    }
+    void onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) override {
+        context_->onGrpcClose(token_, status, message);
+    }
+
+    Context* context_;
+    uint32_t token_;
+    Grpc::RawAsyncClientPtr client_;
+    Grpc::RawAsyncStream* stream_;
+  };
 
   void onHttpCallSuccess(uint32_t token, Envoy::Http::MessagePtr& response);
   void onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
