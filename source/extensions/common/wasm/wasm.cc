@@ -826,9 +826,9 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
     http_request_.erase(token);
     return WasmResult::InternalFailure;
   }
-  handler.context = this;
-  handler.token = token;
-  handler.request = http_request;
+  handler.context_ = this;
+  handler.token_ = token;
+  handler.request_ = http_request;
   *token_ptr = token;
   return WasmResult::Ok;
 }
@@ -853,8 +853,8 @@ WasmResult Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_servi
     token = next_grpc_token_ += 2;
   }
   auto& handler = grpc_call_request_[token];
-  handler.context = this;
-  handler.token = token;
+  handler.context_ = this;
+  handler.token_ = token;
   auto grpc_client =
       clusterManager()
           .grpcAsyncClientManager()
@@ -878,8 +878,8 @@ WasmResult Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_servi
     grpc_call_request_.erase(token);
     return WasmResult::InternalFailure;
   }
-  handler.client = std::move(grpc_client);
-  handler.request = grpc_request;
+  handler.client_ = std::move(grpc_client);
+  handler.request_ = grpc_request;
   *token_ptr = token;
   return WasmResult::Ok;
 }
@@ -902,8 +902,8 @@ WasmResult Context::grpcStream(const envoy::api::v2::core::GrpcService& grpc_ser
     token = next_grpc_token_ += 2;
   }
   auto& handler = grpc_stream_[token];
-  handler.context = this;
-  handler.token = token;
+  handler.context_ = this;
+  handler.token_ = token;
   auto grpc_client =
       clusterManager()
           .grpcAsyncClientManager()
@@ -924,8 +924,8 @@ WasmResult Context::grpcStream(const envoy::api::v2::core::GrpcService& grpc_ser
     grpc_stream_.erase(token);
     return WasmResult::InternalFailure;
   }
-  handler.client = std::move(grpc_client);
-  handler.stream = grpc_stream;
+  handler.client_ = std::move(grpc_client);
+  handler.stream_ = grpc_stream;
   *token_ptr = token;
   return WasmResult::Ok;
 }
@@ -1381,13 +1381,13 @@ std::string Plugin::makeLogPrefix() const {
 Context::~Context() {
   // Cancel any outstanding requests.
   for (auto& p : http_request_) {
-    p.second.request->cancel();
+    p.second.request_->cancel();
   }
   for (auto& p : grpc_call_request_) {
-    p.second.request->cancel();
+    p.second.request_->cancel();
   }
   for (auto& p : grpc_stream_) {
-    p.second.stream->resetStream();
+    p.second.stream_->resetStream();
   }
   // Do not remove vm or root contexts which have the same lifetime as wasm_.
   if (root_context_id_) {
@@ -1885,30 +1885,6 @@ void Context::onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason
   http_request_.erase(token);
 }
 
-void AsyncClientHandler::onSuccess(Envoy::Http::MessagePtr&& response) {
-  context->onHttpCallSuccess(token, response);
-}
-
-void AsyncClientHandler::onFailure(Http::AsyncClient::FailureReason reason) {
-  context->onHttpCallFailure(token, reason);
-}
-
-void GrpcCallClientHandler::onCreateInitialMetadata(Http::HeaderMap& metadata) {
-  context->onGrpcCreateInitialMetadata(token, metadata);
-}
-
-void GrpcStreamClientHandler::onCreateInitialMetadata(Http::HeaderMap& metadata) {
-  context->onGrpcCreateInitialMetadata(token, metadata);
-}
-
-void GrpcStreamClientHandler::onReceiveInitialMetadata(Http::HeaderMapPtr&& metadata) {
-  context->onGrpcReceiveInitialMetadata(token, std::move(metadata));
-}
-
-void GrpcStreamClientHandler::onReceiveTrailingMetadata(Http::HeaderMapPtr&& metadata) {
-  context->onGrpcReceiveTrailingMetadata(token, std::move(metadata));
-}
-
 void Context::onGrpcReceive(uint32_t token, Buffer::InstancePtr response) {
   if (wasm_->onGrpcReceive_) {
     grpc_receive_buffer_ = std::move(response);
@@ -1944,8 +1920,8 @@ WasmResult Context::grpcSend(uint32_t token, absl::string_view message, bool end
   if (it == grpc_stream_.end()) {
     return WasmResult::NotFound;
   }
-  if (it != grpc_stream_.end() && it->second.stream) {
-    it->second.stream->sendMessageRaw(
+  if (it != grpc_stream_.end() && it->second.stream_) {
+    it->second.stream_->sendMessageRaw(
         Buffer::InstancePtr(new Buffer::OwnedImpl(message.data(), message.size())), end_stream);
   }
   return WasmResult::Ok;
@@ -1957,8 +1933,8 @@ WasmResult Context::grpcClose(uint32_t token) {
     if (it == grpc_call_request_.end()) {
       return WasmResult::NotFound;
     }
-    if (it != grpc_call_request_.end() && it->second.request) {
-      it->second.request->cancel();
+    if (it != grpc_call_request_.end() && it->second.request_) {
+      it->second.request_->cancel();
     }
     grpc_call_request_.erase(token);
   } else {
@@ -1966,8 +1942,8 @@ WasmResult Context::grpcClose(uint32_t token) {
     if (it == grpc_stream_.end()) {
       return WasmResult::NotFound;
     }
-    if (it != grpc_stream_.end() && it->second.stream) {
-      it->second.stream->closeStream();
+    if (it != grpc_stream_.end() && it->second.stream_) {
+      it->second.stream_->closeStream();
     }
     grpc_stream_.erase(token);
   }
@@ -1980,8 +1956,8 @@ WasmResult Context::grpcCancel(uint32_t token) {
     if (it == grpc_call_request_.end()) {
       return WasmResult::NotFound;
     }
-    if (it != grpc_call_request_.end() && it->second.request) {
-      it->second.request->cancel();
+    if (it != grpc_call_request_.end() && it->second.request_) {
+      it->second.request_->cancel();
     }
     grpc_call_request_.erase(token);
   } else {
@@ -1989,31 +1965,12 @@ WasmResult Context::grpcCancel(uint32_t token) {
     if (it == grpc_stream_.end()) {
       return WasmResult::NotFound;
     }
-    if (it != grpc_stream_.end() && it->second.stream) {
-      it->second.stream->resetStream();
+    if (it != grpc_stream_.end() && it->second.stream_) {
+      it->second.stream_->resetStream();
     }
     grpc_stream_.erase(token);
   }
   return WasmResult::Ok;
-}
-
-void GrpcCallClientHandler::onSuccessRaw(Buffer::InstancePtr&& response, Tracing::Span&) {
-  context->onGrpcReceive(token, std::move(response));
-}
-
-void GrpcCallClientHandler::onFailure(Grpc::Status::GrpcStatus status, const std::string& message,
-                                      Tracing::Span&) {
-  context->onGrpcClose(token, status, message);
-}
-
-bool GrpcStreamClientHandler::onReceiveMessageRaw(Buffer::InstancePtr&& response) {
-  context->onGrpcReceive(token, std::move(response));
-  return true;
-}
-
-void GrpcStreamClientHandler::onRemoteClose(Grpc::Status::GrpcStatus status,
-                                            const std::string& message) {
-  context->onGrpcClose(token, status, message);
 }
 
 static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
