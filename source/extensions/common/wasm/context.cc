@@ -343,8 +343,11 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
 // An expression wrapper for the WASM state
 class WasmStateWrapper : public google::api::expr::runtime::CelMap {
 public:
-  WasmStateWrapper(const StreamInfo::FilterState& filter_state) : filter_state_(filter_state) {}
-  absl::optional<google::api::expr::runtime::CelValue>
+  WasmStateWrapper(const StreamInfo::FilterState& filter_state,
+                     const StreamInfo::FilterState* connection_filter_state)
+        : filter_state_(filter_state), connection_filter_state_(connection_filter_state) {}
+  WasmStateWrapper(const StreamInfo::FilterState& filter_state)
+        : filter_state_(filter_state), connection_filter_state_(nullptr) {}absl::optional<google::api::expr::runtime::CelValue>
   operator[](google::api::expr::runtime::CelValue key) const override {
     if (!key.IsString()) {
       return {};
@@ -354,6 +357,15 @@ public:
       const WasmState& result = filter_state_.getDataReadOnly<WasmState>(value);
       return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
     } catch (const EnvoyException& e) {
+      // If  doesn't exist in request filter state, try looking up in connection filter state.
+    try {
+      if (connection_filter_state_) {
+        const WasmState& result = connection_filter_state_->getDataReadOnly<WasmState>(value);
+        return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
+      }
+    } catch (const EnvoyException& e) {
+      return {};
+    }
       return {};
     }
   }
@@ -365,6 +377,7 @@ public:
 
 private:
   const StreamInfo::FilterState& filter_state_;
+  const StreamInfo::FilterState* connection_filter_state_;
 };
 
 #define PROPERTY_TOKENS(_f)                                                                        \
@@ -427,8 +440,13 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
         value = CelValue::CreateMessage(&info->dynamicMetadata(), &arena);
         break;
       case PropertyToken::FILTER_STATE:
-        value = CelValue::CreateMap(
-            Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState()));
+        if (getConnection()) {
+                  value = CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
+                      &arena, info->filterState(), &getConnection()->streamInfo().filterState()));
+                } else {
+                  value = CelValue::CreateMap(
+                      Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState()));
+                }
         break;
       case PropertyToken::REQUEST:
         value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
@@ -970,6 +988,15 @@ StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
     return &network_read_filter_callbacks_->connection().streamInfo();
   } else if (network_write_filter_callbacks_) {
     return &network_write_filter_callbacks_->connection().streamInfo();
+  }
+  return nullptr;
+}
+
+const Network::Connection* Context::getConnection() const {
+  if (encoder_callbacks_) {
+    return encoder_callbacks_->connection();
+  } else if (decoder_callbacks_) {
+    return decoder_callbacks_->connection();
   }
   return nullptr;
 }
