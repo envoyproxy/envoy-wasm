@@ -150,8 +150,8 @@ public:
   virtual void onHttpCallResponse(uint32_t token, uint32_t headers, uint32_t body_size,
                                   uint32_t trailers);
   virtual void onQueueReady(uint32_t token);
-  // General stream downcall when the stream has ended.
-  virtual void onDone();
+  // General stream downcall when the stream/vm has ended.
+  virtual bool onDone();
   // General stream downcall for logging. Occurs after onDone().
   virtual void onLog();
   // General stream downcall when no further stream calls will occur.
@@ -463,11 +463,10 @@ protected:
   std::map<uint32_t, GrpcCallClientHandler> grpc_call_request_;
   std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
 };
+using ContextSharedPtr = std::shared_ptr<Context>;
 
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
-class Wasm : public Envoy::Server::Wasm,
-             public ThreadLocal::ThreadLocalObject,
-             public Logger::Loggable<Logger::Id::wasm>,
+class Wasm : public Logger::Loggable<Logger::Id::wasm>,
              public std::enable_shared_from_this<Wasm> {
 public:
   Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
@@ -493,19 +492,22 @@ public:
       return it->second;
     return nullptr;
   }
-  Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
-  void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
-  void tickHandler(uint32_t root_context_id);
-  void queueReady(uint32_t root_context_id, uint32_t token);
-
   uint32_t allocContextId();
 
+  Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
   const std::string& code() const { return code_; }
   const std::string& vm_configuration() const { return vm_configuration_; }
   bool allow_precompiled() const { return allow_precompiled_; }
   void setInitialConfiguration(const std::string& vm_configuration) {
     vm_configuration_ = vm_configuration;
   }
+
+  void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
+  void tickHandler(uint32_t root_context_id);
+  void queueReady(uint32_t root_context_id, uint32_t token);
+
+  void shutdown();
+  WasmResult done(Context* root_context);
 
   //
   // AccessLog::Instance
@@ -545,6 +547,7 @@ public:
 
 private:
   friend class Context;
+  class ShutdownHandle;
   // These are the same as the values of the Context::MetricType enum, here separately for
   // convenience.
   static const uint32_t kMetricTypeCounter = 0x0;
@@ -585,12 +588,14 @@ private:
   Event::Dispatcher& dispatcher_;
 
   uint32_t next_context_id_ = 1;        // 0 is reserved for the VM context.
-  std::shared_ptr<Context> vm_context_; // Context unrelated to any specific root or stream
+  ContextSharedPtr vm_context_; // Context unrelated to any specific root or stream
                                         // (e.g. for global constructors).
   absl::flat_hash_map<std::string, std::unique_ptr<Context>> root_contexts_;
   absl::flat_hash_map<uint32_t, Context*> contexts_;                    // Contains all contexts.
-  std::unordered_map<uint32_t, std::chrono::milliseconds> tick_period_; // per root_id.
+  absl::flat_hash_map<uint32_t, std::chrono::milliseconds> tick_period_; // per root_id.
   std::unordered_map<uint32_t, Event::TimerPtr> timer_;                 // per root_id.
+  std::unique_ptr<ShutdownHandle> shutdown_handle_;
+  absl::flat_hash_set<Context*> pending_done_; // Root contexts not done during shutdown.
 
   TimeSource& time_source_;
 
@@ -634,7 +639,7 @@ private:
 
   WasmCallVoid<2> onQueueReady_;
 
-  WasmCallVoid<1> onDone_;
+  WasmCallWord<1> onDone_;
   WasmCallVoid<1> onLog_;
   WasmCallVoid<1> onDelete_;
 
@@ -662,12 +667,30 @@ private:
   absl::flat_hash_map<uint32_t, Stats::Gauge*> gauges_;
   absl::flat_hash_map<uint32_t, Stats::Histogram*> histograms_;
 };
+using WasmSharedPtr = std::shared_ptr<Wasm>;
 
 // These accessors require Wasm.
 inline WasmVm* Context::wasmVm() const { return wasm_->wasm_vm(); }
 inline Upstream::ClusterManager& Context::clusterManager() const { return wasm_->clusterManager(); }
 
-using CreateWasmCallback = std::function<void(std::shared_ptr<Wasm>)>;
+// Handle which enables shutdown operations to run post deletion (e.g. post listener drain).
+class WasmHandle : public Envoy::Server::Wasm,
+                   public ThreadLocal::ThreadLocalObject,
+                   public std::enable_shared_from_this<WasmHandle> {
+ public:
+  explicit WasmHandle(WasmSharedPtr wasm) : wasm_(wasm) {}
+  ~WasmHandle() {
+    wasm_->shutdown();
+  }
+
+  const WasmSharedPtr& wasm() { return wasm_; }
+
+private:
+  WasmSharedPtr wasm_;
+};
+using WasmHandleSharedPtr = std::shared_ptr<WasmHandle>;
+
+using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
@@ -678,7 +701,7 @@ void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginShared
                 CreateWasmCallback&& cb);
 
 // Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
-std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, PluginSharedPtr plugin,
+WasmHandleSharedPtr createThreadLocalWasm(WasmHandle& base_wasm_handle, PluginSharedPtr plugin,
                                             absl::string_view configuration,
                                             Event::Dispatcher& dispatcher);
 
@@ -691,10 +714,10 @@ void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
                           CreateWasmCallback&& cb);
 
 // Get an existing ThreadLocal VM matching 'vm_id' or nullptr if there isn't one.
-std::shared_ptr<Wasm> getThreadLocalWasmPtr(absl::string_view vm_id);
+WasmHandleSharedPtr getThreadLocalWasmPtr(absl::string_view vm_id);
 // Get an existing ThreadLocal VM matching 'vm_id' or create one using 'base_wavm' by cloning or by
 // using it it as a template.
-std::shared_ptr<Wasm> getOrCreateThreadLocalWasm(Wasm& base_wasm, PluginSharedPtr plugin,
+WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandle& base_wasm, PluginSharedPtr plugin,
                                                  absl::string_view configuration,
                                                  Event::Dispatcher& dispatcher);
 

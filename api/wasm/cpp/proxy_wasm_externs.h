@@ -30,8 +30,8 @@
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onResponseTrailers(uint32_t context_id, uint32_t trailers);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onResponseMetadata(uint32_t context_id, uint32_t nelements);
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onHttpCallResponse(uint32_t context_id, uint32_t token, uint32_t headers, uint32_t body_size, uint32_t trailers);
-   // The stream has completed.
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onDone(uint32_t context_id);
+   // The stream/vm has completed.
+   extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onDone(uint32_t context_id);
    // onLog occurs after onDone.
    extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t context_id);
    // The Context in the proxy has been destroyed and no further calls will be coming.
@@ -160,3 +160,7 @@ extern "C" WasmResult proxy_getMetric(uint32_t metric_id, uint64_t* result);
 
 // System
 extern "C" WasmResult proxy_setEffectiveContext(uint32_t effective_context_id);
+extern "C" WasmResult proxy_done();
+
+// Calls in.
+extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onDone(uint32_t context_id);

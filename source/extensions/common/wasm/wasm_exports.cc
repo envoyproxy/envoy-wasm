@@ -212,6 +212,11 @@ Word setEffectiveContext(void* raw_context, Word context_id) {
   return wasmResultToWord(WasmResult::Ok);
 }
 
+Word done(void* raw_context) {
+  auto context = WASM_CONTEXT(raw_context);
+  return wasmResultToWord(context->wasm()->done(context));
+}
+
 Word clearRouteCache(void* raw_context) {
   auto context = WASM_CONTEXT(raw_context);
   context->clearRouteCache();

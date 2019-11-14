@@ -16,11 +16,14 @@ namespace Extensions {
 namespace NetworkFilters {
 namespace Wasm {
 
-class TestFilter : public Envoy::Extensions::Common::Wasm::Context {
+using Envoy::Extensions::Common::Wasm::Context;
+using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
+using Envoy::Extensions::Common::Wasm::Wasm;
+
+class TestFilter : public Context {
 public:
-  TestFilter(Wasm* wasm, uint32_t root_context_id,
-             Envoy::Extensions::Common::Wasm::PluginSharedPtr plugin)
-      : Envoy::Extensions::Common::Wasm::Context(wasm, root_context_id, plugin) {}
+  TestFilter(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
+      : Context(wasm, root_context_id, plugin) {}
 
   void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
     scriptLog_(level, message);
@@ -28,7 +31,7 @@ public:
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-class TestRoot : public Envoy::Extensions::Common::Wasm::Context {
+class TestRoot : public Context {
 public:
   TestRoot() {}
 
@@ -62,11 +65,12 @@ public:
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
         dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
-        remote_data_provider_, [this](std::shared_ptr<Wasm> wasm) { wasm_ = wasm; });
+        remote_data_provider_, [this](Common::Wasm::WasmHandleSharedPtr wasm) { wasm_ = wasm; });
   }
 
   void setupFilter() {
-    filter_ = std::make_unique<TestFilter>(wasm_.get(), wasm_->getRootContext("")->id(), plugin_);
+    filter_ = std::make_unique<TestFilter>(wasm_->wasm().get(),
+                                           wasm_->wasm()->getRootContext("")->id(), plugin_);
     filter_->initializeReadFilterCallbacks(read_filter_callbacks_);
   }
 
@@ -75,8 +79,8 @@ public:
   NiceMock<Event::MockDispatcher> dispatcher_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
   NiceMock<Init::MockManager> init_manager_;
-  std::shared_ptr<Wasm> wasm_;
-  std::shared_ptr<Common::Wasm::Plugin> plugin_;
+  Common::Wasm::WasmHandleSharedPtr wasm_;
+  Common::Wasm::PluginSharedPtr plugin_;
   std::unique_ptr<TestFilter> filter_;
   NiceMock<Network::MockReadFilterCallbacks> read_filter_callbacks_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;

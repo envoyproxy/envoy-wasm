@@ -77,24 +77,30 @@ TEST_P(WasmTestMatrix, Logging) {
       absl::StrCat("envoy.wasm.runtime.", std::get<0>(GetParam())), vm_id, vm_configuration, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
+  auto wasm_ptr = wasm.get();
+  auto wasm_handler = std::make_unique<Extensions::Common::Wasm::WasmHandle>(std::move(wasm));
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
                    std::get<1>(GetParam()), ".wasm")));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
+  auto context = std::make_unique<TestContext>(wasm_ptr);
 
   EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("warn configure-test")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("test trace logging")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, Eq("test debug logging")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("test error logging")));
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("test tick logging")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("onDone logging")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("onDelete logging")));
 
-  EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->setContext(context.get());
+  EXPECT_TRUE(wasm_ptr->initialize(code, false));
+  wasm_ptr->setContext(context.get());
   auto root_context = context.get();
-  wasm->startForTesting(std::move(context), plugin);
-  wasm->configure(root_context, "configure-test");
-  wasm->tickHandler(root_context->id());
+  wasm_ptr->startForTesting(std::move(context), plugin);
+  wasm_ptr->configure(root_context, "configure-test");
+  wasm_handler.reset();
+  wasm_ptr->tickHandler(root_context->id());
+  dispatcher->clearDeferredDeleteList();
 }
 
 TEST_P(WasmTest, BadSignature) {

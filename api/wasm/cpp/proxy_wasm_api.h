@@ -260,6 +260,10 @@ public:
   virtual RootContext* asRoot() { return nullptr; }
   virtual Context* asContext() { return nullptr; }
 
+  virtual bool onDoneBase() = 0;
+  // Called to indicate that no more calls will come and this context is being deleted.
+  virtual void onDelete() {} // Called when the stream or VM is being deleted.
+
   using HttpCallCallback =
       std::function<void(uint32_t, size_t, uint32_t)>; // headers, body_size, trailers
   using GrpcSimpleCallCallback = std::function<void(GrpcStatus status, size_t body_size)>;
@@ -291,6 +295,9 @@ public:
   virtual void onTick() {}
   // Called when data arrives on a SharedQueue.
   virtual void onQueueReady(uint32_t /* token */) {}
+
+  virtual bool onDone() { return true; } // Called when the VM is being torn down.
+  void done(); // Report that we are now done following returning false from onDone.
 
   // Low level HTTP/gRPC interface.
   virtual void onHttpCallResponse(uint32_t token, uint32_t headers, size_t body_size,
@@ -338,6 +345,8 @@ public:
 private:
   friend class GrpcCallHandlerBase;
   friend class GrpcStreamHandlerBase;
+
+  bool onDoneBase() override { return onDone(); }
 
   const std::string root_id_;
   std::unordered_map<uint32_t, HttpCallCallback> http_calls_;
@@ -392,10 +401,14 @@ public:
   }
   virtual void onDone() {} // Called when the stream has completed.
   virtual void onLog() {}  // Called after onDone when logging is requested.
-  virtual void onDelete() {
-  } // Called to indicate that no more calls will come and this context is being deleted.
 
 private:
+  // For stream Contexts, onDone always returns true.
+  bool onDoneBase() override {
+    onDone();
+    return true;
+  }
+
   RootContext* root_{};
 };
 
@@ -1364,3 +1377,5 @@ inline uint64_t getCurrentTimeNanoseconds() {
   CHECK_RESULT(proxy_getCurrentTimeNanoseconds(&t));
   return t;
 }
+
+inline void RootContext::done() { proxy_done(); }

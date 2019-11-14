@@ -48,11 +48,6 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<1>* f
       SaveRestoreContext saved_context(context);
       plugin->onTick(context_id.u64_);
     };
-  } else if (function_name == "proxy_onDone") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id) {
-      SaveRestoreContext saved_context(context);
-      plugin->onDone(context_id.u64_);
-    };
   } else if (function_name == "proxy_onLog") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id) {
       SaveRestoreContext saved_context(context);
@@ -151,6 +146,11 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
     *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onNewConnection(context_id.u64_));
+    };
+  } else if (function_name == "proxy_onDone") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id) {
+      SaveRestoreContext saved_context(context);
+      return Word(plugin->onDone(context_id.u64_));
     };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
@@ -437,10 +437,12 @@ void NullPlugin::onQueueReady(uint64_t context_id, uint64_t token) {
 
 void NullPlugin::onLog(uint64_t context_id) { getContext(context_id)->onLog(); }
 
-void NullPlugin::onDone(uint64_t context_id) { getContext(context_id)->onDone(); }
+uint64_t NullPlugin::onDone(uint64_t context_id) {
+  return getContextBase(context_id)->onDoneBase() ? 1 : 0;
+}
 
 void NullPlugin::onDelete(uint64_t context_id) {
-  getContext(context_id)->onDelete();
+  getContextBase(context_id)->onDelete();
   context_map_.erase(context_id);
 }
 

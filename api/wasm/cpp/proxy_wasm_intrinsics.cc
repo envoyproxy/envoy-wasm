@@ -202,8 +202,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE FilterTrailersStatus proxy_onResponseTrailers(ui
   return getContext(context_id)->onResponseTrailers(trailers);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onDone(uint32_t context_id) {
-  getContext(context_id)->onDone();
+extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onDone(uint32_t context_id) {
+  return getContextBase(context_id)->onDoneBase();
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t context_id) {
@@ -211,7 +211,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t context_id) {
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onDelete(uint32_t context_id) {
-  getContext(context_id)->onDelete();
+  getContextBase(context_id)->onDelete();
   context_map.erase(context_id);
 }
 
