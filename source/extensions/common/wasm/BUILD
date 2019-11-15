@@ -55,8 +55,9 @@ envoy_cc_library(
 envoy_cc_library(
     name = "wasm_hdr",
     hdrs = [
-        "wasm.h",
+        "context.h",
         "exports.h",
+        "wasm.h",
     ],
     deps = [
         ":wasm_vm_interface",
@@ -90,8 +91,9 @@ envoy_cc_library(
 envoy_cc_library(
     name = "wasm_lib",
     srcs = [
-        "wasm.cc",
+        "context.cc",
         "exports.cc",
+        "wasm.cc",
     ],
     deps = [
         ":wasm_hdr",
