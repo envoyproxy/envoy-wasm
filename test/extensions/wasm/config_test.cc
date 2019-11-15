@@ -63,6 +63,8 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   EXPECT_CALL(init_watcher, ready());
   init_manager.initialize(init_watcher);
   EXPECT_NE(wasmptr, nullptr);
+  EXPECT_CALL(dispatcher, post(_));
+  wasmptr.reset();
 }
 
 TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
@@ -86,6 +88,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
+  EXPECT_CALL(dispatcher, post(_));
   factory->createWasm(config, context,
                       [](Server::WasmSharedPtr wasm) { EXPECT_EQ(wasm, nullptr); });
   EXPECT_CALL(init_watcher, ready());
@@ -114,6 +117,7 @@ TEST_P(WasmFactoryTest, MissingImport) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
+  EXPECT_CALL(dispatcher, post(_));
   EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context, [](Server::WasmSharedPtr) {});
                           , Extensions::Common::Wasm::WasmVmException,
                           "Failed to load WASM module due to a missing import: env.missing");

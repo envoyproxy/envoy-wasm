@@ -99,7 +99,9 @@ TEST_P(WasmTestMatrix, Logging) {
   wasm_ptr->startForTesting(std::move(context), plugin);
   wasm_ptr->configure(root_context, "configure-test");
   wasm_handler.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   wasm_ptr->tickHandler(root_context->id());
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher->clearDeferredDeleteList();
 }
 
@@ -127,6 +129,9 @@ TEST_P(WasmTest, BadSignature) {
   EXPECT_THROW_WITH_MESSAGE(wasm->initialize(code, false),
                             Extensions::Common::Wasm::WasmVmException,
                             "Bad function signature for: proxy_onConfigure");
+  wasm.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
 }
 
 TEST_P(WasmTest, Segv) {
@@ -164,6 +169,9 @@ TEST_P(WasmTest, Segv) {
   } else {
     ASSERT_FALSE(true); // Neither of the above was matched.
   }
+  wasm.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
 }
 
 TEST_P(WasmTest, DivByZero) {
@@ -202,6 +210,9 @@ TEST_P(WasmTest, DivByZero) {
   } else {
     ASSERT_FALSE(true); // Neither of the above was matched.
   }
+  wasm.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
 }
 
 TEST_P(WasmTest, EmscriptenVersion) {
@@ -234,6 +245,9 @@ TEST_P(WasmTest, EmscriptenVersion) {
   // Up to (at least) emsdk 1.39.0.
   EXPECT_EQ(abi_major, 0);
   EXPECT_LE(abi_minor, 19);
+  wasm.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
 }
 
 TEST_P(WasmTest, IntrinsicGlobals) {
@@ -262,6 +276,9 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("inf inf"))).Times(3);
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->startForTesting(std::move(context), plugin);
+  wasm.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
 }
 
 // The asm2wasm.wasm file uses operations which would require the asm2wasm Emscripten module *if*
@@ -295,6 +312,9 @@ TEST_P(WasmTest, Asm2Wasm) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("out 0 0 0")));
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->startForTesting(std::move(context), plugin);
+  wasm.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
 }
 
 TEST_P(WasmTest, Stats) {
@@ -330,6 +350,9 @@ TEST_P(WasmTest, Stats) {
 
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->startForTesting(std::move(context), plugin);
+  wasm.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
 }
 
 TEST_P(WasmTest, StatsHigherLevel) {
@@ -370,6 +393,9 @@ TEST_P(WasmTest, StatsHigherLevel) {
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
   wasm->tickHandler(context->id());
+  wasm.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
 }
 
 TEST_P(WasmTest, StatsHighLevel) {
@@ -413,6 +439,9 @@ TEST_P(WasmTest, StatsHighLevel) {
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
   context->onLog();
+  wasm.reset();
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
 }
 
 } // namespace Wasm
