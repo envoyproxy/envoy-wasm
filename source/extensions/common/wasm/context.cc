@@ -466,6 +466,13 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
         value = CelValue::CreateMessage(plugin_->listener_metadata_, &arena);
         break;
       case PropertyToken::CLUSTER_NAME:
+        if (info->upstreamHost() && !info->upstreamHost()->cluster().name().empty()) {
+          value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
+        } else if (info->routeEntry()) {
+          value = CelValue::CreateString(&info->routeEntry()->clusterName());
+        } else {
+          return WasmResult::NotFound;
+        }
         value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
         break;
       case PropertyToken::CLUSTER_METADATA:
