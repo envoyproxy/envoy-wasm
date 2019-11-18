@@ -124,6 +124,8 @@ using WasmCallback_dd = double (*)(void*, double);
                       _f(WasmCallback_WWl) _f(WasmCallback_WWlWW) _f(WasmCallback_WWm)             \
                           _f(WasmCallback_dd)
 
+enum class Cloneable { NotCloneable, CompiledBytecode, InstantiatedModule };
+
 // Wasm VM instance. Provides the low level WASM interface.
 class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
 public:
@@ -145,7 +147,7 @@ public:
    * VM from scratch for each worker.
    * @return true if the VM is cloneable.
    */
-  virtual bool cloneable() PURE;
+  virtual Cloneable cloneable() PURE;
 
   /**
    * Make a worker/thread-specific copy if supported by the underlying VM system (see cloneable()

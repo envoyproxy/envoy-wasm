@@ -178,7 +178,7 @@ struct Wavm : public WasmVmBase {
 
   // WasmVm
   absl::string_view runtime() override { return WasmRuntimeNames::get().Wavm; }
-  bool cloneable() override { return true; };
+  Cloneable cloneable() override { return Cloneable::InstantiatedModule; };
   std::unique_ptr<WasmVm> clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
   void link(absl::string_view debug_name) override;

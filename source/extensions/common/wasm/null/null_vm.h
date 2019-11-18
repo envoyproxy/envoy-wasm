@@ -32,7 +32,7 @@ struct NullVm : public WasmVmBase {
 
   // WasmVm
   absl::string_view runtime() override { return WasmRuntimeNames::get().Null; }
-  bool cloneable() override { return true; };
+  Cloneable cloneable() override { return Cloneable::InstantiatedModule; };
   WasmVmPtr clone() override;
   bool load(const std::string& code, bool allow_precompiled) override;
   void link(absl::string_view debug_name) override;

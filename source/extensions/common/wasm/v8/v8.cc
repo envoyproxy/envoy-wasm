@@ -47,9 +47,8 @@ public:
   absl::string_view getCustomSection(absl::string_view name) override;
   void link(absl::string_view debug_name) override;
 
-  // V8 is currently not cloneable.
-  bool cloneable() override { return false; }
-  WasmVmPtr clone() override { return nullptr; }
+  Cloneable cloneable() override { return Cloneable::CompiledBytecode; }
+  WasmVmPtr clone() override;
 
   uint64_t getMemorySize() override;
   absl::optional<absl::string_view> getMemory(uint64_t pointer, uint64_t size) override;
@@ -92,6 +91,7 @@ private:
   wasm::vec<byte_t> source_ = wasm::vec<byte_t>::invalid();
   wasm::own<wasm::Store> store_;
   wasm::own<wasm::Module> module_;
+  wasm::own<wasm::Shared<wasm::Module>> shared_module_;
   wasm::own<wasm::Instance> instance_;
   wasm::own<wasm::Memory> memory_;
   wasm::own<wasm::Table> table_;
@@ -250,7 +250,26 @@ bool V8::load(const std::string& code, bool /* allow_precompiled */) {
   ::memcpy(source_.get(), code.data(), code.size());
 
   module_ = wasm::Module::make(store_.get(), source_);
+  if (module_) {
+    shared_module_ = module_->share();
+    RELEASE_ASSERT(shared_module_ != nullptr, "");
+  }
+
   return module_ != nullptr;
+}
+
+WasmVmPtr V8::clone() {
+  ENVOY_LOG(trace, "clone()");
+  ASSERT(shared_module_ != nullptr);
+
+  auto clone = std::make_unique<V8>(scope_);
+  clone->store_ = wasm::Store::make(engine());
+  RELEASE_ASSERT(clone->store_ != nullptr, "");
+
+  clone->module_ = wasm::Module::obtain(clone->store_.get(), shared_module_.get());
+  RELEASE_ASSERT(clone->module_ != nullptr, "");
+
+  return clone;
 }
 
 absl::string_view V8::getCustomSection(absl::string_view name) {
