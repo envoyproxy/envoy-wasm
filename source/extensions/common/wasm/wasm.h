@@ -87,10 +87,10 @@ class Context : public Logger::Loggable<Logger::Id::wasm>,
                 public Network::Filter,
                 public std::enable_shared_from_this<Context> {
 public:
-  Context();                                                              // Testing.
-  Context(Wasm* wasm);                                                    // Vm Context.
-  Context(Wasm* wasm, absl::string_view root_id, PluginSharedPtr plugin); // Root Context.
-  Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin);  // Stream context.
+  Context();                                                                // Testing.
+  Context(Wasm* wasm);                                                      // Vm Context.
+  Context(Wasm* wasm, PluginSharedPtr plugin);                              // Root Context.
+  Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin);    // Stream context.
   ~Context();
 
   Wasm* wasm() const { return wasm_; }
@@ -99,8 +99,8 @@ public:
   bool isRootContext() { return root_context_id_ == 0; }
   Context* root_context() { return root_context_; }
 
-  absl::string_view root_id() const { return plugin_->root_id_; }
-  absl::string_view log_prefix() const { return plugin_->log_prefix_; }
+  absl::string_view root_id() const { return plugin_ ? plugin_->root_id_ : root_id_; }
+  absl::string_view log_prefix() const { return plugin_ ? plugin_->log_prefix_ : root_log_prefix_; }
 
   WasmVm* wasmVm() const;
   Upstream::ClusterManager& clusterManager() const;
@@ -116,9 +116,9 @@ public:
   //
   // VM level downcalls into the WASM code on Context(id == 0).
   //
-  virtual bool validateConfiguration(absl::string_view configuration);
-  virtual bool onStart(absl::string_view vm_configuration);
-  virtual bool onConfigure(absl::string_view plugin_configuration);
+  virtual bool validateConfiguration(absl::string_view configuration, PluginSharedPtr plugin);
+  virtual bool onStart(absl::string_view vm_configuration, PluginSharedPtr plugin);
+  virtual bool onConfigure(absl::string_view plugin_configuration, PluginSharedPtr plugin);
 
   //
   // Stream downcalls on Context(id > 0).
@@ -376,6 +376,9 @@ protected:
     Grpc::RawAsyncStream* stream_;
   };
 
+  void initializeRoot(Wasm* wasm, PluginSharedPtr plugin);
+  std::string makeRootLogPrefix(absl::string_view vm_id) const;
+
   void onHttpCallSuccess(uint32_t token, Envoy::Http::MessagePtr& response);
   void onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
 
@@ -400,6 +403,9 @@ protected:
   Wasm* wasm_{nullptr};
   uint32_t id_{0};
   uint32_t root_context_id_{0};    // 0 for roots and the general context.
+  std::string root_id_;            // set only in root context.
+  std::string root_log_prefix_;    // set only in root context.
+  const LocalInfo::LocalInfo* root_local_info_{nullptr};  // set only for root_context.
   Context* root_context_{nullptr}; // set in all contexts.
   PluginSharedPtr plugin_;
   bool in_vm_context_created_ = false;
@@ -478,7 +484,7 @@ public:
 
   bool initialize(const std::string& code, bool allow_precompiled = false);
   void startVm(Context* root_context);
-  bool configure(Context* root_context, absl::string_view configuration);
+  bool configure(Context* root_context, PluginSharedPtr plugin, absl::string_view configuration);
   Context* start(PluginSharedPtr plugin); // returns the root Context.
 
   absl::string_view vm_id() const { return vm_id_; }
@@ -706,9 +712,17 @@ inline Context::Context(Wasm* wasm) : wasm_(wasm), root_context_(this) {
   wasm_->contexts_[id_] = this;
 }
 
-inline Context::Context(Wasm* wasm, absl::string_view root_id, PluginSharedPtr plugin)
-    : wasm_(wasm), id_(wasm->allocContextId()), root_context_(this), plugin_(plugin) {
-  RELEASE_ASSERT(root_id == plugin->root_id_, "");
+inline Context::Context(Wasm* wasm, PluginSharedPtr plugin) {
+  initializeRoot(wasm, plugin);
+}
+
+inline void Context::initializeRoot(Wasm* wasm, PluginSharedPtr plugin) {
+  wasm_ = wasm;
+  id_ = wasm->allocContextId();
+  root_id_ = plugin->root_id_,
+  root_log_prefix_ = makeRootLogPrefix(plugin->vm_id_);
+  root_local_info_ = &plugin->local_info_;
+  root_context_ = this;
   wasm_->contexts_[id_] = this;
 }
 
