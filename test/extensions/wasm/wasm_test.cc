@@ -97,7 +97,7 @@ TEST_P(WasmTestMatrix, Logging) {
   wasm_weak.lock()->setContext(context.get());
   auto root_context = context.get();
   wasm_weak.lock()->startForTesting(std::move(context), plugin);
-  wasm_weak.lock()->configure(root_context, "configure-test");
+  wasm_weak.lock()->configure(root_context, plugin, "configure-test");
   wasm_handler.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   // This will SEGV on nullptr if wasm has been deleeted.
