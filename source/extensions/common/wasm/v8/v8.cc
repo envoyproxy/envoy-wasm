@@ -11,7 +11,14 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/match.h"
+#include "v8-version.h"
 #include "wasm-api/wasm.hh"
+
+namespace v8 {
+namespace internal {
+extern bool FLAG_wasm_opt;
+} // namespace internal
+} // namespace v8
 
 namespace Envoy {
 namespace Extensions {
@@ -22,6 +29,9 @@ namespace V8 {
 VmGlobalStats global_stats_;
 
 wasm::Engine* engine() {
+  // Enable Wasm optimizations.
+  v8::internal::FLAG_wasm_opt = true;
+
   static const auto engine = wasm::Engine::make();
   return engine.get();
 }
@@ -45,6 +55,7 @@ public:
 
   bool load(const std::string& code, bool allow_precompiled) override;
   absl::string_view getCustomSection(absl::string_view name) override;
+  absl::string_view getPrecompiledSectionName() override;
   void link(absl::string_view debug_name) override;
 
   Cloneable cloneable() override { return Cloneable::CompiledBytecode; }
@@ -241,7 +252,7 @@ template <typename T, typename U> constexpr T convertValTypesToArgsTuple(const U
 
 // V8 implementation.
 
-bool V8::load(const std::string& code, bool /* allow_precompiled */) {
+bool V8::load(const std::string& code, bool allow_precompiled) {
   ENVOY_LOG(trace, "load()");
   store_ = wasm::Store::make(engine());
   RELEASE_ASSERT(store_ != nullptr, "");
@@ -249,7 +260,25 @@ bool V8::load(const std::string& code, bool /* allow_precompiled */) {
   source_ = wasm::vec<byte_t>::make_uninitialized(code.size());
   ::memcpy(source_.get(), code.data(), code.size());
 
-  module_ = wasm::Module::make(store_.get(), source_);
+  if (allow_precompiled) {
+    const auto precompiled = getCustomSection(getPrecompiledSectionName());
+    if (!precompiled.empty()) {
+      auto vec = wasm::vec<byte_t>::make_uninitialized(precompiled.size());
+      ::memcpy(vec.get(), precompiled.data(), precompiled.size());
+
+      module_ = wasm::Module::deserialize(store_.get(), vec);
+      if (!module_) {
+        // Precompiled module that cannot be loaded is considered a hard error,
+        // so don't fallback to compiling the bytecode.
+        return false;
+      }
+    }
+  }
+
+  if (!module_) {
+    module_ = wasm::Module::make(store_.get(), source_);
+  }
+
   if (module_) {
     shared_module_ = module_->share();
     RELEASE_ASSERT(shared_module_ != nullptr, "");
@@ -303,6 +332,13 @@ absl::string_view V8::getCustomSection(absl::string_view name) {
     pos += rest;
   }
   return "";
+}
+
+absl::string_view V8::getPrecompiledSectionName() {
+  static const auto name =
+      absl::StrCat("precompiled_wee8_v", V8_MAJOR_VERSION, ".", V8_MINOR_VERSION, ".",
+                   V8_BUILD_NUMBER, ".", V8_PATCH_LEVEL);
+  return name;
 }
 
 void V8::link(absl::string_view debug_name) {
