@@ -27,8 +27,8 @@ public:
 
 void PluginRootContext::onTick() {
   uint64_t t;
-  if (WasmResult::Ok != proxy_getCurrentTimeNanoseconds(&t)) {
-    logError(std::string("bad proxy_getCurrentTimeNanoseconds result"));
+  if (WasmResult::Ok != proxy_get_current_time_nanoseconds(&t)) {
+    logError(std::string("bad proxy_get_current_time_nanoseconds result"));
   }
 }
 
