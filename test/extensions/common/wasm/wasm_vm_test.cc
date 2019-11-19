@@ -69,7 +69,7 @@ TEST_F(BaseVmTest, NullVmStartup) {
   auto wasm_vm = createWasmVm("envoy.wasm.runtime.null", scope_);
   EXPECT_TRUE(wasm_vm != nullptr);
   EXPECT_TRUE(wasm_vm->runtime() == "envoy.wasm.runtime.null");
-  EXPECT_TRUE(wasm_vm->cloneable());
+  EXPECT_TRUE(wasm_vm->cloneable() == Cloneable::InstantiatedModule);
   auto wasm_vm_clone = wasm_vm->clone();
   EXPECT_TRUE(wasm_vm_clone != nullptr);
   EXPECT_TRUE(wasm_vm->getCustomSection("user").empty());
@@ -141,10 +141,7 @@ TEST_F(WasmVmTest, V8BadCode) {
 TEST_F(WasmVmTest, V8Code) {
   auto wasm_vm = createWasmVm("envoy.wasm.runtime.v8", scope_);
   ASSERT_TRUE(wasm_vm != nullptr);
-
   EXPECT_TRUE(wasm_vm->runtime() == "envoy.wasm.runtime.v8");
-  EXPECT_FALSE(wasm_vm->cloneable());
-  EXPECT_TRUE(wasm_vm->clone() == nullptr);
 
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
@@ -152,6 +149,9 @@ TEST_F(WasmVmTest, V8Code) {
 
   EXPECT_THAT(wasm_vm->getCustomSection("producers"), HasSubstr("rustc"));
   EXPECT_TRUE(wasm_vm->getCustomSection("emscripten_metadata").empty());
+
+  EXPECT_TRUE(wasm_vm->cloneable() == Cloneable::CompiledBytecode);
+  EXPECT_TRUE(wasm_vm->clone() != nullptr);
 }
 
 TEST_F(WasmVmTest, V8BadHostFunctions) {

@@ -165,6 +165,7 @@ private:
   std::string vm_id_;           // User-provided vm_id.
   std::string vm_id_with_hash_; // vm_id + hash of code.
   std::unique_ptr<WasmVm> wasm_vm_;
+  Cloneable started_from_{Cloneable::NotCloneable};
   Stats::ScopeSharedPtr scope_;
 
   Upstream::ClusterManager& cluster_manager_;

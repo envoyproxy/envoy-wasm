@@ -112,9 +112,7 @@ void Wasm::registerCallbacks() {
       "env", #_fn, &Exports::_fn,                                                                  \
       &ConvertFunctionWordToUint32<decltype(Exports::_fn),                                         \
                                    Exports::_fn>::convertFunctionWordToUint32)
-  if (is_emscripten_) {
-    _REGISTER(pthread_equal);
-  }
+  _REGISTER(pthread_equal);
 #undef _REGISTER
 
 #define _REGISTER_WASI(_fn)                                                                        \
@@ -122,14 +120,12 @@ void Wasm::registerCallbacks() {
       "wasi_unstable", #_fn, &Exports::wasi_unstable_##_fn,                                        \
       &ConvertFunctionWordToUint32<decltype(Exports::wasi_unstable_##_fn),                         \
                                    Exports::wasi_unstable_##_fn>::convertFunctionWordToUint32)
-  if (is_emscripten_) {
-    _REGISTER_WASI(fd_write);
-    _REGISTER_WASI(fd_seek);
-    _REGISTER_WASI(fd_close);
-    _REGISTER_WASI(environ_get);
-    _REGISTER_WASI(environ_sizes_get);
-    _REGISTER_WASI(proc_exit);
-  }
+  _REGISTER_WASI(fd_write);
+  _REGISTER_WASI(fd_seek);
+  _REGISTER_WASI(fd_close);
+  _REGISTER_WASI(environ_get);
+  _REGISTER_WASI(environ_sizes_get);
+  _REGISTER_WASI(proc_exit);
 #undef _REGISTER_WASI
 
   // Calls with the "proxy_" prefix.
@@ -241,19 +237,17 @@ void Wasm::getFunctions() {
 
 Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
     : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
-      vm_id_with_hash_(wasm.vm_id_with_hash_), scope_(wasm.scope_),
-      cluster_manager_(wasm.cluster_manager_), dispatcher_(dispatcher),
+      vm_id_with_hash_(wasm.vm_id_with_hash_), started_from_(wasm.wasm_vm()->cloneable()),
+      scope_(wasm.scope_), cluster_manager_(wasm.cluster_manager_), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), wasm_stats_(wasm.wasm_stats_),
       stat_name_set_(wasm.stat_name_set_) {
-  if (wasm.wasm_vm()->cloneable()) {
+  if (started_from_ != Cloneable::NotCloneable) {
     wasm_vm_ = wasm.wasm_vm()->clone();
-    vm_context_ = std::make_shared<Context>(this);
-    getFunctions();
   } else {
     wasm_vm_ = Common::Wasm::createWasmVm(wasm.wasm_vm()->runtime(), scope_);
-    if (!initialize(wasm.code(), wasm.allow_precompiled())) {
-      throw WasmException("Failed to initialize WASM code");
-    }
+  }
+  if (!initialize(wasm.code(), wasm.allow_precompiled())) {
+    throw WasmException("Failed to load WASM code");
   }
   active_wasm_++;
   wasm_stats_.active_.set(active_wasm_);
@@ -277,50 +271,62 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
     return false;
   }
 
-  // Construct a unique identifier for the VM based on the provided vm_id and a hash of the
-  // code.
-  vm_id_with_hash_ = vm_id_ + ":" + base64Sha256(code);
+  if (started_from_ == Cloneable::NotCloneable) {
+    // Construct a unique identifier for the VM based on the provided vm_id and a hash of the
+    // code.
+    vm_id_with_hash_ = vm_id_ + ":" + base64Sha256(code);
 
-  auto ok = wasm_vm_->load(code, allow_precompiled);
-  if (!ok) {
-    return false;
-  }
-  auto metadata = wasm_vm_->getCustomSection("emscripten_metadata");
-  if (!metadata.empty()) {
-    // See https://github.com/emscripten-core/emscripten/blob/incoming/tools/shared.py#L3059
-    is_emscripten_ = true;
-    auto start = reinterpret_cast<const uint8_t*>(metadata.data());
-    auto end = reinterpret_cast<const uint8_t*>(metadata.data() + metadata.size());
-    start = decodeVarint(start, end, &emscripten_metadata_major_version_);
-    start = decodeVarint(start, end, &emscripten_metadata_minor_version_);
-    start = decodeVarint(start, end, &emscripten_abi_major_version_);
-    start = decodeVarint(start, end, &emscripten_abi_minor_version_);
-    uint32_t temp;
-    if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 1) {
-      // metadata 0.2 - added: wasm_backend.
-      start = decodeVarint(start, end, &temp);
+    auto ok = wasm_vm_->load(code, allow_precompiled);
+    if (!ok) {
+      return false;
     }
-    start = decodeVarint(start, end, &temp);
-    start = decodeVarint(start, end, &temp);
-    if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 0) {
-      // metadata 0.1 - added: global_base, dynamic_base, dynamictop_ptr and tempdouble_ptr.
+    auto metadata = wasm_vm_->getCustomSection("emscripten_metadata");
+    if (!metadata.empty()) {
+      // See https://github.com/emscripten-core/emscripten/blob/incoming/tools/shared.py#L3059
+      is_emscripten_ = true;
+      auto start = reinterpret_cast<const uint8_t*>(metadata.data());
+      auto end = reinterpret_cast<const uint8_t*>(metadata.data() + metadata.size());
+      start = decodeVarint(start, end, &emscripten_metadata_major_version_);
+      start = decodeVarint(start, end, &emscripten_metadata_minor_version_);
+      start = decodeVarint(start, end, &emscripten_abi_major_version_);
+      start = decodeVarint(start, end, &emscripten_abi_minor_version_);
+      uint32_t temp;
+      if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 1) {
+        // metadata 0.2 - added: wasm_backend.
+        start = decodeVarint(start, end, &temp);
+      }
       start = decodeVarint(start, end, &temp);
       start = decodeVarint(start, end, &temp);
-      start = decodeVarint(start, end, &temp);
-      decodeVarint(start, end, &temp);
-      if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 2) {
-        // metadata 0.3 - added: standalone_wasm.
-        start = decodeVarint(start, end, &emscripten_standalone_wasm_);
+      if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 0) {
+        // metadata 0.1 - added: global_base, dynamic_base, dynamictop_ptr and tempdouble_ptr.
+        start = decodeVarint(start, end, &temp);
+        start = decodeVarint(start, end, &temp);
+        start = decodeVarint(start, end, &temp);
+        decodeVarint(start, end, &temp);
+        if (emscripten_metadata_major_version_ > 0 || emscripten_metadata_minor_version_ > 2) {
+          // metadata 0.3 - added: standalone_wasm.
+          start = decodeVarint(start, end, &emscripten_standalone_wasm_);
+        }
       }
     }
+
+    code_ = code;
+    allow_precompiled_ = allow_precompiled;
   }
-  registerCallbacks();
-  wasm_vm_->link(vm_id_);
+
+  if (started_from_ != Cloneable::InstantiatedModule) {
+    registerCallbacks();
+    wasm_vm_->link(vm_id_);
+  }
+
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
-  startVm(vm_context_.get());
-  code_ = code;
-  allow_precompiled_ = allow_precompiled;
+
+  if (started_from_ != Cloneable::InstantiatedModule) {
+    // Base VM was already started, so don't try to start cloned VMs again.
+    startVm(vm_context_.get());
+  }
+
   return true;
 }
 
