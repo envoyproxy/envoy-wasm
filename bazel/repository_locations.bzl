@@ -73,7 +73,7 @@ REPOSITORY_LOCATIONS = dict(
         strip_prefix = "sql-parser-5f50c68bdf5f107692bb027d1c568f67597f4d7f",
         urls = ["https://github.com/envoyproxy/sql-parser/archive/5f50c68bdf5f107692bb027d1c568f67597f4d7f.tar.gz"],
     ),
-    com_github_eile_tclap = dict(
+    com_github_mirror_tclap = dict(
         sha256 = "f0ede0721dddbb5eba3a47385a6e8681b14f155e1129dd39d1a959411935098f",
         strip_prefix = "tclap-tclap-1-2-1-release-final",
         urls = ["https://github.com/mirror/tclap/archive/tclap-1-2-1-release-final.tar.gz"],
