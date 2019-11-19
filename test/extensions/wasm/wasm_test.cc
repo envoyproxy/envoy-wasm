@@ -100,7 +100,7 @@ TEST_P(WasmTestMatrix, Logging) {
   wasm_weak.lock()->configure(root_context, plugin, "configure-test");
   wasm_handler.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
-  // This will SEGV on nullptr if wasm has been deleeted.
+  // This will SEGV on nullptr if wasm has been deleted.
   wasm_weak.lock()->tickHandler(root_context->id());
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher->clearDeferredDeleteList();
