@@ -333,21 +333,22 @@ void Wasm::startVm(Context* root_context) {
   }
 }
 
-bool Wasm::configure(Context* root_context, absl::string_view configuration) {
-  return root_context->onConfigure(configuration);
+bool Wasm::configure(Context* root_context, PluginSharedPtr plugin,
+                     absl::string_view configuration) {
+  return root_context->onConfigure(configuration, plugin);
 }
 
 Context* Wasm::start(PluginSharedPtr plugin) {
   auto root_id = plugin->root_id_;
   auto it = root_contexts_.find(root_id);
   if (it != root_contexts_.end()) {
-    it->second->onStart(vm_configuration());
+    it->second->onStart(vm_configuration(), plugin);
     return it->second.get();
   }
-  auto context = std::make_unique<Context>(this, root_id, plugin);
+  auto context = std::make_unique<Context>(this, plugin);
   auto context_ptr = context.get();
   root_contexts_[root_id] = std::move(context);
-  context_ptr->onStart(vm_configuration());
+  context_ptr->onStart(vm_configuration(), plugin);
   return context_ptr;
 };
 
@@ -355,13 +356,11 @@ void Wasm::startForTesting(std::unique_ptr<Context> context, PluginSharedPtr plu
   auto context_ptr = context.get();
   if (!context->wasm_) {
     // Initialization was delayed till the Wasm object was created.
-    context->wasm_ = this;
-    context->plugin_ = plugin;
-    context->id_ = allocContextId();
-    contexts_[context->id_] = context.get();
+    context->initializeRoot(this, plugin);
   }
   root_contexts_[""] = std::move(context);
-  context_ptr->onStart("");
+  // Set the current plugin over the lifetime of the onConfigure call to the RootContext.
+  context_ptr->onStart("", plugin);
 }
 
 void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {
@@ -521,7 +520,7 @@ WasmHandleSharedPtr createThreadLocalWasm(WasmHandle& base_wasm, PluginSharedPtr
                                           Event::Dispatcher& dispatcher) {
   auto wasm = std::make_shared<WasmHandle>(std::make_shared<Wasm>(*base_wasm.wasm(), dispatcher));
   Context* root_context = wasm->wasm()->start(plugin);
-  if (!wasm->wasm()->configure(root_context, configuration)) {
+  if (!wasm->wasm()->configure(root_context, plugin, configuration)) {
     throw WasmException("Failed to configure WASM code");
   }
   local_wasms[wasm->wasm()->vm_id_with_hash()] = wasm;
@@ -546,7 +545,7 @@ WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandle& base_wasm, PluginShar
   auto wasm = getThreadLocalWasmPtr(base_wasm.wasm()->vm_id_with_hash());
   if (wasm) {
     auto root_context = wasm->wasm()->start(plugin);
-    if (!wasm->wasm()->configure(root_context, configuration)) {
+    if (!wasm->wasm()->configure(root_context, plugin, configuration)) {
       throw WasmException("Failed to configure WASM code");
     }
     return wasm;

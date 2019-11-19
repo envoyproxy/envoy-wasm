@@ -220,9 +220,12 @@ Context::Context() : root_context_(this) {}
 
 Context::Context(Wasm* wasm) : wasm_(wasm), root_context_(this) { wasm_->contexts_[id_] = this; }
 
-Context::Context(Wasm* wasm, absl::string_view root_id, PluginSharedPtr plugin)
-    : wasm_(wasm), id_(wasm->allocContextId()), root_context_(this), plugin_(plugin) {
-  RELEASE_ASSERT(root_id == plugin->root_id_, "");
+Context::Context(Wasm* wasm, PluginSharedPtr plugin) {
+  wasm_ = wasm;
+  id_ = wasm->allocContextId();
+  root_id_ = plugin->root_id_, root_log_prefix_ = makeRootLogPrefix(plugin->vm_id_);
+  root_local_info_ = &plugin->local_info_;
+  root_context_ = this;
   wasm_->contexts_[id_] = this;
 }
 
@@ -230,6 +233,26 @@ Context::Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
     : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(root_context_id), plugin_(plugin) {
   wasm_->contexts_[id_] = this;
   root_context_ = wasm_->contexts_[root_context_id_];
+}
+
+void Context::initializeRoot(Wasm* wasm, PluginSharedPtr plugin) {
+  wasm_ = wasm;
+  id_ = wasm->allocContextId();
+  root_id_ = plugin->root_id_, root_log_prefix_ = makeRootLogPrefix(plugin->vm_id_);
+  root_local_info_ = &plugin->local_info_;
+  root_context_ = this;
+  wasm_->contexts_[id_] = this;
+}
+
+std::string Context::makeRootLogPrefix(absl::string_view vm_id) const {
+  std::string prefix;
+  if (!root_id_.empty()) {
+    prefix = prefix + " " + std::string(root_id_);
+  }
+  if (vm_id.empty()) {
+    prefix = prefix + " " + std::string(vm_id);
+  }
+  return prefix;
 }
 
 WasmVm* Context::wasmVm() const { return wasm_->wasm_vm(); }
@@ -431,6 +454,10 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
             Protobuf::Arena::Create<Filters::Common::Expr::UpstreamWrapper>(&arena, *info));
         break;
       case PropertyToken::NODE:
+        if (root_local_info_) {
+          value = CelValue::CreateMessage(&root_local_info_->node(), &arena);
+          break;
+        }
         if (!plugin_) {
           return WasmResult::NotFound;
         }
@@ -995,35 +1022,41 @@ bool Context::isSsl() { return decoder_callbacks_->connection()->ssl() != nullpt
 //
 // Calls into the WASM code.
 //
-bool Context::onStart(absl::string_view vm_configuration) {
+bool Context::onStart(absl::string_view vm_configuration, PluginSharedPtr plugin) {
   bool result = 0;
   if (wasm_->onStart_) {
     configuration_ = vm_configuration;
+    plugin_ = plugin;
     result = wasm_->onStart_(this, id_, static_cast<uint32_t>(vm_configuration.size())).u64_ != 0;
+    plugin_.reset();
     configuration_ = "";
   }
   return result;
 }
 
-bool Context::validateConfiguration(absl::string_view configuration) {
+bool Context::validateConfiguration(absl::string_view configuration, PluginSharedPtr plugin) {
   if (!wasm_->validateConfiguration_) {
     return true;
   }
   configuration_ = configuration;
+  plugin_ = plugin;
   auto result =
       wasm_->validateConfiguration_(this, id_, static_cast<uint32_t>(configuration.size())).u64_ !=
       0;
+  plugin_.reset();
   configuration_ = "";
   return result;
 }
 
-bool Context::onConfigure(absl::string_view plugin_configuration) {
+bool Context::onConfigure(absl::string_view plugin_configuration, PluginSharedPtr plugin) {
   if (!wasm_->onConfigure_) {
     return true;
   }
   configuration_ = plugin_configuration;
+  plugin_ = plugin;
   auto result =
       wasm_->onConfigure_(this, id_, static_cast<uint32_t>(plugin_configuration.size())).u64_ != 0;
+  plugin_.reset();
   configuration_ = "";
   return result;
 }

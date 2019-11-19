@@ -59,7 +59,7 @@ public:
 
   bool initialize(const std::string& code, bool allow_precompiled = false);
   void startVm(Context* root_context);
-  bool configure(Context* root_context, absl::string_view configuration);
+  bool configure(Context* root_context, PluginSharedPtr plugin, absl::string_view configuration);
   Context* start(PluginSharedPtr plugin); // returns the root Context.
 
   absl::string_view vm_id() const { return vm_id_; }

@@ -28,7 +28,7 @@ void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmService& config,
     if (config.singleton()) {
       // Return the WASM VM which will be stored as a singleton by the Server.
       auto root_context = base_wasm->wasm()->start(plugin);
-      if (!base_wasm->wasm()->configure(root_context, config.config().configuration())) {
+      if (!base_wasm->wasm()->configure(root_context, plugin, config.config().configuration())) {
         cb(nullptr);
       }
       return cb(base_wasm);

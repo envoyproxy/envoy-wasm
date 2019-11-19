@@ -59,10 +59,10 @@ class Context : public Logger::Loggable<Logger::Id::wasm>,
                 public Network::Filter,
                 public std::enable_shared_from_this<Context> {
 public:
-  Context();                                                              // Testing.
-  Context(Wasm* wasm);                                                    // Vm Context.
-  Context(Wasm* wasm, absl::string_view root_id, PluginSharedPtr plugin); // Root Context.
-  Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin);  // Stream context.
+  Context();                                                             // Testing.
+  Context(Wasm* wasm);                                                   // Vm Context.
+  Context(Wasm* wasm, PluginSharedPtr plugin);                           // Root Context.
+  Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin); // Stream context.
   ~Context();
 
   Wasm* wasm() const { return wasm_; }
@@ -88,9 +88,9 @@ public:
   //
   // VM level downcalls into the WASM code on Context(id == 0).
   //
-  virtual bool validateConfiguration(absl::string_view configuration);
-  virtual bool onStart(absl::string_view vm_configuration);
-  virtual bool onConfigure(absl::string_view plugin_configuration);
+  virtual bool validateConfiguration(absl::string_view configuration, PluginSharedPtr plugin);
+  virtual bool onStart(absl::string_view vm_configuration, PluginSharedPtr plugin);
+  virtual bool onConfigure(absl::string_view plugin_configuration, PluginSharedPtr plugin);
 
   //
   // Stream downcalls on Context(id > 0).
@@ -348,6 +348,9 @@ protected:
     Grpc::RawAsyncStream* stream_;
   };
 
+  void initializeRoot(Wasm* wasm, PluginSharedPtr plugin);
+  std::string makeRootLogPrefix(absl::string_view vm_id) const;
+
   void onHttpCallSuccess(uint32_t token, Envoy::Http::MessagePtr& response);
   void onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
 
@@ -371,8 +374,11 @@ protected:
 
   Wasm* wasm_{nullptr};
   uint32_t id_{0};
-  uint32_t root_context_id_{0};    // 0 for roots and the general context.
-  Context* root_context_{nullptr}; // set in all contexts.
+  uint32_t root_context_id_{0};                          // 0 for roots and the general context.
+  Context* root_context_{nullptr};                       // set in all contexts.
+  std::string root_id_;                                  // set only in root context.
+  std::string root_log_prefix_;                          // set only in root context.
+  const LocalInfo::LocalInfo* root_local_info_{nullptr}; // set only for root_context.
   PluginSharedPtr plugin_;
   bool in_vm_context_created_ = false;
   bool destroyed_ = false;
