@@ -1608,7 +1608,7 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
     allow_precompiled_ = allow_precompiled;
   }
 
-  if (started_from_ < Cloneable::InstantiatedModule) {
+  if (started_from_ != Cloneable::InstantiatedModule) {
     registerCallbacks();
     wasm_vm_->link(vm_id_);
   }
@@ -1616,7 +1616,7 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
   vm_context_ = std::make_shared<Context>(this);
   getFunctions();
 
-  if (started_from_ < Cloneable::InstantiatedModule) {
+  if (started_from_ != Cloneable::InstantiatedModule) {
     // Base VM was already started, so don't try to start cloned VMs again.
     startVm(vm_context_.get());
   }
