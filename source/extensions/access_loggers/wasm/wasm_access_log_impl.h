@@ -12,6 +12,8 @@ namespace Extensions {
 namespace AccessLoggers {
 namespace Wasm {
 
+using Envoy::Extensions::Common::Wasm::WasmHandle;
+
 class WasmAccessLog : public AccessLog::Instance {
 public:
   WasmAccessLog(absl::string_view root_id, ThreadLocal::SlotPtr tls_slot,
@@ -28,7 +30,7 @@ public:
     }
 
     if (tls_slot_ != nullptr) {
-      tls_slot_->getTyped<Common::Wasm::Wasm>().log(root_id_, request_headers, response_headers,
+      tls_slot_->getTyped<WasmHandle>().wasm()->log(root_id_, request_headers, response_headers,
                                                     response_trailers, stream_info);
     }
   }

@@ -74,6 +74,7 @@ Word setTickPeriodMilliseconds(void* raw_context, Word tick_period_milliseconds)
 Word getCurrentTimeNanoseconds(void* raw_context, Word result_uint64_ptr);
 
 Word setEffectiveContext(void* raw_context, Word context_id);
+Word done(void* raw_context);
 
 // Runtime environment functions exported from envoy to wasm.
 

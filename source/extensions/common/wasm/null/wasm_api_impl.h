@@ -228,6 +228,7 @@ inline WasmResult proxy_getMetric(uint32_t metric_id, uint64_t* value) {
 inline WasmResult proxy_setEffectiveContext(uint64_t context_id) {
   return wordToWasmResult(Exports::setEffectiveContext(current_context_, WS(context_id)));
 }
+inline WasmResult proxy_done() { return wordToWasmResult(Exports::done(current_context_)); }
 
 #undef WS
 #undef WR

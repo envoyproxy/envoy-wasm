@@ -23,11 +23,14 @@ void WasmFactory::createWasm(const envoy::config::wasm::v2::WasmService& config,
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
       envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(), nullptr);
 
-  auto callback = [&context, &config, plugin, cb](std::shared_ptr<Common::Wasm::Wasm> base_wasm) {
+  auto callback = [&context, &config, plugin,
+                   cb](std::shared_ptr<Common::Wasm::WasmHandle> base_wasm) {
     if (config.singleton()) {
       // Return the WASM VM which will be stored as a singleton by the Server.
-      auto root_context = base_wasm->start(plugin);
-      base_wasm->configure(root_context, plugin, config.config().configuration());
+      auto root_context = base_wasm->wasm()->start(plugin);
+      if (!base_wasm->wasm()->configure(root_context, plugin, config.config().configuration())) {
+        cb(nullptr);
+      }
       return cb(base_wasm);
     }
     // Per-thread WASM VM.

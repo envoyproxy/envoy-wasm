@@ -47,6 +47,10 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
+using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
+using Envoy::Extensions::Common::Wasm::Wasm;
+using Envoy::Extensions::Common::Wasm::WasmHandleSharedPtr;
+
 class TestFilter : public Envoy::Extensions::Common::Wasm::Context {
 public:
   TestFilter(Wasm* wasm, uint32_t root_context_id,
@@ -96,7 +100,7 @@ public:
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
         dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
-        remote_data_provider_, [this](std::shared_ptr<Wasm> wasm) { wasm_ = wasm; });
+        remote_data_provider_, [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; });
   }
 
   void setupNullConfig(const std::string& name) {
@@ -119,11 +123,12 @@ public:
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
         dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
-        remote_data_provider_, [this](std::shared_ptr<Wasm> wasm) { wasm_ = wasm; });
+        remote_data_provider_, [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; });
   }
 
   void setupFilter() {
-    filter_ = std::make_unique<TestFilter>(wasm_.get(), wasm_->getRootContext("")->id(), plugin_);
+    filter_ = std::make_unique<TestFilter>(wasm_->wasm().get(),
+                                           wasm_->wasm()->getRootContext("")->id(), plugin_);
     filter_->setDecoderFilterCallbacks(decoder_callbacks_);
     filter_->setEncoderFilterCallbacks(encoder_callbacks_);
   }
@@ -134,8 +139,8 @@ public:
   NiceMock<Event::MockDispatcher> dispatcher_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
   NiceMock<Init::MockManager> init_manager_;
-  std::shared_ptr<Wasm> wasm_;
-  std::shared_ptr<Common::Wasm::Plugin> plugin_;
+  WasmHandleSharedPtr wasm_;
+  PluginSharedPtr plugin_;
   std::unique_ptr<TestFilter> filter_;
   NiceMock<Envoy::Ssl::MockConnectionInfo> ssl_;
   NiceMock<Envoy::Network::MockConnection> connection_;
@@ -448,7 +453,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
           HttpFilters::HttpFilterNames::get().Wasm,
           MessageUtil::keyValueStruct("wasm_request_get_key", "wasm_request_get_value")));
 
-  wasm_->tickHandler(root_context_->id());
+  wasm_->wasm()->tickHandler(root_context_->id());
 
   EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
@@ -545,12 +550,11 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
               scriptLog_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))));
   EXPECT_CALL(*root_context_,
               scriptLog_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
-
-  EXPECT_CALL(dispatcher_, post(_)).WillOnce(Return());
+  EXPECT_CALL(dispatcher_, post(_)).Times(2).WillRepeatedly(Return());
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   auto token = Common::Wasm::resolveQueueForTest("vm_id", "my_shared_queue");
-  wasm_->queueReady(root_context_->id(), token);
+  wasm_->wasm()->queueReady(root_context_->id(), token);
 }
 
 } // namespace Wasm

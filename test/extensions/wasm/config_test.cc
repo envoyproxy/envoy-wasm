@@ -45,7 +45,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
+          "{{ test_rundir }}/test/extensions/wasm/test_data/start_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
   Init::ManagerImpl init_manager{"init_manager"};
@@ -63,6 +63,8 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   EXPECT_CALL(init_watcher, ready());
   init_manager.initialize(init_watcher);
   EXPECT_NE(wasmptr, nullptr);
+  EXPECT_CALL(dispatcher, post(_));
+  wasmptr.reset();
 }
 
 TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
@@ -74,7 +76,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
+          "{{ test_rundir }}/test/extensions/wasm/test_data/start_cpp.wasm"));
   Upstream::MockClusterManager cluster_manager;
   Init::ManagerImpl init_manager{"init_manager"};
   Init::ExpectableWatcherImpl init_watcher;
@@ -86,6 +88,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
+  EXPECT_CALL(dispatcher, post(_));
   factory->createWasm(config, context,
                       [](Server::WasmSharedPtr wasm) { EXPECT_EQ(wasm, nullptr); });
   EXPECT_CALL(init_watcher, ready());
@@ -114,6 +117,7 @@ TEST_P(WasmFactoryTest, MissingImport) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
+  EXPECT_CALL(dispatcher, post(_));
   EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context, [](Server::WasmSharedPtr) {});
                           , Extensions::Common::Wasm::WasmVmException,
                           "Failed to load WASM module due to a missing import: env.missing");
@@ -129,7 +133,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   config.mutable_config()->mutable_vm_config()->set_runtime("");
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
+          "{{ test_rundir }}/test/extensions/wasm/test_data/start_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
   Init::ManagerImpl init_manager{"init_manager"};
@@ -155,7 +159,7 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   config.mutable_config()->mutable_vm_config()->set_runtime("envoy.wasm.runtime.invalid");
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/wasm/test_data/logging_cpp.wasm"));
+          "{{ test_rundir }}/test/extensions/wasm/test_data/start_cpp.wasm"));
   config.set_singleton(true);
   Upstream::MockClusterManager cluster_manager;
   Init::ManagerImpl init_manager{"init_manager"};

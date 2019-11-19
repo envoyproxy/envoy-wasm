@@ -37,4 +37,5 @@ mergeInto(LibraryManager.library, {
     proxy_setEffectiveContext : function () {},
     proxy_getDownstreamDataBufferBytes: function () {},
     proxy_getUpstreamDataBufferBytes: function () {},
+    proxy_done: function () {},
 });

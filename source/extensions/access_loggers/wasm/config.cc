@@ -39,7 +39,7 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
       nullptr /* listener_metadata */);
 
   auto callback = [access_log, &context, plugin,
-                   configuration](std::shared_ptr<Common::Wasm::Wasm> base_wasm) {
+                   configuration](Common::Wasm::WasmHandleSharedPtr base_wasm) {
     auto tls_slot = context.threadLocal().allocateSlot();
 
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.

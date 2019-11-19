@@ -160,7 +160,7 @@ public:
     it->second.dispatcher->post([vm_id, context_id, token] {
       auto wasm = getThreadLocalWasmPtr(vm_id);
       if (wasm) {
-        wasm->queueReady(context_id, token);
+        wasm->wasm()->queueReady(context_id, token);
       }
     });
     return WasmResult::Ok;
@@ -214,7 +214,7 @@ private:
 SharedData global_shared_data;
 
 // Map from Wasm ID to the local Wasm instance.
-thread_local absl::flat_hash_map<std::string, std::weak_ptr<Wasm>> local_wasms;
+thread_local absl::flat_hash_map<std::string, std::weak_ptr<WasmHandle>> local_wasms;
 
 const std::string INLINE_STRING = "<inline>";
 
@@ -1503,6 +1503,7 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(getMetric);
 
   _REGISTER_PROXY(setEffectiveContext);
+  _REGISTER_PROXY(done);
 #undef _REGISTER_PROXY
 }
 
@@ -1718,6 +1719,42 @@ uint32_t Wasm::allocContextId() {
   }
 }
 
+class Wasm::ShutdownHandle : public Envoy::Event::DeferredDeletable {
+public:
+  ShutdownHandle(WasmSharedPtr wasm) : wasm_(wasm) {}
+
+private:
+  WasmSharedPtr wasm_;
+};
+
+void Wasm::shutdown() {
+  bool all_done = true;
+  for (auto& p : root_contexts_) {
+    if (!p.second->onDone()) {
+      all_done = false;
+      pending_done_.insert(p.second.get());
+    }
+  }
+  if (!all_done) {
+    shutdown_handle_ = std::make_unique<ShutdownHandle>(shared_from_this());
+  }
+}
+
+WasmResult Wasm::done(Context* root_context) {
+  auto it = pending_done_.find(root_context);
+  if (it == pending_done_.end()) {
+    return WasmResult::NotFound;
+  }
+  pending_done_.erase(it);
+  if (pending_done_.empty()) {
+    for (auto& p : root_contexts_) {
+      p.second->onDelete();
+    }
+    dispatcher_.deferredDelete(std::move(shutdown_handle_));
+  }
+  return WasmResult::Ok;
+}
+
 void Wasm::queueReady(uint32_t root_context_id, uint32_t token) {
   auto it = contexts_.find(root_context_id);
   if (it == contexts_.end() || !it->second->isRootContext()) {
@@ -1804,10 +1841,11 @@ void Context::onDestroy() {
   onDone();
 }
 
-void Context::onDone() {
+bool Context::onDone() {
   if (wasm_->onDone_) {
-    wasm_->onDone_(this, id_);
+    return wasm_->onDone_(this, id_).u64_ != 0;
   }
+  return true;
 }
 
 void Context::onLog() {
@@ -2009,8 +2047,9 @@ static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_confi
                                Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
                                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                                CreateWasmCallback&& cb) {
-  auto wasm = std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(),
-                                     vm_config.configuration(), scope, cluster_manager, dispatcher);
+  auto wasm = std::make_shared<WasmHandle>(
+      std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(),
+                             scope, cluster_manager, dispatcher));
 
   std::string source, code;
   if (vm_config.code().has_remote()) {
@@ -2028,13 +2067,13 @@ static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_confi
     if (code.empty()) {
       throw WasmException(fmt::format("Failed to load WASM code from {}", source));
     }
-    if (!wasm->initialize(code, allow_precompiled)) {
+    if (!wasm->wasm()->initialize(code, allow_precompiled)) {
       throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
     }
     if (!context) {
-      wasm->start(plugin);
+      wasm->wasm()->start(plugin);
     } else {
-      wasm->startForTesting(std::move(context), plugin);
+      wasm->wasm()->startForTesting(std::move(context), plugin);
     }
     cb(wasm);
   };
@@ -2069,19 +2108,19 @@ void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
                      std::move(root_context_for_testing), remote_data_provider, std::move(cb));
 }
 
-std::shared_ptr<Wasm> createThreadLocalWasm(Wasm& base_wasm, PluginSharedPtr plugin,
-                                            absl::string_view configuration,
-                                            Event::Dispatcher& dispatcher) {
-  auto wasm = std::make_shared<Wasm>(base_wasm, dispatcher);
-  Context* root_context = wasm->start(plugin);
-  if (!wasm->configure(root_context, plugin, configuration)) {
+WasmHandleSharedPtr createThreadLocalWasm(WasmHandle& base_wasm, PluginSharedPtr plugin,
+                                          absl::string_view configuration,
+                                          Event::Dispatcher& dispatcher) {
+  auto wasm = std::make_shared<WasmHandle>(std::make_shared<Wasm>(*base_wasm.wasm(), dispatcher));
+  Context* root_context = wasm->wasm()->start(plugin);
+  if (!wasm->wasm()->configure(root_context, plugin, configuration)) {
     throw WasmException("Failed to configure WASM code");
   }
-  local_wasms[wasm->vm_id_with_hash()] = wasm;
+  local_wasms[wasm->wasm()->vm_id_with_hash()] = wasm;
   return wasm;
 }
 
-std::shared_ptr<Wasm> getThreadLocalWasmPtr(absl::string_view vm_id) {
+WasmHandleSharedPtr getThreadLocalWasmPtr(absl::string_view vm_id) {
   auto it = local_wasms.find(vm_id);
   if (it == local_wasms.end()) {
     return nullptr;
@@ -2093,13 +2132,13 @@ std::shared_ptr<Wasm> getThreadLocalWasmPtr(absl::string_view vm_id) {
   return wasm;
 }
 
-std::shared_ptr<Wasm> getOrCreateThreadLocalWasm(Wasm& base_wasm, PluginSharedPtr plugin,
-                                                 absl::string_view configuration,
-                                                 Event::Dispatcher& dispatcher) {
-  auto wasm = getThreadLocalWasmPtr(base_wasm.vm_id_with_hash());
+WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandle& base_wasm, PluginSharedPtr plugin,
+                                               absl::string_view configuration,
+                                               Event::Dispatcher& dispatcher) {
+  auto wasm = getThreadLocalWasmPtr(base_wasm.wasm()->vm_id_with_hash());
   if (wasm) {
-    auto root_context = wasm->start(plugin);
-    if (!wasm->configure(root_context, plugin, configuration)) {
+    auto root_context = wasm->wasm()->start(plugin);
+    if (!wasm->wasm()->configure(root_context, plugin, configuration)) {
       throw WasmException("Failed to configure WASM code");
     }
     return wasm;
