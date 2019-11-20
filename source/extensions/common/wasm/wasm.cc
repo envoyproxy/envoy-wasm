@@ -51,6 +51,7 @@ namespace Common {
 namespace Wasm {
 
 namespace {
+
 std::atomic<int64_t> active_wasm_;
 
 std::string base64Sha256(absl::string_view data) {
