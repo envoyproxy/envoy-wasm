@@ -43,17 +43,17 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<1>* f
   auto plugin = this;
   if (function_name == "free") {
     *f = [](Common::Wasm::Context*, Word ptr) { return ::free(reinterpret_cast<void*>(ptr.u64_)); };
-  } else if (function_name == "proxy_onTick") {
+  } else if (function_name == "proxy_on_tick") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id) {
       SaveRestoreContext saved_context(context);
       plugin->onTick(context_id.u64_);
     };
-  } else if (function_name == "proxy_onLog") {
+  } else if (function_name == "proxy_on_log") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id) {
       SaveRestoreContext saved_context(context);
       plugin->onLog(context_id.u64_);
     };
-  } else if (function_name == "proxy_onDelete") {
+  } else if (function_name == "proxy_on_delete") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id) {
       SaveRestoreContext saved_context(context);
       plugin->onDelete(context_id.u64_);
@@ -65,22 +65,22 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<1>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f) {
   auto plugin = this;
-  if (function_name == "proxy_onCreate") {
+  if (function_name == "proxy_on_create") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_context_id) {
       SaveRestoreContext saved_context(context);
       plugin->onCreate(context_id.u64_, root_context_id.u64_);
     };
-  } else if (function_name == "proxy_onDownstreamConnectionClose") {
+  } else if (function_name == "proxy_on_downstream_connection_close") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word peer_type) {
       SaveRestoreContext saved_context(context);
       plugin->onDownstreamConnectionClose(context_id.u64_, peer_type.u64_);
     };
-  } else if (function_name == "proxy_onUpstreamConnectionClose") {
+  } else if (function_name == "proxy_on_upstream_connection_close") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word peer_type) {
       SaveRestoreContext saved_context(context);
       plugin->onUpstreamConnectionClose(context_id.u64_, peer_type.u64_);
     };
-  } else if (function_name == "proxy_onQueueReady") {
+  } else if (function_name == "proxy_on_queue_ready") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token) {
       SaveRestoreContext saved_context(context);
       plugin->onQueueReady(context_id.u64_, token.u64_);
@@ -92,27 +92,27 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<3>* f) {
   auto plugin = this;
-  if (function_name == "proxy_onGrpcClose") {
+  if (function_name == "proxy_on_grpc_close") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word status_code) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcClose(context_id.u64_, token.u64_, status_code.u64_);
     };
-  } else if (function_name == "proxy_onGrpcReceive") {
+  } else if (function_name == "proxy_on_grpc_receive") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word body_size) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcReceive(context_id.u64_, token.u64_, body_size.u64_);
     };
-  } else if (function_name == "proxy_onGrpcCreateInitialMetadata") {
+  } else if (function_name == "proxy_on_grpc_create_initial_metadata") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcCreateInitialMetadata(context_id.u64_, token.u64_, headers.u64_);
     };
-  } else if (function_name == "proxy_onGrpcReceiveInitialMetadata") {
+  } else if (function_name == "proxy_on_grpc_receive_initial_metadata") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcReceiveInitialMetadata(context_id.u64_, token.u64_, headers.u64_);
     };
-  } else if (function_name == "proxy_onGrpcReceiveTrailingMetadata") {
+  } else if (function_name == "proxy_on_grpc_receive_trailing_metadata") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word trailers) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcReceiveTrailingMetadata(context_id.u64_, token.u64_, trailers.u64_);
@@ -124,7 +124,7 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<3>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<5>* f) {
   auto plugin = this;
-  if (function_name == "proxy_onHttpCallResponse") {
+  if (function_name == "proxy_on_http_call_response") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers,
                   Word body_size, Word trailers) {
       SaveRestoreContext saved_context(context);
@@ -142,12 +142,12 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
     *f = [](Common::Wasm::Context*, Word size) -> Word {
       return Word(reinterpret_cast<uint64_t>(::malloc(size.u64_)));
     };
-  } else if (function_name == "proxy_onNewConnection") {
+  } else if (function_name == "proxy_on_new_connection") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onNewConnection(context_id.u64_));
     };
-  } else if (function_name == "proxy_onDone") {
+  } else if (function_name == "proxy_on_done") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id) {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onDone(context_id.u64_));
@@ -159,47 +159,47 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<2>* f) {
   auto plugin = this;
-  if (function_name == "proxy_onStart") {
+  if (function_name == "proxy_on_start") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word configuration_size) {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onStart(context_id.u64_, configuration_size.u64_));
     };
-  } else if (function_name == "proxy_onConfigure") {
+  } else if (function_name == "proxy_on_configure") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word configuration_size) {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onConfigure(context_id.u64_, configuration_size.u64_));
     };
-  } else if (function_name == "proxy_validateConfiguration") {
+  } else if (function_name == "proxy_validate_configuration") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word configuration_size) {
       SaveRestoreContext saved_context(context);
       return Word(plugin->validateConfiguration(context_id.u64_, configuration_size.u64_));
     };
-  } else if (function_name == "proxy_onRequestHeaders") {
+  } else if (function_name == "proxy_on_request_headers") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word headers) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onRequestHeaders(context_id.u64_, headers.u64_));
     };
-  } else if (function_name == "proxy_onRequestTrailers") {
+  } else if (function_name == "proxy_on_request_trailers") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word trailers) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onRequestTrailers(context_id.u64_, trailers.u64_));
     };
-  } else if (function_name == "proxy_onRequestMetadata") {
+  } else if (function_name == "proxy_on_request_metadata") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word elements) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onRequestMetadata(context_id.u64_, elements.u64_));
     };
-  } else if (function_name == "proxy_onResponseHeaders") {
+  } else if (function_name == "proxy_on_response_headers") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word headers) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onResponseHeaders(context_id.u64_, headers.u64_));
     };
-  } else if (function_name == "proxy_onResponseTrailers") {
+  } else if (function_name == "proxy_on_response_trailers") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word trailers) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onResponseTrailers(context_id.u64_, trailers.u64_));
     };
-  } else if (function_name == "proxy_onResponseMetadata") {
+  } else if (function_name == "proxy_on_response_metadata") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word elements) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onResponseMetadata(context_id.u64_, elements.u64_));
@@ -211,28 +211,28 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<2>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<3>* f) {
   auto plugin = this;
-  if (function_name == "proxy_onDownstreamData") {
+  if (function_name == "proxy_on_downstream_data") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
                   Word end_of_stream) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(
           plugin->onDownstreamData(context_id.u64_, body_buffer_length.u64_, end_of_stream.u64_));
     };
-  } else if (function_name == "proxy_onUpstreamData") {
+  } else if (function_name == "proxy_on_upstream_data") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
                   Word end_of_stream) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(
           plugin->onUpstreamData(context_id.u64_, body_buffer_length.u64_, end_of_stream.u64_));
     };
-  } else if (function_name == "proxy_onRequestBody") {
+  } else if (function_name == "proxy_on_request_body") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
                   Word end_of_stream) -> Word {
       SaveRestoreContext saved_context(context);
       return Word(
           plugin->onRequestBody(context_id.u64_, body_buffer_length.u64_, end_of_stream.u64_));
     };
-  } else if (function_name == "proxy_onResponseBody") {
+  } else if (function_name == "proxy_on_response_body") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word body_buffer_length,
                   Word end_of_stream) -> Word {
       SaveRestoreContext saved_context(context);

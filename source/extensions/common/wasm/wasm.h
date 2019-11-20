@@ -190,42 +190,42 @@ private:
   WasmCallVoid<1> free_;
 
   // Calls into the VM.
-  WasmCallWord<2> validateConfiguration_;
-  WasmCallWord<2> onStart_;
-  WasmCallWord<2> onConfigure_;
-  WasmCallVoid<1> onTick_;
+  WasmCallWord<2> validate_configuration_;
+  WasmCallWord<2> on_start_;
+  WasmCallWord<2> on_configure_;
+  WasmCallVoid<1> on_tick_;
 
-  WasmCallVoid<2> onCreate_;
+  WasmCallVoid<2> on_create_;
 
-  WasmCallWord<1> onNewConnection_;
-  WasmCallWord<3> onDownstreamData_;
-  WasmCallWord<3> onUpstreamData_;
-  WasmCallVoid<2> onDownstreamConnectionClose_;
-  WasmCallVoid<2> onUpstreamConnectionClose_;
+  WasmCallWord<1> on_new_connection_;
+  WasmCallWord<3> on_downstream_data_;
+  WasmCallWord<3> on_upstream_data_;
+  WasmCallVoid<2> on_downstream_connection_close_;
+  WasmCallVoid<2> on_upstream_connection_close_;
 
-  WasmCallWord<2> onRequestHeaders_;
-  WasmCallWord<3> onRequestBody_;
-  WasmCallWord<2> onRequestTrailers_;
-  WasmCallWord<2> onRequestMetadata_;
+  WasmCallWord<2> on_request_headers_;
+  WasmCallWord<3> on_request_body_;
+  WasmCallWord<2> on_request_trailers_;
+  WasmCallWord<2> on_request_metadata_;
 
-  WasmCallWord<2> onResponseHeaders_;
-  WasmCallWord<3> onResponseBody_;
-  WasmCallWord<2> onResponseTrailers_;
-  WasmCallWord<2> onResponseMetadata_;
+  WasmCallWord<2> on_response_headers_;
+  WasmCallWord<3> on_response_body_;
+  WasmCallWord<2> on_response_trailers_;
+  WasmCallWord<2> on_response_metadata_;
 
-  WasmCallVoid<5> onHttpCallResponse_;
+  WasmCallVoid<5> on_http_call_response_;
 
-  WasmCallVoid<3> onGrpcReceive_;
-  WasmCallVoid<3> onGrpcClose_;
-  WasmCallVoid<3> onGrpcCreateInitialMetadata_;
-  WasmCallVoid<3> onGrpcReceiveInitialMetadata_;
-  WasmCallVoid<3> onGrpcReceiveTrailingMetadata_;
+  WasmCallVoid<3> on_grpc_receive_;
+  WasmCallVoid<3> on_grpc_close_;
+  WasmCallVoid<3> on_grpc_create_initial_metadata_;
+  WasmCallVoid<3> on_grpc_receive_initial_metadata_;
+  WasmCallVoid<3> on_grpc_receive_trailing_metadata_;
 
-  WasmCallVoid<2> onQueueReady_;
+  WasmCallVoid<2> on_queue_ready_;
 
-  WasmCallWord<1> onDone_;
-  WasmCallVoid<1> onLog_;
-  WasmCallVoid<1> onDelete_;
+  WasmCallWord<1> on_done_;
+  WasmCallVoid<1> on_log_;
+  WasmCallVoid<1> on_delete_;
 
   // Used by the base_wasm to enable non-clonable thread local Wasm(s) to be constructed.
   std::string code_;

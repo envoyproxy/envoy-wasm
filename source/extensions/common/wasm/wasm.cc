@@ -136,53 +136,53 @@ void Wasm::registerCallbacks() {
                                    Exports::_fn>::convertFunctionWordToUint32);
   _REGISTER_PROXY(log);
 
-  _REGISTER_PROXY(getStatus);
-  _REGISTER_PROXY(getConfiguration);
+  _REGISTER_PROXY(get_status);
+  _REGISTER_PROXY(get_configuration);
 
-  _REGISTER_PROXY(setProperty);
-  _REGISTER_PROXY(getProperty);
+  _REGISTER_PROXY(set_property);
+  _REGISTER_PROXY(get_property);
 
-  _REGISTER_PROXY(continueRequest);
-  _REGISTER_PROXY(continueResponse);
-  _REGISTER_PROXY(sendLocalResponse);
-  _REGISTER_PROXY(clearRouteCache);
+  _REGISTER_PROXY(continue_request);
+  _REGISTER_PROXY(continue_response);
+  _REGISTER_PROXY(send_local_response);
+  _REGISTER_PROXY(clear_route_cache);
 
-  _REGISTER_PROXY(getSharedData);
-  _REGISTER_PROXY(setSharedData);
+  _REGISTER_PROXY(get_shared_data);
+  _REGISTER_PROXY(set_shared_data);
 
-  _REGISTER_PROXY(registerSharedQueue);
-  _REGISTER_PROXY(resolveSharedQueue);
-  _REGISTER_PROXY(dequeueSharedQueue);
-  _REGISTER_PROXY(enqueueSharedQueue);
+  _REGISTER_PROXY(register_shared_queue);
+  _REGISTER_PROXY(resolve_shared_queue);
+  _REGISTER_PROXY(dequeue_shared_queue);
+  _REGISTER_PROXY(enqueue_shared_queue);
 
-  _REGISTER_PROXY(getHeaderMapValue);
-  _REGISTER_PROXY(addHeaderMapValue);
-  _REGISTER_PROXY(replaceHeaderMapValue);
-  _REGISTER_PROXY(removeHeaderMapValue);
-  _REGISTER_PROXY(getHeaderMapPairs);
-  _REGISTER_PROXY(setHeaderMapPairs);
-  _REGISTER_PROXY(getHeaderMapSize);
+  _REGISTER_PROXY(get_header_map_value);
+  _REGISTER_PROXY(add_header_map_value);
+  _REGISTER_PROXY(replace_header_map_value);
+  _REGISTER_PROXY(remove_header_map_value);
+  _REGISTER_PROXY(get_header_map_pairs);
+  _REGISTER_PROXY(set_header_map_pairs);
+  _REGISTER_PROXY(get_header_map_size);
 
-  _REGISTER_PROXY(getBufferStatus);
-  _REGISTER_PROXY(getBufferBytes);
+  _REGISTER_PROXY(get_buffer_status);
+  _REGISTER_PROXY(get_buffer_bytes);
 
-  _REGISTER_PROXY(httpCall);
+  _REGISTER_PROXY(http_call);
 
-  _REGISTER_PROXY(grpcCall);
-  _REGISTER_PROXY(grpcStream);
-  _REGISTER_PROXY(grpcClose);
-  _REGISTER_PROXY(grpcCancel);
-  _REGISTER_PROXY(grpcSend);
+  _REGISTER_PROXY(grpc_call);
+  _REGISTER_PROXY(grpc_stream);
+  _REGISTER_PROXY(grpc_close);
+  _REGISTER_PROXY(grpc_cancel);
+  _REGISTER_PROXY(grpc_send);
 
-  _REGISTER_PROXY(setTickPeriodMilliseconds);
-  _REGISTER_PROXY(getCurrentTimeNanoseconds);
+  _REGISTER_PROXY(set_tick_period_milliseconds);
+  _REGISTER_PROXY(get_current_time_nanoseconds);
 
-  _REGISTER_PROXY(defineMetric);
-  _REGISTER_PROXY(incrementMetric);
-  _REGISTER_PROXY(recordMetric);
-  _REGISTER_PROXY(getMetric);
+  _REGISTER_PROXY(define_metric);
+  _REGISTER_PROXY(increment_metric);
+  _REGISTER_PROXY(record_metric);
+  _REGISTER_PROXY(get_metric);
 
-  _REGISTER_PROXY(setEffectiveContext);
+  _REGISTER_PROXY(set_effective_context);
   _REGISTER_PROXY(done);
 #undef _REGISTER_PROXY
 }
@@ -197,37 +197,37 @@ void Wasm::getFunctions() {
 #undef _GET
 
 #define _GET_PROXY(_fn) wasm_vm_->getFunction("proxy_" #_fn, &_fn##_);
-  _GET_PROXY(validateConfiguration);
-  _GET_PROXY(onStart);
-  _GET_PROXY(onConfigure);
-  _GET_PROXY(onTick);
+  _GET_PROXY(validate_configuration);
+  _GET_PROXY(on_start);
+  _GET_PROXY(on_configure);
+  _GET_PROXY(on_tick);
 
-  _GET_PROXY(onCreate);
+  _GET_PROXY(on_create);
 
-  _GET_PROXY(onNewConnection);
-  _GET_PROXY(onDownstreamData);
-  _GET_PROXY(onUpstreamData);
-  _GET_PROXY(onDownstreamConnectionClose);
-  _GET_PROXY(onUpstreamConnectionClose);
+  _GET_PROXY(on_new_connection);
+  _GET_PROXY(on_downstream_data);
+  _GET_PROXY(on_upstream_data);
+  _GET_PROXY(on_downstream_connection_close);
+  _GET_PROXY(on_upstream_connection_close);
 
-  _GET_PROXY(onRequestHeaders);
-  _GET_PROXY(onRequestBody);
-  _GET_PROXY(onRequestTrailers);
-  _GET_PROXY(onRequestMetadata);
-  _GET_PROXY(onResponseHeaders);
-  _GET_PROXY(onResponseBody);
-  _GET_PROXY(onResponseTrailers);
-  _GET_PROXY(onResponseMetadata);
-  _GET_PROXY(onHttpCallResponse);
-  _GET_PROXY(onGrpcReceive);
-  _GET_PROXY(onGrpcClose);
-  _GET_PROXY(onGrpcCreateInitialMetadata);
-  _GET_PROXY(onGrpcReceiveInitialMetadata);
-  _GET_PROXY(onGrpcReceiveTrailingMetadata);
-  _GET_PROXY(onQueueReady);
-  _GET_PROXY(onDone);
-  _GET_PROXY(onLog);
-  _GET_PROXY(onDelete);
+  _GET_PROXY(on_request_headers);
+  _GET_PROXY(on_request_body);
+  _GET_PROXY(on_request_trailers);
+  _GET_PROXY(on_request_metadata);
+  _GET_PROXY(on_response_headers);
+  _GET_PROXY(on_response_body);
+  _GET_PROXY(on_response_trailers);
+  _GET_PROXY(on_response_metadata);
+  _GET_PROXY(on_http_call_response);
+  _GET_PROXY(on_grpc_receive);
+  _GET_PROXY(on_grpc_close);
+  _GET_PROXY(on_grpc_create_initial_metadata);
+  _GET_PROXY(on_grpc_receive_initial_metadata);
+  _GET_PROXY(on_grpc_receive_trailing_metadata);
+  _GET_PROXY(on_queue_ready);
+  _GET_PROXY(on_done);
+  _GET_PROXY(on_log);
+  _GET_PROXY(on_delete);
 #undef _GET_PROXY
 
   if (!malloc_ || !free_) {
@@ -391,8 +391,8 @@ void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick
 void Wasm::tickHandler(uint32_t root_context_id) {
   auto& tick_period = tick_period_[root_context_id];
   auto& timer = timer_[root_context_id];
-  if (onTick_) {
-    onTick_(getContext(root_context_id), root_context_id);
+  if (on_tick_) {
+    on_tick_(getContext(root_context_id), root_context_id);
     if (timer && tick_period.count() > 0) {
       timer->enableTimer(tick_period);
     }

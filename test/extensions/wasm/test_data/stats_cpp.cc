@@ -4,7 +4,7 @@
 #include "proxy_wasm_intrinsics.h"
 
 // Test the low level interface.
-extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onStart(uint32_t, uint32_t) {
+extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_start(uint32_t, uint32_t) {
   uint32_t c, g, h;
   CHECK_RESULT(defineMetric(MetricType::Counter, "test_counter", &c));
   CHECK_RESULT(defineMetric(MetricType::Gauge, "test_gauges", &g));
@@ -33,7 +33,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onStart(uint32_t, uint32_t) {
 }
 
 // Test the higher level interface.
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick(uint32_t) {
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_tick(uint32_t) {
   Metric c(MetricType::Counter, "test_counter",
            {MetricTag{"counter_tag", MetricTag::TagType::String}});
   Metric g(MetricType::Gauge, "test_gauge", {MetricTag{"gauge_int_tag", MetricTag::TagType::Int}});
@@ -59,7 +59,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onTick(uint32_t) {
 }
 
 // Test the high level interface.
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_onLog(uint32_t /* context_zero */) {
+extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_log(uint32_t /* context_zero */) {
   auto c =
       Counter<std::string, int, bool>::New("test_counter", "string_tag", "int_tag", "bool_tag");
   auto g = Gauge<std::string, std::string>::New("test_gauge", "string_tag1", "string_tag2");
