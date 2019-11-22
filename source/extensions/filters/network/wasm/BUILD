@@ -32,10 +32,9 @@ envoy_cc_library(
         "//include/envoy/registry",
         "//source/common/common:empty_string",
         "//source/common/config:datasource_lib",
-        "//source/common/config:filter_json_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/filters/network:well_known_names",
         "//source/extensions/filters/network/common:factory_base_lib",
-        "@envoy_api//envoy/config/wasm/v2:pkg_cc_proto",
+        "@envoy_api//envoy/config/filter/network/wasm/v2:pkg_cc_proto",
     ],
 )

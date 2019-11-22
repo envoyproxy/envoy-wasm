@@ -33,7 +33,6 @@ envoy_cc_library(
         "//include/envoy/registry",
         "//source/common/common:empty_string",
         "//source/common/config:datasource_lib",
-        "//source/common/config:filter_json_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/filters/http:well_known_names",
         "//source/extensions/filters/http/common:factory_base_lib",

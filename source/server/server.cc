@@ -8,19 +8,18 @@
 #include <unordered_set>
 
 #include "envoy/admin/v2alpha/config_dump.pb.h"
-#include "envoy/config/bootstrap/v2//bootstrap.pb.validate.h"
 #include "envoy/config/bootstrap/v2/bootstrap.pb.h"
+#include "envoy/config/bootstrap/v2/bootstrap.pb.validate.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/event/signal.h"
 #include "envoy/event/timer.h"
 #include "envoy/network/dns.h"
+#include "envoy/registry/registry.h"
 #include "envoy/server/options.h"
-#include "envoy/server/wasm_config.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "common/api/api_impl.h"
 #include "common/api/os_sys_calls_impl.h"
-#include "common/buffer/buffer_impl.h"
 #include "common/common/enum_to_int.h"
 #include "common/common/mutex_tracer_impl.h"
 #include "common/common/utility.h"
@@ -44,7 +43,6 @@
 #include "server/guarddog_impl.h"
 #include "server/listener_hooks.h"
 #include "server/ssl_context_manager.h"
-#include "server/wasm_config_impl.h"
 
 namespace Envoy {
 namespace Server {
@@ -189,7 +187,7 @@ void InstanceImpl::flushStats() {
   }
 }
 
-void InstanceImpl::flushStatsInternal() {
+void InstanceImpl::updateServerStats() {
   // mergeParentStatsIfAny() does nothing and returns a struct of 0s if there is no parent.
   HotRestart::ServerStatsFromParent parent_stats = restarter_.mergeParentStatsIfAny(stats_store_);
 
@@ -206,7 +204,10 @@ void InstanceImpl::flushStatsInternal() {
       enumToInt(Utility::serverState(initManager().state(), healthCheckFailed())));
   server_stats_->stats_recent_lookups_.set(
       stats_store_.symbolTable().getRecentLookups([](absl::string_view, uint64_t) {}));
+}
 
+void InstanceImpl::flushStatsInternal() {
+  updateServerStats();
   InstanceUtil::flushMetricsToSinks(config_.statsSinks(), stats_store_);
   // TODO(ramaraochavali): consider adding different flush interval for histograms.
   if (stat_flush_timer_ != nullptr) {
@@ -251,35 +252,9 @@ void InstanceImpl::initialize(const Options& options,
             restarter_.version());
 
   ENVOY_LOG(info, "statically linked extensions:");
-  ENVOY_LOG(info, "  access_loggers: {}",
-            Registry::FactoryRegistry<Configuration::AccessLogInstanceFactory>::allFactoryNames());
-  ENVOY_LOG(
-      info, "  filters.http: {}",
-      Registry::FactoryRegistry<Configuration::NamedHttpFilterConfigFactory>::allFactoryNames());
-  ENVOY_LOG(info, "  filters.listener: {}",
-            Registry::FactoryRegistry<
-                Configuration::NamedListenerFilterConfigFactory>::allFactoryNames());
-  ENVOY_LOG(
-      info, "  filters.network: {}",
-      Registry::FactoryRegistry<Configuration::NamedNetworkFilterConfigFactory>::allFactoryNames());
-  ENVOY_LOG(info, "  stat_sinks: {}",
-            Registry::FactoryRegistry<Configuration::StatsSinkFactory>::allFactoryNames());
-  ENVOY_LOG(info, "  tracers: {}",
-            Registry::FactoryRegistry<Configuration::TracerFactory>::allFactoryNames());
-  ENVOY_LOG(info, "  transport_sockets.downstream: {}",
-            Registry::FactoryRegistry<
-                Configuration::DownstreamTransportSocketConfigFactory>::allFactoryNames());
-  ENVOY_LOG(info, "  transport_sockets.upstream: {}",
-            Registry::FactoryRegistry<
-                Configuration::UpstreamTransportSocketConfigFactory>::allFactoryNames());
-  ENVOY_LOG(info, "  wasm: {}",
-            Registry::FactoryRegistry<Configuration::WasmFactory>::allFactoryNames());
-
-  // Enable the selected buffer implementation (old libevent evbuffer version or new native
-  // version) early in the initialization, before any buffers can be created.
-  Buffer::OwnedImpl::useOldImpl(options.libeventBufferEnabled());
-  ENVOY_LOG(info, "buffer implementation: {}",
-            Buffer::OwnedImpl().usesOldImpl() ? "old (libevent)" : "new");
+  for (const auto& ext : Envoy::Registry::FactoryCategoryRegistry::registeredFactories()) {
+    ENVOY_LOG(info, "  {}: {}", ext.first, absl::StrJoin(ext.second->registeredNames(), ", "));
+  }
 
   // Handle configuration that needs to take place prior to the main configuration load.
   InstanceUtil::loadBootstrapConfig(bootstrap_, options,
@@ -401,28 +376,6 @@ void InstanceImpl::initialize(const Options& options,
       dns_resolver_, *ssl_context_manager_, *dispatcher_, *local_info_, *secret_manager_,
       messageValidationContext(), *api_, http_context_, access_log_manager_, *singleton_manager_);
 
-  // Optional Wasm services. These must be initialied afer threading but before the main
-  // configuration which many reference wasm vms.
-  if (bootstrap_.wasm_service_size() > 0) {
-    auto factory = Registry::FactoryRegistry<Configuration::WasmFactory>::getFactory("envoy.wasm");
-    if (factory) {
-      for (auto& config : bootstrap_.wasm_service()) {
-        auto scope = Stats::ScopeSharedPtr(stats_store_.createScope(config.stat_prefix()));
-        Configuration::WasmFactoryContextImpl wasm_factory_context(clusterManager(), initManager(),
-                                                                   *dispatcher_, thread_local_,
-                                                                   api(), scope, *local_info_);
-        factory->createWasm(config, wasm_factory_context, [this](WasmSharedPtr wasm) {
-          if (wasm) {
-            // If not nullptr, this is a singleton WASM service.
-            wasm_.emplace_back(std::move(wasm));
-          }
-        });
-      }
-    } else {
-      ENVOY_LOG(warn, "No wasm factory available, so no wasm service started.");
-    }
-  }
-
   // Now the configuration gets parsed. The configuration may start setting
   // thread local data per above. See MainImpl::initialize() for why ConfigImpl
   // is constructed as part of the InstanceImpl and then populated once
@@ -472,6 +425,8 @@ void InstanceImpl::initialize(const Options& options,
 void InstanceImpl::startWorkers() {
   listener_manager_->startWorkers(*guard_dog_);
   initialization_timer_->complete();
+  // Update server stats as soon as initialization is done.
+  updateServerStats();
   workers_started_ = true;
   // At this point we are ready to take traffic and all listening ports are up. Notify our parent
   // if applicable that they can stop listening and drain.
