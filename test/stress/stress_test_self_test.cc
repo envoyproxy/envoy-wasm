@@ -1,3 +1,5 @@
+#include "envoy/network/listener.h"
+
 #include "common/network/utility.h"
 
 #include "test/test_common/network_utility.h"
@@ -21,11 +23,8 @@ public:
       : transport_socket_factory_(), ip_version_(ipVersion(std::get<1>(GetParam()))),
         http_type_(httpType(std::get<0>(GetParam()))),
         use_grpc_(0 == std::get<2>(GetParam()).compare("gRPC")),
-        listening_socket_(Network::Utility::parseInternetAddressAndPort(fmt::format(
-                              "{}:{}", Network::Test::getAnyAddressUrlString(ip_version_), 0)),
-                          nullptr, true),
-        client_("client"),
-        server_("server", listening_socket_, transport_socket_factory_, http_type_) {}
+        listen_socket_factory_(std::make_shared<LocalListenSocketFactory>()), client_("client"),
+        server_("server", listen_socket_factory_, transport_socket_factory_, http_type_) {}
 
 protected:
   Network::RawBufferSocketFactory transport_socket_factory_;
@@ -33,7 +32,7 @@ protected:
   Http::CodecClient::Type http_type_;
   bool use_grpc_;
 
-  Network::TcpListenSocket listening_socket_;
+  Network::ListenSocketFactorySharedPtr listen_socket_factory_;
   Client client_;
   Server server_;
 };
@@ -72,7 +71,7 @@ TEST_P(StressTestSelfTest, HappyPath) {
     // Client setup
     //
 
-    Network::Address::InstanceConstSharedPtr address = listening_socket_.localAddress();
+    Network::Address::InstanceConstSharedPtr address = listen_socket_factory_->localAddress();
     LoadGenerator load_generator(client_, transport_socket_factory_, http_type_, address);
 
     //
@@ -146,7 +145,7 @@ TEST_P(StressTestSelfTest, AcceptAndClose) {
     // Client setup
     //
 
-    Network::Address::InstanceConstSharedPtr address = listening_socket_.localAddress();
+    Network::Address::InstanceConstSharedPtr address = listen_socket_factory_->localAddress();
     LoadGenerator load_generator(client_, transport_socket_factory_, http_type_, address);
 
     //
@@ -214,7 +213,7 @@ TEST_P(StressTestSelfTest, SlowResponse) {
     // Client setup
     //
 
-    Network::Address::InstanceConstSharedPtr address = listening_socket_.localAddress();
+    Network::Address::InstanceConstSharedPtr address = listen_socket_factory_->localAddress();
     LoadGenerator load_generator(client_, transport_socket_factory_, http_type_, address);
 
     //
@@ -332,7 +331,7 @@ TEST_P(StressTestSelfTest, NoAccept) {
     // Client setup
     //
 
-    Network::Address::InstanceConstSharedPtr address = listening_socket_.localAddress();
+    Network::Address::InstanceConstSharedPtr address = listen_socket_factory_->localAddress();
     LoadGenerator load_generator(client_, transport_socket_factory_, http_type_, address);
 
     //

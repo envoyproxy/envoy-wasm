@@ -527,8 +527,8 @@ inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_
   size_t size = 0;
   exportPairs(additional_response_headers, &ptr, &size);
   return proxy_send_local_response(response_code, response_code_details.data(),
-                                 response_code_details.size(), body.data(), body.size(), ptr, size,
-                                 static_cast<uint32_t>(grpc_status));
+                                   response_code_details.size(), body.data(), body.size(), ptr,
+                                   size, static_cast<uint32_t>(grpc_status));
 }
 inline void clearRouteCache() { proxy_clear_route_cache(); }
 
@@ -566,8 +566,8 @@ inline WasmResult registerSharedQueue(StringView queue_name, uint32_t* token) {
 }
 
 inline WasmResult resolveSharedQueue(StringView vm_id, StringView queue_name, uint32_t* token) {
-  return proxy_resolve_shared_queue(vm_id.data(), vm_id.size(), queue_name.data(), queue_name.size(),
-                                  token);
+  return proxy_resolve_shared_queue(vm_id.data(), vm_id.size(), queue_name.data(),
+                                    queue_name.size(), token);
 }
 
 inline WasmResult enqueueSharedQueue(uint32_t token, StringView data) {
@@ -765,8 +765,8 @@ inline WasmResult makeHttpCall(StringView uri, const HeaderStringPairs& request_
   MakeHeaderStringPairsBuffer(request_headers, &headers_ptr, &headers_size);
   MakeHeaderStringPairsBuffer(request_trailers, &trailers_ptr, &trailers_size);
   WasmResult result = proxy_http_call(uri.data(), uri.size(), headers_ptr, headers_size,
-                                     request_body.data(), request_body.size(), trailers_ptr,
-                                     trailers_size, timeout_milliseconds, token_ptr);
+                                      request_body.data(), request_body.size(), trailers_ptr,
+                                      trailers_size, timeout_milliseconds, token_ptr);
   ::free(headers_ptr);
   ::free(trailers_ptr);
   return result;
@@ -1154,14 +1154,14 @@ inline WasmResult grpcCall(StringView service, StringView service_name, StringVi
   std::string serialized_request;
   request.SerializeToString(&serialized_request);
   return proxy_grpc_call(service.data(), service.size(), service_name.data(), service_name.size(),
-                        method_name.data(), method_name.size(), serialized_request.data(),
-                        serialized_request.size(), timeout_milliseconds, token_ptr);
+                         method_name.data(), method_name.size(), serialized_request.data(),
+                         serialized_request.size(), timeout_milliseconds, token_ptr);
 }
 
 inline WasmResult grpcStream(StringView service, StringView service_name, StringView method_name,
                              uint32_t* token_ptr) {
   return proxy_grpc_stream(service.data(), service.size(), service_name.data(), service_name.size(),
-                          method_name.data(), method_name.size(), token_ptr);
+                           method_name.data(), method_name.size(), token_ptr);
 }
 
 inline WasmResult grpcCancel(uint32_t token) { return proxy_grpc_cancel(token); }

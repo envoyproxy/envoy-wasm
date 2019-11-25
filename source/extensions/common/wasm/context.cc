@@ -508,13 +508,13 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
         if (!plugin_) {
           return WasmResult::NotFound;
         }
-        value = CelValue::CreateString(plugin_->name_);
+        value = CelValue::CreateStringView(plugin_->name_);
         break;
       case PropertyToken::PLUGIN_ROOT_ID:
-        value = CelValue::CreateString(root_id());
+        value = CelValue::CreateStringView(root_id());
         break;
       case PropertyToken::PLUGIN_VM_ID:
-        value = CelValue::CreateString(wasm()->vm_id());
+        value = CelValue::CreateStringView(wasm()->vm_id());
         break;
       }
       continue;
@@ -522,7 +522,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
 
     if (value.IsMap()) {
       auto& map = *value.MapOrDie();
-      auto field = map[CelValue::CreateString(part)];
+      auto field = map[CelValue::CreateStringView(part)];
       if (field.has_value()) {
         value = field.value();
       } else {

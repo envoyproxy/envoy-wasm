@@ -1,5 +1,7 @@
 #include "stress_test.h"
 
+#include "stress_test_upstream.h"
+
 namespace Envoy {
 namespace Stress {
 
@@ -144,9 +146,9 @@ void StressTest::Cluster::bind() {
     return;
   }
   for (size_t i = 0; i < cluster_helper_->servers().size(); ++i) {
-    listeners_.emplace_back(new LocalListenSocket(ip_version_));
+    listen_socket_factories_.push_back(std::make_shared<LocalListenSocketFactory>(ip_version_));
     ENVOY_LOG(debug, "{} bound port {}", cluster_helper_->name(),
-              listeners_.back()->localAddress()->ip()->port());
+              listen_socket_factories_.back()->localAddress()->ip()->port());
   }
   bound_ = true;
 }
@@ -169,18 +171,18 @@ void StressTest::Cluster::addClusterToBootstrap(ConfigHelper& config_helper,
       value->set_value(2147483647U);
     }
 
-    for (const auto& listener : listeners_) {
+    for (const auto& listen_socket_factory : listen_socket_factories_) {
       auto hosts = cluster->add_hosts();
       auto address = hosts->mutable_socket_address();
       address->set_address(Network::Test::getLoopbackAddressString(ip_version_));
-      address->set_port_value(listener->localAddress()->ip()->port());
+      address->set_port_value(listen_socket_factory->localAddress()->ip()->port());
     }
   });
 
   // This avoids "assert failure: ports.size() > port_idx" complaints from
   // ConfigHelper::finalize()
-  for (const auto& listener : listeners_) {
-    ports.push_back(listener->localAddress()->ip()->port());
+  for (const auto& listen_socket_factory : listen_socket_factories_) {
+    ports.push_back(listen_socket_factory->localAddress()->ip()->port());
   }
 }
 
@@ -188,7 +190,8 @@ void StressTest::Cluster::start() {
   bind();
   for (size_t i = 0; i < cluster_helper_->servers().size(); ++i) {
     servers_.emplace_back(new Server(fmt::format("{}-{}", cluster_helper_->name(), i),
-                                     *listeners_[i], transport_socket_factory_, http_type_));
+                                     listen_socket_factories_[i], transport_socket_factory_,
+                                     http_type_));
     servers_.back()->start(*cluster_helper_->servers()[i]);
   }
 }

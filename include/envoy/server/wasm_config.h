@@ -63,6 +63,8 @@ public:
 
   virtual std::string name() PURE;
 
+  static std::string category() { return "wasm_vm"; }
+
   /**
    * Create a particular wasm VM.
    * @param config const ProtoBuf::Message& supplies the config for the resource monitor

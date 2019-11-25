@@ -1,5 +1,7 @@
 #pragma once
 
+#include "envoy/network/listener.h"
+
 #include "test/integration/http_integration.h"
 #include "test/stress/stress_test_downstream.h"
 #include "test/stress/stress_test_upstream.h"
@@ -61,7 +63,7 @@ private:
     void bind();
 
     uint16_t firstPort() const {
-      return static_cast<uint16_t>(listeners_[0]->localAddress()->ip()->port());
+      return static_cast<uint16_t>(listen_socket_factories_[0]->localAddress()->ip()->port());
     }
 
     const ClusterHelper& clusterHelper() const { return *cluster_helper_; }
@@ -77,7 +79,7 @@ private:
     Network::Address::IpVersion ip_version_;
     Http::CodecClient::Type http_type_;
     ClusterHelperPtr cluster_helper_;
-    std::vector<Network::TcpListenSocketPtr> listeners_;
+    std::vector<Network::ListenSocketFactorySharedPtr> listen_socket_factories_;
     std::vector<ServerPtr> servers_;
   };
 
