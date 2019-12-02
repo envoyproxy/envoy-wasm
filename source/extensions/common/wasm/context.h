@@ -71,8 +71,8 @@ public:
   bool isRootContext() { return root_context_id_ == 0; }
   Context* root_context() { return root_context_; }
 
-  absl::string_view root_id() const { return plugin_->root_id_; }
-  absl::string_view log_prefix() const { return plugin_->log_prefix_; }
+  absl::string_view root_id() const { return plugin_ ? plugin_->root_id_ : root_id_; }
+  absl::string_view log_prefix() const { return plugin_ ? plugin_->log_prefix_ : root_log_prefix_; }
 
   WasmVm* wasmVm() const;
   Upstream::ClusterManager& clusterManager() const;
