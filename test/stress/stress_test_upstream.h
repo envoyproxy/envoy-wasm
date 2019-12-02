@@ -1,5 +1,8 @@
 #pragma once
 
+#include "envoy/network/address.h"
+#include "envoy/network/listener.h"
+
 #include "common/api/api_impl.h"
 #include "common/common/thread.h"
 #include "common/grpc/common.h"
@@ -199,6 +202,27 @@ public:
   void operator=(const LocalListenSocket&) = delete;
 };
 
+class LocalListenSocketFactory : public Network::ListenSocketFactory {
+public:
+  explicit LocalListenSocketFactory(
+      Network::Address::IpVersion ip_version = Network::Address::IpVersion::v4, uint16_t port = 0,
+      const Network::Socket::OptionsSharedPtr& options = nullptr, bool bind_to_port = true);
+  // Network::ListenSocketFactory
+  Network::SocketSharedPtr getListenSocket() override { return local_listen_socket_; };
+  Network::Address::SocketType socketType() const override {
+    return Network::Address::SocketType::Stream;
+  };
+  const Network::Address::InstanceConstSharedPtr& localAddress() const override {
+    return local_listen_socket_->localAddress();
+  };
+  absl::optional<std::reference_wrapper<Network::Socket>> sharedSocket() const override {
+    return *local_listen_socket_;
+  };
+
+private:
+  std::shared_ptr<LocalListenSocket> local_listen_socket_;
+};
+
 /**
  * A convenience class for passing callbacks to a Server. If no callbacks are
  * provided, default callbacks that track some simple metrics will be used. If
@@ -254,7 +278,7 @@ class Server : public Network::FilterChainManager,
                public Network::ListenerConfig,
                Logger::Loggable<Logger::Id::testing> {
 public:
-  Server(const std::string& name, Network::Socket& listening_socket,
+  Server(const std::string& name, Network::ListenSocketFactorySharedPtr listen_socket_factory,
          Network::TransportSocketFactory& transport_socket_factory,
          Http::CodecClient::Type http_type);
   Server(const Server&) = delete;
@@ -284,9 +308,7 @@ public:
 
   Network::FilterChainFactory& filterChainFactory() override;
 
-  Network::Socket& socket() override;
-
-  const Network::Socket& socket() const override;
+  Network::ListenSocketFactory& listenSocketFactory() override;
 
   bool bindToPort() override;
 
@@ -327,8 +349,8 @@ public:
 
   bool createListenerFilterChain(Network::ListenerFilterManager&) override;
 
-  bool createUdpListenerFilterChain(Network::UdpListenerFilterManager&,
-                                    Network::UdpReadFilterCallbacks&) override;
+  void createUdpListenerFilterChain(Network::UdpListenerFilterManager&,
+                                    Network::UdpReadFilterCallbacks&) override{};
 
 private:
   std::string name_;
@@ -349,7 +371,7 @@ private:
   // Network::ListenerConfig
   //
 
-  Network::Socket& listening_socket_;
+  Network::ListenSocketFactorySharedPtr listen_socket_factory_;
   std::atomic<uint32_t> connection_buffer_limit_bytes_{0U};
 
   //

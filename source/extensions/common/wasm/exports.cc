@@ -192,10 +192,10 @@ Word send_local_response(void* raw_context, Word response_code, Word response_co
       headers.addCopy(lower_key, std::string(p.second));
     }
   };
-  auto grpc_status = static_cast<Grpc::Status::GrpcStatus>(grpc_code.u64_);
-  auto grpc_status_opt = (grpc_status != Grpc::Status::GrpcStatus::InvalidCode)
-                             ? absl::optional<Grpc::Status::GrpcStatus>(grpc_status)
-                             : absl::optional<Grpc::Status::GrpcStatus>();
+  auto grpc_status = static_cast<Grpc::Status::WellKnownGrpcStatus>(grpc_code.u64_);
+  auto grpc_status_opt = (grpc_status != Grpc::Status::WellKnownGrpcStatus::InvalidCode)
+                             ? absl::optional<Grpc::Status::WellKnownGrpcStatus>(grpc_status)
+                             : absl::optional<Grpc::Status::WellKnownGrpcStatus>();
   context->sendLocalResponse(static_cast<Envoy::Http::Code>(response_code.u64_), body.value(),
                              modify_headers, grpc_status_opt, details.value());
   return wasmResultToWord(WasmResult::Ok);

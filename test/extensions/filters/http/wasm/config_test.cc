@@ -151,8 +151,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASM) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
-  const std::string sha256 =
-      Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
+  const std::string sha256 = Hex::encode(
+      Envoy::Common::Crypto::UtilitySingleton::get().getSha256Digest(Buffer::OwnedImpl(code)));
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
@@ -196,8 +196,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASM) {
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
-  const std::string sha256 =
-      Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
+  const std::string sha256 = Hex::encode(
+      Envoy::Common::Crypto::UtilitySingleton::get().getSha256Digest(Buffer::OwnedImpl(code)));
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
@@ -235,8 +235,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
-  const std::string sha256 =
-      Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
+  const std::string sha256 = Hex::encode(
+      Envoy::Common::Crypto::UtilitySingleton::get().getSha256Digest(Buffer::OwnedImpl(code)));
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
@@ -275,8 +275,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
-  const std::string sha256 =
-      Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
+  const std::string sha256 = Hex::encode(
+      Envoy::Common::Crypto::UtilitySingleton::get().getSha256Digest(Buffer::OwnedImpl(code)));
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
@@ -315,8 +315,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
   const std::string code = "foo";
-  const std::string sha256 =
-      Hex::encode(Envoy::Common::Crypto::Utility::getSha256Digest(Buffer::OwnedImpl(code)));
+  const std::string sha256 = Hex::encode(
+      Envoy::Common::Crypto::UtilitySingleton::get().getSha256Digest(Buffer::OwnedImpl(code)));
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
