@@ -41,9 +41,21 @@ example body
 
 ## Build WASM Module
 
-Now you want to make changes to the C++ filter, regenerate to WASM module.
+Now you want to make changes to the C++ filter ([envoy_filter_http_wasm_example.cc](envoy_filter_http_wasm_example.cc))
+and regenerate to WASM module ([envoy_filter_http_wasm_example.wasm](envoy_filter_http_wasm_example.wasm)).
 
-### Prerequisite
+### Build using Docker image with WASM toolchain
+
+1. Build Docker image with WASM toolchain
+   ```shell
+   docker build -t wasmsdk:v2 -f ../../api/wasm/cpp/Dockerfile-sdk ../../api/wasm/cpp/
+   ```
+2. Build example WASM Module
+   ```shell
+   ./docker_build_cpp_wasm.sh
+   ```
+
+### Build using WASM toolchain installed on a host
 
 1. Download and install [`protobuf`](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md).
 2. Download and install [`WAVM`](https://github.com/WAVM/WAVM).
