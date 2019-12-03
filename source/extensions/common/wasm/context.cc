@@ -440,7 +440,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
       case PropertyToken::METADATA:
         value = CelValue::CreateMessage(&info->dynamicMetadata(), &arena);
         break;
-      case PropertyToken::FILTER_STATE:
+      case PropertyToken::FILTER_STATE: {
         const Envoy::Network::Connection* connection = getConnection();
         if (connection) {
           value = CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
@@ -450,6 +450,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
               Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState()));
         }
         break;
+      }
       case PropertyToken::REQUEST:
         value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
             &arena, request_headers, *info));
