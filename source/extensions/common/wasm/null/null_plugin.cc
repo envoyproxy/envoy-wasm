@@ -260,7 +260,7 @@ Plugin::Context* NullPlugin::ensureContext(uint64_t context_id, uint64_t root_co
 }
 
 Plugin::RootContext* NullPlugin::ensureRootContext(uint64_t context_id) {
-  auto root_id_opt = Plugin::getProperty({"plugin_root_id"});
+  auto root_id_opt = Plugin::getProperty({"wasm", "plugin_root_id"});
   if (!root_id_opt) {
     throw WasmException("unable to get root_id");
   }

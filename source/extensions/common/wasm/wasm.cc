@@ -363,6 +363,7 @@ void Wasm::startForTesting(std::unique_ptr<Context> context, PluginSharedPtr plu
   if (!context->wasm_) {
     // Initialization was delayed till the Wasm object was created.
     context->initializeRoot(this, plugin);
+    context->initializeActivation();
   }
   root_contexts_[""] = std::move(context);
   // Set the current plugin over the lifetime of the onConfigure call to the RootContext.

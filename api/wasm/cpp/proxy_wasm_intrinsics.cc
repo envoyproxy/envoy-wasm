@@ -45,7 +45,8 @@ static RootContext* ensureRootContext(uint32_t context_id) {
   }
   const char* root_id_ptr = nullptr;
   size_t root_id_size = 0;
-  CHECK_RESULT(proxy_get_property("plugin_root_id", sizeof("plugin_root_id") - 1, &root_id_ptr,
+  std::string plugin_root_id("wasm\0plugin_root_id", 19);
+  CHECK_RESULT(proxy_get_property(plugin_root_id.data(), plugin_root_id.size(), &root_id_ptr,
                                   &root_id_size));
   auto root_id = std::make_unique<WasmData>(root_id_ptr, root_id_size);
   if (!root_factories) {

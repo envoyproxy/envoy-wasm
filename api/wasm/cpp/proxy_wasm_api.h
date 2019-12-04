@@ -495,7 +495,7 @@ inline bool getStructValue(std::initializer_list<StringView> parts,
 }
 
 inline WasmResult getRequestProtocol(std::string* result) {
-  return getStringValue({"request_protocol"}, result) ? WasmResult::Ok : WasmResult::NotFound;
+  return getStringValue({"wasm", "request_protocol"}, result) ? WasmResult::Ok : WasmResult::NotFound;
 }
 
 template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T* out) {

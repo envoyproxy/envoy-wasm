@@ -15,6 +15,9 @@
 #include "common/common/assert.h"
 #include "common/common/logger.h"
 
+#include "extensions/common/wasm/wasm_state.h"
+#include "extensions/filters/common/expr/evaluator.h"
+
 namespace Envoy {
 namespace Extensions {
 namespace Common {
@@ -27,6 +30,11 @@ class WasmVm;
 
 using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
 using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::string>>;
+using google::api::expr::runtime::CelValue;
+
+constexpr absl::string_view FilterStateToken = "filter_state";
+constexpr absl::string_view NodeToken = "node";
+constexpr absl::string_view WasmToken = "wasm";
 
 // Plugin contains the information for a filter/service.
 struct Plugin {
@@ -57,7 +65,8 @@ class Context : public Logger::Loggable<Logger::Id::wasm>,
                 public Http::StreamFilter,
                 public Network::ConnectionCallbacks,
                 public Network::Filter,
-                public std::enable_shared_from_this<Context> {
+                public std::enable_shared_from_this<Context>,
+                public Filters::Common::Expr::BaseWrapper {
 public:
   Context();                                                             // Testing.
   Context(Wasm* wasm);                                                   // Vm Context.
@@ -293,6 +302,9 @@ public:
   // Connection
   virtual bool isSsl();
 
+  // CelMap
+  absl::optional<CelValue> operator[](CelValue key) const override;
+
 protected:
   friend class Wasm;
 
@@ -354,6 +366,7 @@ protected:
     Grpc::RawAsyncStream* stream_;
   };
 
+  void initializeActivation();
   void initializeRoot(Wasm* wasm, PluginSharedPtr plugin);
   std::string makeRootLogPrefix(absl::string_view vm_id) const;
 
@@ -406,6 +419,76 @@ protected:
   uint32_t status_code_{0};
   absl::string_view status_message_;
 
+  Filters::Common::Expr::Activation activation_{};
+
+  // Stream info bound to either a request or a connection.
+  const StreamInfo::StreamInfo* stream_info_{};
+  void setStreamInfo(const StreamInfo::StreamInfo& stream_info) {
+    if (&stream_info != stream_info_) {
+      stream_info_ = &stream_info;
+      activation_.InsertValueProducer(
+          Filters::Common::Expr::Connection,
+          std::make_unique<Filters::Common::Expr::ConnectionWrapper>(stream_info));
+      activation_.InsertValueProducer(
+          Filters::Common::Expr::Upstream,
+          std::make_unique<Filters::Common::Expr::UpstreamWrapper>(stream_info));
+      activation_.InsertValueProducer(
+          Filters::Common::Expr::Source,
+          std::make_unique<Filters::Common::Expr::PeerWrapper>(stream_info, false));
+      activation_.InsertValueProducer(
+          Filters::Common::Expr::Destination,
+          std::make_unique<Filters::Common::Expr::PeerWrapper>(stream_info, true));
+      activation_.InsertValueProducer(
+          Filters::Common::Expr::Metadata,
+          std::make_unique<Filters::Common::Expr::MetadataProducer>(stream_info.dynamicMetadata()));
+    }
+  }
+  void setRequestHeaders(const Http::HeaderMap* request_headers) {
+    activation_.InsertValueProducer(
+        Filters::Common::Expr::Request,
+        std::make_unique<Filters::Common::Expr::RequestWrapper>(request_headers, *stream_info_));
+  }
+  void setResponseHeaders(const Http::HeaderMap* response_headers,
+                          const Http::HeaderMap* response_trailers) {
+    activation_.InsertValueProducer(Filters::Common::Expr::Response,
+                                    std::make_unique<Filters::Common::Expr::ResponseWrapper>(
+                                        response_headers, response_trailers, *stream_info_));
+  }
+
+  // An expression wrapper for the WASM state
+  struct WasmStateWrapper : public Filters::Common::Expr::BaseWrapper {
+    absl::optional<CelValue> operator[](CelValue key) const override {
+      if (!key.IsString()) {
+        return {};
+      }
+      auto value = key.StringOrDie().value();
+      try {
+        if (context_->stream_info_) {
+          const WasmState& result =
+              context_->stream_info_->filterState().getDataReadOnly<WasmState>(value);
+          return CelValue::CreateBytes(&result.value());
+        }
+      } catch (const EnvoyException& e) {
+        // fallthrough
+      }
+
+      // If doesn't exist in request filter state, try looking up in connection filter state.
+      const auto* connection = context_->getConnection();
+      if (connection) {
+        try {
+          const WasmState& result =
+              connection->streamInfo().filterState().getDataReadOnly<WasmState>(value);
+          return CelValue::CreateBytes(&result.value());
+        } catch (const EnvoyException& e) {
+          return {};
+        }
+      }
+      return {};
+    }
+    Context* context_;
+  };
+  WasmStateWrapper wasm_state_wrapper_;
+
   // Network filter state.
   Buffer::Instance* network_downstream_data_buffer_{};
   Buffer::Instance* network_upstream_data_buffer_{};
@@ -432,7 +515,6 @@ protected:
   // NB: this are only available (non-nullptr) during onGrpcReceive.
   Buffer::InstancePtr grpc_receive_buffer_;
 
-  const StreamInfo::StreamInfo* access_log_stream_info_{};
   const Http::HeaderMap* access_log_request_headers_{};
   const Http::HeaderMap* access_log_response_headers_{};
   const Http::HeaderMap* access_log_request_trailers_{}; // unused

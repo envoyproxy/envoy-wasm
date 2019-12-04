@@ -60,6 +60,7 @@ envoy_cc_library(
         "wasm.h",
     ],
     deps = [
+        ":wasm_interoperation_lib",
         ":wasm_vm_interface",
         ":well_known_names",
         "//include/envoy/http:codes_interface",
@@ -69,7 +70,9 @@ envoy_cc_library(
         "//source/common/common:stack_array",
         "//source/common/config:datasource_lib",
         "//source/common/stats:stats_lib",
+        "//source/extensions/filters/common/expr:evaluator_lib",
         "//source/extensions/filters/http:well_known_names",
+        "@com_google_cel_cpp//eval/public:activation",
         "@envoy_api//envoy/config/wasm/v2:pkg_cc_proto",
     ],
 )
@@ -97,7 +100,6 @@ envoy_cc_library(
     ],
     deps = [
         ":wasm_hdr",
-        ":wasm_interoperation_lib",
         ":wasm_vm_lib",
         "//api/wasm/cpp:common_lib",
         "//external:abseil_base",

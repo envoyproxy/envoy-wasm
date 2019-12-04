@@ -25,7 +25,6 @@
 #include "common/tracing/http_tracer_impl.h"
 
 #include "extensions/common/wasm/wasm.h"
-#include "extensions/common/wasm/wasm_state.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/common/expr/context.h"
 
@@ -218,14 +217,33 @@ uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_na
 
 Context::Context() : root_context_(this) {}
 
-Context::Context(Wasm* wasm) : wasm_(wasm), root_context_(this) { wasm_->contexts_[id_] = this; }
+Context::Context(Wasm* wasm) : wasm_(wasm), root_context_(this) {
+  wasm_->contexts_[id_] = this;
+  initializeActivation();
+}
 
-Context::Context(Wasm* wasm, PluginSharedPtr plugin) { initializeRoot(wasm, plugin); }
+Context::Context(Wasm* wasm, PluginSharedPtr plugin) {
+  initializeRoot(wasm, plugin);
+  initializeActivation();
+}
 
 Context::Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
     : wasm_(wasm), id_(wasm->allocContextId()), root_context_id_(root_context_id), plugin_(plugin) {
   wasm_->contexts_[id_] = this;
   root_context_ = wasm_->contexts_[root_context_id_];
+  initializeActivation();
+}
+
+void Context::initializeActivation() {
+  activation_.InsertValue(WasmToken, CelValue::CreateMap(this));
+  wasm_state_wrapper_.context_ = this;
+  activation_.InsertValue(FilterStateToken, CelValue::CreateMap(&wasm_state_wrapper_));
+  if (root_local_info_) {
+    activation_.InsertValue(NodeToken, CelValue::CreateMessage(&root_local_info_->node(), nullptr));
+  } else if (plugin_) {
+    activation_.InsertValue(NodeToken,
+                            CelValue::CreateMessage(&plugin_->local_info_.node(), nullptr));
+  }
 }
 
 void Context::initializeRoot(Wasm* wasm, PluginSharedPtr plugin) {
@@ -340,52 +358,9 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
   return WasmResult::SerializationFailure;
 }
 
-// An expression wrapper for the WASM state
-class WasmStateWrapper : public google::api::expr::runtime::CelMap {
-public:
-  WasmStateWrapper(const StreamInfo::FilterState& filter_state,
-                   const StreamInfo::FilterState* connection_filter_state)
-      : filter_state_(filter_state), connection_filter_state_(connection_filter_state) {}
-  WasmStateWrapper(const StreamInfo::FilterState& filter_state)
-      : filter_state_(filter_state), connection_filter_state_(nullptr) {}
-  absl::optional<google::api::expr::runtime::CelValue>
-  operator[](google::api::expr::runtime::CelValue key) const override {
-    if (!key.IsString()) {
-      return {};
-    }
-    auto value = key.StringOrDie().value();
-    try {
-      const WasmState& result = filter_state_.getDataReadOnly<WasmState>(value);
-      return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
-    } catch (const EnvoyException& e) {
-      // If  doesn't exist in request filter state, try looking up in connection filter state.
-      try {
-        if (connection_filter_state_) {
-          const WasmState& result = connection_filter_state_->getDataReadOnly<WasmState>(value);
-          return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
-        }
-      } catch (const EnvoyException& e) {
-        return {};
-      }
-      return {};
-    }
-  }
-  int size() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
-  bool empty() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
-  const google::api::expr::runtime::CelList* ListKeys() const override {
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
-  }
-
-private:
-  const StreamInfo::FilterState& filter_state_;
-  const StreamInfo::FilterState* connection_filter_state_;
-};
-
 #define PROPERTY_TOKENS(_f)                                                                        \
-  _f(METADATA) _f(FILTER_STATE) _f(REQUEST) _f(RESPONSE) _f(CONNECTION) _f(UPSTREAM) _f(NODE)      \
-      _f(SOURCE) _f(DESTINATION) _f(REQUEST_PROTOCOL) _f(LISTENER_DIRECTION) _f(LISTENER_METADATA) \
-          _f(CLUSTER_NAME) _f(CLUSTER_METADATA) _f(ROUTE_NAME) _f(ROUTE_METADATA) _f(PLUGIN_NAME)  \
-              _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID)
+  _f(REQUEST_PROTOCOL) _f(LISTENER_DIRECTION) _f(CLUSTER_NAME) _f(ROUTE_NAME) _f(PLUGIN_NAME)      \
+      _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID)
 
 static inline std::string downCase(std::string s) {
   std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -400,20 +375,65 @@ enum class PropertyToken { PROPERTY_TOKENS(_DECLARE) };
 static absl::flat_hash_map<std::string, PropertyToken> property_tokens = {PROPERTY_TOKENS(_PAIR)};
 #undef _PARI
 
-WasmResult Context::getProperty(absl::string_view path, std::string* result) {
-  using google::api::expr::runtime::CelValue;
-  using google::api::expr::runtime::FieldBackedListImpl;
-  using google::api::expr::runtime::FieldBackedMapImpl;
+absl::optional<CelValue> Context::operator[](CelValue key) const {
+  if (!key.IsString()) {
+    return {};
+  }
 
+  // Convert into a dense token to enable a jump table implementation.
+  auto part_token = property_tokens.find(key.StringOrDie().value());
+  if (part_token == property_tokens.end()) {
+    return {};
+  }
+
+  switch (part_token->second) {
+  case PropertyToken::REQUEST_PROTOCOL:
+    // TODO(kyessenov) move this upstream to CEL context
+    if (stream_info_ && stream_info_->protocol().has_value()) {
+      return CelValue::CreateString(
+          &Http::Utility::getProtocolString(stream_info_->protocol().value()));
+    }
+    break;
+  case PropertyToken::LISTENER_DIRECTION:
+    if (plugin_) {
+      return CelValue::CreateInt64(plugin_->direction_);
+    }
+    break;
+  case PropertyToken::CLUSTER_NAME:
+    if (stream_info_ && stream_info_->upstreamHost() &&
+        !stream_info_->upstreamHost()->cluster().name().empty()) {
+      return CelValue::CreateString(&stream_info_->upstreamHost()->cluster().name());
+    } else if (stream_info_ && stream_info_->routeEntry()) {
+      return CelValue::CreateString(&stream_info_->routeEntry()->clusterName());
+    }
+    break;
+  case PropertyToken::ROUTE_NAME:
+    if (stream_info_) {
+      return CelValue::CreateString(&stream_info_->getRouteName());
+    }
+    break;
+  case PropertyToken::PLUGIN_NAME:
+    if (plugin_) {
+      return CelValue::CreateStringView(plugin_->name_);
+    }
+    break;
+  case PropertyToken::PLUGIN_ROOT_ID:
+    return CelValue::CreateStringView(root_id());
+  case PropertyToken::PLUGIN_VM_ID:
+    return CelValue::CreateStringView(wasm()->vm_id());
+  default:
+    return {};
+  }
+  return {};
+}
+
+WasmResult Context::getProperty(absl::string_view path, std::string* result) {
   bool first = true;
   CelValue value;
   Protobuf::Arena arena;
-  const StreamInfo::StreamInfo* info = getConstRequestStreamInfo();
-  const auto request_headers = request_headers_ ? request_headers_ : access_log_request_headers_;
-  const auto response_headers =
-      response_headers_ ? response_headers_ : access_log_response_headers_;
-  const auto response_trailers =
-      response_trailers_ ? response_trailers_ : access_log_response_trailers_;
+
+  // Values might be cached with a stale arena.
+  activation_.ClearValueEntry(Filters::Common::Expr::Metadata);
 
   size_t start = 0;
   while (true) {
@@ -431,114 +451,12 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
     // top-level ident
     if (first) {
       first = false;
-      // Convert into a dense token to enable a jump table implementation.
-      auto part_token = property_tokens.find(part);
-      if (part_token == property_tokens.end()) {
-        return WasmResult::NotFound;
+      auto lookup = activation_.FindValue(part, &arena);
+      if (lookup.has_value()) {
+        value = lookup.value();
+        continue;
       }
-      switch (part_token->second) {
-      case PropertyToken::METADATA:
-        value = CelValue::CreateMessage(&info->dynamicMetadata(), &arena);
-        break;
-      case PropertyToken::FILTER_STATE: {
-        const Envoy::Network::Connection* connection = getConnection();
-        if (connection) {
-          value = CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
-              &arena, info->filterState(), &connection->streamInfo().filterState()));
-        } else {
-          value = CelValue::CreateMap(
-              Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState()));
-        }
-        break;
-      }
-      case PropertyToken::REQUEST:
-        value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
-            &arena, request_headers, *info));
-        break;
-      case PropertyToken::RESPONSE:
-        value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::ResponseWrapper>(
-            &arena, response_headers, response_trailers, *info));
-        break;
-      case PropertyToken::CONNECTION:
-        value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(&arena, *info));
-        break;
-      case PropertyToken::UPSTREAM:
-        value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::UpstreamWrapper>(&arena, *info));
-        break;
-      case PropertyToken::NODE:
-        if (root_local_info_) {
-          value = CelValue::CreateMessage(&root_local_info_->node(), &arena);
-          break;
-        }
-        if (!plugin_) {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateMessage(&plugin_->local_info_.node(), &arena);
-        break;
-      case PropertyToken::SOURCE:
-        value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, *info, false));
-        break;
-      case PropertyToken::DESTINATION:
-        value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, *info, true));
-        break;
-      case PropertyToken::REQUEST_PROTOCOL:
-        // TODO(kyessenov) move this upstream to CEL context
-        if (info->protocol().has_value()) {
-          value =
-              CelValue::CreateString(&Http::Utility::getProtocolString(info->protocol().value()));
-          break;
-        } else {
-          return WasmResult::NotFound;
-        }
-      case PropertyToken::LISTENER_DIRECTION:
-        if (!plugin_) {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateInt64(plugin_->direction_);
-        break;
-      case PropertyToken::LISTENER_METADATA:
-        if (!plugin_) {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateMessage(plugin_->listener_metadata_, &arena);
-        break;
-      case PropertyToken::CLUSTER_NAME:
-        if (info->upstreamHost() && !info->upstreamHost()->cluster().name().empty()) {
-          value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
-        } else if (info->routeEntry()) {
-          value = CelValue::CreateString(&info->routeEntry()->clusterName());
-        } else {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
-        break;
-      case PropertyToken::CLUSTER_METADATA:
-        value = CelValue::CreateMessage(&info->upstreamHost()->cluster().metadata(), &arena);
-        break;
-      case PropertyToken::ROUTE_NAME:
-        value = CelValue::CreateString(&info->getRouteName());
-        break;
-      case PropertyToken::ROUTE_METADATA:
-        value = CelValue::CreateMessage(&info->routeEntry()->metadata(), &arena);
-        break;
-      case PropertyToken::PLUGIN_NAME:
-        if (!plugin_) {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateStringView(plugin_->name_);
-        break;
-      case PropertyToken::PLUGIN_ROOT_ID:
-        value = CelValue::CreateStringView(root_id());
-        break;
-      case PropertyToken::PLUGIN_VM_ID:
-        value = CelValue::CreateStringView(wasm()->vm_id());
-        break;
-      }
-      continue;
+      return WasmResult::NotFound;
     }
 
     if (value.IsMap()) {
@@ -547,32 +465,34 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
       if (field.has_value()) {
         value = field.value();
       } else {
-        return {};
+        return WasmResult::NotFound;
       }
     } else if (value.IsMessage()) {
       auto msg = value.MessageOrDie();
       if (msg == nullptr) {
-        return {};
+        return WasmResult::NotFound;
       }
       const Protobuf::Descriptor* desc = msg->GetDescriptor();
       const Protobuf::FieldDescriptor* field_desc = desc->FindFieldByName(std::string(part));
       if (field_desc == nullptr) {
-        return {};
+        return WasmResult::NotFound;
       } else if (field_desc->is_map()) {
         value = CelValue::CreateMap(
-            Protobuf::Arena::Create<FieldBackedMapImpl>(&arena, msg, field_desc, &arena));
+            Protobuf::Arena::Create<google::api::expr::runtime::FieldBackedMapImpl>(
+                &arena, msg, field_desc, &arena));
       } else if (field_desc->is_repeated()) {
         value = CelValue::CreateList(
-            Protobuf::Arena::Create<FieldBackedListImpl>(&arena, msg, field_desc, &arena));
+            Protobuf::Arena::Create<google::api::expr::runtime::FieldBackedListImpl>(
+                &arena, msg, field_desc, &arena));
       } else {
         auto status =
             google::api::expr::runtime::CreateValueFromSingleField(msg, field_desc, &arena, &value);
         if (!status.ok()) {
-          return {};
+          return WasmResult::InternalFailure;
         }
       }
     } else {
-      return {};
+      return WasmResult::NotFound;
     }
   }
 
@@ -964,22 +884,6 @@ void Context::httpRespond(const Pairs& response_headers, absl::string_view body,
   (void)response_headers;
   (void)body;
   (void)response_trailers;
-}
-
-// StreamInfo
-const StreamInfo::StreamInfo* Context::getConstRequestStreamInfo() const {
-  if (encoder_callbacks_) {
-    return &encoder_callbacks_->streamInfo();
-  } else if (decoder_callbacks_) {
-    return &decoder_callbacks_->streamInfo();
-  } else if (access_log_stream_info_) {
-    return access_log_stream_info_;
-  } else if (network_read_filter_callbacks_) {
-    return &network_read_filter_callbacks_->connection().streamInfo();
-  } else if (network_write_filter_callbacks_) {
-    return &network_write_filter_callbacks_->connection().streamInfo();
-  }
-  return nullptr;
 }
 
 StreamInfo::StreamInfo* Context::getRequestStreamInfo() const {
@@ -1461,10 +1365,12 @@ void Context::onEvent(Network::ConnectionEvent event) {
 void Context::initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) {
   network_read_filter_callbacks_ = &callbacks;
   network_read_filter_callbacks_->connection().addConnectionCallbacks(*this);
+  setStreamInfo(callbacks.connection().streamInfo());
 }
 
 void Context::initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& callbacks) {
   network_write_filter_callbacks_ = &callbacks;
+  setStreamInfo(callbacks.connection().streamInfo());
 }
 
 void Wasm::log(absl::string_view root_id, const Http::HeaderMap* request_headers,
@@ -1481,7 +1387,9 @@ void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap*
   // ? request_trailers  ?
   access_log_response_headers_ = response_headers;
   access_log_response_trailers_ = response_trailers;
-  access_log_stream_info_ = &stream_info;
+  setStreamInfo(stream_info);
+  setRequestHeaders(request_headers);
+  setResponseHeaders(response_headers, response_trailers);
 
   onLog();
 
@@ -1489,7 +1397,6 @@ void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap*
   // ? request_trailers  ?
   access_log_response_headers_ = nullptr;
   access_log_response_trailers_ = nullptr;
-  access_log_stream_info_ = nullptr;
 
   onDelete();
 }
@@ -1524,6 +1431,7 @@ void Context::onDelete() {
 Http::FilterHeadersStatus Context::decodeHeaders(Http::HeaderMap& headers, bool end_stream) {
   request_headers_ = &headers;
   end_of_stream_ = end_stream;
+  setRequestHeaders(request_headers_);
   auto result = onRequestHeaders();
   request_headers_ = nullptr;
   return result;
@@ -1553,6 +1461,7 @@ Http::FilterMetadataStatus Context::decodeMetadata(Http::MetadataMap& request_me
 
 void Context::setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks& callbacks) {
   decoder_callbacks_ = &callbacks;
+  setStreamInfo(callbacks.streamInfo());
 }
 
 Http::FilterHeadersStatus Context::encode100ContinueHeaders(Http::HeaderMap&) {
@@ -1593,6 +1502,7 @@ Http::FilterMetadataStatus Context::encodeMetadata(Http::MetadataMap& response_m
 
 void Context::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks& callbacks) {
   encoder_callbacks_ = &callbacks;
+  setStreamInfo(callbacks.streamInfo());
 }
 
 void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::MessagePtr& response) {
