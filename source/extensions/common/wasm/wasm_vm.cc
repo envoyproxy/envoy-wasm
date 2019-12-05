@@ -4,6 +4,7 @@
 
 #include "extensions/common/wasm/null/null.h"
 #include "extensions/common/wasm/v8/v8.h"
+
 #ifdef ENVOY_WASM_WAVM
 #include "extensions/common/wasm/wavm/wavm.h"
 #endif
