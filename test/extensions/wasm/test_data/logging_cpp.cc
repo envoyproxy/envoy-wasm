@@ -20,7 +20,10 @@ extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_start(uint32_t, uint32_t) {
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_tick(uint32_t) {
-  logInfo("test tick logging");
+  const char* root_id = nullptr;
+  size_t size;
+  proxy_get_property("plugin_root_id", sizeof("plugin_root_id") - 1, &root_id, &size);
+  logInfo("test tick logging" + std::string(root_id, size));
   proxy_done();
 }
 
