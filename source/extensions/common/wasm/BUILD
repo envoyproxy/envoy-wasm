@@ -4,7 +4,6 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
-    "envoy_select_wasm_v8",
     "envoy_select_wasm_wavm",
 )
 
@@ -44,9 +43,8 @@ envoy_cc_library(
         ":wasm_vm_interface",
         "//source/common/common:assert_lib",
         "//source/extensions/common/wasm/null:null_lib",
-    ] + envoy_select_wasm_v8([
         "//source/extensions/common/wasm/v8:v8_lib",
-    ]) + envoy_select_wasm_wavm([
+    ] + envoy_select_wasm_wavm([
         "//source/extensions/common/wasm/wavm:wavm_lib",
     ]),
 )

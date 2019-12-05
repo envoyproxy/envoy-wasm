@@ -32,22 +32,7 @@ def envoy_select_hot_restart(xs, repository = ""):
         "//conditions:default": xs,
     })
 
-# Selects the given values depending on the WASM runtimes enabbled in the current build.
-def envoy_select_wasm(xs):
-    return select({
-        "@envoy//bazel:wasm_all": xs,
-        "@envoy//bazel:wasm_v8": xs,
-        "@envoy//bazel:wasm_wavm": xs,
-        "//conditions:default": [],
-    })
-
-def envoy_select_wasm_v8(xs):
-    return select({
-        "@envoy//bazel:wasm_all": xs,
-        "@envoy//bazel:wasm_v8": xs,
-        "//conditions:default": [],
-    })
-
+# Selects the given values depending on the WASM runtimes enabled in the current build.
 def envoy_select_wasm_wavm(xs):
     return select({
         "@envoy//bazel:wasm_all": xs,
