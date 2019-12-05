@@ -1,20 +1,13 @@
 // NOLINT(namespace-envoy)
 #include <string>
 
-#include "proxy_wasm_intrinsics.h"
+#define PROXY_WASM_KEEPALIVE __attribute__((used)) __attribute__((visibility("default")))
 
-extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_configure(uint32_t, int bad, char* configuration,
+extern "C" uint32_t proxy_log(uint32_t level, const char* logMessage, size_t messageSize);
+
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_configure(uint32_t, int bad, char* configuration,
                                                             int size) {
-  logWarn(std::string("warn " + std::string(configuration, size)));
+  std::string message = "bad signature";
+  proxy_log(4 /* error */, message.c_str(), message.size());
   return 1;
-}
-
-extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_start(uint32_t, uint32_t) {
-  logDebug(std::string("test debug") + " logging");
-  logInfo(std::string("test info") + " logging");
-  return 1;
-}
-
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_tick(uint32_t) {
-  logError(std::string("test tick") + " logging");
 }

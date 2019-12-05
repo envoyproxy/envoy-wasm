@@ -1,51 +1,15 @@
 /*
- * Intrinsic functions available to WASM modules.
+ * Proxy-WASM ABI.
  */
 // NOLINT(namespace-envoy)
 
 #pragma once
 
-#include "stddef.h"
-
-// clang-format off
-/*
-   API Calls into the VM.
-
-
-   // Non-stream calls.
-   extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_start(uint32_t root_context_id, uint32_t configuration_size);
-   extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_validate_configuration(uint32_t root_context_id, uint32_t configuration_size);
-   extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_configure(uint32_t root_context_id, uint32_t configuration_size);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_tick(uint32_t root_context_id);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_queue_ready(uint32_t root_context_id, uint32_t token);
-
-   // Stream calls.
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_create(uint32_t context_id, root_context_id);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_request_headers(uint32_t context_id, uint32_t headers);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_request_body(uint32_t context_id,  uint32_t body_buffer_length, uint32_t end_of_stream);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_request_trailers(uint32_t context_id, uint32_t trailers);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_request_metadata(uint32_t context_id, uint32_t nelements);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_response_headers(uint32_t context_id, uint32_t headers);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_response_body(uint32_t context_id,  uint32_t body_buffer_length, uint32_t end_of_stream);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_response_trailers(uint32_t context_id, uint32_t trailers);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_response_metadata(uint32_t context_id, uint32_t nelements);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_http_call_response(uint32_t context_id, uint32_t token, uint32_t headers, uint32_t body_size, uint32_t trailers);
-   // The stream/vm has completed.
-   extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_done(uint32_t context_id);
-   // onLog occurs after onDone.
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_log(uint32_t context_id);
-   // The Context in the proxy has been destroyed and no further calls will be coming.
-   extern "C" ENSCRIPTEN_KEEPALIVE void proxy_on_delete(uint32_t context_id);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_grpc_create_initial_metadata(uint32_t context_id, uint32_t token);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_grpc_receive_initial_metadata(uint32_t context_id, uint32_t token);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_grpc_trailing_metadata(uint32_t context_id, uint32_t token);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_grpc_receive(uint32_t context_id, uint32_t token, uint32_t response_size);
-   extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_grpc_close(uint32_t context_id, uint32_t token, uint32_t status_code);
-*/
-// clang-format on
+#include <stddef.h>
+#include <stdint.h>
 
 //
-// Low Level API.
+// ABI
 //
 
 // Configuration and Status
@@ -164,4 +128,41 @@ extern "C" WasmResult proxy_set_effective_context(uint32_t effective_context_id)
 extern "C" WasmResult proxy_done();
 
 // Calls in.
-extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_onDone(uint32_t context_id);
+extern "C" uint32_t proxy_on_start(uint32_t root_context_id, uint32_t configuration_size);
+extern "C" uint32_t proxy_validate_configuration(uint32_t root_context_id,
+                                                 uint32_t configuration_size);
+extern "C" uint32_t proxy_on_configure(uint32_t root_context_id, uint32_t configuration_size);
+extern "C" void proxy_on_tick(uint32_t root_context_id);
+extern "C" void proxy_on_queue_ready(uint32_t root_context_id, uint32_t token);
+
+// Stream calls.
+extern "C" void proxy_on_create(uint32_t context_id, uint32_t root_context_id);
+extern "C" FilterHeadersStatus proxy_on_request_headers(uint32_t context_id, uint32_t headers);
+extern "C" FilterDataStatus proxy_on_request_body(uint32_t context_id, uint32_t body_buffer_length,
+                                                  uint32_t end_of_stream);
+extern "C" FilterTrailersStatus proxy_on_request_trailers(uint32_t context_id, uint32_t trailers);
+extern "C" FilterMetadataStatus proxy_on_request_metadata(uint32_t context_id, uint32_t nelements);
+extern "C" FilterHeadersStatus proxy_on_response_headers(uint32_t context_id, uint32_t headers);
+extern "C" FilterDataStatus proxy_on_response_body(uint32_t context_id, uint32_t body_buffer_length,
+                                                   uint32_t end_of_stream);
+extern "C" FilterTrailersStatus proxy_on_response_trailers(uint32_t context_id, uint32_t trailers);
+extern "C" FilterMetadataStatus proxy_on_response_metadata(uint32_t context_id, uint32_t nelements);
+
+// HTTP/gRPC.
+extern "C" void proxy_on_http_call_response(uint32_t context_id, uint32_t token, uint32_t headers,
+                                            uint32_t body_size, uint32_t trailers);
+extern "C" void proxy_on_grpc_create_initial_metadata(uint32_t context_id, uint32_t token,
+                                                      uint32_t headers);
+extern "C" void proxy_on_grpc_receive_initial_metadata(uint32_t context_id, uint32_t token,
+                                                       uint32_t headers);
+extern "C" void proxy_on_grpc_trailing_metadata(uint32_t context_id, uint32_t token,
+                                                uint32_t trailers);
+extern "C" void proxy_on_grpc_receive(uint32_t context_id, uint32_t token, uint32_t response_size);
+extern "C" void proxy_on_grpc_close(uint32_t context_id, uint32_t token, uint32_t status_code);
+
+// The stream/vm has completed.
+extern "C" uint32_t proxy_on_done(uint32_t context_id);
+// proxy_on_log occurs after proxy_on_done.
+extern "C" void proxy_on_log(uint32_t context_id);
+// The Context in the proxy has been destroyed and no further calls will be coming.
+extern "C" void proxy_on_delete(uint32_t context_id);
