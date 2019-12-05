@@ -426,6 +426,8 @@ protected:
   void setStreamInfo(const StreamInfo::StreamInfo& stream_info) {
     if (&stream_info != stream_info_) {
       stream_info_ = &stream_info;
+      // note: none of these use an arena to produce a wrapper, which means
+      // they are safe to re-use across evaluations
       activation_.InsertValueProducer(
           Filters::Common::Expr::Connection,
           std::make_unique<Filters::Common::Expr::ConnectionWrapper>(stream_info));
@@ -448,12 +450,14 @@ protected:
         Filters::Common::Expr::Request,
         std::make_unique<Filters::Common::Expr::RequestWrapper>(request_headers, *stream_info_));
   }
+  void clearRequestHeaders() { activation_.RemoveValueEntry(Filters::Common::Expr::Request); }
   void setResponseHeaders(const Http::HeaderMap* response_headers,
                           const Http::HeaderMap* response_trailers) {
     activation_.InsertValueProducer(Filters::Common::Expr::Response,
                                     std::make_unique<Filters::Common::Expr::ResponseWrapper>(
                                         response_headers, response_trailers, *stream_info_));
   }
+  void clearResponseHeaders() { activation_.RemoveValueEntry(Filters::Common::Expr::Response); }
 
   // An expression wrapper for the WASM state
   struct WasmStateWrapper : public Filters::Common::Expr::BaseWrapper {

@@ -359,8 +359,8 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
 }
 
 #define PROPERTY_TOKENS(_f)                                                                        \
-  _f(REQUEST_PROTOCOL) _f(LISTENER_DIRECTION) _f(CLUSTER_NAME) _f(ROUTE_NAME) _f(PLUGIN_NAME)      \
-      _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID)
+  _f(LISTENER_DIRECTION) _f(LISTENER_METADATA) _f(CLUSTER_NAME) _f(CLUSTER_METADATA)               \
+      _f(ROUTE_NAME) _f(ROUTE_METADATA) _f(PLUGIN_NAME) _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID)
 
 static inline std::string downCase(std::string s) {
   std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -387,16 +387,14 @@ absl::optional<CelValue> Context::operator[](CelValue key) const {
   }
 
   switch (part_token->second) {
-  case PropertyToken::REQUEST_PROTOCOL:
-    // TODO(kyessenov) move this upstream to CEL context
-    if (stream_info_ && stream_info_->protocol().has_value()) {
-      return CelValue::CreateString(
-          &Http::Utility::getProtocolString(stream_info_->protocol().value()));
-    }
-    break;
   case PropertyToken::LISTENER_DIRECTION:
     if (plugin_) {
       return CelValue::CreateInt64(plugin_->direction_);
+    }
+    break;
+  case PropertyToken::LISTENER_METADATA:
+    if (plugin_) {
+      return CelValue::CreateMessage(plugin_->listener_metadata_, nullptr);
     }
     break;
   case PropertyToken::CLUSTER_NAME:
@@ -407,9 +405,19 @@ absl::optional<CelValue> Context::operator[](CelValue key) const {
       return CelValue::CreateString(&stream_info_->routeEntry()->clusterName());
     }
     break;
+  case PropertyToken::CLUSTER_METADATA:
+    if (stream_info_ && stream_info_->upstreamHost()) {
+      return CelValue::CreateMessage(&stream_info_->upstreamHost()->cluster().metadata(), nullptr);
+    }
+    break;
   case PropertyToken::ROUTE_NAME:
     if (stream_info_) {
       return CelValue::CreateString(&stream_info_->getRouteName());
+    }
+    break;
+  case PropertyToken::ROUTE_METADATA:
+    if (stream_info_ && stream_info_->routeEntry()) {
+      return CelValue::CreateMessage(&stream_info_->routeEntry()->metadata(), nullptr);
     }
     break;
   case PropertyToken::PLUGIN_NAME:
@@ -431,9 +439,6 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
   bool first = true;
   CelValue value;
   Protobuf::Arena arena;
-
-  // Values might be cached with a stale arena.
-  activation_.ClearValueEntry(Filters::Common::Expr::Metadata);
 
   size_t start = 0;
   while (true) {
@@ -1397,6 +1402,8 @@ void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap*
   // ? request_trailers  ?
   access_log_response_headers_ = nullptr;
   access_log_response_trailers_ = nullptr;
+  clearRequestHeaders();
+  clearResponseHeaders();
 
   onDelete();
 }
@@ -1434,6 +1441,7 @@ Http::FilterHeadersStatus Context::decodeHeaders(Http::HeaderMap& headers, bool 
   setRequestHeaders(request_headers_);
   auto result = onRequestHeaders();
   request_headers_ = nullptr;
+  clearRequestHeaders();
   return result;
 }
 

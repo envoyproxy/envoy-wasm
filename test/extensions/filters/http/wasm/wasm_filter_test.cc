@@ -184,8 +184,6 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   EXPECT_CALL(*filter_,
               scriptLog_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info, Eq(absl::string_view("header path /"))));
-  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::info,
-                                   Eq(absl::string_view("request protocol response HTTP/1.1"))));
   EXPECT_CALL(*filter_, scriptLog_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
