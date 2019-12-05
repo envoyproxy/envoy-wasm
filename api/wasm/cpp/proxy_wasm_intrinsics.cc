@@ -218,9 +218,10 @@ extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_delete(uint32_t context_id) {
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_http_call_response(uint32_t context_id,
                                                                  uint32_t token, uint32_t headers,
-                                                                 size_t body_size,
+                                                                 uint32_t body_size,
                                                                  uint32_t trailers) {
-  getRootContext(context_id)->onHttpCallResponse(token, headers, body_size, trailers);
+  getRootContext(context_id)
+      ->onHttpCallResponse(token, headers, static_cast<size_t>(body_size), trailers);
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void
@@ -239,8 +240,8 @@ proxy_on_grpc_receive_trailing_metadata(uint32_t context_id, uint32_t token, uin
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_grpc_receive(uint32_t context_id, uint32_t token,
-                                                           size_t response_size) {
-  getRootContext(context_id)->onGrpcReceive(token, response_size);
+                                                           uint32_t response_size) {
+  getRootContext(context_id)->onGrpcReceive(token, static_cast<size_t>(response_size));
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_grpc_close(uint32_t context_id, uint32_t token,
