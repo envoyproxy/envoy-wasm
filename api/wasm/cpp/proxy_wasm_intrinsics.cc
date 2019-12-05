@@ -103,7 +103,7 @@ RootContext* getRoot(StringView root_id) {
   return nullptr;
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_start(uint32_t root_context_id,
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_start(uint32_t root_context_id,
                                                         uint32_t vm_configuration_size) {
   auto context = ensureRootContext(root_context_id);
   if (!context) {
@@ -112,142 +112,143 @@ extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_start(uint32_t root_context_id
   return context->onStart(vm_configuration_size);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_validate_configuration(uint32_t root_context_id,
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_validate_configuration(uint32_t root_context_id,
                                                                       uint32_t configuration_size) {
   return getRootContext(root_context_id)->validateConfiguration(configuration_size) ? 1 : 0;
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_configure(uint32_t root_context_id,
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_configure(uint32_t root_context_id,
                                                             uint32_t configuration_size) {
   return getRootContext(root_context_id)->onConfigure(configuration_size) ? 1 : 0;
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_tick(uint32_t root_context_id) {
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_tick(uint32_t root_context_id) {
   getRootContext(root_context_id)->onTick();
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_create(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_create(uint32_t context_id,
                                                      uint32_t root_context_id) {
   ensureContext(context_id, root_context_id)->onCreate();
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterStatus proxy_on_new_connection(uint32_t context_id) {
+extern "C" PROXY_WASM_KEEPALIVE FilterStatus proxy_on_new_connection(uint32_t context_id) {
   return getContext(context_id)->onNewConnection();
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterStatus proxy_on_downstream_data(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterStatus proxy_on_downstream_data(uint32_t context_id,
                                                                       uint32_t data_length,
                                                                       uint32_t end_of_stream) {
   return getContext(context_id)
       ->onDownstreamData(static_cast<size_t>(data_length), end_of_stream != 0);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterStatus proxy_on_upstream_data(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterStatus proxy_on_upstream_data(uint32_t context_id,
                                                                     uint32_t data_length,
                                                                     uint32_t end_of_stream) {
   return getContext(context_id)
       ->onUpstreamData(static_cast<size_t>(data_length), end_of_stream != 0);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_downstream_connection_close(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_downstream_connection_close(uint32_t context_id,
                                                                           uint32_t peer_type) {
   return getContext(context_id)->onDownstreamConnectionClose(static_cast<PeerType>(peer_type));
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_upstream_connection_close(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_upstream_connection_close(uint32_t context_id,
                                                                         uint32_t peer_type) {
   return getContext(context_id)->onUpstreamConnectionClose(static_cast<PeerType>(peer_type));
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterHeadersStatus proxy_on_request_headers(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterHeadersStatus proxy_on_request_headers(uint32_t context_id,
                                                                              uint32_t headers) {
   return getContext(context_id)->onRequestHeaders(headers);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterMetadataStatus proxy_on_request_metadata(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterMetadataStatus proxy_on_request_metadata(uint32_t context_id,
                                                                                uint32_t elements) {
   return getContext(context_id)->onRequestMetadata(elements);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterDataStatus proxy_on_request_body(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterDataStatus proxy_on_request_body(uint32_t context_id,
                                                                        uint32_t body_buffer_length,
                                                                        uint32_t end_of_stream) {
   return getContext(context_id)
       ->onRequestBody(static_cast<size_t>(body_buffer_length), end_of_stream != 0);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterTrailersStatus proxy_on_request_trailers(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterTrailersStatus proxy_on_request_trailers(uint32_t context_id,
                                                                                uint32_t trailers) {
   return getContext(context_id)->onRequestTrailers(trailers);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterHeadersStatus proxy_on_response_headers(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterHeadersStatus proxy_on_response_headers(uint32_t context_id,
                                                                               uint32_t headers) {
   return getContext(context_id)->onResponseHeaders(headers);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterMetadataStatus proxy_on_response_metadata(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterMetadataStatus proxy_on_response_metadata(uint32_t context_id,
                                                                                 uint32_t elements) {
   return getContext(context_id)->onResponseMetadata(elements);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterDataStatus proxy_on_response_body(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterDataStatus proxy_on_response_body(uint32_t context_id,
                                                                         uint32_t body_buffer_length,
                                                                         uint32_t end_of_stream) {
   return getContext(context_id)
       ->onResponseBody(static_cast<size_t>(body_buffer_length), end_of_stream != 0);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE FilterTrailersStatus proxy_on_response_trailers(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE FilterTrailersStatus proxy_on_response_trailers(uint32_t context_id,
                                                                                 uint32_t trailers) {
   return getContext(context_id)->onResponseTrailers(trailers);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE uint32_t proxy_on_done(uint32_t context_id) {
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_done(uint32_t context_id) {
   return getContextBase(context_id)->onDoneBase();
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_log(uint32_t context_id) {
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_log(uint32_t context_id) {
   getContext(context_id)->onLog();
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_delete(uint32_t context_id) {
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_delete(uint32_t context_id) {
   getContextBase(context_id)->onDelete();
   context_map.erase(context_id);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_http_call_response(uint32_t context_id,
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_http_call_response(uint32_t context_id,
                                                                  uint32_t token, uint32_t headers,
-                                                                 size_t body_size,
+                                                                 uint32_t body_size,
                                                                  uint32_t trailers) {
-  getRootContext(context_id)->onHttpCallResponse(token, headers, body_size, trailers);
+  getRootContext(context_id)
+      ->onHttpCallResponse(token, headers, static_cast<size_t>(body_size), trailers);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void
+extern "C" PROXY_WASM_KEEPALIVE void
 proxy_on_grpc_create_initial_metadata(uint32_t context_id, uint32_t token, uint32_t headers) {
   getRootContext(context_id)->onGrpcCreateInitialMetadata(token, headers);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void
+extern "C" PROXY_WASM_KEEPALIVE void
 proxy_on_grpc_receive_initial_metadata(uint32_t context_id, uint32_t token, uint32_t headers) {
   getRootContext(context_id)->onGrpcReceiveInitialMetadata(token, headers);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void
+extern "C" PROXY_WASM_KEEPALIVE void
 proxy_on_grpc_receive_trailing_metadata(uint32_t context_id, uint32_t token, uint32_t trailers) {
   getRootContext(context_id)->onGrpcReceiveTrailingMetadata(token, trailers);
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_grpc_receive(uint32_t context_id, uint32_t token,
-                                                           size_t response_size) {
-  getRootContext(context_id)->onGrpcReceive(token, response_size);
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_grpc_receive(uint32_t context_id, uint32_t token,
+                                                           uint32_t response_size) {
+  getRootContext(context_id)->onGrpcReceive(token, static_cast<size_t>(response_size));
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_grpc_close(uint32_t context_id, uint32_t token,
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_grpc_close(uint32_t context_id, uint32_t token,
                                                          uint32_t status_code) {
   getRootContext(context_id)->onGrpcClose(token, static_cast<GrpcStatus>(status_code));
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void proxy_on_queue_ready(uint32_t context_id, uint32_t token) {
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_queue_ready(uint32_t context_id, uint32_t token) {
   getRootContext(context_id)->onQueueReady(token);
 }
