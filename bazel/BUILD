@@ -241,11 +241,6 @@ config_setting(
 )
 
 config_setting(
-    name = "wasm_v8",
-    values = {"define": "wasm=v8"},
-)
-
-config_setting(
     name = "wasm_wavm",
     values = {"define": "wasm=wavm"},
 )

@@ -23,18 +23,13 @@ namespace Wasm {
 
 class WasmFactoryTest : public testing::TestWithParam<std::string> {};
 
-#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
-
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest,
-                         testing::Values(
-#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                             "v8", "wavm"
-#elif defined(ENVOY_WASM_V8)
-                             "v8"
-#elif defined(ENVOY_WASM_WAVM)
-                             "wavm"
+                         testing::Values("v8"
+#if defined(ENVOY_WASM_WAVM)
+                                         ,
+                                         "wavm"
 #endif
-                             ));
+                                         ));
 
 TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   auto factory =
@@ -122,8 +117,6 @@ TEST_P(WasmFactoryTest, MissingImport) {
                           , Extensions::Common::Wasm::WasmVmException,
                           "Failed to load WASM module due to a missing import: env.missing");
 }
-
-#endif
 
 TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   auto factory =

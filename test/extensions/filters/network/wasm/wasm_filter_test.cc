@@ -90,15 +90,12 @@ public:
 }; // namespace Wasm
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterTest,
-                         testing::Values(
-#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                             "v8", "wavm"
-#elif defined(ENVOY_WASM_V8)
-                             "v8"
-#elif defined(ENVOY_WASM_WAVM)
-                             "wavm"
+                         testing::Values("v8"
+#if defined(ENVOY_WASM_WAVM)
+                                         ,
+                                         "wavm"
 #endif
-                             ));
+                                         ));
 
 // Bad code in initial config.
 TEST_P(WasmFilterTest, BadCode) {

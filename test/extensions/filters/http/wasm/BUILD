@@ -3,7 +3,6 @@ licenses(["notice"])  # Apache 2
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_package",
-    "envoy_select_wasm",
 )
 load(
     "//test/extensions:extensions_build_system.bzl",
@@ -40,7 +39,7 @@ envoy_extension_cc_test(
 
 envoy_extension_cc_test(
     name = "config_test",
-    srcs = envoy_select_wasm(["config_test.cc"]),
+    srcs = ["config_test.cc"],
     data = [
         "//test/extensions/filters/http/wasm/test_data:modules",
     ],
@@ -54,13 +53,14 @@ envoy_extension_cc_test(
         "//source/extensions/filters/http/wasm:config",
         "//test/mocks/server:server_mocks",
         "//test/test_common:environment_lib",
+        "@envoy_api//envoy/config/filter/http/wasm/v2:pkg_cc_proto",
     ],
 )
 
 envoy_extension_cc_test(
     name = "wasm_filter_stress_test",
     size = "large",
-    srcs = envoy_select_wasm(["wasm_filter_stress_test.cc"]),
+    srcs = ["wasm_filter_stress_test.cc"],
     data = [
         "//test/extensions/filters/http/wasm/test_data:modules",
     ],

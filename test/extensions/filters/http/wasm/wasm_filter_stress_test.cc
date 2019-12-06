@@ -32,28 +32,22 @@ class GrpcWasmStressTest : public WasmStressTest {};
 class HttpWasmStressTest : public WasmStressTest {};
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, GrpcWasmStressTest,
-                         testing::Combine(testing::Values(
-#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                                              "envoy.wasm.runtime.v8", "envoy.wasm.runtime.wavm"
-#elif defined(ENVOY_WASM_V8)
-                                              "envoy.wasm.runtime.v8"
-#elif defined(ENVOY_WASM_WAVM)
-                                              "envoy.wasm.runtime.wavm"
+                         testing::Combine(testing::Values("envoy.wasm.runtime.v8"
+#if defined(ENVOY_WASM_WAVM)
+                                                          ,
+                                                          "envoy.wasm.runtime.wavm"
 #endif
-                                              ),
+                                                          ),
                                           testing::Values("cpp"), testing::Values("http2"),
                                           testing::Values("IPv4", "IPv6")));
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, HttpWasmStressTest,
-                         testing::Combine(testing::Values(
-#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                                              "envoy.wasm.runtime.v8", "envoy.wasm.runtime.wavm"
-#elif defined(ENVOY_WASM_V8)
-                                              "envoy.wasm.runtime.v8"
-#elif defined(ENVOY_WASM_WAVM)
-                                              "envoy.wasm.runtime.wavm"
+                         testing::Combine(testing::Values("envoy.wasm.runtime.v8"
+#if defined(ENVOY_WASM_WAVM)
+                                                          ,
+                                                          "envoy.wasm.runtime.wavm"
 #endif
-                                              ),
+                                                          ),
                                           testing::Values("cpp"), testing::Values("http1", "http2"),
                                           testing::Values("IPv4", "IPv6")));
 

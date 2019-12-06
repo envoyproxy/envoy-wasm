@@ -40,15 +40,12 @@ private:
 class WasmAccessLogConfigTest : public testing::TestWithParam<std::string> {};
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmAccessLogConfigTest,
-                         testing::Values(
-#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                             "v8", "wavm"
-#elif defined(ENVOY_WASM_V8)
-                             "v8"
-#elif defined(ENVOY_WASM_WAVM)
-                             "wavm"
+                         testing::Values("v8"
+#if defined(ENVOY_WASM_WAVM)
+                                         ,
+                                         "wavm"
 #endif
-                             ));
+                                         ));
 
 TEST_P(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
   auto factory =
