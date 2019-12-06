@@ -394,6 +394,13 @@ LocalListenSocket::LocalListenSocket(Network::Address::IpVersion ip_version, uin
                                      bool bind_to_port)
     : NetworkListenSocket(loopbackAddress(ip_version, port), options, bind_to_port) {}
 
+LocalListenSocketFactory::LocalListenSocketFactory(Network::Address::IpVersion ip_version,
+                                                   uint16_t port,
+                                                   const Network::Socket::OptionsSharedPtr& options,
+                                                   bool bind_to_port)
+    : local_listen_socket_(
+          std::make_shared<LocalListenSocket>(ip_version, port, options, bind_to_port)) {}
+
 ServerCallbackHelper::ServerCallbackHelper(ServerRequestCallback&& request_callback,
                                            ServerAcceptCallback&& accept_callback,
                                            ServerCloseCallback&& close_callback) {
@@ -493,14 +500,14 @@ void ServerCallbackHelper::wait() {
   mutex_.Await(absl::Condition(&constraints));
 }
 
-Server::Server(const std::string& name, Network::Socket& listening_socket,
+Server::Server(const std::string& name, Network::ListenSocketFactorySharedPtr listen_socket_factory,
                Network::TransportSocketFactory& transport_socket_factory,
                Http::CodecClient::Type http_type)
     : name_(name), stats_(), time_system_(),
       api_(Thread::threadFactoryForTest(), stats_, time_system_, Filesystem::fileSystemForTest()),
       dispatcher_(api_.allocateDispatcher()),
       connection_handler_(new Envoy::Server::ConnectionHandlerImpl(*dispatcher_, "stress_server")),
-      thread_(nullptr), listening_socket_(listening_socket),
+      thread_(nullptr), listen_socket_factory_(std::move(listen_socket_factory)),
       server_filter_chain_(transport_socket_factory), http_type_(http_type) {}
 
 Server::~Server() { stop(); }
@@ -567,9 +574,7 @@ Network::FilterChainManager& Server::filterChainManager() { return *this; }
 
 Network::FilterChainFactory& Server::filterChainFactory() { return *this; }
 
-Network::Socket& Server::socket() { return listening_socket_; }
-
-const Network::Socket& Server::socket() const { return listening_socket_; }
+Network::ListenSocketFactory& Server::listenSocketFactory() { return *listen_socket_factory_; }
 
 bool Server::bindToPort() { return true; }
 
@@ -610,11 +615,6 @@ bool Server::createNetworkFilterChain(Network::Connection& network_connection,
 }
 
 bool Server::createListenerFilterChain(Network::ListenerFilterManager&) { return true; }
-
-bool Server::createUdpListenerFilterChain(Network::UdpListenerFilterManager&,
-                                          Network::UdpReadFilterCallbacks&) {
-  return true;
-}
 
 ClusterHelper::ClusterHelper(const std::string& name) : name_{name} {}
 

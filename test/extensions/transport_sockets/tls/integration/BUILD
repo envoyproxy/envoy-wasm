@@ -10,7 +10,6 @@ envoy_package()
 
 envoy_cc_test(
     name = "ssl_integration_test",
-    size = "large",
     srcs = [
         "ssl_integration_test.cc",
         "ssl_integration_test.h",

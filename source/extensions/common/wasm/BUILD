@@ -4,7 +4,6 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
-    "envoy_select_wasm_v8",
     "envoy_select_wasm_wavm",
 )
 
@@ -44,9 +43,8 @@ envoy_cc_library(
         ":wasm_vm_interface",
         "//source/common/common:assert_lib",
         "//source/extensions/common/wasm/null:null_lib",
-    ] + envoy_select_wasm_v8([
         "//source/extensions/common/wasm/v8:v8_lib",
-    ]) + envoy_select_wasm_wavm([
+    ] + envoy_select_wasm_wavm([
         "//source/extensions/common/wasm/wavm:wavm_lib",
     ]),
 )
@@ -70,7 +68,7 @@ envoy_cc_library(
         "//source/common/config:datasource_lib",
         "//source/common/stats:stats_lib",
         "//source/extensions/filters/http:well_known_names",
-        "@envoy_api//envoy/config/filter/http/wasm/v2:pkg_cc_proto",
+        "@envoy_api//envoy/config/wasm/v2:pkg_cc_proto",
     ],
 )
 
@@ -114,5 +112,6 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/eval:field_backed_map_impl",
         "@com_google_cel_cpp//eval/public:cel_value",
         "@com_google_cel_cpp//eval/public:value_export_util",
+        "@envoy_api//envoy/config/wasm/v2:pkg_cc_proto",
     ],
 )

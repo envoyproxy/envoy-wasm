@@ -35,28 +35,22 @@ public:
 class WasmTest : public testing::TestWithParam<std::string> {};
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
-                         testing::Values(
-#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                             "v8", "wavm"
-#elif defined(ENVOY_WASM_V8)
-                             "v8"
-#elif defined(ENVOY_WASM_WAVM)
-                             "wavm"
+                         testing::Values("v8"
+#if defined(ENVOY_WASM_WAVM)
+                                         ,
+                                         "wavm"
 #endif
-                             ));
+                                         ));
 
 class WasmTestMatrix : public testing::TestWithParam<std::tuple<std::string, std::string>> {};
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
-                         testing::Combine(testing::Values(
-#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                                              "v8", "wavm"
-#elif defined(ENVOY_WASM_V8)
-                                              "v8"
-#elif defined(ENVOY_WASM_WAVM)
-                                              "wavm"
+                         testing::Combine(testing::Values("v8"
+#if defined(ENVOY_WASM_WAVM)
+                                                          ,
+                                                          "wavm"
 #endif
-                                              ),
+                                                          ),
                                           testing::Values("cpp", "rust")));
 
 TEST_P(WasmTestMatrix, Logging) {

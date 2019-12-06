@@ -1,3 +1,5 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_proto_library")
+
 licenses(["notice"])  # Apache 2
 
 load("//bazel:envoy_build_system.bzl", "envoy_package")
@@ -38,6 +40,12 @@ genrule(
     # Undocumented attr to depend on workspace status files.
     # https://github.com/bazelbuild/bazel/issues/4942
     stamp = 1,
+)
+
+sh_binary(
+    name = "fuzzit_wrapper",
+    srcs = ["fuzzit_wrapper.sh"],
+    data = ["@fuzzit_linux//:fuzzit"],
 )
 
 # A target to optionally link C++ standard library dynamically in sanitizer runs.
@@ -233,11 +241,6 @@ config_setting(
 )
 
 config_setting(
-    name = "wasm_v8",
-    values = {"define": "wasm=v8"},
-)
-
-config_setting(
     name = "wasm_wavm",
     values = {"define": "wasm=wavm"},
 )
@@ -371,9 +374,4 @@ alias(
             "//conditions:default": ":darwin_x86_64",
         },
     ),
-)
-
-alias(
-    name = "crypto_utility_lib",
-    actual = "//source/extensions/common/crypto:utility_lib",
 )

@@ -77,9 +77,7 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string vm) 
   }
 }
 
-#if defined(ENVOY_WASM_V8)
 BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest, std::string("v8"));
-#endif
 #if defined(ENVOY_WASM_WAVM)
 BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, WavmSpeedTest, std::string("wavm"));
 #endif

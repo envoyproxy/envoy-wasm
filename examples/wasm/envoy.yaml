@@ -20,7 +20,7 @@ static_resources:
               routes:
               - match:
                   prefix: "/"
-                route: 
+                route:
                   cluster: web_service
           http_filters:
           - name: envoy.filters.http.wasm
@@ -32,7 +32,8 @@ static_resources:
                   vm_id: "my_vm_id"
                   runtime: "envoy.wasm.runtime.wavm"
                   code:
-                    filename: "/etc/envoy_filter_http_wasm_example.wasm"
+                    local:
+                      filename: "/etc/envoy_filter_http_wasm_example.wasm"
                   allow_precompiled: true
           - name: envoy.router
             config: {}
