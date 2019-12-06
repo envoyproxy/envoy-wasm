@@ -19,9 +19,9 @@ namespace Extensions {
 namespace NetworkFilters {
 namespace Wasm {
 
-class WasmFilterConfigTest : public testing::TestWithParam<std::string> {
+class WasmNetworkFilterConfigTest : public testing::TestWithParam<std::string> {
 protected:
-  WasmFilterConfigTest() : api_(Api::createApiForTest(stats_store_)) {
+  WasmNetworkFilterConfigTest() : api_(Api::createApiForTest(stats_store_)) {
     ON_CALL(context_, api()).WillByDefault(ReturnRef(*api_));
     ON_CALL(context_, scope()).WillByDefault(ReturnRef(stats_store_));
     ON_CALL(context_, listenerMetadata()).WillByDefault(ReturnRef(listener_metadata_));
@@ -37,7 +37,7 @@ protected:
   Init::ExpectableWatcherImpl init_watcher_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest,
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterConfigTest,
                          testing::Values("v8"
 #if defined(ENVOY_WASM_WAVM)
                                          ,
@@ -45,7 +45,7 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest,
 #endif
                                          ));
 
-TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
+TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWASM) {
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
@@ -68,7 +68,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
   cb(connection);
 }
 
-TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
+TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineWASM) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm"));
   EXPECT_FALSE(code.empty());
@@ -94,7 +94,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
   cb(connection);
 }
 
-TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
+TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCode) {
   const std::string yaml = absl::StrCat(R"EOF(
   config:
     vm_config:

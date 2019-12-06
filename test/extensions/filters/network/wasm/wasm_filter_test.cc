@@ -41,10 +41,10 @@ public:
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-class WasmFilterTest : public testing::TestWithParam<std::string> {
+class WasmNetworkFilterTest : public testing::TestWithParam<std::string> {
 public:
-  WasmFilterTest() {}
-  ~WasmFilterTest() {}
+  WasmNetworkFilterTest() {}
+  ~WasmNetworkFilterTest() {}
 
   void setupConfig(const std::string& code) {
     root_context_ = new TestRoot();
@@ -89,7 +89,7 @@ public:
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 }; // namespace Wasm
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterTest,
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest,
                          testing::Values("v8"
 #if defined(ENVOY_WASM_WAVM)
                                          ,
@@ -98,13 +98,13 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterTest,
                                          ));
 
 // Bad code in initial config.
-TEST_P(WasmFilterTest, BadCode) {
+TEST_P(WasmNetworkFilterTest, BadCode) {
   EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException,
                             "Failed to initialize WASM code from <inline>");
 }
 
 // Test happy path.
-TEST_P(WasmFilterTest, HappyPath) {
+TEST_P(WasmNetworkFilterTest, HappyPath) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm")));
   setupFilter();
