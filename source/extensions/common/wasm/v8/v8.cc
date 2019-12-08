@@ -261,16 +261,19 @@ bool V8::load(const std::string& code, bool allow_precompiled) {
   ::memcpy(source_.get(), code.data(), code.size());
 
   if (allow_precompiled) {
-    const auto precompiled = getCustomSection(getPrecompiledSectionName());
-    if (!precompiled.empty()) {
-      auto vec = wasm::vec<byte_t>::make_uninitialized(precompiled.size());
-      ::memcpy(vec.get(), precompiled.data(), precompiled.size());
+    const auto section_name = getPrecompiledSectionName();
+    if (!section_name.empty()) {
+      const auto precompiled = getCustomSection(section_name);
+      if (!precompiled.empty()) {
+        auto vec = wasm::vec<byte_t>::make_uninitialized(precompiled.size());
+        ::memcpy(vec.get(), precompiled.data(), precompiled.size());
 
-      module_ = wasm::Module::deserialize(store_.get(), vec);
-      if (!module_) {
-        // Precompiled module that cannot be loaded is considered a hard error,
-        // so don't fallback to compiling the bytecode.
-        return false;
+        module_ = wasm::Module::deserialize(store_.get(), vec);
+        if (!module_) {
+          // Precompiled module that cannot be loaded is considered a hard error,
+          // so don't fallback to compiling the bytecode.
+          return false;
+        }
       }
     }
   }
@@ -334,10 +337,20 @@ absl::string_view V8::getCustomSection(absl::string_view name) {
   return "";
 }
 
+#if defined(__linux__) && defined(__x86_64__)
+#define WEE8_PLATFORM "linux_x86_64"
+#elif defined(__APPLE__) && defined(__x86_64__)
+#define WEE8_PLATFORM "macos_x86_64"
+#else
+#define WEE8_PLATFORM ""
+#endif
+
 absl::string_view V8::getPrecompiledSectionName() {
   static const auto name =
-      absl::StrCat("precompiled_wee8_v", V8_MAJOR_VERSION, ".", V8_MINOR_VERSION, ".",
-                   V8_BUILD_NUMBER, ".", V8_PATCH_LEVEL);
+      sizeof(WEE8_PLATFORM) - 1 > 0
+          ? absl::StrCat("precompiled_wee8_v", V8_MAJOR_VERSION, ".", V8_MINOR_VERSION, ".",
+                         V8_BUILD_NUMBER, ".", V8_PATCH_LEVEL, "_", WEE8_PLATFORM)
+          : "";
   return name;
 }
 

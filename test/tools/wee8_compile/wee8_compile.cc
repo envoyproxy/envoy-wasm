@@ -156,7 +156,20 @@ bool writeWasmModule(const char* path, const wasm::vec<byte_t>& module,
   return true;
 }
 
+#if defined(__linux__) && defined(__x86_64__)
+#define WEE8_PLATFORM "linux_x86_64"
+#elif defined(__APPLE__) && defined(__x86_64__)
+#define WEE8_PLATFORM "macos_x86_64"
+#else
+#define WEE8_PLATFORM ""
+#endif
+
 int main(int argc, char* argv[]) {
+  if (sizeof(WEE8_PLATFORM) - 1 == 0) {
+    std::cerr << "Unsupported platform." << std::endl;
+    return EXIT_FAILURE;
+  }
+
   if (argc != 3) {
     std::cerr << "Usage: " << argv[0] << " <input> <output>" << std::endl;
     return EXIT_FAILURE;
@@ -165,7 +178,7 @@ int main(int argc, char* argv[]) {
   const std::string section_name = "precompiled_wee8_v" + std::to_string(V8_MAJOR_VERSION) + "." +
                                    std::to_string(V8_MINOR_VERSION) + "." +
                                    std::to_string(V8_BUILD_NUMBER) + "." +
-                                   std::to_string(V8_PATCH_LEVEL);
+                                   std::to_string(V8_PATCH_LEVEL) + "_" + WEE8_PLATFORM;
 
   const auto module = readWasmModule(argv[1], section_name);
   if (!module) {
