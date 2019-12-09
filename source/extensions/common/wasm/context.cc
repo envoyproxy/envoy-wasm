@@ -556,12 +556,12 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
     } else if (value.IsMessage()) {
       auto msg = value.MessageOrDie();
       if (msg == nullptr) {
-        return WasmResult::Ok;
+        return WasmResult::NotFound;
       }
       const Protobuf::Descriptor* desc = msg->GetDescriptor();
       const Protobuf::FieldDescriptor* field_desc = desc->FindFieldByName(std::string(part));
       if (field_desc == nullptr) {
-        return WasmResult::InternalFailure;
+        return WasmResult::NotFound;
       }
       if (field_desc->is_map()) {
         value = CelValue::CreateMap(
