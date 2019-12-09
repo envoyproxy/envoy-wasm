@@ -83,6 +83,8 @@ public:
 #undef _GET_MODULE_FUNCTION
 
 private:
+  wasm::vec<byte_t> strip(const wasm::vec<byte_t>& module);
+
   template <typename... Args>
   void registerHostFunctionImpl(absl::string_view module_name, absl::string_view function_name,
                                 void (*function)(void*, Args...));
@@ -257,6 +259,12 @@ bool V8::load(const std::string& code, bool allow_precompiled) {
   store_ = wasm::Store::make(engine());
   RELEASE_ASSERT(store_ != nullptr, "");
 
+  // Wasm file header is 8 bytes (magic number + version).
+  static const uint8_t magic_number[4] = {0x00, 0x61, 0x73, 0x6d};
+  if (code.size() < 8 || ::memcmp(code.data(), magic_number, 4) != 0) {
+    return false;
+  }
+
   source_ = wasm::vec<byte_t>::make_uninitialized(code.size());
   ::memcpy(source_.get(), code.data(), code.size());
 
@@ -279,7 +287,11 @@ bool V8::load(const std::string& code, bool allow_precompiled) {
   }
 
   if (!module_) {
-    module_ = wasm::Module::make(store_.get(), source_);
+    const auto stripped_source = strip(source_);
+    if (!stripped_source) {
+      return false;
+    }
+    module_ = wasm::Module::make(store_.get(), stripped_source);
   }
 
   if (module_) {
@@ -304,35 +316,66 @@ WasmVmPtr V8::clone() {
   return clone;
 }
 
+wasm::vec<byte_t> V8::strip(const wasm::vec<byte_t>& module) {
+  std::vector<byte_t> stripped;
+
+  const byte_t* pos = module.get();
+  const byte_t* end = module.get() + module.size();
+
+  // Copy Wasm header.
+  stripped.insert(stripped.end(), pos, pos + 8);
+  pos += 8;
+
+  while (pos < end) {
+    auto section_start = pos;
+    if (pos + 1 > end) {
+      return wasm::vec<byte_t>::invalid();
+    }
+    auto section_type = *pos++;
+    auto section_len = parseVarint(pos, end);
+    if (section_len == static_cast<uint32_t>(-1) || pos + section_len > end) {
+      return wasm::vec<byte_t>::invalid();
+    }
+    if (section_type != 0 /* custom section */) {
+      stripped.insert(stripped.end(), section_start, pos + section_len);
+    }
+    pos += section_len;
+  }
+
+  return wasm::vec<byte_t>::make(stripped.size(), stripped.data());
+}
+
 absl::string_view V8::getCustomSection(absl::string_view name) {
   ENVOY_LOG(trace, "getCustomSection(\"{}\")", name);
   ASSERT(source_.get() != nullptr);
 
+  const byte_t* pos = source_.get() + 8 /* Wasm header */;
   const byte_t* end = source_.get() + source_.size();
-  const byte_t* pos = source_.get() + 8; // skip header
   while (pos < end) {
     if (pos + 1 > end) {
       throw WasmVmException("Failed to parse corrupted WASM module");
     }
-    auto type = *pos++;
-    auto rest = parseVarint(pos, end);
-    if (pos + rest > end) {
+    auto section_type = *pos++;
+    auto section_len = parseVarint(pos, end);
+    if (section_len == static_cast<uint32_t>(-1) || pos + section_len > end) {
       throw WasmVmException("Failed to parse corrupted WASM module");
     }
-    if (type == 0 /* custom section */) {
-      auto start = pos;
-      auto len = parseVarint(pos, end);
-      if (pos + len > end) {
+    if (section_type == 0 /* custom section */) {
+      auto section_data_start = pos;
+      auto section_name_len = parseVarint(pos, end);
+      if (section_name_len == static_cast<uint32_t>(-1) || pos + section_name_len > end) {
         throw WasmVmException("Failed to parse corrupted WASM module");
       }
-      pos += len;
-      rest -= (pos - start);
-      if (len == name.size() && ::memcmp(pos - len, name.data(), len) == 0) {
-        ENVOY_LOG(trace, "getCustomSection(\"{}\") found, size: {}", name, rest);
-        return {pos, rest};
+      if (section_name_len == name.size() && ::memcmp(pos, name.data(), section_name_len) == 0) {
+        pos += section_name_len;
+        ENVOY_LOG(trace, "getCustomSection(\"{}\") found, size: {}", name,
+                  section_data_start + section_len - pos);
+        return {pos, static_cast<size_t>(section_data_start + section_len - pos)};
       }
+      pos = section_data_start + section_len;
+    } else {
+      pos += section_len;
     }
-    pos += rest;
   }
   return "";
 }
