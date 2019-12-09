@@ -339,8 +339,6 @@ absl::string_view V8::getCustomSection(absl::string_view name) {
 
 #if defined(__linux__) && defined(__x86_64__)
 #define WEE8_PLATFORM "linux_x86_64"
-#elif defined(__APPLE__) && defined(__x86_64__)
-#define WEE8_PLATFORM "macos_x86_64"
 #else
 #define WEE8_PLATFORM ""
 #endif
