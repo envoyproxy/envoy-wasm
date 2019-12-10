@@ -24,7 +24,7 @@ message VmConfig {
   // VM. May be left blank.
   string vm_id = 1;
 
-  // The Wasm runtime type (see source/extensions/commmon/wasm/well_known_names.h).
+  // The Wasm runtime type (see source/extensions/common/wasm/well_known_names.h).
   string runtime = 2;
 
   // The Wasm code that Envoy will execute.
@@ -42,7 +42,7 @@ message PluginConfig {
   option (udpa.api.annotations.versioning).previous_message_type =
       "envoy.config.wasm.v2.PluginConfig";
 
-  // A unique name for a filters/services in a VM for use in identifiying the filter/service if
+  // A unique name for a filters/services in a VM for use in identifying the filter/service if
   // multiple filters/services are handled by the same vm_id and root_id and for logging/debugging.
   string name = 1;
 

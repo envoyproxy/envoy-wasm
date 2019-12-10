@@ -428,7 +428,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
     auto part = path.substr(start, end - start);
     start = end + 1;
 
-    // top-level ident
+    // top-level indent
     if (first) {
       first = false;
       // Convert into a dense token to enable a jump table implementation.

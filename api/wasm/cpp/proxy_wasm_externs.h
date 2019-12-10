@@ -56,7 +56,7 @@ extern "C" WasmResult proxy_set_shared_data(const char* key_ptr, size_t key_size
                                             const char* value_ptr, size_t value_size, uint32_t cas);
 
 // SharedQueue
-// Note: Registering the same queue_name will overwrite the old registration while preseving any
+// Note: Registering the same queue_name will overwrite the old registration while preserving any
 // pending data. Consequently it should typically be followed by a call to
 // proxy_dequeue_shared_queue. Returns: Ok
 extern "C" WasmResult proxy_register_shared_queue(const char* queue_name_ptr,

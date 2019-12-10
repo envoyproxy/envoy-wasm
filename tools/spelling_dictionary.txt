@@ -101,6 +101,7 @@ GCOVR
 GCP
 GETting
 GLB
+GNUC
 GOAWAY
 GRPC
 GTEST
@@ -129,6 +130,7 @@ IPV
 IPs
 IPv
 ITOA
+IWYU
 Isode
 JSON
 JSONs
@@ -777,6 +779,7 @@ pos
 posix
 postfix
 postfixes
+pragma
 pre
 preallocate
 preallocating
