@@ -156,7 +156,9 @@ TEST_P(WasmVmTest, V8Code) {
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   // Sanity checks for the expected test file.
-  EXPECT_TRUE(!wasm_vm->getCustomSection(wasm_vm->getPrecompiledSectionName()).empty());
+  if (!wasm_vm->getPrecompiledSectionName().empty()) {
+    EXPECT_TRUE(!wasm_vm->getCustomSection(wasm_vm->getPrecompiledSectionName()).empty());
+  }
   EXPECT_THAT(wasm_vm->getCustomSection("producers"), HasSubstr("rustc"));
   EXPECT_TRUE(wasm_vm->getCustomSection("emscripten_metadata").empty());
 
