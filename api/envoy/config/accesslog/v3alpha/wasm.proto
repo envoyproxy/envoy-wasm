@@ -10,6 +10,8 @@ import "envoy/config/wasm/v3alpha/wasm.proto";
 
 import "google/protobuf/struct.proto";
 
+import "udpa/api/annotations/versioning.proto";
+
 import "validate/validate.proto";
 
 // [#protodoc-title: Wasm access log]
@@ -18,5 +20,8 @@ import "validate/validate.proto";
 // <envoy_api_msg_config.filter.accesslog.v3alpha.AccessLog>` that calls into a WASM VM. Configures
 // the built-in *envoy.wasm_access_log* AccessLog.
 message WasmAccessLog {
+  option (udpa.api.annotations.versioning).previous_message_type =
+      "envoy.config.accesslog.v2.WasmAccessLog";
+
   wasm.v3alpha.PluginConfig config = 1;
 }
