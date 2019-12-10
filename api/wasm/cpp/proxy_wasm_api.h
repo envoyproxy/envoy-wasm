@@ -512,6 +512,16 @@ inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
   return setFilterState(key, s);
 }
 
+inline Optional<WasmDataPtr> exprEval(uint32_t token) {
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  auto result = proxy_expr_eval(token, &value_ptr, &value_size);
+  if (result != WasmResult::Ok) {
+    return {};
+  }
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
 // Continue/Respond/Route
 inline WasmResult continueRequest() { return proxy_continue_request(); }
 inline WasmResult continueResponse() { return proxy_continue_response(); }

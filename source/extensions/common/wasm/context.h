@@ -14,6 +14,7 @@
 
 #include "common/common/assert.h"
 #include "common/common/logger.h"
+#include "extensions/filters/common/expr/evaluator.h"
 
 #include "eval/public/activation.h"
 
@@ -301,6 +302,9 @@ public:
   virtual absl::optional<google::api::expr::runtime::CelValue>
   FindValue(absl::string_view name, Protobuf::Arena* arena) const override;
   virtual bool IsPathUnknown(absl::string_view) const override { return false; }
+  virtual WasmResult exprCreate(absl::string_view expr, uint32_t* token_ptr);
+  virtual WasmResult exprEval(uint32_t token, std::string* result);
+  virtual WasmResult exprDelete(uint32_t token);
 
   // Connection
   virtual bool isSsl();
@@ -458,6 +462,11 @@ protected:
   std::map<uint32_t, AsyncClientHandler> http_request_;
   std::map<uint32_t, GrpcCallClientHandler> grpc_call_request_;
   std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
+
+  // Evaluator state
+  Filters::Common::Expr::BuilderPtr builder_{};
+  uint32_t next_expr_token_ = 0;
+  std::map<uint32_t, Filters::Common::Expr::ExpressionPtr> expr_;
 };
 using ContextSharedPtr = std::shared_ptr<Context>;
 

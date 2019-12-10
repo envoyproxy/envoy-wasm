@@ -604,6 +604,41 @@ Word grpc_send(void* raw_context, Word token, Word message_ptr, Word message_siz
   return wasmResultToWord(context->grpcSend(token.u64_, message.value(), end_stream.u64_));
 }
 
+Word expr_create(void* raw_context, Word expr_ptr, Word expr_size, Word token_ptr) {
+  auto context = WASM_CONTEXT(raw_context)->root_context();
+  auto expr = context->wasmVm()->getMemory(expr_ptr.u64_, expr_size.u64_);
+  if (!expr) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  uint32_t token = 0;
+  auto result = context->exprCreate(expr.value(), &token);
+  if (result != WasmResult::Ok) {
+    return wasmResultToWord(result);
+  }
+  if (!context->wasm()->setDatatype(token_ptr.u64_, token)) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  return wasmResultToWord(WasmResult::Ok);
+}
+
+Word expr_eval(void* raw_context, Word token, Word value_ptr_ptr, Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  std::string value;
+  auto result = context->exprEval(token.u64_, &value);
+  if (result != WasmResult::Ok) {
+    return wasmResultToWord(result);
+  }
+  if (!context->wasm()->copyToPointerSize(value, value_ptr_ptr.u64_, value_size_ptr.u64_)) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  return wasmResultToWord(WasmResult::Ok);
+}
+
+Word expr_delete(void* raw_context, Word token) {
+  auto context = WASM_CONTEXT(raw_context)->root_context();
+  return wasmResultToWord(context->exprDelete(token.u64_));
+}
+
 // Implementation of writev-like() syscall that redirects stdout/stderr to Envoy logs.
 Word writevImpl(void* raw_context, Word fd, Word iovs, Word iovs_len, Word* nwritten_ptr) {
   auto context = WASM_CONTEXT(raw_context);

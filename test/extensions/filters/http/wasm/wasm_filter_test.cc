@@ -438,6 +438,8 @@ TEST_P(WasmHttpFilterTest, Metadata) {
       *filter_,
       scriptLog_(spdlog::level::trace,
                  Eq(absl::string_view("Struct wasm_request_get_value wasm_request_get_value"))));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::info, Eq(absl::string_view("server is envoy-wasm"))));
 
   request_stream_info_.metadata_.mutable_filter_metadata()->insert(
       Protobuf::MapPair<std::string, ProtobufWkt::Struct>(

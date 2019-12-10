@@ -37,11 +37,14 @@
 #include "eval/eval/field_access.h"
 #include "eval/eval/field_backed_list_impl.h"
 #include "eval/eval/field_backed_map_impl.h"
+#include "eval/public/builtin_func_registrar.h"
+#include "eval/public/cel_expr_builder_factory.h"
 #include "eval/public/cel_value.h"
 #include "eval/public/value_export_util.h"
 #include "openssl/bytestring.h"
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
+#include "parser/parser.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -1705,6 +1708,61 @@ WasmResult Context::grpcCancel(uint32_t token) {
     }
     grpc_stream_.erase(token);
   }
+  return WasmResult::Ok;
+}
+
+WasmResult Context::exprCreate(absl::string_view expr, ABSL_ATTRIBUTE_UNUSED uint32_t* token_ptr) {
+  auto parse_status = google::api::expr::parser::Parse(std::string(expr));
+  if (!parse_status.ok()) {
+    return WasmResult::BadArgument;
+  }
+
+  // lazily create a builder
+  if (!builder_) {
+    google::api::expr::runtime::InterpreterOptions options;
+    builder_ = google::api::expr::runtime::CreateCelExpressionBuilder(options);
+    auto register_status =
+        google::api::expr::runtime::RegisterBuiltinFunctions(builder_->GetRegistry(), options);
+    if (!register_status.ok()) {
+      return WasmResult::InternalFailure;
+    }
+  }
+
+  google::api::expr::v1alpha1::SourceInfo source_info;
+  auto cel_expression_status =
+      builder_->CreateExpression(&parse_status.ValueOrDie().expr(), &source_info);
+  if (!cel_expression_status.ok()) {
+    return WasmResult::BadArgument;
+  }
+
+  auto token = next_expr_token_++;
+  for (;;) {
+    if (!expr_.count(token)) {
+      break;
+    }
+    token = next_expr_token_++;
+  }
+  expr_[token] = std::move(cel_expression_status.ValueOrDie());
+  return WasmResult::Ok;
+}
+WasmResult Context::exprEval(uint32_t token, std::string* result) {
+  auto it = root_context_->expr_.find(token);
+  if (it == root_context_->expr_.end()) {
+    return WasmResult::NotFound;
+  }
+  Protobuf::Arena arena;
+  auto eval_status = it->second->Evaluate(*this, &arena);
+  if (!eval_status.ok()) {
+    return WasmResult::InternalFailure;
+  }
+  return serializeValue(eval_status.ValueOrDie(), result);
+}
+WasmResult Context::exprDelete(uint32_t token) {
+  auto it = expr_.find(token);
+  if (it == expr_.end()) {
+    return WasmResult::NotFound;
+  }
+  expr_.erase(token);
   return WasmResult::Ok;
 }
 

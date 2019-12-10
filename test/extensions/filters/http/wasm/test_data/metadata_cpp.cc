@@ -42,6 +42,19 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   logInfo(std::string("header path ") + path->toString());
   addRequestHeader("newheader", "newheadervalue");
   replaceRequestHeader("server", "envoy-wasm");
+
+  std::string expr = R"("server is " + request.headers["server"])";
+  uint32_t token = 0;
+  if (WasmResult::Ok != proxy_expr_create(expr.data(), expr.size(), &token)) {
+    logError("expr_create error");
+  }
+  auto eval_result = exprEval(token);
+  if (!eval_result.has_value()) {
+    logError("expr_eval error");
+  } else {
+    logInfo(eval_result.value()->toString());
+  }
+
   return FilterHeadersStatus::Continue;
 }
 
