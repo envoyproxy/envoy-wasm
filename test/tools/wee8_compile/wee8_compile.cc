@@ -57,7 +57,7 @@ wasm::vec<byte_t> readWasmModule(const char* path, const std::string& name) {
   // Open binary file.
   auto file = std::ifstream(path, std::ios::binary);
   file.seekg(0, std::ios_base::end);
-  auto size = file.tellg();
+  const auto size = file.tellg();
   file.seekg(0);
   auto content = wasm::vec<byte_t>::make_uninitialized(size);
   file.read(content.get(), size);
@@ -83,15 +83,15 @@ wasm::vec<byte_t> readWasmModule(const char* path, const std::string& name) {
       std::cerr << "ERROR: Failed to parse corrupted Wasm module from: " << path << std::endl;
       return wasm::vec<byte_t>::invalid();
     }
-    auto section_type = *pos++;
-    auto section_len = parseVarint(pos, end);
+    const auto section_type = *pos++;
+    const auto section_len = parseVarint(pos, end);
     if (section_len == static_cast<uint32_t>(-1) || pos + section_len > end) {
       std::cerr << "ERROR: Failed to parse corrupted Wasm module from: " << path << std::endl;
       return wasm::vec<byte_t>::invalid();
     }
     if (section_type == 0 /* custom section */) {
-      auto section_data_start = pos;
-      auto section_name_len = parseVarint(pos, end);
+      const auto section_data_start = pos;
+      const auto section_name_len = parseVarint(pos, end);
       if (section_name_len == static_cast<uint32_t>(-1) || pos + section_name_len > end) {
         std::cerr << "ERROR: Failed to parse corrupted Wasm module from: " << path << std::endl;
         return wasm::vec<byte_t>::invalid();
@@ -121,13 +121,13 @@ wasm::vec<byte_t> stripWasmModule(const wasm::vec<byte_t>& module) {
   pos += 8;
 
   while (pos < end) {
-    auto section_start = pos;
+    const auto section_start = pos;
     if (pos + 1 > end) {
       std::cerr << "ERROR: Failed to parse corrupted Wasm module." << std::endl;
       return wasm::vec<byte_t>::invalid();
     }
-    auto section_type = *pos++;
-    auto section_len = parseVarint(pos, end);
+    const auto section_type = *pos++;
+    const auto section_len = parseVarint(pos, end);
     if (section_len == static_cast<uint32_t>(-1) || pos + section_len > end) {
       std::cerr << "ERROR: Failed to parse corrupted Wasm module." << std::endl;
       return wasm::vec<byte_t>::invalid();
@@ -173,10 +173,11 @@ bool writeWasmModule(const char* path, const wasm::vec<byte_t>& module, size_t s
                      const std::string& section_name, const wasm::vec<byte_t>& serialized) {
   auto file = std::fstream(path, std::ios::out | std::ios::binary);
   file.write(module.get(), module.size());
-  char section_type = '\0'; // custom section
+  const char section_type = '\0'; // custom section
   file.write(&section_type, 1);
-  auto section_name_len = getVarint(section_name.size());
-  auto section_size = getVarint(section_name_len.size() + section_name.size() + serialized.size());
+  const auto section_name_len = getVarint(section_name.size());
+  const auto section_size =
+      getVarint(section_name_len.size() + section_name.size() + serialized.size());
   file.write(section_size.get(), section_size.size());
   file.write(section_name_len.get(), section_name_len.size());
   file.write(section_name.data(), section_name.size());

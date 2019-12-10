@@ -83,7 +83,7 @@ public:
 #undef _GET_MODULE_FUNCTION
 
 private:
-  wasm::vec<byte_t> strip(const wasm::vec<byte_t>& module);
+  wasm::vec<byte_t> getStrippedSource();
 
   template <typename... Args>
   void registerHostFunctionImpl(absl::string_view module_name, absl::string_view function_name,
@@ -287,11 +287,8 @@ bool V8::load(const std::string& code, bool allow_precompiled) {
   }
 
   if (!module_) {
-    const auto stripped_source = strip(source_);
-    if (!stripped_source) {
-      return false;
-    }
-    module_ = wasm::Module::make(store_.get(), stripped_source);
+    const auto stripped_source = getStrippedSource();
+    module_ = wasm::Module::make(store_.get(), stripped_source ? stripped_source : source_);
   }
 
   if (module_) {
@@ -316,32 +313,41 @@ WasmVmPtr V8::clone() {
   return clone;
 }
 
-wasm::vec<byte_t> V8::strip(const wasm::vec<byte_t>& module) {
+wasm::vec<byte_t> V8::getStrippedSource() {
+  ENVOY_LOG(trace, "getStrippedSource()");
+  ASSERT(source_.get() != nullptr);
+
   std::vector<byte_t> stripped;
 
-  const byte_t* pos = module.get();
-  const byte_t* end = module.get() + module.size();
-
-  // Copy Wasm header.
-  stripped.insert(stripped.end(), pos, pos + 8);
-  pos += 8;
-
+  const byte_t* pos = source_.get() + 8 /* Wasm header */;
+  const byte_t* end = source_.get() + source_.size();
   while (pos < end) {
-    auto section_start = pos;
+    const auto section_start = pos;
     if (pos + 1 > end) {
       return wasm::vec<byte_t>::invalid();
     }
-    auto section_type = *pos++;
-    auto section_len = parseVarint(pos, end);
+    const auto section_type = *pos++;
+    const auto section_len = parseVarint(pos, end);
     if (section_len == static_cast<uint32_t>(-1) || pos + section_len > end) {
       return wasm::vec<byte_t>::invalid();
     }
-    if (section_type != 0 /* custom section */) {
-      stripped.insert(stripped.end(), section_start, pos + section_len);
-    }
     pos += section_len;
+    if (section_type == 0 /* custom section */) {
+      if (stripped.empty()) {
+        const byte_t* start = source_.get();
+        stripped.insert(stripped.end(), start, section_start);
+      }
+    } else if (!stripped.empty()) {
+      stripped.insert(stripped.end(), section_start, pos /* section end */);
+    }
   }
 
+  // No custom sections found, use the original source.
+  if (stripped.empty()) {
+    return wasm::vec<byte_t>::invalid();
+  }
+
+  // Return stripped source, without custom sections.
   return wasm::vec<byte_t>::make(stripped.size(), stripped.data());
 }
 
@@ -355,14 +361,14 @@ absl::string_view V8::getCustomSection(absl::string_view name) {
     if (pos + 1 > end) {
       throw WasmVmException("Failed to parse corrupted WASM module");
     }
-    auto section_type = *pos++;
-    auto section_len = parseVarint(pos, end);
+    const auto section_type = *pos++;
+    const auto section_len = parseVarint(pos, end);
     if (section_len == static_cast<uint32_t>(-1) || pos + section_len > end) {
       throw WasmVmException("Failed to parse corrupted WASM module");
     }
     if (section_type == 0 /* custom section */) {
-      auto section_data_start = pos;
-      auto section_name_len = parseVarint(pos, end);
+      const auto section_data_start = pos;
+      const auto section_name_len = parseVarint(pos, end);
       if (section_name_len == static_cast<uint32_t>(-1) || pos + section_name_len > end) {
         throw WasmVmException("Failed to parse corrupted WASM module");
       }
