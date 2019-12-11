@@ -2,15 +2,16 @@ syntax = "proto3";
 
 package envoy.config.filter.network.http_connection_manager.v3alpha;
 
+option java_package = "io.envoyproxy.envoy.config.filter.network.http_connection_manager.v3alpha";
 option java_outer_classname = "HttpConnectionManagerProto";
 option java_multiple_files = true;
-option java_package = "io.envoyproxy.envoy.config.filter.network.http_connection_manager.v3alpha";
 
 import "envoy/api/v3alpha/core/config_source.proto";
 import "envoy/api/v3alpha/core/protocol.proto";
 import "envoy/api/v3alpha/rds.proto";
 import "envoy/api/v3alpha/srds.proto";
 import "envoy/config/filter/accesslog/v3alpha/accesslog.proto";
+import "envoy/type/tracing/v2/custom_tag.proto";
 import "envoy/type/v3alpha/percent.proto";
 
 import "google/protobuf/any.proto";
@@ -18,7 +19,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 
-import "udpa/api/annotations/versioning.proto";
+import "udpa/annotations/versioning.proto";
 
 import "validate/validate.proto";
 
@@ -28,7 +29,7 @@ import "validate/validate.proto";
 
 // [#next-free-field: 36]
 message HttpConnectionManager {
-  option (udpa.api.annotations.versioning).previous_message_type =
+  option (udpa.annotations.versioning).previous_message_type =
       "envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager";
 
   enum CodecType {
@@ -89,9 +90,9 @@ message HttpConnectionManager {
     ALWAYS_FORWARD_ONLY = 4;
   }
 
-  // [#next-free-field: 8]
+  // [#next-free-field: 9]
   message Tracing {
-    option (udpa.api.annotations.versioning).previous_message_type =
+    option (udpa.annotations.versioning).previous_message_type =
         "envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager.Tracing";
 
     enum OperationName {
@@ -102,14 +103,9 @@ message HttpConnectionManager {
       EGRESS = 1;
     }
 
-    reserved 1;
+    reserved 1, 2;
 
-    reserved "operation_name";
-
-    // A list of header names used to create tags for the active span. The header name is used to
-    // populate the tag name, and the header value is used to populate the tag value. The tag is
-    // created if the specified header name is present in the request's headers.
-    repeated string request_headers_for_tags = 2;
+    reserved "operation_name", "request_headers_for_tags";
 
     // Target percentage of requests managed by this HTTP connection manager that will be force
     // traced if the :ref:`x-client-trace-id <config_http_conn_man_headers_x-client-trace-id>`
@@ -144,10 +140,13 @@ message HttpConnectionManager {
     // truncate lengthy request paths to meet the needs of a tracing backend.
     // Default: 256
     google.protobuf.UInt32Value max_path_tag_length = 7;
+
+    // A list of custom tags with unique tag name to create tags for the active span.
+    repeated type.tracing.v2.CustomTag custom_tags = 8;
   }
 
   message InternalAddressConfig {
-    option (udpa.api.annotations.versioning).previous_message_type =
+    option (udpa.annotations.versioning).previous_message_type =
         "envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager."
         "InternalAddressConfig";
 
@@ -157,7 +156,7 @@ message HttpConnectionManager {
 
   // [#next-free-field: 7]
   message SetCurrentClientCertDetails {
-    option (udpa.api.annotations.versioning).previous_message_type =
+    option (udpa.annotations.versioning).previous_message_type =
         "envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager."
         "SetCurrentClientCertDetails";
 
@@ -199,7 +198,7 @@ message HttpConnectionManager {
   //    The current implementation of upgrade headers does not work with HTTP/2
   //    upstreams.
   message UpgradeConfig {
-    option (udpa.api.annotations.versioning).previous_message_type =
+    option (udpa.annotations.versioning).previous_message_type =
         "envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager."
         "UpgradeConfig";
 
@@ -478,7 +477,7 @@ message HttpConnectionManager {
 }
 
 message Rds {
-  option (udpa.api.annotations.versioning).previous_message_type =
+  option (udpa.annotations.versioning).previous_message_type =
       "envoy.config.filter.network.http_connection_manager.v2.Rds";
 
   // Configuration source specifier for RDS.
@@ -493,7 +492,7 @@ message Rds {
 
 // This message is used to work around the limitations with 'oneof' and repeated fields.
 message ScopedRouteConfigurationsList {
-  option (udpa.api.annotations.versioning).previous_message_type =
+  option (udpa.annotations.versioning).previous_message_type =
       "envoy.config.filter.network.http_connection_manager.v2.ScopedRouteConfigurationsList";
 
   repeated api.v3alpha.ScopedRouteConfiguration scoped_route_configurations = 1
@@ -502,7 +501,7 @@ message ScopedRouteConfigurationsList {
 
 // [#next-free-field: 6]
 message ScopedRoutes {
-  option (udpa.api.annotations.versioning).previous_message_type =
+  option (udpa.annotations.versioning).previous_message_type =
       "envoy.config.filter.network.http_connection_manager.v2.ScopedRoutes";
 
   // Specifies the mechanism for constructing "scope keys" based on HTTP request attributes. These
@@ -517,12 +516,12 @@ message ScopedRoutes {
   // :ref:`RouteConfiguration<envoy_api_msg_api.v3alpha.RouteConfiguration>`) to use for the
   // request.
   message ScopeKeyBuilder {
-    option (udpa.api.annotations.versioning).previous_message_type =
+    option (udpa.annotations.versioning).previous_message_type =
         "envoy.config.filter.network.http_connection_manager.v2.ScopedRoutes.ScopeKeyBuilder";
 
     // Specifies the mechanism for constructing key fragments which are composed into scope keys.
     message FragmentBuilder {
-      option (udpa.api.annotations.versioning).previous_message_type =
+      option (udpa.annotations.versioning).previous_message_type =
           "envoy.config.filter.network.http_connection_manager.v2.ScopedRoutes.ScopeKeyBuilder."
           "FragmentBuilder";
 
@@ -544,13 +543,13 @@ message ScopedRoutes {
       //
       //    Each 'a=b' key-value pair constitutes an 'element' of the header field.
       message HeaderValueExtractor {
-        option (udpa.api.annotations.versioning).previous_message_type =
+        option (udpa.annotations.versioning).previous_message_type =
             "envoy.config.filter.network.http_connection_manager.v2.ScopedRoutes.ScopeKeyBuilder."
             "FragmentBuilder.HeaderValueExtractor";
 
         // Specifies a header field's key value pair to match on.
         message KvElement {
-          option (udpa.api.annotations.versioning).previous_message_type =
+          option (udpa.annotations.versioning).previous_message_type =
               "envoy.config.filter.network.http_connection_manager.v2.ScopedRoutes.ScopeKeyBuilder."
               "FragmentBuilder.HeaderValueExtractor.KvElement";
 
@@ -628,7 +627,7 @@ message ScopedRoutes {
 }
 
 message ScopedRds {
-  option (udpa.api.annotations.versioning).previous_message_type =
+  option (udpa.annotations.versioning).previous_message_type =
       "envoy.config.filter.network.http_connection_manager.v2.ScopedRds";
 
   // Configuration source specifier for scoped RDS.
@@ -637,7 +636,7 @@ message ScopedRds {
 }
 
 message HttpFilter {
-  option (udpa.api.annotations.versioning).previous_message_type =
+  option (udpa.annotations.versioning).previous_message_type =
       "envoy.config.filter.network.http_connection_manager.v2.HttpFilter";
 
   reserved 3, 2;

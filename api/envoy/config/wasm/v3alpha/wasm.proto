@@ -2,13 +2,13 @@ syntax = "proto3";
 
 package envoy.config.wasm.v3alpha;
 
+option java_package = "io.envoyproxy.envoy.config.wasm.v3alpha";
 option java_outer_classname = "WasmProto";
 option java_multiple_files = true;
-option java_package = "io.envoyproxy.envoy.config.wasm.v3alpha";
 
 import "envoy/api/v3alpha/core/base.proto";
 
-import "udpa/api/annotations/versioning.proto";
+import "udpa/annotations/versioning.proto";
 
 import "validate/validate.proto";
 
@@ -17,7 +17,7 @@ import "validate/validate.proto";
 // Configuration for a Wasm VM.
 // [#next-free-field: 6]
 message VmConfig {
-  option (udpa.api.annotations.versioning).previous_message_type = "envoy.config.wasm.v2.VmConfig";
+  option (udpa.annotations.versioning).previous_message_type = "envoy.config.wasm.v2.VmConfig";
 
   // An ID which will be used along with a hash of the wasm code (or null_vm_id) to determine which
   // VM will be used for the plugin. All plugins which use the same vm_id and code will use the same
@@ -39,8 +39,7 @@ message VmConfig {
 
 // Base Configuration for Wasm Plugins, e.g. filters and services.
 message PluginConfig {
-  option (udpa.api.annotations.versioning).previous_message_type =
-      "envoy.config.wasm.v2.PluginConfig";
+  option (udpa.annotations.versioning).previous_message_type = "envoy.config.wasm.v2.PluginConfig";
 
   // A unique name for a filters/services in a VM for use in identifiying the filter/service if
   // multiple filters/services are handled by the same vm_id and root_id and for logging/debugging.
@@ -63,8 +62,7 @@ message PluginConfig {
 // <envoy_api_msg_config.wasm.v2.ServiceConfig>`. This opaque configuration will be used to
 // create a Wasm Service.
 message WasmService {
-  option (udpa.api.annotations.versioning).previous_message_type =
-      "envoy.config.wasm.v2.WasmService";
+  option (udpa.annotations.versioning).previous_message_type = "envoy.config.wasm.v2.WasmService";
 
   // General plugin configuration.
   PluginConfig config = 1;
