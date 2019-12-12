@@ -313,6 +313,7 @@ WasmVmPtr V8::clone() {
   return clone;
 }
 
+// Get Wasm module without Custom Sections to save some memory in workers.
 wasm::vec<byte_t> V8::getStrippedSource() {
   ENVOY_LOG(trace, "getStrippedSource()");
   ASSERT(source_.get() != nullptr);
