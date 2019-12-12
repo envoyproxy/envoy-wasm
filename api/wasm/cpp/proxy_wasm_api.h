@@ -494,10 +494,6 @@ inline bool getStructValue(std::initializer_list<StringView> parts,
   return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
 }
 
-inline WasmResult getRequestProtocol(std::string* result) {
-  return getStringValue({"request_protocol"}, result) ? WasmResult::Ok : WasmResult::NotFound;
-}
-
 template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T* out) {
   auto buf = getProperty(parts);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
