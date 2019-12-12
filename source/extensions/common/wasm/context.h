@@ -18,6 +18,8 @@
 
 #include "eval/public/activation.h"
 
+#include "eval/public/activation.h"
+
 namespace Envoy {
 namespace Extensions {
 namespace Common {

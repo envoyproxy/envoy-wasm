@@ -764,12 +764,7 @@ void Context::replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
     return;
   }
   const Http::LowerCaseString lower_key(std::move(std::string(key)));
-  auto entry = map->get(lower_key);
-  if (entry != nullptr) {
-    entry->value(value.data(), value.size());
-  } else {
-    map->addCopy(lower_key, std::string(value));
-  }
+  map->setCopy(lower_key, value);
 }
 
 uint32_t Context::getHeaderMapSize(HeaderMapType type) {
@@ -777,7 +772,7 @@ uint32_t Context::getHeaderMapSize(HeaderMapType type) {
   if (!map) {
     return 0;
   }
-  return map->refreshByteSize();
+  return map->byteSize();
 }
 
 // Buffer
@@ -827,7 +822,7 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
 
   if (!request_body.empty()) {
     message->body().reset(new Buffer::OwnedImpl(request_body.data(), request_body.size()));
-    message->headers().insertContentLength().value(request_body.size());
+    message->headers().setContentLength(request_body.size());
   }
 
   if (request_trailers.size() > 0) {
