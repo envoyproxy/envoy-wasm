@@ -29,6 +29,7 @@
 #include "common/protobuf/protobuf.h"
 #include "common/protobuf/utility.h"
 #include "common/router/retry_state_impl.h"
+#include "common/tracing/http_tracer_impl.h"
 
 #include "extensions/filters/http/well_known_names.h"
 
@@ -218,6 +219,9 @@ RouteTracingImpl::RouteTracingImpl(const envoy::api::v2::route::Tracing& tracing
   } else {
     overall_sampling_ = tracing.overall_sampling();
   }
+  for (const auto& tag : tracing.custom_tags()) {
+    custom_tags_.emplace(tag.tag(), Tracing::HttpTracerUtility::createCustomTag(tag));
+  }
 }
 
 const envoy::type::FractionalPercent& RouteTracingImpl::getClientSampling() const {
@@ -231,6 +235,7 @@ const envoy::type::FractionalPercent& RouteTracingImpl::getRandomSampling() cons
 const envoy::type::FractionalPercent& RouteTracingImpl::getOverallSampling() const {
   return overall_sampling_;
 }
+const Tracing::CustomTagMap& RouteTracingImpl::getCustomTags() const { return custom_tags_; }
 
 RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
                                        const envoy::api::v2::route::Route& route,
@@ -383,6 +388,12 @@ bool RouteEntryImplBase::matchRoute(const Http::HeaderMap& headers,
                                     uint64_t random_value) const {
   bool matches = true;
 
+  // TODO(mattklein123): Currently all match types require a path header. When we support CONNECT
+  // we will need to figure out how to safely relax this.
+  if (headers.Path() == nullptr) {
+    return false;
+  }
+
   matches &= evaluateRuntimeMatch(random_value);
   if (!matches) {
     // No need to waste further cycles calculating a route match.
@@ -424,13 +435,13 @@ void RouteEntryImplBase::finalizeRequestHeaders(Http::HeaderMap& headers,
   }
 
   if (!host_rewrite_.empty()) {
-    headers.Host()->value(host_rewrite_);
+    headers.setHost(host_rewrite_);
   } else if (auto_host_rewrite_header_) {
-    Http::HeaderEntry* header = headers.get(*auto_host_rewrite_header_);
+    const Http::HeaderEntry* header = headers.get(*auto_host_rewrite_header_);
     if (header != nullptr) {
       absl::string_view header_value = header->value().getStringView();
       if (!header_value.empty()) {
-        headers.Host()->value(header_value);
+        headers.setHost(header_value);
       }
     }
   }
@@ -1063,6 +1074,11 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
   if (virtual_hosts_.empty() && wildcard_virtual_host_suffixes_.empty() &&
       wildcard_virtual_host_prefixes_.empty()) {
     return default_virtual_host_.get();
+  }
+
+  // There may be no authority in early reply paths in the HTTP connection manager.
+  if (headers.Host() == nullptr) {
+    return nullptr;
   }
 
   // TODO (@rshriram) Match Origin header in WebSocket
