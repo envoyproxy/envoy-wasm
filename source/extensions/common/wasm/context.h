@@ -15,6 +15,8 @@
 #include "common/common/assert.h"
 #include "common/common/logger.h"
 
+#include "eval/public/activation.h"
+
 namespace Envoy {
 namespace Extensions {
 namespace Common {
@@ -57,6 +59,7 @@ class Context : public Logger::Loggable<Logger::Id::wasm>,
                 public Http::StreamFilter,
                 public Network::ConnectionCallbacks,
                 public Network::Filter,
+                public google::api::expr::runtime::BaseActivation,
                 public std::enable_shared_from_this<Context> {
 public:
   Context();                                                             // Testing.
@@ -289,6 +292,15 @@ public:
   virtual WasmResult grpcCancel(uint32_t token); // cancel on call, reset on stream.
   virtual WasmResult grpcSend(uint32_t token, absl::string_view message,
                               bool end_stream); // stream only
+
+  // CEL evaluation
+  virtual std::vector<const google::api::expr::runtime::CelFunction*>
+  FindFunctionOverloads(absl::string_view) const override {
+    return {};
+  }
+  virtual absl::optional<google::api::expr::runtime::CelValue>
+  FindValue(absl::string_view name, Protobuf::Arena* arena) const override;
+  virtual bool IsPathUnknown(absl::string_view) const override { return false; }
 
   // Connection
   virtual bool isSsl();

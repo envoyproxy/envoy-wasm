@@ -20,10 +20,6 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   auto path = getRequestHeader(":path");
   logInfo(std::string("header path ") + std::string(path->view()));
   std::string protocol;
-  // Should not be found.
-  if (WasmResult::Ok == getRequestProtocol(&protocol)) {
-    logInfo(std::string("request protocol response ") + protocol);
-  }
   addRequestHeader("newheader", "newheadervalue");
   replaceRequestHeader("server", "envoy-wasm");
   return FilterHeadersStatus::Continue;

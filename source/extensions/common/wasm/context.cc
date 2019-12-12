@@ -383,8 +383,8 @@ private:
 
 #define PROPERTY_TOKENS(_f)                                                                        \
   _f(METADATA) _f(FILTER_STATE) _f(REQUEST) _f(RESPONSE) _f(CONNECTION) _f(UPSTREAM) _f(NODE)      \
-      _f(SOURCE) _f(DESTINATION) _f(REQUEST_PROTOCOL) _f(LISTENER_DIRECTION) _f(LISTENER_METADATA) \
-          _f(CLUSTER_NAME) _f(CLUSTER_METADATA) _f(ROUTE_NAME) _f(ROUTE_METADATA) _f(PLUGIN_NAME)  \
+      _f(SOURCE) _f(DESTINATION) _f(LISTENER_DIRECTION) _f(LISTENER_METADATA) _f(CLUSTER_NAME)     \
+          _f(CLUSTER_METADATA) _f(ROUTE_NAME) _f(ROUTE_METADATA) _f(PLUGIN_NAME)                   \
               _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID)
 
 static inline std::string downCase(std::string s) {
@@ -400,20 +400,130 @@ enum class PropertyToken { PROPERTY_TOKENS(_DECLARE) };
 static absl::flat_hash_map<std::string, PropertyToken> property_tokens = {PROPERTY_TOKENS(_PAIR)};
 #undef _PARI
 
+absl::optional<google::api::expr::runtime::CelValue>
+Context::FindValue(absl::string_view name, Protobuf::Arena* arena) const {
+  using google::api::expr::runtime::CelValue;
+
+  // Convert into a dense token to enable a jump table implementation.
+  auto part_token = property_tokens.find(name);
+  if (part_token == property_tokens.end()) {
+    return {};
+  }
+
+  const StreamInfo::StreamInfo* info = getConstRequestStreamInfo();
+  switch (part_token->second) {
+  case PropertyToken::METADATA:
+    if (info) {
+      return CelValue::CreateMessage(&info->dynamicMetadata(), arena);
+    }
+    break;
+  case PropertyToken::FILTER_STATE:
+    if (info) {
+      const Envoy::Network::Connection* connection = getConnection();
+      if (connection) {
+        return CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
+            arena, info->filterState(), &connection->streamInfo().filterState()));
+      } else {
+        return CelValue::CreateMap(
+            Protobuf::Arena::Create<WasmStateWrapper>(arena, info->filterState()));
+      }
+    }
+    break;
+  case PropertyToken::REQUEST:
+    if (info) {
+      return CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
+          arena, request_headers_ ? request_headers_ : access_log_request_headers_, *info));
+    }
+    break;
+  case PropertyToken::RESPONSE:
+    if (info) {
+      return CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::ResponseWrapper>(
+          arena, response_headers_ ? response_headers_ : access_log_response_headers_,
+          response_trailers_ ? response_trailers_ : access_log_response_trailers_, *info));
+    }
+    break;
+  case PropertyToken::CONNECTION:
+    if (info) {
+      return CelValue::CreateMap(
+          Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(arena, *info));
+    }
+    break;
+  case PropertyToken::UPSTREAM:
+    if (info) {
+      return CelValue::CreateMap(
+          Protobuf::Arena::Create<Filters::Common::Expr::UpstreamWrapper>(arena, *info));
+    }
+    break;
+  case PropertyToken::NODE:
+    if (root_local_info_) {
+      return CelValue::CreateMessage(&root_local_info_->node(), arena);
+    } else if (plugin_) {
+      return CelValue::CreateMessage(&plugin_->local_info_.node(), arena);
+    }
+    break;
+  case PropertyToken::SOURCE:
+    if (info) {
+      return CelValue::CreateMap(
+          Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(arena, *info, false));
+    }
+    break;
+  case PropertyToken::DESTINATION:
+    if (info) {
+      return CelValue::CreateMap(
+          Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(arena, *info, true));
+    }
+    break;
+  case PropertyToken::LISTENER_DIRECTION:
+    if (plugin_) {
+      return CelValue::CreateInt64(plugin_->direction_);
+    }
+    break;
+  case PropertyToken::LISTENER_METADATA:
+    if (plugin_) {
+      return CelValue::CreateMessage(plugin_->listener_metadata_, arena);
+    }
+    break;
+  case PropertyToken::CLUSTER_NAME:
+    if (info && info->upstreamHost()) {
+      return CelValue::CreateString(&info->upstreamHost()->cluster().name());
+    } else if (info && info->routeEntry()) {
+      return CelValue::CreateString(&info->routeEntry()->clusterName());
+    }
+    break;
+  case PropertyToken::CLUSTER_METADATA:
+    if (info && info->upstreamHost()) {
+      return CelValue::CreateMessage(&info->upstreamHost()->cluster().metadata(), arena);
+    }
+    break;
+  case PropertyToken::ROUTE_NAME:
+    if (info) {
+      return CelValue::CreateString(&info->getRouteName());
+    }
+    break;
+  case PropertyToken::ROUTE_METADATA:
+    if (info && info->routeEntry()) {
+      return CelValue::CreateMessage(&info->routeEntry()->metadata(), arena);
+    }
+    break;
+  case PropertyToken::PLUGIN_NAME:
+    if (plugin_) {
+      return CelValue::CreateStringView(plugin_->name_);
+    }
+    break;
+  case PropertyToken::PLUGIN_ROOT_ID:
+    return CelValue::CreateStringView(root_id());
+  case PropertyToken::PLUGIN_VM_ID:
+    return CelValue::CreateStringView(wasm()->vm_id());
+  }
+  return {};
+}
+
 WasmResult Context::getProperty(absl::string_view path, std::string* result) {
   using google::api::expr::runtime::CelValue;
-  using google::api::expr::runtime::FieldBackedListImpl;
-  using google::api::expr::runtime::FieldBackedMapImpl;
 
   bool first = true;
   CelValue value;
   Protobuf::Arena arena;
-  const StreamInfo::StreamInfo* info = getConstRequestStreamInfo();
-  const auto request_headers = request_headers_ ? request_headers_ : access_log_request_headers_;
-  const auto response_headers =
-      response_headers_ ? response_headers_ : access_log_response_headers_;
-  const auto response_trailers =
-      response_trailers_ ? response_trailers_ : access_log_response_trailers_;
 
   size_t start = 0;
   while (true) {
@@ -428,151 +538,48 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
     auto part = path.substr(start, end - start);
     start = end + 1;
 
-    // top-level ident
     if (first) {
+      // top-level ident
       first = false;
-      // Convert into a dense token to enable a jump table implementation.
-      auto part_token = property_tokens.find(part);
-      if (part_token == property_tokens.end()) {
+      auto top_value = FindValue(part, &arena);
+      if (!top_value.has_value()) {
         return WasmResult::NotFound;
       }
-      switch (part_token->second) {
-      case PropertyToken::METADATA:
-        value = CelValue::CreateMessage(&info->dynamicMetadata(), &arena);
-        break;
-      case PropertyToken::FILTER_STATE: {
-        const Envoy::Network::Connection* connection = getConnection();
-        if (connection) {
-          value = CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
-              &arena, info->filterState(), &connection->streamInfo().filterState()));
-        } else {
-          value = CelValue::CreateMap(
-              Protobuf::Arena::Create<WasmStateWrapper>(&arena, info->filterState()));
-        }
-        break;
-      }
-      case PropertyToken::REQUEST:
-        value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::RequestWrapper>(
-            &arena, request_headers, *info));
-        break;
-      case PropertyToken::RESPONSE:
-        value = CelValue::CreateMap(Protobuf::Arena::Create<Filters::Common::Expr::ResponseWrapper>(
-            &arena, response_headers, response_trailers, *info));
-        break;
-      case PropertyToken::CONNECTION:
-        value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(&arena, *info));
-        break;
-      case PropertyToken::UPSTREAM:
-        value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::UpstreamWrapper>(&arena, *info));
-        break;
-      case PropertyToken::NODE:
-        if (root_local_info_) {
-          value = CelValue::CreateMessage(&root_local_info_->node(), &arena);
-          break;
-        }
-        if (!plugin_) {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateMessage(&plugin_->local_info_.node(), &arena);
-        break;
-      case PropertyToken::SOURCE:
-        value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, *info, false));
-        break;
-      case PropertyToken::DESTINATION:
-        value = CelValue::CreateMap(
-            Protobuf::Arena::Create<Filters::Common::Expr::PeerWrapper>(&arena, *info, true));
-        break;
-      case PropertyToken::REQUEST_PROTOCOL:
-        // TODO(kyessenov) move this upstream to CEL context
-        if (info->protocol().has_value()) {
-          value =
-              CelValue::CreateString(&Http::Utility::getProtocolString(info->protocol().value()));
-          break;
-        } else {
-          return WasmResult::NotFound;
-        }
-      case PropertyToken::LISTENER_DIRECTION:
-        if (!plugin_) {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateInt64(plugin_->direction_);
-        break;
-      case PropertyToken::LISTENER_METADATA:
-        if (!plugin_) {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateMessage(plugin_->listener_metadata_, &arena);
-        break;
-      case PropertyToken::CLUSTER_NAME:
-        if (info->upstreamHost() && !info->upstreamHost()->cluster().name().empty()) {
-          value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
-        } else if (info->routeEntry()) {
-          value = CelValue::CreateString(&info->routeEntry()->clusterName());
-        } else {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateString(&info->upstreamHost()->cluster().name());
-        break;
-      case PropertyToken::CLUSTER_METADATA:
-        value = CelValue::CreateMessage(&info->upstreamHost()->cluster().metadata(), &arena);
-        break;
-      case PropertyToken::ROUTE_NAME:
-        value = CelValue::CreateString(&info->getRouteName());
-        break;
-      case PropertyToken::ROUTE_METADATA:
-        value = CelValue::CreateMessage(&info->routeEntry()->metadata(), &arena);
-        break;
-      case PropertyToken::PLUGIN_NAME:
-        if (!plugin_) {
-          return WasmResult::NotFound;
-        }
-        value = CelValue::CreateStringView(plugin_->name_);
-        break;
-      case PropertyToken::PLUGIN_ROOT_ID:
-        value = CelValue::CreateStringView(root_id());
-        break;
-      case PropertyToken::PLUGIN_VM_ID:
-        value = CelValue::CreateStringView(wasm()->vm_id());
-        break;
-      }
-      continue;
-    }
-
-    if (value.IsMap()) {
+      value = top_value.value();
+    } else if (value.IsMap()) {
       auto& map = *value.MapOrDie();
       auto field = map[CelValue::CreateStringView(part)];
-      if (field.has_value()) {
-        value = field.value();
-      } else {
-        return {};
+      if (!field.has_value()) {
+        return WasmResult::NotFound;
       }
+      value = field.value();
     } else if (value.IsMessage()) {
       auto msg = value.MessageOrDie();
       if (msg == nullptr) {
-        return {};
+        return WasmResult::NotFound;
       }
       const Protobuf::Descriptor* desc = msg->GetDescriptor();
       const Protobuf::FieldDescriptor* field_desc = desc->FindFieldByName(std::string(part));
       if (field_desc == nullptr) {
-        return {};
-      } else if (field_desc->is_map()) {
+        return WasmResult::NotFound;
+      }
+      if (field_desc->is_map()) {
         value = CelValue::CreateMap(
-            Protobuf::Arena::Create<FieldBackedMapImpl>(&arena, msg, field_desc, &arena));
+            Protobuf::Arena::Create<google::api::expr::runtime::FieldBackedMapImpl>(
+                &arena, msg, field_desc, &arena));
       } else if (field_desc->is_repeated()) {
         value = CelValue::CreateList(
-            Protobuf::Arena::Create<FieldBackedListImpl>(&arena, msg, field_desc, &arena));
+            Protobuf::Arena::Create<google::api::expr::runtime::FieldBackedListImpl>(
+                &arena, msg, field_desc, &arena));
       } else {
         auto status =
             google::api::expr::runtime::CreateValueFromSingleField(msg, field_desc, &arena, &value);
         if (!status.ok()) {
-          return {};
+          return WasmResult::InternalFailure;
         }
       }
     } else {
-      return {};
+      return WasmResult::NotFound;
     }
   }
 
