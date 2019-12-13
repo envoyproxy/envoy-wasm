@@ -1,0 +1,14 @@
+diff --git a/runtime/Cpp/runtime/src/atn/ATNDeserializer.cpp b/runtime/Cpp/runtime/src/atn/ATNDeserializer.cpp
+index c6cceda13..e86533759 100755
+--- a/runtime/Cpp/runtime/src/atn/ATNDeserializer.cpp
++++ b/runtime/Cpp/runtime/src/atn/ATNDeserializer.cpp
+@@ -104,7 +104,7 @@ void deserializeSets(
+
+ }
+
+-ATNDeserializer::ATNDeserializer(): ATNDeserializer(ATNDeserializationOptions::getDefaultOptions()) {
++ATNDeserializer::ATNDeserializer(): ATNDeserializer(ATNDeserializationOptions()) {
+ }
+
+ ATNDeserializer::ATNDeserializer(const ATNDeserializationOptions& dso): deserializationOptions(dso) {
+
