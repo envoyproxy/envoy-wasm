@@ -357,6 +357,7 @@ cc_library(
     includes = ["runtime/Cpp/runtime/src"],
 )
 """,
+        sha256 = "46f5e1af5f4bd28ade55cb632f9a069656b31fc8c2408f9aa045f9b5f5caad64",
         patch_args = ["-p1"],
         # Patches ASAN violation of initialization fiasco
         patches = ["@envoy//bazel:antlr.patch"],
