@@ -476,25 +476,11 @@ inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-inline bool getStringValue(std::initializer_list<StringView> parts, std::string* out) {
-  auto buf = getProperty(parts);
-  if (!buf.has_value()) {
-    return false;
-  }
-  out->assign(buf.value()->data(), buf.value()->size());
-  return true;
-}
-
-inline bool getStructValue(std::initializer_list<StringView> parts,
-                           google::protobuf::Struct* value_ptr) {
-  auto buf = getProperty(parts);
-  if (!buf.has_value()) {
-    return false;
-  }
-  return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
-}
-
-template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T* out) {
+// Generic property reader for basic types: int64, uint64, double, bool
+// Durations are represented as int64 nanoseconds.
+// Timetamps are represented as int64 Unix nanoseconds.
+template <typename T> 
+inline bool getValue(std::initializer_list<StringView> parts, T* out) {
   auto buf = getProperty(parts);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
     return false;
@@ -503,13 +489,34 @@ template <typename T> inline bool getValue(std::initializer_list<StringView> par
   return true;
 }
 
-inline WasmResult setFilterState(StringView key, StringView value) {
-  return static_cast<WasmResult>(
-      proxy_set_property(key.data(), key.size(), value.data(), value.size()));
+// Specialization for bytes and string values
+template <>
+inline bool getValue<std::string>(std::initializer_list<StringView> parts, std::string* out) {
+  auto buf = getProperty(parts);
+  if (!buf.has_value()) {
+    return false;
+  }
+  out->assign(buf.value()->data(), buf.value()->size());
+  return true;
 }
 
-inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
-  return setFilterState(key, s);
+// Specialization for message types (including struct value for lists and maps)
+template <typename T>
+inline bool getMessageValue(std::initializer_list<StringView> parts,
+                            T* value_ptr) {
+  auto buf = getProperty(parts);
+  if (!buf.has_value()) {
+    return false;
+  }
+  if (buf.value()->size() == 0) {
+    value_ptr = nullptr;
+    return true;
+  }
+  return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
+}
+
+inline WasmResult exprCreate(StringView expr, uint32_t* token) {
+  return proxy_expr_create(expr.data(), expr.size(), token);
 }
 
 inline Optional<WasmDataPtr> exprEval(uint32_t token) {
@@ -520,6 +527,54 @@ inline Optional<WasmDataPtr> exprEval(uint32_t token) {
     return {};
   }
   return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+inline WasmResult exprDelete(uint32_t token) {
+  return proxy_expr_delete(token);
+}
+
+template <typename T> 
+inline bool evaluate(uint32_t token, T* out) {
+  auto buf = exprEval(token);
+  if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
+    return false;
+  }
+  *out = *reinterpret_cast<const T*>(buf.value()->data());
+  return true;
+}
+
+template <>
+inline bool evaluate<std::string>(uint32_t token, std::string* out) {
+  auto buf = exprEval(token);
+  if (!buf.has_value()) {
+    return false;
+  }
+  out->assign(buf.value()->data(), buf.value()->size());
+  return true;
+}
+
+// Specialization for message types (including struct value for lists and maps)
+template <typename T>
+inline bool evaluateMessage(uint32_t token,
+                            T* value_ptr) {
+  auto buf = exprEval(token);
+  if (!buf.has_value()) {
+    return false;
+  }
+  if (buf.value()->size() == 0) {
+    value_ptr = nullptr;
+    return true;
+  }
+  return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
+}
+
+inline WasmResult setFilterState(StringView key, StringView value) {
+  return static_cast<WasmResult>(
+      proxy_set_property(key.data(), key.size(), value.data(), value.size()));
+}
+
+inline WasmResult setFilterStateStringValue(StringView key, StringView s) {
+  return setFilterState(key, s);
 }
 
 // Continue/Respond/Route

@@ -296,13 +296,15 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     return WasmResult::Ok;
   }
   case CelValue::Type::kDuration: {
-    auto out = value.DurationOrDie();
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Duration));
+    // Warning: loss of precision to nano-seconds
+    int64_t out = absl::ToInt64Nanoseconds(value.DurationOrDie());
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
     return WasmResult::Ok;
   }
   case CelValue::Type::kTimestamp: {
-    auto out = value.TimestampOrDie();
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
+    // Warning: loss of precision to nano-seconds
+    int64_t out = absl::ToUnixNanos(value.TimestampOrDie());
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
     return WasmResult::Ok;
   }
   case CelValue::Type::kMessage: {
@@ -1706,9 +1708,10 @@ WasmResult Context::grpcCancel(uint32_t token) {
   return WasmResult::Ok;
 }
 
-WasmResult Context::exprCreate(absl::string_view expr, ABSL_ATTRIBUTE_UNUSED uint32_t* token_ptr) {
+WasmResult Context::exprCreate(absl::string_view expr, uint32_t* token_ptr) {
   auto parse_status = google::api::expr::parser::Parse(std::string(expr));
   if (!parse_status.ok()) {
+    ENVOY_LOG(info, "wasm expr parse {}: {}", log_prefix(), parse_status.status().message());
     return WasmResult::BadArgument;
   }
 
@@ -1727,6 +1730,8 @@ WasmResult Context::exprCreate(absl::string_view expr, ABSL_ATTRIBUTE_UNUSED uin
   auto cel_expression_status =
       builder_->CreateExpression(&parse_status.ValueOrDie().expr(), &source_info);
   if (!cel_expression_status.ok()) {
+    ENVOY_LOG(info, "wasm expr compile {}: {}", log_prefix(),
+              cel_expression_status.status().message());
     return WasmResult::BadArgument;
   }
 
@@ -1738,6 +1743,7 @@ WasmResult Context::exprCreate(absl::string_view expr, ABSL_ATTRIBUTE_UNUSED uin
     token = next_expr_token_++;
   }
   expr_[token] = std::move(cel_expression_status.ValueOrDie());
+  *token_ptr = token;
   return WasmResult::Ok;
 }
 WasmResult Context::exprEval(uint32_t token, std::string* result) {

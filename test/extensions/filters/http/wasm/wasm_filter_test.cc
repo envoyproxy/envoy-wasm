@@ -449,11 +449,18 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   wasm_->wasm()->tickHandler(root_context_->id());
 
   EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
+  absl::optional<std::chrono::nanoseconds> dur = std::chrono::nanoseconds(15000000);
+  EXPECT_CALL(request_stream_info_, requestComplete()).WillRepeatedly(Return(dur));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::info, Eq(absl::string_view("duration is 15000000"))));
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::info, Eq(absl::string_view("grpc service: test"))));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
   filter_->onDestroy();
+
   StreamInfo::MockStreamInfo log_stream_info;
   filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
 

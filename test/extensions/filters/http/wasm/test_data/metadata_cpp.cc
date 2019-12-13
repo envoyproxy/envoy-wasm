@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "proxy_wasm_intrinsics.h"
+#include "proxy_wasm_intrinsics_lite.pb.h"
 
 class ExampleContext : public Context {
 public:
@@ -23,7 +24,7 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
 
 void ExampleRootContext::onTick() {
   std::string value;
-  if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
+  if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
     logDebug("missing node metadata");
   }
   logDebug(std::string("onTick ") + value);
@@ -31,7 +32,7 @@ void ExampleRootContext::onTick() {
 
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   std::string value;
-  if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
+  if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
     logDebug("missing node metadata");
   }
   auto r = setFilterStateStringValue("wasm_request_set_key", "wasm_request_set_value");
@@ -43,16 +44,52 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   addRequestHeader("newheader", "newheadervalue");
   replaceRequestHeader("server", "envoy-wasm");
 
-  std::string expr = R"("server is " + request.headers["server"])";
-  uint32_t token = 0;
-  if (WasmResult::Ok != proxy_expr_create(expr.data(), expr.size(), &token)) {
-    logError("expr_create error");
+  {
+    const std::string expr = R"("server is " + request.headers["server"])";
+    uint32_t token = 0;
+    if (WasmResult::Ok != exprCreate(expr, &token)) {
+      logError("expr_create error");
+    } else {
+      std::string eval_result;
+      if (!evaluate(token, &eval_result)) {
+        logError("expr_eval error");
+      } else {
+        logInfo(eval_result);
+      }
+      if (WasmResult::Ok != exprDelete(token)) {
+        logError("failed to delete an expression");
+      }
+    }
   }
-  auto eval_result = exprEval(token);
-  if (!eval_result.has_value()) {
-    logError("expr_eval error");
+
+  {
+    const std::string expr = R"(
+envoy.api.v2.core.GrpcService{
+  envoy_grpc: envoy.api.v2.core.GrpcService.EnvoyGrpc {
+    cluster_name: "test"
+  }
+})";
+    uint32_t token = 0;
+    if (WasmResult::Ok != exprCreate(expr, &token)) {
+      logError("expr_create error");
+    } else {
+      GrpcService eval_result;
+      if (!evaluateMessage(token, &eval_result)) {
+        logError("expr_eval error");
+      } else {
+        logInfo("grpc service: " + eval_result.envoy_grpc().cluster_name());
+      }
+      if (WasmResult::Ok != exprDelete(token)) {
+        logError("failed to delete an expression");
+      }
+    }
+  }
+
+  int64_t dur;
+  if (getValue({"request", "duration"}, &dur)) {
+    logInfo("duration is " + std::to_string(dur));
   } else {
-    logInfo(eval_result.value()->toString());
+    logError("failed to get request duration");
   }
 
   return FilterHeadersStatus::Continue;
@@ -60,18 +97,18 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
 
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
   std::string value;
-  if (!getStringValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
+  if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
     logDebug("missing node metadata");
   }
   logError(std::string("onRequestBody ") + value);
   std::string request_string;
   std::string request_string2;
-  if (!getStringValue(
+  if (!getValue(
           {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
           &request_string)) {
     logDebug("missing request metadata");
   }
-  if (!getStringValue(
+  if (!getValue(
           {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
           &request_string2)) {
     logDebug("missing request metadata");
