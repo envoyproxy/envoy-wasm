@@ -533,7 +533,7 @@ inline WasmResult exprDelete(uint32_t token) {
   return proxy_expr_delete(token);
 }
 
-template <typename T> 
+template <typename T>
 inline bool evaluate(uint32_t token, T* out) {
   auto buf = exprEval(token);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
