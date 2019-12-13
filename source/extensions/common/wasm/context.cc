@@ -1726,15 +1726,6 @@ WasmResult Context::exprCreate(absl::string_view expr, uint32_t* token_ptr) {
     }
   }
 
-  google::api::expr::v1alpha1::SourceInfo source_info;
-  auto cel_expression_status =
-      builder_->CreateExpression(&parse_status.ValueOrDie().expr(), &source_info);
-  if (!cel_expression_status.ok()) {
-    ENVOY_LOG(info, "wasm expr compile {}: {}", log_prefix(),
-              cel_expression_status.status().message());
-    return WasmResult::BadArgument;
-  }
-
   auto token = next_expr_token_++;
   for (;;) {
     if (!expr_.count(token)) {
@@ -1742,7 +1733,19 @@ WasmResult Context::exprCreate(absl::string_view expr, uint32_t* token_ptr) {
     }
     token = next_expr_token_++;
   }
-  expr_[token] = std::move(cel_expression_status.ValueOrDie());
+  auto& handler = expr_[token];
+  handler.parsed_expr_ = parse_status.ValueOrDie();
+
+  auto cel_expression_status =
+      builder_->CreateExpression(&handler.parsed_expr_.expr(), &handler.parsed_expr_.source_info());
+  if (!cel_expression_status.ok()) {
+    ENVOY_LOG(info, "wasm expr compile {}: {}", log_prefix(),
+              cel_expression_status.status().message());
+    expr_.erase(token);
+    return WasmResult::BadArgument;
+  }
+
+  handler.compiled_expr_ = std::move(cel_expression_status.ValueOrDie());
   *token_ptr = token;
   return WasmResult::Ok;
 }
@@ -1752,7 +1755,7 @@ WasmResult Context::exprEval(uint32_t token, std::string* result) {
     return WasmResult::NotFound;
   }
   Protobuf::Arena arena;
-  auto eval_status = it->second->Evaluate(*this, &arena);
+  auto eval_status = it->second.compiled_expr_->Evaluate(*this, &arena);
   if (!eval_status.ok()) {
     return WasmResult::InternalFailure;
   }

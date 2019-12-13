@@ -468,7 +468,11 @@ protected:
   // Evaluator state
   Filters::Common::Expr::BuilderPtr builder_{};
   uint32_t next_expr_token_ = 0;
-  std::map<uint32_t, Filters::Common::Expr::ExpressionPtr> expr_;
+  struct ExpressionData {
+    google::api::expr::v1alpha1::ParsedExpr parsed_expr_;
+    Filters::Common::Expr::ExpressionPtr compiled_expr_;
+  };
+  std::map<uint32_t, ExpressionData> expr_;
 };
 using ContextSharedPtr = std::shared_ptr<Context>;
 
