@@ -359,7 +359,7 @@ cc_library(
 """,
         sha256 = "4d0714f441333a63e50031c9e8e4890c78f3d21e053d46416949803e122a6574",
         patch_args = ["-p1"],
-        # Patches ASAN violation of initialization fiasco (fixes ASAN tests)
+        # Patches ASAN violation of initialization fiasco
         patches = ["@envoy//bazel:antlr.patch"],
         strip_prefix = "antlr4-4.7.1",
         urls = ["https://github.com/antlr/antlr4/archive/4.7.1.tar.gz"],
