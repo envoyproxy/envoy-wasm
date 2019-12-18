@@ -71,7 +71,8 @@ STD_REGEX_WHITELIST = ("./source/common/common/utility.cc", "./source/common/com
                        "./source/common/access_log/access_log_formatter.cc",
                        "./source/extensions/filters/http/squash/squash_filter.h",
                        "./source/extensions/filters/http/squash/squash_filter.cc",
-                       "./source/server/http/admin.h", "./source/server/http/admin.cc")
+                       "./source/server/http/admin.h", "./source/server/http/admin.cc",
+                       "./tools/clang_tools/api_booster/main.cc")
 
 # Only one C++ file should instantiate grpc_init
 GRPC_INIT_WHITELIST = ("./source/common/grpc/google_grpc_context.cc")
@@ -341,7 +342,8 @@ def isBuildFile(file_path):
 
 
 def isExternalBuildFile(file_path):
-  return isBuildFile(file_path) and file_path.startswith("./bazel/external/")
+  return isBuildFile(file_path) and (file_path.startswith("./bazel/external/") or
+                                     file_path.startswith("./tools/clang_tools"))
 
 
 def isSkylarkFile(file_path):
