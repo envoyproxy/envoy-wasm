@@ -188,6 +188,7 @@ struct Wavm : public WasmVmBase {
   bool getWord(uint64_t pointer, Word* data) override;
   bool setWord(uint64_t pointer, Word data) override;
   absl::string_view getCustomSection(absl::string_view name) override;
+  absl::string_view getPrecompiledSectionName() override;
 
 #define _GET_FUNCTION(_T)                                                                          \
   void getFunction(absl::string_view function_name, _T* f) override {                              \
@@ -256,7 +257,7 @@ bool Wavm::load(const std::string& code, bool allow_precompiled) {
   const CustomSection* precompiled_object_section = nullptr;
   if (allow_precompiled) {
     for (const CustomSection& customSection : ir_module_.customSections) {
-      if (customSection.name == "wavm.precompiled_object") {
+      if (customSection.name == getPrecompiledSectionName()) {
         precompiled_object_section = &customSection;
         break;
       }
@@ -330,6 +331,8 @@ absl::string_view Wavm::getCustomSection(absl::string_view name) {
   }
   return {};
 }
+
+absl::string_view Wavm::getPrecompiledSectionName() { return "wavm.precompiled_object"; }
 
 std::unique_ptr<WasmVm> createVm(Stats::ScopeSharedPtr scope) {
   return std::make_unique<Wavm>(scope);
