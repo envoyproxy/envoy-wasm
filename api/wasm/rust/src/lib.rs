@@ -62,6 +62,93 @@ fn free(ptr: *mut u8) {
     }
 }
 
+#[no_mangle]
+fn proxy_on_configure(_root_context_id: u32, _configuration_size: u32) -> u32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_create(_context_id: u32, _root_context_id: u32) {
+}
+
+#[no_mangle]
+fn proxy_on_downstream_connection_close(_context_id: u32, _peer_type: u32) {
+}
+
+#[no_mangle]
+fn proxy_on_downstream_data(_ontext_id: u32, _data_length: u32, _end_of_stream: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_new_connection(_context_id: u32) -> i32  {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_request_body(_context_id: u32, _body_buffer_length: u32, _end_of_stream: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_request_headers(_context_id: u32, _headers: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_request_metadata(_context_id: u32, _elements: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_request_trailers(_context_id: u32, _trailers: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_response_body(_context_id: u32, _body_buffer_length: u32, _end_of_stream: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_response_headers(_context_id: u32, _headers: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_response_metadata(_context_id: u32, _elements: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_response_trailers(_context_id: u32, _trailers: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_start(_root_context_id: u32, _vm_configuration_size: u32) -> u32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_tick(_root_context_id: u32) {
+}
+
+#[no_mangle]
+fn proxy_on_upstream_connection_close(_context_id: u32, _peer_type: u32) {
+}
+
+#[no_mangle]
+fn proxy_on_upstream_data(_context_id: u32, _data_length: u32, _end_of_stream: u32) -> i32 {
+    1
+}
+
+#[no_mangle]
+fn proxy_on_validate_configuration(_root_context_id: u32, _configuration_size: u32) -> u32 {
+    0
+}
+
+
 /// Low-level Proxy-WASM APIs for the host functions.
 pub mod host {
     extern "C" {
