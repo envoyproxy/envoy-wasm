@@ -2,9 +2,9 @@
 
 set -e
 
-# This works only on Linux-x86_64 and macOS-x86_64.
-if [[ ( `uname` != "Linux" && `uname` != "Darwin" ) || `uname -m` != "x86_64" ]]; then
-  echo "ERROR: wee8 is currently supported only on Linux-x86_64 and macOS-x86_64."
+# This works only on Linux-x86_64, Linux-aarch64 and macOS-x86_64.
+if [[ ( `uname` != "Linux" && `uname` != "Darwin" ) || ( `uname -m` != "x86_64" && `uname -m` != "aarch64" ) ]]; then
+  echo "ERROR: wee8 is currently supported only on Linux-x86_64, Linux-aarch64 and macOS-x86_64."
   exit 1
 fi
 
@@ -28,6 +28,17 @@ fi
 
 export AR=$${AR:-ar}
 export NM=$${NM:-nm}
+
+GN=`which gn`
+if [[ "$${GN}" == "" ]]; then
+   echo "gn: no such file in PATH, use gn in wee8"
+   export GN=buildtools/linux64/gn
+fi
+NINJA=`which ninja`
+if [[ "$${NINJA}" == "" ]]; then
+   echo "ninja: no such file in PATH, use ninja in wee8"
+   export NINJA=third_party/depot_tools/ninja
+fi
 
 # Hook sanitizers.
 if [[ $${ENVOY_ASAN-} == "1" ]]; then
@@ -75,9 +86,9 @@ WEE8_BUILD_ARGS+=" v8_enable_shared_ro_heap=false"
 if [[ `uname` == "Darwin" ]]; then
   buildtools/mac/gn gen out/wee8 --args="$$WEE8_BUILD_ARGS"
 else
-  buildtools/linux64/gn gen out/wee8 --args="$$WEE8_BUILD_ARGS"
+  $${GN} gen out/wee8 --args="$$WEE8_BUILD_ARGS"
 fi
-third_party/depot_tools/ninja -C out/wee8 wee8
+$${NINJA} -C out/wee8 wee8
 
 # Move compiled library to the expected destinations.
 popd
