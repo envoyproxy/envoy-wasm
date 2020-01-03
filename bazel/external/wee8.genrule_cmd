@@ -28,17 +28,8 @@ fi
 
 export AR=$${AR:-ar}
 export NM=$${NM:-nm}
-
-GN=`which gn`
-if [[ "$${GN}" == "" ]]; then
-   echo "gn: no such file in PATH, use gn in wee8"
-   export GN=buildtools/linux64/gn
-fi
-NINJA=`which ninja`
-if [[ "$${NINJA}" == "" ]]; then
-   echo "ninja: no such file in PATH, use ninja in wee8"
-   export NINJA=third_party/depot_tools/ninja
-fi
+export GN=$${GN-buildtools/linux64/gn}
+export NINJA=$${NINJA:-third_party/depot_tools/ninja}
 
 # Hook sanitizers.
 if [[ $${ENVOY_ASAN-} == "1" ]]; then
