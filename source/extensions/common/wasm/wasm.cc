@@ -125,6 +125,8 @@ void Wasm::registerCallbacks() {
   _REGISTER_WASI(fd_close);
   _REGISTER_WASI(environ_get);
   _REGISTER_WASI(environ_sizes_get);
+  _REGISTER_WASI(args_get);
+  _REGISTER_WASI(args_sizes_get);
   _REGISTER_WASI(proc_exit);
 #undef _REGISTER_WASI
 
