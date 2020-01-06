@@ -293,13 +293,15 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     return WasmResult::Ok;
   }
   case CelValue::Type::kDuration: {
-    auto out = value.DurationOrDie();
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Duration));
+    // Warning: loss of precision to nano-seconds
+    int64_t out = absl::ToInt64Nanoseconds(value.DurationOrDie());
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
     return WasmResult::Ok;
   }
   case CelValue::Type::kTimestamp: {
-    auto out = value.TimestampOrDie();
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(absl::Time));
+    // Warning: loss of precision to nano-seconds
+    int64_t out = absl::ToUnixNanos(value.TimestampOrDie());
+    result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
     return WasmResult::Ok;
   }
   case CelValue::Type::kMessage: {
