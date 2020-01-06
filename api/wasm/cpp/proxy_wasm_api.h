@@ -478,7 +478,8 @@ inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts
 
 // Generic property reader for basic types: int64, uint64, double, bool
 // Durations are represented as int64 nanoseconds.
-// Timetamps are represented as int64 Unix nanoseconds.
+// Timestamps are represented as int64 Unix nanoseconds.
+// Strings and bytes are represented as std::string.
 template <typename T>
 inline bool getValue(std::initializer_list<StringView> parts, T* out) {
   auto buf = getProperty(parts);
