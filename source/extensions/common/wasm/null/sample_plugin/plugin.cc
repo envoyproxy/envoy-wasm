@@ -8,6 +8,7 @@
 #include "absl/base/casts.h"
 #endif
 
+// NOLINT(namespace-envoy)
 START_WASM_PLUGIN(ExamplePlugin)
 
 // For performance testing: see wasm_speed_test.cc.
