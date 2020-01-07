@@ -18,6 +18,15 @@ RegisterContextFactory::RegisterContextFactory(ContextFactory context_factory,
     (*root_factories)[std::string(root_id)] = root_factory;
 }
 
+RegisterContextFactory::RegisterContextFactory(RootFactory root_factory, StringView root_id) {
+  if (!root_factories) {
+    root_factories = new std::unordered_map<std::string, RootFactory>;
+    context_factories = new std::unordered_map<std::string, ContextFactory>;
+  }
+  if (root_factory)
+    (*root_factories)[std::string(root_id)] = root_factory;
+}
+
 static Context* ensureContext(uint32_t context_id, uint32_t root_context_id) {
   auto e = context_map.insert(std::make_pair(context_id, nullptr));
   if (e.second) {

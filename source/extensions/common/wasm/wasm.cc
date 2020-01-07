@@ -366,7 +366,7 @@ void Wasm::startForTesting(std::unique_ptr<Context> context, PluginSharedPtr plu
   }
   root_contexts_[""] = std::move(context);
   // Set the current plugin over the lifetime of the onConfigure call to the RootContext.
-  context_ptr->onStart("", plugin);
+  context_ptr->onStart(vm_configuration_, plugin);
 }
 
 void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {
