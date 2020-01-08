@@ -1,6 +1,6 @@
 #pragma once
 
-#include "envoy/config/filter/http/wasm/v2/wasm.pb.h"
+#include "envoy/config/filter/http/wasm/v3alpha/wasm.pb.h"
 
 #include "extensions/filters/http/common/factory_base.h"
 #include "extensions/filters/http/well_known_names.h"

@@ -1,6 +1,6 @@
 #include "extensions/filters/network/wasm/config.h"
 
-#include "envoy/config/filter/network/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/filter/network/wasm/v3alpha/wasm.pb.validate.h"
 #include "envoy/registry/registry.h"
 
 #include "common/common/empty_string.h"

@@ -767,6 +767,7 @@ def _com_github_wavm_wavm():
     native.bind(
         name = "wavm",
         actual = "@envoy//bazel/foreign_cc:wavm",
+    )
 
 def _kafka_deps():
     # This archive contains Kafka client source code.

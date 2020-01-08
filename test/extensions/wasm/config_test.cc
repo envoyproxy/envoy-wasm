@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "envoy/config/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3alpha/wasm.pb.validate.h"
 #include "envoy/registry/registry.h"
 
 #include "common/stats/isolated_store_impl.h"

@@ -1,4 +1,4 @@
-#include "envoy/config/filter/http/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/filter/http/wasm/v3alpha/wasm.pb.validate.h"
 
 #include "common/common/base64.h"
 #include "common/common/hex.h"

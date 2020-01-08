@@ -9,7 +9,7 @@
 #include <string>
 
 #include "envoy/common/exception.h"
-#include "envoy/config/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3alpha/wasm.pb.validate.h"
 #include "envoy/grpc/status.h"
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "envoy/config/filter/network/wasm/v2/wasm.pb.h"
+#include "envoy/config/filter/network/wasm/v3alpha/wasm.pb.h"
 
 #include "extensions/filters/network/common/factory_base.h"
 #include "extensions/filters/network/well_known_names.h"
@@ -14,7 +14,7 @@ namespace Wasm {
  * Config registration for the Wasm filter. @see NamedNetworkFilterConfigFactory.
  */
 class WasmFilterConfig
-    : public Common::FactoryBase<envoy::config::filter::network::wasm::v2::Wasm> {
+    : public Common::FactoryBase<envoy::config::filter::network::wasm::v3alpha::Wasm> {
 public:
   WasmFilterConfig() : FactoryBase(NetworkFilterNames::get().Wasm) {}
 

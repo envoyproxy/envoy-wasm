@@ -1,6 +1,6 @@
 #pragma once
 
-#include "envoy/config/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3alpha/wasm.pb.validate.h"
 #include "envoy/server/wasm_config.h"
 
 #include "extensions/common/wasm/wasm.h"
