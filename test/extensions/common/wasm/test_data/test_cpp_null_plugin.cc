@@ -17,19 +17,25 @@ class PluginFactory : public NullVmPluginFactory {
 public:
   PluginFactory() {}
 
-  const std::string name() const override { return "CommonWasmTestCpp"; }
+  const std::string name() const override {
+    // Work around issue with coverage doubly registering.
+    return "CommonWasmTestCpp" + std::string(suffix_++, '_');
+  }
   std::unique_ptr<NullVmPlugin> create() const override {
     return std::make_unique<NullPlugin>(
         &Envoy::Extensions::Common::Wasm::Null::Plugin::CommonWasmTestCpp::null_plugin_registry_
              .get());
   }
+
+private:
+  static int suffix_;
 };
+int PluginFactory::suffix_ = 0;
 
 /**
  * Static registration for the null Wasm filter. @see RegisterFactory.
  */
 static Registry::RegisterFactory<PluginFactory, NullVmPluginFactory> register_;
-
 } // namespace Plugin
 } // namespace Null
 } // namespace Wasm

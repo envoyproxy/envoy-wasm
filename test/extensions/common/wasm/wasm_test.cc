@@ -32,11 +32,11 @@ public:
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-class WasmTest : public testing::TestWithParam<std::string> {};
+class WasmCommonTest : public testing::TestWithParam<std::string> {};
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing::Values("v8", "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest, testing::Values("v8", "null"));
 
-TEST_P(WasmTest, Logging) {
+TEST_P(WasmCommonTest, Logging) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -88,7 +88,7 @@ TEST_P(WasmTest, Logging) {
   dispatcher->clearDeferredDeleteList();
 }
 
-TEST_P(WasmTest, BadSignature) {
+TEST_P(WasmCommonTest, BadSignature) {
   if (GetParam() != "v8") {
     return;
   }
@@ -117,7 +117,7 @@ TEST_P(WasmTest, BadSignature) {
                             "Bad function signature for: proxy_on_configure");
 }
 
-TEST_P(WasmTest, Segv) {
+TEST_P(WasmCommonTest, Segv) {
   if (GetParam() != "v8") {
     return;
   }
@@ -149,7 +149,7 @@ TEST_P(WasmTest, Segv) {
                             "Function: proxy_on_start failed: Uncaught RuntimeError: unreachable");
 }
 
-TEST_P(WasmTest, DivByZero) {
+TEST_P(WasmCommonTest, DivByZero) {
   if (GetParam() != "v8") {
     return;
   }
@@ -182,7 +182,7 @@ TEST_P(WasmTest, DivByZero) {
       "Function: proxy_on_start failed: Uncaught RuntimeError: divide by zero");
 }
 
-TEST_P(WasmTest, EmscriptenVersion) {
+TEST_P(WasmCommonTest, EmscriptenVersion) {
   if (GetParam() != "v8") {
     return;
   }
@@ -218,7 +218,7 @@ TEST_P(WasmTest, EmscriptenVersion) {
   EXPECT_LE(abi_minor, 19);
 }
 
-TEST_P(WasmTest, IntrinsicGlobals) {
+TEST_P(WasmCommonTest, IntrinsicGlobals) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
@@ -252,7 +252,7 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   wasm->startForTesting(std::move(context), plugin);
 }
 
-TEST_P(WasmTest, Stats) {
+TEST_P(WasmCommonTest, Stats) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   Upstream::MockClusterManager cluster_manager;
