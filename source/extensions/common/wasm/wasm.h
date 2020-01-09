@@ -7,7 +7,7 @@
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/exception.h"
-#include "envoy/config/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3alpha/wasm.pb.validate.h"
 #include "envoy/http/filter.h"
 #include "envoy/server/wasm.h"
 #include "envoy/stats/scope.h"
@@ -47,6 +47,8 @@ namespace Wasm {
 struct WasmStats {
   ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
 };
+
+using VmConfig = envoy::config::wasm::v3alpha::VmConfig;
 
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
 class Wasm : public Logger::Loggable<Logger::Id::wasm>, public std::enable_shared_from_this<Wasm> {
@@ -277,7 +279,7 @@ using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
-void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin_config,
+void createWasm(const VmConfig& vm_config, PluginSharedPtr plugin_config,
                 Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
@@ -288,10 +290,9 @@ WasmHandleSharedPtr createThreadLocalWasm(WasmHandle& base_wasm_handle, PluginSh
                                           absl::string_view configuration,
                                           Event::Dispatcher& dispatcher);
 
-void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                          PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
-                          Event::Dispatcher& dispatcher, Api::Api& api,
+void createWasmForTesting(const VmConfig& vm_config, PluginSharedPtr plugin,
+                          Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+                          Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
                           std::unique_ptr<Context> root_context_for_testing,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                           CreateWasmCallback&& cb);

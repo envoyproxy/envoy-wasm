@@ -155,12 +155,14 @@ void StressTest::Cluster::bind() {
 
 void StressTest::Cluster::addClusterToBootstrap(ConfigHelper& config_helper,
                                                 std::vector<uint32_t>& ports) const {
-  config_helper.addConfigModifier([this](envoy::config::bootstrap::v2::Bootstrap& bootstrap) {
+  config_helper.addConfigModifier([this](envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap) {
     auto cluster = bootstrap.mutable_static_resources()->add_clusters();
 
     cluster->set_name(cluster_helper_->name());
-    cluster->set_type(envoy::api::v2::Cluster_DiscoveryType::Cluster_DiscoveryType_STATIC);
-    cluster->set_lb_policy(envoy::api::v2::Cluster_LbPolicy::Cluster_LbPolicy_ROUND_ROBIN);
+    cluster->set_type(
+        envoy::config::cluster::v3alpha::Cluster_DiscoveryType::Cluster_DiscoveryType_STATIC);
+    cluster->set_lb_policy(
+        envoy::config::cluster::v3alpha::Cluster_LbPolicy::Cluster_LbPolicy_ROUND_ROBIN);
 
     if (http_type_ == Http::CodecClient::Type::HTTP1) {
       auto opts = cluster->mutable_http_protocol_options();

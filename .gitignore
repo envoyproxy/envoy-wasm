@@ -31,3 +31,5 @@ TAGS
 clang.bazelrc
 user.bazelrc
 **/Cargo.lock
+CMakeLists.txt
+cmake-build-debug

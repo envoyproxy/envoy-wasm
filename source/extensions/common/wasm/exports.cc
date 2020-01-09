@@ -541,7 +541,7 @@ Word grpc_call(void* raw_context, Word service_ptr, Word service_size, Word serv
   if (!service || !service_name || !method_name || !request) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  envoy::api::v2::core::GrpcService service_proto;
+  GrpcService service_proto;
   if (!service_proto.ParseFromArray(service.value().data(), service.value().size())) {
     return wasmResultToWord(WasmResult::ParseFailure);
   }
@@ -568,7 +568,7 @@ Word grpc_stream(void* raw_context, Word service_ptr, Word service_size, Word se
   if (!service || !service_name || !method_name) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  envoy::api::v2::core::GrpcService service_proto;
+  GrpcService service_proto;
   if (!service_proto.ParseFromArray(service.value().data(), service.value().size())) {
     return wasmResultToWord(WasmResult::ParseFailure);
   }
