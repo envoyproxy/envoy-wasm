@@ -15,12 +15,16 @@ ThreadSafeSingleton<NullPluginRegistry> null_plugin_registry_;
  */
 class PluginFactory : public NullVmPluginFactory {
 public:
-  PluginFactory() {}
+  PluginFactory() { created_++; }
 
-  const std::string name() const override {
-    // FIXME: work around issue with coverage doubly registering this factory.
-    return "CommonWasmTestCpp" + std::string(suffix_++, '_');
+  std::string name() const override {
+    if (created_ <= 1)
+      return "CommonWasmTestCpp";
+    else
+      // FIXME: coverage is registering a duplicate.
+      return "CommonWasmTestCpp_duplicate";
   }
+
   std::unique_ptr<NullVmPlugin> create() const override {
     return std::make_unique<NullPlugin>(
         &Envoy::Extensions::Common::Wasm::Null::Plugin::CommonWasmTestCpp::null_plugin_registry_
@@ -28,9 +32,9 @@ public:
   }
 
 private:
-  static int suffix_;
+  static int created_;
 };
-int PluginFactory::suffix_ = 0;
+int PluginFactory::created_ = 0;
 
 /**
  * Static registration for the null Wasm filter. @see RegisterFactory.
