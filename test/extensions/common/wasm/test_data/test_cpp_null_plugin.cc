@@ -13,33 +13,23 @@ ThreadSafeSingleton<NullPluginRegistry> null_plugin_registry_;
 /**
  * Config registration for a Wasm filter plugin. @see NamedHttpFilterConfigFactory.
  */
-class PluginFactory : public NullVmPluginFactory {
+class CommonWasmTestPluginFactory : public NullVmPluginFactory {
 public:
-  PluginFactory() { created_++; }
+  CommonWasmTestPluginFactory() {}
 
-  std::string name() const override {
-    if (created_ <= 1)
-      return "CommonWasmTestCpp";
-    else
-      // FIXME: coverage is registering a duplicate.
-      return "CommonWasmTestCpp_duplicate";
-  }
+  std::string name() const override { return "CommonWasmTestCpp"; }
 
   std::unique_ptr<NullVmPlugin> create() const override {
     return std::make_unique<NullPlugin>(
         &Envoy::Extensions::Common::Wasm::Null::Plugin::CommonWasmTestCpp::null_plugin_registry_
              .get());
   }
-
-private:
-  static int created_;
 };
-int PluginFactory::created_ = 0;
 
 /**
  * Static registration for the null Wasm filter. @see RegisterFactory.
  */
-static Registry::RegisterFactory<PluginFactory, NullVmPluginFactory> register_;
+static Registry::RegisterFactory<CommonWasmTestPluginFactory, NullVmPluginFactory> register_;
 } // namespace Plugin
 } // namespace Null
 } // namespace Wasm
