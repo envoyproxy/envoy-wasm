@@ -50,6 +50,8 @@ namespace Wasm {
 
 namespace {
 
+using HashPolicy = envoy::config::route::v3alpha::RouteAction::HashPolicy;
+
 class SharedData {
 public:
   WasmResult get(absl::string_view vm_id, const absl::string_view key,
@@ -847,7 +849,7 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
   // set default hash policy to be based on :authority to enable consistent hash
   Http::AsyncClient::RequestOptions options;
   options.setTimeout(timeout);
-  Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy> hash_policy;
+  Protobuf::RepeatedPtrField<HashPolicy> hash_policy;
   hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
   options.setHashPolicy(hash_policy);
   auto http_request = clusterManager()
@@ -864,9 +866,8 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
   return WasmResult::Ok;
 }
 
-WasmResult Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_service,
-                             absl::string_view service_name, absl::string_view method_name,
-                             absl::string_view request,
+WasmResult Context::grpcCall(const GrpcService& grpc_service, absl::string_view service_name,
+                             absl::string_view method_name, absl::string_view request,
                              const absl::optional<std::chrono::milliseconds>& timeout,
                              uint32_t* token_ptr) {
   auto token = next_grpc_token_++;
@@ -895,7 +896,7 @@ WasmResult Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_servi
   // set default hash policy to be based on :authority to enable consistent hash
   Http::AsyncClient::RequestOptions options;
   options.setTimeout(timeout);
-  Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy> hash_policy;
+  Protobuf::RepeatedPtrField<HashPolicy> hash_policy;
   hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
   options.setHashPolicy(hash_policy);
 
@@ -915,9 +916,8 @@ WasmResult Context::grpcCall(const envoy::api::v2::core::GrpcService& grpc_servi
   return WasmResult::Ok;
 }
 
-WasmResult Context::grpcStream(const envoy::api::v2::core::GrpcService& grpc_service,
-                               absl::string_view service_name, absl::string_view method_name,
-                               uint32_t* token_ptr) {
+WasmResult Context::grpcStream(const GrpcService& grpc_service, absl::string_view service_name,
+                               absl::string_view method_name, uint32_t* token_ptr) {
   auto token = next_grpc_token_++;
   if (IsGrpcCallToken(token)) {
     token = next_grpc_token_++;
@@ -943,7 +943,7 @@ WasmResult Context::grpcStream(const envoy::api::v2::core::GrpcService& grpc_ser
 
   // set default hash policy to be based on :authority to enable consistent hash
   Http::AsyncClient::StreamOptions options;
-  Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy> hash_policy;
+  Protobuf::RepeatedPtrField<HashPolicy> hash_policy;
   hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
   options.setHashPolicy(hash_policy);
 

@@ -20,7 +20,7 @@ using Envoy::Extensions::Common::Wasm::WasmHandle;
 
 class FilterConfig : Logger::Loggable<Logger::Id::wasm> {
 public:
-  FilterConfig(const envoy::config::filter::http::wasm::v2::Wasm& proto_config,
+  FilterConfig(const envoy::config::filter::http::wasm::v3alpha::Wasm& proto_config,
                Server::Configuration::FactoryContext& context);
 
   std::shared_ptr<Context> createFilter() {

@@ -15,7 +15,7 @@ namespace NetworkFilters {
 namespace Wasm {
 
 Network::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
-    const envoy::config::filter::network::wasm::v2::Wasm& proto_config,
+    const envoy::config::filter::network::wasm::v3alpha::Wasm& proto_config,
     Server::Configuration::FactoryContext& context) {
   auto filter_config = std::make_shared<FilterConfig>(proto_config, context);
   return [filter_config](Network::FilterManager& filter_manager) -> void {

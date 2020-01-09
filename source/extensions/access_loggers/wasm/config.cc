@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 
-#include "envoy/config/accesslog/v2/wasm.pb.validate.h"
+#include "envoy/config/accesslog/v3alpha/wasm.pb.validate.h"
 #include "envoy/registry/registry.h"
 #include "envoy/server/filter_config.h"
 
@@ -24,7 +24,7 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
                                               AccessLog::FilterPtr&& filter,
                                               Server::Configuration::FactoryContext& context) {
   const auto& config =
-      MessageUtil::downcastAndValidate<const envoy::config::accesslog::v2::WasmAccessLog&>(
+      MessageUtil::downcastAndValidate<const envoy::config::accesslog::v3alpha::WasmAccessLog&>(
           proto_config, context.messageValidationVisitor());
   auto vm_id = config.config().vm_config().vm_id();
   auto root_id = config.config().root_id();
@@ -35,7 +35,7 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   // individual threads.
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      envoy::api::v2::core::TrafficDirection::UNSPECIFIED, context.localInfo(),
+      envoy::config::core::v3alpha::TrafficDirection::UNSPECIFIED, context.localInfo(),
       nullptr /* listener_metadata */);
 
   auto callback = [access_log, &context, plugin,
@@ -58,7 +58,7 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
 }
 
 ProtobufTypes::MessagePtr WasmAccessLogFactory::createEmptyConfigProto() {
-  return ProtobufTypes::MessagePtr{new envoy::config::accesslog::v2::WasmAccessLog()};
+  return ProtobufTypes::MessagePtr{new envoy::config::accesslog::v3alpha::WasmAccessLog()};
 }
 
 std::string WasmAccessLogFactory::name() const { return AccessLogNames::get().Wasm; }

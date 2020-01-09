@@ -47,9 +47,12 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
+using envoy::config::core::v3alpha::TrafficDirection;
 using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
 using Envoy::Extensions::Common::Wasm::Wasm;
 using Envoy::Extensions::Common::Wasm::WasmHandleSharedPtr;
+using GrpcService = envoy::config::core::v3alpha::GrpcService;
+using WasmFilterConfig = envoy::config::filter::http::wasm::v3alpha::Wasm;
 
 class TestFilter : public Envoy::Extensions::Common::Wasm::Context {
 public:
@@ -80,7 +83,7 @@ public:
 
   void setupConfig(const std::string& code) {
     root_context_ = new TestRoot();
-    envoy::config::filter::http::wasm::v2::Wasm proto_config;
+    WasmFilterConfig proto_config;
     proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
     proto_config.mutable_config()->mutable_vm_config()->set_runtime(
         absl::StrCat("envoy.wasm.runtime.", GetParam()));
@@ -95,8 +98,7 @@ public:
     auto root_id = "";
     auto vm_id = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
-        &listener_metadata_);
+        name, root_id, vm_id, TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
         dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
@@ -105,7 +107,7 @@ public:
 
   void setupNullConfig(const std::string& name) {
     root_context_ = new TestRoot();
-    envoy::config::filter::http::wasm::v2::Wasm proto_config;
+    WasmFilterConfig proto_config;
     proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
     proto_config.mutable_config()->mutable_vm_config()->set_runtime("envoy.wasm.runtime.null");
     proto_config.mutable_config()
@@ -118,8 +120,7 @@ public:
     auto root_id = "";
     auto vm_id = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        name, root_id, vm_id, envoy::api::v2::core::TrafficDirection::INBOUND, local_info_,
-        &listener_metadata_);
+        name, root_id, vm_id, TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
         dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
@@ -148,7 +149,7 @@ public:
   NiceMock<Http::MockStreamEncoderFilterCallbacks> encoder_callbacks_;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> request_stream_info_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
-  envoy::api::v2::core::Metadata listener_metadata_;
+  envoy::config::core::v3alpha::Metadata listener_metadata_;
   TestRoot* root_context_ = nullptr;
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
@@ -339,9 +340,9 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
   EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
       .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
   EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
-      .WillOnce(
-          Invoke([&](const envoy::api::v2::core::GrpcService&, Stats::Scope&,
-                     bool) -> Grpc::AsyncClientFactoryPtr { return std::move(client_factory); }));
+      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
+        return std::move(client_factory);
+      }));
   EXPECT_CALL(*root_context_, scriptLog_(spdlog::level::debug, Eq("response")));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
@@ -390,9 +391,9 @@ TEST_P(WasmHttpFilterTest, GrpcCallAfterDestroyed) {
   EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
       .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
   EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
-      .WillOnce(
-          Invoke([&](const envoy::api::v2::core::GrpcService&, Stats::Scope&,
-                     bool) -> Grpc::AsyncClientFactoryPtr { return std::move(client_factory); }));
+      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
+        return std::move(client_factory);
+      }));
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
 
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
@@ -421,7 +422,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/metadata_cpp.wasm")));
   setupFilter();
-  envoy::api::v2::core::Node node_data;
+  envoy::config::core::v3alpha::Node node_data;
   ProtobufWkt::Value node_val;
   node_val.set_string_value("wasm_node_get_value");
   (*node_data.mutable_metadata()->mutable_fields())["wasm_node_get_key"] = node_val;
@@ -478,7 +479,7 @@ TEST_F(WasmHttpFilterTest, NullPluginRequestHeadersOnly) {
 TEST_F(WasmHttpFilterTest, NullVmResolver) {
   setupNullConfig("null_vm_plugin");
   setupFilter();
-  envoy::api::v2::core::Node node_data;
+  envoy::config::core::v3alpha::Node node_data;
   ProtobufWkt::Value node_val;
   node_val.set_string_value("sample_data");
   (*node_data.mutable_metadata()->mutable_fields())["istio.io/metadata"] = node_val;

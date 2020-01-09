@@ -10,6 +10,7 @@ import "envoy/config/listener/v3alpha/listener.proto";
 import "envoy/config/metrics/v3alpha/stats.proto";
 import "envoy/config/overload/v3alpha/overload.proto";
 import "envoy/config/trace/v3alpha/trace.proto";
+import "envoy/config/wasm/v3alpha/wasm.proto";
 import "envoy/extensions/transport_sockets/tls/v3alpha/cert.proto";
 
 import "google/protobuf/duration.proto";
@@ -30,7 +31,7 @@ option java_multiple_files = true;
 // <config_overview_v2_bootstrap>` for more detail.
 
 // Bootstrap :ref:`configuration overview <config_overview_v2_bootstrap>`.
-// [#next-free-field: 21]
+// [#next-free-field: 22]
 message Bootstrap {
   option (udpa.annotations.versioning).previous_message_type =
       "envoy.config.bootstrap.v2.Bootstrap";
@@ -171,6 +172,9 @@ message Bootstrap {
   // :ref:`use_tcp_for_dns_lookups
   // <envoy_api_field_config.cluster.v3alpha.Cluster.use_tcp_for_dns_lookups>` are specified.
   bool use_tcp_for_dns_lookups = 20;
+
+  // Configuration for an wasm service provider(s).
+  repeated wasm.v3alpha.WasmService wasm_service = 21;
 }
 
 // Administration interface :ref:`operations documentation

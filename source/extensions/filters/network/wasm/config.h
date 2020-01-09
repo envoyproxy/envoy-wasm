@@ -20,7 +20,7 @@ public:
 
 private:
   Network::FilterFactoryCb createFilterFactoryFromProtoTyped(
-      const envoy::config::filter::network::wasm::v2::Wasm& proto_config,
+      const envoy::config::filter::network::wasm::v3alpha::Wasm& proto_config,
       Server::Configuration::FactoryContext& context) override;
 };
 

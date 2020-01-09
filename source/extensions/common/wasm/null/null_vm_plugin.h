@@ -35,8 +35,6 @@ public:
   /**
    * Name of the plugin.
    */
-  virtual const std::string name() const PURE;
-
   std::string category() const override { return "envoy.wasm.null_vms"; }
 
   /**
