@@ -198,7 +198,7 @@ git clone https://github.com/kwonoj/protobuf-wasm wasm-patches
 cd wasm-patches && git checkout 4bba8b2f38b5004f87489642b6ca4525ae72fe7f && cd ..
 git apply wasm-patches/*.patch
 ./autogen.sh
-emconfigure ./configure --disable-shared CXXFLAGS="-O3"
+emconfigure ./configure --disable-shared CXXFLAGS="-O3 -flto -s WASM_OBJECT_FILES=0 --llvm-lto 1"
 emmake make
 cp src/.libs/libprotobuf-lite.a ${CPP_API}/libprotobuf-lite.a
 cp src/.libs/libprotobuf.a ${CPP_API}/libprotobuf.a
