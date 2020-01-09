@@ -18,7 +18,7 @@ public:
   PluginFactory() {}
 
   const std::string name() const override {
-    // Work around issue with coverage doubly registering.
+    // FIXME: work around issue with coverage doubly registering this factory.
     return "CommonWasmTestCpp" + std::string(suffix_++, '_');
   }
   std::unique_ptr<NullVmPlugin> create() const override {
