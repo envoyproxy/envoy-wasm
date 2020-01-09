@@ -541,7 +541,7 @@ Word grpc_call(void* raw_context, Word service_ptr, Word service_size, Word serv
   if (!service || !service_name || !method_name || !request) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  envoy::api::v2::core::GrpcService service_proto;
+  GrpcService service_proto;
   if (!service_proto.ParseFromArray(service.value().data(), service.value().size())) {
     return wasmResultToWord(WasmResult::ParseFailure);
   }
@@ -568,7 +568,7 @@ Word grpc_stream(void* raw_context, Word service_ptr, Word service_size, Word se
   if (!service || !service_name || !method_name) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  envoy::api::v2::core::GrpcService service_proto;
+  GrpcService service_proto;
   if (!service_proto.ParseFromArray(service.value().data(), service.value().size())) {
     return wasmResultToWord(WasmResult::ParseFailure);
   }
@@ -688,6 +688,23 @@ Word wasi_unstable_environ_sizes_get(void* raw_context, Word count_ptr, Word buf
     return 21; // __WASI_EFAULT
   }
   if (!context->wasmVm()->setWord(buf_size_ptr.u64_, Word(0))) {
+    return 21; // __WASI_EFAULT
+  }
+  return 0; // __WASI_ESUCCESS
+}
+
+// __wasi_errno_t __wasi_args_get(size_t **argv, size_t *argv_buf);
+Word wasi_unstable_args_get(void*, Word, Word) {
+  return 0; // __WASI_ESUCCESS
+}
+
+// __wasi_errno_t __wasi_args_sizes_get(size_t *argc, size_t *argv_buf_size);
+Word wasi_unstable_args_sizes_get(void* raw_context, Word argc_ptr, Word argv_buf_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  if (!context->wasmVm()->setWord(argc_ptr.u64_, Word(0))) {
+    return 21; // __WASI_EFAULT
+  }
+  if (!context->wasmVm()->setWord(argv_buf_size_ptr.u64_, Word(0))) {
     return 21; // __WASI_EFAULT
   }
   return 0; // __WASI_ESUCCESS

@@ -1,4 +1,4 @@
-#include "envoy/config/filter/http/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/filter/http/wasm/v3alpha/wasm.pb.validate.h"
 
 #include "common/common/base64.h"
 #include "common/common/hex.h"
@@ -35,7 +35,7 @@ protected:
   NiceMock<Server::Configuration::MockFactoryContext> context_;
   Stats::IsolatedStoreImpl stats_store_;
   Api::ApiPtr api_;
-  envoy::api::v2::core::Metadata listener_metadata_;
+  envoy::config::core::v3alpha::Metadata listener_metadata_;
   Init::ManagerImpl init_manager_{"init_manager"};
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
   Init::ExpectableWatcherImpl init_watcher_;
@@ -63,7 +63,7 @@ TEST_P(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   }}}
   )EOF"));
 
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  envoy::config::filter::http::wasm::v3alpha::Wasm proto_config;
   TestUtility::loadFromJson(json, proto_config);
   WasmFilterConfig factory;
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
@@ -87,7 +87,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
           filename: "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"
   )EOF"));
 
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  envoy::config::filter::http::wasm::v3alpha::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
@@ -113,7 +113,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineWASM) {
         local: { inline_bytes: ")EOF",
                                         Base64::encode(code.data(), code.size()), R"EOF(" }
                                         )EOF");
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  envoy::config::filter::http::wasm::v3alpha::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
@@ -137,7 +137,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
           inline_string: "bad code"
   )EOF");
 
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  envoy::config::filter::http::wasm::v3alpha::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
@@ -163,7 +163,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASM) {
             timeout: 5s
           sha256: )EOF",
                                                                     sha256));
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  envoy::config::filter::http::wasm::v3alpha::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
 
@@ -208,7 +208,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
             timeout: 5s
           sha256: )EOF",
                                                                     sha256));
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  envoy::config::filter::http::wasm::v3alpha::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
 
@@ -247,7 +247,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
             timeout: 5s
           sha256: )EOF",
                                                                     sha256));
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  envoy::config::filter::http::wasm::v3alpha::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
 
@@ -286,7 +286,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
             cluster: cluster_1
             timeout: 5s
           sha256: xxxx )EOF"));
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  envoy::config::filter::http::wasm::v3alpha::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
 
@@ -327,7 +327,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
             timeout: 5s
           sha256: )EOF",
                                                                     sha256));
-  envoy::config::filter::http::wasm::v2::Wasm proto_config;
+  envoy::config::filter::http::wasm::v3alpha::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
 

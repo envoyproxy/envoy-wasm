@@ -6,8 +6,6 @@
 
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
-
-// #include "envoy/config/wasm/v2/wasm.pb.validate.h"
 #include "envoy/http/filter.h"
 #include "envoy/server/wasm.h"
 #include "envoy/upstream/cluster_manager.h"
@@ -30,11 +28,14 @@ class WasmVm;
 using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
 using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::string>>;
 
+using GrpcService = envoy::config::core::v3alpha::GrpcService;
+
 // Plugin contains the information for a filter/service.
 struct Plugin {
   Plugin(absl::string_view name, absl::string_view root_id, absl::string_view vm_id,
-         envoy::api::v2::core::TrafficDirection direction, const LocalInfo::LocalInfo& local_info,
-         const envoy::api::v2::core::Metadata* listener_metadata)
+         envoy::config::core::v3alpha::TrafficDirection direction,
+         const LocalInfo::LocalInfo& local_info,
+         const envoy::config::core::v3alpha::Metadata* listener_metadata)
       : name_(std::string(name)), root_id_(std::string(root_id)), vm_id_(std::string(vm_id)),
         direction_(direction), local_info_(local_info), listener_metadata_(listener_metadata),
         log_prefix_(makeLogPrefix()) {}
@@ -44,9 +45,9 @@ struct Plugin {
   const std::string name_;
   const std::string root_id_;
   const std::string vm_id_;
-  envoy::api::v2::core::TrafficDirection direction_;
+  envoy::config::core::v3alpha::TrafficDirection direction_;
   const LocalInfo::LocalInfo& local_info_;
-  const envoy::api::v2::core::Metadata* listener_metadata_;
+  const envoy::config::core::v3alpha::Metadata* listener_metadata_;
 
   std::string log_prefix_;
 };
@@ -280,14 +281,12 @@ public:
 
   // gRPC
   // Returns a token which will be used with the corresponding onGrpc and grpc calls.
-  virtual WasmResult grpcCall(const envoy::api::v2::core::GrpcService& grpc_service,
-                              absl::string_view service_name, absl::string_view method_name,
-                              absl::string_view request,
+  virtual WasmResult grpcCall(const GrpcService& grpc_service, absl::string_view service_name,
+                              absl::string_view method_name, absl::string_view request,
                               const absl::optional<std::chrono::milliseconds>& timeout,
                               uint32_t* token_ptr);
-  virtual WasmResult grpcStream(const envoy::api::v2::core::GrpcService& grpc_service,
-                                absl::string_view service_name, absl::string_view method_name,
-                                uint32_t* token_ptr);
+  virtual WasmResult grpcStream(const GrpcService& grpc_service, absl::string_view service_name,
+                                absl::string_view method_name, uint32_t* token_ptr);
   virtual WasmResult grpcClose(uint32_t token);  // cancel on call, close on stream.
   virtual WasmResult grpcCancel(uint32_t token); // cancel on call, reset on stream.
   virtual WasmResult grpcSend(uint32_t token, absl::string_view message,

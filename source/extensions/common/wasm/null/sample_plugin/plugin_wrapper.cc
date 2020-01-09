@@ -17,7 +17,8 @@ class PluginFactory : public NullVmPluginFactory {
 public:
   PluginFactory() {}
 
-  const std::string name() const override { return "null_vm_plugin"; }
+  std::string name() const override { return "null_vm_plugin"; }
+
   std::unique_ptr<NullVmPlugin> create() const override {
     return std::make_unique<NullPlugin>(
         Envoy::Extensions::Common::Wasm::Null::Plugin::ExamplePlugin::context_registry_);

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "envoy/config/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3alpha/wasm.pb.validate.h"
 #include "envoy/registry/registry.h"
 
 #include "common/stats/isolated_store_impl.h"
@@ -35,7 +35,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmService config;
+  envoy::config::wasm::v3alpha::WasmService config;
   config.mutable_config()->mutable_vm_config()->set_runtime(
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
@@ -66,7 +66,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmService config;
+  envoy::config::wasm::v3alpha::WasmService config;
   config.mutable_config()->mutable_vm_config()->set_runtime(
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
@@ -94,7 +94,7 @@ TEST_P(WasmFactoryTest, MissingImport) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmService config;
+  envoy::config::wasm::v3alpha::WasmService config;
   config.mutable_config()->mutable_vm_config()->set_runtime(
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
@@ -122,7 +122,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmService config;
+  envoy::config::wasm::v3alpha::WasmService config;
   config.mutable_config()->mutable_vm_config()->set_runtime("");
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
@@ -148,7 +148,7 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
-  envoy::config::wasm::v2::WasmService config;
+  envoy::config::wasm::v3alpha::WasmService config;
   config.mutable_config()->mutable_vm_config()->set_runtime("envoy.wasm.runtime.invalid");
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(

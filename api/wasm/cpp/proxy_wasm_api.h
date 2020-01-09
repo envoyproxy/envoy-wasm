@@ -477,7 +477,23 @@ inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-inline bool getStringValue(std::initializer_list<StringView> parts, std::string* out) {
+// Generic property reader for basic types: int64, uint64, double, bool
+// Durations are represented as int64 nanoseconds.
+// Timestamps are represented as int64 Unix nanoseconds.
+// Strings and bytes are represented as std::string.
+template <typename T>
+inline bool getValue(std::initializer_list<StringView> parts, T* out) {
+  auto buf = getProperty(parts);
+  if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
+    return false;
+  }
+  *out = *reinterpret_cast<const T*>(buf.value()->data());
+  return true;
+}
+
+// Specialization for bytes and string values
+template <>
+inline bool getValue<std::string>(std::initializer_list<StringView> parts, std::string* out) {
   auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
@@ -486,22 +502,19 @@ inline bool getStringValue(std::initializer_list<StringView> parts, std::string*
   return true;
 }
 
-inline bool getStructValue(std::initializer_list<StringView> parts,
-                           google::protobuf::Struct* value_ptr) {
+// Specialization for message types (including struct value for lists and maps)
+template <typename T>
+inline bool getMessageValue(std::initializer_list<StringView> parts,
+                            T* value_ptr) {
   auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
   }
-  return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
-}
-
-template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T* out) {
-  auto buf = getProperty(parts);
-  if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
-    return false;
+  if (buf.value()->size() == 0) {
+    value_ptr = nullptr;
+    return true;
   }
-  *out = *reinterpret_cast<const T*>(buf.value()->data());
-  return true;
+  return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
 }
 
 inline WasmResult setFilterState(StringView key, StringView value) {

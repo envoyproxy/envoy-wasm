@@ -74,7 +74,7 @@ public:
    * @throw EnvoyException if the implementation is unable to produce an instance with
    *        the provided parameters.
    */
-  virtual void createWasm(const envoy::config::wasm::v2::WasmService& config,
+  virtual void createWasm(const envoy::config::wasm::v3alpha::WasmService& config,
                           WasmFactoryContext& context, CreateWasmCallback&& cb) PURE;
 };
 

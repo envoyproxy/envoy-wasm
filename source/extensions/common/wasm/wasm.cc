@@ -9,7 +9,7 @@
 #include <string>
 
 #include "envoy/common/exception.h"
-#include "envoy/config/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3alpha/wasm.pb.validate.h"
 #include "envoy/grpc/status.h"
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"
@@ -125,6 +125,8 @@ void Wasm::registerCallbacks() {
   _REGISTER_WASI(fd_close);
   _REGISTER_WASI(environ_get);
   _REGISTER_WASI(environ_sizes_get);
+  _REGISTER_WASI(args_get);
+  _REGISTER_WASI(args_sizes_get);
   _REGISTER_WASI(proc_exit);
 #undef _REGISTER_WASI
 
@@ -453,8 +455,8 @@ void Wasm::queueReady(uint32_t root_context_id, uint32_t token) {
   it->second->onQueueReady(token);
 }
 
-static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
-                               PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin,
+                               Stats::ScopeSharedPtr scope,
                                Upstream::ClusterManager& cluster_manager,
                                Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                                Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
@@ -501,16 +503,16 @@ static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_confi
   }
 }
 
-void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin,
-                Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
-                Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+void createWasm(const VmConfig& vm_config, PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                Event::Dispatcher& dispatcher, Api::Api& api,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb) {
   createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, api,
                      nullptr /* root_context_for_testing */, remote_data_provider, std::move(cb));
 }
 
-void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
+void createWasmForTesting(const envoy::config::wasm::v3alpha::VmConfig& vm_config,
                           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
                           Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
                           Event::Dispatcher& dispatcher, Api::Api& api,
