@@ -34,7 +34,12 @@ public:
 
 class WasmCommonTest : public testing::TestWithParam<std::string> {};
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest, testing::Values("v8", "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest,
+                         testing::Values("v8",
+#if defined(ENVOY_WASM_WAVM)
+                                         "wavm",
+#endif
+                                         "null"));
 
 TEST_P(WasmCommonTest, Logging) {
   Stats::IsolatedStoreImpl stats_store;
@@ -57,7 +62,7 @@ TEST_P(WasmCommonTest, Logging) {
   auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm);
   auto wasm_handler = std::make_unique<Extensions::Common::Wasm::WasmHandle>(std::move(wasm));
   std::string code;
-  if (GetParam() == "v8") {
+  if (GetParam() != "null") {
     code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
         absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
   } else {
@@ -89,7 +94,7 @@ TEST_P(WasmCommonTest, Logging) {
 }
 
 TEST_P(WasmCommonTest, BadSignature) {
-  if (GetParam() != "v8") {
+  if (GetParam() == "null") {
     return;
   }
   Stats::IsolatedStoreImpl stats_store;
@@ -118,7 +123,7 @@ TEST_P(WasmCommonTest, BadSignature) {
 }
 
 TEST_P(WasmCommonTest, Segv) {
-  if (GetParam() != "v8") {
+  if (GetParam() == "null") {
     return;
   }
   Stats::IsolatedStoreImpl stats_store;
@@ -144,13 +149,18 @@ TEST_P(WasmCommonTest, Segv) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("before badptr")));
   EXPECT_TRUE(wasm->initialize(code, false));
 
-  EXPECT_THROW_WITH_MESSAGE(wasm->startForTesting(std::move(context), plugin),
-                            Extensions::Common::Wasm::WasmException,
-                            "Function: proxy_on_start failed: Uncaught RuntimeError: unreachable");
+  if (GetParam() == "v8") {
+    EXPECT_THROW_WITH_MESSAGE(
+        wasm->startForTesting(std::move(context), plugin), Extensions::Common::Wasm::WasmException,
+        "Function: proxy_on_start failed: Uncaught RuntimeError: unreachable");
+  } else {
+    EXPECT_THROW(wasm->startForTesting(std::move(context), plugin),
+                 Extensions::Common::Wasm::WasmException);
+  }
 }
 
 TEST_P(WasmCommonTest, DivByZero) {
-  if (GetParam() != "v8") {
+  if (GetParam() == "null") {
     return;
   }
   Stats::IsolatedStoreImpl stats_store;
@@ -177,13 +187,18 @@ TEST_P(WasmCommonTest, DivByZero) {
   EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("before div by zero")));
   EXPECT_TRUE(wasm->initialize(code, false));
 
-  EXPECT_THROW_WITH_MESSAGE(
-      wasm->startForTesting(std::move(context), plugin), Extensions::Common::Wasm::WasmException,
-      "Function: proxy_on_start failed: Uncaught RuntimeError: divide by zero");
+  if (GetParam() == "v8") {
+    EXPECT_THROW_WITH_MESSAGE(
+        wasm->startForTesting(std::move(context), plugin), Extensions::Common::Wasm::WasmException,
+        "Function: proxy_on_start failed: Uncaught RuntimeError: divide by zero");
+  } else {
+    EXPECT_THROW(wasm->startForTesting(std::move(context), plugin),
+                 Extensions::Common::Wasm::WasmException);
+  }
 }
 
 TEST_P(WasmCommonTest, EmscriptenVersion) {
-  if (GetParam() != "v8") {
+  if (GetParam() == "null") {
     return;
   }
   Stats::IsolatedStoreImpl stats_store;
@@ -237,7 +252,7 @@ TEST_P(WasmCommonTest, IntrinsicGlobals) {
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   std::string code;
-  if (GetParam() == "v8") {
+  if (GetParam() != "null") {
     code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
         absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
   } else {
@@ -271,7 +286,7 @@ TEST_P(WasmCommonTest, Stats) {
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   std::string code;
-  if (GetParam() == "v8") {
+  if (GetParam() != "null") {
     code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
         absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
   } else {
