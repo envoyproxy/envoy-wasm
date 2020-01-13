@@ -4,19 +4,12 @@
 #ifndef NULL_PLUGIN
 #include "proxy_wasm_intrinsics.h"
 #else
-
 #include "extensions/common/wasm/null/null_plugin.h"
 #include "absl/base/casts.h"
-
-namespace Envoy {
-namespace Extensions {
-namespace Common {
-namespace Wasm {
-namespace Null {
-namespace Plugin {
-namespace ExamplePlugin {
-NULL_PLUGIN_ROOT_REGISTRY;
 #endif
+
+// NOLINT(namespace-envoy)
+START_WASM_PLUGIN(ExamplePlugin)
 
 // For performance testing: see wasm_speed_test.cc.
 class PluginRootContext : public RootContext {
@@ -84,12 +77,4 @@ void PluginContext::onLog() {
 
 void PluginContext::onDone() { logWarn("onDone " + std::to_string(id())); }
 
-#ifdef NULL_PLUGIN
-} // namespace ExamplePlugin
-} // namespace Plugin
-} // namespace Null
-} // namespace Wasm
-} // namespace Common
-} // namespace Extensions
-} // namespace Envoy
-#endif
+END_WASM_PLUGIN

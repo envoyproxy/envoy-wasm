@@ -323,6 +323,9 @@ bool NullPlugin::validateConfiguration(uint64_t root_context_id, uint64_t config
 }
 
 bool NullPlugin::onStart(uint64_t root_context_id, uint64_t vm_configuration_size) {
+  if (registry_->proxy_on_start_) {
+    return registry_->proxy_on_start_(root_context_id, vm_configuration_size);
+  }
   auto context = ensureRootContext(root_context_id);
   if (!context) {
     return false;
@@ -331,6 +334,9 @@ bool NullPlugin::onStart(uint64_t root_context_id, uint64_t vm_configuration_siz
 }
 
 bool NullPlugin::onConfigure(uint64_t root_context_id, uint64_t plugin_configuration_size) {
+  if (registry_->proxy_on_configure_) {
+    return registry_->proxy_on_configure_(root_context_id, plugin_configuration_size);
+  }
   return getRootContext(root_context_id)->onConfigure(plugin_configuration_size);
 }
 
@@ -438,10 +444,17 @@ void NullPlugin::onQueueReady(uint64_t context_id, uint64_t token) {
 void NullPlugin::onLog(uint64_t context_id) { getContext(context_id)->onLog(); }
 
 uint64_t NullPlugin::onDone(uint64_t context_id) {
+  if (registry_->proxy_on_done_) {
+    return registry_->proxy_on_done_(context_id);
+  }
   return getContextBase(context_id)->onDoneBase() ? 1 : 0;
 }
 
 void NullPlugin::onDelete(uint64_t context_id) {
+  if (registry_->proxy_on_delete_) {
+    registry_->proxy_on_delete_(context_id);
+    return;
+  }
   getContextBase(context_id)->onDelete();
   context_map_.erase(context_id);
 }

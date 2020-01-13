@@ -42,9 +42,16 @@ namespace Plugin {
 } // namespace Plugin
 
 /**
- * Registry for roots.
+ * Registry for Plugin implementation.
  */
-struct NullPluginRootRegistry {
+struct NullPluginRegistry {
+  uint32_t (*proxy_validate_configuration_)(uint32_t root_context_id,
+                                            uint32_t plugin_configuration_size) = nullptr;
+  uint32_t (*proxy_on_start_)(uint32_t root_context_id, uint32_t vm_configuration_size) = nullptr;
+  uint32_t (*proxy_on_configure_)(uint32_t root_context_id,
+                                  uint32_t plugin_configuration_size) = nullptr;
+  uint32_t (*proxy_on_done_)(uint32_t context_id) = nullptr;
+  void (*proxy_on_delete_)(uint32_t context_id) = nullptr;
   std::unordered_map<std::string, Plugin::RootFactory> root_factories;
   std::unordered_map<std::string, Plugin::ContextFactory> context_factories;
 };
@@ -57,7 +64,7 @@ class NullPlugin : public NullVmPlugin {
 public:
   using NewContextFnPtr = std::unique_ptr<Context> (*)(uint32_t /* id */);
 
-  explicit NullPlugin(NullPluginRootRegistry* registry) : registry_(registry) {}
+  explicit NullPlugin(NullPluginRegistry* registry) : registry_(registry) {}
   NullPlugin(const NullPlugin& other) : registry_(other.registry_) {}
 
 #define _DECLARE_OVERRIDE(_t) void getFunction(absl::string_view function_name, _t* f) override;
@@ -110,23 +117,55 @@ private:
   Plugin::RootContext* getRootContext(uint64_t context_id);
   Plugin::ContextBase* getContextBase(uint64_t context_id);
 
-  NullPluginRootRegistry* registry_{};
+  NullPluginRegistry* registry_{};
   std::unordered_map<std::string, Plugin::RootContext*> root_context_map_;
   std::unordered_map<int64_t, std::unique_ptr<Plugin::ContextBase>> context_map_;
 };
 
-#define NULL_PLUGIN_ROOT_REGISTRY                                                                  \
-  extern NullPluginRootRegistry* context_registry_;                                                \
+#define START_WASM_PLUGIN(_name)                                                                   \
+  namespace Envoy {                                                                                \
+  namespace Extensions {                                                                           \
+  namespace Common {                                                                               \
+  namespace Wasm {                                                                                 \
+  namespace Null {                                                                                 \
+  namespace Plugin {                                                                               \
+  namespace _name {                                                                                \
+  extern ThreadSafeSingleton<Null::NullPluginRegistry> null_plugin_registry_;                      \
+  extern NullPluginRegistry* context_registry_;                                                    \
   struct RegisterContextFactory {                                                                  \
     explicit RegisterContextFactory(ContextFactory context_factory,                                \
                                     RootFactory root_factory = nullptr, StringView root_id = "") { \
       if (!context_registry_) {                                                                    \
-        context_registry_ = new NullPluginRootRegistry;                                            \
+        context_registry_ = new NullPluginRegistry;                                                \
       }                                                                                            \
       context_registry_->context_factories[std::string(root_id)] = context_factory;                \
       context_registry_->root_factories[std::string(root_id)] = root_factory;                      \
     }                                                                                              \
+    explicit RegisterContextFactory(RootFactory root_factory, StringView root_id = "") {           \
+      if (!context_registry_) {                                                                    \
+        context_registry_ = new NullPluginRegistry;                                                \
+      }                                                                                            \
+      context_registry_->root_factories[std::string(root_id)] = root_factory;                      \
+    }                                                                                              \
   };
+
+#define END_WASM_PLUGIN                                                                            \
+  }                                                                                                \
+  }                                                                                                \
+  }                                                                                                \
+  }                                                                                                \
+  }                                                                                                \
+  }                                                                                                \
+  }
+
+#define WASM_EXPORT(_t, _f, _a)                                                                    \
+  _t _f _a;                                                                                        \
+  static int register_export_##_f() {                                                              \
+    null_plugin_registry_.get()._f##_ = _f;                                                        \
+    return 0;                                                                                      \
+  };                                                                                               \
+  static int register_export_##_f##_ = register_export_##_f();                                     \
+  _t _f _a
 
 } // namespace Null
 } // namespace Wasm

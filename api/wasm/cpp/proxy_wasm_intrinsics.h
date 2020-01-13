@@ -8,6 +8,10 @@
 #ifndef PROXY_WASM_KEEPALIVE
 #define PROXY_WASM_KEEPALIVE __attribute__((used)) __attribute__((visibility("default")))
 #endif
+#define WASM_EXPORT(_return_type, _function_name, _function_args)                                  \
+  extern "C" PROXY_WASM_KEEPALIVE _return_type _function_name _function_args
+#define START_WASM_PLUGIN(_x)
+#define END_WASM_PLUGIN
 
 #include <cstdint>
 #include <string_view>

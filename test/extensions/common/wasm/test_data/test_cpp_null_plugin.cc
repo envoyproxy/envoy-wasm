@@ -6,30 +6,30 @@ namespace Common {
 namespace Wasm {
 namespace Null {
 namespace Plugin {
-namespace ExamplePlugin {
-NullPluginRegistry* context_registry_{};
-} // namespace ExamplePlugin
+namespace CommonWasmTestCpp {
+ThreadSafeSingleton<NullPluginRegistry> null_plugin_registry_;
+} // namespace CommonWasmTestCpp
 
 /**
  * Config registration for a Wasm filter plugin. @see NamedHttpFilterConfigFactory.
  */
-class SamplePluginFactory : public NullVmPluginFactory {
+class CommonWasmTestPluginFactory : public NullVmPluginFactory {
 public:
-  SamplePluginFactory() {}
+  CommonWasmTestPluginFactory() {}
 
-  std::string name() const override { return "null_vm_plugin"; }
+  std::string name() const override { return "CommonWasmTestCpp"; }
 
   std::unique_ptr<NullVmPlugin> create() const override {
     return std::make_unique<NullPlugin>(
-        Envoy::Extensions::Common::Wasm::Null::Plugin::ExamplePlugin::context_registry_);
+        &Envoy::Extensions::Common::Wasm::Null::Plugin::CommonWasmTestCpp::null_plugin_registry_
+             .get());
   }
 };
 
 /**
  * Static registration for the null Wasm filter. @see RegisterFactory.
  */
-static Registry::RegisterFactory<SamplePluginFactory, NullVmPluginFactory> register_;
-
+static Registry::RegisterFactory<CommonWasmTestPluginFactory, NullVmPluginFactory> register_;
 } // namespace Plugin
 } // namespace Null
 } // namespace Wasm
