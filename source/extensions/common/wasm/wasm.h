@@ -258,7 +258,7 @@ private:
   absl::flat_hash_map<uint32_t, Stats::Gauge*> gauges_;
   absl::flat_hash_map<uint32_t, Stats::Histogram*> histograms_;
 
-  // Foreign Fnctions.
+  // Foreign Functions.
   absl::flat_hash_map<std::string, WasmForeignFunction> foreign_functions_;
 };
 using WasmSharedPtr = std::shared_ptr<Wasm>;
