@@ -139,6 +139,14 @@ absl::optional<CelValue> ResponseWrapper::operator[](CelValue key) const {
     return CelValue::CreateMap(&trailers_);
   } else if (value == Flags) {
     return CelValue::CreateInt64(info_.responseFlags());
+  } else if (value == GrpcStatus) {
+    if (trailers_.value_ != nullptr && trailers_.value_->GrpcStatus()) {
+      return convertHeaderEntry(trailers_.value_->GrpcStatus());
+    }
+    if (headers_.value_ != nullptr && headers_.value_->GrpcStatus()) {
+      return convertHeaderEntry(headers_.value_->GrpcStatus());
+    }
+    return {};
   }
   return {};
 }
