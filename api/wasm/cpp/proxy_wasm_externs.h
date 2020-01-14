@@ -127,7 +127,7 @@ extern "C" WasmResult proxy_get_metric(uint32_t metric_id, uint64_t* result);
 extern "C" WasmResult proxy_set_effective_context(uint32_t effective_context_id);
 extern "C" WasmResult proxy_done();
 extern "C" WasmResult proxy_call_foreign_function(const char* function_name,
-                                                  size_t funtion_name_size, const char* arguments,
+                                                  size_t function_name_size, const char* arguments,
                                                   size_t arguments_size, char** results,
                                                   size_t* results_size);
 
