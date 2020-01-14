@@ -308,6 +308,42 @@ TEST_P(WasmCommonTest, Stats) {
   wasm->startForTesting(std::move(context), plugin);
 }
 
+TEST_P(WasmCommonTest, Foreign) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
+  auto name = "";
+  auto root_id = "";
+  auto vm_id = "";
+  auto vm_configuration = "foreign";
+  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
+      name, root_id, vm_id, envoy::config::core::v3alpha::TrafficDirection::UNSPECIFIED, local_info,
+      nullptr);
+  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, scope,
+      cluster_manager, *dispatcher);
+  EXPECT_NE(wasm, nullptr);
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+  } else {
+    // The name of the Null VM plugin.
+    code = "CommonWasmTestCpp";
+  }
+  EXPECT_FALSE(code.empty());
+  auto context = std::make_unique<TestContext>(wasm.get());
+
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("compress 41 -> 34")));
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, Eq("uncompress 34 -> 41")));
+
+  EXPECT_TRUE(wasm->initialize(code, false));
+  wasm->startForTesting(std::move(context), plugin);
+}
+
 } // namespace Wasm
 } // namespace Common
 } // namespace Extensions

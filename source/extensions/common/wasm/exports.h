@@ -75,6 +75,8 @@ Word get_current_time_nanoseconds(void* raw_context, Word result_uint64_ptr);
 
 Word set_effective_context(void* raw_context, Word context_id);
 Word done(void* raw_context);
+Word call_foreign_function(void* raw_context, Word function_name, Word function_name_size,
+                           Word arguments, Word warguments_size, Word results, Word results_size);
 
 // Runtime environment functions exported from envoy to wasm.
 

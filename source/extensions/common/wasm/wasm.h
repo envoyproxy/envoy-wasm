@@ -50,6 +50,9 @@ struct WasmStats {
 
 using VmConfig = envoy::config::wasm::v3alpha::VmConfig;
 
+using WasmForeignFunction =
+    std::function<WasmResult(Wasm&, absl::string_view, std::function<void*(size_t size)>)>;
+
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
 class Wasm : public Logger::Loggable<Logger::Id::wasm>, public std::enable_shared_from_this<Wasm> {
 public:
@@ -111,6 +114,8 @@ public:
   bool copyToPointerSize(const Buffer::Instance& buffer, uint64_t start, uint64_t length,
                          uint64_t ptr_ptr, uint64_t size_ptr);
   template <typename T> bool setDatatype(uint64_t ptr, const T& t);
+
+  WasmForeignFunction getForeignFunction(absl::string_view function_name);
 
   // For testing.
   void setContext(Context* context) { contexts_[context->id()] = context; }
@@ -252,6 +257,9 @@ private:
   absl::flat_hash_map<uint32_t, Stats::Counter*> counters_;
   absl::flat_hash_map<uint32_t, Stats::Gauge*> gauges_;
   absl::flat_hash_map<uint32_t, Stats::Histogram*> histograms_;
+
+  // Foreign Fnctions.
+  absl::flat_hash_map<std::string, WasmForeignFunction> foreign_functions_;
 };
 using WasmSharedPtr = std::shared_ptr<Wasm>;
 

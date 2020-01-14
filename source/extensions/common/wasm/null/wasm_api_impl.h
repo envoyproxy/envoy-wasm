@@ -230,10 +230,20 @@ inline WasmResult proxy_record_metric(uint32_t metric_id, uint64_t value) {
 inline WasmResult proxy_get_metric(uint32_t metric_id, uint64_t* value) {
   return wordToWasmResult(Exports::get_metric(current_context_, WS(metric_id), WR(value)));
 }
+
+// System
 inline WasmResult proxy_set_effective_context(uint64_t context_id) {
   return wordToWasmResult(Exports::set_effective_context(current_context_, WS(context_id)));
 }
 inline WasmResult proxy_done() { return wordToWasmResult(Exports::done(current_context_)); }
+
+inline WasmResult proxy_call_foreign_function(const char* function_name, size_t function_name_size,
+                                              const char* arguments, size_t arguments_size,
+                                              char** results, size_t* results_size) {
+  return wordToWasmResult(Exports::call_foreign_function(
+      current_context_, WR(function_name), WS(function_name_size), WR(arguments),
+      WS(arguments_size), WR(results), WR(results_size)));
+}
 
 #undef WS
 #undef WR

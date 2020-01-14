@@ -55,6 +55,7 @@ envoy_cc_library(
     hdrs = [
         "context.h",
         "exports.h",
+        "foreign.h",
         "wasm.h",
     ],
     deps = [
@@ -92,6 +93,7 @@ envoy_cc_library(
     srcs = [
         "context.cc",
         "exports.cc",
+        "foreign.cc",
         "wasm.cc",
     ],
     deps = [
