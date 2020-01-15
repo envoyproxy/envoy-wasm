@@ -21,7 +21,7 @@ envoy_cc_library(
     srcs = [
         "speed_cpp.cc",
         "speed_cpp_null_plugin.cc",
-        ],
+    ],
     copts = ["-DNULL_PLUGIN=1"],
     deps = [
         "//external:abseil_node_hash_map",
