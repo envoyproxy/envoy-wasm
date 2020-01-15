@@ -41,7 +41,7 @@ public:
   MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string vm) {
+static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test, std::string vm) {
   Envoy::Logger::Registry::getLog(Logger::Id::wasm).set_level(spdlog::level::off);
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
@@ -51,9 +51,9 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string vm) 
   NiceMock<LocalInfo::MockLocalInfo> local_info;
   auto root_context = new TestRoot();
   auto name = "";
-  auto root_id = "";
+  auto root_id = "some_long_root_id";
   auto vm_id = "";
-  auto vm_configuration = "";
+  auto vm_configuration = test;
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::config::core::v3alpha::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
@@ -62,7 +62,7 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string vm) 
       *dispatcher);
   std::string code;
   if (vm == "null") {
-    code = "null_vm_plugin";
+    code = "WasmSpeedCpp";
   } else {
     code = TestEnvironment::readFileToStringForTest(
         TestEnvironment::runfilesPath("test/extensions/wasm/test_data/speed_cpp.wasm"));
@@ -77,11 +77,29 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string vm) 
   }
 }
 
-BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest, std::string("v8"));
 #if defined(ENVOY_WASM_WAVM)
-BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, WavmSpeedTest, std::string("wavm"));
+#define B(_t)                                                                                      \
+  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                \
+                    std::string("v8"));                                                            \
+  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),              \
+                    std::string("null"));                                                          \
+  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, WavmSpeedTest_##_t, std::string(#_t),              \
+                    std::string("wavm"));
+#else
+#define B(_t)                                                                                      \
+  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                \
+                    std::string("v8"));                                                            \
+  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),              \
+                    std::string("null"));
 #endif
-BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest, std::string("null"));
+
+B(empty)
+B(get_current_time)
+B(string)
+B(string1000)
+B(get_property)
+B(grpc_service)
+B(grpc_service1000)
 
 } // namespace Wasm
 } // namespace Extensions
