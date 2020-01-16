@@ -340,7 +340,12 @@ bool NullPlugin::onConfigure(uint64_t root_context_id, uint64_t plugin_configura
   return getRootContext(root_context_id)->onConfigure(plugin_configuration_size);
 }
 
-void NullPlugin::onTick(uint64_t root_context_id) { getRootContext(root_context_id)->onTick(); }
+void NullPlugin::onTick(uint64_t root_context_id) {
+  if (registry_->proxy_on_tick_) {
+    return registry_->proxy_on_tick_(root_context_id);
+  }
+  getRootContext(root_context_id)->onTick();
+}
 
 void NullPlugin::onCreate(uint64_t context_id, uint64_t root_context_id) {
   ensureContext(context_id, root_context_id)->onCreate();
