@@ -1051,6 +1051,11 @@ bool Context::isSsl() { return decoder_callbacks_->connection()->ssl() != nullpt
 //
 bool Context::onStart(absl::string_view vm_configuration, PluginSharedPtr plugin) {
   bool result = 0;
+  if (wasm_->on_context_create_) {
+    plugin_ = plugin;
+    wasm_->on_context_create_(this, id_, 0);
+    plugin_.reset();
+  }
   if (wasm_->on_start_) {
     configuration_ = vm_configuration;
     plugin_ = plugin;
@@ -1094,9 +1099,9 @@ std::pair<uint32_t, absl::string_view> Context::getStatus() {
   return std::make_pair(status_code_, status_message_);
 }
 
-void Context::onCreate(uint32_t root_context_id) {
-  if (wasm_->on_create_) {
-    wasm_->on_create_(this, id_, root_context_id);
+void Context::onCreate(uint32_t parent_context_id) {
+  if (wasm_->on_context_create_) {
+    wasm_->on_context_create_(this, id_, parent_context_id);
   }
 }
 

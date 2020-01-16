@@ -114,11 +114,7 @@ RootContext* getRoot(StringView root_id) {
 
 extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_start(uint32_t root_context_id,
                                                         uint32_t vm_configuration_size) {
-  auto context = ensureRootContext(root_context_id);
-  if (!context) {
-    return 0;
-  }
-  return context->onStart(vm_configuration_size);
+  return getRootContext(root_context_id)->onStart(vm_configuration_size);
 }
 
 extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_validate_configuration(uint32_t root_context_id,
@@ -135,9 +131,12 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_tick(uint32_t root_context_id) {
   getRootContext(root_context_id)->onTick();
 }
 
-extern "C" PROXY_WASM_KEEPALIVE void proxy_on_create(uint32_t context_id,
-                                                     uint32_t root_context_id) {
-  ensureContext(context_id, root_context_id)->onCreate();
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_context_create(uint32_t context_id,
+                                                             uint32_t parent_context_id) {
+  if (parent_context_id)
+    ensureContext(context_id, parent_context_id)->onCreate();
+  else
+    ensureRootContext(context_id);
 }
 
 extern "C" PROXY_WASM_KEEPALIVE FilterStatus proxy_on_new_connection(uint32_t context_id) {

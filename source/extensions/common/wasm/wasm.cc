@@ -204,7 +204,7 @@ void Wasm::getFunctions() {
   _GET_PROXY(on_configure);
   _GET_PROXY(on_tick);
 
-  _GET_PROXY(on_create);
+  _GET_PROXY(on_context_create);
 
   _GET_PROXY(on_new_connection);
   _GET_PROXY(on_downstream_data);
