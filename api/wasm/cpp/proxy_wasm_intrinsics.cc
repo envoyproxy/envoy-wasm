@@ -133,10 +133,11 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_tick(uint32_t root_context_id) {
 
 extern "C" PROXY_WASM_KEEPALIVE void proxy_on_context_create(uint32_t context_id,
                                                              uint32_t parent_context_id) {
-  if (parent_context_id)
+  if (parent_context_id) {
     ensureContext(context_id, parent_context_id)->onCreate();
-  else
+  } else {
     ensureRootContext(context_id);
+  }
 }
 
 extern "C" PROXY_WASM_KEEPALIVE FilterStatus proxy_on_new_connection(uint32_t context_id) {
