@@ -15,7 +15,7 @@ pub fn proxy_on_configure(_context_id : u32, _plugin_configuration_size: u32) ->
 }
 
 #[no_mangle]
-pub fn proxy_on_start(_context_id : u32, _vm_configuration_size : u32) -> u32 {
+pub fn proxy_on_vm_start(_context_id : u32, _vm_configuration_size : u32) -> u32 {
     trace!("test trace logging");
     debug!("test debug logging");
     error!("test error logging");

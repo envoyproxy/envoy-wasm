@@ -25,7 +25,7 @@ static float gInfinity = INFINITY;
   } while (0)
 #endif
 
-WASM_EXPORT(uint32_t, proxy_on_start, (uint32_t, uint32_t context_id)) {
+WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t context_id)) {
   const char* configuration_ptr = nullptr;
   size_t size;
   proxy_get_configuration(&configuration_ptr, &size);
@@ -122,7 +122,7 @@ WASM_EXPORT(uint32_t, proxy_on_start, (uint32_t, uint32_t context_id)) {
     ::free(compressed);
     ::free(result);
   } else {
-    std::string message = "on_start " + configuration;
+    std::string message = "on_vm_start " + configuration;
     proxy_log(LogLevel::info, message.c_str(), message.size());
   }
   ::free(const_cast<void*>(reinterpret_cast<const void*>(configuration_ptr)));

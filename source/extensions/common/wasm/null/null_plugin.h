@@ -47,9 +47,12 @@ namespace Plugin {
 struct NullPluginRegistry {
   uint32_t (*proxy_validate_configuration_)(uint32_t root_context_id,
                                             uint32_t plugin_configuration_size) = nullptr;
-  uint32_t (*proxy_on_start_)(uint32_t root_context_id, uint32_t vm_configuration_size) = nullptr;
+  uint32_t (*proxy_on_context_create_)(uint32_t context_id, uint32_t parent_context_id) = nullptr;
+  uint32_t (*proxy_on_vm_start_)(uint32_t root_context_id,
+                                 uint32_t vm_configuration_size) = nullptr;
   uint32_t (*proxy_on_configure_)(uint32_t root_context_id,
                                   uint32_t plugin_configuration_size) = nullptr;
+  void (*proxy_on_tick_)(uint32_t context_id) = nullptr;
   uint32_t (*proxy_on_done_)(uint32_t context_id) = nullptr;
   void (*proxy_on_delete_)(uint32_t context_id) = nullptr;
   std::unordered_map<std::string, Plugin::RootFactory> root_factories;

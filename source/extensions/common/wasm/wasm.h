@@ -198,11 +198,11 @@ private:
 
   // Calls into the VM.
   WasmCallWord<2> validate_configuration_;
-  WasmCallWord<2> on_start_;
+  WasmCallWord<2> on_vm_start_;
   WasmCallWord<2> on_configure_;
   WasmCallVoid<1> on_tick_;
 
-  WasmCallVoid<2> on_create_;
+  WasmCallVoid<2> on_context_create_;
 
   WasmCallWord<1> on_new_connection_;
   WasmCallWord<3> on_downstream_data_;

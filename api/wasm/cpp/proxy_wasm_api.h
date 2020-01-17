@@ -260,6 +260,7 @@ public:
   virtual RootContext* asRoot() { return nullptr; }
   virtual Context* asContext() { return nullptr; }
 
+  virtual void onCreate() {}
   virtual bool onDoneBase() = 0;
   // Called to indicate that no more calls will come and this context is being deleted.
   virtual void onDelete() {} // Called when the stream or VM is being deleted.
@@ -367,9 +368,6 @@ public:
 
   RootContext* asRoot() override { return nullptr; }
   Context* asContext() override { return this; }
-
-  // Called on individual requests/response streams.
-  virtual void onCreate() {}
 
   virtual FilterStatus onNewConnection() { return FilterStatus::Continue; }
   virtual FilterStatus onDownstreamData(size_t, bool) { return FilterStatus::Continue; }
@@ -481,8 +479,7 @@ inline Optional<WasmDataPtr> getProperty(std::initializer_list<StringView> parts
 // Durations are represented as int64 nanoseconds.
 // Timestamps are represented as int64 Unix nanoseconds.
 // Strings and bytes are represented as std::string.
-template <typename T>
-inline bool getValue(std::initializer_list<StringView> parts, T* out) {
+template <typename T> inline bool getValue(std::initializer_list<StringView> parts, T* out) {
   auto buf = getProperty(parts);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
     return false;
@@ -504,8 +501,7 @@ inline bool getValue<std::string>(std::initializer_list<StringView> parts, std::
 
 // Specialization for message types (including struct value for lists and maps)
 template <typename T>
-inline bool getMessageValue(std::initializer_list<StringView> parts,
-                            T* value_ptr) {
+inline bool getMessageValue(std::initializer_list<StringView> parts, T* value_ptr) {
   auto buf = getProperty(parts);
   if (!buf.has_value()) {
     return false;
