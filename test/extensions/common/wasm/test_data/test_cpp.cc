@@ -97,6 +97,30 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t context_id)) {
       message = std::string("get histogram = Unsupported");
       proxy_log(LogLevel::error, message.c_str(), message.size());
     }
+  } else if (configuration == "foreign") {
+    std::string function = "compress";
+    std::string argument = "something to compress dup dup dup dup dup";
+    char* compressed = nullptr;
+    size_t compressed_size = 0;
+    CHECK_RESULT(proxy_call_foreign_function(function.data(), function.size(), argument.data(),
+                                             argument.size(), &compressed, &compressed_size));
+    auto message = std::string("compress ") + std::to_string(argument.size()) + " -> " +
+                   std::to_string(compressed_size);
+    proxy_log(LogLevel::trace, message.c_str(), message.size());
+    function = "uncompress";
+    char* result = nullptr;
+    size_t result_size = 0;
+    CHECK_RESULT(proxy_call_foreign_function(function.data(), function.size(), compressed,
+                                             compressed_size, &result, &result_size));
+    message = std::string("uncompress ") + std::to_string(compressed_size) + " -> " +
+              std::to_string(result_size);
+    proxy_log(LogLevel::debug, message.c_str(), message.size());
+    if (argument != std::string(result, result_size)) {
+      message = "compress mismatch ";
+      proxy_log(LogLevel::error, message.c_str(), message.size());
+    }
+    ::free(compressed);
+    ::free(result);
   } else {
     std::string message = "on_vm_start " + configuration;
     proxy_log(LogLevel::info, message.c_str(), message.size());

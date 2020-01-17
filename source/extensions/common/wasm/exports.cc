@@ -217,6 +217,40 @@ Word done(void* raw_context) {
   return wasmResultToWord(context->wasm()->done(context));
 }
 
+Word call_foreign_function(void* raw_context, Word function_name, Word function_name_size,
+                           Word arguments, Word arguments_size, Word results, Word results_size) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto function = context->wasmVm()->getMemory(function_name.u64_, function_name_size.u64_);
+  if (!function) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  auto args_opt = context->wasmVm()->getMemory(arguments.u64_, arguments_size.u64_);
+  if (!args_opt) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  auto f = context->wasm()->getForeignFunction(function.value());
+  if (!f) {
+    return wasmResultToWord(WasmResult::NotFound);
+  }
+  auto& wasm = *context->wasm();
+  auto& args = args_opt.value();
+  uint64_t address = 0;
+  void* result = nullptr;
+  size_t result_size = 0;
+  f(wasm, args, [&wasm, &address, &result, &result_size](size_t s) -> void* {
+    result = wasm.allocMemory(s, &address);
+    result_size = s;
+    return result;
+  });
+  if (!context->wasmVm()->setWord(results.u64_, Word(address))) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  if (!context->wasmVm()->setWord(results_size.u64_, Word(result_size))) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  return wasmResultToWord(WasmResult::Ok);
+}
+
 Word clear_route_cache(void* raw_context) {
   auto context = WASM_CONTEXT(raw_context);
   context->clearRouteCache();

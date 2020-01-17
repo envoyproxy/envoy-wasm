@@ -27,6 +27,7 @@
 #include "common/http/utility.h"
 #include "common/tracing/http_tracer_impl.h"
 
+#include "extensions/common/wasm/foreign.h"
 #include "extensions/common/wasm/wasm_state.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/common/expr/context.h"
@@ -186,6 +187,7 @@ void Wasm::registerCallbacks() {
 
   _REGISTER_PROXY(set_effective_context);
   _REGISTER_PROXY(done);
+  _REGISTER_PROXY(call_foreign_function);
 #undef _REGISTER_PROXY
 }
 
@@ -453,6 +455,20 @@ void Wasm::queueReady(uint32_t root_context_id, uint32_t token) {
     return;
   }
   it->second->onQueueReady(token);
+}
+
+WasmForeignFunction Wasm::getForeignFunction(absl::string_view function_name) {
+  auto it = foreign_functions_.find(function_name);
+  if (it != foreign_functions_.end()) {
+    return it->second;
+  }
+  auto factory = Registry::FactoryRegistry<ForeignFunctionFactory>::getFactory(function_name);
+  if (factory) {
+    auto f = factory->create();
+    foreign_functions_[function_name] = f;
+    return f;
+  }
+  return WasmForeignFunction();
 }
 
 static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin,

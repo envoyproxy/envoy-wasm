@@ -36,4 +36,5 @@ mergeInto(LibraryManager.library, {
     proxy_send_local_response : function () {},
     proxy_set_effective_context : function () {},
     proxy_done: function () {},
+    proxy_call_foreign_function: function () {},
 });
