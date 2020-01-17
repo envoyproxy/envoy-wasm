@@ -159,7 +159,7 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<2>* f) {
   auto plugin = this;
-  if (function_name == "proxy_on_start") {
+  if (function_name == "proxy_on_vm_start") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word configuration_size) {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onStart(context_id.u64_, configuration_size.u64_));
@@ -323,8 +323,8 @@ bool NullPlugin::validateConfiguration(uint64_t root_context_id, uint64_t config
 }
 
 bool NullPlugin::onStart(uint64_t root_context_id, uint64_t vm_configuration_size) {
-  if (registry_->proxy_on_start_) {
-    return registry_->proxy_on_start_(root_context_id, vm_configuration_size);
+  if (registry_->proxy_on_vm_start_) {
+    return registry_->proxy_on_vm_start_(root_context_id, vm_configuration_size);
   }
   return getRootContext(root_context_id)->onStart(vm_configuration_size) != 0;
 }

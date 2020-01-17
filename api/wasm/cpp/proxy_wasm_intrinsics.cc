@@ -112,8 +112,8 @@ RootContext* getRoot(StringView root_id) {
   return nullptr;
 }
 
-extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_start(uint32_t root_context_id,
-                                                        uint32_t vm_configuration_size) {
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_vm_start(uint32_t root_context_id,
+                                                           uint32_t vm_configuration_size) {
   return getRootContext(root_context_id)->onStart(vm_configuration_size);
 }
 

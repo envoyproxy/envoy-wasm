@@ -1056,10 +1056,11 @@ bool Context::onStart(absl::string_view vm_configuration, PluginSharedPtr plugin
     wasm_->on_context_create_(this, id_, 0);
     plugin_.reset();
   }
-  if (wasm_->on_start_) {
+  if (wasm_->on_vm_start_) {
     configuration_ = vm_configuration;
     plugin_ = plugin;
-    result = wasm_->on_start_(this, id_, static_cast<uint32_t>(vm_configuration.size())).u64_ != 0;
+    result =
+        wasm_->on_vm_start_(this, id_, static_cast<uint32_t>(vm_configuration.size())).u64_ != 0;
     plugin_.reset();
     configuration_ = "";
   }

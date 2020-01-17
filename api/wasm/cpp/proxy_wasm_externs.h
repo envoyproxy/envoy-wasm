@@ -128,7 +128,7 @@ extern "C" WasmResult proxy_set_effective_context(uint32_t effective_context_id)
 extern "C" WasmResult proxy_done();
 
 // Calls in.
-extern "C" uint32_t proxy_on_start(uint32_t root_context_id, uint32_t configuration_size);
+extern "C" uint32_t proxy_on_vm_start(uint32_t root_context_id, uint32_t configuration_size);
 extern "C" uint32_t proxy_validate_configuration(uint32_t root_context_id,
                                                  uint32_t configuration_size);
 extern "C" uint32_t proxy_on_configure(uint32_t root_context_id, uint32_t configuration_size);

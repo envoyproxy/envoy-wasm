@@ -153,11 +153,11 @@ TEST_P(WasmTest, Segv) {
   if (GetParam() == "v8") {
     EXPECT_THROW_WITH_MESSAGE(
         wasm->startForTesting(std::move(context), plugin), Extensions::Common::Wasm::WasmException,
-        "Function: proxy_on_start failed: Uncaught RuntimeError: unreachable");
+        "Function: proxy_on_vm_start failed: Uncaught RuntimeError: unreachable");
   } else if (GetParam() == "wavm") {
     EXPECT_THROW_WITH_REGEX(wasm->startForTesting(std::move(context), plugin),
                             Extensions::Common::Wasm::WasmException,
-                            "Function: proxy_on_start failed: wavm.reachedUnreachable.*");
+                            "Function: proxy_on_vm_start failed: wavm.reachedUnreachable.*");
   } else {
     ASSERT_FALSE(true); // Neither of the above was matched.
   }

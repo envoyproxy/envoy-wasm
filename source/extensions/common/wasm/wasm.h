@@ -193,7 +193,7 @@ private:
 
   // Calls into the VM.
   WasmCallWord<2> validate_configuration_;
-  WasmCallWord<2> on_start_;
+  WasmCallWord<2> on_vm_start_;
   WasmCallWord<2> on_configure_;
   WasmCallVoid<1> on_tick_;
 
