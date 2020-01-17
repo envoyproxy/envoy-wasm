@@ -65,7 +65,7 @@ void grpc_service1000_test() {
   }
 }
 
-WASM_EXPORT(uint32_t, proxy_on_start, (uint32_t, uint32_t)) {
+WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t)) {
   const char* configuration_ptr = nullptr;
   size_t size;
   proxy_get_configuration(&configuration_ptr, &size);
