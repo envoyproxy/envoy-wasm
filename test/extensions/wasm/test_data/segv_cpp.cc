@@ -5,7 +5,7 @@
 
 static int* badptr = nullptr;
 
-extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_start(uint32_t, uint32_t) {
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_vm_start(uint32_t, uint32_t) {
   logError("before badptr");
   *badptr = 1;
   logError("after badptr");

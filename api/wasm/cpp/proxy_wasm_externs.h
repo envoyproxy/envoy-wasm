@@ -128,7 +128,7 @@ extern "C" WasmResult proxy_set_effective_context(uint32_t effective_context_id)
 extern "C" WasmResult proxy_done();
 
 // Calls in.
-extern "C" uint32_t proxy_on_start(uint32_t root_context_id, uint32_t configuration_size);
+extern "C" uint32_t proxy_on_vm_start(uint32_t root_context_id, uint32_t configuration_size);
 extern "C" uint32_t proxy_validate_configuration(uint32_t root_context_id,
                                                  uint32_t configuration_size);
 extern "C" uint32_t proxy_on_configure(uint32_t root_context_id, uint32_t configuration_size);
@@ -136,7 +136,7 @@ extern "C" void proxy_on_tick(uint32_t root_context_id);
 extern "C" void proxy_on_queue_ready(uint32_t root_context_id, uint32_t token);
 
 // Stream calls.
-extern "C" void proxy_on_create(uint32_t context_id, uint32_t root_context_id);
+extern "C" void proxy_on_context_create(uint32_t context_id, uint32_t parent_context_id);
 extern "C" FilterHeadersStatus proxy_on_request_headers(uint32_t context_id, uint32_t headers);
 extern "C" FilterDataStatus proxy_on_request_body(uint32_t context_id, uint32_t body_buffer_length,
                                                   uint32_t end_of_stream);

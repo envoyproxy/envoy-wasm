@@ -200,11 +200,11 @@ void Wasm::getFunctions() {
 
 #define _GET_PROXY(_fn) wasm_vm_->getFunction("proxy_" #_fn, &_fn##_);
   _GET_PROXY(validate_configuration);
-  _GET_PROXY(on_start);
+  _GET_PROXY(on_vm_start);
   _GET_PROXY(on_configure);
   _GET_PROXY(on_tick);
 
-  _GET_PROXY(on_create);
+  _GET_PROXY(on_context_create);
 
   _GET_PROXY(on_new_connection);
   _GET_PROXY(on_downstream_data);

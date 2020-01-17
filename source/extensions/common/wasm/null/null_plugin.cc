@@ -65,10 +65,10 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<1>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f) {
   auto plugin = this;
-  if (function_name == "proxy_on_create") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word root_context_id) {
+  if (function_name == "proxy_on_context_create") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word parent_context_id) {
       SaveRestoreContext saved_context(context);
-      plugin->onCreate(context_id.u64_, root_context_id.u64_);
+      plugin->onCreate(context_id.u64_, parent_context_id.u64_);
     };
   } else if (function_name == "proxy_on_downstream_connection_close") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word peer_type) {
@@ -159,7 +159,7 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<1>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallWord<2>* f) {
   auto plugin = this;
-  if (function_name == "proxy_on_start") {
+  if (function_name == "proxy_on_vm_start") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word configuration_size) {
       SaveRestoreContext saved_context(context);
       return Word(plugin->onStart(context_id.u64_, configuration_size.u64_));
@@ -323,14 +323,10 @@ bool NullPlugin::validateConfiguration(uint64_t root_context_id, uint64_t config
 }
 
 bool NullPlugin::onStart(uint64_t root_context_id, uint64_t vm_configuration_size) {
-  if (registry_->proxy_on_start_) {
-    return registry_->proxy_on_start_(root_context_id, vm_configuration_size);
+  if (registry_->proxy_on_vm_start_) {
+    return registry_->proxy_on_vm_start_(root_context_id, vm_configuration_size);
   }
-  auto context = ensureRootContext(root_context_id);
-  if (!context) {
-    return false;
-  }
-  return context->onStart(vm_configuration_size) != 0;
+  return getRootContext(root_context_id)->onStart(vm_configuration_size) != 0;
 }
 
 bool NullPlugin::onConfigure(uint64_t root_context_id, uint64_t plugin_configuration_size) {
@@ -347,8 +343,16 @@ void NullPlugin::onTick(uint64_t root_context_id) {
   getRootContext(root_context_id)->onTick();
 }
 
-void NullPlugin::onCreate(uint64_t context_id, uint64_t root_context_id) {
-  ensureContext(context_id, root_context_id)->onCreate();
+void NullPlugin::onCreate(uint64_t context_id, uint64_t parent_context_id) {
+  if (registry_->proxy_on_context_create_) {
+    registry_->proxy_on_context_create_(context_id, parent_context_id);
+    return;
+  }
+  if (parent_context_id) {
+    ensureContext(context_id, parent_context_id)->onCreate();
+  } else {
+    ensureRootContext(context_id)->onCreate();
+  }
 }
 
 uint64_t NullPlugin::onNewConnection(uint64_t context_id) {
