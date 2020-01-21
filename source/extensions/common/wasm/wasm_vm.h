@@ -124,7 +124,11 @@ using WasmCallback_dd = double (*)(void*, double);
                       _f(WasmCallback_WWl) _f(WasmCallback_WWlWW) _f(WasmCallback_WWm)             \
                           _f(WasmCallback_dd)
 
-enum class Cloneable { NotCloneable, CompiledBytecode, InstantiatedModule };
+enum class Cloneable {
+  NotCloneable,      // VMs can not be cloned and should be created from scratch.
+  CompiledBytecode,  // VMs can be cloned with compiled bytecode.
+  InstantiatedModule // VMs can be cloned from an instantiated module.
+};
 
 // Wasm VM instance. Provides the low level WASM interface.
 class WasmVm : public Logger::Loggable<Logger::Id::wasm> {
@@ -145,7 +149,7 @@ public:
    * compilation. Then, if cloning is supported, we clone that VM for each worker, potentially
    * copying and sharing the initialized data structures for efficiency. Otherwise we create an new
    * VM from scratch for each worker.
-   * @return true if the VM is cloneable.
+   * @return one of enum Cloneable with the VMs cloneability.
    */
   virtual Cloneable cloneable() PURE;
 
@@ -297,7 +301,7 @@ struct SaveRestoreContext {
 };
 
 // Create a new low-level WASM VM using runtime of the given type (e.g. "envoy.wasm.runtime.wavm").
-WasmVmPtr createWasmVm(absl::string_view runtime, Stats::ScopeSharedPtr scope);
+WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& scope);
 
 } // namespace Wasm
 } // namespace Common

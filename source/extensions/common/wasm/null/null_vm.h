@@ -24,11 +24,9 @@ extern VmGlobalStats global_stats_;
 // and linked directly into the Envoy process. This is useful for development
 // in that it permits the debugger to set breakpoints in both Envoy and the plugin.
 struct NullVm : public WasmVmBase {
-  NullVm(Stats::ScopeSharedPtr scope)
-      : WasmVmBase(scope, &global_stats_, WasmRuntimeNames::get().Null) {}
+  NullVm(const Stats::ScopeSharedPtr& scope) : WasmVmBase(scope, WasmRuntimeNames::get().Null) {}
   NullVm(const NullVm& other)
-      : WasmVmBase(other.scope_, &global_stats_, WasmRuntimeNames::get().Null),
-        plugin_name_(other.plugin_name_) {}
+      : WasmVmBase(other.scope_, WasmRuntimeNames::get().Null), plugin_name_(other.plugin_name_) {}
 
   // WasmVm
   absl::string_view runtime() override { return WasmRuntimeNames::get().Null; }
