@@ -1,5 +1,7 @@
 #pragma once
 
+#include "envoy/config/typed_config.h"
+
 #include "extensions/common/wasm/wasm_vm.h"
 
 namespace Envoy {
@@ -26,16 +28,14 @@ public:
  * Pseudo-WASM plugins using the NullVM should implement this factory and register via
  * Registry::registerFactory or the convenience class RegisterFactory.
  */
-class NullVmPluginFactory {
+class NullVmPluginFactory : public Config::UntypedFactory {
 public:
   virtual ~NullVmPluginFactory() = default;
 
   /**
    * Name of the plugin.
    */
-  virtual const std::string name() const PURE;
-
-  static std::string category() { return "null_vm_plugins"; }
+  std::string category() const override { return "envoy.wasm.null_vms"; }
 
   /**
    * Create an instance of the plugin.

@@ -7,7 +7,7 @@
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/exception.h"
-#include "envoy/config/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3alpha/wasm.pb.validate.h"
 #include "envoy/http/filter.h"
 #include "envoy/server/wasm.h"
 #include "envoy/stats/scope.h"
@@ -47,6 +47,11 @@ namespace Wasm {
 struct WasmStats {
   ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
 };
+
+using VmConfig = envoy::config::wasm::v3alpha::VmConfig;
+
+using WasmForeignFunction =
+    std::function<WasmResult(Wasm&, absl::string_view, std::function<void*(size_t size)>)>;
 
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
 class Wasm : public Logger::Loggable<Logger::Id::wasm>, public std::enable_shared_from_this<Wasm> {
@@ -109,6 +114,8 @@ public:
   bool copyToPointerSize(const Buffer::Instance& buffer, uint64_t start, uint64_t length,
                          uint64_t ptr_ptr, uint64_t size_ptr);
   template <typename T> bool setDatatype(uint64_t ptr, const T& t);
+
+  WasmForeignFunction getForeignFunction(absl::string_view function_name);
 
   // For testing.
   void setContext(Context* context) { contexts_[context->id()] = context; }
@@ -191,11 +198,11 @@ private:
 
   // Calls into the VM.
   WasmCallWord<2> validate_configuration_;
-  WasmCallWord<2> on_start_;
+  WasmCallWord<2> on_vm_start_;
   WasmCallWord<2> on_configure_;
   WasmCallVoid<1> on_tick_;
 
-  WasmCallVoid<2> on_create_;
+  WasmCallVoid<2> on_context_create_;
 
   WasmCallWord<1> on_new_connection_;
   WasmCallWord<3> on_downstream_data_;
@@ -250,6 +257,9 @@ private:
   absl::flat_hash_map<uint32_t, Stats::Counter*> counters_;
   absl::flat_hash_map<uint32_t, Stats::Gauge*> gauges_;
   absl::flat_hash_map<uint32_t, Stats::Histogram*> histograms_;
+
+  // Foreign Functions.
+  absl::flat_hash_map<std::string, WasmForeignFunction> foreign_functions_;
 };
 using WasmSharedPtr = std::shared_ptr<Wasm>;
 
@@ -277,7 +287,7 @@ using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 
 // Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
 // be shared by APIs (e.g. HTTP Filter + AccessLog).
-void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin_config,
+void createWasm(const VmConfig& vm_config, PluginSharedPtr plugin_config,
                 Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
@@ -288,10 +298,9 @@ WasmHandleSharedPtr createThreadLocalWasm(WasmHandle& base_wasm_handle, PluginSh
                                           absl::string_view configuration,
                                           Event::Dispatcher& dispatcher);
 
-void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
-                          PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
-                          Event::Dispatcher& dispatcher, Api::Api& api,
+void createWasmForTesting(const VmConfig& vm_config, PluginSharedPtr plugin,
+                          Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+                          Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
                           std::unique_ptr<Context> root_context_for_testing,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                           CreateWasmCallback&& cb);

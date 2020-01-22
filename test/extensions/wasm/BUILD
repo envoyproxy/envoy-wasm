@@ -51,7 +51,7 @@ envoy_extension_cc_test(
         "//test/mocks/thread_local:thread_local_mocks",
         "//test/mocks/upstream:upstream_mocks",
         "//test/test_common:environment_lib",
-        "@envoy_api//envoy/config/wasm/v2:pkg_cc_proto",
+        "@envoy_api//envoy/config/wasm/v3alpha:pkg_cc_proto",
     ],
 )
 
@@ -71,8 +71,8 @@ envoy_extension_cc_test_binary(
         "//source/common/stats:isolated_store_lib",
         "//source/common/stats:stats_lib",
         "//source/extensions/common/wasm:wasm_lib",
-        "//source/extensions/common/wasm/null/sample_plugin:plugin",
         "//source/extensions/wasm:config",
+        "//test/extensions/wasm/test_data:speed_cpp_plugin",
         "//test/mocks/server:server_mocks",
         "//test/mocks/upstream:upstream_mocks",
         "//test/test_common:environment_lib",

@@ -55,6 +55,7 @@ envoy_cc_library(
     hdrs = [
         "context.h",
         "exports.h",
+        "foreign.h",
         "wasm.h",
     ],
     deps = [
@@ -70,7 +71,7 @@ envoy_cc_library(
         "//source/extensions/filters/common/expr:evaluator_lib",
         "//source/extensions/filters/http:well_known_names",
         "@com_google_cel_cpp//eval/public:activation",
-        "@envoy_api//envoy/config/wasm/v2:pkg_cc_proto",
+        "@envoy_api//envoy/config/wasm/v3alpha:pkg_cc_proto",
     ],
 )
 
@@ -93,6 +94,7 @@ envoy_cc_library(
     srcs = [
         "context.cc",
         "exports.cc",
+        "foreign.cc",
         "wasm.cc",
     ],
     deps = [
@@ -117,6 +119,6 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/public:cel_value",
         "@com_google_cel_cpp//eval/public:value_export_util",
         "@com_google_cel_cpp//parser",
-        "@envoy_api//envoy/config/wasm/v2:pkg_cc_proto",
+        "@envoy_api//envoy/config/wasm/v3alpha:pkg_cc_proto",
     ],
 )

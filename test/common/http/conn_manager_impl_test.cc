@@ -7,7 +7,10 @@
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/event/dispatcher.h"
+#include "envoy/extensions/filters/network/http_connection_manager/v3alpha/http_connection_manager.pb.h"
 #include "envoy/tracing/http_tracer.h"
+#include "envoy/type/tracing/v2/custom_tag.pb.h"
+#include "envoy/type/v3alpha/percent.pb.h"
 
 #include "common/access_log/access_log_formatter.h"
 #include "common/access_log/access_log_impl.h"
@@ -120,11 +123,11 @@ public:
     conn_manager_->initializeReadFilterCallbacks(filter_callbacks_);
 
     if (tracing) {
-      envoy::type::FractionalPercent percent1;
+      envoy::type::v3alpha::FractionalPercent percent1;
       percent1.set_numerator(100);
-      envoy::type::FractionalPercent percent2;
+      envoy::type::v3alpha::FractionalPercent percent2;
       percent2.set_numerator(10000);
-      percent2.set_denominator(envoy::type::FractionalPercent::TEN_THOUSAND);
+      percent2.set_denominator(envoy::type::v3alpha::FractionalPercent::TEN_THOUSAND);
       tracing_config_ = std::make_unique<TracingConnectionManagerConfig>(
           TracingConnectionManagerConfig{Tracing::OperationName::Ingress,
                                          {{":method", requestHeaderCustomTag(":method")}},
@@ -136,35 +139,40 @@ public:
     }
   }
 
-  void setupFilterChain(int num_decoder_filters, int num_encoder_filters) {
+  void setupFilterChain(int num_decoder_filters, int num_encoder_filters, int num_requests = 1) {
     // NOTE: The length/repetition in this routine allows InSequence to work correctly in an outer
     // scope.
-    for (int i = 0; i < num_decoder_filters; i++) {
+    for (int i = 0; i < num_decoder_filters * num_requests; i++) {
       decoder_filters_.push_back(new MockStreamDecoderFilter());
     }
 
-    for (int i = 0; i < num_encoder_filters; i++) {
+    for (int i = 0; i < num_encoder_filters * num_requests; i++) {
       encoder_filters_.push_back(new MockStreamEncoderFilter());
     }
 
-    EXPECT_CALL(filter_factory_, createFilterChain(_))
-        .WillOnce(Invoke([num_decoder_filters, num_encoder_filters,
-                          this](FilterChainFactoryCallbacks& callbacks) -> void {
-          for (int i = 0; i < num_decoder_filters; i++) {
-            callbacks.addStreamDecoderFilter(StreamDecoderFilterSharedPtr{decoder_filters_[i]});
-          }
+    InSequence s;
+    for (int req = 0; req < num_requests; req++) {
+      EXPECT_CALL(filter_factory_, createFilterChain(_))
+          .WillOnce(Invoke([num_decoder_filters, num_encoder_filters, req,
+                            this](FilterChainFactoryCallbacks& callbacks) -> void {
+            for (int i = 0; i < num_decoder_filters; i++) {
+              callbacks.addStreamDecoderFilter(
+                  StreamDecoderFilterSharedPtr{decoder_filters_[req * num_decoder_filters + i]});
+            }
 
-          for (int i = 0; i < num_encoder_filters; i++) {
-            callbacks.addStreamEncoderFilter(StreamEncoderFilterSharedPtr{encoder_filters_[i]});
-          }
-        }));
+            for (int i = 0; i < num_encoder_filters; i++) {
+              callbacks.addStreamEncoderFilter(
+                  StreamEncoderFilterSharedPtr{encoder_filters_[req * num_encoder_filters + i]});
+            }
+          }));
 
-    for (int i = 0; i < num_decoder_filters; i++) {
-      EXPECT_CALL(*decoder_filters_[i], setDecoderFilterCallbacks(_));
-    }
+      for (int i = 0; i < num_decoder_filters; i++) {
+        EXPECT_CALL(*decoder_filters_[req * num_decoder_filters + i], setDecoderFilterCallbacks(_));
+      }
 
-    for (int i = 0; i < num_encoder_filters; i++) {
-      EXPECT_CALL(*encoder_filters_[i], setEncoderFilterCallbacks(_));
+      for (int i = 0; i < num_encoder_filters; i++) {
+        EXPECT_CALL(*encoder_filters_[req * num_encoder_filters + i], setEncoderFilterCallbacks(_));
+      }
     }
   }
 
@@ -801,11 +809,11 @@ TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlow) {
   // No decorator.
   EXPECT_CALL(*route_config_provider_.route_config_->route_, decorator())
       .WillRepeatedly(Return(nullptr));
-  envoy::type::FractionalPercent percent1;
+  envoy::type::v3alpha::FractionalPercent percent1;
   percent1.set_numerator(100);
-  envoy::type::FractionalPercent percent2;
+  envoy::type::v3alpha::FractionalPercent percent2;
   percent2.set_numerator(10000);
-  percent2.set_denominator(envoy::type::FractionalPercent::TEN_THOUSAND);
+  percent2.set_denominator(envoy::type::v3alpha::FractionalPercent::TEN_THOUSAND);
 
   struct TracingTagMetaSuite {
     using Factory =
@@ -895,8 +903,9 @@ TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlow) {
   }
   // Verify if the activeSpan interface returns reference to the current span.
   EXPECT_CALL(*span, setTag(Eq("service-cluster"), Eq("scoobydoo")));
-  EXPECT_CALL(runtime_.snapshot_, featureEnabled("tracing.global_enabled",
-                                                 An<const envoy::type::FractionalPercent&>(), _))
+  EXPECT_CALL(runtime_.snapshot_,
+              featureEnabled("tracing.global_enabled",
+                             An<const envoy::type::v3alpha::FractionalPercent&>(), _))
       .WillOnce(Return(true));
   EXPECT_CALL(*span, setOperation(_)).Times(0);
 
@@ -961,8 +970,9 @@ TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlowIngressDecorat
           [&](const Tracing::Span& apply_to_span) -> void { EXPECT_EQ(span, &apply_to_span); }));
   EXPECT_CALL(*span, finishSpan());
   EXPECT_CALL(*span, setTag(_, _)).Times(testing::AnyNumber());
-  EXPECT_CALL(runtime_.snapshot_, featureEnabled("tracing.global_enabled",
-                                                 An<const envoy::type::FractionalPercent&>(), _))
+  EXPECT_CALL(runtime_.snapshot_,
+              featureEnabled("tracing.global_enabled",
+                             An<const envoy::type::v3alpha::FractionalPercent&>(), _))
       .WillOnce(Return(true));
   EXPECT_CALL(*span, setOperation(_)).Times(0);
 
@@ -1024,8 +1034,9 @@ TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlowIngressDecorat
           [&](const Tracing::Span& apply_to_span) -> void { EXPECT_EQ(span, &apply_to_span); }));
   EXPECT_CALL(*span, finishSpan());
   EXPECT_CALL(*span, setTag(_, _)).Times(testing::AnyNumber());
-  EXPECT_CALL(runtime_.snapshot_, featureEnabled("tracing.global_enabled",
-                                                 An<const envoy::type::FractionalPercent&>(), _))
+  EXPECT_CALL(runtime_.snapshot_,
+              featureEnabled("tracing.global_enabled",
+                             An<const envoy::type::v3alpha::FractionalPercent&>(), _))
       .WillOnce(Return(true));
   EXPECT_CALL(*span, setOperation(Eq("testOp")));
 
@@ -1073,11 +1084,11 @@ TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlowIngressDecorat
 
 TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlowEgressDecorator) {
   setup(false, "");
-  envoy::type::FractionalPercent percent1;
+  envoy::type::v3alpha::FractionalPercent percent1;
   percent1.set_numerator(100);
-  envoy::type::FractionalPercent percent2;
+  envoy::type::v3alpha::FractionalPercent percent2;
   percent2.set_numerator(10000);
-  percent2.set_denominator(envoy::type::FractionalPercent::TEN_THOUSAND);
+  percent2.set_denominator(envoy::type::v3alpha::FractionalPercent::TEN_THOUSAND);
   tracing_config_ = std::make_unique<TracingConnectionManagerConfig>(
       TracingConnectionManagerConfig{Tracing::OperationName::Egress,
                                      {{":method", requestHeaderCustomTag(":method")}},
@@ -1103,8 +1114,9 @@ TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlowEgressDecorato
           [&](const Tracing::Span& apply_to_span) -> void { EXPECT_EQ(span, &apply_to_span); }));
   EXPECT_CALL(*span, finishSpan());
   EXPECT_CALL(*span, setTag(_, _)).Times(testing::AnyNumber());
-  EXPECT_CALL(runtime_.snapshot_, featureEnabled("tracing.global_enabled",
-                                                 An<const envoy::type::FractionalPercent&>(), _))
+  EXPECT_CALL(runtime_.snapshot_,
+              featureEnabled("tracing.global_enabled",
+                             An<const envoy::type::v3alpha::FractionalPercent&>(), _))
       .WillOnce(Return(true));
   EXPECT_CALL(*span, setOperation(_)).Times(0);
 
@@ -1152,11 +1164,11 @@ TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlowEgressDecorato
 
 TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlowEgressDecoratorOverrideOp) {
   setup(false, "");
-  envoy::type::FractionalPercent percent1;
+  envoy::type::v3alpha::FractionalPercent percent1;
   percent1.set_numerator(100);
-  envoy::type::FractionalPercent percent2;
+  envoy::type::v3alpha::FractionalPercent percent2;
   percent2.set_numerator(10000);
-  percent2.set_denominator(envoy::type::FractionalPercent::TEN_THOUSAND);
+  percent2.set_denominator(envoy::type::v3alpha::FractionalPercent::TEN_THOUSAND);
   tracing_config_ = std::make_unique<TracingConnectionManagerConfig>(
       TracingConnectionManagerConfig{Tracing::OperationName::Egress,
                                      {{":method", requestHeaderCustomTag(":method")}},
@@ -1182,8 +1194,9 @@ TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlowEgressDecorato
           [&](const Tracing::Span& apply_to_span) -> void { EXPECT_EQ(span, &apply_to_span); }));
   EXPECT_CALL(*span, finishSpan());
   EXPECT_CALL(*span, setTag(_, _)).Times(testing::AnyNumber());
-  EXPECT_CALL(runtime_.snapshot_, featureEnabled("tracing.global_enabled",
-                                                 An<const envoy::type::FractionalPercent&>(), _))
+  EXPECT_CALL(runtime_.snapshot_,
+              featureEnabled("tracing.global_enabled",
+                             An<const envoy::type::v3alpha::FractionalPercent&>(), _))
       .WillOnce(Return(true));
   // Verify that span operation overridden by value supplied in response header.
   EXPECT_CALL(*span, setOperation(Eq("testOp")));
@@ -1226,11 +1239,11 @@ TEST_F(HttpConnectionManagerImplTest, StartAndFinishSpanNormalFlowEgressDecorato
 TEST_F(HttpConnectionManagerImplTest,
        StartAndFinishSpanNormalFlowEgressDecoratorOverrideOpNoActiveSpan) {
   setup(false, "");
-  envoy::type::FractionalPercent percent1;
+  envoy::type::v3alpha::FractionalPercent percent1;
   percent1.set_numerator(100);
-  envoy::type::FractionalPercent percent2;
+  envoy::type::v3alpha::FractionalPercent percent2;
   percent2.set_numerator(10000);
-  percent2.set_denominator(envoy::type::FractionalPercent::TEN_THOUSAND);
+  percent2.set_denominator(envoy::type::v3alpha::FractionalPercent::TEN_THOUSAND);
   tracing_config_ = std::make_unique<TracingConnectionManagerConfig>(
       TracingConnectionManagerConfig{Tracing::OperationName::Egress,
                                      {{":method", requestHeaderCustomTag(":method")}},
@@ -1240,8 +1253,9 @@ TEST_F(HttpConnectionManagerImplTest,
                                      false,
                                      256});
 
-  EXPECT_CALL(runtime_.snapshot_, featureEnabled("tracing.global_enabled",
-                                                 An<const envoy::type::FractionalPercent&>(), _))
+  EXPECT_CALL(runtime_.snapshot_,
+              featureEnabled("tracing.global_enabled",
+                             An<const envoy::type::v3alpha::FractionalPercent&>(), _))
       .WillOnce(Return(false));
   std::shared_ptr<MockStreamDecoderFilter> filter(new NiceMock<MockStreamDecoderFilter>());
 
@@ -1514,7 +1528,8 @@ TEST_F(HttpConnectionManagerImplTest, DoNotStartSpanIfTracingIsNotEnabled) {
 
   EXPECT_CALL(tracer_, startSpan_(_, _, _, _)).Times(0);
   ON_CALL(runtime_.snapshot_,
-          featureEnabled("tracing.global_enabled", An<const envoy::type::FractionalPercent&>(), _))
+          featureEnabled("tracing.global_enabled",
+                         An<const envoy::type::v3alpha::FractionalPercent&>(), _))
       .WillByDefault(Return(true));
 
   std::shared_ptr<MockStreamDecoderFilter> filter(new NiceMock<MockStreamDecoderFilter>());
@@ -2608,8 +2623,9 @@ TEST_F(HttpConnectionManagerImplTest, FrameFloodErrorWithLog) {
     throw FrameFloodException("too many outbound frames.");
   }));
 
-  EXPECT_CALL(runtime_.snapshot_, featureEnabled("http.connection_manager.log_flood_exception",
-                                                 Matcher<const envoy::type::FractionalPercent&>(_)))
+  EXPECT_CALL(runtime_.snapshot_,
+              featureEnabled("http.connection_manager.log_flood_exception",
+                             Matcher<const envoy::type::v3alpha::FractionalPercent&>(_)))
       .WillOnce(Return(true));
 
   EXPECT_CALL(response_encoder_.stream_, removeCallbacks(_));
@@ -5058,6 +5074,87 @@ TEST_F(HttpConnectionManagerImplTest, HeaderOnlyRequestAndResponseUsingHttp3) {
   filter_callbacks_.connection_.dispatcher_.clearDeferredDeleteList();
   conn_manager_.reset();
   EXPECT_EQ(0U, stats_.named_.downstream_cx_http3_active_.value());
+}
+
+namespace {
+
+class SimpleType : public StreamInfo::FilterState::Object {
+public:
+  SimpleType(int value) : value_(value) {}
+  int access() const { return value_; }
+
+private:
+  int value_;
+};
+
+} // namespace
+
+TEST_F(HttpConnectionManagerImplTest, ConnectionFilterState) {
+  setup(false, "envoy-custom-server", false);
+
+  setupFilterChain(1, 0, /* num_requests = */ 3);
+
+  EXPECT_CALL(*codec_, dispatch(_)).Times(2).WillRepeatedly(Invoke([&](Buffer::Instance&) -> void {
+    StreamDecoder* decoder = &conn_manager_->newStream(response_encoder_);
+    HeaderMapPtr headers{
+        new TestHeaderMapImpl{{":authority", "host"}, {":path", "/"}, {":method", "GET"}}};
+    decoder->decodeHeaders(std::move(headers), true);
+  }));
+  {
+    InSequence s;
+    EXPECT_CALL(*decoder_filters_[0], decodeHeaders(_, true))
+        .WillOnce(Invoke([this](HeaderMap&, bool) -> FilterHeadersStatus {
+          decoder_filters_[0]->callbacks_->streamInfo().filterState().setData(
+              "per_filter_chain", std::make_unique<SimpleType>(1),
+              StreamInfo::FilterState::StateType::ReadOnly,
+              StreamInfo::FilterState::LifeSpan::FilterChain);
+          decoder_filters_[0]->callbacks_->streamInfo().filterState().setData(
+              "per_downstream_request", std::make_unique<SimpleType>(2),
+              StreamInfo::FilterState::StateType::ReadOnly,
+              StreamInfo::FilterState::LifeSpan::DownstreamRequest);
+          decoder_filters_[0]->callbacks_->streamInfo().filterState().setData(
+              "per_downstream_connection", std::make_unique<SimpleType>(3),
+              StreamInfo::FilterState::StateType::ReadOnly,
+              StreamInfo::FilterState::LifeSpan::DownstreamConnection);
+          return FilterHeadersStatus::StopIteration;
+        }));
+    EXPECT_CALL(*decoder_filters_[1], decodeHeaders(_, true))
+        .WillOnce(Invoke([this](HeaderMap&, bool) -> FilterHeadersStatus {
+          EXPECT_FALSE(
+              decoder_filters_[1]->callbacks_->streamInfo().filterState().hasData<SimpleType>(
+                  "per_filter_chain"));
+          EXPECT_TRUE(
+              decoder_filters_[1]->callbacks_->streamInfo().filterState().hasData<SimpleType>(
+                  "per_downstream_request"));
+          EXPECT_TRUE(
+              decoder_filters_[1]->callbacks_->streamInfo().filterState().hasData<SimpleType>(
+                  "per_downstream_connection"));
+          return FilterHeadersStatus::StopIteration;
+        }));
+    EXPECT_CALL(*decoder_filters_[2], decodeHeaders(_, true))
+        .WillOnce(Invoke([this](HeaderMap&, bool) -> FilterHeadersStatus {
+          EXPECT_FALSE(
+              decoder_filters_[2]->callbacks_->streamInfo().filterState().hasData<SimpleType>(
+                  "per_filter_chain"));
+          EXPECT_FALSE(
+              decoder_filters_[2]->callbacks_->streamInfo().filterState().hasData<SimpleType>(
+                  "per_downstream_request"));
+          EXPECT_TRUE(
+              decoder_filters_[2]->callbacks_->streamInfo().filterState().hasData<SimpleType>(
+                  "per_downstream_connection"));
+          return FilterHeadersStatus::StopIteration;
+        }));
+  }
+
+  EXPECT_CALL(*decoder_filters_[0], decodeComplete());
+  EXPECT_CALL(*decoder_filters_[0], onDestroy());
+  EXPECT_CALL(*decoder_filters_[1], decodeComplete());
+  EXPECT_CALL(*decoder_filters_[2], decodeComplete());
+
+  Buffer::OwnedImpl fake_input;
+  conn_manager_->onData(fake_input, false);
+  decoder_filters_[0]->callbacks_->recreateStream();
+  conn_manager_->onData(fake_input, false);
 }
 
 class HttpConnectionManagerImplDeathTest : public HttpConnectionManagerImplTest {

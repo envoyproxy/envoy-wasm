@@ -9,7 +9,7 @@
 #include <string>
 
 #include "envoy/common/exception.h"
-#include "envoy/config/wasm/v2/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3alpha/wasm.pb.validate.h"
 #include "envoy/grpc/status.h"
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"
@@ -27,6 +27,7 @@
 #include "common/http/utility.h"
 #include "common/tracing/http_tracer_impl.h"
 
+#include "extensions/common/wasm/foreign.h"
 #include "extensions/common/wasm/wasm_state.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/common/expr/context.h"
@@ -125,6 +126,8 @@ void Wasm::registerCallbacks() {
   _REGISTER_WASI(fd_close);
   _REGISTER_WASI(environ_get);
   _REGISTER_WASI(environ_sizes_get);
+  _REGISTER_WASI(args_get);
+  _REGISTER_WASI(args_sizes_get);
   _REGISTER_WASI(proc_exit);
 #undef _REGISTER_WASI
 
@@ -188,6 +191,7 @@ void Wasm::registerCallbacks() {
 
   _REGISTER_PROXY(set_effective_context);
   _REGISTER_PROXY(done);
+  _REGISTER_PROXY(call_foreign_function);
 #undef _REGISTER_PROXY
 }
 
@@ -202,11 +206,11 @@ void Wasm::getFunctions() {
 
 #define _GET_PROXY(_fn) wasm_vm_->getFunction("proxy_" #_fn, &_fn##_);
   _GET_PROXY(validate_configuration);
-  _GET_PROXY(on_start);
+  _GET_PROXY(on_vm_start);
   _GET_PROXY(on_configure);
   _GET_PROXY(on_tick);
 
-  _GET_PROXY(on_create);
+  _GET_PROXY(on_context_create);
 
   _GET_PROXY(on_new_connection);
   _GET_PROXY(on_downstream_data);
@@ -370,7 +374,7 @@ void Wasm::startForTesting(std::unique_ptr<Context> context, PluginSharedPtr plu
   }
   root_contexts_[""] = std::move(context);
   // Set the current plugin over the lifetime of the onConfigure call to the RootContext.
-  context_ptr->onStart("", plugin);
+  context_ptr->onStart(vm_configuration_, plugin);
 }
 
 void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {
@@ -457,8 +461,22 @@ void Wasm::queueReady(uint32_t root_context_id, uint32_t token) {
   it->second->onQueueReady(token);
 }
 
-static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_config,
-                               PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+WasmForeignFunction Wasm::getForeignFunction(absl::string_view function_name) {
+  auto it = foreign_functions_.find(function_name);
+  if (it != foreign_functions_.end()) {
+    return it->second;
+  }
+  auto factory = Registry::FactoryRegistry<ForeignFunctionFactory>::getFactory(function_name);
+  if (factory) {
+    auto f = factory->create();
+    foreign_functions_[function_name] = f;
+    return f;
+  }
+  return WasmForeignFunction();
+}
+
+static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin,
+                               Stats::ScopeSharedPtr scope,
                                Upstream::ClusterManager& cluster_manager,
                                Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                                Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
@@ -505,16 +523,16 @@ static void createWasmInternal(const envoy::config::wasm::v2::VmConfig& vm_confi
   }
 }
 
-void createWasm(const envoy::config::wasm::v2::VmConfig& vm_config, PluginSharedPtr plugin,
-                Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
-                Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
+void createWasm(const VmConfig& vm_config, PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
+                Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                Event::Dispatcher& dispatcher, Api::Api& api,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb) {
   createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, api,
                      nullptr /* root_context_for_testing */, remote_data_provider, std::move(cb));
 }
 
-void createWasmForTesting(const envoy::config::wasm::v2::VmConfig& vm_config,
+void createWasmForTesting(const envoy::config::wasm::v3alpha::VmConfig& vm_config,
                           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
                           Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
                           Event::Dispatcher& dispatcher, Api::Api& api,

@@ -18,6 +18,15 @@ RegisterContextFactory::RegisterContextFactory(ContextFactory context_factory,
     (*root_factories)[std::string(root_id)] = root_factory;
 }
 
+RegisterContextFactory::RegisterContextFactory(RootFactory root_factory, StringView root_id) {
+  if (!root_factories) {
+    root_factories = new std::unordered_map<std::string, RootFactory>;
+    context_factories = new std::unordered_map<std::string, ContextFactory>;
+  }
+  if (root_factory)
+    (*root_factories)[std::string(root_id)] = root_factory;
+}
+
 static Context* ensureContext(uint32_t context_id, uint32_t root_context_id) {
   auto e = context_map.insert(std::make_pair(context_id, nullptr));
   if (e.second) {
@@ -103,13 +112,9 @@ RootContext* getRoot(StringView root_id) {
   return nullptr;
 }
 
-extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_start(uint32_t root_context_id,
-                                                        uint32_t vm_configuration_size) {
-  auto context = ensureRootContext(root_context_id);
-  if (!context) {
-    return 0;
-  }
-  return context->onStart(vm_configuration_size);
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_vm_start(uint32_t root_context_id,
+                                                           uint32_t vm_configuration_size) {
+  return getRootContext(root_context_id)->onStart(vm_configuration_size);
 }
 
 extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_validate_configuration(uint32_t root_context_id,
@@ -126,9 +131,13 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_tick(uint32_t root_context_id) {
   getRootContext(root_context_id)->onTick();
 }
 
-extern "C" PROXY_WASM_KEEPALIVE void proxy_on_create(uint32_t context_id,
-                                                     uint32_t root_context_id) {
-  ensureContext(context_id, root_context_id)->onCreate();
+extern "C" PROXY_WASM_KEEPALIVE void proxy_on_context_create(uint32_t context_id,
+                                                             uint32_t parent_context_id) {
+  if (parent_context_id) {
+    ensureContext(context_id, parent_context_id)->onCreate();
+  } else {
+    ensureRootContext(context_id);
+  }
 }
 
 extern "C" PROXY_WASM_KEEPALIVE FilterStatus proxy_on_new_connection(uint32_t context_id) {

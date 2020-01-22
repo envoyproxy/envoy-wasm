@@ -330,8 +330,8 @@ public:
 
   Network::ConnectionBalancer& connectionBalancer() override { return connection_balancer_; }
 
-  envoy::api::v2::core::TrafficDirection direction() const override {
-    return envoy::api::v2::core::TrafficDirection::UNSPECIFIED;
+  envoy::config::core::v3alpha::TrafficDirection direction() const override {
+    return envoy::config::core::v3alpha::TrafficDirection::UNSPECIFIED;
   }
 
   //

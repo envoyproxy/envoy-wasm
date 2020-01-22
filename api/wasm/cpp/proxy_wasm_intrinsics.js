@@ -39,4 +39,5 @@ mergeInto(LibraryManager.library, {
     proxy_expr_create: function() {},
     proxy_expr_eval: function() {},
     proxy_expr_delete: function() {},
+    proxy_call_foreign_function: function () {},
 });

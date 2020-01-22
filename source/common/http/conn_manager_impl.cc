@@ -10,11 +10,14 @@
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
+#include "envoy/extensions/filters/network/http_connection_manager/v3alpha/http_connection_manager.pb.h"
 #include "envoy/network/drain_decision.h"
 #include "envoy/router/router.h"
 #include "envoy/ssl/connection.h"
 #include "envoy/stats/scope.h"
+#include "envoy/stream_info/filter_state.h"
 #include "envoy/tracing/http_tracer.h"
+#include "envoy/type/v3alpha/percent.pb.h"
 
 #include "common/buffer/buffer_impl.h"
 #include "common/common/assert.h"
@@ -308,7 +311,7 @@ Network::FilterStatus ConnectionManagerImpl::onData(Buffer::Instance& data, bool
       // level logging in the HCM, similar to what we have in tcp_proxy. This will allow abuse
       // indicators to be stored in the connection level stream info, and then matched, sampled,
       // etc. when logged.
-      const envoy::type::FractionalPercent default_value; // 0
+      const envoy::type::v3alpha::FractionalPercent default_value; // 0
       if (runtime_.snapshot().featureEnabled("http.connection_manager.log_flood_exception",
                                              default_value)) {
         ENVOY_CONN_LOG(warn, "downstream HTTP flood from IP '{}': {}",
@@ -379,6 +382,10 @@ void ConnectionManagerImpl::resetAllStreams(
     stream.onResetStream(StreamResetReason::ConnectionTermination, absl::string_view());
     if (response_flag.has_value()) {
       stream.stream_info_.setResponseFlag(response_flag.value());
+      if (*response_flag == StreamInfo::ResponseFlag::DownstreamProtocolError) {
+        stream.stream_info_.setResponseCodeDetails(
+            stream.response_encoder_->getStream().responseDetails());
+      }
     }
   }
 }
@@ -485,7 +492,8 @@ ConnectionManagerImpl::ActiveStream::ActiveStream(ConnectionManagerImpl& connect
       stream_id_(connection_manager.random_generator_.random()),
       request_response_timespan_(new Stats::HistogramCompletableTimespanImpl(
           connection_manager_.stats_.named_.downstream_rq_time_, connection_manager_.timeSource())),
-      stream_info_(connection_manager_.codec_->protocol(), connection_manager_.timeSource()),
+      stream_info_(connection_manager_.codec_->protocol(), connection_manager_.timeSource(),
+                   connection_manager.filterState()),
       upstream_options_(std::make_shared<Network::Socket::Options>()) {
   ASSERT(!connection_manager.config_.isRoutable() ||
              ((connection_manager.config_.routeConfigProvider() == nullptr &&
@@ -766,14 +774,8 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
     }
   }
 
-  // Make sure the host is valid.
-  if (Runtime::runtimeFeatureEnabled("envoy.reloadable_features.strict_authority_validation") &&
-      !HeaderUtility::authorityIsValid(request_headers_->Host()->value().getStringView())) {
-    sendLocalReply(Grpc::Common::hasGrpcContentType(*request_headers_), Code::BadRequest, "",
-                   nullptr, is_head_request_, absl::nullopt,
-                   StreamInfo::ResponseCodeDetails::get().InvalidAuthority);
-    return;
-  }
+  // Verify header sanity checks which should have been performed by the codec.
+  ASSERT(HeaderUtility::requestHeadersValid(*request_headers_).has_value() == false);
 
   // Currently we only support relative paths at the application layer. We expect the codec to have
   // broken the path into pieces if applicable. NOTE: Currently the HTTP/1.1 codec only does this
@@ -2244,6 +2246,17 @@ bool ConnectionManagerImpl::ActiveStreamDecoderFilter::recreateStream() {
   parent_.connection_manager_.doEndStream(this->parent_);
 
   StreamDecoder& new_stream = parent_.connection_manager_.newStream(*response_encoder, true);
+  // We don't need to copy over the old parent FilterState from the old StreamInfo if it did not
+  // store any objects with a LifeSpan at or above DownstreamRequest. This is to avoid unnecessary
+  // heap allocation.
+  if (parent_.stream_info_.filter_state_->hasDataAtOrAboveLifeSpan(
+          StreamInfo::FilterState::LifeSpan::DownstreamRequest)) {
+    (*parent_.connection_manager_.streams_.begin())->stream_info_.filter_state_ =
+        std::make_shared<StreamInfo::FilterStateImpl>(
+            parent_.stream_info_.filter_state_->parent(),
+            StreamInfo::FilterState::LifeSpan::FilterChain);
+  }
+
   new_stream.decodeHeaders(std::move(request_headers), true);
   return true;
 }
