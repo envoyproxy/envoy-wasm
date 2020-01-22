@@ -28,14 +28,14 @@ class WasmVm;
 using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
 using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::string>>;
 
-using GrpcService = envoy::config::core::v3alpha::GrpcService;
+using GrpcService = envoy::config::core::v3::GrpcService;
 
 // Plugin contains the information for a filter/service.
 struct Plugin {
   Plugin(absl::string_view name, absl::string_view root_id, absl::string_view vm_id,
-         envoy::config::core::v3alpha::TrafficDirection direction,
+         envoy::config::core::v3::TrafficDirection direction,
          const LocalInfo::LocalInfo& local_info,
-         const envoy::config::core::v3alpha::Metadata* listener_metadata)
+         const envoy::config::core::v3::Metadata* listener_metadata)
       : name_(std::string(name)), root_id_(std::string(root_id)), vm_id_(std::string(vm_id)),
         direction_(direction), local_info_(local_info), listener_metadata_(listener_metadata),
         log_prefix_(makeLogPrefix()) {}
@@ -45,9 +45,9 @@ struct Plugin {
   const std::string name_;
   const std::string root_id_;
   const std::string vm_id_;
-  envoy::config::core::v3alpha::TrafficDirection direction_;
+  envoy::config::core::v3::TrafficDirection direction_;
   const LocalInfo::LocalInfo& local_info_;
-  const envoy::config::core::v3alpha::Metadata* listener_metadata_;
+  const envoy::config::core::v3::Metadata* listener_metadata_;
 
   std::string log_prefix_;
 };

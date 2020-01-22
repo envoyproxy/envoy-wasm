@@ -48,7 +48,7 @@ public:
 
   void setupConfig(const std::string& code) {
     root_context_ = new TestRoot();
-    envoy::config::filter::network::wasm::v3alpha::Wasm proto_config;
+    envoy::extensions::filters::network::wasm::v3::Wasm proto_config;
     proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
     proto_config.mutable_config()->mutable_vm_config()->set_runtime(
         absl::StrCat("envoy.wasm.runtime.", GetParam()));
@@ -61,7 +61,7 @@ public:
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
         "", proto_config.config().root_id(), proto_config.config().vm_config().vm_id(),
-        envoy::config::core::v3alpha::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
+        envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
         dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
@@ -84,7 +84,7 @@ public:
   std::unique_ptr<TestFilter> filter_;
   NiceMock<Network::MockReadFilterCallbacks> read_filter_callbacks_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
-  envoy::config::core::v3alpha::Metadata listener_metadata_;
+  envoy::config::core::v3::Metadata listener_metadata_;
   TestRoot* root_context_ = nullptr;
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 }; // namespace Wasm

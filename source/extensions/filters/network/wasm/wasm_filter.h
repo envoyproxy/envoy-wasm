@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "envoy/config/filter/network/wasm/v3alpha/wasm.pb.validate.h"
+#include "envoy/extensions/filters/network/wasm/v3/wasm.pb.validate.h"
 #include "envoy/network/filter.h"
 #include "envoy/server/filter_config.h"
 #include "envoy/upstream/cluster_manager.h"
@@ -20,7 +20,7 @@ using Envoy::Extensions::Common::Wasm::WasmHandle;
 
 class FilterConfig : Logger::Loggable<Logger::Id::wasm> {
 public:
-  FilterConfig(const envoy::config::filter::network::wasm::v3alpha::Wasm& proto_config,
+  FilterConfig(const envoy::extensions::filters::network::wasm::v3::Wasm& proto_config,
                Server::Configuration::FactoryContext& context);
 
   std::shared_ptr<Context> createFilter() {

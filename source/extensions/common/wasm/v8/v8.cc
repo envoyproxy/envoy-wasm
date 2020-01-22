@@ -26,8 +26,6 @@ namespace Common {
 namespace Wasm {
 namespace V8 {
 
-VmGlobalStats global_stats_;
-
 wasm::Engine* engine() {
   // Enable Wasm optimizations.
   v8::internal::FLAG_wasm_opt = true;

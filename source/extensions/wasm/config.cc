@@ -16,12 +16,12 @@ namespace Wasm {
 
 static const std::string INLINE_STRING = "<inline>";
 
-void WasmFactory::createWasm(const envoy::config::wasm::v3alpha::WasmService& config,
+void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& config,
                              Server::Configuration::WasmFactoryContext& context,
                              Server::CreateWasmCallback&& cb) {
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      envoy::config::core::v3alpha::TrafficDirection::UNSPECIFIED, context.localInfo(), nullptr);
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.localInfo(), nullptr);
 
   auto callback = [&context, &config, plugin,
                    cb](std::shared_ptr<Common::Wasm::WasmHandle> base_wasm) {

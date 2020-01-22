@@ -37,14 +37,6 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "wasm_vm_base",
-    hdrs = ["wasm_vm_base.h"],
-    deps = [
-        "//source/common/stats:stats_lib",
-    ],
-)
-
-envoy_cc_library(
     name = "wasm_vm_lib",
     srcs = ["wasm_vm.cc"],
     deps = [
@@ -78,7 +70,7 @@ envoy_cc_library(
         "//source/common/stats:stats_lib",
         "//source/extensions/filters/http:well_known_names",
         "@com_google_cel_cpp//eval/public:activation",
-        "@envoy_api//envoy/config/wasm/v3alpha:pkg_cc_proto",
+        "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
     ],
 )
 
@@ -123,6 +115,6 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/eval:field_backed_map_impl",
         "@com_google_cel_cpp//eval/public:cel_value",
         "@com_google_cel_cpp//eval/public:value_export_util",
-        "@envoy_api//envoy/config/wasm/v3alpha:pkg_cc_proto",
+        "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
     ],
 )

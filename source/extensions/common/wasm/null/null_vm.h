@@ -18,8 +18,6 @@ namespace Common {
 namespace Wasm {
 namespace Null {
 
-extern VmGlobalStats global_stats_;
-
 // The NullVm wraps a C++ WASM plugin which has been compiled with the WASM API
 // and linked directly into the Envoy process. This is useful for development
 // in that it permits the debugger to set breakpoints in both Envoy and the plugin.

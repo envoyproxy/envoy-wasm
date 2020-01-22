@@ -1,4 +1,4 @@
-#include "envoy/config/filter/network/wasm/v3alpha/wasm.pb.validate.h"
+#include "envoy/extensions/filters/network/wasm/v3/wasm.pb.validate.h"
 
 #include "common/common/base64.h"
 
@@ -31,7 +31,7 @@ protected:
   NiceMock<Server::Configuration::MockFactoryContext> context_;
   Stats::IsolatedStoreImpl stats_store_;
   Api::ApiPtr api_;
-  envoy::config::core::v3alpha::Metadata listener_metadata_;
+  envoy::config::core::v3::Metadata listener_metadata_;
   Init::ManagerImpl init_manager_{"init_manager"};
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
   Init::ExpectableWatcherImpl init_watcher_;
@@ -56,7 +56,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWASM) {
           filename: "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm"
   )EOF"));
 
-  envoy::config::filter::network::wasm::v3alpha::Wasm proto_config;
+  envoy::extensions::filters::network::wasm::v3::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Network::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, context_);
@@ -82,7 +82,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineWASM) {
                                         Base64::encode(code.data(), code.size()), R"EOF(" }
   )EOF");
 
-  envoy::config::filter::network::wasm::v3alpha::Wasm proto_config;
+  envoy::extensions::filters::network::wasm::v3::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   Network::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, context_);
@@ -104,7 +104,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCode) {
         local: { inline_string: "bad code" }
   )EOF");
 
-  envoy::config::filter::network::wasm::v3alpha::Wasm proto_config;
+  envoy::extensions::filters::network::wasm::v3::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, context_),
