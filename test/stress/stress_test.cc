@@ -155,14 +155,14 @@ void StressTest::Cluster::bind() {
 
 void StressTest::Cluster::addClusterToBootstrap(ConfigHelper& config_helper,
                                                 std::vector<uint32_t>& ports) const {
-  config_helper.addConfigModifier([this](envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap) {
+  config_helper.addConfigModifier([this](envoy::config::bootstrap::v3::Bootstrap& bootstrap) {
     auto cluster = bootstrap.mutable_static_resources()->add_clusters();
 
     cluster->set_name(cluster_helper_->name());
     cluster->set_type(
-        envoy::config::cluster::v3alpha::Cluster_DiscoveryType::Cluster_DiscoveryType_STATIC);
+        envoy::config::cluster::v3::Cluster_DiscoveryType::Cluster_DiscoveryType_STATIC);
     cluster->set_lb_policy(
-        envoy::config::cluster::v3alpha::Cluster_LbPolicy::Cluster_LbPolicy_ROUND_ROBIN);
+        envoy::config::cluster::v3::Cluster_LbPolicy::Cluster_LbPolicy_ROUND_ROBIN);
 
     if (http_type_ == Http::CodecClient::Type::HTTP1) {
       auto opts = cluster->mutable_http_protocol_options();
@@ -174,8 +174,12 @@ void StressTest::Cluster::addClusterToBootstrap(ConfigHelper& config_helper,
     }
 
     for (const auto& listen_socket_factory : listen_socket_factories_) {
-      auto hosts = cluster->add_hosts();
-      auto address = hosts->mutable_socket_address();
+      cluster->mutable_load_assignment()->set_cluster_name(cluster->name());
+      auto* endpoints = cluster->mutable_load_assignment()->add_endpoints();
+      auto* address = endpoints->add_lb_endpoints()
+                          ->mutable_endpoint()
+                          ->mutable_address()
+                          ->mutable_socket_address();
       address->set_address(Network::Test::getLoopbackAddressString(ip_version_));
       address->set_port_value(listen_socket_factory->localAddress()->ip()->port());
     }

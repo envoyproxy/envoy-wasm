@@ -26,8 +26,6 @@ namespace Common {
 namespace Wasm {
 namespace V8 {
 
-VmGlobalStats global_stats_;
-
 wasm::Engine* engine() {
   // Enable Wasm optimizations.
   v8::internal::FLAG_wasm_opt = true;
@@ -48,7 +46,7 @@ using FuncDataPtr = std::unique_ptr<FuncData>;
 
 class V8 : public WasmVmBase {
 public:
-  V8(Stats::ScopeSharedPtr scope) : WasmVmBase(scope, &global_stats_, WasmRuntimeNames::get().V8) {}
+  V8(const Stats::ScopeSharedPtr& scope) : WasmVmBase(scope, WasmRuntimeNames::get().V8) {}
 
   // Extensions::Common::Wasm::WasmVm
   absl::string_view runtime() override { return WasmRuntimeNames::get().V8; }
@@ -257,7 +255,6 @@ template <typename T, typename U> constexpr T convertValTypesToArgsTuple(const U
 bool V8::load(const std::string& code, bool allow_precompiled) {
   ENVOY_LOG(trace, "load()");
   store_ = wasm::Store::make(engine());
-  RELEASE_ASSERT(store_ != nullptr, "");
 
   // Wasm file header is 8 bytes (magic number + version).
   static const uint8_t magic_number[4] = {0x00, 0x61, 0x73, 0x6d};
@@ -305,10 +302,8 @@ WasmVmPtr V8::clone() {
 
   auto clone = std::make_unique<V8>(scope_);
   clone->store_ = wasm::Store::make(engine());
-  RELEASE_ASSERT(clone->store_ != nullptr, "");
 
   clone->module_ = wasm::Module::obtain(clone->store_.get(), shared_module_.get());
-  RELEASE_ASSERT(clone->module_ != nullptr, "");
 
   return clone;
 }
@@ -475,7 +470,6 @@ void V8::link(absl::string_view debug_name) {
   ASSERT(import_types.size() == imports.size());
 
   instance_ = wasm::Instance::make(store_.get(), module_.get(), imports.data());
-  RELEASE_ASSERT(instance_ != nullptr, "");
 
   const auto export_types = module_.get()->exports();
   const auto exports = instance_.get()->exports();
@@ -681,7 +675,7 @@ void V8::getModuleFunctionImpl(absl::string_view function_name,
   };
 }
 
-WasmVmPtr createVm(Stats::ScopeSharedPtr scope) { return std::make_unique<V8>(scope); }
+WasmVmPtr createVm(const Stats::ScopeSharedPtr& scope) { return std::make_unique<V8>(scope); }
 
 } // namespace V8
 } // namespace Wasm

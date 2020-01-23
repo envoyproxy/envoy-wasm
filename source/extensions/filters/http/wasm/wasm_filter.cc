@@ -14,7 +14,7 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-FilterConfig::FilterConfig(const envoy::config::filter::http::wasm::v3alpha::Wasm& config,
+FilterConfig::FilterConfig(const envoy::extensions::filters::http::wasm::v3::Wasm& config,
                            Server::Configuration::FactoryContext& context)
     : tls_slot_(context.threadLocal().allocateSlot()) {
   plugin_ = std::make_shared<Common::Wasm::Plugin>(

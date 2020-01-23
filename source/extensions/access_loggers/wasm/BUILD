@@ -32,6 +32,6 @@ envoy_cc_library(
         "//source/common/protobuf",
         "//source/extensions/access_loggers:well_known_names",
         "//source/extensions/common/wasm:wasm_lib",
-        "@envoy_api//envoy/config/accesslog/v3alpha:pkg_cc_proto",
+        "@envoy_api//envoy/extensions/access_loggers/wasm/v3:pkg_cc_proto",
     ],
 )

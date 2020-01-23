@@ -25,36 +25,28 @@ struct VmStats {
   ALL_VM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
 };
 
-struct VmGlobalStats {
-  std::atomic<int64_t> active_;
-};
-
 // Wasm VM base instance. Provides common behavior (e.g. Stats).
 class WasmVmBase : public WasmVm {
 public:
-  WasmVmBase(Stats::ScopeSharedPtr scope, VmGlobalStats* global_stats_ptr,
-             absl::string_view runtime)
-      : scope_(scope), global_stats_ptr_(global_stats_ptr),
-        stats_(VmStats{
-            ALL_VM_STATS(POOL_COUNTER_PREFIX(*scope_, absl::StrCat("wasm_vm.", runtime, ".")),
-                         POOL_GAUGE_PREFIX(*scope_, absl::StrCat("wasm_vm.", runtime, ".")))}),
-        runtime_(std::string(runtime)) {
-    global_stats_ptr_->active_++;
+  WasmVmBase(const Stats::ScopeSharedPtr& scope, absl::string_view runtime)
+      : scope_(scope), runtime_prefix_(absl::StrCat("wasm_vm.", runtime, ".")),
+        runtime_(std::string(runtime)),
+        stats_(VmStats{ALL_VM_STATS(POOL_COUNTER_PREFIX(*scope_, runtime_prefix_),
+                                    POOL_GAUGE_PREFIX(*scope_, runtime_prefix_))}) {
     stats_.created_.inc();
-    stats_.active_.set(global_stats_ptr_->active_);
-    ENVOY_LOG(debug, "WasmVm created {} now active", runtime_, global_stats_ptr_->active_);
+    stats_.active_.inc();
+    ENVOY_LOG(debug, "WasmVm created {} now active", runtime_, stats_.active_.value());
   }
   virtual ~WasmVmBase() {
-    global_stats_ptr_->active_--;
-    stats_.active_.set(global_stats_ptr_->active_);
-    ENVOY_LOG(debug, "~WasmVm {} {} remaining active", runtime_, global_stats_ptr_->active_);
+    stats_.active_.dec();
+    ENVOY_LOG(debug, "~WasmVm {} {} remaining active", runtime_, stats_.active_.value());
   }
 
 protected:
-  Stats::ScopeSharedPtr scope_;
-  VmGlobalStats* global_stats_ptr_;
+  const Stats::ScopeSharedPtr scope_;
+  const std::string runtime_prefix_;
+  const std::string runtime_; // The runtime e.g. "v8".
   VmStats stats_;
-  std::string runtime_;
 };
 
 } // namespace Wasm

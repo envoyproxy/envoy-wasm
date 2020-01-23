@@ -47,12 +47,12 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-using envoy::config::core::v3alpha::TrafficDirection;
+using envoy::config::core::v3::TrafficDirection;
 using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
 using Envoy::Extensions::Common::Wasm::Wasm;
 using Envoy::Extensions::Common::Wasm::WasmHandleSharedPtr;
-using GrpcService = envoy::config::core::v3alpha::GrpcService;
-using WasmFilterConfig = envoy::config::filter::http::wasm::v3alpha::Wasm;
+using GrpcService = envoy::config::core::v3::GrpcService;
+using WasmFilterConfig = envoy::extensions::filters::http::wasm::v3::Wasm;
 
 class TestFilter : public Envoy::Extensions::Common::Wasm::Context {
 public:
@@ -149,7 +149,7 @@ public:
   NiceMock<Http::MockStreamEncoderFilterCallbacks> encoder_callbacks_;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> request_stream_info_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
-  envoy::config::core::v3alpha::Metadata listener_metadata_;
+  envoy::config::core::v3::Metadata listener_metadata_;
   TestRoot* root_context_ = nullptr;
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
@@ -422,7 +422,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/metadata_cpp.wasm")));
   setupFilter();
-  envoy::config::core::v3alpha::Node node_data;
+  envoy::config::core::v3::Node node_data;
   ProtobufWkt::Value node_val;
   node_val.set_string_value("wasm_node_get_value");
   (*node_data.mutable_metadata()->mutable_fields())["wasm_node_get_key"] = node_val;
@@ -479,7 +479,7 @@ TEST_F(WasmHttpFilterTest, NullPluginRequestHeadersOnly) {
 TEST_F(WasmHttpFilterTest, NullVmResolver) {
   setupNullConfig("null_vm_plugin");
   setupFilter();
-  envoy::config::core::v3alpha::Node node_data;
+  envoy::config::core::v3::Node node_data;
   ProtobufWkt::Value node_val;
   node_val.set_string_value("sample_data");
   (*node_data.mutable_metadata()->mutable_fields())["istio.io/metadata"] = node_val;
