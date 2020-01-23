@@ -93,8 +93,6 @@ using Context = Common::Wasm::Context; // Shadowing WAVM::Runtime::Context.
 
 const Logger::Id wasmId = Logger::Id::wasm;
 
-VmGlobalStats global_stats_;
-
 class RootResolver : public WAVM::Runtime::Resolver, public Logger::Loggable<wasmId> {
 public:
   RootResolver(WAVM::Runtime::Compartment*) {}
@@ -172,8 +170,7 @@ struct PairHash {
 };
 
 struct Wavm : public WasmVmBase {
-  Wavm(Stats::ScopeSharedPtr scope)
-      : WasmVmBase(scope, &global_stats_, WasmRuntimeNames::get().Wavm) {}
+  Wavm(Stats::ScopeSharedPtr scope) : WasmVmBase(scope, WasmRuntimeNames::get().Wavm) {}
   ~Wavm() override;
 
   // WasmVm

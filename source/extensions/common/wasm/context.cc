@@ -7,7 +7,7 @@
 #include <string>
 
 #include "envoy/common/exception.h"
-#include "envoy/config/wasm/v3alpha/wasm.pb.validate.h"
+#include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
 #include "envoy/grpc/status.h"
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"
@@ -50,7 +50,7 @@ namespace Wasm {
 
 namespace {
 
-using HashPolicy = envoy::config::route::v3alpha::RouteAction::HashPolicy;
+using HashPolicy = envoy::config::route::v3::RouteAction::HashPolicy;
 
 class SharedData {
 public:

@@ -1,6 +1,6 @@
 #include "extensions/filters/http/wasm/config.h"
 
-#include "envoy/config/filter/http/wasm/v3alpha/wasm.pb.validate.h"
+#include "envoy/extensions/filters/http/wasm/v3/wasm.pb.validate.h"
 #include "envoy/registry/registry.h"
 
 #include "common/common/empty_string.h"
@@ -15,7 +15,7 @@ namespace HttpFilters {
 namespace Wasm {
 
 Http::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
-    const envoy::config::filter::http::wasm::v3alpha::Wasm& proto_config, const std::string&,
+    const envoy::extensions::filters::http::wasm::v3::Wasm& proto_config, const std::string&,
     Server::Configuration::FactoryContext& context) {
   auto filter_config = std::make_shared<FilterConfig>(proto_config, context);
   return [filter_config](Http::FilterChainFactoryCallbacks& callbacks) -> void {

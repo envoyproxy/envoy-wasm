@@ -1,4 +1,4 @@
-#include "envoy/config/accesslog/v3alpha/wasm.pb.h"
+#include "envoy/extensions/access_loggers/wasm/v3/wasm.pb.h"
 #include "envoy/registry/registry.h"
 
 #include "common/access_log/access_log_impl.h"
@@ -27,14 +27,14 @@ public:
   TestFactoryContext(Api::Api& api, Stats::Scope& scope) : api_(api), scope_(scope) {}
   Api::Api& api() override { return api_; }
   Stats::Scope& scope() override { return scope_; }
-  const envoy::config::core::v3alpha::Metadata& listenerMetadata() const override {
+  const envoy::config::core::v3::Metadata& listenerMetadata() const override {
     return listener_metadata_;
   }
 
 private:
   Api::Api& api_;
   Stats::Scope& scope_;
-  envoy::config::core::v3alpha::Metadata listener_metadata_;
+  envoy::config::core::v3::Metadata listener_metadata_;
 };
 
 class WasmAccessLogConfigTest : public testing::TestWithParam<std::string> {};
@@ -71,7 +71,7 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
           AccessLogNames::get().Wasm);
   ASSERT_NE(factory, nullptr);
 
-  envoy::config::accesslog::v3alpha::WasmAccessLog config;
+  envoy::extensions::access_loggers::wasm::v3::WasmAccessLog config;
   config.mutable_config()->mutable_vm_config()->set_runtime(
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
