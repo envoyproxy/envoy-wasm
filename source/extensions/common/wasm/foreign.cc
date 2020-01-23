@@ -68,7 +68,7 @@ protected:
     Filters::Common::Expr::ExpressionPtr compiled_expr_;
   };
 
-  class ExpressionContext : public ContextObject {
+  class ExpressionContext : public StorageObject {
   public:
     friend class ExpressionFactory;
     ExpressionContext(Filters::Common::Expr::BuilderPtr builder) : builder_(std::move(builder)) {}

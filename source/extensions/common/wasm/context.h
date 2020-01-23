@@ -56,9 +56,9 @@ struct Plugin {
 using PluginSharedPtr = std::shared_ptr<Plugin>;
 
 // Opaque context object.
-class ContextObject {
+class StorageObject {
 public:
-  virtual ~ContextObject() = default;
+  virtual ~StorageObject() = default;
 };
 
 // A context which will be the target of callbacks for a particular session
@@ -310,7 +310,7 @@ public:
   virtual bool IsPathUnknown(absl::string_view) const override { return false; }
 
   // Foreign function state
-  virtual void setForeignData(absl::string_view data_name, std::unique_ptr<ContextObject> data) {
+  virtual void setForeignData(absl::string_view data_name, std::unique_ptr<StorageObject> data) {
     data_storage_[data_name] = std::move(data);
   }
   template <typename T> T* getForeignData(absl::string_view data_name) {
@@ -482,7 +482,7 @@ protected:
   std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
 
   // Opaque state
-  absl::flat_hash_map<std::string, std::unique_ptr<ContextObject>> data_storage_;
+  absl::flat_hash_map<std::string, std::unique_ptr<StorageObject>> data_storage_;
 };
 
 using ContextSharedPtr = std::shared_ptr<Context>;

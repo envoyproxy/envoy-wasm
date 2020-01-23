@@ -4,6 +4,7 @@
 
 #include "proxy_wasm_intrinsics.h"
 #include "proxy_wasm_intrinsics_lite.pb.h"
+#include "contrib/proxy_expr.h"
 
 class ExampleContext : public Context {
 public:
@@ -47,11 +48,11 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   {
     const std::string expr = R"("server is " + request.headers["server"])";
     uint32_t token = 0;
-    if (WasmResult::Ok != exprCreate(expr, &token)) {
+    if (WasmResult::Ok != createExpression(expr, &token)) {
       logError("expr_create error");
     } else {
       std::string eval_result;
-      if (!evaluate(token, &eval_result)) {
+      if (!evaluateExpression(token, &eval_result)) {
         logError("expr_eval error");
       } else {
         logInfo(eval_result);
@@ -70,7 +71,7 @@ envoy.api.v2.core.GrpcService{
   }
 })";
     uint32_t token = 0;
-    if (WasmResult::Ok != exprCreate(expr, &token)) {
+    if (WasmResult::Ok != createExpression(expr, &token)) {
       logError("expr_create error");
     } else {
       GrpcService eval_result;
