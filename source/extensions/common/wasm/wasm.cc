@@ -145,10 +145,6 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(set_property);
   _REGISTER_PROXY(get_property);
 
-  _REGISTER_PROXY(expr_create);
-  _REGISTER_PROXY(expr_eval);
-  _REGISTER_PROXY(expr_delete);
-
   _REGISTER_PROXY(continue_request);
   _REGISTER_PROXY(continue_response);
   _REGISTER_PROXY(send_local_response);

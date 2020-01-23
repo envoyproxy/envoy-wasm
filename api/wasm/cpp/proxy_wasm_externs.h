@@ -116,12 +116,6 @@ extern "C" WasmResult proxy_grpc_close(uint32_t token);
 extern "C" WasmResult proxy_grpc_send(uint32_t token, const char* message_ptr, size_t message_size,
                                       uint32_t end_stream);
 
-// Evaluation
-extern "C" WasmResult proxy_expr_create(const char* expr_ptr, size_t expr_size, uint32_t* token_ptr);
-extern "C" WasmResult proxy_expr_eval(uint32_t token,
-                                      const char** value_ptr_ptr, size_t* value_size_ptr);
-extern "C" WasmResult proxy_expr_delete(uint32_t token);
-
 // Metrics
 extern "C" WasmResult proxy_define_metric(MetricType type, const char* name_ptr, size_t name_size,
                                           uint32_t* metric_id);

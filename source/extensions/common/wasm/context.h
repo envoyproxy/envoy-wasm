@@ -12,9 +12,8 @@
 
 #include "common/common/assert.h"
 #include "common/common/logger.h"
-#include "extensions/filters/common/expr/evaluator.h"
 
-#include "eval/public/activation.h"
+#include "extensions/filters/common/expr/evaluator.h"
 
 #include "eval/public/activation.h"
 
@@ -55,6 +54,12 @@ struct Plugin {
   std::string log_prefix_;
 };
 using PluginSharedPtr = std::shared_ptr<Plugin>;
+
+// Opaque context object.
+class ContextObject {
+public:
+  virtual ~ContextObject() = default;
+};
 
 // A context which will be the target of callbacks for a particular session
 // e.g. a handler of a stream.
@@ -303,9 +308,21 @@ public:
   virtual absl::optional<google::api::expr::runtime::CelValue>
   FindValue(absl::string_view name, Protobuf::Arena* arena) const override;
   virtual bool IsPathUnknown(absl::string_view) const override { return false; }
-  virtual WasmResult exprCreate(absl::string_view expr, uint32_t* token_ptr);
-  virtual WasmResult exprEval(uint32_t token, std::string* result);
-  virtual WasmResult exprDelete(uint32_t token);
+
+  // Foreign function state
+  virtual void setForeignData(absl::string_view data_name, std::unique_ptr<ContextObject> data) {
+    data_storage_[data_name] = std::move(data);
+  }
+  template <typename T> T* getForeignData(absl::string_view data_name) {
+    const auto& it = data_storage_.find(data_name);
+    if (it == data_storage_.end()) {
+      return nullptr;
+    }
+    return dynamic_cast<T*>(it->second.get());
+  }
+  bool hasForeignData(absl::string_view data_name) const {
+    return data_storage_.contains(data_name);
+  }
 
   // Connection
   virtual bool isSsl();
@@ -464,18 +481,15 @@ protected:
   std::map<uint32_t, GrpcCallClientHandler> grpc_call_request_;
   std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
 
-  // Evaluator state
-  Filters::Common::Expr::BuilderPtr builder_{};
-  uint32_t next_expr_token_ = 0;
-  struct ExpressionData {
-    google::api::expr::v1alpha1::ParsedExpr parsed_expr_;
-    Filters::Common::Expr::ExpressionPtr compiled_expr_;
-  };
-  std::map<uint32_t, ExpressionData> expr_;
+  // Opaque state
+  absl::flat_hash_map<std::string, std::unique_ptr<ContextObject>> data_storage_;
 };
+
 using ContextSharedPtr = std::shared_ptr<Context>;
 
 uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_name);
+
+WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result);
 
 } // namespace Wasm
 } // namespace Common

@@ -37,14 +37,11 @@
 #include "eval/eval/field_access.h"
 #include "eval/eval/field_backed_list_impl.h"
 #include "eval/eval/field_backed_map_impl.h"
-#include "eval/public/builtin_func_registrar.h"
-#include "eval/public/cel_expr_builder_factory.h"
 #include "eval/public/cel_value.h"
 #include "eval/public/value_export_util.h"
 #include "openssl/bytestring.h"
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
-#include "parser/parser.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -1711,68 +1708,6 @@ WasmResult Context::grpcCancel(uint32_t token) {
     }
     grpc_stream_.erase(token);
   }
-  return WasmResult::Ok;
-}
-
-WasmResult Context::exprCreate(absl::string_view expr, uint32_t* token_ptr) {
-  auto parse_status = google::api::expr::parser::Parse(std::string(expr));
-  if (!parse_status.ok()) {
-    ENVOY_LOG(info, "wasm expr parse {}: {}", log_prefix(), parse_status.status().message());
-    return WasmResult::BadArgument;
-  }
-
-  // lazily create a builder
-  if (!builder_) {
-    google::api::expr::runtime::InterpreterOptions options;
-    builder_ = google::api::expr::runtime::CreateCelExpressionBuilder(options);
-    auto register_status =
-        google::api::expr::runtime::RegisterBuiltinFunctions(builder_->GetRegistry(), options);
-    if (!register_status.ok()) {
-      return WasmResult::InternalFailure;
-    }
-  }
-
-  auto token = next_expr_token_++;
-  for (;;) {
-    if (!expr_.count(token)) {
-      break;
-    }
-    token = next_expr_token_++;
-  }
-  auto& handler = expr_[token];
-  handler.parsed_expr_ = parse_status.ValueOrDie();
-
-  auto cel_expression_status =
-      builder_->CreateExpression(&handler.parsed_expr_.expr(), &handler.parsed_expr_.source_info());
-  if (!cel_expression_status.ok()) {
-    ENVOY_LOG(info, "wasm expr compile {}: {}", log_prefix(),
-              cel_expression_status.status().message());
-    expr_.erase(token);
-    return WasmResult::BadArgument;
-  }
-
-  handler.compiled_expr_ = std::move(cel_expression_status.ValueOrDie());
-  *token_ptr = token;
-  return WasmResult::Ok;
-}
-WasmResult Context::exprEval(uint32_t token, std::string* result) {
-  auto it = root_context_->expr_.find(token);
-  if (it == root_context_->expr_.end()) {
-    return WasmResult::NotFound;
-  }
-  Protobuf::Arena arena;
-  auto eval_status = it->second.compiled_expr_->Evaluate(*this, &arena);
-  if (!eval_status.ok()) {
-    return WasmResult::InternalFailure;
-  }
-  return serializeValue(eval_status.ValueOrDie(), result);
-}
-WasmResult Context::exprDelete(uint32_t token) {
-  auto it = expr_.find(token);
-  if (it == expr_.end()) {
-    return WasmResult::NotFound;
-  }
-  expr_.erase(token);
   return WasmResult::Ok;
 }
 

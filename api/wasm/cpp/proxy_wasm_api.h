@@ -513,22 +513,41 @@ inline bool getMessageValue(std::initializer_list<StringView> parts, T* value_pt
   return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
 }
 
+// Create an expression using a foreign function call.
 inline WasmResult exprCreate(StringView expr, uint32_t* token) {
-  return proxy_expr_create(expr.data(), expr.size(), token);
+  std::string function = "expr_create";
+  char* out = nullptr;
+  size_t out_size = 0;
+  auto result = proxy_call_foreign_function(function.data(), function.size(), expr.data(),
+                                            expr.size(), &out, &out_size);
+  if (result != WasmResult::Ok) {
+    return result;
+  }
+  if (out_size != sizeof(uint32_t)) {
+    return WasmResult::ResultMismatch;
+  }
+  *token = *reinterpret_cast<uint32_t*>(out);
+  return result;
 }
 
+// Evaluate an expression using an expression token.
 inline Optional<WasmDataPtr> exprEval(uint32_t token) {
-  const char* value_ptr = nullptr;
-  size_t value_size = 0;
-  auto result = proxy_expr_eval(token, &value_ptr, &value_size);
+  std::string function = "expr_evaluate";
+  char* out = nullptr;
+  size_t out_size = 0;
+  auto result = proxy_call_foreign_function(function.data(), function.size(), reinterpret_cast<const char*>(&token), sizeof(uint32_t), &out, &out_size);
   if (result != WasmResult::Ok) {
     return {};
   }
-  return std::make_unique<WasmData>(value_ptr, value_size);
+  return std::make_unique<WasmData>(out, out_size);
 }
 
+// Delete an expression using an expression token.
 inline WasmResult exprDelete(uint32_t token) {
-  return proxy_expr_delete(token);
+  std::string function = "expr_delete";
+  char* out = nullptr;
+  size_t out_size = 0;
+  return proxy_call_foreign_function(function.data(), function.size(), reinterpret_cast<const char*>(&token), sizeof(uint32_t), &out, &out_size);
 }
 
 template <typename T>
@@ -560,7 +579,7 @@ inline bool evaluateMessage(uint32_t token,
     return false;
   }
   if (buf.value()->size() == 0) {
-    value_ptr = nullptr;
+    // evaluates to null
     return true;
   }
   return value_ptr->ParseFromArray(buf.value()->data(), buf.value()->size());
