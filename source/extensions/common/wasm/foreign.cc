@@ -166,6 +166,7 @@ public:
       auto& handler = expr_context.getExpression(token);
       auto eval_status = handler.compiled_expr_->Evaluate(*current_context_, &arena);
       if (!eval_status.ok()) {
+        ENVOY_LOG(debug, "expr_evaluate error: {}", eval_status.status().message());
         return WasmResult::InternalFailure;
       }
       std::string result;
