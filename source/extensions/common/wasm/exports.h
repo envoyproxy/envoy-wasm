@@ -69,9 +69,6 @@ Word grpc_stream(void* raw_context, Word service_ptr, Word service_size, Word se
 Word grpc_cancel(void* raw_context, Word token);
 Word grpc_close(void* raw_context, Word token);
 Word grpc_send(void* raw_context, Word token, Word message_ptr, Word message_size, Word end_stream);
-Word expr_create(void* raw_context, Word expr_ptr, Word expr_size, Word token_ptr);
-Word expr_eval(void* raw_context, Word token, Word value_ptr_ptr, Word value_size_ptr);
-Word expr_delete(void* raw_context, Word token);
 
 Word set_tick_period_milliseconds(void* raw_context, Word tick_period_milliseconds);
 Word get_current_time_nanoseconds(void* raw_context, Word result_uint64_ptr);

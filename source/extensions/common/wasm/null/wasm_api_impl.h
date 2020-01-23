@@ -214,20 +214,6 @@ inline WasmResult proxy_grpc_send(uint64_t token, const char* message_ptr, size_
                                              WS(message_size), WS(end_stream)));
 }
 
-// Evaluation
-inline WasmResult proxy_expr_create(const char* expr_ptr, size_t expr_size, uint32_t* token_ptr) {
-  return wordToWasmResult(
-      Exports::expr_create(current_context_, WR(expr_ptr), WS(expr_size), WR(token_ptr)));
-}
-inline WasmResult proxy_expr_eval(uint32_t token, const char** value_ptr_ptr,
-                                  size_t* value_size_ptr) {
-  return wordToWasmResult(
-      Exports::expr_eval(current_context_, WS(token), WR(value_ptr_ptr), WR(value_size_ptr)));
-}
-inline WasmResult proxy_expr_delete(uint32_t token) {
-  return wordToWasmResult(Exports::expr_delete(current_context_, WS(token)));
-}
-
 // Metrics
 // Returns a metric_id which can be used to report a metric. On error returns 0.
 inline WasmResult proxy_define_metric(MetricType type, const char* name_ptr, size_t name_size,
