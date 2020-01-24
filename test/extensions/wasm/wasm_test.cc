@@ -228,9 +228,9 @@ TEST_P(WasmTest, EmscriptenVersion) {
   EXPECT_TRUE(wasm->getEmscriptenVersion(&major, &minor, &abi_major, &abi_minor));
   EXPECT_EQ(major, 0);
   EXPECT_LE(minor, 3);
-  // Up to (at least) emsdk 1.39.0.
+  // Up to (at least) emsdk 1.39.6.
   EXPECT_EQ(abi_major, 0);
-  EXPECT_LE(abi_minor, 19);
+  EXPECT_LE(abi_minor, 20);
 }
 
 TEST_P(WasmTest, IntrinsicGlobals) {
