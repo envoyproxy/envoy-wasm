@@ -3,6 +3,8 @@
 #include <unordered_map>
 
 #include "proxy_wasm_intrinsics.h"
+#include "proxy_wasm_intrinsics_lite.pb.h"
+#include "contrib/proxy_expr.h"
 
 class ExampleContext : public Context {
 public:
@@ -42,6 +44,55 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   logInfo(std::string("header path ") + path->toString());
   addRequestHeader("newheader", "newheadervalue");
   replaceRequestHeader("server", "envoy-wasm");
+
+  {
+    const std::string expr = R"("server is " + request.headers["server"])";
+    uint32_t token = 0;
+    if (WasmResult::Ok != createExpression(expr, &token)) {
+      logError("expr_create error");
+    } else {
+      std::string eval_result;
+      if (!evaluateExpression(token, &eval_result)) {
+        logError("expr_eval error");
+      } else {
+        logInfo(eval_result);
+      }
+      if (WasmResult::Ok != exprDelete(token)) {
+        logError("failed to delete an expression");
+      }
+    }
+  }
+
+  {
+    const std::string expr = R"(
+envoy.api.v2.core.GrpcService{
+  envoy_grpc: envoy.api.v2.core.GrpcService.EnvoyGrpc {
+    cluster_name: "test"
+  }
+})";
+    uint32_t token = 0;
+    if (WasmResult::Ok != createExpression(expr, &token)) {
+      logError("expr_create error");
+    } else {
+      GrpcService eval_result;
+      if (!evaluateMessage(token, &eval_result)) {
+        logError("expr_eval error");
+      } else {
+        logInfo("grpc service: " + eval_result.envoy_grpc().cluster_name());
+      }
+      if (WasmResult::Ok != exprDelete(token)) {
+        logError("failed to delete an expression");
+      }
+    }
+  }
+
+  int64_t dur;
+  if (getValue({"request", "duration"}, &dur)) {
+    logInfo("duration is " + std::to_string(dur));
+  } else {
+    logError("failed to get request duration");
+  }
+
   return FilterHeadersStatus::Continue;
 }
 

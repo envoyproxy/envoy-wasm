@@ -13,6 +13,8 @@
 #include "common/common/assert.h"
 #include "common/common/logger.h"
 
+#include "extensions/filters/common/expr/evaluator.h"
+
 #include "eval/public/activation.h"
 
 namespace Envoy {
@@ -52,6 +54,12 @@ struct Plugin {
   std::string log_prefix_;
 };
 using PluginSharedPtr = std::shared_ptr<Plugin>;
+
+// Opaque context object.
+class StorageObject {
+public:
+  virtual ~StorageObject() = default;
+};
 
 // A context which will be the target of callbacks for a particular session
 // e.g. a handler of a stream.
@@ -301,6 +309,21 @@ public:
   FindValue(absl::string_view name, Protobuf::Arena* arena) const override;
   virtual bool IsPathUnknown(absl::string_view) const override { return false; }
 
+  // Foreign function state
+  virtual void setForeignData(absl::string_view data_name, std::unique_ptr<StorageObject> data) {
+    data_storage_[data_name] = std::move(data);
+  }
+  template <typename T> T* getForeignData(absl::string_view data_name) {
+    const auto& it = data_storage_.find(data_name);
+    if (it == data_storage_.end()) {
+      return nullptr;
+    }
+    return dynamic_cast<T*>(it->second.get());
+  }
+  bool hasForeignData(absl::string_view data_name) const {
+    return data_storage_.contains(data_name);
+  }
+
   // Connection
   virtual bool isSsl();
 
@@ -457,10 +480,16 @@ protected:
   std::map<uint32_t, AsyncClientHandler> http_request_;
   std::map<uint32_t, GrpcCallClientHandler> grpc_call_request_;
   std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
+
+  // Opaque state
+  absl::flat_hash_map<std::string, std::unique_ptr<StorageObject>> data_storage_;
 };
+
 using ContextSharedPtr = std::shared_ptr<Context>;
 
 uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_name);
+
+WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result);
 
 } // namespace Wasm
 } // namespace Common
