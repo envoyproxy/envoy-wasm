@@ -120,6 +120,10 @@ void Wasm::registerCallbacks() {
   wasm_vm_->registerCallback(                                                                      \
       "wasi_unstable", #_fn, &Exports::wasi_unstable_##_fn,                                        \
       &ConvertFunctionWordToUint32<decltype(Exports::wasi_unstable_##_fn),                         \
+                                   Exports::wasi_unstable_##_fn>::convertFunctionWordToUint32);    \
+  wasm_vm_->registerCallback(                                                                      \
+      "wasi_snapshot_preview1", #_fn, &Exports::wasi_unstable_##_fn,                               \
+      &ConvertFunctionWordToUint32<decltype(Exports::wasi_unstable_##_fn),                         \
                                    Exports::wasi_unstable_##_fn>::convertFunctionWordToUint32)
   _REGISTER_WASI(fd_write);
   _REGISTER_WASI(fd_seek);
