@@ -164,6 +164,9 @@ extern "C" void proxy_on_grpc_trailing_metadata(uint32_t context_id, uint32_t to
 extern "C" void proxy_on_grpc_receive(uint32_t context_id, uint32_t token, uint32_t response_size);
 extern "C" void proxy_on_grpc_close(uint32_t context_id, uint32_t token, uint32_t status_code);
 
+extern "C" WasmResult proxy_active_span_set_tag(const char* key_ptr, size_t key_size, const char* value_ptr,
+                                         size_t value_size);
+
 // The stream/vm has completed.
 extern "C" uint32_t proxy_on_done(uint32_t context_id);
 // proxy_on_log occurs after proxy_on_done.

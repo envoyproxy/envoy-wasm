@@ -1046,6 +1046,15 @@ void Context::scriptLog(spdlog::level::level_enum level, absl::string_view messa
 // Connection
 bool Context::isSsl() { return decoder_callbacks_->connection()->ssl() != nullptr; }
 
+// Tracing
+void Context::activeSpanSetTag(absl::string_view key, absl::string_view value) {
+  if (!decoder_callbacks_) {
+    return;
+  }
+  Tracing::Span& span = decoder_callbacks_->activeSpan();
+  span.setTag(key, value);
+}
+
 //
 // Calls into the WASM code.
 //

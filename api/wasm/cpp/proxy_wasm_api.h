@@ -169,6 +169,7 @@ struct Tuple3Hash {
 };
 
 using HeaderStringPairs = std::vector<std::pair<std::string, std::string>>;
+using SpanTagPairs = std::vector<std::pair<std::string, std::string>>;
 
 class GrpcCallHandlerBase {
 public:
@@ -776,6 +777,11 @@ inline WasmResult makeHttpCall(StringView uri, const HeaderStringPairs& request_
   ::free(headers_ptr);
   ::free(trailers_ptr);
   return result;
+}
+
+// Tracing
+inline WasmResult activeSpanSetTag(StringView key, StringView value) {
+  return proxy_active_span_set_tag(key.data(), key.size(), value.data(), value.size());
 }
 
 // Low level metrics interface.

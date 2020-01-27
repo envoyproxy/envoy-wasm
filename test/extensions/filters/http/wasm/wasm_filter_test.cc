@@ -16,6 +16,7 @@
 #include "test/mocks/ssl/mocks.h"
 #include "test/mocks/stream_info/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
+#include "test/mocks/tracing/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/printers.h"
@@ -149,6 +150,7 @@ public:
   NiceMock<Http::MockStreamEncoderFilterCallbacks> encoder_callbacks_;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> request_stream_info_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
+  NiceMock<Tracing::MockSpan> active_span_;
   envoy::config::core::v3::Metadata listener_metadata_;
   TestRoot* root_context_ = nullptr;
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
@@ -554,6 +556,18 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   auto token = Common::Wasm::resolveQueueForTest("vm_id", "my_shared_queue");
   wasm_->wasm()->queueReady(root_context_->id(), token);
+}
+
+// Verifies if the tags have been added correctly.
+TEST_P(WasmHttpFilterTest, AddTagToActiveSpans) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/tracing_cpp.wasm")));
+  setupFilter();
+  EXPECT_CALL(decoder_callbacks_, activeSpan).WillRepeatedly(ReturnRef(active_span_));
+  EXPECT_CALL(active_span_, setTag(Eq("tag_1"), Eq("tag_value_1")));
+  Http::TestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  filter_->onDestroy();
 }
 
 } // namespace Wasm

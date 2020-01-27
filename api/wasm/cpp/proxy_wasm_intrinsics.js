@@ -37,4 +37,5 @@ mergeInto(LibraryManager.library, {
     proxy_set_effective_context : function () {},
     proxy_done: function () {},
     proxy_call_foreign_function: function () {},
+    proxy_active_span_set_tag: function () {},
 });

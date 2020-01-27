@@ -675,6 +675,14 @@ method is effective when calling from
 Returns [WasmData](#wasmdata) pointer which
 holds the response body data.
 
+### activeSpanSetTag
+
+``` {.sourceCode .cpp}
+void activeSpanSetTag(StringView key, StringView value)
+```
+Sets a tag key and value in the active span of the request being
+processed by the filte.
+
 Metadata API
 ------------
 

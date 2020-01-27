@@ -327,6 +327,9 @@ public:
   // Connection
   virtual bool isSsl();
 
+  // Tracing
+  virtual void activeSpanSetTag(absl::string_view key, absl::string_view value);
+
 protected:
   friend class Wasm;
 

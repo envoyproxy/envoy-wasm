@@ -214,6 +214,13 @@ inline WasmResult proxy_grpc_send(uint64_t token, const char* message_ptr, size_
                                              WS(message_size), WS(end_stream)));
 }
 
+// Tracing
+inline WasmResult proxy_active_span_set_tag(const char* key_ptr, size_t key_size, const char* value_ptr,
+                                             size_t value_size) {
+  return wordToWasmResult(Exports::active_span_set_tag(
+      current_context_, WR(key_ptr), WS(key_size), WR(value_ptr), WS(value_size)));
+}
+
 // Metrics
 // Returns a metric_id which can be used to report a metric. On error returns 0.
 inline WasmResult proxy_define_metric(MetricType type, const char* name_ptr, size_t name_size,
