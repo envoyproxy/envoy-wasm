@@ -93,7 +93,7 @@ inline WasmResult proxy_set_shared_data(const char* key_ptr, size_t key_size, co
 }
 
 // SharedQueue
-// Note: Registering the same queue_name will overwrite the old registration while preseving any
+// Note: Registering the same queue_name will overwrite the old registration while preserving any
 // pending data. Consequently it should typically be followed by a call to
 // proxy_dequeue_shared_queue. Returns unique token for the queue.
 inline WasmResult proxy_register_shared_queue(const char* queue_name_ptr, size_t queue_name_size,
@@ -215,10 +215,10 @@ inline WasmResult proxy_grpc_send(uint64_t token, const char* message_ptr, size_
 }
 
 // Tracing
-inline WasmResult proxy_active_span_set_tag(const char* key_ptr, size_t key_size, const char* value_ptr,
-                                             size_t value_size) {
-  return wordToWasmResult(Exports::active_span_set_tag(
-      current_context_, WR(key_ptr), WS(key_size), WR(value_ptr), WS(value_size)));
+inline WasmResult proxy_active_span_set_tag(const char* key_ptr, size_t key_size,
+                                            const char* value_ptr, size_t value_size) {
+  return wordToWasmResult(Exports::active_span_set_tag(current_context_, WR(key_ptr), WS(key_size),
+                                                       WR(value_ptr), WS(value_size)));
 }
 
 // Metrics

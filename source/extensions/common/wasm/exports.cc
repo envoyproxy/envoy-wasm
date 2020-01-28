@@ -1,5 +1,6 @@
-#include "extensions/common/wasm/wasm.h"
 #include <iostream>
+
+#include "extensions/common/wasm/wasm.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -776,7 +777,7 @@ Word log(void* raw_context, Word level, Word address, Word size) {
 }
 
 Word active_span_set_tag(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
-                          Word value_size) {
+                         Word value_size) {
   auto context = WASM_CONTEXT(raw_context);
   auto key = context->wasmVm()->getMemory(key_ptr.u64_, key_size.u64_);
   auto value = context->wasmVm()->getMemory(value_ptr.u64_, value_size.u64_);

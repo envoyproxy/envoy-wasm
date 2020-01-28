@@ -64,6 +64,7 @@ DW
 EADDRINUSE
 EADDRNOTAVAIL
 EAGAIN
+EBADF
 ECDH
 ECDHE
 ECDSA
@@ -72,6 +73,7 @@ ECMP
 ECONNREFUSED
 EDESTRUCTION
 EDF
+EFAULT
 EINVAL
 ELB
 ENOTSUP
@@ -81,6 +83,7 @@ EOS
 EPOLLRDHUP
 EQ
 ERANGE
+ESUCCESS
 EV
 EVAL
 EVLOOP
@@ -308,6 +311,7 @@ VHDS
 VLOG
 VM
 WASM
+WASI
 WAVM
 WIP
 WKT
@@ -418,6 +422,7 @@ chrono
 chroot
 chunked
 ci
+ciovec
 ciphersuite
 ciphersuites
 circllhist
@@ -488,6 +493,7 @@ deletable
 deleter
 delim
 deque
+dequeue
 deprecations
 dereference
 dereferences
@@ -531,6 +537,7 @@ enqueued
 enqueues
 enum
 enums
+environ
 epoll
 errno
 etag
@@ -542,6 +549,7 @@ evented
 evwatch
 exe
 execlp
+exitcode
 exprfor
 expectable
 extrahelp
@@ -553,9 +561,11 @@ fastbuild
 favicon
 fd
 fds
+filedelta
 filename
 filenames
 fileno
+filesize
 filesystem
 firefox
 fixup
@@ -640,8 +650,10 @@ interpretable
 intra
 ints
 invariance
+iov
 iovec
 iovecs
+iovs
 ips
 iptables
 ish
@@ -743,6 +755,7 @@ nd
 netblock
 netblocks
 netfilter
+newoffset
 nonblocking
 noncopyable
 nonresponsive
@@ -757,6 +770,7 @@ nullopt
 nullptr
 num
 numkeys
+nwritten
 observability
 offsetof
 oneof
@@ -921,6 +935,7 @@ ruleset
 runfiles
 runtime
 runtimes
+rval
 sandboxed
 sanitization
 sanitizer
