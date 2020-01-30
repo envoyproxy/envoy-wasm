@@ -24,4 +24,3 @@ index 827c3d59f..62914cf55 100755
    _mode = mode;
    ssize_t mark = input->mark();
 
-d
