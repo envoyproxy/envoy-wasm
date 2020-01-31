@@ -54,12 +54,13 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
   auto root_id = "some_long_root_id";
   auto vm_id = "";
   auto vm_configuration = test;
+  auto vm_key = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
       nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", vm), vm_id, vm_configuration, scope, cluster_manager,
-      *dispatcher);
+      absl::StrCat("envoy.wasm.runtime.", vm), vm_id, vm_configuration, vm_key, scope,
+      cluster_manager, *dispatcher);
   std::string code;
   if (vm == "null") {
     code = "WasmSpeedCpp";
