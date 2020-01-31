@@ -45,7 +45,7 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     tls_slot->set([base_wasm, plugin, configuration](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
-          Common::Wasm::getOrCreateThreadLocalWasm(*base_wasm, plugin, *configuration, dispatcher));
+          Common::Wasm::getOrCreateThreadLocalWasm(base_wasm, plugin, *configuration, dispatcher));
     });
     access_log->setTlsSlot(std::move(tls_slot));
   };

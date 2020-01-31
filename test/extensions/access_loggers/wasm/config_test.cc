@@ -62,7 +62,7 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
   AccessLog::InstanceSharedPtr instance;
   EXPECT_THROW_WITH_MESSAGE(
       instance = factory->createAccessLogInstance(*message, std::move(filter), context),
-      Common::Wasm::WasmVmException, "Failed to create WASM VM with unspecified runtime.");
+      Common::Wasm::WasmException, "Failed to load WASM code from ");
 }
 
 TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {

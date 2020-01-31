@@ -549,7 +549,6 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
               scriptLog_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))));
   EXPECT_CALL(*root_context_,
               scriptLog_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
-  EXPECT_CALL(dispatcher_, post(_)).Times(2).WillRepeatedly(Return());
   Http::TestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   auto token = Common::Wasm::resolveQueueForTest("vm_id", "my_shared_queue");

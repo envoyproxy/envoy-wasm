@@ -23,8 +23,7 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.localInfo(), nullptr);
 
-  auto callback = [&context, &config, plugin,
-                   cb](std::shared_ptr<Common::Wasm::WasmHandle> base_wasm) {
+  auto callback = [&context, &config, plugin, cb](Common::Wasm::WasmHandleSharedPtr base_wasm) {
     if (config.singleton()) {
       // Return the WASM VM which will be stored as a singleton by the Server.
       auto root_context = base_wasm->wasm()->start(plugin);
@@ -40,7 +39,7 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
     context.threadLocal().allocateSlot()->set([base_wasm, plugin,
                                                configuration](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
-          Common::Wasm::getOrCreateThreadLocalWasm(*base_wasm, plugin, *configuration, dispatcher));
+          Common::Wasm::getOrCreateThreadLocalWasm(base_wasm, plugin, *configuration, dispatcher));
     });
     // Do not return this WASM VM since this is per-thread. Returning it would indicate that
     // this is a singleton.
