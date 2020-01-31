@@ -55,7 +55,7 @@ namespace {
 
 std::atomic<int64_t> active_wasm_;
 
-std::string base64Sha256(absl::string_view data) {
+std::string Sha256(absl::string_view data) {
   std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
   EVP_MD_CTX* ctx(EVP_MD_CTX_new());
   auto rc = EVP_DigestInit(ctx, EVP_sha256());
@@ -65,11 +65,24 @@ std::string base64Sha256(absl::string_view data) {
   rc = EVP_DigestFinal(ctx, digest.data(), nullptr);
   RELEASE_ASSERT(rc == 1, "Failed to finalize digest");
   EVP_MD_CTX_free(ctx);
-  return Base64::encode(reinterpret_cast<const char*>(&digest[0]), digest.size());
+  return std::string(reinterpret_cast<const char*>(&digest[0]), digest.size());
 }
 
-// Map from Wasm ID to the local Wasm instance.
-thread_local absl::flat_hash_map<std::string, std::weak_ptr<WasmHandle>> local_wasms;
+std::string Xor(absl::string_view a, absl::string_view b) {
+  ASSERT(a.size() == b.size());
+  std::string result;
+  result.reserve(a.size());
+  for (size_t i = 0; i < a.size(); i++) {
+    result.push_back(a[i] ^ b[i]);
+  }
+  return result;
+}
+
+// Map from Wasm Key to the local Wasm instance.
+thread_local absl::flat_hash_map<std::string, std::weak_ptr<WasmHandle>> local_wasms_;
+// Map from Wasm Key to the base Wasm instance, using a pointer to avoid the initialization fiasco.
+ABSL_CONST_INIT absl::Mutex base_wasms_mutex_(absl::kConstInit);
+absl::flat_hash_map<std::string, std::weak_ptr<WasmHandle>>* base_wasms_ = nullptr;
 
 const std::string INLINE_STRING = "<inline>";
 
@@ -92,10 +105,11 @@ const uint8_t* decodeVarint(const uint8_t* pos, const uint8_t* end, uint32_t* ou
 } // namespace
 
 Wasm::Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
-           Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
-           Event::Dispatcher& dispatcher)
-    : vm_id_(std::string(vm_id)), wasm_vm_(Common::Wasm::createWasmVm(runtime, scope)),
-      scope_(scope), cluster_manager_(cluster_manager), dispatcher_(dispatcher),
+           absl::string_view vm_key, Stats::ScopeSharedPtr scope,
+           Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher)
+    : vm_id_(std::string(vm_id)), vm_key_(std::string(vm_key)),
+      wasm_vm_(Common::Wasm::createWasmVm(runtime, scope)), scope_(scope),
+      cluster_manager_(cluster_manager), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
       wasm_stats_(WasmStats{
           ALL_WASM_STATS(POOL_COUNTER_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")),
@@ -243,18 +257,22 @@ void Wasm::getFunctions() {
   }
 }
 
-Wasm::Wasm(const Wasm& wasm, Event::Dispatcher& dispatcher)
-    : std::enable_shared_from_this<Wasm>(wasm), vm_id_(wasm.vm_id_),
-      vm_id_with_hash_(wasm.vm_id_with_hash_), started_from_(wasm.wasm_vm()->cloneable()),
-      scope_(wasm.scope_), cluster_manager_(wasm.cluster_manager_), dispatcher_(dispatcher),
-      time_source_(dispatcher.timeSource()), wasm_stats_(wasm.wasm_stats_),
-      stat_name_set_(wasm.stat_name_set_) {
+Wasm::Wasm(WasmHandleSharedPtr& base_wasm_handle, Event::Dispatcher& dispatcher)
+    : std::enable_shared_from_this<Wasm>(*base_wasm_handle->wasm()),
+      vm_id_(base_wasm_handle->wasm()->vm_id_), vm_key_(base_wasm_handle->wasm()->vm_key_),
+      started_from_(base_wasm_handle->wasm()->wasm_vm()->cloneable()),
+      scope_(base_wasm_handle->wasm()->scope_),
+      cluster_manager_(base_wasm_handle->wasm()->cluster_manager_), dispatcher_(dispatcher),
+      time_source_(dispatcher.timeSource()), base_wasm_handle_(base_wasm_handle),
+      wasm_stats_(base_wasm_handle->wasm()->wasm_stats_),
+      stat_name_set_(base_wasm_handle->wasm()->stat_name_set_) {
   if (started_from_ != Cloneable::NotCloneable) {
-    wasm_vm_ = wasm.wasm_vm()->clone();
+    wasm_vm_ = base_wasm_handle->wasm()->wasm_vm()->clone();
   } else {
-    wasm_vm_ = Common::Wasm::createWasmVm(wasm.wasm_vm()->runtime(), scope_);
+    wasm_vm_ = Common::Wasm::createWasmVm(base_wasm_handle->wasm()->wasm_vm()->runtime(), scope_);
   }
-  if (!initialize(wasm.code(), wasm.allow_precompiled())) {
+  if (!initialize(base_wasm_handle->wasm()->code(),
+                  base_wasm_handle->wasm()->allow_precompiled())) {
     throw WasmException("Failed to load WASM code");
   }
   active_wasm_++;
@@ -280,10 +298,6 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
   }
 
   if (started_from_ == Cloneable::NotCloneable) {
-    // Construct a unique identifier for the VM based on the provided vm_id and a hash of the
-    // code.
-    vm_id_with_hash_ = vm_id_ + ":" + base64Sha256(code);
-
     auto ok = wasm_vm_->load(code, allow_precompiled);
     if (!ok) {
       return false;
@@ -482,10 +496,6 @@ static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin
                                Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
                                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                                CreateWasmCallback&& cb) {
-  auto wasm = std::make_shared<WasmHandle>(
-      std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(),
-                             scope, cluster_manager, dispatcher));
-
   std::string source, code;
   if (vm_config.code().has_remote()) {
     source = vm_config.code().remote().http_uri().uri();
@@ -495,14 +505,42 @@ static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin
                  .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
   }
 
-  auto callback = [wasm, plugin, cb, source, allow_precompiled = vm_config.allow_precompiled(),
+  auto callback = [vm_config, scope, &cluster_manager, &dispatcher, plugin, cb, source,
                    context_ptr = root_context_for_testing ? root_context_for_testing.release()
                                                           : nullptr](const std::string& code) {
     std::unique_ptr<Context> context(context_ptr);
     if (code.empty()) {
       throw WasmException(fmt::format("Failed to load WASM code from {}", source));
     }
-    if (!wasm->wasm()->initialize(code, allow_precompiled)) {
+    // Construct a unique identifier for the VM based on a hash of the code, vm configuration data
+    // and vm_id.
+    std::string vm_key = Sha256(vm_config.vm_id());
+    vm_key = Xor(vm_key, Sha256(vm_config.configuration()));
+    vm_key = Xor(vm_key, Sha256(code));
+    vm_key = Base64::encode(&*vm_key.begin(), vm_key.size());
+
+    std::shared_ptr<WasmHandle> wasm;
+    {
+      absl::MutexLock l(&base_wasms_mutex_);
+      if (!base_wasms_) {
+        base_wasms_ = new std::remove_reference<decltype(*base_wasms_)>::type;
+      }
+      auto it = base_wasms_->find(vm_key);
+      if (it != base_wasms_->end()) {
+        wasm = it->second.lock();
+        if (!wasm) {
+          base_wasms_->erase(it);
+        }
+      }
+      if (!wasm) {
+        wasm = std::make_shared<WasmHandle>(std::make_shared<Wasm>(
+            vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(), vm_key, scope,
+            cluster_manager, dispatcher));
+        (*base_wasms_)[vm_key] = wasm;
+      }
+    }
+
+    if (!wasm->wasm()->initialize(code, vm_config.allow_precompiled())) {
       throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
     }
     if (!context) {
@@ -510,7 +548,7 @@ static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin
     } else {
       wasm->wasm()->startForTesting(std::move(context), plugin);
     }
-    cb(wasm);
+    cb(std::move(wasm));
   };
 
   if (vm_config.code().has_remote()) {
@@ -543,40 +581,41 @@ void createWasmForTesting(const envoy::extensions::wasm::v3::VmConfig& vm_config
                      std::move(root_context_for_testing), remote_data_provider, std::move(cb));
 }
 
-WasmHandleSharedPtr createThreadLocalWasm(WasmHandle& base_wasm, PluginSharedPtr plugin,
+WasmHandleSharedPtr createThreadLocalWasm(WasmHandleSharedPtr& base_wasm, PluginSharedPtr plugin,
                                           absl::string_view configuration,
                                           Event::Dispatcher& dispatcher) {
-  auto wasm = std::make_shared<WasmHandle>(std::make_shared<Wasm>(*base_wasm.wasm(), dispatcher));
-  Context* root_context = wasm->wasm()->start(plugin);
-  if (!wasm->wasm()->configure(root_context, plugin, configuration)) {
+  auto wasm_handle = std::make_shared<WasmHandle>(std::make_shared<Wasm>(base_wasm, dispatcher));
+  Context* root_context = wasm_handle->wasm()->start(plugin);
+  if (!wasm_handle->wasm()->configure(root_context, plugin, configuration)) {
     throw WasmException("Failed to configure WASM code");
   }
-  local_wasms[wasm->wasm()->vm_id_with_hash()] = wasm;
-  return wasm;
+  local_wasms_[wasm_handle->wasm()->vm_key()] = wasm_handle;
+  return wasm_handle;
 }
 
-WasmHandleSharedPtr getThreadLocalWasmPtr(absl::string_view vm_id) {
-  auto it = local_wasms.find(vm_id);
-  if (it == local_wasms.end()) {
+WasmHandleSharedPtr getThreadLocalWasmPtr(absl::string_view vm_key) {
+  auto it = local_wasms_.find(vm_key);
+  if (it == local_wasms_.end()) {
     return nullptr;
   }
   auto wasm = it->second.lock();
   if (!wasm) {
-    local_wasms.erase(vm_id);
+    local_wasms_.erase(vm_key);
   }
   return wasm;
 }
 
-WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandle& base_wasm, PluginSharedPtr plugin,
+WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandleSharedPtr base_wasm,
+                                               PluginSharedPtr plugin,
                                                absl::string_view configuration,
                                                Event::Dispatcher& dispatcher) {
-  auto wasm = getThreadLocalWasmPtr(base_wasm.wasm()->vm_id_with_hash());
-  if (wasm) {
-    auto root_context = wasm->wasm()->start(plugin);
-    if (!wasm->wasm()->configure(root_context, plugin, configuration)) {
+  auto wasm_handle = getThreadLocalWasmPtr(base_wasm->wasm()->vm_key());
+  if (wasm_handle) {
+    auto root_context = wasm_handle->wasm()->start(plugin);
+    if (!wasm_handle->wasm()->configure(root_context, plugin, configuration)) {
       throw WasmException("Failed to configure WASM code");
     }
-    return wasm;
+    return wasm_handle;
   }
   return createThreadLocalWasm(base_wasm, plugin, configuration, dispatcher);
 }
