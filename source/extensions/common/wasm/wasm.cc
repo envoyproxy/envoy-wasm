@@ -69,6 +69,7 @@ std::string Sha256(absl::string_view data) {
 }
 
 std::string Xor(absl::string_view a, absl::string_view b) {
+  ASSERT(a.size == b.size());
   std::string result;
   result.reserve(a.size());
   for (size_t i = 0; i < a.size(); i++) {
@@ -256,20 +257,22 @@ void Wasm::getFunctions() {
   }
 }
 
-Wasm::Wasm(WasmHandleSharedPtr& wasm_handle, Event::Dispatcher& dispatcher)
-    : std::enable_shared_from_this<Wasm>(*wasm_handle->wasm()), vm_id_(wasm_handle->wasm()->vm_id_),
-      vm_key_(wasm_handle->wasm()->vm_key_),
-      started_from_(wasm_handle->wasm()->wasm_vm()->cloneable()),
-      scope_(wasm_handle->wasm()->scope_), cluster_manager_(wasm_handle->wasm()->cluster_manager_),
-      dispatcher_(dispatcher), time_source_(dispatcher.timeSource()),
-      base_wasm_handle_(wasm_handle), wasm_stats_(wasm_handle->wasm()->wasm_stats_),
-      stat_name_set_(wasm_handle->wasm()->stat_name_set_) {
+Wasm::Wasm(WasmHandleSharedPtr& base_wasm_handle, Event::Dispatcher& dispatcher)
+    : std::enable_shared_from_this<Wasm>(*base_wasm_handle->wasm()),
+      vm_id_(base_wasm_handle->wasm()->vm_id_), vm_key_(base_wasm_handle->wasm()->vm_key_),
+      started_from_(base_wasm_handle->wasm()->wasm_vm()->cloneable()),
+      scope_(base_wasm_handle->wasm()->scope_),
+      cluster_manager_(base_wasm_handle->wasm()->cluster_manager_), dispatcher_(dispatcher),
+      time_source_(dispatcher.timeSource()), base_wasm_handle_(base_wasm_handle),
+      wasm_stats_(base_wasm_handle->wasm()->wasm_stats_),
+      stat_name_set_(base_wasm_handle->wasm()->stat_name_set_) {
   if (started_from_ != Cloneable::NotCloneable) {
-    wasm_vm_ = wasm_handle->wasm()->wasm_vm()->clone();
+    wasm_vm_ = base_wasm_handle->wasm()->wasm_vm()->clone();
   } else {
-    wasm_vm_ = Common::Wasm::createWasmVm(wasm_handle->wasm()->wasm_vm()->runtime(), scope_);
+    wasm_vm_ = Common::Wasm::createWasmVm(base_wasm_handle->wasm()->wasm_vm()->runtime(), scope_);
   }
-  if (!initialize(wasm_handle->wasm()->code(), wasm_handle->wasm()->allow_precompiled())) {
+  if (!initialize(base_wasm_handle->wasm()->code(),
+                  base_wasm_handle->wasm()->allow_precompiled())) {
     throw WasmException("Failed to load WASM code");
   }
   active_wasm_++;
@@ -503,7 +506,6 @@ static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin
   }
 
   auto callback = [vm_config, scope, &cluster_manager, &dispatcher, plugin, cb, source,
-                   allow_precompiled = vm_config.allow_precompiled(),
                    context_ptr = root_context_for_testing ? root_context_for_testing.release()
                                                           : nullptr](const std::string& code) {
     std::unique_ptr<Context> context(context_ptr);
@@ -519,10 +521,10 @@ static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin
 
     std::shared_ptr<WasmHandle> wasm;
     {
+      absl::MutexLock l(&base_wasms_mutex_);
       if (!base_wasms_) {
         base_wasms_ = new std::remove_reference<decltype(*base_wasms_)>::type;
       }
-      absl::MutexLock l(&base_wasms_mutex_);
       auto it = base_wasms_->find(vm_key);
       if (it != base_wasms_->end()) {
         wasm = it->second.lock();
@@ -530,30 +532,27 @@ static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin
           base_wasms_->erase(it);
         }
       }
-    }
-    // Drop the lock so that the the expensive Wasm creation is not under the lock.
-
-    if (!wasm) {
-      wasm = std::make_shared<WasmHandle>(
-          std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(),
-                                 vm_key, scope, cluster_manager, dispatcher));
-      {
-        absl::MutexLock l(&base_wasms_mutex_);
-        auto it = base_wasms_->find(vm_key);
-        if (it != base_wasms_->end()) {
-          auto other_wasm = it->second.lock();
-          if (!other_wasm) {
-            base_wasms_->erase(it);
-          } else {
-            // We lost the race, so drop our new Wasm and use the winner.
-            wasm = other_wasm;
+      if (!wasm) {
+        wasm = std::make_shared<WasmHandle>(std::make_shared<Wasm>(
+            vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(), vm_key, scope,
+            cluster_manager, dispatcher));
+        {
+          auto it = base_wasms_->find(vm_key);
+          if (it != base_wasms_->end()) {
+            auto other_wasm = it->second.lock();
+            if (!other_wasm) {
+              base_wasms_->erase(it);
+            } else {
+              // We lost the race, so drop our new Wasm and use the winner.
+              wasm = other_wasm;
+            }
           }
+          (*base_wasms_)[vm_key] = wasm;
         }
-        (*base_wasms_)[vm_key] = wasm;
       }
     }
 
-    if (!wasm->wasm()->initialize(code, allow_precompiled)) {
+    if (!wasm->wasm()->initialize(code, vm_config.allow_precompiled())) {
       throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
     }
     if (!context) {
