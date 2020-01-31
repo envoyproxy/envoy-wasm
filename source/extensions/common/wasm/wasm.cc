@@ -536,19 +536,7 @@ static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin
         wasm = std::make_shared<WasmHandle>(std::make_shared<Wasm>(
             vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(), vm_key, scope,
             cluster_manager, dispatcher));
-        {
-          auto it = base_wasms_->find(vm_key);
-          if (it != base_wasms_->end()) {
-            auto other_wasm = it->second.lock();
-            if (!other_wasm) {
-              base_wasms_->erase(it);
-            } else {
-              // We lost the race, so drop our new Wasm and use the winner.
-              wasm = other_wasm;
-            }
-          }
-          (*base_wasms_)[vm_key] = wasm;
-        }
+        (*base_wasms_)[vm_key] = wasm;
       }
     }
 
