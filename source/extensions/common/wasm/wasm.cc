@@ -69,7 +69,7 @@ std::string Sha256(absl::string_view data) {
 }
 
 std::string Xor(absl::string_view a, absl::string_view b) {
-  ASSERT(a.size == b.size());
+  ASSERT(a.size() == b.size());
   std::string result;
   result.reserve(a.size());
   for (size_t i = 0; i < a.size(); i++) {
