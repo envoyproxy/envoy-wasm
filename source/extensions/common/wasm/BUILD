@@ -65,7 +65,6 @@ envoy_cc_library(
         "//include/envoy/http:filter_interface",
         "//include/envoy/server:wasm_interface",
         "//include/envoy/upstream:cluster_manager_interface",
-        "//source/common/common:stack_array",
         "//source/common/config:datasource_lib",
         "//source/common/stats:stats_lib",
         "//source/extensions/filters/common/expr:evaluator_lib",

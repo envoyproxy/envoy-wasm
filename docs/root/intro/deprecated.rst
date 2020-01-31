@@ -10,6 +10,12 @@ The following features have been DEPRECATED and will be removed in the specified
 A logged warning is expected for each deprecated item that is in deprecation window.
 Deprecated items below are listed in chronological order.
 
+1.14.0 (Pending)
+================
+* The previous behavior for upstream connection pool circuit breaking described
+  `here <https://www.envoyproxy.io/docs/envoy/v1.13.0/intro/arch_overview/upstream/circuit_breaking>`_ has
+  been deprecated in favor of the new behavior described :ref:`here <arch_overview_circuit_break>`.
+
 1.13.0 (January 20, 2020)
 =========================
 * The `request_headers_for_tags` field in :ref:`HTTP connection manager

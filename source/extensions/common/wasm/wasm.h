@@ -4,6 +4,8 @@
 #include <map>
 #include <memory>
 
+#include "absl/container/fixed_array.h"
+
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/exception.h"
@@ -17,7 +19,6 @@
 
 #include "common/common/assert.h"
 #include "common/common/logger.h"
-#include "common/common/stack_array.h"
 #include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
 
@@ -354,7 +355,7 @@ inline uint64_t Wasm::copyBuffer(const Buffer::Instance& buffer) {
     memcpy(m, oneRawSlice.mem_, oneRawSlice.len_);
     return pointer;
   }
-  STACK_ARRAY(manyRawSlices, Buffer::RawSlice, nSlices);
+  absl::FixedArray<Buffer::RawSlice> manyRawSlices(nSlices);
   buffer.getRawSlices(manyRawSlices.begin(), nSlices);
   auto p = m;
   for (int i = 0; i < nSlices; i++) {
