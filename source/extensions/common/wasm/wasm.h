@@ -4,8 +4,6 @@
 #include <map>
 #include <memory>
 
-#include "absl/container/fixed_array.h"
-
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/exception.h"
@@ -27,6 +25,8 @@
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/http/well_known_names.h"
+
+#include "absl/container/fixed_array.h"
 
 namespace Envoy {
 
