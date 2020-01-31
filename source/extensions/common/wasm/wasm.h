@@ -307,7 +307,7 @@ void createWasmForTesting(const VmConfig& vm_config, PluginSharedPtr plugin,
 // Get an existing ThreadLocal VM matching 'vm_id' or nullptr if there isn't one.
 WasmHandleSharedPtr getThreadLocalWasmPtr(absl::string_view vm_id);
 // Get an existing ThreadLocal VM matching 'vm_id' or create one using 'base_wavm' by cloning or by
-// using it it as a template.  Note that 'base_wasm' typically is a const lambda capture and needs
+// using it it as a template. Note that 'base_wasm' typically is a const lambda capture and needs
 // to be copied to be passed, hence the pass-by-value interface.
 WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandleSharedPtr base_wasm,
                                                PluginSharedPtr plugin,
