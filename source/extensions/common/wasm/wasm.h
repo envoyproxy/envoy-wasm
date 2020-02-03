@@ -17,7 +17,6 @@
 
 #include "common/common/assert.h"
 #include "common/common/logger.h"
-#include "common/common/stack_array.h"
 #include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
 
@@ -26,6 +25,8 @@
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/http/well_known_names.h"
+
+#include "absl/container/fixed_array.h"
 
 namespace Envoy {
 
@@ -355,7 +356,7 @@ inline uint64_t Wasm::copyBuffer(const Buffer::Instance& buffer) {
     memcpy(m, oneRawSlice.mem_, oneRawSlice.len_);
     return pointer;
   }
-  STACK_ARRAY(manyRawSlices, Buffer::RawSlice, nSlices);
+  absl::FixedArray<Buffer::RawSlice> manyRawSlices(nSlices);
   buffer.getRawSlices(manyRawSlices.begin(), nSlices);
   auto p = m;
   for (int i = 0; i < nSlices; i++) {

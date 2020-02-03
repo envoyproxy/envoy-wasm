@@ -465,7 +465,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   StreamInfo::MockStreamInfo log_stream_info;
   filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
 
-  const auto& result = request_stream_info_.filterState().getDataReadOnly<Common::Wasm::WasmState>(
+  const auto& result = request_stream_info_.filterState()->getDataReadOnly<Common::Wasm::WasmState>(
       "wasm_request_set_key");
   EXPECT_EQ("wasm_request_set_value", result.value());
 }
