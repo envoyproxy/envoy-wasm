@@ -239,6 +239,12 @@ void Filter::initialize(Network::ReadFilterCallbacks& callbacks, bool set_connec
   getStreamInfo().setDownstreamLocalAddress(read_callbacks_->connection().localAddress());
   getStreamInfo().setDownstreamRemoteAddress(read_callbacks_->connection().remoteAddress());
   getStreamInfo().setDownstreamSslConnection(read_callbacks_->connection().ssl());
+  read_callbacks_->connection().streamInfo().setDownstreamLocalAddress(
+      read_callbacks_->connection().localAddress());
+  read_callbacks_->connection().streamInfo().setDownstreamRemoteAddress(
+      read_callbacks_->connection().remoteAddress());
+  read_callbacks_->connection().streamInfo().setDownstreamSslConnection(
+      read_callbacks_->connection().ssl());
 
   // Need to disable reads so that we don't write to an upstream that might fail
   // in onData(). This will get re-enabled when the upstream connection is
@@ -469,6 +475,10 @@ void Filter::onPoolReady(Tcp::ConnectionPool::ConnectionDataPtr&& conn_data,
   getStreamInfo().onUpstreamHostSelected(host);
   getStreamInfo().setUpstreamLocalAddress(connection.localAddress());
   getStreamInfo().setUpstreamSslConnection(connection.streamInfo().downstreamSslConnection());
+  read_callbacks_->connection().streamInfo().onUpstreamHostSelected(host);
+  read_callbacks_->connection().streamInfo().setUpstreamLocalAddress(connection.localAddress());
+  read_callbacks_->connection().streamInfo().setUpstreamSslConnection(
+      connection.streamInfo().downstreamSslConnection());
   read_callbacks_->connection().streamInfo().setUpstreamFilterState(
       connection.streamInfo().filterState());
 

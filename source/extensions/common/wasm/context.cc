@@ -348,32 +348,29 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
 class WasmStateWrapper : public google::api::expr::runtime::CelMap {
 public:
   WasmStateWrapper(const StreamInfo::FilterState& filter_state,
-                   const StreamInfo::FilterState* connection_filter_state)
-      : filter_state_(filter_state), connection_filter_state_(connection_filter_state) {}
-  WasmStateWrapper(const StreamInfo::FilterState& filter_state)
-      : filter_state_(filter_state), connection_filter_state_(nullptr) {}
+                   const StreamInfo::FilterState* upstream_connection_filter_state)
+      : filter_state_(filter_state),
+        upstream_connection_filter_state_(upstream_connection_filter_state) {}
   absl::optional<google::api::expr::runtime::CelValue>
   operator[](google::api::expr::runtime::CelValue key) const override {
     if (!key.IsString()) {
       return {};
     }
     auto value = key.StringOrDie().value();
-    try {
+    if (filter_state_.hasData<WasmState>(value)) {
       const WasmState& result = filter_state_.getDataReadOnly<WasmState>(value);
       return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
-    } catch (const EnvoyException& e) {
-      // If  doesn't exist in request filter state, try looking up in connection filter state.
-      try {
-        if (connection_filter_state_) {
-          const WasmState& result = connection_filter_state_->getDataReadOnly<WasmState>(value);
-          return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
-        }
-      } catch (const EnvoyException& e) {
-        return {};
-      }
-      return {};
     }
+
+    if (upstream_connection_filter_state_ &&
+        upstream_connection_filter_state_->hasData<WasmState>(value)) {
+      const WasmState& result =
+          upstream_connection_filter_state_->getDataReadOnly<WasmState>(value);
+      return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
+    }
+    return {};
   }
+
   int size() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
   bool empty() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
   const google::api::expr::runtime::CelList* ListKeys() const override {
@@ -382,7 +379,7 @@ public:
 
 private:
   const StreamInfo::FilterState& filter_state_;
-  const StreamInfo::FilterState* connection_filter_state_;
+  const StreamInfo::FilterState* upstream_connection_filter_state_;
 };
 
 #define PROPERTY_TOKENS(_f)                                                                        \
@@ -423,14 +420,9 @@ Context::FindValue(absl::string_view name, Protobuf::Arena* arena) const {
     break;
   case PropertyToken::FILTER_STATE:
     if (info) {
-      const Envoy::Network::Connection* connection = getConnection();
-      if (connection) {
-        return CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
-            arena, info->filterState(), &connection->streamInfo().filterState()));
-      } else {
-        return CelValue::CreateMap(
-            Protobuf::Arena::Create<WasmStateWrapper>(arena, info->filterState()));
-      }
+
+      return CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
+          arena, info->filterState(), info->upstreamFilterState().get()));
     }
     break;
   case PropertyToken::REQUEST:
@@ -1004,6 +996,10 @@ const Network::Connection* Context::getConnection() const {
     return encoder_callbacks_->connection();
   } else if (decoder_callbacks_) {
     return decoder_callbacks_->connection();
+  } else if (network_read_filter_callbacks_) {
+    return &network_read_filter_callbacks_->connection();
+  } else if (network_write_filter_callbacks_) {
+    return &network_write_filter_callbacks_->connection();
   }
   return nullptr;
 }
