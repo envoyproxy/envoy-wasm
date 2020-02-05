@@ -429,10 +429,12 @@ using ContextFactory = std::function<std::unique_ptr<Context>(uint32_t id, RootC
 // Register Context factory.
 // e.g. static RegisterContextFactory register_MyContext(CONTEXT_FACTORY(MyContext));
 struct RegisterContextFactory {
-  explicit RegisterContextFactory(ContextFactory context_factory,
-                                  RootFactory root_factory = nullptr, StringView root_id = "");
-  explicit RegisterContextFactory(ContextFactory root_factory, StringView root_id);
-  explicit RegisterContextFactory(RootFactory root_factory, StringView root_id = "");
+  RegisterContextFactory(ContextFactory context_factory, RootFactory root_factory,
+                         StringView root_id = "");
+  explicit RegisterContextFactory(RootFactory root_factory, StringView root_id = "")
+      : RegisterContextFactory(nullptr, root_factory, root_id) {}
+  explicit RegisterContextFactory(ContextFactory context_factory, StringView root_id = "")
+      : RegisterContextFactory(context_factory, nullptr, root_id) {}
 };
 
 inline WasmDataPtr getConfiguration() {
