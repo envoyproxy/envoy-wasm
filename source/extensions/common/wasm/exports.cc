@@ -237,7 +237,7 @@ Word call_foreign_function(void* raw_context, Word function_name, Word function_
   uint64_t address = 0;
   void* result = nullptr;
   size_t result_size = 0;
-  f(wasm, args, [&wasm, &address, &result, &result_size](size_t s) -> void* {
+  auto res = f(wasm, args, [&wasm, &address, &result, &result_size](size_t s) -> void* {
     result = wasm.allocMemory(s, &address);
     result_size = s;
     return result;
@@ -248,7 +248,7 @@ Word call_foreign_function(void* raw_context, Word function_name, Word function_
   if (!context->wasmVm()->setWord(results_size.u64_, Word(result_size))) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  return wasmResultToWord(WasmResult::Ok);
+  return wasmResultToWord(res);
 }
 
 Word clear_route_cache(void* raw_context) {
