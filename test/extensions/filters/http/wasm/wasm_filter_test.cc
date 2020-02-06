@@ -81,9 +81,10 @@ public:
   WasmHttpFilterTest() {}
   ~WasmHttpFilterTest() {}
 
-  void setupConfig(const std::string& code) {
+  void setupConfig(const std::string& code, std::string root_id = "") {
     root_context_ = new TestRoot();
     WasmFilterConfig proto_config;
+    proto_config.mutable_config()->set_root_id(root_id);
     proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
     proto_config.mutable_config()->mutable_vm_config()->set_runtime(
         absl::StrCat("envoy.wasm.runtime.", GetParam()));
@@ -95,7 +96,6 @@ public:
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     auto name = "";
-    auto root_id = "";
     auto vm_id = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
         name, root_id, vm_id, TrafficDirection::INBOUND, local_info_, &listener_metadata_);
@@ -127,9 +127,9 @@ public:
         remote_data_provider_, [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; });
   }
 
-  void setupFilter() {
+  void setupFilter(const std::string root_id = "") {
     filter_ = std::make_unique<TestFilter>(wasm_->wasm().get(),
-                                           wasm_->wasm()->getRootContext("")->id(), plugin_);
+                                           wasm_->wasm()->getRootContext(root_id)->id(), plugin_);
     filter_->setDecoderFilterCallbacks(decoder_callbacks_);
     filter_->setEncoderFilterCallbacks(encoder_callbacks_);
   }
@@ -553,6 +553,41 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   auto token = Common::Wasm::resolveQueueForTest("vm_id", "my_shared_queue");
   wasm_->wasm()->queueReady(root_context_->id(), token);
+}
+
+// Script using a root_id which is not registered.
+TEST_P(WasmHttpFilterTest, RootIdNotRegistered) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/root_id_cpp.wasm")));
+  setupFilter();
+  Http::TestHeaderMapImpl request_headers;
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+}
+
+// Script using an explicit root_id which is registered.
+TEST_P(WasmHttpFilterTest, RootId1) {
+  setupConfig(
+      TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/root_id_cpp.wasm")),
+      "context1");
+  setupFilter("context1");
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders1 2"))));
+  Http::TestHeaderMapImpl request_headers;
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+}
+
+// Script using an explicit root_id which is registered.
+TEST_P(WasmHttpFilterTest, RootId2) {
+  setupConfig(
+      TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/root_id_cpp.wasm")),
+      "context2");
+  setupFilter("context2");
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders2 2"))));
+  Http::TestHeaderMapImpl request_headers;
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
 }
 
 } // namespace Wasm

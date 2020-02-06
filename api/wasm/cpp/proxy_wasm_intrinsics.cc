@@ -18,15 +18,6 @@ RegisterContextFactory::RegisterContextFactory(ContextFactory context_factory,
     (*root_factories)[std::string(root_id)] = root_factory;
 }
 
-RegisterContextFactory::RegisterContextFactory(RootFactory root_factory, StringView root_id) {
-  if (!root_factories) {
-    root_factories = new std::unordered_map<std::string, RootFactory>;
-    context_factories = new std::unordered_map<std::string, ContextFactory>;
-  }
-  if (root_factory)
-    (*root_factories)[std::string(root_id)] = root_factory;
-}
-
 static Context* ensureContext(uint32_t context_id, uint32_t root_context_id) {
   auto e = context_map.insert(std::make_pair(context_id, nullptr));
   if (e.second) {
@@ -38,8 +29,8 @@ static Context* ensureContext(uint32_t context_id, uint32_t root_context_id) {
     }
     auto factory = context_factories->find(root_id);
     if (factory == context_factories->end()) {
-      logError("no context factory for root_id: " + root_id);
-      return nullptr;
+      e.first->second = std::make_unique<Context>(context_id, root);
+      return e.first->second->asContext();
     } else {
       e.first->second = factory->second(context_id, root);
     }
@@ -57,13 +48,14 @@ static RootContext* ensureRootContext(uint32_t context_id) {
   CHECK_RESULT(proxy_get_property("plugin_root_id", sizeof("plugin_root_id") - 1, &root_id_ptr,
                                   &root_id_size));
   auto root_id = std::make_unique<WasmData>(root_id_ptr, root_id_size);
+  auto root_id_string = root_id->toString();
   if (!root_factories) {
     auto context = std::make_unique<RootContext>(context_id, root_id->view());
     RootContext* root_context = context->asRoot();
     context_map[context_id] = std::move(context);
+    root_context_map[root_id_string] = root_context;
     return root_context;
   }
-  auto root_id_string = root_id->toString();
   auto factory = root_factories->find(root_id_string);
   RootContext* root_context;
   if (factory != root_factories->end()) {
@@ -72,17 +64,17 @@ static RootContext* ensureRootContext(uint32_t context_id) {
     root_context_map[root_id_string] = root_context;
     context_map[context_id] = std::move(context);
   } else {
-    // Default handlers.
     auto context = std::make_unique<RootContext>(context_id, root_id->view());
     root_context = context->asRoot();
     context_map[context_id] = std::move(context);
+    root_context_map[root_id_string] = root_context;
   }
   return root_context;
 }
 
 static ContextBase* getContextBase(uint32_t context_id) {
   auto it = context_map.find(context_id);
-  if (it == context_map.end() || !(it->second->asContext() || it->second->asRoot())) {
+  if (it == context_map.end()) {
     return nullptr;
   }
   return it->second.get();
