@@ -76,6 +76,7 @@ public:
   Context* vm_context() const { return vm_context_.get(); }
   Stats::StatNameSetSharedPtr stat_name_set() const { return stat_name_set_; }
   Context* getRootContext(absl::string_view root_id) { return root_contexts_[root_id].get(); }
+  Context* getOrCreateRootContext(const PluginSharedPtr& plugin);
   Context* getContext(uint32_t id) {
     auto it = contexts_.find(id);
     if (it != contexts_.end())

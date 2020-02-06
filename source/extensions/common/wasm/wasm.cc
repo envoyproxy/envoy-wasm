@@ -352,6 +352,16 @@ bool Wasm::initialize(const std::string& code, bool allow_precompiled) {
   return true;
 }
 
+Context* Wasm::getOrCreateRootContext(const PluginSharedPtr& plugin) {
+  auto root_context = getRootContext(plugin->root_id_);
+  if (!root_context) {
+    auto context = std::make_unique<Context>(this, plugin);
+    root_context = context.get();
+    root_contexts_[plugin->root_id_] = std::move(context);
+  }
+  return root_context;
+}
+
 void Wasm::startVm(Context* root_context) {
   /* Call "_start" function, and fallback to "__wasm_call_ctors" if the former is not available. */
   if (_start_) {
@@ -611,7 +621,7 @@ WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandleSharedPtr base_wasm,
                                                Event::Dispatcher& dispatcher) {
   auto wasm_handle = getThreadLocalWasmPtr(base_wasm->wasm()->vm_key());
   if (wasm_handle) {
-    auto root_context = wasm_handle->wasm()->start(plugin);
+    auto root_context = wasm_handle->wasm()->getOrCreateRootContext(plugin);
     if (!wasm_handle->wasm()->configure(root_context, plugin, configuration)) {
       throw WasmException("Failed to configure WASM code");
     }
