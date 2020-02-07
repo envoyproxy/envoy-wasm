@@ -25,20 +25,14 @@ fn free(ptr: *mut u8) {
 
 #[no_mangle]
 pub fn proxy_on_vm_start(_root_context_id: u32, _vm_configuration_size: u32) -> u32 {
-  get_root_context(_root_context_id)
-    .lock()
-    .unwrap()
-    .on_start();
+  get_root_context(_root_context_id).on_start();
   1
 }
 
 #[no_mangle]
 pub fn proxy_on_context_create(_root_context_id: u32, _context_id: u32) {
   if _context_id != 0 {
-    ensure_context(_context_id, _root_context_id)
-      .lock()
-      .unwrap()
-      .on_create();
+    ensure_context(_context_id, _root_context_id).on_create();
   } else {
     ensure_root_context(_root_context_id);
   }

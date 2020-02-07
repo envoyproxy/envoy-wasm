@@ -6,3 +6,7 @@ The rust SDK is a WIP.
 
 curl https://sh.rustup.rs -sSf | sh
 
+## How to build your wasm filter with Rust
+```
+cargo build --lib --release --target=wasm32-unknown-unknown
+```

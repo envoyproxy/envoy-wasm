@@ -14,36 +14,36 @@ pub trait Context {
 }
 
 pub trait RootContextFactory {
-  fn create(&self) -> Arc<Mutex<dyn RootContext + Sync + Send>>;
+  fn create(&self) -> Arc<dyn RootContext + Sync + Send>;
 }
 pub trait ContextFactory {
   fn create(
     &self,
-    _root_context: Arc<Mutex<dyn RootContext + Sync + Send>>,
-  ) -> Arc<Mutex<dyn Context + Sync + Send>>;
+    _root_context: Arc<dyn RootContext + Sync + Send>,
+  ) -> Arc<dyn Context + Sync + Send>;
 }
 
 lazy_static! {
-  static ref ROOT_CONTEXT_FACTORY_MAP: Mutex<HashMap<&'static str, &'static Box<dyn RootContextFactory + Sync>>> =
+  static ref ROOT_CONTEXT_FACTORY_MAP: Mutex<HashMap<&'static str, &'static Box<dyn RootContextFactory + Sync + Send>>> =
     Mutex::new(HashMap::new());
-  static ref CONTEXT_FACTORY_MAP: Mutex<HashMap<&'static str, &'static Box<dyn ContextFactory + Sync>>> =
+  static ref CONTEXT_FACTORY_MAP: Mutex<HashMap<&'static str, &'static Box<dyn ContextFactory + Sync + Send>>> =
     Mutex::new(HashMap::new());
-  static ref ROOT_CONTEXT_MAP: Mutex<HashMap<u32, Arc<Mutex<dyn RootContext + Sync + Send>>>> =
+  static ref ROOT_CONTEXT_MAP: Mutex<HashMap<u32, Arc<dyn RootContext + Sync + Send>>> =
     Mutex::new(HashMap::new());
-  static ref CONTEXT_MAP: Mutex<HashMap<u32, Arc<Mutex<dyn Context + Sync + Send>>>> =
+  static ref CONTEXT_MAP: Mutex<HashMap<u32, Arc<dyn Context + Sync + Send>>> =
     Mutex::new(HashMap::new());
 }
 
 pub fn register_factory(
   _root_id: &'static str,
-  _cf: &'static Box<dyn ContextFactory + Sync>,
-  _rcf: &'static Box<dyn RootContextFactory + Sync>,
+  _cf: &'static Box<dyn ContextFactory + Sync + Send>,
+  _rcf: &'static Box<dyn RootContextFactory + Sync + Send>,
 ) {
   ROOT_CONTEXT_FACTORY_MAP
     .lock()
     .unwrap()
-    .insert(_root_id, &_rcf);
-  CONTEXT_FACTORY_MAP.lock().unwrap().insert(_root_id, &_cf);
+    .insert(_root_id, _rcf);
+  CONTEXT_FACTORY_MAP.lock().unwrap().insert(_root_id, _cf);
 }
 
 fn current_root_id_str() -> String {
@@ -62,7 +62,7 @@ fn current_root_id_str() -> String {
   }
 }
 
-pub fn ensure_root_context(root_context_id: u32) -> Arc<Mutex<dyn RootContext + Sync + Send>> {
+pub fn ensure_root_context(root_context_id: u32) -> Arc<dyn RootContext + Sync + Send> {
   let root_context = match ROOT_CONTEXT_MAP.lock().unwrap().get(&root_context_id) {
     Some(x) => Arc::clone(x),
     None => {
@@ -85,11 +85,8 @@ pub fn ensure_root_context(root_context_id: u32) -> Arc<Mutex<dyn RootContext + 
   root_context
 }
 
-pub fn ensure_context(
-  context_id: u32,
-  root_context_id: u32,
-) -> Arc<Mutex<dyn Context + Sync + Send>> {
-  let context = match CONTEXT_MAP.lock().unwrap().get(&context_id) {
+pub fn ensure_context(context_id: u32, root_context_id: u32) -> Arc<dyn Context + Sync + Send> {
+  match CONTEXT_MAP.lock().unwrap().get(&context_id) {
     Some(x) => Arc::clone(x),
     None => {
       let root_id_str = current_root_id_str();
@@ -112,7 +109,7 @@ pub fn ensure_context(
                 Some(root_factory) => root_factory.create(),
                 None => unimplemented!(),
               };
-              factory.create(Arc::clone(&root_context))
+              factory.create(root_context)
             }
           };
           context
@@ -121,22 +118,19 @@ pub fn ensure_context(
       };
       context
     }
-  };
-  context
+  }
 }
 
-pub fn get_context(context_id: u32) -> Arc<Mutex<dyn Context + Sync + Send>> {
-  let context = match CONTEXT_MAP.lock().unwrap().get(&context_id) {
+pub fn get_context(context_id: u32) -> Arc<dyn Context + Sync + Send> {
+  match CONTEXT_MAP.lock().unwrap().get(&context_id) {
     Some(x) => Arc::clone(x),
     None => unimplemented!(),
-  };
-  context
+  }
 }
 
-pub fn get_root_context(root_context_id: u32) -> Arc<Mutex<dyn RootContext + Sync + Send>> {
-  let root_context = match ROOT_CONTEXT_MAP.lock().unwrap().get(&root_context_id) {
+pub fn get_root_context(root_context_id: u32) -> Arc<dyn RootContext + Sync + Send> {
+  match ROOT_CONTEXT_MAP.lock().unwrap().get(&root_context_id) {
     Some(x) => Arc::clone(x),
     None => unimplemented!(),
-  };
-  root_context
+  }
 }
