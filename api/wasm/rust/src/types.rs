@@ -56,11 +56,16 @@ pub enum FilterStatus {
   StopIteration,
 }
 
+pub enum FilterHeadersStatus {
+  Continue,
+  StopIteration,
+}
+
 pub enum FilterMetadataStatus {
   Continue,
 }
 
-pub enum FilterTrailerStatus {
+pub enum FilterTrailersStatus {
   Continue,
   StopIteration,
 }
@@ -104,4 +109,40 @@ pub enum PeerType {
   Unknown,
   Local,
   Remote,
+}
+
+pub fn filter_trailer_status_to_int(status: FilterTrailersStatus) -> u32 {
+  match status {
+    FilterTrailersStatus::Continue => 0,
+    FilterTrailersStatus::StopIteration => 1,
+  }
+}
+
+pub fn filter_header_status_to_int(status: FilterHeadersStatus) -> u32 {
+  match status {
+    FilterHeadersStatus::Continue => 0,
+    FilterHeadersStatus::StopIteration => 1,
+  }
+}
+
+pub fn filter_data_status_to_int(status: FilterDataStatus) -> u32 {
+  match status {
+    FilterDataStatus::Continue => 0,
+    FilterDataStatus::StopIterationAndBuffer => 1,
+    FilterDataStatus::StopIterationAndWatermark => 2,
+    FilterDataStatus::StopIterationNoBuffer => 3,
+  }
+}
+
+pub fn filter_metadata_status_to_int(status: FilterMetadataStatus) -> u32 {
+  match status {
+    FilterMetadataStatus::Continue => 0,
+  }
+}
+
+pub fn filter_status_to_int(status: FilterStatus) -> u32 {
+  match status {
+    FilterStatus::Continue => 0,
+    FilterStatus::StopIteration => 1,
+  }
 }
