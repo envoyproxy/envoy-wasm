@@ -198,7 +198,6 @@ private:
   WasmCallVoid<0> __wasm_call_ctors_;
 
   WasmCallWord<1> malloc_;
-  WasmCallVoid<1> free_;
 
   // Calls into the VM.
   WasmCallWord<2> validate_configuration_;
