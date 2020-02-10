@@ -1087,6 +1087,7 @@ bool Context::onConfigure(absl::string_view plugin_configuration, PluginSharedPt
       wasm_->on_configure_(this, id_, static_cast<uint32_t>(plugin_configuration.size())).u64_ != 0;
   plugin_.reset();
   configuration_ = "";
+  wasm_->checkShutdown();
   return result;
 }
 
@@ -1094,6 +1095,13 @@ absl::string_view Context::getConfiguration() { return configuration_; }
 
 std::pair<uint32_t, absl::string_view> Context::getStatus() {
   return std::make_pair(status_code_, status_message_);
+}
+
+void Context::onTick() {
+  if (wasm_->on_tick_) {
+    wasm_->on_tick_(this, id_);
+  }
+  wasm_->checkShutdown();
 }
 
 void Context::onCreate(uint32_t parent_context_id) {
@@ -1264,12 +1272,14 @@ void Context::onHttpCallResponse(uint32_t token, uint32_t headers, uint32_t body
     return;
   }
   wasm_->on_http_call_response_(this, id_, token, headers, body_size, trailers);
+  wasm_->checkShutdown();
 }
 
 void Context::onQueueReady(uint32_t token) {
   if (wasm_->on_queue_ready_) {
     wasm_->on_queue_ready_(this, id_, token);
   }
+  wasm_->checkShutdown();
 }
 
 void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metadata) {
@@ -1280,6 +1290,7 @@ void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metad
   wasm_->on_grpc_create_initial_metadata_(this, id_, token,
                                           headerSize(grpc_create_initial_metadata_));
   grpc_create_initial_metadata_ = nullptr;
+  wasm_->checkShutdown();
 }
 
 void Context::onGrpcReceiveInitialMetadata(uint32_t token, Http::HeaderMapPtr&& metadata) {
@@ -1290,6 +1301,7 @@ void Context::onGrpcReceiveInitialMetadata(uint32_t token, Http::HeaderMapPtr&& 
   wasm_->on_grpc_receive_initial_metadata_(this, id_, token,
                                            headerSize(grpc_receive_initial_metadata_));
   grpc_receive_initial_metadata_ = nullptr;
+  wasm_->checkShutdown();
 }
 
 void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&& metadata) {
@@ -1300,6 +1312,7 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
   wasm_->on_grpc_receive_trailing_metadata_(this, id_, token,
                                             headerSize(grpc_receive_trailing_metadata_));
   grpc_receive_trailing_metadata_ = nullptr;
+  wasm_->checkShutdown();
 }
 
 WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {

@@ -109,6 +109,7 @@ public:
   virtual bool validateConfiguration(absl::string_view configuration, PluginSharedPtr plugin);
   virtual bool onStart(absl::string_view vm_configuration, PluginSharedPtr plugin);
   virtual bool onConfigure(absl::string_view plugin_configuration, PluginSharedPtr plugin);
+  virtual void onTick();
 
   //
   // Stream downcalls on Context(id > 0).
