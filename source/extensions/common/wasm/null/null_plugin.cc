@@ -41,9 +41,7 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<0>* f
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<1>* f) {
   auto plugin = this;
-  if (function_name == "free") {
-    *f = [](Common::Wasm::Context*, Word ptr) { return ::free(reinterpret_cast<void*>(ptr.u64_)); };
-  } else if (function_name == "proxy_on_tick") {
+  if (function_name == "proxy_on_tick") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id) {
       SaveRestoreContext saved_context(context);
       plugin->onTick(context_id.u64_);

@@ -215,7 +215,6 @@ void Wasm::getFunctions() {
   _GET(__wasm_call_ctors);
 
   _GET(malloc);
-  _GET(free);
 #undef _GET
 
 #define _GET_PROXY(_fn) wasm_vm_->getFunction("proxy_" #_fn, &_fn##_);
@@ -252,8 +251,8 @@ void Wasm::getFunctions() {
   _GET_PROXY(on_delete);
 #undef _GET_PROXY
 
-  if (!malloc_ || !free_) {
-    throw WasmException("WASM missing malloc/free");
+  if (!malloc_) {
+    throw WasmException("WASM missing malloc");
   }
 }
 

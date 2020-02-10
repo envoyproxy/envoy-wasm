@@ -6,4 +6,4 @@ include ../../../../api/wasm/cpp/Makefile.base_lite
 include ../../../../api/wasm/rust/Makefile.base
 
 missing_cpp.wasm missing_cpp.wat: missing_cpp.cc ${CPP_API}/proxy_wasm_intrinsics.h ${CPP_API}/proxy_wasm_intrinsics.js
-	em++ -s STANDALONE_WASM=1 -s EMIT_EMSCRIPTEN_METADATA=1 -s EXPORTED_FUNCTIONS=['_malloc','_free'] -s ERROR_ON_UNDEFINED_SYMBOLS=0 --std=c++17 -O3 -DPROXY_WASM_PROTOBUF_LITE=1 -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include --js-library ${CPP_API}/proxy_wasm_intrinsics.js missing_cpp.cc ${CPP_API}/proxy_wasm_intrinsics_lite.pb.cc ${CPP_API}/struct_lite.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf-lite.a -o missing_cpp.wasm
+	em++ -s STANDALONE_WASM=1 -s EMIT_EMSCRIPTEN_METADATA=1 -s EXPORTED_FUNCTIONS=['_malloc'] -s ERROR_ON_UNDEFINED_SYMBOLS=0 --std=c++17 -O3 -DPROXY_WASM_PROTOBUF_LITE=1 -I${CPP_API} -I${CPP_API}/google/protobuf -I/usr/local/include --js-library ${CPP_API}/proxy_wasm_intrinsics.js missing_cpp.cc ${CPP_API}/proxy_wasm_intrinsics_lite.pb.cc ${CPP_API}/struct_lite.pb.cc ${CPP_CONTEXT_LIB} ${CPP_API}/libprotobuf-lite.a -o missing_cpp.wasm
