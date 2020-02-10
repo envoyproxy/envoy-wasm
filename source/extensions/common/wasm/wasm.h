@@ -95,11 +95,19 @@ public:
   Event::Dispatcher& dispatcher() { return dispatcher_; }
 
   void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
+
+  // Handlers for Root Contexts must call checkShutdown() after the call into the VM.
   void tickHandler(uint32_t root_context_id);
   void queueReady(uint32_t root_context_id, uint32_t token);
 
-  void shutdown();
+  void startShutdown();
   WasmResult done(Context* root_context);
+  void checkShutdown() {
+    if (shutdown_ready_) {
+      finishShutdown();
+    }
+  }
+  void finishShutdown();
 
   //
   // AccessLog::Instance
@@ -191,6 +199,7 @@ private:
   std::unordered_map<uint32_t, Event::TimerPtr> timer_;                  // per root_id.
   std::unique_ptr<ShutdownHandle> shutdown_handle_;
   absl::flat_hash_set<Context*> pending_done_; // Root contexts not done during shutdown.
+  bool shutdown_ready_{false};                 // All pending RootContexts are now done.
 
   TimeSource& time_source_;
 
@@ -274,7 +283,7 @@ class WasmHandle : public Envoy::Server::Wasm,
                    public std::enable_shared_from_this<WasmHandle> {
 public:
   explicit WasmHandle(WasmSharedPtr wasm) : wasm_(wasm) {}
-  ~WasmHandle() { wasm_->shutdown(); }
+  ~WasmHandle() { wasm_->startShutdown(); }
 
   WasmSharedPtr& wasm() { return wasm_; }
 
