@@ -13,6 +13,7 @@ jobs:
    release:
      executor: ubuntu-build
      environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=12288 --local_cpu_resources=8"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
@@ -29,6 +30,7 @@ jobs:
    asan:
      executor: ubuntu-build
      environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=12288 --local_cpu_resources=8"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
@@ -41,6 +43,7 @@ jobs:
    coverage:
      executor: ubuntu-build
      environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=12288 --local_cpu_resources=8"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
        VALIDATE_COVERAGE: 0
      steps:
