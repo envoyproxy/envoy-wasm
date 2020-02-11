@@ -1,3 +1,6 @@
+use std::convert::TryFrom;
+use std::fmt;
+
 pub enum WasmResult {
   Ok,
   // The result could not be found, e.g. a provided key did not appear in a table.
@@ -22,6 +25,7 @@ pub enum WasmResult {
   InternalFailure,
   // The connection/stream/pipe was broken/closed unexpectedly.
   BrokenConnection,
+  MAX,
 }
 
 pub enum HeaderMapType {
@@ -111,38 +115,67 @@ pub enum PeerType {
   Remote,
 }
 
-pub fn filter_trailer_status_to_int(status: FilterTrailersStatus) -> u32 {
-  match status {
-    FilterTrailersStatus::Continue => 0,
-    FilterTrailersStatus::StopIteration => 1,
+impl TryFrom<u32> for WasmResult {
+  type Error = String;
+  fn try_from(n: u32) -> Result<Self, Self::Error> {
+    match n {
+      0 => Ok(WasmResult::Ok),
+      1 => Ok(WasmResult::NotFound),
+      2 => Ok(WasmResult::BadArgument),
+      3 => Ok(WasmResult::SerializationFailure),
+      4 => Ok(WasmResult::ParseFailure),
+      5 => Ok(WasmResult::BadExpression),
+      6 => Ok(WasmResult::InvalidMemoryAccess),
+      7 => Ok(WasmResult::Empty),
+      8 => Ok(WasmResult::CasMismatch),
+      9 => Ok(WasmResult::ResultMismatch),
+      10 => Ok(WasmResult::InternalFailure),
+      11 => Ok(WasmResult::BrokenConnection),
+      _ => Err(format!("invalid status: {}", n)),
+    }
   }
+}
+
+impl std::fmt::Display for WasmResult {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match *self {
+      WasmResult::Ok => write!(f, "OK"),
+      WasmResult::NotFound => write!(f, "NotFound"),
+      WasmResult::BadArgument => write!(f, "BadArgument"),
+      WasmResult::SerializationFailure => write!(f, "SerializationFailure"),
+      WasmResult::ParseFailure => write!(f, "ParseFailure"),
+      WasmResult::BadExpression => write!(f, "BadExpression"),
+      WasmResult::InvalidMemoryAccess => write!(f, "InvalidMemoryAccess"),
+      WasmResult::Empty => write!(f, "Empty"),
+      WasmResult::CasMismatch => write!(f, "CasMismatch"),
+      WasmResult::ResultMismatch => write!(f, "ResultMismatch"),
+      WasmResult::InternalFailure => write!(f, "internalFailure"),
+      WasmResult::BrokenConnection => write!(f, "BrokenConnection"),
+      WasmResult::MAX => write!(f, "unimplemented"),
+    }
+  }
+}
+
+pub fn filter_trailer_status_to_int(status: FilterTrailersStatus) -> u32 {
+  status as u32
 }
 
 pub fn filter_header_status_to_int(status: FilterHeadersStatus) -> u32 {
-  match status {
-    FilterHeadersStatus::Continue => 0,
-    FilterHeadersStatus::StopIteration => 1,
-  }
+  status as u32
 }
 
 pub fn filter_data_status_to_int(status: FilterDataStatus) -> u32 {
-  match status {
-    FilterDataStatus::Continue => 0,
-    FilterDataStatus::StopIterationAndBuffer => 1,
-    FilterDataStatus::StopIterationAndWatermark => 2,
-    FilterDataStatus::StopIterationNoBuffer => 3,
-  }
+  status as u32
 }
 
 pub fn filter_metadata_status_to_int(status: FilterMetadataStatus) -> u32 {
-  match status {
-    FilterMetadataStatus::Continue => 0,
-  }
+  status as u32
 }
 
 pub fn filter_status_to_int(status: FilterStatus) -> u32 {
-  match status {
-    FilterStatus::Continue => 0,
-    FilterStatus::StopIteration => 1,
-  }
+  status as u32
+}
+
+pub fn header_map_type_to_int(htype: HeaderMapType) -> u32 {
+  htype as u32
 }
