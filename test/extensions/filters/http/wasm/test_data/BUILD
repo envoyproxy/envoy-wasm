@@ -9,6 +9,13 @@ load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
 
 envoy_package()
 
+filegroup(
+    name = "modules",
+    srcs = glob([
+        "*.wasm",
+    ]),
+)
+
 envoy_cc_library(
     name = "test_cpp_plugin",
     srcs = [
