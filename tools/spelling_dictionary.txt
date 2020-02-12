@@ -41,6 +41,7 @@ CRC
 CRL
 CRLFs
 CRT
+CSDS
 CSRF
 CSS
 CSV
@@ -57,6 +58,7 @@ DFATAL
 DGRAM
 DLOG
 DNS
+DQUOTE
 DRYs
 DS
 DST
@@ -123,6 +125,7 @@ HCM
 HDS
 HMAC
 HPACK
+HTAB
 HTML
 HTTP
 HTTPS
@@ -162,6 +165,7 @@ LEV
 LF
 LHS
 LLVM
+LPT
 LRS
 MB
 MD
@@ -298,6 +302,7 @@ UA
 UBSAN
 UDP
 UDS
+UNC
 URI
 URL
 USEVC
@@ -306,6 +311,7 @@ UTF
 UUID
 UUIDs
 VC
+VCHAR
 VH
 VHDS
 VLOG
@@ -355,6 +361,7 @@ args
 argv
 artisanal
 ary
+asctime
 async
 atoi
 atomicity
@@ -568,6 +575,7 @@ fileno
 filesize
 filesystem
 firefox
+fixdate
 fixup
 fld
 fmt
@@ -703,6 +711,7 @@ lookups
 loopback
 lossy
 lowp
+lstat
 ltrim
 lua
 lyft
@@ -711,6 +720,7 @@ malloc
 matchable
 matcher
 matchers
+maxage
 maxbuffer
 megamiss
 mem
@@ -859,6 +869,7 @@ pts
 pubkey
 pwd
 py
+qdtext
 qps
 quantile
 quantiles
@@ -925,6 +936,7 @@ resync
 ret
 retriable
 retriggers
+rmdir
 rollout
 roundtrip
 rpcs
@@ -936,6 +948,7 @@ runfiles
 runtime
 runtimes
 rval
+rver
 sandboxed
 sanitization
 sanitizer
@@ -1028,6 +1041,8 @@ syscalls
 sysctl
 sz
 tbl
+tchar
+tchars
 tcmalloc
 tcpdump
 teardown

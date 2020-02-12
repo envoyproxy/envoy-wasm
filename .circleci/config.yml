@@ -13,13 +13,14 @@ jobs:
    release:
      executor: ubuntu-build
      environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
        - run:
            environment:
-             BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=enabled" # v8 + WAVM (build only).
+             BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6 --define wasm=enabled" # v8 + WAVM (build only)
            command: ci/do_circle_ci.sh bazel.release.server_only
        - run: ci/do_circle_ci.sh bazel.release ${BAZEL_TEST_TARGETS}
        - store_artifacts:
@@ -29,6 +30,7 @@ jobs:
    asan:
      executor: ubuntu-build
      environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
@@ -41,6 +43,7 @@ jobs:
    coverage:
      executor: ubuntu-build
      environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
        VALIDATE_COVERAGE: 0
      steps:

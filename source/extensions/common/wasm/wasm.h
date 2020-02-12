@@ -17,7 +17,6 @@
 
 #include "common/common/assert.h"
 #include "common/common/logger.h"
-#include "common/common/stack_array.h"
 #include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
 
@@ -26,6 +25,8 @@
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/http/well_known_names.h"
+
+#include "absl/container/fixed_array.h"
 
 namespace Envoy {
 
@@ -53,13 +54,15 @@ using VmConfig = envoy::extensions::wasm::v3::VmConfig;
 using WasmForeignFunction =
     std::function<WasmResult(Wasm&, absl::string_view, std::function<void*(size_t size)>)>;
 
+class WasmHandle;
+
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
 class Wasm : public Logger::Loggable<Logger::Id::wasm>, public std::enable_shared_from_this<Wasm> {
 public:
   Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
-       Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
-       Event::Dispatcher& dispatcher);
-  Wasm(const Wasm& other, Event::Dispatcher& dispatcher);
+       absl::string_view vm_key, Stats::ScopeSharedPtr scope,
+       Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher);
+  Wasm(std::shared_ptr<WasmHandle>& other, Event::Dispatcher& dispatcher);
   ~Wasm();
 
   bool initialize(const std::string& code, bool allow_precompiled = false);
@@ -68,11 +71,12 @@ public:
   Context* start(PluginSharedPtr plugin); // returns the root Context.
 
   absl::string_view vm_id() const { return vm_id_; }
-  absl::string_view vm_id_with_hash() const { return vm_id_with_hash_; }
+  absl::string_view vm_key() const { return vm_key_; }
   WasmVm* wasm_vm() const { return wasm_vm_.get(); }
   Context* vm_context() const { return vm_context_.get(); }
   Stats::StatNameSetSharedPtr stat_name_set() const { return stat_name_set_; }
   Context* getRootContext(absl::string_view root_id) { return root_contexts_[root_id].get(); }
+  Context* getOrCreateRootContext(const PluginSharedPtr& plugin);
   Context* getContext(uint32_t id) {
     auto it = contexts_.find(id);
     if (it != contexts_.end())
@@ -91,11 +95,19 @@ public:
   Event::Dispatcher& dispatcher() { return dispatcher_; }
 
   void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
+
+  // Handlers for Root Contexts must call checkShutdown() after the call into the VM.
   void tickHandler(uint32_t root_context_id);
   void queueReady(uint32_t root_context_id, uint32_t token);
 
-  void shutdown();
+  void startShutdown();
   WasmResult done(Context* root_context);
+  void checkShutdown() {
+    if (shutdown_ready_) {
+      finishShutdown();
+    }
+  }
+  void finishShutdown();
 
   //
   // AccessLog::Instance
@@ -169,8 +181,8 @@ private:
   void establishEnvironment(); // Language specific environments.
   void getFunctions();         // Get functions call into WASM.
 
-  std::string vm_id_;           // User-provided vm_id.
-  std::string vm_id_with_hash_; // vm_id + hash of code.
+  std::string vm_id_;  // User-provided vm_id.
+  std::string vm_key_; // Hash(code, vm configuration data, vm_id_)
   std::unique_ptr<WasmVm> wasm_vm_;
   Cloneable started_from_{Cloneable::NotCloneable};
   Stats::ScopeSharedPtr scope_;
@@ -187,6 +199,7 @@ private:
   std::unordered_map<uint32_t, Event::TimerPtr> timer_;                  // per root_id.
   std::unique_ptr<ShutdownHandle> shutdown_handle_;
   absl::flat_hash_set<Context*> pending_done_; // Root contexts not done during shutdown.
+  bool shutdown_ready_{false};                 // All pending RootContexts are now done.
 
   TimeSource& time_source_;
 
@@ -194,7 +207,6 @@ private:
   WasmCallVoid<0> __wasm_call_ctors_;
 
   WasmCallWord<1> malloc_;
-  WasmCallVoid<1> free_;
 
   // Calls into the VM.
   WasmCallWord<2> validate_configuration_;
@@ -234,6 +246,8 @@ private:
   WasmCallVoid<1> on_log_;
   WasmCallVoid<1> on_delete_;
 
+  std::shared_ptr<WasmHandle> base_wasm_handle_;
+
   // Used by the base_wasm to enable non-clonable thread local Wasm(s) to be constructed.
   std::string code_;
   std::string vm_configuration_;
@@ -269,14 +283,9 @@ class WasmHandle : public Envoy::Server::Wasm,
                    public std::enable_shared_from_this<WasmHandle> {
 public:
   explicit WasmHandle(WasmSharedPtr wasm) : wasm_(wasm) {}
-  ~WasmHandle() {
-    auto wasm = wasm_;
-    // NB: V8 will stack overflow during the stress test if we shutdown with the call stack in the
-    // ThreadLocal set call so shift to a fresh call stack.
-    wasm_->dispatcher().post([wasm] { wasm->shutdown(); });
-  }
+  ~WasmHandle() { wasm_->startShutdown(); }
 
-  const WasmSharedPtr& wasm() { return wasm_; }
+  WasmSharedPtr& wasm() { return wasm_; }
 
 private:
   WasmSharedPtr wasm_;
@@ -308,8 +317,10 @@ void createWasmForTesting(const VmConfig& vm_config, PluginSharedPtr plugin,
 // Get an existing ThreadLocal VM matching 'vm_id' or nullptr if there isn't one.
 WasmHandleSharedPtr getThreadLocalWasmPtr(absl::string_view vm_id);
 // Get an existing ThreadLocal VM matching 'vm_id' or create one using 'base_wavm' by cloning or by
-// using it it as a template.
-WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandle& base_wasm, PluginSharedPtr plugin,
+// using it it as a template. Note that 'base_wasm' typically is a const lambda capture and needs
+// to be copied to be passed, hence the pass-by-value interface.
+WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandleSharedPtr base_wasm,
+                                               PluginSharedPtr plugin,
                                                absl::string_view configuration,
                                                Event::Dispatcher& dispatcher);
 
@@ -354,7 +365,7 @@ inline uint64_t Wasm::copyBuffer(const Buffer::Instance& buffer) {
     memcpy(m, oneRawSlice.mem_, oneRawSlice.len_);
     return pointer;
   }
-  STACK_ARRAY(manyRawSlices, Buffer::RawSlice, nSlices);
+  absl::FixedArray<Buffer::RawSlice> manyRawSlices(nSlices);
   buffer.getRawSlices(manyRawSlices.begin(), nSlices);
   auto p = m;
   for (int i = 0; i < nSlices; i++) {

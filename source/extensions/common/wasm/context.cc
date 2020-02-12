@@ -348,32 +348,29 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
 class WasmStateWrapper : public google::api::expr::runtime::CelMap {
 public:
   WasmStateWrapper(const StreamInfo::FilterState& filter_state,
-                   const StreamInfo::FilterState* connection_filter_state)
-      : filter_state_(filter_state), connection_filter_state_(connection_filter_state) {}
-  WasmStateWrapper(const StreamInfo::FilterState& filter_state)
-      : filter_state_(filter_state), connection_filter_state_(nullptr) {}
+                   const StreamInfo::FilterState* upstream_connection_filter_state)
+      : filter_state_(filter_state),
+        upstream_connection_filter_state_(upstream_connection_filter_state) {}
   absl::optional<google::api::expr::runtime::CelValue>
   operator[](google::api::expr::runtime::CelValue key) const override {
     if (!key.IsString()) {
       return {};
     }
     auto value = key.StringOrDie().value();
-    try {
+    if (filter_state_.hasData<WasmState>(value)) {
       const WasmState& result = filter_state_.getDataReadOnly<WasmState>(value);
       return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
-    } catch (const EnvoyException& e) {
-      // If  doesn't exist in request filter state, try looking up in connection filter state.
-      try {
-        if (connection_filter_state_) {
-          const WasmState& result = connection_filter_state_->getDataReadOnly<WasmState>(value);
-          return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
-        }
-      } catch (const EnvoyException& e) {
-        return {};
-      }
-      return {};
     }
+
+    if (upstream_connection_filter_state_ &&
+        upstream_connection_filter_state_->hasData<WasmState>(value)) {
+      const WasmState& result =
+          upstream_connection_filter_state_->getDataReadOnly<WasmState>(value);
+      return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
+    }
+    return {};
   }
+
   int size() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
   bool empty() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
   const google::api::expr::runtime::CelList* ListKeys() const override {
@@ -382,7 +379,7 @@ public:
 
 private:
   const StreamInfo::FilterState& filter_state_;
-  const StreamInfo::FilterState* connection_filter_state_;
+  const StreamInfo::FilterState* upstream_connection_filter_state_;
 };
 
 #define PROPERTY_TOKENS(_f)                                                                        \
@@ -423,14 +420,9 @@ Context::FindValue(absl::string_view name, Protobuf::Arena* arena) const {
     break;
   case PropertyToken::FILTER_STATE:
     if (info) {
-      const Envoy::Network::Connection* connection = getConnection();
-      if (connection) {
-        return CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
-            arena, info->filterState(), &connection->streamInfo().filterState()));
-      } else {
-        return CelValue::CreateMap(
-            Protobuf::Arena::Create<WasmStateWrapper>(arena, info->filterState()));
-      }
+
+      return CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
+          arena, info->filterState(), info->upstreamFilterState().get()));
     }
     break;
   case PropertyToken::REQUEST:
@@ -1004,6 +996,10 @@ const Network::Connection* Context::getConnection() const {
     return encoder_callbacks_->connection();
   } else if (decoder_callbacks_) {
     return decoder_callbacks_->connection();
+  } else if (network_read_filter_callbacks_) {
+    return &network_read_filter_callbacks_->connection();
+  } else if (network_write_filter_callbacks_) {
+    return &network_write_filter_callbacks_->connection();
   }
   return nullptr;
 }
@@ -1013,8 +1009,8 @@ WasmResult Context::setProperty(absl::string_view key, absl::string_view seriali
   if (!stream_info) {
     return WasmResult::NotFound;
   }
-  stream_info->filterState().setData(key, std::make_unique<WasmState>(serialized_value),
-                                     StreamInfo::FilterState::StateType::Mutable);
+  stream_info->filterState()->setData(key, std::make_unique<WasmState>(serialized_value),
+                                      StreamInfo::FilterState::StateType::Mutable);
   return WasmResult::Ok;
 }
 
@@ -1100,6 +1096,7 @@ bool Context::onConfigure(absl::string_view plugin_configuration, PluginSharedPt
       wasm_->on_configure_(this, id_, static_cast<uint32_t>(plugin_configuration.size())).u64_ != 0;
   plugin_.reset();
   configuration_ = "";
+  wasm_->checkShutdown();
   return result;
 }
 
@@ -1107,6 +1104,13 @@ absl::string_view Context::getConfiguration() { return configuration_; }
 
 std::pair<uint32_t, absl::string_view> Context::getStatus() {
   return std::make_pair(status_code_, status_message_);
+}
+
+void Context::onTick() {
+  if (wasm_->on_tick_) {
+    wasm_->on_tick_(this, id_);
+  }
+  wasm_->checkShutdown();
 }
 
 void Context::onCreate(uint32_t parent_context_id) {
@@ -1277,12 +1281,14 @@ void Context::onHttpCallResponse(uint32_t token, uint32_t headers, uint32_t body
     return;
   }
   wasm_->on_http_call_response_(this, id_, token, headers, body_size, trailers);
+  wasm_->checkShutdown();
 }
 
 void Context::onQueueReady(uint32_t token) {
   if (wasm_->on_queue_ready_) {
     wasm_->on_queue_ready_(this, id_, token);
   }
+  wasm_->checkShutdown();
 }
 
 void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metadata) {
@@ -1293,6 +1299,7 @@ void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metad
   wasm_->on_grpc_create_initial_metadata_(this, id_, token,
                                           headerSize(grpc_create_initial_metadata_));
   grpc_create_initial_metadata_ = nullptr;
+  wasm_->checkShutdown();
 }
 
 void Context::onGrpcReceiveInitialMetadata(uint32_t token, Http::HeaderMapPtr&& metadata) {
@@ -1303,6 +1310,7 @@ void Context::onGrpcReceiveInitialMetadata(uint32_t token, Http::HeaderMapPtr&& 
   wasm_->on_grpc_receive_initial_metadata_(this, id_, token,
                                            headerSize(grpc_receive_initial_metadata_));
   grpc_receive_initial_metadata_ = nullptr;
+  wasm_->checkShutdown();
 }
 
 void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&& metadata) {
@@ -1313,10 +1321,11 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
   wasm_->on_grpc_receive_trailing_metadata_(this, id_, token,
                                             headerSize(grpc_receive_trailing_metadata_));
   grpc_receive_trailing_metadata_ = nullptr;
+  wasm_->checkShutdown();
 }
 
 WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
-  auto stat_name = wasm_->stat_name_set_->getDynamic(name);
+  auto stat_name = wasm_->stat_name_set_->add(name);
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
     auto c = &wasm_->scope_->counterFromStatName(stat_name);
