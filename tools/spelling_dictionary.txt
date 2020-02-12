@@ -72,6 +72,7 @@ ECDHE
 ECDSA
 ECDSAs
 ECMP
+ECONNREFUSE
 ECONNREFUSED
 EDESTRUCTION
 EDF
@@ -115,6 +116,7 @@ GCOVR
 GCP
 GETting
 GLB
+GNUC
 GOAWAY
 GRPC
 GTEST
@@ -144,8 +146,10 @@ IPV
 IPs
 IPv
 ITOA
+IWYU
 Isode
 Iters
+JS
 JSON
 JSONs
 JWKS
@@ -214,6 +218,7 @@ PGV
 PID
 PKTINFO
 PNG
+Plulgin
 PostCBs
 PREBIND
 PRNG
@@ -253,6 +258,7 @@ SAN
 SCT
 SDK
 SDS
+SEGV
 SENDSRCADDR
 SHA
 SHM
@@ -272,6 +278,7 @@ SPIFFE
 SPKI
 SQL
 SR
+SRCDIR
 SRDS
 SRV
 SS
@@ -362,6 +369,7 @@ argv
 artisanal
 ary
 asctime
+asm
 async
 atoi
 atomicity
@@ -384,6 +392,7 @@ backticks
 balancer
 balancers
 barbaz
+basename
 baz
 bazel
 behaviour
@@ -410,6 +419,7 @@ bulkstrings
 bursty
 bytecode
 callee
+callout
 callsite
 callsites
 callstack
@@ -434,6 +444,7 @@ ciphersuite
 ciphersuites
 circllhist
 CITT
+clonable
 cloneable
 cloneability
 cmd
@@ -444,6 +455,7 @@ codecs
 codepath
 codings
 combinatorial
+commmon
 comparator
 compat
 completable
@@ -471,8 +483,10 @@ cryptographically
 cstate
 cstring
 ctor
+ctors
 ctrl
 customizations
+cxa
 darwin
 datadog
 datagram
@@ -522,6 +536,8 @@ dgst
 dir
 dirname
 djb
+downcall
+downcalls
 downcasted
 downcasting
 downstreams
@@ -529,11 +545,13 @@ dtor
 dubbo
 dup
 durations
+dynamictop
 dynamodb
 eg
 emplace
 emplaced
 emscripten
+emsdk
 enablement
 encodings
 endian
@@ -546,6 +564,7 @@ enum
 enums
 environ
 epoll
+eproto
 errno
 etag
 etags
@@ -574,10 +593,12 @@ filenames
 fileno
 filesize
 filesystem
+fintrinsics
 firefox
 fixdate
 fixup
 fld
+flite
 fmt
 fmtlib
 fn
@@ -589,6 +610,8 @@ ftruncate
 func
 functor
 functors
+functtions
+fwasm
 gRPC
 gcov
 genrule
@@ -634,12 +657,15 @@ huffman
 hystrix
 iap
 idempotency
+ident
+identifiying
 idx
 ie
 ifdef
 iff
 ified
 impl
+implemenation
 implementors
 impls
 incrementing
@@ -647,6 +673,7 @@ inflater
 inflight
 ing
 init
+initate
 initializer
 inlined
 inlining
@@ -656,6 +683,7 @@ instantiation
 instantiations
 interpretable
 intra
+intrinsics
 ints
 invariance
 iov
@@ -684,6 +712,8 @@ kv
 kvs
 lala
 latencies
+ld
+ldd
 len
 lenenc
 lexically
@@ -757,9 +787,11 @@ muxed
 muxing
 mysql
 namespace
+namespaced
 namespaces
 namespacing
 nan
+nano
 natively
 nd
 netblock
@@ -819,6 +851,7 @@ pausable
 pcall
 pcap
 pclose
+percompiled
 pfctl
 pipelined
 pipelining
@@ -831,6 +864,7 @@ pos
 posix
 postfix
 postfixes
+pragma
 pre
 preallocate
 preallocating
@@ -846,6 +880,7 @@ preorder
 prepend
 prepended
 prepending
+preseving
 prev
 proc
 profiler
@@ -948,6 +983,7 @@ runfiles
 runtime
 runtimes
 rval
+rvalue
 rver
 sandboxed
 sanitization
@@ -1030,6 +1066,7 @@ subtypes
 subzone
 superclass
 superset
+suppoorted
 symlink
 symlinked
 symlinks
@@ -1047,6 +1084,7 @@ tcmalloc
 tcpdump
 teardown
 tempdir
+tempdouble
 templated
 templating
 templatize
@@ -1142,6 +1180,7 @@ unwatched
 unweighted
 unzigzag
 upcasts
+upstreaming
 upstreams
 uptime
 upvalue
@@ -1155,6 +1194,7 @@ utils
 valgrind
 validator
 validators
+valueor
 vanishingly
 varchar
 variadic
