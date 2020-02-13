@@ -142,7 +142,7 @@ template <typename Pairs> void marshalPairs(const Pairs& result, char* buffer) {
   }
 }
 
-template <typename Pairs> void exportPairs(const Pairs& pairs, const char** ptr, size_t* size_ptr) {
+template <typename Pairs> void exportPairs(const Pairs& pairs, char** ptr, size_t* size_ptr) {
   if (pairs.empty()) {
     *ptr = nullptr;
     *size_ptr = 0;
@@ -151,6 +151,7 @@ template <typename Pairs> void exportPairs(const Pairs& pairs, const char** ptr,
   size_t size = pairsSize(pairs);
   char* buffer = static_cast<char*>(::malloc(size));
   marshalPairs(pairs, buffer);
+  *ptr = buffer;
   *size_ptr = size;
 }
 
@@ -532,7 +533,7 @@ inline WasmResult sendLocalResponse(uint32_t response_code, StringView response_
                                     StringView body,
                                     const HeaderStringPairs& additional_response_headers,
                                     GrpcStatus grpc_status = GrpcStatus::InvalidCode) {
-  const char* ptr = nullptr;
+  char* ptr = nullptr;
   size_t size = 0;
   exportPairs(additional_response_headers, &ptr, &size);
   return proxy_send_local_response(response_code, response_code_details.data(),
@@ -619,7 +620,7 @@ inline WasmDataPtr getHeaderMapPairs(HeaderMapType type) {
 }
 
 inline WasmResult setHeaderMapPairs(HeaderMapType type, const HeaderStringPairs& pairs) {
-  const char* ptr = nullptr;
+  char* ptr = nullptr;
   size_t size = 0;
   exportPairs(pairs, &ptr, &size);
   return proxy_set_header_map_pairs(type, ptr, size);

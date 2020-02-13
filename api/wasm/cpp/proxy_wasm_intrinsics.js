@@ -13,6 +13,7 @@ mergeInto(LibraryManager.library, {
     proxy_get_header_map_value: function () {},
     proxy_get_header_map_pairs: function () {},
     proxy_get_header_map_size: function () {},
+    proxy_set_header_map_pairs: function () {},
     proxy_get_shared_data: function () {},
     proxy_set_shared_data: function () {},
     proxy_register_shared_queue: function () {},

@@ -22,6 +22,10 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   std::string protocol;
   addRequestHeader("newheader", "newheadervalue");
   replaceRequestHeader("server", "envoy-wasm");
+  std::vector<std::pair<std::string, std::string>> pairs;
+  pairs.push_back(std::make_pair("pair-header-1", "header-val-1"));
+  pairs.push_back(std::make_pair("pair-header-2", "header-val-2"));
+  setRequestHeaderPairs(pairs);
   return FilterHeadersStatus::Continue;
 }
 

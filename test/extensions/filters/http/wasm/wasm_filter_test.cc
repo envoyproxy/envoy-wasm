@@ -182,6 +182,8 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm"));
+  EXPECT_THAT(request_headers.get_("pair-header-1"), Eq("header-val-1"));
+  EXPECT_THAT(request_headers.get_("pair-header-2"), Eq("header-val-2"));
   filter_->onDestroy();
 }
 

@@ -723,21 +723,10 @@ void Context::setHeaderMapPairs(HeaderMapType type, const Pairs& pairs) {
   if (!map) {
     return;
   }
-  std::vector<std::string> keys;
-  map->iterate(
-      [](const Http::HeaderEntry& header, void* keys) -> Http::HeaderMap::Iterate {
-        (static_cast<std::vector<std::string>*>(keys))
-            ->push_back(std::string(header.key().getStringView()));
-        return Http::HeaderMap::Iterate::Continue;
-      },
-      &keys);
-  for (auto& k : keys) {
-    const Http::LowerCaseString lower_key(std::move(k));
-    map->remove(lower_key);
-  }
+
   for (auto& p : pairs) {
     const Http::LowerCaseString lower_key(std::move(std::string(p.first)));
-    map->addCopy(lower_key, std::move(std::string(p.second)));
+    map->setCopy(lower_key, std::move(std::string(p.second)));
   }
 }
 
