@@ -16,10 +16,11 @@ extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTO
 extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_DataSource_proxy_5fwasm_5fintrinsics_5flite_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_GrpcService_EnvoyGrpc_proxy_5fwasm_5fintrinsics_5flite_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<3> scc_info_GrpcService_GoogleGrpc_proxy_5fwasm_5fintrinsics_5flite_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<4> scc_info_GrpcService_GoogleGrpc_CallCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<5> scc_info_GrpcService_GoogleGrpc_CallCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<2> scc_info_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_proxy_5fwasm_5fintrinsics_5flite_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_CallCredentials_StsService_proxy_5fwasm_5fintrinsics_5flite_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<3> scc_info_GrpcService_GoogleGrpc_ChannelCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_Empty_proxy_5fwasm_5fintrinsics_5flite_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_proxy_5fwasm_5fintrinsics_5flite_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_GoogleLocalCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto;
@@ -78,6 +79,10 @@ class GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPluginDefaul
   const ::google::protobuf::Struct* config_;
   const ::Any* typed_config_;
 } _GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_default_instance_;
+class GrpcService_GoogleGrpc_CallCredentials_StsServiceDefaultTypeInternal {
+ public:
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc_CallCredentials_StsService> _instance;
+} _GrpcService_GoogleGrpc_CallCredentials_StsService_default_instance_;
 class GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<GrpcService_GoogleGrpc_CallCredentials> _instance;
@@ -87,6 +92,7 @@ class GrpcService_GoogleGrpc_CallCredentialsDefaultTypeInternal {
   const ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials* service_account_jwt_access_;
   const ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials* google_iam_;
   const ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* from_plugin_;
+  const ::GrpcService_GoogleGrpc_CallCredentials_StsService* sts_service_;
 } _GrpcService_GoogleGrpc_CallCredentials_default_instance_;
 class GrpcService_GoogleGrpcDefaultTypeInternal {
  public:
@@ -189,12 +195,13 @@ static void InitDefaultsscc_info_GrpcService_GoogleGrpc_CallCredentials_proxy_5f
   ::GrpcService_GoogleGrpc_CallCredentials::InitAsDefaultInstance();
 }
 
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<4> scc_info_GrpcService_GoogleGrpc_CallCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 4, InitDefaultsscc_info_GrpcService_GoogleGrpc_CallCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto}, {
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<5> scc_info_GrpcService_GoogleGrpc_CallCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 5, InitDefaultsscc_info_GrpcService_GoogleGrpc_CallCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto}, {
       &scc_info_GrpcService_GoogleGrpc_Empty_proxy_5fwasm_5fintrinsics_5flite_2eproto.base,
       &scc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto.base,
       &scc_info_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto.base,
-      &scc_info_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_proxy_5fwasm_5fintrinsics_5flite_2eproto.base,}};
+      &scc_info_GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin_proxy_5fwasm_5fintrinsics_5flite_2eproto.base,
+      &scc_info_GrpcService_GoogleGrpc_CallCredentials_StsService_proxy_5fwasm_5fintrinsics_5flite_2eproto.base,}};
 
 static void InitDefaultsscc_info_GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -239,6 +246,20 @@ static void InitDefaultsscc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceA
 
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto =
     {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsscc_info_GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto}, {}};
+
+static void InitDefaultsscc_info_GrpcService_GoogleGrpc_CallCredentials_StsService_proxy_5fwasm_5fintrinsics_5flite_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_GrpcService_GoogleGrpc_CallCredentials_StsService_default_instance_;
+    new (ptr) ::GrpcService_GoogleGrpc_CallCredentials_StsService();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::GrpcService_GoogleGrpc_CallCredentials_StsService::InitAsDefaultInstance();
+}
+
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_GrpcService_GoogleGrpc_CallCredentials_StsService_proxy_5fwasm_5fintrinsics_5flite_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsscc_info_GrpcService_GoogleGrpc_CallCredentials_StsService_proxy_5fwasm_5fintrinsics_5flite_2eproto}, {}};
 
 static void InitDefaultsscc_info_GrpcService_GoogleGrpc_ChannelCredentials_proxy_5fwasm_5fintrinsics_5flite_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -3442,6 +3463,651 @@ std::string GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin
 
 // ===================================================================
 
+void GrpcService_GoogleGrpc_CallCredentials_StsService::InitAsDefaultInstance() {
+}
+class GrpcService_GoogleGrpc_CallCredentials_StsService::_Internal {
+ public:
+};
+
+GrpcService_GoogleGrpc_CallCredentials_StsService::GrpcService_GoogleGrpc_CallCredentials_StsService()
+  : ::PROTOBUF_NAMESPACE_ID::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:GrpcService.GoogleGrpc.CallCredentials.StsService)
+}
+GrpcService_GoogleGrpc_CallCredentials_StsService::GrpcService_GoogleGrpc_CallCredentials_StsService(const GrpcService_GoogleGrpc_CallCredentials_StsService& from)
+  : ::PROTOBUF_NAMESPACE_ID::MessageLite(),
+      _internal_metadata_(nullptr) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  token_exchange_service_uri_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from.token_exchange_service_uri().empty()) {
+    token_exchange_service_uri_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.token_exchange_service_uri_);
+  }
+  resource_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from.resource().empty()) {
+    resource_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.resource_);
+  }
+  audience_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from.audience().empty()) {
+    audience_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.audience_);
+  }
+  scope_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from.scope().empty()) {
+    scope_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.scope_);
+  }
+  requested_token_type_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from.requested_token_type().empty()) {
+    requested_token_type_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.requested_token_type_);
+  }
+  subject_token_path_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from.subject_token_path().empty()) {
+    subject_token_path_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.subject_token_path_);
+  }
+  subject_token_type_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from.subject_token_type().empty()) {
+    subject_token_type_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.subject_token_type_);
+  }
+  actor_token_path_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from.actor_token_path().empty()) {
+    actor_token_path_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.actor_token_path_);
+  }
+  actor_token_type_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from.actor_token_type().empty()) {
+    actor_token_type_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.actor_token_type_);
+  }
+  // @@protoc_insertion_point(copy_constructor:GrpcService.GoogleGrpc.CallCredentials.StsService)
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_StsService::SharedCtor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_GrpcService_GoogleGrpc_CallCredentials_StsService_proxy_5fwasm_5fintrinsics_5flite_2eproto.base);
+  token_exchange_service_uri_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  resource_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  audience_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  scope_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  requested_token_type_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  subject_token_path_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  subject_token_type_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  actor_token_path_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  actor_token_type_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+}
+
+GrpcService_GoogleGrpc_CallCredentials_StsService::~GrpcService_GoogleGrpc_CallCredentials_StsService() {
+  // @@protoc_insertion_point(destructor:GrpcService.GoogleGrpc.CallCredentials.StsService)
+  SharedDtor();
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_StsService::SharedDtor() {
+  token_exchange_service_uri_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  resource_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  audience_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  scope_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  requested_token_type_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  subject_token_path_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  subject_token_type_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  actor_token_path_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  actor_token_type_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_StsService::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const GrpcService_GoogleGrpc_CallCredentials_StsService& GrpcService_GoogleGrpc_CallCredentials_StsService::default_instance() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_GrpcService_GoogleGrpc_CallCredentials_StsService_proxy_5fwasm_5fintrinsics_5flite_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void GrpcService_GoogleGrpc_CallCredentials_StsService::Clear() {
+// @@protoc_insertion_point(message_clear_start:GrpcService.GoogleGrpc.CallCredentials.StsService)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  token_exchange_service_uri_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  resource_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  audience_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  scope_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  requested_token_type_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  subject_token_path_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  subject_token_type_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  actor_token_path_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  actor_token_type_.ClearToEmptyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* GrpcService_GoogleGrpc_CallCredentials_StsService::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
+      // string token_exchange_service_uri = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_token_exchange_service_uri(), ptr, ctx, nullptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string resource = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_resource(), ptr, ctx, nullptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string audience = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_audience(), ptr, ctx, nullptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string scope = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_scope(), ptr, ctx, nullptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string requested_token_type = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_requested_token_type(), ptr, ctx, nullptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string subject_token_path = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 50)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_subject_token_path(), ptr, ctx, nullptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string subject_token_type = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 58)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_subject_token_type(), ptr, ctx, nullptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string actor_token_path = 8;
+      case 8:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 66)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_actor_token_path(), ptr, ctx, nullptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string actor_token_type = 9;
+      case 9:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 74)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParserUTF8(mutable_actor_token_type(), ptr, ctx, nullptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag, &_internal_metadata_, ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
+  }  // while
+success:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto success;
+#undef CHK_
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool GrpcService_GoogleGrpc_CallCredentials_StsService::MergePartialFromCodedStream(
+    ::PROTOBUF_NAMESPACE_ID::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+  ::PROTOBUF_NAMESPACE_ID::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:GrpcService.GoogleGrpc.CallCredentials.StsService)
+  for (;;) {
+    ::std::pair<::PROTOBUF_NAMESPACE_ID::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string token_exchange_service_uri = 1;
+      case 1: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (10 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
+                input, this->mutable_token_exchange_service_uri()));
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->token_exchange_service_uri().data(), static_cast<int>(this->token_exchange_service_uri().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.StsService.token_exchange_service_uri"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string resource = 2;
+      case 2: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (18 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
+                input, this->mutable_resource()));
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->resource().data(), static_cast<int>(this->resource().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.StsService.resource"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string audience = 3;
+      case 3: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (26 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
+                input, this->mutable_audience()));
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->audience().data(), static_cast<int>(this->audience().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.StsService.audience"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string scope = 4;
+      case 4: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (34 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
+                input, this->mutable_scope()));
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->scope().data(), static_cast<int>(this->scope().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.StsService.scope"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string requested_token_type = 5;
+      case 5: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (42 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
+                input, this->mutable_requested_token_type()));
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->requested_token_type().data(), static_cast<int>(this->requested_token_type().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.StsService.requested_token_type"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string subject_token_path = 6;
+      case 6: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (50 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
+                input, this->mutable_subject_token_path()));
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->subject_token_path().data(), static_cast<int>(this->subject_token_path().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.StsService.subject_token_path"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string subject_token_type = 7;
+      case 7: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (58 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
+                input, this->mutable_subject_token_type()));
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->subject_token_type().data(), static_cast<int>(this->subject_token_type().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.StsService.subject_token_type"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string actor_token_path = 8;
+      case 8: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (66 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
+                input, this->mutable_actor_token_path()));
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->actor_token_path().data(), static_cast<int>(this->actor_token_path().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.StsService.actor_token_path"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string actor_token_type = 9;
+      case 9: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (74 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadString(
+                input, this->mutable_actor_token_type()));
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+            this->actor_token_type().data(), static_cast<int>(this->actor_token_type().length()),
+            ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE,
+            "GrpcService.GoogleGrpc.CallCredentials.StsService.actor_token_type"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:GrpcService.GoogleGrpc.CallCredentials.StsService)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:GrpcService.GoogleGrpc.CallCredentials.StsService)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void GrpcService_GoogleGrpc_CallCredentials_StsService::SerializeWithCachedSizes(
+    ::PROTOBUF_NAMESPACE_ID::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:GrpcService.GoogleGrpc.CallCredentials.StsService)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string token_exchange_service_uri = 1;
+  if (this->token_exchange_service_uri().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->token_exchange_service_uri().data(), static_cast<int>(this->token_exchange_service_uri().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.StsService.token_exchange_service_uri");
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->token_exchange_service_uri(), output);
+  }
+
+  // string resource = 2;
+  if (this->resource().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->resource().data(), static_cast<int>(this->resource().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.StsService.resource");
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->resource(), output);
+  }
+
+  // string audience = 3;
+  if (this->audience().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->audience().data(), static_cast<int>(this->audience().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.StsService.audience");
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
+      3, this->audience(), output);
+  }
+
+  // string scope = 4;
+  if (this->scope().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->scope().data(), static_cast<int>(this->scope().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.StsService.scope");
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
+      4, this->scope(), output);
+  }
+
+  // string requested_token_type = 5;
+  if (this->requested_token_type().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->requested_token_type().data(), static_cast<int>(this->requested_token_type().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.StsService.requested_token_type");
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
+      5, this->requested_token_type(), output);
+  }
+
+  // string subject_token_path = 6;
+  if (this->subject_token_path().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->subject_token_path().data(), static_cast<int>(this->subject_token_path().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.StsService.subject_token_path");
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
+      6, this->subject_token_path(), output);
+  }
+
+  // string subject_token_type = 7;
+  if (this->subject_token_type().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->subject_token_type().data(), static_cast<int>(this->subject_token_type().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.StsService.subject_token_type");
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
+      7, this->subject_token_type(), output);
+  }
+
+  // string actor_token_path = 8;
+  if (this->actor_token_path().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->actor_token_path().data(), static_cast<int>(this->actor_token_path().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.StsService.actor_token_path");
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
+      8, this->actor_token_path(), output);
+  }
+
+  // string actor_token_type = 9;
+  if (this->actor_token_type().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->actor_token_type().data(), static_cast<int>(this->actor_token_type().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "GrpcService.GoogleGrpc.CallCredentials.StsService.actor_token_type");
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteStringMaybeAliased(
+      9, this->actor_token_type(), output);
+  }
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc.CallCredentials.StsService)
+}
+
+size_t GrpcService_GoogleGrpc_CallCredentials_StsService::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:GrpcService.GoogleGrpc.CallCredentials.StsService)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string token_exchange_service_uri = 1;
+  if (this->token_exchange_service_uri().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->token_exchange_service_uri());
+  }
+
+  // string resource = 2;
+  if (this->resource().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->resource());
+  }
+
+  // string audience = 3;
+  if (this->audience().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->audience());
+  }
+
+  // string scope = 4;
+  if (this->scope().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->scope());
+  }
+
+  // string requested_token_type = 5;
+  if (this->requested_token_type().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->requested_token_type());
+  }
+
+  // string subject_token_path = 6;
+  if (this->subject_token_path().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->subject_token_path());
+  }
+
+  // string subject_token_type = 7;
+  if (this->subject_token_type().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->subject_token_type());
+  }
+
+  // string actor_token_path = 8;
+  if (this->actor_token_path().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->actor_token_path());
+  }
+
+  // string actor_token_type = 9;
+  if (this->actor_token_type().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->actor_token_type());
+  }
+
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_StsService::CheckTypeAndMergeFrom(
+    const ::PROTOBUF_NAMESPACE_ID::MessageLite& from) {
+  MergeFrom(*::PROTOBUF_NAMESPACE_ID::internal::DownCast<const GrpcService_GoogleGrpc_CallCredentials_StsService*>(
+      &from));
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_StsService::MergeFrom(const GrpcService_GoogleGrpc_CallCredentials_StsService& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:GrpcService.GoogleGrpc.CallCredentials.StsService)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.token_exchange_service_uri().size() > 0) {
+
+    token_exchange_service_uri_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.token_exchange_service_uri_);
+  }
+  if (from.resource().size() > 0) {
+
+    resource_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.resource_);
+  }
+  if (from.audience().size() > 0) {
+
+    audience_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.audience_);
+  }
+  if (from.scope().size() > 0) {
+
+    scope_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.scope_);
+  }
+  if (from.requested_token_type().size() > 0) {
+
+    requested_token_type_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.requested_token_type_);
+  }
+  if (from.subject_token_path().size() > 0) {
+
+    subject_token_path_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.subject_token_path_);
+  }
+  if (from.subject_token_type().size() > 0) {
+
+    subject_token_type_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.subject_token_type_);
+  }
+  if (from.actor_token_path().size() > 0) {
+
+    actor_token_path_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.actor_token_path_);
+  }
+  if (from.actor_token_type().size() > 0) {
+
+    actor_token_type_.AssignWithDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from.actor_token_type_);
+  }
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_StsService::CopyFrom(const GrpcService_GoogleGrpc_CallCredentials_StsService& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:GrpcService.GoogleGrpc.CallCredentials.StsService)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GrpcService_GoogleGrpc_CallCredentials_StsService::IsInitialized() const {
+  return true;
+}
+
+void GrpcService_GoogleGrpc_CallCredentials_StsService::InternalSwap(GrpcService_GoogleGrpc_CallCredentials_StsService* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  token_exchange_service_uri_.Swap(&other->token_exchange_service_uri_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  resource_.Swap(&other->resource_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  audience_.Swap(&other->audience_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  scope_.Swap(&other->scope_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  requested_token_type_.Swap(&other->requested_token_type_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  subject_token_path_.Swap(&other->subject_token_path_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  subject_token_type_.Swap(&other->subject_token_type_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  actor_token_path_.Swap(&other->actor_token_path_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  actor_token_type_.Swap(&other->actor_token_type_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+}
+
+std::string GrpcService_GoogleGrpc_CallCredentials_StsService::GetTypeName() const {
+  return "GrpcService.GoogleGrpc.CallCredentials.StsService";
+}
+
+
+// ===================================================================
+
 void GrpcService_GoogleGrpc_CallCredentials::InitAsDefaultInstance() {
 }
 class GrpcService_GoogleGrpc_CallCredentials::_Internal {
@@ -3450,6 +4116,7 @@ class GrpcService_GoogleGrpc_CallCredentials::_Internal {
   static const ::GrpcService_GoogleGrpc_CallCredentials_ServiceAccountJWTAccessCredentials& service_account_jwt_access(const GrpcService_GoogleGrpc_CallCredentials* msg);
   static const ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMCredentials& google_iam(const GrpcService_GoogleGrpc_CallCredentials* msg);
   static const ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin& from_plugin(const GrpcService_GoogleGrpc_CallCredentials* msg);
+  static const ::GrpcService_GoogleGrpc_CallCredentials_StsService& sts_service(const GrpcService_GoogleGrpc_CallCredentials* msg);
 };
 
 const ::GrpcService_GoogleGrpc_Empty&
@@ -3467,6 +4134,10 @@ GrpcService_GoogleGrpc_CallCredentials::_Internal::google_iam(const GrpcService_
 const ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin&
 GrpcService_GoogleGrpc_CallCredentials::_Internal::from_plugin(const GrpcService_GoogleGrpc_CallCredentials* msg) {
   return *msg->credential_specifier_.from_plugin_;
+}
+const ::GrpcService_GoogleGrpc_CallCredentials_StsService&
+GrpcService_GoogleGrpc_CallCredentials::_Internal::sts_service(const GrpcService_GoogleGrpc_CallCredentials* msg) {
+  return *msg->credential_specifier_.sts_service_;
 }
 void GrpcService_GoogleGrpc_CallCredentials::set_allocated_google_compute_engine(::GrpcService_GoogleGrpc_Empty* google_compute_engine) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaNoVirtual();
@@ -3524,6 +4195,20 @@ void GrpcService_GoogleGrpc_CallCredentials::set_allocated_from_plugin(::GrpcSer
   }
   // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.from_plugin)
 }
+void GrpcService_GoogleGrpc_CallCredentials::set_allocated_sts_service(::GrpcService_GoogleGrpc_CallCredentials_StsService* sts_service) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaNoVirtual();
+  clear_credential_specifier();
+  if (sts_service) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena = nullptr;
+    if (message_arena != submessage_arena) {
+      sts_service = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, sts_service, submessage_arena);
+    }
+    set_has_sts_service();
+    credential_specifier_.sts_service_ = sts_service;
+  }
+  // @@protoc_insertion_point(field_set_allocated:GrpcService.GoogleGrpc.CallCredentials.sts_service)
+}
 GrpcService_GoogleGrpc_CallCredentials::GrpcService_GoogleGrpc_CallCredentials()
   : ::PROTOBUF_NAMESPACE_ID::MessageLite(), _internal_metadata_(nullptr) {
   SharedCtor();
@@ -3557,6 +4242,10 @@ GrpcService_GoogleGrpc_CallCredentials::GrpcService_GoogleGrpc_CallCredentials(c
     }
     case kFromPlugin: {
       mutable_from_plugin()->::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::MergeFrom(from.from_plugin());
+      break;
+    }
+    case kStsService: {
+      mutable_sts_service()->::GrpcService_GoogleGrpc_CallCredentials_StsService::MergeFrom(from.sts_service());
       break;
     }
     case CREDENTIAL_SPECIFIER_NOT_SET: {
@@ -3616,6 +4305,10 @@ void GrpcService_GoogleGrpc_CallCredentials::clear_credential_specifier() {
     }
     case kFromPlugin: {
       delete credential_specifier_.from_plugin_;
+      break;
+    }
+    case kStsService: {
+      delete credential_specifier_.sts_service_;
       break;
     }
     case CREDENTIAL_SPECIFIER_NOT_SET: {
@@ -3683,6 +4376,13 @@ const char* GrpcService_GoogleGrpc_CallCredentials::_InternalParse(const char* p
       case 6:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 50)) {
           ptr = ctx->ParseMessage(mutable_from_plugin(), ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // .GrpcService.GoogleGrpc.CallCredentials.StsService sts_service = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 58)) {
+          ptr = ctx->ParseMessage(mutable_sts_service(), ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -3796,6 +4496,17 @@ bool GrpcService_GoogleGrpc_CallCredentials::MergePartialFromCodedStream(
         break;
       }
 
+      // .GrpcService.GoogleGrpc.CallCredentials.StsService sts_service = 7;
+      case 7: {
+        if (static_cast< ::PROTOBUF_NAMESPACE_ID::uint8>(tag) == (58 & 0xFF)) {
+          DO_(::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::ReadMessage(
+               input, mutable_sts_service()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -3867,6 +4578,12 @@ void GrpcService_GoogleGrpc_CallCredentials::SerializeWithCachedSizes(
       6, _Internal::from_plugin(this), output);
   }
 
+  // .GrpcService.GoogleGrpc.CallCredentials.StsService sts_service = 7;
+  if (has_sts_service()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteMessage(
+      7, _Internal::sts_service(this), output);
+  }
+
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
   // @@protoc_insertion_point(serialize_end:GrpcService.GoogleGrpc.CallCredentials)
@@ -3925,6 +4642,13 @@ size_t GrpcService_GoogleGrpc_CallCredentials::ByteSizeLong() const {
           *credential_specifier_.from_plugin_);
       break;
     }
+    // .GrpcService.GoogleGrpc.CallCredentials.StsService sts_service = 7;
+    case kStsService: {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *credential_specifier_.sts_service_);
+      break;
+    }
     case CREDENTIAL_SPECIFIER_NOT_SET: {
       break;
     }
@@ -3970,6 +4694,10 @@ void GrpcService_GoogleGrpc_CallCredentials::MergeFrom(const GrpcService_GoogleG
     }
     case kFromPlugin: {
       mutable_from_plugin()->::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin::MergeFrom(from.from_plugin());
+      break;
+    }
+    case kStsService: {
+      mutable_sts_service()->::GrpcService_GoogleGrpc_CallCredentials_StsService::MergeFrom(from.sts_service());
       break;
     }
     case CREDENTIAL_SPECIFIER_NOT_SET: {
@@ -5191,6 +5919,9 @@ template<> PROTOBUF_NOINLINE ::GrpcService_GoogleGrpc_CallCredentials_GoogleIAMC
 }
 template<> PROTOBUF_NOINLINE ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin >(Arena* arena) {
   return Arena::CreateInternal< ::GrpcService_GoogleGrpc_CallCredentials_MetadataCredentialsFromPlugin >(arena);
+}
+template<> PROTOBUF_NOINLINE ::GrpcService_GoogleGrpc_CallCredentials_StsService* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials_StsService >(Arena* arena) {
+  return Arena::CreateInternal< ::GrpcService_GoogleGrpc_CallCredentials_StsService >(arena);
 }
 template<> PROTOBUF_NOINLINE ::GrpcService_GoogleGrpc_CallCredentials* Arena::CreateMaybeMessage< ::GrpcService_GoogleGrpc_CallCredentials >(Arena* arena) {
   return Arena::CreateInternal< ::GrpcService_GoogleGrpc_CallCredentials >(arena);
