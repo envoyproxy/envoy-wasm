@@ -446,6 +446,7 @@ uint32_t Wasm::allocContextId() {
 
 class Wasm::ShutdownHandle : public Envoy::Event::DeferredDeletable {
 public:
+  ~ShutdownHandle() { wasm_->finishShutdown(); }
   ShutdownHandle(WasmSharedPtr wasm) : wasm_(wasm) {}
 
 private:
@@ -473,8 +474,8 @@ WasmResult Wasm::done(Context* root_context) {
     return WasmResult::NotFound;
   }
   pending_done_.erase(it);
-  if (pending_done_.empty()) {
-    shutdown_ready_ = true;
+  if (pending_done_.empty() && shutdown_handle_) {
+    dispatcher_.deferredDelete(std::move(shutdown_handle_));
   }
   return WasmResult::Ok;
 }
@@ -482,9 +483,6 @@ WasmResult Wasm::done(Context* root_context) {
 void Wasm::finishShutdown() {
   for (auto& p : root_contexts_) {
     p.second->onDelete();
-  }
-  if (shutdown_handle_) {
-    dispatcher_.deferredDelete(std::move(shutdown_handle_));
   }
 }
 
