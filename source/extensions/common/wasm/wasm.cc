@@ -555,18 +555,18 @@ static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin
         wasm = std::make_shared<WasmHandle>(std::make_shared<Wasm>(
             vm_config.runtime(), vm_config.vm_id(), vm_config.configuration(), vm_key, scope,
             cluster_manager, dispatcher));
+        if (!wasm->wasm()->initialize(code, vm_config.allow_precompiled())) {
+          throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
+        }
+        if (!context) {
+          wasm->wasm()->start(plugin);
+        } else {
+          wasm->wasm()->startForTesting(std::move(context), plugin);
+        }
         (*base_wasms_)[vm_key] = wasm;
       }
     }
 
-    if (!wasm->wasm()->initialize(code, vm_config.allow_precompiled())) {
-      throw WasmException(fmt::format("Failed to initialize WASM code from {}", source));
-    }
-    if (!context) {
-      wasm->wasm()->start(plugin);
-    } else {
-      wasm->wasm()->startForTesting(std::move(context), plugin);
-    }
     cb(std::move(wasm));
   };
 
