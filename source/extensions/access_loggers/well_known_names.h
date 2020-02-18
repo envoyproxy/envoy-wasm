@@ -15,9 +15,9 @@ namespace AccessLoggers {
 class AccessLogNameValues {
 public:
   // File access log
-  const std::string File = "envoy.file_access_log";
+  const std::string File = "envoy.access_loggers.file";
   // HTTP gRPC access log
-  const std::string HttpGrpc = "envoy.http_grpc_access_log";
+  const std::string HttpGrpc = "envoy.access_loggers.http_grpc";
   // TCP gRPC access log
   const std::string TcpGrpc = "envoy.tcp_grpc_access_log";
   // WASM access log
