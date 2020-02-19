@@ -131,7 +131,7 @@ public:
   //
 
   Http::RequestDecoder& newStream(Http::ResponseEncoder& stream_encoder,
-                                 bool is_internally_created = false) override;
+                                  bool is_internally_created = false) override;
 
   //
   // Network::ConnectionCallbacks
