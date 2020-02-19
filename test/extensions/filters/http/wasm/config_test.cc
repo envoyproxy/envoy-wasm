@@ -171,10 +171,11 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASM) {
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
-          Invoke([&](Http::MessagePtr&, Http::AsyncClient::Callbacks& callbacks,
+          Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
-            Http::MessagePtr response(new Http::ResponseMessageImpl(
-                Http::HeaderMapPtr{new Http::TestHeaderMapImpl{{":status", "200"}}}));
+            Http::ResponseMessagePtr response(
+                new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                    new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
             response->body() = std::make_unique<Buffer::OwnedImpl>(code);
             callbacks.onSuccess(std::move(response));
             return nullptr;
@@ -216,7 +217,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
-          Invoke([&](Http::MessagePtr&, Http::AsyncClient::Callbacks& callbacks,
+          Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             callbacks.onFailure(Envoy::Http::AsyncClient::FailureReason::Reset);
             return nullptr;
@@ -255,10 +256,11 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
-          Invoke([&](Http::MessagePtr&, Http::AsyncClient::Callbacks& callbacks,
+          Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
-            callbacks.onSuccess(Http::MessagePtr{new Http::ResponseMessageImpl(
-                Http::HeaderMapPtr{new Http::TestHeaderMapImpl{{":status", "503"}}})});
+            callbacks.onSuccess(
+                Http::ResponseMessagePtr{new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                    new Http::TestResponseHeaderMapImpl{{":status", "503"}}})});
             return nullptr;
           }));
 
@@ -294,10 +296,11 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
-          Invoke([&](Http::MessagePtr&, Http::AsyncClient::Callbacks& callbacks,
+          Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
-            Http::MessagePtr response(new Http::ResponseMessageImpl(
-                Http::HeaderMapPtr{new Http::TestHeaderMapImpl{{":status", "200"}}}));
+            Http::ResponseMessagePtr response(
+                new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                    new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
             response->body() = std::make_unique<Buffer::OwnedImpl>(code);
             callbacks.onSuccess(std::move(response));
             return nullptr;
@@ -335,10 +338,11 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
-          Invoke([&](Http::MessagePtr&, Http::AsyncClient::Callbacks& callbacks,
+          Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
-            Http::MessagePtr response(new Http::ResponseMessageImpl(
-                Http::HeaderMapPtr{new Http::TestHeaderMapImpl{{":status", "200"}}}));
+            Http::ResponseMessagePtr response(
+                new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                    new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
             response->body() = std::make_unique<Buffer::OwnedImpl>(code);
             callbacks.onSuccess(std::move(response));
             return nullptr;
