@@ -83,6 +83,11 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<2>* f
       SaveRestoreContext saved_context(context);
       plugin->onQueueReady(context_id.u64_, token.u64_);
     };
+  } else if (function_name == "proxy_on_grpc_create_initial_metadata") {
+    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word headers) {
+      SaveRestoreContext saved_context(context);
+      plugin->onGrpcCreateInitialMetadata(context_id.u64_, headers.u64_);
+    };
   } else {
     throw WasmVmException(fmt::format("Missing getFunction for: {}", function_name));
   }
@@ -99,11 +104,6 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<3>* f
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word body_size) {
       SaveRestoreContext saved_context(context);
       plugin->onGrpcReceive(context_id.u64_, token.u64_, body_size.u64_);
-    };
-  } else if (function_name == "proxy_on_grpc_create_initial_metadata") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers) {
-      SaveRestoreContext saved_context(context);
-      plugin->onGrpcCreateInitialMetadata(context_id.u64_, token.u64_, headers.u64_);
     };
   } else if (function_name == "proxy_on_grpc_receive_initial_metadata") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers) {
@@ -429,9 +429,8 @@ void NullPlugin::onGrpcClose(uint64_t context_id, uint64_t token, uint64_t statu
   getRootContext(context_id)->onGrpcClose(token, static_cast<Plugin::GrpcStatus>(status_code));
 }
 
-void NullPlugin::onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t token,
-                                             uint64_t headers) {
-  getRootContext(context_id)->onGrpcCreateInitialMetadata(token, headers);
+void NullPlugin::onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t headers) {
+  getRootContext(context_id)->onGrpcCreateInitialMetadata(headers);
 }
 
 void NullPlugin::onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t token,

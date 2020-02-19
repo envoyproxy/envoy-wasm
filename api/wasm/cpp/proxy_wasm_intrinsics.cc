@@ -226,8 +226,8 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_http_call_response(uint32_t contex
 }
 
 extern "C" PROXY_WASM_KEEPALIVE void
-proxy_on_grpc_create_initial_metadata(uint32_t context_id, uint32_t token, uint32_t headers) {
-  getRootContext(context_id)->onGrpcCreateInitialMetadata(token, headers);
+proxy_on_grpc_create_initial_metadata(uint32_t context_id, uint32_t headers) {
+  getRootContext(context_id)->onGrpcCreateInitialMetadata(headers);
 }
 
 extern "C" PROXY_WASM_KEEPALIVE void

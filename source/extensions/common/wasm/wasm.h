@@ -230,7 +230,7 @@ private:
 
   WasmCallVoid<3> on_grpc_receive_;
   WasmCallVoid<3> on_grpc_close_;
-  WasmCallVoid<3> on_grpc_create_initial_metadata_;
+  WasmCallVoid<2> on_grpc_create_initial_metadata_;
   WasmCallVoid<3> on_grpc_receive_initial_metadata_;
   WasmCallVoid<3> on_grpc_receive_trailing_metadata_;
 

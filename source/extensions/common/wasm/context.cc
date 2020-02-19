@@ -1278,13 +1278,12 @@ void Context::onQueueReady(uint32_t token) {
   }
 }
 
-void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metadata) {
+void Context::onGrpcCreateInitialMetadata(Http::HeaderMap& metadata) {
   if (!wasm_->on_grpc_create_initial_metadata_) {
     return;
   }
   grpc_create_initial_metadata_ = &metadata;
-  wasm_->on_grpc_create_initial_metadata_(this, id_, token,
-                                          headerSize(grpc_create_initial_metadata_));
+  wasm_->on_grpc_create_initial_metadata_(this, id_, headerSize(grpc_create_initial_metadata_));
   grpc_create_initial_metadata_ = nullptr;
 }
 

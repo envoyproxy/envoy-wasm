@@ -348,7 +348,7 @@ protected:
   struct GrpcCallClientHandler : public Grpc::RawAsyncRequestCallbacks {
     // Grpc::AsyncRequestCallbacks
     void onCreateInitialMetadata(Http::HeaderMap& metadata) override {
-      context_->onGrpcCreateInitialMetadata(token_, metadata);
+      context_->onGrpcCreateInitialMetadata(metadata);
     }
     void onSuccessRaw(Buffer::InstancePtr&& response, Tracing::Span& /* span */) override {
       context_->onGrpcReceive(token_, std::move(response));
@@ -367,7 +367,7 @@ protected:
   struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
     // Grpc::AsyncStreamCallbacks
     void onCreateInitialMetadata(Http::HeaderMap& metadata) override {
-      context_->onGrpcCreateInitialMetadata(token_, metadata);
+      context_->onGrpcCreateInitialMetadata(metadata);
     }
     void onReceiveInitialMetadata(Http::HeaderMapPtr&& metadata) override {
       context_->onGrpcReceiveInitialMetadata(token_, std::move(metadata));
@@ -395,8 +395,7 @@ protected:
   void onHttpCallSuccess(uint32_t token, Envoy::Http::MessagePtr& response);
   void onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
 
-  virtual void onGrpcCreateInitialMetadata(uint32_t token,
-                                           Http::HeaderMap& metadata); // For both Call and Stream.
+  virtual void onGrpcCreateInitialMetadata(Http::HeaderMap& metadata); // For both Call and Stream.
   virtual void onGrpcReceive(uint32_t token,
                              Buffer::InstancePtr response); // Call (implies OK close) and Stream.
   virtual void onGrpcClose(uint32_t token, const Grpc::Status::GrpcStatus& status,

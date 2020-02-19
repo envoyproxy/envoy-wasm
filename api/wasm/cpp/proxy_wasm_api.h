@@ -303,7 +303,7 @@ public:
   // Low level HTTP/gRPC interface.
   virtual void onHttpCallResponse(uint32_t token, uint32_t headers, size_t body_size,
                                   uint32_t trailers);
-  virtual void onGrpcCreateInitialMetadata(uint32_t token, uint32_t headers);
+  virtual void onGrpcCreateInitialMetadata(uint32_t headers);
   virtual void onGrpcReceiveInitialMetadata(uint32_t token, uint32_t headers);
   virtual void onGrpcReceiveTrailingMetadata(uint32_t token, uint32_t trailers);
   virtual void onGrpcReceive(uint32_t token, size_t body_size);
@@ -354,6 +354,11 @@ private:
   std::unordered_map<uint32_t, GrpcSimpleCallCallback> simple_grpc_calls_;
   std::unordered_map<uint32_t, std::unique_ptr<GrpcCallHandlerBase>> grpc_calls_;
   std::unordered_map<uint32_t, std::unique_ptr<GrpcStreamHandlerBase>> grpc_streams_;
+
+  // Handles initial metadata creation callback, which is triggered inline when initializing the call, by which time token is not yet available in module and thus the handler cannot be added into grpc_calls_ and grpc_streams_;
+  // These two pointers should only be used in onCreateInitialMetadata.
+  std::unique_ptr<GrpcCallHandlerBase> cur_grpc_call_handler_;
+  std::unique_ptr<GrpcStreamHandlerBase> cur_grpc_stream_handler_;
 };
 
 RootContext* getRoot(StringView root_id);
@@ -1247,18 +1252,16 @@ inline void GrpcStreamHandlerBase::send(StringView message, bool end_of_stream) 
   }
 }
 
-inline void RootContext::onGrpcCreateInitialMetadata(uint32_t token, uint32_t headers) {
+inline void RootContext::onGrpcCreateInitialMetadata(uint32_t headers) {
   {
-    auto it = grpc_calls_.find(token);
-    if (it != grpc_calls_.end()) {
-      it->second->onCreateInitialMetadata(headers);
+    if (cur_grpc_call_handler_ != nullptr) {
+      cur_grpc_call_handler_->onCreateInitialMetadata(headers);
       return;
     }
   }
   {
-    auto it = grpc_streams_.find(token);
-    if (it != grpc_streams_.end()) {
-      it->second->onCreateInitialMetadata(headers);
+    if (cur_grpc_stream_handler_ != nullptr) {
+      cur_grpc_stream_handler_->onCreateInitialMetadata(headers);
       return;
     }
   }
@@ -1357,12 +1360,14 @@ inline WasmResult RootContext::grpcCallHandler(StringView service, StringView se
                                                uint32_t timeout_milliseconds,
                                                std::unique_ptr<GrpcCallHandlerBase> handler) {
   uint32_t token = 0;
+  cur_grpc_call_handler_ = std::move(handler);
   auto result = grpcCall(service, service_name, method_name, request, timeout_milliseconds, &token);
   if (result == WasmResult::Ok) {
-    handler->token_ = token;
-    handler->context_ = this;
-    grpc_calls_[token] = std::move(handler);
+    cur_grpc_call_handler_->token_ = token;
+    cur_grpc_call_handler_->context_ = this;
+    grpc_calls_[token] = std::move(cur_grpc_call_handler_);
   }
+  cur_grpc_call_handler_ = nullptr;
   return result;
 }
 
@@ -1370,12 +1375,14 @@ inline WasmResult RootContext::grpcStreamHandler(StringView service, StringView 
                                                  StringView method_name,
                                                  std::unique_ptr<GrpcStreamHandlerBase> handler) {
   uint32_t token = 0;
+  cur_grpc_stream_handler_ = std::move(handler);
   auto result = grpcStream(service, service_name, method_name, &token);
   if (result == WasmResult::Ok) {
-    handler->token_ = token;
-    handler->context_ = this;
-    grpc_streams_[token] = std::move(handler);
+    cur_grpc_stream_handler_->token_ = token;
+    cur_grpc_stream_handler_->context_ = this;
+    grpc_streams_[token] = std::move(cur_grpc_stream_handler_);
   }
+  cur_grpc_stream_handler_ = nullptr;
   return result;
 }
 
