@@ -88,14 +88,14 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
 
   addCluster(std::make_unique<ClusterHelper>(StressTest::ORIGIN_CLUSTER_NAME))
       .addServer(std::make_unique<ServerCallbackHelper>(
-          [](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
+          [](ServerConnection&, ServerStream& stream, Http::RequestHeaderMapPtr&&) {
             ENVOY_LOG(debug, "Origin server received request");
-            Http::TestHeaderMapImpl response{{":status", "200"}};
+            Http::TestResponseHeaderMapImpl response{{":status", "200"}};
             stream.sendResponseHeaders(response);
           }));
   addCluster(std::make_unique<ClusterHelper>(callout_cluster_name))
       .addServer(std::make_unique<ServerCallbackHelper>(
-          [](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
+          [](ServerConnection&, ServerStream& stream, Http::RequestHeaderMapPtr&&) {
             ENVOY_LOG(debug, "Callout server received request");
             ProtobufWkt::Value response;
             response.set_string_value("response");
@@ -118,7 +118,7 @@ TEST_P(GrpcWasmStressTest, CalloutHappyPath) {
   // Exec test and wait for it to finish
   //
 
-  Http::HeaderMapPtr request{new Http::TestHeaderMapImpl{
+  Http::RequestHeaderMapPtr request{new Http::TestRequestHeaderMapImpl{
       {":method", "GET"}, {":path", "/"}, {":scheme", "http"}, {":authority", "host"}}};
   client->run(connections_to_initiate, requests_to_send, std::move(request));
 
@@ -195,14 +195,14 @@ TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
 
   addCluster(std::make_unique<ClusterHelper>(StressTest::ORIGIN_CLUSTER_NAME))
       .addServer(std::make_unique<ServerCallbackHelper>(
-          [](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
+          [](ServerConnection&, ServerStream& stream, Http::RequestHeaderMapPtr&&) {
             ENVOY_LOG(debug, "Origin server received request");
-            Http::TestHeaderMapImpl response{{":status", "200"}};
+            Http::TestResponseHeaderMapImpl response{{":status", "200"}};
             stream.sendResponseHeaders(response);
           }));
   addCluster(std::make_unique<ClusterHelper>(callout_cluster_name))
       .addServer(std::make_unique<ServerCallbackHelper>(
-          [](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
+          [](ServerConnection&, ServerStream& stream, Http::RequestHeaderMapPtr&&) {
             ENVOY_LOG(debug, "Callout server received request");
             ProtobufWkt::Value response;
             response.set_string_value("response");
@@ -225,7 +225,7 @@ TEST_P(GrpcWasmStressTest, CalloutErrorResponse) {
   // Exec test and wait for it to finish
   //
 
-  Http::HeaderMapPtr request{new Http::TestHeaderMapImpl{
+  Http::RequestHeaderMapPtr request{new Http::TestRequestHeaderMapImpl{
       {":method", "GET"}, {":path", "/"}, {":scheme", "http"}, {":authority", "host"}}};
   client->run(connections_to_initiate, requests_to_send, std::move(request));
 
@@ -306,16 +306,16 @@ TEST_P(HttpWasmStressTest, DISABLED_CalloutHappyPath) {
   //
   addCluster(std::make_unique<ClusterHelper>(StressTest::ORIGIN_CLUSTER_NAME))
       .addServer(std::make_unique<ServerCallbackHelper>(
-          [](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
+          [](ServerConnection&, ServerStream& stream, Http::RequestHeaderMapPtr&&) {
             ENVOY_LOG(debug, "Origin server received request");
-            Http::TestHeaderMapImpl response{{":status", "200"}};
+            Http::TestResponseHeaderMapImpl response{{":status", "200"}};
             stream.sendResponseHeaders(response);
           }));
   addCluster(std::make_unique<ClusterHelper>(callout_cluster_name))
       .addServer(std::make_unique<ServerCallbackHelper>(
-          [](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
+          [](ServerConnection&, ServerStream& stream, Http::RequestHeaderMapPtr&&) {
             ENVOY_LOG(debug, "Callout server received request");
-            Http::TestHeaderMapImpl response{{":status", "200"}};
+            Http::TestResponseHeaderMapImpl response{{":status", "200"}};
             stream.sendResponseHeaders(response);
           }));
 
@@ -339,11 +339,12 @@ TEST_P(HttpWasmStressTest, DISABLED_CalloutHappyPath) {
       fmt::format("http://{}:{}/", Network::Test::getLoopbackAddressString(ipVersion()),
                   firstPortInCluster(callout_cluster_name));
 
-  Http::HeaderMapPtr request{new Http::TestHeaderMapImpl{{":method", "GET"},
-                                                         {":path", "/"},
-                                                         {":scheme", "http"},
-                                                         {":authority", "host"},
-                                                         {"x-callout-url", callout_url}}};
+  Http::RequestHeaderMapPtr request{
+      new Http::TestRequestHeaderMapImpl{{":method", "GET"},
+                                         {":path", "/"},
+                                         {":scheme", "http"},
+                                         {":authority", "host"},
+                                         {"x-callout-url", callout_url}}};
   client->run(connections_to_initiate, requests_to_send, std::move(request));
 
   //

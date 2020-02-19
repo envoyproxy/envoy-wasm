@@ -120,7 +120,7 @@ public:
               connection_.id(), id_);
   }
 
-  virtual void sendRequest(const Http::HeaderMap& request_headers,
+  virtual void sendRequest(const Http::RequestHeaderMap& request_headers,
                            const std::chrono::milliseconds timeout) {
     if (connection_.networkConnection().state() != Network::Connection::State::Open) {
       ENVOY_LOG(warn, "ClientStream({}:{}:{})'s underlying connection is not open!",
@@ -356,7 +356,8 @@ void ClientConnection::onGoAway() {
   ENVOY_LOG(warn, "ClientConnection({}:{}) remote closed", client_.name(), id_);
 }
 
-void ClientConnection::sendRequest(const Http::HeaderMap& headers, ClientResponseCallback& callback,
+void ClientConnection::sendRequest(const Http::RequestHeaderMap& headers,
+                                   ClientResponseCallback& callback,
                                    std::chrono::milliseconds timeout) {
   newStream(callback).sendRequest(headers, timeout);
 }
@@ -458,7 +459,7 @@ LoadGenerator::LoadGenerator(Client& client, Network::TransportSocketFactory& so
                              const Network::ConnectionSocket::OptionsSharedPtr& sockopts)
     : client_(client), socket_factory_(socket_factory), http_version_(http_version),
       address_(address), sockopts_(sockopts) {
-  response_callback_ = [this](ClientConnection& connection, Http::HeaderMapPtr&& response) {
+  response_callback_ = [this](ClientConnection& connection, Http::ResponseHeaderMapPtr&& response) {
     if (!response) {
       ENVOY_LOG(debug, "Connection({}:{}) timedout waiting for response", connection.name(),
                 connection.id());
@@ -533,8 +534,8 @@ LoadGenerator::LoadGenerator(Client& client, Network::TransportSocketFactory& so
   };
 }
 
-void LoadGenerator::run(uint32_t connections, uint32_t requests, Http::HeaderMapPtr&& request,
-                        std::chrono::milliseconds timeout) {
+void LoadGenerator::run(uint32_t connections, uint32_t requests,
+                        Http::RequestHeaderMapPtr&& request, std::chrono::milliseconds timeout) {
   connections_to_initiate_ = connections;
   requests_to_send_ = requests;
   request_ = std::move(request);

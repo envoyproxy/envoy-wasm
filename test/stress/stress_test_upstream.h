@@ -76,7 +76,7 @@ typedef std::function<ServerCallbackResult(ServerConnection& server_connection)>
 typedef std::function<void(ServerConnection& connection, ServerCloseReason reason)>
     ServerCloseCallback;
 typedef std::function<void(ServerConnection& connection, ServerStream& stream,
-                           Http::HeaderMapPtr&& request_headers)>
+                           Http::RequestHeaderMapPtr&& request_headers)>
     ServerRequestCallback;
 
 class ServerConnection : public Network::ReadFilter,

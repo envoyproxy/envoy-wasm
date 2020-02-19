@@ -77,7 +77,8 @@ typedef std::function<void(ClientConnection& connection, ClientCloseReason reaso
  * @param connection The connection that received the response.
  * @param response_headers The response headers or null if timed out.
  */
-typedef std::function<void(ClientConnection& connection, Http::HeaderMapPtr&& response_headers)>
+typedef std::function<void(ClientConnection& connection,
+                           Http::ResponseHeaderMapPtr&& response_headers)>
     ClientResponseCallback;
 
 class ClientConnection : public Network::ConnectionCallbacks,
@@ -111,7 +112,8 @@ public:
    * @param request_headers
    * @param callback
    */
-  virtual void sendRequest(const Http::HeaderMap& request_headers, ClientResponseCallback& callback,
+  virtual void sendRequest(const Http::RequestHeaderMap& request_headers,
+                           ClientResponseCallback& callback,
                            std::chrono::milliseconds timeout = std::chrono::milliseconds(5'000));
 
   /**
@@ -242,7 +244,7 @@ public:
    * @param timeout The time in msec to wait to receive a response after sending
    * each request.
    */
-  void run(uint32_t connections, uint32_t requests, Http::HeaderMapPtr&& request,
+  void run(uint32_t connections, uint32_t requests, Http::RequestHeaderMapPtr&& request,
            std::chrono::milliseconds timeout = std::chrono::milliseconds(5'000));
 
   uint32_t connectFailures() const;
@@ -258,7 +260,7 @@ public:
 private:
   uint32_t connections_to_initiate_{0};
   uint32_t requests_to_send_{0};
-  Http::HeaderMapPtr request_{};
+  Http::RequestHeaderMapPtr request_{};
   Client& client_;
   Network::TransportSocketFactory& socket_factory_;
   Http::CodecClient::Type http_version_;

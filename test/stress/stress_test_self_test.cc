@@ -53,18 +53,19 @@ TEST_P(StressTestSelfTest, HappyPath) {
 
   try {
     // Take a really long time (500 msec) to send a 200 OK response.
-    ServerCallbackHelper server_callbacks(
-        [use_grpc = use_grpc_](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
-          if (use_grpc) {
-            ProtobufWkt::Value response;
-            response.set_string_value("response");
-            stream.sendGrpcResponse(Grpc::Status::Ok, response);
-            return;
-          }
+    ServerCallbackHelper server_callbacks([use_grpc = use_grpc_](ServerConnection&,
+                                                                 ServerStream& stream,
+                                                                 Http::RequestHeaderMapPtr&&) {
+      if (use_grpc) {
+        ProtobufWkt::Value response;
+        response.set_string_value("response");
+        stream.sendGrpcResponse(Grpc::Status::Ok, response);
+        return;
+      }
 
-          Http::TestHeaderMapImpl response{{":status", "200"}};
-          stream.sendResponseHeaders(response);
-        });
+      Http::TestResponseHeaderMapImpl response{{":status", "200"}};
+      stream.sendResponseHeaders(response);
+    });
     server_.start(server_callbacks);
 
     //
@@ -78,7 +79,7 @@ TEST_P(StressTestSelfTest, HappyPath) {
     // Exec test and wait for it to finish
     //
 
-    Http::HeaderMapPtr request{new Http::TestHeaderMapImpl{
+    Http::RequestHeaderMapPtr request{new Http::TestRequestHeaderMapImpl{
         {":method", "GET"}, {":path", "/"}, {":scheme", "http"}, {":authority", "host"}}};
     load_generator.run(connections_to_initiate, requests_to_send, std::move(request));
 
@@ -134,7 +135,7 @@ TEST_P(StressTestSelfTest, AcceptAndClose) {
   try {
     // Immediately close any connection accepted.
     ServerCallbackHelper server_callbacks(
-        [](ServerConnection&, ServerStream&, Http::HeaderMapPtr&&) {
+        [](ServerConnection&, ServerStream&, Http::RequestHeaderMapPtr&&) {
           GTEST_FATAL_FAILURE_("Connections immediately closed so no response should be received");
         },
         [](ServerConnection&) -> ServerCallbackResult { return ServerCallbackResult::CLOSE; });
@@ -152,7 +153,7 @@ TEST_P(StressTestSelfTest, AcceptAndClose) {
     // Exec test and wait for it to finish
     //
 
-    Http::HeaderMapPtr request{new Http::TestHeaderMapImpl{
+    Http::RequestHeaderMapPtr request{new Http::TestRequestHeaderMapImpl{
         {":method", "GET"}, {":path", "/"}, {":scheme", "http"}, {":authority", "host"}}};
     load_generator.run(connections_to_initiate, requests_to_send, std::move(request));
 
@@ -202,8 +203,8 @@ TEST_P(StressTestSelfTest, SlowResponse) {
   try {
     // Take a really long time (500 msec) to send a 200 OK response.
     ServerCallbackHelper server_callbacks(
-        [](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
-          Http::TestHeaderMapImpl response{{":status", "200"}};
+        [](ServerConnection&, ServerStream& stream, Http::RequestHeaderMapPtr&&) {
+          Http::TestResponseHeaderMapImpl response{{":status", "200"}};
           stream.sendResponseHeaders(response, std::chrono::milliseconds(500));
         });
 
@@ -220,7 +221,7 @@ TEST_P(StressTestSelfTest, SlowResponse) {
     // Exec test and wait for it to finish
     //
 
-    Http::HeaderMapPtr request{new Http::TestHeaderMapImpl{
+    Http::RequestHeaderMapPtr request{new Http::TestRequestHeaderMapImpl{
         {":method", "GET"}, {":path", "/"}, {":scheme", "http"}, {":authority", "host"}}};
     load_generator.run(connections_to_initiate, requests_to_send, std::move(request),
                        std::chrono::milliseconds(250));
@@ -283,7 +284,7 @@ TEST_P(StressTestSelfTest, NoServer) {
     // Exec test and wait for it to finish
     //
 
-    Http::HeaderMapPtr request{new Http::TestHeaderMapImpl{
+    Http::RequestHeaderMapPtr request{new Http::TestRequestHeaderMapImpl{
         {":method", "GET"}, {":path", "/"}, {":scheme", "http"}, {":authority", "host"}}};
     load_generator.run(connections_to_initiate, requests_to_send, std::move(request));
 
@@ -338,7 +339,7 @@ TEST_P(StressTestSelfTest, NoAccept) {
     // Exec test and wait for it to finish
     //
 
-    Http::HeaderMapPtr request{new Http::TestHeaderMapImpl{
+    Http::RequestHeaderMapPtr request{new Http::TestRequestHeaderMapImpl{
         {":method", "GET"}, {":path", "/"}, {":scheme", "http"}, {":authority", "host"}}};
     load_generator.run(connections_to_initiate, requests_to_send, std::move(request),
                        std::chrono::milliseconds(250));

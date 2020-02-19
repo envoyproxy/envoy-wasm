@@ -403,14 +403,15 @@ ServerCallbackHelper::ServerCallbackHelper(ServerRequestCallback&& request_callb
   if (request_callback) {
     request_callback_ = [this, request_callback = std::move(request_callback)](
                             ServerConnection& connection, ServerStream& stream,
-                            Http::HeaderMapPtr&& request_headers) {
+                            Http::RequestHeaderMapPtr&& request_headers) {
       ++requests_received_;
       request_callback(connection, stream, std::move(request_headers));
     };
   } else {
-    request_callback_ = [this](ServerConnection&, ServerStream& stream, Http::HeaderMapPtr&&) {
+    request_callback_ = [this](ServerConnection&, ServerStream& stream,
+                               Http::RequestHeaderMapPtr&&) {
       ++requests_received_;
-      Http::TestHeaderMapImpl response{{":status", "200"}};
+      Http::TestResponseHeaderMapImpl response{{":status", "200"}};
       stream.sendResponseHeaders(response);
     };
   }
