@@ -11,6 +11,7 @@
 #include "common/http/conn_manager_config.h"
 #include "common/http/conn_manager_impl.h"
 #include "common/http/exception.h"
+#include "common/http/header_map_impl.h"
 #include "common/http/http1/codec_impl.h"
 #include "common/http/http2/codec_impl.h"
 #include "common/network/listen_socket_impl.h"
@@ -29,12 +30,12 @@ namespace Stress {
 static Http::LowerCaseString RequestId(std::string("x-request-id"));
 
 class ServerStreamImpl : public ServerStream,
-                         public Http::StreamDecoder,
+                         public Http::RequestDecoder,
                          public Http::StreamCallbacks,
                          Logger::Loggable<Logger::Id::testing> {
 public:
   ServerStreamImpl(uint32_t id, ServerConnection& connection,
-                   ServerRequestCallback& request_callback, Http::StreamEncoder& stream_encoder)
+                   ServerRequestCallback& request_callback, Http::ResponseEncoder& stream_encoder)
       : id_(id), connection_(connection), request_callback_(request_callback),
         stream_encoder_(stream_encoder) {}
 
@@ -50,7 +51,7 @@ public:
   // ServerStream
   //
 
-  void sendResponseHeaders(const Http::HeaderMap& response_headers,
+  void sendResponseHeaders(const Http::ResponseHeaderMap& response_headers,
                            const std::chrono::milliseconds delay) override {
     if (connection_.networkConnection().state() != Network::Connection::State::Open) {
       ENVOY_LOG(warn, "ServerStream({}:{}:{})'s underlying connection is not open!",
@@ -71,7 +72,7 @@ public:
       return;
     }
 
-    response_headers_ = std::make_unique<Http::HeaderMapImpl>(response_headers);
+    response_headers_ = Http::createHeaderMap<Http::ResponseHeaderMapImpl>(response_headers);
     delay_timer_ = connection_.dispatcher().createTimer([this, delay]() {
       ENVOY_LOG(debug, "ServerStream({}:{}:{}) sending response headers after {} msec delay",
                 connection_.name(), connection_.id(), id_, static_cast<long int>(delay.count()));
@@ -96,9 +97,9 @@ public:
     Event::TimerCb send_grpc_response = [this, delay]() {
       ENVOY_LOG(debug, "ServerStream({}:{}:{}) sending gRPC response after {} msec delay",
                 connection_.name(), connection_.id(), id_, static_cast<long int>(delay.count()));
-      stream_encoder_.encodeHeaders(Http::TestHeaderMapImpl{{":status", "200"}}, false);
+      stream_encoder_.encodeHeaders(Http::TestResponseHeaderMapImpl{{":status", "200"}}, false);
       stream_encoder_.encodeData(*response_body_, false);
-      stream_encoder_.encodeTrailers(Http::TestHeaderMapImpl{
+      stream_encoder_.encodeTrailers(Http::TestResponseTrailerMapImpl{
           {"grpc-status", std::to_string(static_cast<uint32_t>(response_status_))}});
     };
 
@@ -116,13 +117,8 @@ public:
   }
 
   //
-  // Http::StreamDecoder
+  // Http::RequestDecoder
   //
-
-  void decode100ContinueHeaders(Http::HeaderMapPtr&&) override {
-    ENVOY_LOG(error, "ServerStream({}:{}:{}) got continue headers?!?!", connection_.name(),
-              connection_.id(), id_);
-  }
 
   /**
    * Called with decoded headers, optionally indicating end of stream.
@@ -130,7 +126,7 @@ public:
    * callee.
    * @param end_stream supplies whether this is a header only request/response.
    */
-  void decodeHeaders(Http::HeaderMapPtr&& headers, bool end_stream) override {
+  void decodeHeaders(Http::RequestHeaderMapPtr&& headers, bool end_stream) override {
     ENVOY_LOG(debug, "ServerStream({}:{}:{}) got request headers", connection_.name(),
               connection_.id(), id_);
 
@@ -152,7 +148,7 @@ public:
     }
   }
 
-  void decodeTrailers(Http::HeaderMapPtr&&) override {
+  void decodeTrailers(Http::RequestTrailerMapPtr&&) override {
     ENVOY_LOG(trace, "ServerStream({}:{}:{}) got request trailers", connection_.name(),
               connection_.id(), id_);
     onEndStream();
@@ -226,12 +222,12 @@ private:
 
   uint32_t id_;
   ServerConnection& connection_;
-  Http::HeaderMapPtr request_headers_{nullptr};
-  Http::HeaderMapPtr response_headers_{nullptr};
+  Http::RequestHeaderMapPtr request_headers_{nullptr};
+  Http::ResponseHeaderMapPtr response_headers_{nullptr};
   Buffer::InstancePtr response_body_{nullptr};
   Grpc::Status::GrpcStatus response_status_{Grpc::Status::Ok};
   ServerRequestCallback& request_callback_;
-  Http::StreamEncoder& stream_encoder_;
+  Http::ResponseEncoder& stream_encoder_;
   Event::TimerPtr delay_timer_{nullptr};
 };
 
@@ -318,7 +314,7 @@ Network::FilterStatus ServerConnection::onNewConnection() {
 
 void ServerConnection::initializeReadFilterCallbacks(Network::ReadFilterCallbacks&) {}
 
-Http::StreamDecoder& ServerConnection::newStream(Http::StreamEncoder& stream_encoder, bool) {
+Http::RequestDecoder& ServerConnection::newStream(Http::ResponseEncoder& stream_encoder, bool) {
   ServerStreamImpl* raw = nullptr;
   uint32_t id = 0U;
 
@@ -594,7 +590,7 @@ uint64_t Server::listenerTag() const { return 0; }
 
 const std::string& Server::name() const { return name_; }
 
-const Network::ActiveUdpListenerFactory* Server::udpListenerFactory() { return nullptr; }
+Network::ActiveUdpListenerFactory* Server::udpListenerFactory() { return nullptr; }
 
 const Network::FilterChain* Server::findFilterChain(const Network::ConnectionSocket&) const {
   return &server_filter_chain_;

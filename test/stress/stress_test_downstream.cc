@@ -12,7 +12,7 @@
 namespace Envoy {
 namespace Stress {
 
-class ClientStream : public Http::StreamDecoder,
+class ClientStream : public Http::ResponseDecoder,
                      public Http::StreamCallbacks,
                      Logger::Loggable<Logger::Id::testing> {
 public:
@@ -27,15 +27,15 @@ public:
   }
 
   //
-  // Http::StreamDecoder
+  // Http::ResponseDecoder
   //
 
-  void decode100ContinueHeaders(Http::HeaderMapPtr&&) override {
+  void decode100ContinueHeaders(Http::ResponseHeaderMapPtr&&) override {
     ENVOY_LOG(trace, "ClientStream({}:{}:{}) got continue headers", connection_.name(),
               connection_.id(), id_);
   }
 
-  void decodeHeaders(Http::HeaderMapPtr&& response_headers, bool end_stream) override {
+  void decodeHeaders(Http::ResponseHeaderMapPtr&& response_headers, bool end_stream) override {
     ENVOY_LOG(debug, "ClientStream({}:{}:{}) got response headers", connection_.name(),
               connection_.id(), id_);
 
@@ -57,7 +57,7 @@ public:
     }
   }
 
-  void decodeTrailers(Http::HeaderMapPtr&&) override {
+  void decodeTrailers(Http::ResponseTrailerMapPtr&&) override {
     ENVOY_LOG(trace, "ClientStream({}:{}:{}) got response trailers", connection_.name(),
               connection_.id(), id_);
     onEndStream();
@@ -130,7 +130,7 @@ public:
       return;
     }
 
-    Http::StreamEncoder& encoder = connection_.httpConnection().newStream(*this);
+    Http::RequestEncoder& encoder = connection_.httpConnection().newStream(*this);
     encoder.getStream().addCallbacks(*this);
 
     ENVOY_LOG(debug, "ClientStream({}:{}:{}) sending request headers", connection_.name(),
@@ -157,7 +157,7 @@ private:
 
   uint32_t id_;
   ClientConnection& connection_;
-  Http::HeaderMapPtr response_headers_{nullptr};
+  Http::ResponseHeaderMapPtr response_headers_{nullptr};
   ClientResponseCallback& callback_;
   Event::TimerPtr timeout_timer_{nullptr};
 };

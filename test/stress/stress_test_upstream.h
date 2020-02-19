@@ -47,7 +47,7 @@ public:
    * immediately
    */
   virtual void
-  sendResponseHeaders(const Http::HeaderMap& response_headers,
+  sendResponseHeaders(const Http::ResponseHeaderMap& response_headers,
                       const std::chrono::milliseconds delay = std::chrono::milliseconds(0)) PURE;
 
   /**
@@ -130,7 +130,7 @@ public:
   // Http::ServerConnectionCallbacks
   //
 
-  Http::StreamDecoder& newStream(Http::StreamEncoder& stream_encoder,
+  Http::RequestDecoder& newStream(Http::ResponseEncoder& stream_encoder,
                                  bool is_internally_created = false) override;
 
   //
@@ -326,7 +326,7 @@ public:
 
   const std::string& name() const override;
 
-  const Network::ActiveUdpListenerFactory* udpListenerFactory() override;
+  Network::ActiveUdpListenerFactory* udpListenerFactory() override;
 
   Network::ConnectionBalancer& connectionBalancer() override { return connection_balancer_; }
 
