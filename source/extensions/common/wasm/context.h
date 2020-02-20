@@ -193,19 +193,21 @@ public:
   //
   // Http::StreamDecoderFilter
   //
-  Http::FilterHeadersStatus decodeHeaders(Http::HeaderMap& headers, bool end_stream) override;
+  Http::FilterHeadersStatus decodeHeaders(Http::RequestHeaderMap& headers,
+                                          bool end_stream) override;
   Http::FilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) override;
-  Http::FilterTrailersStatus decodeTrailers(Http::HeaderMap& trailers) override;
+  Http::FilterTrailersStatus decodeTrailers(Http::RequestTrailerMap& trailers) override;
   Http::FilterMetadataStatus decodeMetadata(Http::MetadataMap& metadata_map) override;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks& callbacks) override;
 
   //
   // Http::StreamEncoderFilter
   //
-  Http::FilterHeadersStatus encode100ContinueHeaders(Http::HeaderMap&) override;
-  Http::FilterHeadersStatus encodeHeaders(Http::HeaderMap& headers, bool end_stream) override;
+  Http::FilterHeadersStatus encode100ContinueHeaders(Http::ResponseHeaderMap&) override;
+  Http::FilterHeadersStatus encodeHeaders(Http::ResponseHeaderMap& headers,
+                                          bool end_stream) override;
   Http::FilterDataStatus encodeData(Buffer::Instance& data, bool end_stream) override;
-  Http::FilterTrailersStatus encodeTrailers(Http::HeaderMap& trailers) override;
+  Http::FilterTrailersStatus encodeTrailers(Http::ResponseTrailerMap& trailers) override;
   Http::FilterMetadataStatus encodeMetadata(Http::MetadataMap& metadata_map) override;
   void setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallbacks& callbacks) override;
 
@@ -333,7 +335,7 @@ protected:
 
   struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
     // Http::AsyncClient::Callbacks
-    void onSuccess(Envoy::Http::MessagePtr&& response) override {
+    void onSuccess(Envoy::Http::ResponseMessagePtr&& response) override {
       context_->onHttpCallSuccess(token_, response);
     }
     void onFailure(Http::AsyncClient::FailureReason reason) override {
@@ -347,7 +349,7 @@ protected:
 
   struct GrpcCallClientHandler : public Grpc::RawAsyncRequestCallbacks {
     // Grpc::AsyncRequestCallbacks
-    void onCreateInitialMetadata(Http::HeaderMap& metadata) override {
+    void onCreateInitialMetadata(Http::RequestHeaderMap& metadata) override {
       context_->onGrpcCreateInitialMetadata(token_, metadata);
     }
     void onSuccessRaw(Buffer::InstancePtr&& response, Tracing::Span& /* span */) override {
@@ -366,17 +368,17 @@ protected:
 
   struct GrpcStreamClientHandler : public Grpc::RawAsyncStreamCallbacks {
     // Grpc::AsyncStreamCallbacks
-    void onCreateInitialMetadata(Http::HeaderMap& metadata) override {
+    void onCreateInitialMetadata(Http::RequestHeaderMap& metadata) override {
       context_->onGrpcCreateInitialMetadata(token_, metadata);
     }
-    void onReceiveInitialMetadata(Http::HeaderMapPtr&& metadata) override {
+    void onReceiveInitialMetadata(Http::ResponseHeaderMapPtr&& metadata) override {
       context_->onGrpcReceiveInitialMetadata(token_, std::move(metadata));
     }
     bool onReceiveMessageRaw(Buffer::InstancePtr&& response) override {
       context_->onGrpcReceive(token_, std::move(response));
       return true;
     }
-    void onReceiveTrailingMetadata(Http::HeaderMapPtr&& metadata) override {
+    void onReceiveTrailingMetadata(Http::ResponseTrailerMapPtr&& metadata) override {
       context_->onGrpcReceiveTrailingMetadata(token_, std::move(metadata));
     }
     void onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) override {
@@ -392,7 +394,7 @@ protected:
   void initializeRoot(Wasm* wasm, PluginSharedPtr plugin);
   std::string makeRootLogPrefix(absl::string_view vm_id) const;
 
-  void onHttpCallSuccess(uint32_t token, Envoy::Http::MessagePtr& response);
+  void onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr& response);
   void onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
 
   virtual void onGrpcCreateInitialMetadata(uint32_t token,
@@ -448,17 +450,17 @@ protected:
   // HTTP filter state.
   // NB: this are only available (non-nullptr) during the calls corresponding to when the data is
   // live. For example, request_headers_ is available during the onRequestHeaders() call.
-  Http::HeaderMap* request_headers_{};
-  Http::HeaderMap* response_headers_{};
+  Http::RequestHeaderMap* request_headers_{};
+  Http::ResponseHeaderMap* response_headers_{};
   Buffer::Instance* request_body_buffer_{};
   Buffer::Instance* response_body_buffer_{};
-  Http::HeaderMap* request_trailers_{};
-  Http::HeaderMap* response_trailers_{};
+  Http::RequestTrailerMap* request_trailers_{};
+  Http::ResponseTrailerMap* response_trailers_{};
   Http::MetadataMap* request_metadata_{};
   Http::MetadataMap* response_metadata_{};
 
   // Only available during onHttpCallResponse.
-  Envoy::Http::MessagePtr* http_call_response_{};
+  Envoy::Http::ResponseMessagePtr* http_call_response_{};
 
   Http::HeaderMap* grpc_create_initial_metadata_{};
   Http::HeaderMapPtr grpc_receive_initial_metadata_{};
