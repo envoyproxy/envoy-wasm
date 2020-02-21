@@ -19,9 +19,9 @@ public:
   // HTTP gRPC access log
   const std::string HttpGrpc = "envoy.access_loggers.http_grpc";
   // TCP gRPC access log
-  const std::string TcpGrpc = "envoy.tcp_grpc_access_log";
+  const std::string TcpGrpc = "envoy.access_loggers.tcp_grpc";
   // WASM access log
-  const std::string Wasm = "envoy.wasm_access_log";
+  const std::string Wasm = "envoy.access_loggers.wasm";
 };
 
 using AccessLogNames = ConstSingleton<AccessLogNameValues>;

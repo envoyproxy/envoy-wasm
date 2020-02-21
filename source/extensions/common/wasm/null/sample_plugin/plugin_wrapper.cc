@@ -28,7 +28,7 @@ public:
 /**
  * Static registration for the null Wasm filter. @see RegisterFactory.
  */
-static Registry::RegisterFactory<SamplePluginFactory, NullVmPluginFactory> register_;
+REGISTER_FACTORY(SamplePluginFactory, NullVmPluginFactory);
 
 } // namespace Plugin
 } // namespace Null

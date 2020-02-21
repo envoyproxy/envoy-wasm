@@ -17,7 +17,7 @@ option (udpa.annotations.file_migrate).move_to_package = "envoy.extensions.acces
 // [#protodoc-title: Wasm access log]
 
 // Custom configuration for an :ref:`AccessLog <envoy_api_msg_config.filter.accesslog.v2.AccessLog>`
-// that calls into a WASM VM. Configures the built-in *envoy.wasm_access_log*
+// that calls into a WASM VM. Configures the built-in *envoy.access_loggers.wasm*
 // AccessLog.
 message WasmAccessLog {
   wasm.v2.PluginConfig config = 1;
