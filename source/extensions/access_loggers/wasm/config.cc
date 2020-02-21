@@ -79,9 +79,8 @@ WasmAccessLogFactory::convertJsonFormatToMap(ProtobufWkt::Struct json_format) {
 /**
  * Static registration for the wasm access log. @see RegisterFactory.
  */
-static Registry::RegisterFactory<WasmAccessLogFactory,
-                                 Server::Configuration::AccessLogInstanceFactory>
-    register_;
+REGISTER_FACTORY(WasmAccessLogFactory,
+                 Server::Configuration::AccessLogInstanceFactory){"envoy.wasm_access_log"};
 
 } // namespace Wasm
 } // namespace AccessLoggers

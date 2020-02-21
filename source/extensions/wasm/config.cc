@@ -54,7 +54,7 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
 /**
  * Static registration for the wasm factory. @see RegistryFactory.
  */
-static Registry::RegisterFactory<WasmFactory, Server::Configuration::WasmFactory> registered_;
+REGISTER_FACTORY(WasmFactory, Server::Configuration::WasmFactory);
 
 } // namespace Wasm
 } // namespace Extensions

@@ -31,7 +31,7 @@ public:
     return f;
   }
 };
-static Registry::RegisterFactory<CompressFactory, ForeignFunctionFactory> register_compress_;
+REGISTER_FACTORY(CompressFactory, ForeignFunctionFactory);
 
 class UncompressFactory : public ForeignFunctionFactory {
 public:
@@ -59,7 +59,7 @@ public:
     return f;
   }
 };
-static Registry::RegisterFactory<UncompressFactory, ForeignFunctionFactory> register_uncompress_;
+REGISTER_FACTORY(UncompressFactory, ForeignFunctionFactory);
 
 class ExpressionFactory : public Logger::Loggable<Logger::Id::wasm> {
 protected:
@@ -145,8 +145,7 @@ public:
     return f;
   }
 };
-static Registry::RegisterFactory<CreateExpressionFactory, ForeignFunctionFactory>
-    register_expr_create_;
+REGISTER_FACTORY(CreateExpressionFactory, ForeignFunctionFactory);
 
 class EvaluateExpressionFactory : public ExpressionFactory, public ForeignFunctionFactory {
 public:
@@ -181,8 +180,7 @@ public:
     return f;
   }
 };
-static Registry::RegisterFactory<EvaluateExpressionFactory, ForeignFunctionFactory>
-    register_expr_evaluate_;
+REGISTER_FACTORY(EvaluateExpressionFactory, ForeignFunctionFactory);
 
 class DeleteExpressionFactory : public ExpressionFactory, public ForeignFunctionFactory {
 public:
@@ -201,8 +199,7 @@ public:
     return f;
   }
 };
-static Registry::RegisterFactory<DeleteExpressionFactory, ForeignFunctionFactory>
-    register_expr_delete_;
+REGISTER_FACTORY(DeleteExpressionFactory, ForeignFunctionFactory);
 
 } // namespace Wasm
 } // namespace Common
