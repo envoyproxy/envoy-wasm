@@ -37,6 +37,7 @@ jobs:
            key: tests-bazel-cache-{{ checksum "WORKSPACE" }}-{{ checksum "bazel/repository_locations.bzl" }}
            paths:
              - /home/circleci/.cache/bazel
+           when: always # Save cache even when some tests fail.
 
    asan:
      executor: ubuntu-build
