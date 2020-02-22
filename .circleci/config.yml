@@ -13,19 +13,31 @@ jobs:
    release:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6"
-       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6 --define wasm=enabled" # v8 + WAVM (build only)
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
-       - run:
-           environment:
-             BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6 --define wasm=enabled" # v8 + WAVM (build only)
-           command: ci/do_circle_ci.sh bazel.release.server_only
-       - run: ci/do_circle_ci.sh bazel.release ${BAZEL_TEST_TARGETS}
+       - run: ci/do_circle_ci.sh bazel.release.server_only
        - store_artifacts:
            path: /build/envoy/generated
            destination: /
+
+   all_tests:
+     executor: ubuntu-build
+     environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6"
+     steps:
+       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+       - checkout
+       - restore_cache:
+           keys:
+             - tests-bazel-cache-{{ checksum "WORKSPACE" }}-{{ checksum "bazel/repository_locations.bzl" }}
+       - run: ci/do_circle_ci.sh bazel.dev
+       - save_cache:
+           key: tests-bazel-cache-{{ checksum "WORKSPACE" }}-{{ checksum "bazel/repository_locations.bzl" }}
+           paths:
+             - /home/circleci/.cache/bazel
+           when: always # Save cache even when some tests fail.
 
    asan:
      executor: ubuntu-build
@@ -36,6 +48,19 @@ jobs:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
        - run: ci/do_circle_ci.sh bazel.asan ${BAZEL_TEST_TARGETS}
+       - store_artifacts:
+           path: /build/envoy/generated
+           destination: /
+
+   tsan:
+     executor: ubuntu-build
+     environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6"
+       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/wasm/... //test/extensions/common/wasm/..."
+     steps:
+       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+       - checkout
+       - run: ci/do_circle_ci.sh bazel.tsan ${BAZEL_TEST_TARGETS}
        - store_artifacts:
            path: /build/envoy/generated
            destination: /
@@ -95,7 +120,9 @@ workflows:
   all:
     jobs:
       - release
+      - all_tests
       - asan
+      - tsan
       - coverage
       - format
       - macos
