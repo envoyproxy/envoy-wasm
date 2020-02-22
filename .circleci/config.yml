@@ -25,7 +25,7 @@ jobs:
    all_tests:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6"
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6 --flaky_test_attempts=5"
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
