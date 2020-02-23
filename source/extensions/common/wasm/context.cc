@@ -198,8 +198,20 @@ private:
 
 SharedData global_shared_data;
 
-Http::HeaderMapPtr buildHeaderMapFromPairs(const Pairs& pairs) {
-  auto map = std::make_unique<Http::HeaderMapImpl>();
+Http::RequestTrailerMapPtr buildRequestTrailerMapFromPairs(const Pairs& pairs) {
+  auto map = std::make_unique<Http::RequestTrailerMapImpl>();
+  for (auto& p : pairs) {
+    // Note: because of the lack of a string_view interface for addCopy and
+    // the lack of an interface to add an entry with an empty value and return
+    // the entry, there is no efficient way to prevent either a double copy
+    // of the valueor a double lookup of the entry.
+    map->addCopy(Http::LowerCaseString(std::string(p.first)), std::string(p.second));
+  }
+  return map;
+}
+
+Http::RequestHeaderMapPtr buildRequestHeaderMapFromPairs(const Pairs& pairs) {
+  auto map = std::make_unique<Http::RequestHeaderMapImpl>();
   for (auto& p : pairs) {
     // Note: because of the lack of a string_view interface for addCopy and
     // the lack of an interface to add an entry with an empty value and return
@@ -805,7 +817,8 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
     return WasmResult::BadArgument;
   }
 
-  Http::MessagePtr message(new Http::RequestMessageImpl(buildHeaderMapFromPairs(request_headers)));
+  Http::RequestMessagePtr message(
+      new Http::RequestMessageImpl(buildRequestHeaderMapFromPairs(request_headers)));
 
   // Check that we were provided certain headers.
   if (message->headers().Path() == nullptr || message->headers().Method() == nullptr ||
@@ -819,7 +832,7 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
   }
 
   if (request_trailers.size() > 0) {
-    message->trailers(buildHeaderMapFromPairs(request_trailers));
+    message->trailers(buildRequestTrailerMapFromPairs(request_trailers));
   }
 
   absl::optional<std::chrono::milliseconds> timeout;
@@ -1096,7 +1109,6 @@ bool Context::onConfigure(absl::string_view plugin_configuration, PluginSharedPt
       wasm_->on_configure_(this, id_, static_cast<uint32_t>(plugin_configuration.size())).u64_ != 0;
   plugin_.reset();
   configuration_ = "";
-  wasm_->checkShutdown();
   return result;
 }
 
@@ -1110,7 +1122,6 @@ void Context::onTick() {
   if (wasm_->on_tick_) {
     wasm_->on_tick_(this, id_);
   }
-  wasm_->checkShutdown();
 }
 
 void Context::onCreate(uint32_t parent_context_id) {
@@ -1281,14 +1292,12 @@ void Context::onHttpCallResponse(uint32_t token, uint32_t headers, uint32_t body
     return;
   }
   wasm_->on_http_call_response_(this, id_, token, headers, body_size, trailers);
-  wasm_->checkShutdown();
 }
 
 void Context::onQueueReady(uint32_t token) {
   if (wasm_->on_queue_ready_) {
     wasm_->on_queue_ready_(this, id_, token);
   }
-  wasm_->checkShutdown();
 }
 
 void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metadata) {
@@ -1299,7 +1308,6 @@ void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metad
   wasm_->on_grpc_create_initial_metadata_(this, id_, token,
                                           headerSize(grpc_create_initial_metadata_));
   grpc_create_initial_metadata_ = nullptr;
-  wasm_->checkShutdown();
 }
 
 void Context::onGrpcReceiveInitialMetadata(uint32_t token, Http::HeaderMapPtr&& metadata) {
@@ -1310,7 +1318,6 @@ void Context::onGrpcReceiveInitialMetadata(uint32_t token, Http::HeaderMapPtr&& 
   wasm_->on_grpc_receive_initial_metadata_(this, id_, token,
                                            headerSize(grpc_receive_initial_metadata_));
   grpc_receive_initial_metadata_ = nullptr;
-  wasm_->checkShutdown();
 }
 
 void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&& metadata) {
@@ -1321,7 +1328,6 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
   wasm_->on_grpc_receive_trailing_metadata_(this, id_, token,
                                             headerSize(grpc_receive_trailing_metadata_));
   grpc_receive_trailing_metadata_ = nullptr;
-  wasm_->checkShutdown();
 }
 
 WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
@@ -1549,7 +1555,7 @@ void Context::onDelete() {
   }
 }
 
-Http::FilterHeadersStatus Context::decodeHeaders(Http::HeaderMap& headers, bool end_stream) {
+Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers, bool end_stream) {
   request_headers_ = &headers;
   end_of_stream_ = end_stream;
   auto result = onRequestHeaders();
@@ -1565,7 +1571,7 @@ Http::FilterDataStatus Context::decodeData(Buffer::Instance& data, bool end_stre
   return result;
 }
 
-Http::FilterTrailersStatus Context::decodeTrailers(Http::HeaderMap& trailers) {
+Http::FilterTrailersStatus Context::decodeTrailers(Http::RequestTrailerMap& trailers) {
   request_trailers_ = &trailers;
   auto result = onRequestTrailers();
   request_trailers_ = nullptr;
@@ -1583,11 +1589,12 @@ void Context::setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallback
   decoder_callbacks_ = &callbacks;
 }
 
-Http::FilterHeadersStatus Context::encode100ContinueHeaders(Http::HeaderMap&) {
+Http::FilterHeadersStatus Context::encode100ContinueHeaders(Http::ResponseHeaderMap&) {
   return Http::FilterHeadersStatus::Continue;
 }
 
-Http::FilterHeadersStatus Context::encodeHeaders(Http::HeaderMap& headers, bool end_stream) {
+Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& headers,
+                                                 bool end_stream) {
   response_headers_ = &headers;
   end_of_stream_ = end_stream;
   auto result = onResponseHeaders();
@@ -1603,7 +1610,7 @@ Http::FilterDataStatus Context::encodeData(Buffer::Instance& data, bool end_stre
   return result;
 }
 
-Http::FilterTrailersStatus Context::encodeTrailers(Http::HeaderMap& trailers) {
+Http::FilterTrailersStatus Context::encodeTrailers(Http::ResponseTrailerMap& trailers) {
   response_trailers_ = &trailers;
   auto result = onResponseTrailers();
   response_trailers_ = nullptr;
@@ -1623,7 +1630,7 @@ void Context::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallback
   encoder_callbacks_ = &callbacks;
 }
 
-void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::MessagePtr& response) {
+void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr& response) {
   http_call_response_ = &response;
   onHttpCallResponse(token, response->headers().size(), response->body()->length(),
                      headerSize(response->trailers()));

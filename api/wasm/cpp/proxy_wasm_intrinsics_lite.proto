@@ -59,6 +59,17 @@ message GrpcService {
           Any typed_config = 3;
         }
       }
+      message StsService {
+        string token_exchange_service_uri = 1;
+        string resource = 2;
+        string audience = 3;
+        string scope = 4;
+        string requested_token_type = 5;
+        string subject_token_path = 6;
+        string subject_token_type = 7;
+        string actor_token_path = 8;
+        string actor_token_type = 9;
+      }
       oneof credential_specifier {
         string access_token = 1;
         Empty google_compute_engine = 2;
@@ -66,6 +77,7 @@ message GrpcService {
         ServiceAccountJWTAccessCredentials service_account_jwt_access = 4;
         GoogleIAMCredentials google_iam = 5;
         MetadataCredentialsFromPlugin from_plugin = 6;
+        StsService sts_service = 7;
       }
     }
     repeated CallCredentials call_credentials = 3;

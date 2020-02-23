@@ -5,7 +5,7 @@
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats_macros.h"
 
-#include "extensions/filters/http/common/aws/signer.h"
+#include "extensions/common/aws/signer.h"
 #include "extensions/filters/http/common/pass_through_filter.h"
 
 namespace Envoy {
@@ -39,7 +39,7 @@ public:
   /**
    * @return the config's signer.
    */
-  virtual HttpFilters::Common::Aws::Signer& signer() PURE;
+  virtual Extensions::Common::Aws::Signer& signer() PURE;
 
   /**
    * @return the filter stats.
@@ -54,27 +54,28 @@ using FilterConfigSharedPtr = std::shared_ptr<FilterConfig>;
  */
 class FilterConfigImpl : public FilterConfig {
 public:
-  FilterConfigImpl(HttpFilters::Common::Aws::SignerPtr&& signer, const std::string& stats_prefix,
+  FilterConfigImpl(Extensions::Common::Aws::SignerPtr&& signer, const std::string& stats_prefix,
                    Stats::Scope& scope);
 
-  HttpFilters::Common::Aws::Signer& signer() override;
+  Extensions::Common::Aws::Signer& signer() override;
   FilterStats& stats() override;
 
 private:
-  HttpFilters::Common::Aws::SignerPtr signer_;
+  Extensions::Common::Aws::SignerPtr signer_;
   FilterStats stats_;
 };
 
 /**
  * HTTP AWS request signing auth filter.
  */
-class Filter : public Http::PassThroughFilter, Logger::Loggable<Logger::Id::filter> {
+class Filter : public Http::PassThroughDecoderFilter, Logger::Loggable<Logger::Id::filter> {
 public:
   Filter(const std::shared_ptr<FilterConfig>& config);
 
   static FilterStats generateStats(const std::string& prefix, Stats::Scope& scope);
 
-  Http::FilterHeadersStatus decodeHeaders(Http::HeaderMap& headers, bool end_stream) override;
+  Http::FilterHeadersStatus decodeHeaders(Http::RequestHeaderMap& headers,
+                                          bool end_stream) override;
 
 private:
   std::shared_ptr<FilterConfig> config_;

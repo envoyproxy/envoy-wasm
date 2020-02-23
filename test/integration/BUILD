@@ -350,6 +350,7 @@ envoy_cc_test(
     srcs = [
         "protocol_integration_test.cc",
     ],
+    flaky = True,
     # As this test has many H1/H2/v4/v6 tests it takes a while to run.
     # Shard it enough to bring the run time in line with other integration tests.
     shard_count = 5,
@@ -826,6 +827,22 @@ envoy_cc_test(
         "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
         "@envoy_api//envoy/extensions/transport_sockets/tls/v3:pkg_cc_proto",
         "@envoy_api//envoy/service/secret/v3:pkg_cc_proto",
+    ],
+)
+
+envoy_cc_test(
+    name = "sds_generic_secret_integration_test",
+    srcs = [
+        "sds_generic_secret_integration_test.cc",
+    ],
+    deps = [
+        ":http_integration_lib",
+        "//include/envoy/registry",
+        "//source/common/grpc:common_lib",
+        "//test/test_common:utility_lib",
+        "@envoy_api//envoy/api/v2:pkg_cc_proto",
+        "@envoy_api//envoy/config/bootstrap/v3:pkg_cc_proto",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],
 )
 

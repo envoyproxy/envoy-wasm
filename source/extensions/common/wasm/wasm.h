@@ -96,17 +96,11 @@ public:
 
   void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
 
-  // Handlers for Root Contexts must call checkShutdown() after the call into the VM.
   void tickHandler(uint32_t root_context_id);
   void queueReady(uint32_t root_context_id, uint32_t token);
 
   void startShutdown();
   WasmResult done(Context* root_context);
-  void checkShutdown() {
-    if (shutdown_ready_) {
-      finishShutdown();
-    }
-  }
   void finishShutdown();
 
   //
