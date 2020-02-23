@@ -564,7 +564,7 @@ TEST_P(WasmHttpFilterTest, AddTagToActiveSpans) {
   setupFilter();
   EXPECT_CALL(decoder_callbacks_, activeSpan).WillRepeatedly(ReturnRef(active_span_));
   EXPECT_CALL(active_span_, setTag(Eq("tag_1"), Eq("tag_value_1")));
-  Http::TestHeaderMapImpl request_headers{{":path", "/"}};
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
   filter_->onDestroy();
 }
