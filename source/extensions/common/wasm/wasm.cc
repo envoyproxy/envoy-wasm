@@ -140,8 +140,10 @@ void Wasm::registerCallbacks() {
       &ConvertFunctionWordToUint32<decltype(Exports::wasi_unstable_##_fn),                         \
                                    Exports::wasi_unstable_##_fn>::convertFunctionWordToUint32)
   _REGISTER_WASI(fd_write);
+  _REGISTER_WASI(fd_read);
   _REGISTER_WASI(fd_seek);
   _REGISTER_WASI(fd_close);
+  _REGISTER_WASI(fd_fdstat_get);
   _REGISTER_WASI(environ_get);
   _REGISTER_WASI(environ_sizes_get);
   _REGISTER_WASI(args_get);
