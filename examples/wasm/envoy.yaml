@@ -32,15 +32,8 @@ static_resources:
                   vm_id: "my_vm_id"
                   runtime: "envoy.wasm.runtime.v8"
                   code:
-                    #local:
-                    #  filename: "/etc/envoy_filter_http_wasm_example.wasm"
-                    remote:
-                      sha256: 497302bb0de35537b066118bd9bfcd893fe46f04b32005a114ea0d2fc3683fab
-                      http_uri:
-                        uri: http://storage.googleapis.com/artifacts.mixologist-142215.appspot.com/extensions/jwt_header_plugin_15.wasm
-                        cluster: googleapis_storage
-                        timeout:
-                          seconds: 5
+                    local:
+                      filename: "/etc/envoy_filter_http_wasm_example.wasm"
                   allow_precompiled: true
           - name: envoy.router
             config: {}
@@ -81,24 +74,6 @@ static_resources:
     - socket_address:
         address: 127.0.0.1
         port_value: 8099
-  - name: googleapis_storage
-    dns_lookup_family: V4_ONLY
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: round_robin
-    hosts:
-    - socket_address:
-        address: storage.googleapis.com
-        port_value: 80
-  #- name: googleapis_storage
-  #  connect_timeout: 0.5s
-  #  type: strict_dns
-  #  lb_policy: round_robin
-  #  http_protocol_options: {}
-    #hosts:
-    #- socket_address:
-    #  address: storage.googleapis.com
-    #  port_value: 80
 admin:
   access_log_path: "/dev/null"
   address:
