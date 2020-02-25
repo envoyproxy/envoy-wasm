@@ -648,6 +648,8 @@ Http::HeaderMap* Context::getMap(HeaderMapType type) {
   }
 }
 
+#define GET_FROM_ROOT(x) isRootContext() ? x : root_context_->x
+
 const Http::HeaderMap* Context::getConstMap(HeaderMapType type) {
   switch (type) {
   case HeaderMapType::RequestHeaders:
@@ -671,22 +673,20 @@ const Http::HeaderMap* Context::getConstMap(HeaderMapType type) {
     }
     return response_trailers_;
   case HeaderMapType::GrpcCreateInitialMetadata:
-    return grpc_create_initial_metadata_;
+    return GET_FROM_ROOT(grpc_create_initial_metadata_);
   case HeaderMapType::GrpcReceiveInitialMetadata:
-    return grpc_receive_initial_metadata_.get();
+    return GET_FROM_ROOT(grpc_receive_initial_metadata_.get());
   case HeaderMapType::GrpcReceiveTrailingMetadata:
-    return grpc_receive_trailing_metadata_.get();
+    return GET_FROM_ROOT(grpc_receive_trailing_metadata_.get());
   case HeaderMapType::HttpCallResponseHeaders: {
-    Envoy::Http::ResponseMessagePtr* response =
-        isRootContext() ? http_call_response_ : root_context_->http_call_response_;
+    Envoy::Http::ResponseMessagePtr* response = GET_FROM_ROOT(http_call_response_);
     if (response) {
       return &(*response)->headers();
     }
     return nullptr;
   }
   case HeaderMapType::HttpCallResponseTrailers: {
-    Envoy::Http::ResponseMessagePtr* response =
-        isRootContext() ? http_call_response_ : root_context_->http_call_response_;
+    Envoy::Http::ResponseMessagePtr* response = GET_FROM_ROOT(http_call_response_);
     if (response) {
       return (*response)->trailers();
     }
@@ -801,14 +801,13 @@ Buffer::Instance* Context::getBuffer(BufferType type) {
   case BufferType::NetworkUpstreamData:
     return network_upstream_data_buffer_;
   case BufferType::HttpCallResponseBody: {
-    Envoy::Http::ResponseMessagePtr* response =
-        isRootContext() ? http_call_response_ : root_context_->http_call_response_;
+    Envoy::Http::ResponseMessagePtr* response = GET_FROM_ROOT(http_call_response_);
     if (response) {
       return (*response)->body().get();
     }
   } break;
   case BufferType::GrpcReceiveBuffer:
-    return grpc_receive_buffer_.get();
+    return GET_FROM_ROOT(grpc_receive_buffer_.get());
   default:
     break;
   }
