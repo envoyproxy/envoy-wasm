@@ -16,7 +16,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   auto context_id = id();
   auto callback = [context_id](uint32_t, size_t body_size, uint32_t) {
     auto response_headers = getHeaderMapPairs(HeaderMapType::HttpCallResponseHeaders);
-    // Switch context after getting headers, but before getting body to exercies code paths.
+    // Switch context after getting headers, but before getting body to exercise both code paths.
     getContext(context_id)->setEffectiveContext();
     auto body = getBufferBytes(BufferType::HttpCallResponseBody, 0, body_size);
     auto response_trailers = getHeaderMapPairs(HeaderMapType::HttpCallResponseTrailers);
