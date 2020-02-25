@@ -196,8 +196,12 @@ Word send_local_response(void* raw_context, Word response_code, Word response_co
   auto grpc_status_opt = (grpc_status != Grpc::Status::WellKnownGrpcStatus::InvalidCode)
                              ? absl::optional<Grpc::Status::WellKnownGrpcStatus>(grpc_status)
                              : absl::optional<Grpc::Status::WellKnownGrpcStatus>();
-  context->sendLocalResponse(static_cast<Envoy::Http::Code>(response_code.u64_), body.value(),
-                             modify_headers, grpc_status_opt, details.value());
+  context->addAfterVmCallAction([context, response_code, body = std::string(body.value()),
+                                 modify_headers = std::move(modify_headers), grpc_status_opt,
+                                 details = std::string(details.value())] {
+    context->sendLocalResponse(static_cast<Envoy::Http::Code>(response_code.u64_), body,
+                               modify_headers, grpc_status_opt, details);
+  });
   return wasmResultToWord(WasmResult::Ok);
 }
 

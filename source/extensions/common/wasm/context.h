@@ -330,6 +330,8 @@ public:
   // Connection
   virtual bool isSsl();
 
+  void addAfterVmCallAction(std::function<void()> f);
+
 protected:
   friend class Wasm;
 
