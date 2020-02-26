@@ -1687,6 +1687,7 @@ void Context::onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason
 
 void Context::onGrpcReceive(uint32_t token, Buffer::InstancePtr response) {
   if (wasm_->on_grpc_receive_) {
+    DeferAfterCallActions actions(this);
     grpc_receive_buffer_ = std::move(response);
     uint32_t response_size = grpc_receive_buffer_->length();
     wasm_->on_grpc_receive_(this, id_, token, response_size);
@@ -1700,6 +1701,7 @@ void Context::onGrpcReceive(uint32_t token, Buffer::InstancePtr response) {
 void Context::onGrpcClose(uint32_t token, const Grpc::Status::GrpcStatus& status,
                           const absl::string_view message) {
   if (wasm_->on_grpc_close_) {
+    DeferAfterCallActions actions(this);
     status_code_ = static_cast<uint32_t>(status);
     status_message_ = message;
     wasm_->on_grpc_close_(this, id_, token, static_cast<uint64_t>(status));
