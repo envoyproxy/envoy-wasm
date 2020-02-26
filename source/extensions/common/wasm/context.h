@@ -81,7 +81,7 @@ public:
   uint32_t id() const { return id_; }
   bool isVmContext() { return id_ == 0; }
   bool isRootContext() { return root_context_id_ == 0; }
-  Context* root_context() { return root_context_; }
+  Context* rootContext() { return isRootContext() ? this : root_context_; }
 
   absl::string_view root_id() const { return plugin_ ? plugin_->root_id_ : root_id_; }
   absl::string_view log_prefix() const { return plugin_ ? plugin_->log_prefix_ : root_log_prefix_; }
