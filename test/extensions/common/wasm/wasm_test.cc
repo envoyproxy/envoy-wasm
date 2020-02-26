@@ -355,7 +355,7 @@ TEST_P(WasmCommonTest, Foreign) {
 }
 
 TEST_P(WasmCommonTest, WASI) {
-  if (GetParam() != "v8") {
+  if (GetParam() == "null") {
     // This test has no meaning unless it is invoked by actual WASM code
     return;
   }

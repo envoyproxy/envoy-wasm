@@ -705,7 +705,7 @@ Word wasi_unstable_fd_write(void* raw_context, Word fd, Word iovs, Word iovs_len
 //    size_t iovs_len, __wasi_size_t *nread);
 Word wasi_unstable_fd_read(void*, Word, Word, Word, Word) {
   // Don't support reading of any files.
-  return 8; // __WASI_EBADF
+  return 52; // __WASI_ERRNO_ENOSYS
 }
 
 // __wasi_errno_t __wasi_fd_seek(__wasi_fd_t fd, __wasi_filedelta_t offset, __wasi_whence_t
@@ -720,7 +720,7 @@ Word wasi_unstable_fd_close(void*, Word) { throw WasmException("wasi_unstable fd
 // __wasi_errno_t __wasi_fd_fdstat_get(__wasi_fd_t fd, __wasi_fdstat_t *stat)
 Word wasi_unstable_fd_fdstat_get(void* raw_context, Word fd, Word statOut) {
   // We will only support this interface on stdout and stderr
-  if ((fd.u64_ < 1) || (fd.u64_ > 2)) {
+  if ((fd.u64_ != 1) && (fd.u64_ != 2)) {
     return 8; // __WASI_EBADF;
   }
 

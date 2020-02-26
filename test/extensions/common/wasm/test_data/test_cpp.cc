@@ -147,8 +147,8 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t context_id)) {
     // We explicitly don't support reading from stdin
     char tmp[16];
     size_t rc = fread(static_cast<void*>(tmp), 1, 16, stdin);
-    if (rc != 0) {
-      FAIL_NOW("stdin read should fail");
+    if ((rc != 0) || (errno != ENOSYS)) {
+      FAIL_NOW("stdin read should fail. errno = " + std::to_string(errno));
     }
     // No environment variables should be available
     char* pathenv = getenv("PATH");
@@ -166,7 +166,7 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t context_id)) {
     }
     tty = isatty(99);
     if ((errno != EBADF) || (tty != 0)) {
-      FAIL_NOW("isatty errors on bad fds");
+      FAIL_NOW("isatty errors on bad fds. errno = " + std::to_string(errno));
     }
   } else {
     std::string message = "on_vm_start " + configuration;
