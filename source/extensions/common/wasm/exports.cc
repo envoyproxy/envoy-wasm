@@ -501,7 +501,7 @@ Word get_buffer_status(void* raw_context, Word type, Word length_ptr, Word flags
 Word http_call(void* raw_context, Word uri_ptr, Word uri_size, Word header_pairs_ptr,
                Word header_pairs_size, Word body_ptr, Word body_size, Word trailer_pairs_ptr,
                Word trailer_pairs_size, Word timeout_milliseconds, Word token_ptr) {
-  auto context = WASM_CONTEXT(raw_context)->root_context();
+  auto context = WASM_CONTEXT(raw_context)->rootContext();
   auto uri = context->wasmVm()->getMemory(uri_ptr.u64_, uri_size.u64_);
   auto body = context->wasmVm()->getMemory(body_ptr.u64_, body_size.u64_);
   auto header_pairs = context->wasmVm()->getMemory(header_pairs_ptr.u64_, header_pairs_size.u64_);
@@ -571,7 +571,7 @@ Word get_metric(void* raw_context, Word metric_id, Word result_uint64_ptr) {
 Word grpc_call(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
                Word service_name_size, Word method_name_ptr, Word method_name_size,
                Word request_ptr, Word request_size, Word timeout_milliseconds, Word token_ptr) {
-  auto context = WASM_CONTEXT(raw_context)->root_context();
+  auto context = WASM_CONTEXT(raw_context)->rootContext();
   auto service = context->wasmVm()->getMemory(service_ptr.u64_, service_size.u64_);
   auto service_name = context->wasmVm()->getMemory(service_name_ptr.u64_, service_name_size.u64_);
   auto method_name = context->wasmVm()->getMemory(method_name_ptr.u64_, method_name_size.u64_);
@@ -599,7 +599,7 @@ Word grpc_call(void* raw_context, Word service_ptr, Word service_size, Word serv
 Word grpc_stream(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
                  Word service_name_size, Word method_name_ptr, Word method_name_size,
                  Word token_ptr) {
-  auto context = WASM_CONTEXT(raw_context)->root_context();
+  auto context = WASM_CONTEXT(raw_context)->rootContext();
   auto service = context->wasmVm()->getMemory(service_ptr.u64_, service_size.u64_);
   auto service_name = context->wasmVm()->getMemory(service_name_ptr.u64_, service_name_size.u64_);
   auto method_name = context->wasmVm()->getMemory(method_name_ptr.u64_, method_name_size.u64_);
@@ -623,18 +623,18 @@ Word grpc_stream(void* raw_context, Word service_ptr, Word service_size, Word se
 }
 
 Word grpc_cancel(void* raw_context, Word token) {
-  auto context = WASM_CONTEXT(raw_context)->root_context();
+  auto context = WASM_CONTEXT(raw_context)->rootContext();
   return wasmResultToWord(context->grpcCancel(token.u64_));
 }
 
 Word grpc_close(void* raw_context, Word token) {
-  auto context = WASM_CONTEXT(raw_context)->root_context();
+  auto context = WASM_CONTEXT(raw_context)->rootContext();
   return wasmResultToWord(context->grpcClose(token.u64_));
 }
 
 Word grpc_send(void* raw_context, Word token, Word message_ptr, Word message_size,
                Word end_stream) {
-  auto context = WASM_CONTEXT(raw_context)->root_context();
+  auto context = WASM_CONTEXT(raw_context)->rootContext();
   auto message = context->wasmVm()->getMemory(message_ptr.u64_, message_size.u64_);
   if (!message) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
