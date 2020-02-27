@@ -203,6 +203,45 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   filter_->onDestroy();
 }
 
+// Script that reads the body.
+TEST_P(WasmHttpFilterTest, BodyRequestReadBody) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/body_cpp.wasm")));
+  setupFilter();
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"x-test-operation", "ReadBody"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  Buffer::OwnedImpl data("hello");
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
+  filter_->onDestroy();
+}
+
+// Script that buffers the body.
+TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/body_cpp.wasm")));
+  setupFilter();
+
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::err,
+                                   Eq(absl::string_view("onRequestBody hello again hello"))));
+
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
+                                                 {"x-test-operation", "BufferBody"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  Buffer::OwnedImpl data1("hello");
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data1, false));
+  Buffer::OwnedImpl data2(" again ");
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data2, false));
+
+  // The test only asks for the buffered data on the last call
+  Buffer::OwnedImpl bufferedBody("hello again hello");
+  EXPECT_CALL(decoder_callbacks_, decodingBuffer()).WillRepeatedly(Return(&bufferedBody));
+  Buffer::OwnedImpl data3("hello");
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data3, true));
+  filter_->onDestroy();
+}
+
 // Script testing AccessLog::Instance::log.
 TEST_P(WasmHttpFilterTest, AccessLog) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(

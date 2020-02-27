@@ -73,7 +73,8 @@ enum class BufferType : int32_t {
   NetworkUpstreamData = 3,   // During the onLog callback these are immutable
   HttpCallResponseBody = 4,  // Immutable
   GrpcReceiveBuffer = 5,     // Immutable
-  MAX = 5,
+  BufferedBody = 6,          // After returning StopIterationAndBuffer
+  MAX = 6,
 };
 enum class BufferFlags : int32_t {
   // These must be powers of 2.

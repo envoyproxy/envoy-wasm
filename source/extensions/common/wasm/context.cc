@@ -782,7 +782,7 @@ uint32_t Context::getHeaderMapSize(HeaderMapType type) {
 
 // Buffer
 
-Buffer::Instance* Context::getBuffer(BufferType type) {
+const Buffer::Instance* Context::getBuffer(BufferType type) {
   switch (type) {
   case BufferType::HttpRequestBody:
     return request_body_buffer_;
@@ -799,6 +799,12 @@ Buffer::Instance* Context::getBuffer(BufferType type) {
     break;
   case BufferType::GrpcReceiveBuffer:
     return grpc_receive_buffer_.get();
+  case BufferType::BufferedBody:
+    if (direction_ == decoding) {
+      return decoder_callbacks_->decodingBuffer();
+    } else {
+      return encoder_callbacks_->encodingBuffer();
+    }
   default:
     break;
   }
@@ -1221,6 +1227,7 @@ Http::FilterMetadataStatus Context::onRequestMetadata() {
 }
 
 Http::FilterHeadersStatus Context::onResponseHeaders() {
+  direction_ = Direction::encoding;
   if (!in_vm_context_created_) {
     // If the request is invalid then onRequestHeaders() will not be called and neither will
     // onCreate() then sendLocalReply be called which will call this function. In this case we
