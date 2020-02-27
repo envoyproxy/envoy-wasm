@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "common/common/hex.h"
 #include "common/event/dispatcher_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
@@ -15,6 +16,7 @@
 #include "gtest/gtest.h"
 
 using testing::Eq;
+using testing::Return;
 
 namespace Envoy {
 namespace Extensions {
@@ -408,6 +410,84 @@ TEST_P(WasmCommonTest, VmCache) {
   wasm_handle.reset();
   wasm_handle2.reset();
 
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  wasm->configure(root_context, plugin, "done");
+  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher->clearDeferredDeleteList();
+}
+
+TEST_P(WasmCommonTest, RemoteCode) {
+  if (GetParam() == "null") {
+    return;
+  }
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  NiceMock<Upstream::MockClusterManager> cluster_manager;
+  NiceMock<Init::MockManager> init_manager;
+  Init::ExpectableWatcherImpl init_watcher;
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
+  Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider;
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
+  auto name = "";
+  auto root_id = "";
+  auto vm_id = "";
+  auto vm_configuration = "vm_cache";
+  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
+      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
+      nullptr);
+
+  std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+
+  VmConfig vm_config;
+  vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));
+  vm_config.set_configuration(vm_configuration);
+  std::string sha256 = Extensions::Common::Wasm::Sha256(code);
+  std::string sha256Hex =
+      Hex::encode(reinterpret_cast<const uint8_t*>(&*sha256.begin()), sha256.size());
+  vm_config.mutable_code()->mutable_remote()->set_sha256(sha256Hex);
+  vm_config.mutable_code()->mutable_remote()->mutable_http_uri()->set_uri(
+      "http://example.com/test.wasm");
+  vm_config.mutable_code()->mutable_remote()->mutable_http_uri()->set_cluster("example_com");
+  vm_config.mutable_code()->mutable_remote()->mutable_http_uri()->mutable_timeout()->set_seconds(5);
+  WasmHandleSharedPtr wasm_handle;
+  auto root_context = new Extensions::Common::Wasm::TestContext();
+
+  EXPECT_CALL(*root_context, scriptLog_(spdlog::level::info, Eq("on_vm_start vm_cache")));
+  EXPECT_CALL(*root_context, scriptLog_(spdlog::level::info, Eq("on_done logging")));
+  EXPECT_CALL(*root_context, scriptLog_(spdlog::level::info, Eq("on_delete logging")));
+
+  EXPECT_CALL(cluster_manager, httpAsyncClientForCluster("example_com"))
+      .WillOnce(ReturnRef(cluster_manager.async_client_));
+  EXPECT_CALL(cluster_manager.async_client_, send_(_, _, _))
+      .WillOnce(
+          Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
+                     const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
+            Http::ResponseMessagePtr response(
+                new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                    new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
+            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            callbacks.onSuccess(std::move(response));
+            return nullptr;
+          }));
+
+  Init::TargetHandlePtr init_target_handle;
+  EXPECT_CALL(init_manager, add(_)).WillOnce(Invoke([&](const Init::Target& target) {
+    init_target_handle = target.createHandle("test");
+  }));
+  createWasmForTesting(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, *api,
+                       std::unique_ptr<Context>(root_context), remote_data_provider,
+                       [&wasm_handle](WasmHandleSharedPtr w) { wasm_handle = w; });
+
+  EXPECT_CALL(init_watcher, ready());
+  init_target_handle->initialize(init_watcher);
+
+  EXPECT_NE(wasm_handle, nullptr);
+
+  plugin.reset();
+  auto wasm = wasm_handle->wasm().get();
+  wasm_handle.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   wasm->configure(root_context, plugin, "done");
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);

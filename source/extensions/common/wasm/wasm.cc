@@ -51,10 +51,6 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-namespace {
-
-std::atomic<int64_t> active_wasm_;
-
 std::string Sha256(absl::string_view data) {
   std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
   EVP_MD_CTX* ctx(EVP_MD_CTX_new());
@@ -67,6 +63,10 @@ std::string Sha256(absl::string_view data) {
   EVP_MD_CTX_free(ctx);
   return std::string(reinterpret_cast<const char*>(&digest[0]), digest.size());
 }
+
+namespace {
+
+std::atomic<int64_t> active_wasm_;
 
 std::string Xor(absl::string_view a, absl::string_view b) {
   ASSERT(a.size() == b.size());
