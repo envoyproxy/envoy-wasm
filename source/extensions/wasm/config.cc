@@ -23,11 +23,14 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.localInfo(), nullptr);
 
-  auto callback = [&context, &config, plugin, cb](Common::Wasm::WasmHandleSharedPtr base_wasm) {
-    if (config.singleton()) {
+  auto configuration = std::make_shared<std::string>(config.config().configuration());
+  bool singleton = config.singleton();
+  auto callback = [&context, configuration, singleton, plugin,
+                   cb](Common::Wasm::WasmHandleSharedPtr base_wasm) {
+    if (singleton) {
       // Return the WASM VM which will be stored as a singleton by the Server.
       auto root_context = base_wasm->wasm()->start(plugin);
-      if (!base_wasm->wasm()->configure(root_context, plugin, config.config().configuration())) {
+      if (!base_wasm->wasm()->configure(root_context, plugin, *configuration)) {
         cb(nullptr);
       }
       return cb(base_wasm);
@@ -35,7 +38,6 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
     // Per-thread WASM VM.
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     // NB: no need to keep the resulting slot as Wasm is cached on each thread.
-    auto configuration = std::make_shared<std::string>(config.config().configuration());
     context.threadLocal().allocateSlot()->set([base_wasm, plugin,
                                                configuration](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(

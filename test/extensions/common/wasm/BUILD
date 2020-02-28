@@ -29,9 +29,12 @@ envoy_cc_test(
     ],
     external_deps = ["abseil_optional"],
     deps = [
+        "//source/common/common:hex_lib",
+        "//source/common/crypto:utility_lib",
         "//source/common/event:dispatcher_lib",
         "//source/common/stats:isolated_store_lib",
         "//source/common/stats:stats_lib",
+        "//source/extensions/common/crypto:utility_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//test/extensions/common/wasm/test_data:test_cpp_plugin",
         "//test/mocks/server:server_mocks",

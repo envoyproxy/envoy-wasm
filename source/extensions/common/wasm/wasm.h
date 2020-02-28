@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <deque>
 #include <map>
 #include <memory>
 
@@ -141,6 +142,15 @@ public:
     return true;
   }
 
+  void addAfterVmCallAction(std::function<void()> f) { after_vm_call_actions_.push_back(f); }
+  void doAfterVmCallActions() {
+    while (!after_vm_call_actions_.empty()) {
+      auto f = std::move(after_vm_call_actions_.front());
+      after_vm_call_actions_.pop_front();
+      f();
+    }
+  }
+
 private:
   friend class Context;
   class ShutdownHandle;
@@ -196,6 +206,8 @@ private:
   bool shutdown_ready_{false};                 // All pending RootContexts are now done.
 
   TimeSource& time_source_;
+
+  WasmCallVoid<0> abi_version_0_1_0_;
 
   WasmCallVoid<0> _start_; /* Emscripten v1.39.0+ */
   WasmCallVoid<0> __wasm_call_ctors_;
@@ -268,6 +280,9 @@ private:
 
   // Foreign Functions.
   absl::flat_hash_map<std::string, WasmForeignFunction> foreign_functions_;
+
+  // Actions to be done after the call into the VM returns.
+  std::deque<std::function<void()>> after_vm_call_actions_;
 };
 using WasmSharedPtr = std::shared_ptr<Wasm>;
 
@@ -285,6 +300,8 @@ private:
   WasmSharedPtr wasm_;
 };
 using WasmHandleSharedPtr = std::shared_ptr<WasmHandle>;
+
+std::string Sha256(absl::string_view data);
 
 using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 
