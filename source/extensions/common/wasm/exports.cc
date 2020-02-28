@@ -724,7 +724,7 @@ Word wasi_unstable_fd_close(void*, Word) { throw WasmException("wasi_unstable fd
 // __wasi_errno_t __wasi_fd_fdstat_get(__wasi_fd_t fd, __wasi_fdstat_t *stat)
 Word wasi_unstable_fd_fdstat_get(void* raw_context, Word fd, Word statOut) {
   // We will only support this interface on stdout and stderr
-  if ((fd.u64_ != 1) && (fd.u64_ != 2)) {
+  if (fd.u64_ != 1 && fd.u64_ != 2) {
     return 8; // __WASI_EBADF;
   }
 
