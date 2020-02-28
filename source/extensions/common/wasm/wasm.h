@@ -207,6 +207,8 @@ private:
 
   TimeSource& time_source_;
 
+  WasmCallVoid<0> abi_version_0_1_0_;
+
   WasmCallVoid<0> _start_; /* Emscripten v1.39.0+ */
   WasmCallVoid<0> __wasm_call_ctors_;
 

@@ -215,9 +215,17 @@ void Wasm::getFunctions() {
   _GET(__wasm_call_ctors);
 
   _GET(malloc);
+  if (!malloc_) {
+    throw WasmException("WASM missing malloc");
+  }
 #undef _GET
 
 #define _GET_PROXY(_fn) wasm_vm_->getFunction("proxy_" #_fn, &_fn##_);
+  _GET_PROXY(abi_version_0_1_0);
+  if (!abi_version_0_1_0_) {
+    throw WasmException("WASM missing Proxy-Wasm ABI version or requires an unsupported version.");
+  }
+
   _GET_PROXY(validate_configuration);
   _GET_PROXY(on_vm_start);
   _GET_PROXY(on_configure);
@@ -250,10 +258,6 @@ void Wasm::getFunctions() {
   _GET_PROXY(on_log);
   _GET_PROXY(on_delete);
 #undef _GET_PROXY
-
-  if (!malloc_) {
-    throw WasmException("WASM missing malloc");
-  }
 }
 
 Wasm::Wasm(WasmHandleSharedPtr& base_wasm_handle, Event::Dispatcher& dispatcher)
