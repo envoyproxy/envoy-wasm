@@ -30,7 +30,9 @@ using Plugin::Context;
 using Plugin::WasmData;
 
 void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<0>* f) {
-  if (function_name == "_start") {
+  if (function_name == "proxy_abi_version_0_1_0") {
+    *f = [](Common::Wasm::Context*) { /* dummy function */ };
+  } else if (function_name == "_start") {
     *f = nullptr;
   } else if (function_name == "__wasm_call_ctors") {
     *f = nullptr;
