@@ -223,12 +223,14 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/body_cpp.wasm")));
   setupFilter();
 
-  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::err,
-                                   Eq(absl::string_view("onRequestBody hello again hello"))));
-
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "BufferBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, false));
+  // Despite multiple calls to "decodeData," the filter only gets the data once after
+  // it returns "StopIterationAndBuffer"
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("Requesting buffering"))))
+      .Times(1);
   Buffer::OwnedImpl data1("hello");
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data1, false));
   Buffer::OwnedImpl data2(" again ");
@@ -236,9 +238,24 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
 
   // The test only asks for the buffered data on the last call
   Buffer::OwnedImpl bufferedBody("hello again hello");
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::err,
+                                   Eq(absl::string_view("onRequestBody hello again hello"))))
+      .Times(1);
   EXPECT_CALL(decoder_callbacks_, decodingBuffer()).WillRepeatedly(Return(&bufferedBody));
   Buffer::OwnedImpl data3("hello");
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data3, true));
+
+  // Verify that the response still works even though we buffered the request.
+  Http::TestResponseHeaderMapImpl response_headers{{":status", "200"},
+                                                   {"x-test-operation", "ReadBody"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->encodeHeaders(response_headers, false));
+  // Should not buffer this time
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
+      .Times(2);
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->encodeData(data1, false));
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->encodeData(data1, true));
+
   filter_->onDestroy();
 }
 

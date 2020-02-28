@@ -415,8 +415,6 @@ protected:
   Http::HeaderMap* getMap(HeaderMapType type);
   const Http::HeaderMap* getConstMap(HeaderMapType type);
 
-  enum Direction { decoding, encoding };
-
   Wasm* wasm_{nullptr};
   uint32_t id_{0};
   uint32_t root_context_id_{0};                          // 0 for roots and the general context.
@@ -427,7 +425,7 @@ protected:
   PluginSharedPtr plugin_;
   bool in_vm_context_created_ = false;
   bool destroyed_ = false;
-  Direction direction_ = decoding;
+  bool buffering_body_ = false;
 
   uint32_t next_http_call_token_ = 1;
   uint32_t next_grpc_token_ = 1; // Odd tokens are for Calls even for Streams.
