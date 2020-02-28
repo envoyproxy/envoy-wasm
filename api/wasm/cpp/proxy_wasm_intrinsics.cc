@@ -1,6 +1,9 @@
 // NOLINT(namespace-envoy)
 #include "proxy_wasm_intrinsics.h"
 
+// Required Proxy-Wasm ABI version.
+extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
+
 static std::unordered_map<std::string, RootFactory>* root_factories = nullptr;
 static std::unordered_map<std::string, ContextFactory>* context_factories = nullptr;
 static std::unordered_map<int32_t, std::unique_ptr<ContextBase>> context_map;

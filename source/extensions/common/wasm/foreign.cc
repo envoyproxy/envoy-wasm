@@ -124,7 +124,7 @@ public:
         return WasmResult::BadArgument;
       }
 
-      auto& expr_context = getOrCreateContext(current_context_->root_context());
+      auto& expr_context = getOrCreateContext(current_context_->rootContext());
       auto token = expr_context.createToken();
       auto& handler = expr_context.getExpression(token);
 
@@ -153,7 +153,7 @@ public:
   WasmForeignFunction create() const override {
     WasmForeignFunction f = [](Wasm&, absl::string_view argument,
                                std::function<void*(size_t size)> alloc_result) -> WasmResult {
-      auto& expr_context = getOrCreateContext(current_context_->root_context());
+      auto& expr_context = getOrCreateContext(current_context_->rootContext());
       if (argument.size() != sizeof(uint32_t)) {
         return WasmResult::BadArgument;
       }
@@ -188,7 +188,7 @@ public:
   WasmForeignFunction create() const override {
     WasmForeignFunction f = [](Wasm&, absl::string_view argument,
                                std::function<void*(size_t size)>) -> WasmResult {
-      auto& expr_context = getOrCreateContext(current_context_->root_context());
+      auto& expr_context = getOrCreateContext(current_context_->rootContext());
       if (argument.size() != sizeof(uint32_t)) {
         return WasmResult::BadArgument;
       }

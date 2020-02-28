@@ -5,6 +5,9 @@
 
 #include "proxy_wasm_intrinsics.h"
 
+// Required Proxy-Wasm ABI version.
+extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
+
 float gNan = std::nan("1");
 float gInfinity = INFINITY;
 
