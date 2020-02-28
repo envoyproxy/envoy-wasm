@@ -784,7 +784,7 @@ inline WasmResult makeHttpCall(StringView uri, const HeaderStringPairs& request_
 
 // Tracing
 inline WasmResult activeSpanSetTag(StringView key, StringView value) {
-  return proxy_active_span_set_tag(key.data(), key.size(), value.data(), value.size());
+  return proxy_set_active_span_tag(key.data(), key.size(), value.data(), value.size());
 }
 
 // Low level metrics interface.

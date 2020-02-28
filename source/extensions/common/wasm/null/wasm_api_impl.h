@@ -215,7 +215,7 @@ inline WasmResult proxy_grpc_send(uint64_t token, const char* message_ptr, size_
 }
 
 // Tracing
-inline WasmResult proxy_active_span_set_tag(const char* key_ptr, size_t key_size,
+inline WasmResult proxy_set_active_span_tag(const char* key_ptr, size_t key_size,
                                             const char* value_ptr, size_t value_size) {
   return wordToWasmResult(Exports::active_span_set_tag(current_context_, WR(key_ptr), WS(key_size),
                                                        WR(value_ptr), WS(value_size)));
