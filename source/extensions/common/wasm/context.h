@@ -129,12 +129,12 @@ public:
   virtual void onUpstreamConnectionClose(PeerType);
   // HTTP Filter Stream Request Downcalls.
   virtual Http::FilterHeadersStatus onRequestHeaders();
-  virtual Http::FilterDataStatus onRequestBody(int body_buffer_length, bool end_of_stream);
+  virtual Http::FilterDataStatus onRequestBody(bool end_of_stream);
   virtual Http::FilterTrailersStatus onRequestTrailers();
   virtual Http::FilterMetadataStatus onRequestMetadata();
   // HTTP Filter Stream Response Downcalls.
   virtual Http::FilterHeadersStatus onResponseHeaders();
-  virtual Http::FilterDataStatus onResponseBody(int body_buffer_length, bool end_of_stream);
+  virtual Http::FilterDataStatus onResponseBody(bool end_of_stream);
   virtual Http::FilterTrailersStatus onResponseTrailers();
   virtual Http::FilterMetadataStatus onResponseMetadata();
   // Async Response Downcalls on any Context.

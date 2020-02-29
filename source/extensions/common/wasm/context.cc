@@ -1215,14 +1215,11 @@ Http::FilterHeadersStatus Context::onRequestHeaders() {
   return Http::FilterHeadersStatus::StopIteration;
 }
 
-Http::FilterDataStatus Context::onRequestBody(int, bool end_of_stream) {
+Http::FilterDataStatus Context::onRequestBody(bool end_of_stream) {
   if (!wasm_->on_request_body_) {
     return Http::FilterDataStatus::Continue;
   }
   DeferAfterCallActions actions(this);
-  if (!end_of_stream_ && buffering_body_) {
-    return Http::FilterDataStatus::StopIterationAndBuffer;
-  }
   const auto buf = getBuffer(BufferType::HttpRequestBody);
   const int bodyLen = buf == nullptr ? 0 : buf->length();
   switch (wasm_
@@ -1230,13 +1227,16 @@ Http::FilterDataStatus Context::onRequestBody(int, bool end_of_stream) {
                                  static_cast<uint32_t>(end_of_stream))
               .u64_) {
   case 0:
+    buffering_body_ = false;
     return Http::FilterDataStatus::Continue;
   case 1:
     buffering_body_ = true;
     return Http::FilterDataStatus::StopIterationAndBuffer;
   case 2:
+    buffering_body_ = false;
     return Http::FilterDataStatus::StopIterationAndWatermark;
   default:
+    buffering_body_ = false;
     return Http::FilterDataStatus::StopIterationNoBuffer;
   }
 }
@@ -1284,14 +1284,11 @@ Http::FilterHeadersStatus Context::onResponseHeaders() {
   return Http::FilterHeadersStatus::StopIteration;
 }
 
-Http::FilterDataStatus Context::onResponseBody(int, bool end_of_stream) {
+Http::FilterDataStatus Context::onResponseBody(bool end_of_stream) {
   if (!wasm_->on_response_body_) {
     return Http::FilterDataStatus::Continue;
   }
   DeferAfterCallActions actions(this);
-  if (!end_of_stream_ && buffering_body_) {
-    return Http::FilterDataStatus::StopIterationAndBuffer;
-  }
   const auto buf = getBuffer(BufferType::HttpResponseBody);
   const int bodyLen = buf == nullptr ? 0 : buf->length();
   switch (wasm_
@@ -1299,13 +1296,16 @@ Http::FilterDataStatus Context::onResponseBody(int, bool end_of_stream) {
                                   static_cast<uint32_t>(end_of_stream))
               .u64_) {
   case 0:
+    buffering_body_ = false;
     return Http::FilterDataStatus::Continue;
   case 1:
     buffering_body_ = true;
     return Http::FilterDataStatus::StopIterationAndBuffer;
   case 2:
+    buffering_body_ = false;
     return Http::FilterDataStatus::StopIterationAndWatermark;
   default:
+    buffering_body_ = false;
     return Http::FilterDataStatus::StopIterationNoBuffer;
   }
 }
@@ -1623,7 +1623,7 @@ Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers
 Http::FilterDataStatus Context::decodeData(Buffer::Instance& data, bool end_stream) {
   request_body_buffer_ = &data;
   end_of_stream_ = end_stream;
-  auto result = onRequestBody(data.length(), end_stream);
+  auto result = onRequestBody(end_stream);
   request_body_buffer_ = nullptr;
   return result;
 }
@@ -1662,7 +1662,7 @@ Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& header
 Http::FilterDataStatus Context::encodeData(Buffer::Instance& data, bool end_stream) {
   response_body_buffer_ = &data;
   end_of_stream_ = end_stream;
-  auto result = onResponseBody(data.length(), end_stream);
+  auto result = onResponseBody(end_stream);
   response_body_buffer_ = nullptr;
   return result;
 }
