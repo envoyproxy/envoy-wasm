@@ -5,7 +5,10 @@
 
 #include "proxy_wasm_intrinsics.h"
 
-//  Use global variables so the compiler cannot optimize the operations away.
+// Required Proxy-Wasm ABI version.
+extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
+
+// Use global variables so the compiler cannot optimize the operations away.
 int32_t i32a = 0;
 int32_t i32b = 1;
 double f64a = 0.0;

@@ -5,6 +5,8 @@
 
 #ifndef NULL_PLUGIN
 #include "proxy_wasm_intrinsics.h"
+// Required Proxy-Wasm ABI version.
+extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
 #else
 #include "extensions/common/wasm/null/null_plugin.h"
 #endif
