@@ -77,7 +77,7 @@ Word set_effective_context(void* raw_context, Word context_id);
 Word done(void* raw_context);
 Word call_foreign_function(void* raw_context, Word function_name, Word function_name_size,
                            Word arguments, Word warguments_size, Word results, Word results_size);
-Word active_span_set_tag(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
+Word set_active_span_tag(void* raw_context, Word key_ptr, Word key_size, Word value_ptr,
                          Word value_size);
 
 // Runtime environment functions exported from envoy to wasm.

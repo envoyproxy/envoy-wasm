@@ -206,7 +206,7 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(set_effective_context);
   _REGISTER_PROXY(done);
   _REGISTER_PROXY(call_foreign_function);
-  _REGISTER_PROXY(active_span_set_tag);
+  _REGISTER_PROXY(set_active_span_tag);
 #undef _REGISTER_PROXY
 }
 
