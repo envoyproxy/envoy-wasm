@@ -86,6 +86,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
                       [](Server::WasmSharedPtr wasm) { EXPECT_EQ(wasm, nullptr); });
   EXPECT_CALL(init_watcher, ready());
   init_manager.initialize(init_watcher);
+  tls.shutdownThread();
 }
 
 TEST_P(WasmFactoryTest, MissingImport) {

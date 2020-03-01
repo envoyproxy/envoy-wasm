@@ -19,6 +19,7 @@ public:
 
 private:
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
+  ThreadLocal::SlotPtr tls_slot_;
 };
 
 } // namespace Wasm
