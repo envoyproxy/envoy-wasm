@@ -54,7 +54,8 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
   Server::WasmServicePtr wasmptr = nullptr;
-  factory->createWasm(config, context, [&wasmptr](Server::WasmServicePtr wasm) { wasmptr = std::move(wasm); });
+  factory->createWasm(config, context,
+                      [&wasmptr](Server::WasmServicePtr wasm) { wasmptr = std::move(wasm); });
   EXPECT_CALL(init_watcher, ready());
   init_manager.initialize(init_watcher);
   EXPECT_NE(wasmptr, nullptr);
@@ -83,7 +84,8 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
   Server::WasmServicePtr wasmptr = nullptr;
-  factory->createWasm(config, context, [&wasmptr](Server::WasmServicePtr wasm) { wasmptr = std::move(wasm); });
+  factory->createWasm(config, context,
+                      [&wasmptr](Server::WasmServicePtr wasm) { wasmptr = std::move(wasm); });
   EXPECT_CALL(init_watcher, ready());
   init_manager.initialize(init_watcher);
   EXPECT_NE(wasmptr, nullptr);
