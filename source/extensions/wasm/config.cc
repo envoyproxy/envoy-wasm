@@ -42,8 +42,6 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
           Common::Wasm::getOrCreateThreadLocalWasm(base_wasm, plugin, *configuration, dispatcher));
     });
-    // Do not return this WASM VM since this is per-thread. Returning it would indicate that
-    // this is a singleton.
     cb(std::make_unique<Server::WasmService>(std::move(tls_slot)));
   };
 
