@@ -70,12 +70,12 @@ public:
    * @param config const ProtoBuf::Message& supplies the config for the resource monitor
    *        implementation.
    * @param context WasmFactoryContext& supplies the resource monitor's context.
-   * @param cb CreateWasmCallback&& supplies the callback to be called after wasm is created.
+   * @param cb CreateWasmServiceCallback&& supplies the callback to be called after wasm is created.
    * @throw EnvoyException if the implementation is unable to produce an instance with
    *        the provided parameters.
    */
   virtual void createWasm(const envoy::extensions::wasm::v3::WasmService& config,
-                          WasmFactoryContext& context, CreateWasmCallback&& cb) PURE;
+                          WasmFactoryContext& context, CreateWasmServiceCallback&& cb) PURE;
 };
 
 } // namespace Configuration

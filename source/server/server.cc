@@ -436,7 +436,7 @@ void InstanceImpl::initialize(const Options& options,
         Configuration::WasmFactoryContextImpl wasm_factory_context(clusterManager(), initManager(),
                                                                    *dispatcher_, thread_local_,
                                                                    api(), scope, *local_info_);
-        factory->createWasm(config, wasm_factory_context, [this](WasmSharedPtr wasm) {
+        factory->createWasm(config, wasm_factory_context, [this](WasmServicePtr wasm) {
           if (wasm) {
             // If not nullptr, this is a singleton WASM service.
             wasm_.emplace_back(std::move(wasm));
