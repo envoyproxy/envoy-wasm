@@ -25,6 +25,7 @@ using testing::_;
 using testing::AtLeast;
 using testing::InSequence;
 using testing::Invoke;
+using testing::InvokeWithoutArgs;
 using testing::NiceMock;
 using testing::Return;
 using testing::ReturnRef;
@@ -315,6 +316,30 @@ TEST_F(Http1ServerConnectionImplTest, ChunkedBody) {
   EXPECT_EQ(0U, buffer.length());
 }
 
+TEST_F(Http1ServerConnectionImplTest, ChunkedBodyCase) {
+  initialize();
+
+  InSequence sequence;
+
+  MockRequestDecoder decoder;
+  EXPECT_CALL(callbacks_, newStream(_, _)).WillOnce(ReturnRef(decoder));
+
+  TestHeaderMapImpl expected_headers{
+      {":path", "/"},
+      {":method", "POST"},
+      {"transfer-encoding", "Chunked"},
+  };
+  EXPECT_CALL(decoder, decodeHeaders_(HeaderMapEqual(&expected_headers), false)).Times(1);
+  Buffer::OwnedImpl expected_data("Hello World");
+  EXPECT_CALL(decoder, decodeData(BufferEqual(&expected_data), false)).Times(1);
+  EXPECT_CALL(decoder, decodeData(_, true)).Times(1);
+
+  Buffer::OwnedImpl buffer(
+      "POST / HTTP/1.1\r\ntransfer-encoding: Chunked\r\n\r\nb\r\nHello World\r\n0\r\n\r\n");
+  codec_->dispatch(buffer);
+  EXPECT_EQ(0U, buffer.length());
+}
+
 // Currently http_parser does not support chained transfer encodings.
 TEST_F(Http1ServerConnectionImplTest, IdentityAndChunkedBody) {
   initialize();
@@ -600,6 +625,92 @@ TEST_F(Http1ServerConnectionImplTest, BadRequestStartedStream) {
   Buffer::OwnedImpl buffer2("g");
   EXPECT_THROW(codec_->dispatch(buffer2), CodecProtocolException);
   EXPECT_EQ("HTTP/1.1 400 Bad Request\r\ncontent-length: 0\r\nconnection: close\r\n\r\n", output);
+}
+
+TEST_F(Http1ServerConnectionImplTest, FloodProtection) {
+  initialize();
+
+  NiceMock<MockRequestDecoder> decoder;
+  Buffer::OwnedImpl local_buffer;
+  // Read a request and send a response, without draining the response from the
+  // connection buffer. The first two should not cause problems.
+  for (int i = 0; i < 2; ++i) {
+    Http::ResponseEncoder* response_encoder = nullptr;
+    EXPECT_CALL(callbacks_, newStream(_, _))
+        .WillOnce(Invoke([&](Http::ResponseEncoder& encoder, bool) -> Http::RequestDecoder& {
+          response_encoder = &encoder;
+          return decoder;
+        }));
+
+    Buffer::OwnedImpl buffer("GET / HTTP/1.1\r\n\r\n");
+    codec_->dispatch(buffer);
+    EXPECT_EQ(0U, buffer.length());
+
+    // In most tests the write output is serialized to a buffer here it is
+    // ignored to build up queued "end connection" sentinels.
+    EXPECT_CALL(connection_, write(_, _))
+        .Times(1)
+        .WillOnce(Invoke([&](Buffer::Instance& data, bool) -> void {
+          // Move the response out of data while preserving the buffer fragment sentinels.
+          local_buffer.move(data);
+        }));
+
+    TestResponseHeaderMapImpl headers{{":status", "200"}};
+    response_encoder->encodeHeaders(headers, true);
+  }
+
+  // Trying to shove a third response in the queue should trigger flood protection.
+  {
+    Http::ResponseEncoder* response_encoder = nullptr;
+    EXPECT_CALL(callbacks_, newStream(_, _))
+        .WillOnce(Invoke([&](Http::ResponseEncoder& encoder, bool) -> Http::RequestDecoder& {
+          response_encoder = &encoder;
+          return decoder;
+        }));
+
+    Buffer::OwnedImpl buffer("GET / HTTP/1.1\r\n\r\n");
+    codec_->dispatch(buffer);
+
+    TestResponseHeaderMapImpl headers{{":status", "200"}};
+    EXPECT_THROW_WITH_MESSAGE(response_encoder->encodeHeaders(headers, true), FrameFloodException,
+                              "Too many responses queued.");
+    EXPECT_EQ(1, store_.counter("http1.response_flood").value());
+  }
+}
+
+TEST_F(Http1ServerConnectionImplTest, FloodProtectionOff) {
+  TestScopedRuntime scoped_runtime;
+  Runtime::LoaderSingleton::getExisting()->mergeValues(
+      {{"envoy.reloadable_features.http1_flood_protection", "false"}});
+  initialize();
+
+  NiceMock<MockRequestDecoder> decoder;
+  Buffer::OwnedImpl local_buffer;
+  // With flood protection off, many responses can be queued up.
+  for (int i = 0; i < 4; ++i) {
+    Http::ResponseEncoder* response_encoder = nullptr;
+    EXPECT_CALL(callbacks_, newStream(_, _))
+        .WillOnce(Invoke([&](Http::ResponseEncoder& encoder, bool) -> Http::RequestDecoder& {
+          response_encoder = &encoder;
+          return decoder;
+        }));
+
+    Buffer::OwnedImpl buffer("GET / HTTP/1.1\r\n\r\n");
+    codec_->dispatch(buffer);
+    EXPECT_EQ(0U, buffer.length());
+
+    // In most tests the write output is serialized to a buffer here it is
+    // ignored to build up queued "end connection" sentinels.
+    EXPECT_CALL(connection_, write(_, _))
+        .Times(1)
+        .WillOnce(Invoke([&](Buffer::Instance& data, bool) -> void {
+          // Move the response out of data while preserving the buffer fragment sentinels.
+          local_buffer.move(data);
+        }));
+
+    TestResponseHeaderMapImpl headers{{":status", "200"}};
+    response_encoder->encodeHeaders(headers, true);
+  }
 }
 
 TEST_F(Http1ServerConnectionImplTest, HostHeaderTranslation) {
@@ -955,7 +1066,13 @@ TEST_F(Http1ServerConnectionImplTest, ChunkedResponse) {
   EXPECT_EQ(0U, buffer.length());
 
   std::string output;
-  ON_CALL(connection_, write(_, _)).WillByDefault(AddBufferToString(&output));
+  ON_CALL(connection_, write(_, _)).WillByDefault(Invoke([&output](Buffer::Instance& data, bool) {
+    // Verify that individual writes into the codec's output buffer were coalesced into a single
+    // slice
+    ASSERT_EQ(1, data.getRawSlices(nullptr, 0));
+    output.append(data.toString());
+    data.drain(data.length());
+  }));
 
   TestResponseHeaderMapImpl headers{{":status", "200"}};
   response_encoder->encodeHeaders(headers, false);
