@@ -268,6 +268,7 @@ public:
 
   // Buffer
   virtual const Buffer::Instance* getBuffer(BufferType type);
+  virtual WasmResult setBuffer(BufferType type, std::function<void(Buffer::Instance&)> callback);
   bool end_of_stream() { return end_of_stream_; }
 
   // HTTP

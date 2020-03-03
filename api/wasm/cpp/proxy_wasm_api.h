@@ -729,6 +729,11 @@ inline WasmResult getBufferStatus(BufferType type, size_t* size, uint32_t* flags
   return proxy_get_buffer_status(type, size, flags);
 }
 
+inline WasmResult setBuffer(BufferType type, size_t start, size_t length, StringView data,
+                            uint32_t flags) {
+  return proxy_set_buffer(type, start, length, data.data(), data.size(), flags);
+}
+
 // HTTP
 
 inline void MakeHeaderStringPairsBuffer(const HeaderStringPairs& headers, void** buffer_ptr,

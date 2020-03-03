@@ -829,6 +829,33 @@ const Buffer::Instance* Context::getBuffer(BufferType type) {
   return nullptr;
 }
 
+WasmResult Context::setBuffer(BufferType type, std::function<void(Buffer::Instance&)> callback) {
+  switch (type) {
+  case BufferType::HttpRequestBody:
+    if (buffering_request_body_) {
+      decoder_callbacks_->modifyDecodingBuffer(callback);
+    } else {
+      callback(*request_body_buffer_);
+    }
+    return WasmResult::Ok;
+  case BufferType::HttpResponseBody:
+    if (buffering_response_body_) {
+      encoder_callbacks_->modifyEncodingBuffer(callback);
+    } else {
+      callback(*response_body_buffer_);
+    }
+    return WasmResult::Ok;
+  case BufferType::NetworkDownstreamData:
+    callback(*network_downstream_data_buffer_);
+    return WasmResult::Ok;
+  case BufferType::NetworkUpstreamData:
+    callback(*network_upstream_data_buffer_);
+    return WasmResult::Ok;
+  default:
+    return WasmResult::BadArgument;
+  }
+}
+
 // Async call via HTTP
 WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_headers,
                              absl::string_view request_body, const Pairs& request_trailers,
@@ -1221,9 +1248,9 @@ Http::FilterDataStatus Context::onRequestBody(bool end_of_stream) {
   }
   DeferAfterCallActions actions(this);
   const auto buffer = getBuffer(BufferType::HttpRequestBody);
-  const auto body_len = (buffer == nullptr) ? 0 : buffer->length();
+  const auto buffer_length = (buffer == nullptr) ? 0 : buffer->length();
   switch (wasm_
-              ->on_request_body_(this, id_, static_cast<uint32_t>(body_len),
+              ->on_request_body_(this, id_, static_cast<uint32_t>(buffer_length),
                                  static_cast<uint32_t>(end_of_stream))
               .u64_) {
   case 0:
@@ -1288,9 +1315,9 @@ Http::FilterDataStatus Context::onResponseBody(bool end_of_stream) {
   }
   DeferAfterCallActions actions(this);
   const auto buffer = getBuffer(BufferType::HttpResponseBody);
-  const auto body_len = (buffer == nullptr) ? 0 : buffer->length();
+  const auto buffer_length = (buffer == nullptr) ? 0 : buffer->length();
   switch (wasm_
-              ->on_response_body_(this, id_, static_cast<uint32_t>(body_len),
+              ->on_response_body_(this, id_, static_cast<uint32_t>(buffer_length),
                                   static_cast<uint32_t>(end_of_stream))
               .u64_) {
   case 0:
