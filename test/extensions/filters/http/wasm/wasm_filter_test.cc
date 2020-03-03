@@ -252,8 +252,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestRemoveBody) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/body_cpp.wasm")));
   setupFilter();
-  EXPECT_CALL(*filter_,
-              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody "))));
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody "))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "RemoveBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
@@ -345,8 +344,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestRemoveBufferedBody) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/body_cpp.wasm")));
   setupFilter();
-  EXPECT_CALL(*filter_,
-              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody "))));
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody "))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "RemoveBufferedBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
