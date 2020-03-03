@@ -129,12 +129,12 @@ public:
   virtual void onUpstreamConnectionClose(PeerType);
   // HTTP Filter Stream Request Downcalls.
   virtual Http::FilterHeadersStatus onRequestHeaders();
-  virtual Http::FilterDataStatus onRequestBody(int body_buffer_length, bool end_of_stream);
+  virtual Http::FilterDataStatus onRequestBody(bool end_of_stream);
   virtual Http::FilterTrailersStatus onRequestTrailers();
   virtual Http::FilterMetadataStatus onRequestMetadata();
   // HTTP Filter Stream Response Downcalls.
   virtual Http::FilterHeadersStatus onResponseHeaders();
-  virtual Http::FilterDataStatus onResponseBody(int body_buffer_length, bool end_of_stream);
+  virtual Http::FilterDataStatus onResponseBody(bool end_of_stream);
   virtual Http::FilterTrailersStatus onResponseTrailers();
   virtual Http::FilterMetadataStatus onResponseMetadata();
   // Async Response Downcalls on any Context.
@@ -267,7 +267,7 @@ public:
   virtual uint32_t getHeaderMapSize(HeaderMapType type);
 
   // Buffer
-  virtual Buffer::Instance* getBuffer(BufferType type);
+  virtual const Buffer::Instance* getBuffer(BufferType type);
   bool end_of_stream() { return end_of_stream_; }
 
   // HTTP
@@ -480,6 +480,8 @@ protected:
   // Temporary state.
   ProtobufWkt::Struct temporary_metadata_;
   bool end_of_stream_;
+  bool buffering_request_body_ = false;
+  bool buffering_response_body_ = false;
 
   // MB: must be a node-type map as we take persistent references to the entries.
   std::map<uint32_t, AsyncClientHandler> http_request_;

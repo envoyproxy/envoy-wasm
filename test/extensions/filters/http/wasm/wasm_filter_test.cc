@@ -203,6 +203,122 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   filter_->onDestroy();
 }
 
+// Script that reads the body.
+TEST_P(WasmHttpFilterTest, BodyRequestReadBody) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/body_cpp.wasm")));
+  setupFilter();
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"x-test-operation", "ReadBody"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  Buffer::OwnedImpl data("hello");
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
+  filter_->onDestroy();
+}
+
+// Script that buffers the body.
+TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/body_cpp.wasm")));
+  setupFilter();
+
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
+                                                 {"x-test-operation", "BufferBody"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, false));
+
+  Buffer::OwnedImpl bufferedBody;
+  EXPECT_CALL(decoder_callbacks_, decodingBuffer()).WillRepeatedly(Return(&bufferedBody));
+
+  Buffer::OwnedImpl data1("hello");
+  bufferedBody.add(data1);
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data1, false));
+
+  Buffer::OwnedImpl data2(" again ");
+  bufferedBody.add(data2);
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello again "))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data2, false));
+
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::err,
+                                   Eq(absl::string_view("onRequestBody hello again hello"))))
+      .Times(1);
+  Buffer::OwnedImpl data3("hello");
+  bufferedBody.add(data3);
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data3, true));
+
+  // Verify that the response still works even though we buffered the request.
+  Http::TestResponseHeaderMapImpl response_headers{{":status", "200"},
+                                                   {"x-test-operation", "ReadBody"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->encodeHeaders(response_headers, false));
+  // Should not buffer this time
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
+      .Times(2);
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->encodeData(data1, false));
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->encodeData(data1, true));
+
+  filter_->onDestroy();
+}
+
+// Script that buffers the first part of the body and streams the rest
+TEST_P(WasmHttpFilterTest, BodyRequestBufferThenStreamBody) {
+  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/body_cpp.wasm")));
+  setupFilter();
+
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+
+  Buffer::OwnedImpl bufferedBody;
+  EXPECT_CALL(decoder_callbacks_, decodingBuffer()).WillRepeatedly(Return(&bufferedBody));
+
+  Http::TestResponseHeaderMapImpl response_headers{{":status", "200"},
+                                                   {"x-test-operation", "BufferTwoBodies"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->encodeHeaders(response_headers, false));
+
+  Buffer::OwnedImpl data1("hello");
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data1, false));
+  bufferedBody.add(data1);
+
+  Buffer::OwnedImpl data2(", there, ");
+  bufferedBody.add(data2);
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello, there, "))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data2, false));
+
+  // Previous callbacks returned "Buffer" so we have buffered so far
+  Buffer::OwnedImpl data3("world!");
+  bufferedBody.add(data3);
+  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::err,
+                                   Eq(absl::string_view("onRequestBody hello, there, world!"))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data3, false));
+
+  // Last callback returned "continue" so we just see individual chunks.
+  Buffer::OwnedImpl data4("So it's ");
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody So it's "))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data4, false));
+
+  Buffer::OwnedImpl data5("goodbye, then!");
+  EXPECT_CALL(*filter_,
+              scriptLog_(spdlog::level::err, Eq(absl::string_view("onRequestBody goodbye, then!"))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data5, true));
+
+  filter_->onDestroy();
+}
+
 // Script testing AccessLog::Instance::log.
 TEST_P(WasmHttpFilterTest, AccessLog) {
   setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
