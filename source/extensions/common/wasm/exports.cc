@@ -705,6 +705,13 @@ Word wasi_unstable_fd_write(void* raw_context, Word fd, Word iovs, Word iovs_len
   return 0; // __WASI_ESUCCESS
 }
 
+// __wasi_errno_t __wasi_fd_read(_wasi_fd_t fd, const __wasi_iovec_t *iovs,
+//    size_t iovs_len, __wasi_size_t *nread);
+Word wasi_unstable_fd_read(void*, Word, Word, Word, Word) {
+  // Don't support reading of any files.
+  return 52; // __WASI_ERRNO_ENOSYS
+}
+
 // __wasi_errno_t __wasi_fd_seek(__wasi_fd_t fd, __wasi_filedelta_t offset, __wasi_whence_t
 // whence,__wasi_filesize_t *newoffset);
 Word wasi_unstable_fd_seek(void*, Word, int64_t, Word, Word) {
@@ -713,6 +720,26 @@ Word wasi_unstable_fd_seek(void*, Word, int64_t, Word, Word) {
 
 // __wasi_errno_t __wasi_fd_close(__wasi_fd_t fd);
 Word wasi_unstable_fd_close(void*, Word) { throw WasmException("wasi_unstable fd_close"); }
+
+// __wasi_errno_t __wasi_fd_fdstat_get(__wasi_fd_t fd, __wasi_fdstat_t *stat)
+Word wasi_unstable_fd_fdstat_get(void* raw_context, Word fd, Word statOut) {
+  // We will only support this interface on stdout and stderr
+  if (fd.u64_ != 1 && fd.u64_ != 2) {
+    return 8; // __WASI_EBADF;
+  }
+
+  // The last word points to a 24-byte structure, which we
+  // are mostly going to zero out.
+  uint64_t wasi_fdstat[3];
+  wasi_fdstat[0] = 0;
+  wasi_fdstat[1] = 64; // This sets "fs_rights_base" to __WASI_RIGHTS_FD_WRITE
+  wasi_fdstat[2] = 0;
+
+  auto context = WASM_CONTEXT(raw_context);
+  context->wasmVm()->setMemory(statOut.u64_, 3 * sizeof(uint64_t), &wasi_fdstat);
+
+  return 0; // __WASI_ESUCCESS
+}
 
 // __wasi_errno_t __wasi_environ_get(char **environ, char *environ_buf);
 Word wasi_unstable_environ_get(void*, Word, Word) {

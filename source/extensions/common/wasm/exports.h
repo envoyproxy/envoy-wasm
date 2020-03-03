@@ -82,8 +82,10 @@ Word call_foreign_function(void* raw_context, Word function_name, Word function_
 
 Word wasi_unstable_fd_write(void* raw_context, Word fd, Word iovs, Word iovs_len,
                             Word nwritten_ptr);
+Word wasi_unstable_fd_read(void*, Word, Word, Word, Word);
 Word wasi_unstable_fd_seek(void*, Word, int64_t, Word, Word);
 Word wasi_unstable_fd_close(void*, Word);
+Word wasi_unstable_fd_fdstat_get(void*, Word fd, Word statOut);
 Word wasi_unstable_environ_get(void*, Word, Word);
 Word wasi_unstable_environ_sizes_get(void* raw_context, Word count_ptr, Word buf_size_ptr);
 Word wasi_unstable_args_get(void* raw_context, Word argc_ptr, Word argv_buf_size_ptr);

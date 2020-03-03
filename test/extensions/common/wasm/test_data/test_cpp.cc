@@ -1,5 +1,10 @@
 // NOLINT(namespace-envoy)
+#include <unistd.h>
+
+#include <cerrno>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <limits>
 #include <string>
 
@@ -26,6 +31,13 @@ static float gInfinity = INFINITY;
     }                                                                                              \
   } while (0)
 #endif
+
+#define FAIL_NOW(_msg)                                                                             \
+  do {                                                                                             \
+    const std::string __message = _msg;                                                            \
+    proxy_log(LogLevel::critical, __message.c_str(), __message.size());                            \
+    abort();                                                                                       \
+  } while (0)
 
 WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t context_id)) {
   const char* configuration_ptr = nullptr;
@@ -123,6 +135,41 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t context_id)) {
     }
     ::free(compressed);
     ::free(result);
+  } else if (configuration == "WASI") {
+    // These checks depend on Emscripten's support for WASI and will only
+    // work if invoked on a "real" WASM VM.
+    int err = fprintf(stdout, "WASI write to stdout\n");
+    if (err < 0) {
+      FAIL_NOW("stdout write should succeed");
+    }
+    err = fprintf(stderr, "WASI write to stderr\n");
+    if (err < 0) {
+      FAIL_NOW("stderr write should succeed");
+    }
+    // We explicitly don't support reading from stdin
+    char tmp[16];
+    size_t rc = fread(static_cast<void*>(tmp), 1, 16, stdin);
+    if (rc != 0 || errno != ENOSYS) {
+      FAIL_NOW("stdin read should fail. errno = " + std::to_string(errno));
+    }
+    // No environment variables should be available
+    char* pathenv = getenv("PATH");
+    if (pathenv != nullptr) {
+      FAIL_NOW("PATH environment variable should not be available");
+    }
+    // Exercise the WASI "fd_fdstat_get" a little bit
+    int tty = isatty(1);
+    if (errno != ENOTTY || tty != 0) {
+      FAIL_NOW("stdout is not a tty");
+    }
+    tty = isatty(2);
+    if (errno != ENOTTY || tty != 0) {
+      FAIL_NOW("stderr is not a tty");
+    }
+    tty = isatty(99);
+    if (errno != EBADF || tty != 0) {
+      FAIL_NOW("isatty errors on bad fds. errno = " + std::to_string(errno));
+    }
   } else {
     std::string message = "on_vm_start " + configuration;
     proxy_log(LogLevel::info, message.c_str(), message.size());
