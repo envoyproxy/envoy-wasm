@@ -53,8 +53,9 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
-  Server::WasmSharedPtr wasmptr = nullptr;
-  factory->createWasm(config, context, [&wasmptr](Server::WasmSharedPtr wasm) { wasmptr = wasm; });
+  Server::WasmServicePtr wasmptr = nullptr;
+  factory->createWasm(config, context,
+                      [&wasmptr](Server::WasmServicePtr wasm) { wasmptr = std::move(wasm); });
   EXPECT_CALL(init_watcher, ready());
   init_manager.initialize(init_watcher);
   EXPECT_NE(wasmptr, nullptr);
@@ -82,10 +83,14 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
+  Server::WasmServicePtr wasmptr = nullptr;
   factory->createWasm(config, context,
-                      [](Server::WasmSharedPtr wasm) { EXPECT_EQ(wasm, nullptr); });
+                      [&wasmptr](Server::WasmServicePtr wasm) { wasmptr = std::move(wasm); });
   EXPECT_CALL(init_watcher, ready());
   init_manager.initialize(init_watcher);
+  EXPECT_NE(wasmptr, nullptr);
+  wasmptr.reset();
+  tls.shutdownThread();
 }
 
 TEST_P(WasmFactoryTest, MissingImport) {
@@ -110,7 +115,7 @@ TEST_P(WasmFactoryTest, MissingImport) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
-  EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context, [](Server::WasmSharedPtr) {});
+  EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context, [](Server::WasmServicePtr) {});
                           , Extensions::Common::Wasm::WasmVmException,
                           "Failed to load WASM module due to a missing import: env.missing");
 }
@@ -136,7 +141,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
-  EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmSharedPtr) {}),
+  EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
                             Extensions::Common::Wasm::WasmVmException,
                             "Failed to create WASM VM with unspecified runtime.");
 }
@@ -162,7 +167,7 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, local_info);
-  EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmSharedPtr) {}),
+  EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
                             Extensions::Common::Wasm::WasmVmException,
                             "Failed to create WASM VM using envoy.wasm.runtime.invalid runtime. "
                             "Envoy was compiled without support for it.");

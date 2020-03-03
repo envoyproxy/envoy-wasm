@@ -356,6 +356,47 @@ TEST_P(WasmCommonTest, Foreign) {
   wasm->startForTesting(std::move(context), plugin);
 }
 
+TEST_P(WasmCommonTest, WASI) {
+  if (GetParam() == "null") {
+    // This test has no meaning unless it is invoked by actual WASM code
+    return;
+  }
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher());
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
+  auto name = "";
+  auto root_id = "";
+  auto vm_id = "";
+  auto vm_configuration = "WASI";
+  auto vm_key = "";
+  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
+      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
+      nullptr);
+  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
+      cluster_manager, *dispatcher);
+  EXPECT_NE(wasm, nullptr);
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+  } else {
+    // The name of the Null VM plugin.
+    code = "CommonWasmTestCpp";
+  }
+  EXPECT_FALSE(code.empty());
+  auto context = std::make_unique<TestContext>(wasm.get());
+
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("WASI write to stdout"))).Times(1);
+  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("WASI write to stderr"))).Times(1);
+
+  EXPECT_TRUE(wasm->initialize(code, false));
+  wasm->startForTesting(std::move(context), plugin);
+}
+
 TEST_P(WasmCommonTest, VmCache) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
