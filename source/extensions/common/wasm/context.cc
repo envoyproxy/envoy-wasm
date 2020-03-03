@@ -802,12 +802,12 @@ uint32_t Context::getHeaderMapSize(HeaderMapType type) {
 const Buffer::Instance* Context::getBuffer(BufferType type) {
   switch (type) {
   case BufferType::HttpRequestBody:
-    if (buffering_body_) {
+    if (buffering_request_body_) {
       return decoder_callbacks_->decodingBuffer();
     }
     return request_body_buffer_;
   case BufferType::HttpResponseBody:
-    if (buffering_body_) {
+    if (buffering_response_body_) {
       return encoder_callbacks_->encodingBuffer();
     }
     return response_body_buffer_;
@@ -1220,23 +1220,23 @@ Http::FilterDataStatus Context::onRequestBody(bool end_of_stream) {
     return Http::FilterDataStatus::Continue;
   }
   DeferAfterCallActions actions(this);
-  const auto buf = getBuffer(BufferType::HttpRequestBody);
-  const int bodyLen = buf == nullptr ? 0 : buf->length();
+  const auto buffer = getBuffer(BufferType::HttpRequestBody);
+  const auto body_len = (buffer == nullptr) ? 0 : buffer->length();
   switch (wasm_
-              ->on_request_body_(this, id_, static_cast<uint32_t>(bodyLen),
+              ->on_request_body_(this, id_, static_cast<uint32_t>(body_len),
                                  static_cast<uint32_t>(end_of_stream))
               .u64_) {
   case 0:
-    buffering_body_ = false;
+    buffering_request_body_ = false;
     return Http::FilterDataStatus::Continue;
   case 1:
-    buffering_body_ = true;
+    buffering_request_body_ = true;
     return Http::FilterDataStatus::StopIterationAndBuffer;
   case 2:
-    buffering_body_ = false;
+    buffering_request_body_ = false;
     return Http::FilterDataStatus::StopIterationAndWatermark;
   default:
-    buffering_body_ = false;
+    buffering_request_body_ = false;
     return Http::FilterDataStatus::StopIterationNoBuffer;
   }
 }
@@ -1273,8 +1273,6 @@ Http::FilterHeadersStatus Context::onResponseHeaders() {
     onCreate(root_context_id_);
     in_vm_context_created_ = true;
   }
-  // On the response body we have a new buffer
-  buffering_body_ = false;
   if (!wasm_->on_response_headers_) {
     return Http::FilterHeadersStatus::Continue;
   }
@@ -1289,23 +1287,23 @@ Http::FilterDataStatus Context::onResponseBody(bool end_of_stream) {
     return Http::FilterDataStatus::Continue;
   }
   DeferAfterCallActions actions(this);
-  const auto buf = getBuffer(BufferType::HttpResponseBody);
-  const int bodyLen = buf == nullptr ? 0 : buf->length();
+  const auto buffer = getBuffer(BufferType::HttpResponseBody);
+  const auto body_len = (buffer == nullptr) ? 0 : buffer->length();
   switch (wasm_
-              ->on_response_body_(this, id_, static_cast<uint32_t>(bodyLen),
+              ->on_response_body_(this, id_, static_cast<uint32_t>(body_len),
                                   static_cast<uint32_t>(end_of_stream))
               .u64_) {
   case 0:
-    buffering_body_ = false;
+    buffering_response_body_ = false;
     return Http::FilterDataStatus::Continue;
   case 1:
-    buffering_body_ = true;
+    buffering_response_body_ = true;
     return Http::FilterDataStatus::StopIterationAndBuffer;
   case 2:
-    buffering_body_ = false;
+    buffering_response_body_ = false;
     return Http::FilterDataStatus::StopIterationAndWatermark;
   default:
-    buffering_body_ = false;
+    buffering_response_body_ = false;
     return Http::FilterDataStatus::StopIterationNoBuffer;
   }
 }

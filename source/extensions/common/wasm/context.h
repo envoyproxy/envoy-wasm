@@ -427,7 +427,6 @@ protected:
   PluginSharedPtr plugin_;
   bool in_vm_context_created_ = false;
   bool destroyed_ = false;
-  bool buffering_body_ = false;
 
   uint32_t next_http_call_token_ = 1;
   uint32_t next_grpc_token_ = 1; // Odd tokens are for Calls even for Streams.
@@ -481,6 +480,8 @@ protected:
   // Temporary state.
   ProtobufWkt::Struct temporary_metadata_;
   bool end_of_stream_;
+  bool buffering_request_body_ = false;
+  bool buffering_response_body_ = false;
 
   // MB: must be a node-type map as we take persistent references to the entries.
   std::map<uint32_t, AsyncClientHandler> http_request_;
