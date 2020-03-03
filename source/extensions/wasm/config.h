@@ -15,7 +15,7 @@ public:
   std::string name() override { return "envoy.wasm"; }
   void createWasm(const envoy::extensions::wasm::v3::WasmService& config,
                   Server::Configuration::WasmFactoryContext& context,
-                  Server::CreateWasmCallback&& cb) override;
+                  Server::CreateWasmServiceCallback&& cb) override;
 
 private:
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;

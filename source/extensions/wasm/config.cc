@@ -18,7 +18,7 @@ static const std::string INLINE_STRING = "<inline>";
 
 void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& config,
                              Server::Configuration::WasmFactoryContext& context,
-                             Server::CreateWasmCallback&& cb) {
+                             Server::CreateWasmServiceCallback&& cb) {
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.localInfo(), nullptr);
@@ -29,23 +29,20 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
                    cb](Common::Wasm::WasmHandleSharedPtr base_wasm) {
     if (singleton) {
       // Return the WASM VM which will be stored as a singleton by the Server.
-      auto root_context = base_wasm->wasm()->start(plugin);
+      auto root_context = base_wasm->wasm()->getOrCreateRootContext(plugin);
       if (!base_wasm->wasm()->configure(root_context, plugin, *configuration)) {
         cb(nullptr);
       }
-      return cb(base_wasm);
+      return cb(std::make_unique<Server::WasmService>(base_wasm));
     }
     // Per-thread WASM VM.
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
-    // NB: no need to keep the resulting slot as Wasm is cached on each thread.
-    context.threadLocal().allocateSlot()->set([base_wasm, plugin,
-                                               configuration](Event::Dispatcher& dispatcher) {
+    auto tls_slot = context.threadLocal().allocateSlot();
+    tls_slot->set([base_wasm, plugin, configuration](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
           Common::Wasm::getOrCreateThreadLocalWasm(base_wasm, plugin, *configuration, dispatcher));
     });
-    // Do not return this WASM VM since this is per-thread. Returning it would indicate that
-    // this is a singleton.
-    cb(nullptr);
+    cb(std::make_unique<Server::WasmService>(std::move(tls_slot)));
   };
 
   Common::Wasm::createWasm(config.config().vm_config(), plugin, context.scope(),

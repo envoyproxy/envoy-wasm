@@ -16,6 +16,7 @@
 #include "envoy/network/dns.h"
 #include "envoy/registry/registry.h"
 #include "envoy/server/options.h"
+#include "envoy/server/wasm_config.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "common/api/api_impl.h"
@@ -43,6 +44,7 @@
 #include "server/guarddog_impl.h"
 #include "server/listener_hooks.h"
 #include "server/ssl_context_manager.h"
+#include "server/wasm_config_impl.h"
 
 namespace Envoy {
 namespace Server {
@@ -422,6 +424,28 @@ void InstanceImpl::initialize(const Options& options,
         stats_store_, *ssl_context_manager_, *random_generator_, info_factory_, access_log_manager_,
         *config_.clusterManager(), *local_info_, *admin_, *singleton_manager_, thread_local_,
         messageValidationContext().dynamicValidationVisitor(), *api_);
+  }
+
+  // Optional Wasm services. These must be initialied afer threading but before the main
+  // configuration which many reference wasm vms.
+  if (bootstrap_.wasm_service_size() > 0) {
+    auto factory = Registry::FactoryRegistry<Configuration::WasmFactory>::getFactory("envoy.wasm");
+    if (factory) {
+      for (auto& config : bootstrap_.wasm_service()) {
+        auto scope = Stats::ScopeSharedPtr(stats_store_.createScope(config.stat_prefix()));
+        Configuration::WasmFactoryContextImpl wasm_factory_context(clusterManager(), initManager(),
+                                                                   *dispatcher_, thread_local_,
+                                                                   api(), scope, *local_info_);
+        factory->createWasm(config, wasm_factory_context, [this](WasmServicePtr wasm) {
+          if (wasm) {
+            // If not nullptr, this is a singleton WASM service.
+            wasm_.emplace_back(std::move(wasm));
+          }
+        });
+      }
+    } else {
+      ENVOY_LOG(warn, "No wasm factory available, so no wasm service started.");
+    }
   }
 
   for (Stats::SinkPtr& sink : config_.statsSinks()) {
