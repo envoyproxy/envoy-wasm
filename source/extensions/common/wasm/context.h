@@ -160,8 +160,9 @@ public:
   //
   // AccessLog::Instance
   //
-  void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
-           const Http::HeaderMap* response_trailers,
+  void log(const Http::RequestHeaderMap* request_headers,
+           const Http::ResponseHeaderMap* response_headers,
+           const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override;
 
   //
