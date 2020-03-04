@@ -457,22 +457,23 @@ Word get_buffer_bytes(void* raw_context, Word type, Word start, Word length, Wor
     return wasmResultToWord(WasmResult::NotFound);
   }
   // NB: check for overflow.
-  if (buffer->length() < start.u64_ + length.u64_ || start.u64_ > start.u64_ + length.u64_) {
+  if (start.u64_ > start.u64_ + length.u64_) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   uint64_t pointer = 0;
   void* p = nullptr;
-  if (length.u64_ > 0) {
-    p = context->wasm()->allocMemory(length.u64_, &pointer);
+  uint64_t written = std::min(buffer->length(), length.u64_);
+  if (written > 0) {
+    p = context->wasm()->allocMemory(written, &pointer);
     if (!p) {
       return wasmResultToWord(WasmResult::InvalidMemoryAccess);
     }
-    buffer->copyOut(start.u64_, length.u64_, p);
+    buffer->copyOut(start.u64_, written, p);
   }
   if (!context->wasmVm()->setWord(ptr_ptr.u64_, Word(pointer))) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  if (!context->wasmVm()->setWord(size_ptr.u64_, Word(length.u64_))) {
+  if (!context->wasmVm()->setWord(size_ptr.u64_, Word(written))) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
   return wasmResultToWord(WasmResult::Ok);
@@ -496,6 +497,46 @@ Word get_buffer_status(void* raw_context, Word type, Word length_ptr, Word flags
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
   return wasmResultToWord(WasmResult::Ok);
+}
+
+Word set_buffer_bytes(void* raw_context, Word type, Word start, Word length, Word data_ptr,
+                      Word data_size) {
+  if (type.u64_ > static_cast<uint64_t>(BufferType::MAX)) {
+    return wasmResultToWord(WasmResult::BadArgument);
+  }
+  auto context = WASM_CONTEXT(raw_context);
+  auto buffer = context->getBuffer(static_cast<BufferType>(type.u64_));
+  if (!buffer) {
+    return wasmResultToWord(WasmResult::NotFound);
+  }
+  auto data = context->wasmVm()->getMemory(data_ptr.u64_, data_size.u64_);
+  if (!data) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  WasmResult result = WasmResult::InternalFailure;
+  if (context->setBuffer(static_cast<BufferType>(type.u64_),
+                         [start = start.u64_, length = length.u64_, data, &result](auto& buffer) {
+                           if (start == 0) {
+                             if (length == 0) {
+                               buffer.prepend(data.value());
+                               result = WasmResult::Ok;
+                             } else if (length >= buffer.length()) {
+                               buffer.drain(buffer.length());
+                               buffer.add(data.value());
+                               result = WasmResult::Ok;
+                             } else {
+                               result = WasmResult::BadArgument;
+                             }
+                           } else if (start >= buffer.length()) {
+                             buffer.add(data.value());
+                             result = WasmResult::Ok;
+                           } else {
+                             result = WasmResult::BadArgument;
+                           }
+                         }) != WasmResult::Ok) {
+    return wasmResultToWord(WasmResult::BadArgument);
+  }
+  return wasmResultToWord(result);
 }
 
 Word http_call(void* raw_context, Word uri_ptr, Word uri_size, Word header_pairs_ptr,

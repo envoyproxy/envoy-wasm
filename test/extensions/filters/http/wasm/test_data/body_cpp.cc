@@ -16,8 +16,8 @@ public:
   FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
 
 private:
-  FilterDataStatus onBody(BufferType bt, size_t bufLen, bool end);
-  static void logBody(BufferType bt);
+  FilterDataStatus onBody(BufferType type, size_t buffer_length, bool end);
+  static void logBody(BufferType type);
 
   std::string test_op_;
   int num_chunks_ = 0;
@@ -34,27 +34,61 @@ FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t) {
   return FilterHeadersStatus::Continue;
 }
 
-void ExampleContext::logBody(BufferType bt) {
-  size_t bufferedSize;
+void ExampleContext::logBody(BufferType type) {
+  size_t buffered_size;
   uint32_t flags;
-  getBufferStatus(bt, &bufferedSize, &flags);
-  auto body = getBufferBytes(bt, 0, bufferedSize);
+  getBufferStatus(type, &buffered_size, &flags);
+  auto body = getBufferBytes(type, 0, buffered_size);
   logError(std::string("onRequestBody ") + std::string(body->view()));
 }
 
-FilterDataStatus ExampleContext::onBody(BufferType bt, size_t bufLen, bool end) {
+FilterDataStatus ExampleContext::onBody(BufferType type, size_t buffer_length, bool end_of_stream) {
   if (test_op_ == "ReadBody") {
-    auto body = getBufferBytes(bt, 0, bufLen);
+    auto body = getBufferBytes(type, 0, buffer_length);
     logError("onRequestBody " + std::string(body->view()));
 
+  } else if (test_op_ == "PrependAndAppendToBody") {
+    setBuffer(BufferType::HttpRequestBody, 0, 0, "prepend.");
+    setBuffer(BufferType::HttpRequestBody, 0xFFFFFFFF, 0, ".append");
+    auto updated = getBufferBytes(BufferType::HttpRequestBody, 0, 0xFFFFFFFF);
+    logError("onRequestBody " + std::string(updated->view()));
+
+  } else if (test_op_ == "ReplaceBody") {
+    setBuffer(BufferType::HttpRequestBody, 0, 0xFFFFFFFF, "replace");
+    auto replaced = getBufferBytes(BufferType::HttpRequestBody, 0, 0xFFFFFFFF);
+    logError("onRequestBody " + std::string(replaced->view()));
+
+  } else if (test_op_ == "RemoveBody") {
+    setBuffer(BufferType::HttpRequestBody, 0, 0xFFFFFFFF, "");
+    auto erased = getBufferBytes(BufferType::HttpRequestBody, 0, 0xFFFFFFFF);
+    logError("onRequestBody " + std::string(erased->view()));  
+
   } else if (test_op_ == "BufferBody") {
-    logBody(bt);
-    return end ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
+    logBody(type);
+    return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
+
+  } else if (test_op_ == "PrependAndAppendToBufferedBody") {
+    setBuffer(BufferType::HttpRequestBody, 0, 0, "prepend.");
+    setBuffer(BufferType::HttpRequestBody, 0xFFFFFFFF, 0, ".append");
+    logBody(type);
+    return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
+
+  } else if (test_op_ == "ReplaceBufferedBody") {
+    setBuffer(BufferType::HttpRequestBody, 0, 0xFFFFFFFF, "replace");
+    auto replaced = getBufferBytes(BufferType::HttpRequestBody, 0, 0xFFFFFFFF);
+    logBody(type);
+    return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
+
+  } else if (test_op_ == "RemoveBufferedBody") {
+    setBuffer(BufferType::HttpRequestBody, 0, 0xFFFFFFFF, "");
+    auto erased = getBufferBytes(BufferType::HttpRequestBody, 0, 0xFFFFFFFF);
+    logBody(type);
+    return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
 
   } else if (test_op_ == "BufferTwoBodies") {
-    logBody(bt);
+    logBody(type);
     num_chunks_++;
-    if (end || num_chunks_ > 2) {
+    if (end_of_stream || num_chunks_ > 2) {
       return FilterDataStatus::Continue;
     }
     return FilterDataStatus::StopIterationAndBuffer;
