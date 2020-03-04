@@ -11,10 +11,13 @@ namespace Null {
 namespace Plugin {
 class RootContext;
 class Context;
+class ContextBase;
 } // namespace Plugin
 
 Plugin::RootContext* nullVmGetRoot(absl::string_view root_id);
 Plugin::Context* nullVmGetContext(uint32_t context_id);
+Plugin::RootContext* nullVmGetRootContext(uint32_t context_id);
+Plugin::ContextBase* nullVmGetContextBase(uint32_t context_id);
 
 namespace Plugin {
 
@@ -258,6 +261,12 @@ inline WasmResult proxy_call_foreign_function(const char* function_name, size_t 
 
 inline RootContext* getRoot(StringView root_id) { return nullVmGetRoot(root_id); }
 inline Plugin::Context* getContext(uint32_t context_id) { return nullVmGetContext(context_id); }
+inline Plugin::RootContext* getRootContext(uint32_t context_id) {
+  return nullVmGetRootContext(context_id);
+}
+inline Plugin::ContextBase* getContextBase(uint32_t context_id) {
+  return nullVmGetContextBase(context_id);
+}
 
 } // namespace Plugin
 } // namespace Null

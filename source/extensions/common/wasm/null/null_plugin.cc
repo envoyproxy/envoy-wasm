@@ -478,6 +478,16 @@ Plugin::Context* nullVmGetContext(uint32_t context_id) {
   return static_cast<NullPlugin*>(null_vm->plugin_.get())->getContext(context_id);
 }
 
+Plugin::RootContext* nullVmGetRootContext(uint32_t context_id) {
+  auto null_vm = static_cast<NullVm*>(current_context_->wasmVm());
+  return static_cast<NullPlugin*>(null_vm->plugin_.get())->getRootContext(context_id);
+}
+
+Plugin::ContextBase* nullVmGetContextBase(uint32_t context_id) {
+  auto null_vm = static_cast<NullVm*>(current_context_->wasmVm());
+  return static_cast<NullPlugin*>(null_vm->plugin_.get())->getContextBase(context_id);
+}
+
 } // namespace Null
 } // namespace Wasm
 } // namespace Common
