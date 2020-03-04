@@ -19,8 +19,9 @@ public:
   WasmAccessLog(absl::string_view root_id, ThreadLocal::SlotPtr tls_slot,
                 AccessLog::FilterPtr filter)
       : root_id_(root_id), tls_slot_(std::move(tls_slot)), filter_(std::move(filter)) {}
-  void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
-           const Http::HeaderMap* response_trailers,
+  void log(const Http::RequestHeaderMap* request_headers,
+           const Http::ResponseHeaderMap* response_headers,
+           const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override {
     if (filter_ && request_headers && response_headers && response_trailers) {
       if (!filter_->evaluate(stream_info, *request_headers, *response_headers,
