@@ -113,12 +113,12 @@ public:
 
   Plugin::RootContext* getRoot(absl::string_view root_id);
   Plugin::Context* getContext(uint64_t context_id);
+  Plugin::RootContext* getRootContext(uint64_t context_id);
+  Plugin::ContextBase* getContextBase(uint64_t context_id);
 
 private:
   Plugin::Context* ensureContext(uint64_t context_id, uint64_t root_context_id);
   Plugin::RootContext* ensureRootContext(uint64_t context_id);
-  Plugin::RootContext* getRootContext(uint64_t context_id);
-  Plugin::ContextBase* getContextBase(uint64_t context_id);
 
   NullPluginRegistry* registry_{};
   std::unordered_map<std::string, Plugin::RootContext*> root_context_map_;
