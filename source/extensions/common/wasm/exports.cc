@@ -499,10 +499,8 @@ Word get_buffer_status(void* raw_context, Word type, Word length_ptr, Word flags
   return wasmResultToWord(WasmResult::Ok);
 }
 
-Word set_buffer(void* raw_context, Word type, Word start, Word length, Word data_ptr,
-                Word data_size, Word flags) {
-  // TODO(PiotrSikora): use flags.
-  UNREFERENCED_PARAMETER(flags);
+Word set_buffer_bytes(void* raw_context, Word type, Word start, Word length, Word data_ptr,
+                      Word data_size) {
   if (type.u64_ > static_cast<uint64_t>(BufferType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
