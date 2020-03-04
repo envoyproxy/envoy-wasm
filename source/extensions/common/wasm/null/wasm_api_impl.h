@@ -10,9 +10,11 @@ extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
 namespace Null {
 namespace Plugin {
 class RootContext;
-}
+class Context;
+} // namespace Plugin
 
 Plugin::RootContext* nullVmGetRoot(absl::string_view root_id);
+Plugin::Context* nullVmGetContext(uint32_t context_id);
 
 namespace Plugin {
 
@@ -249,6 +251,7 @@ inline WasmResult proxy_call_foreign_function(const char* function_name, size_t 
 #undef WR
 
 inline RootContext* getRoot(StringView root_id) { return nullVmGetRoot(root_id); }
+inline Plugin::Context* getContext(uint32_t context_id) { return nullVmGetContext(context_id); }
 
 } // namespace Plugin
 } // namespace Null
