@@ -16,7 +16,7 @@ class ContextBase;
 
 Plugin::RootContext* nullVmGetRoot(absl::string_view root_id);
 Plugin::Context* nullVmGetContext(uint32_t context_id);
-Plugin::RooContext* nullVmGetRootContext(uint32_t context_id);
+Plugin::RootContext* nullVmGetRootContext(uint32_t context_id);
 Plugin::ContextBase* nullVmGetContextBase(uint32_t context_id);
 
 namespace Plugin {
