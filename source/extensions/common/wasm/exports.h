@@ -38,6 +38,8 @@ Word enqueue_shared_queue(void* raw_context, Word token, Word data_ptr, Word dat
 Word get_buffer_bytes(void* raw_context, Word type, Word start, Word length, Word ptr_ptr,
                       Word size_ptr);
 Word get_buffer_status(void* raw_context, Word type, Word length_ptr, Word flags_ptr);
+Word set_buffer_bytes(void* raw_context, Word type, Word start, Word length, Word data_ptr,
+                      Word data_size);
 Word add_header_map_value(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
                           Word value_size);
 Word get_header_map_value(void* raw_context, Word type, Word key_ptr, Word key_size,

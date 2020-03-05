@@ -188,6 +188,7 @@ void Wasm::registerCallbacks() {
 
   _REGISTER_PROXY(get_buffer_status);
   _REGISTER_PROXY(get_buffer_bytes);
+  _REGISTER_PROXY(set_buffer_bytes);
 
   _REGISTER_PROXY(http_call);
 

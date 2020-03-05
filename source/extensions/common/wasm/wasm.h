@@ -107,8 +107,9 @@ public:
   //
   // AccessLog::Instance
   //
-  void log(absl::string_view root_id, const Http::HeaderMap* request_headers,
-           const Http::HeaderMap* response_headers, const Http::HeaderMap* response_trailers,
+  void log(absl::string_view root_id, const Http::RequestHeaderMap* request_headers,
+           const Http::ResponseHeaderMap* response_headers,
+           const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info);
 
   // Support functions.

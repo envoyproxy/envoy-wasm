@@ -160,8 +160,9 @@ public:
   //
   // AccessLog::Instance
   //
-  void log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
-           const Http::HeaderMap* response_trailers,
+  void log(const Http::RequestHeaderMap* request_headers,
+           const Http::ResponseHeaderMap* response_headers,
+           const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override;
 
   //
@@ -268,6 +269,7 @@ public:
 
   // Buffer
   virtual const Buffer::Instance* getBuffer(BufferType type);
+  virtual WasmResult setBuffer(BufferType type, std::function<void(Buffer::Instance&)> callback);
   bool end_of_stream() { return end_of_stream_; }
 
   // HTTP
@@ -475,10 +477,10 @@ protected:
   Buffer::InstancePtr grpc_receive_buffer_;
 
   const StreamInfo::StreamInfo* access_log_stream_info_{};
-  const Http::HeaderMap* access_log_request_headers_{};
-  const Http::HeaderMap* access_log_response_headers_{};
-  const Http::HeaderMap* access_log_request_trailers_{}; // unused
-  const Http::HeaderMap* access_log_response_trailers_{};
+  const Http::RequestHeaderMap* access_log_request_headers_{};
+  const Http::ResponseHeaderMap* access_log_response_headers_{};
+  const Http::RequestTrailerMap* access_log_request_trailers_{}; // unused
+  const Http::ResponseTrailerMap* access_log_response_trailers_{};
 
   // Temporary state.
   ProtobufWkt::Struct temporary_metadata_;

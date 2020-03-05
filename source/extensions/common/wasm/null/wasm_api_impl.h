@@ -10,9 +10,14 @@ extern thread_local Envoy::Extensions::Common::Wasm::Context* current_context_;
 namespace Null {
 namespace Plugin {
 class RootContext;
-}
+class Context;
+class ContextBase;
+} // namespace Plugin
 
 Plugin::RootContext* nullVmGetRoot(absl::string_view root_id);
+Plugin::Context* nullVmGetContext(uint32_t context_id);
+Plugin::RootContext* nullVmGetRootContext(uint32_t context_id);
+Plugin::ContextBase* nullVmGetContextBase(uint32_t context_id);
 
 namespace Plugin {
 
@@ -133,6 +138,12 @@ inline WasmResult proxy_get_buffer_status(BufferType type, size_t* length_ptr,
                                           uint32_t* flags_ptr) {
   return wordToWasmResult(
       Exports::get_buffer_status(current_context_, WS(type), WR(length_ptr), WR(flags_ptr)));
+}
+
+inline WasmResult proxy_set_buffer_bytes(BufferType type, uint64_t start, uint64_t length,
+                                         const char* data_ptr, size_t data_size) {
+  return wordToWasmResult(Exports::set_buffer_bytes(current_context_, WS(type), WS(start),
+                                                    WS(length), WR(data_ptr), WS(data_size)));
 }
 
 // Headers/Trailers/Metadata Maps
@@ -256,6 +267,13 @@ inline WasmResult proxy_call_foreign_function(const char* function_name, size_t 
 #undef WR
 
 inline RootContext* getRoot(StringView root_id) { return nullVmGetRoot(root_id); }
+inline Plugin::Context* getContext(uint32_t context_id) { return nullVmGetContext(context_id); }
+inline Plugin::RootContext* getRootContext(uint32_t context_id) {
+  return nullVmGetRootContext(context_id);
+}
+inline Plugin::ContextBase* getContextBase(uint32_t context_id) {
+  return nullVmGetContextBase(context_id);
+}
 
 } // namespace Plugin
 } // namespace Null

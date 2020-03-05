@@ -23,6 +23,7 @@ mergeInto(LibraryManager.library, {
     proxy_remove_header_map_value: function () {},
     proxy_get_buffer_bytes: function () {},
     proxy_get_buffer_status: function () {},
+    proxy_set_buffer_bytes: function () {},
     proxy_http_call: function () {},
     proxy_define_metric: function () {},
     proxy_increment_metric: function () {},
