@@ -1580,15 +1580,17 @@ void Context::initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& call
   network_write_filter_callbacks_ = &callbacks;
 }
 
-void Wasm::log(absl::string_view root_id, const Http::HeaderMap* request_headers,
-               const Http::HeaderMap* response_headers, const Http::HeaderMap* response_trailers,
+void Wasm::log(absl::string_view root_id, const Http::RequestHeaderMap* request_headers,
+               const Http::ResponseHeaderMap* response_headers,
+               const Http::ResponseTrailerMap* response_trailers,
                const StreamInfo::StreamInfo& stream_info) {
   auto context = getRootContext(root_id);
   context->log(request_headers, response_headers, response_trailers, stream_info);
 }
 
-void Context::log(const Http::HeaderMap* request_headers, const Http::HeaderMap* response_headers,
-                  const Http::HeaderMap* response_trailers,
+void Context::log(const Http::RequestHeaderMap* request_headers,
+                  const Http::ResponseHeaderMap* response_headers,
+                  const Http::ResponseTrailerMap* response_trailers,
                   const StreamInfo::StreamInfo& stream_info) {
   access_log_request_headers_ = request_headers;
   // ? request_trailers  ?

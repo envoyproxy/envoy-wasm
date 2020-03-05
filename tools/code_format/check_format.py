@@ -580,6 +580,10 @@ def checkSourceLine(line, file_path, reportError):
     reportError("Don't use 'using testing::Test;, elaborate the type instead")
   if line.startswith("using testing::TestWithParams;"):
     reportError("Don't use 'using testing::Test;, elaborate the type instead")
+  if re.search("TEST(_.\(.*,\s|\()[a-z].*\)\s\{", line):
+    # Matches variants of TEST(), TEST_P(), TEST_F() etc. where the test name begins
+    # with a lowercase letter.
+    reportError("Test names should be CamelCase, starting with a capital letter")
   if not whitelistedForSerializeAsString(file_path) and "SerializeAsString" in line:
     # The MessageLite::SerializeAsString doesn't generate deterministic serialization,
     # use MessageUtil::hash instead.
@@ -924,7 +928,7 @@ if __name__ == "__main__":
     owned = []
     maintainers = [
         '@mattklein123', '@htuch', '@alyssawilk', '@zuercher', '@lizan', '@snowp', '@asraa',
-        '@junr03', '@dio', '@jmarantz'
+        '@yavlasov', '@junr03', '@dio', '@jmarantz'
     ]
 
     try:
