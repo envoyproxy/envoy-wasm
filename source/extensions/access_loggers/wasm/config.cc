@@ -52,7 +52,8 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
 
   Common::Wasm::createWasm(config.config().vm_config(), plugin, context.scope().createScope(""),
                            context.clusterManager(), context.initManager(), context.dispatcher(),
-                           context.api(), remote_data_provider_, std::move(callback));
+                           context.random(), context.api(), remote_data_provider_,
+                           std::move(callback));
 
   return access_log;
 }
