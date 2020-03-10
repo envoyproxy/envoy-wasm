@@ -104,19 +104,6 @@ const uint8_t* decodeVarint(const uint8_t* pos, const uint8_t* end, uint32_t* ou
 
 } // namespace
 
-// TODO: consider moving this into StatNameSet as it currently requires 3 table lookups to insert a
-// new entry.
-Stats::StatName StatNameTable::intern(absl::string_view name) {
-  Thread::LockGuard lock(mutex_);
-  auto none = Stats::StatName();
-  auto stat_name = stat_name_set_->getBuiltin(name, none);
-  if (stat_name != none) {
-    return stat_name;
-  }
-  stat_name_set_->rememberBuiltin(name);
-  return stat_name_set_->getBuiltin(name, none);
-}
-
 Wasm::Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
            absl::string_view vm_key, Stats::ScopeSharedPtr scope,
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher)
@@ -126,8 +113,7 @@ Wasm::Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
       wasm_stats_(WasmStats{
           ALL_WASM_STATS(POOL_COUNTER_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")),
-                         POOL_GAUGE_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")))}),
-      stat_name_table_(std::make_shared<StatNameTable>(scope_->symbolTable().makeSet("Wasm"))) {
+                         POOL_GAUGE_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")))}) {
   active_wasm_++;
   wasm_stats_.active_.set(active_wasm_);
   wasm_stats_.created_.inc();
@@ -283,8 +269,7 @@ Wasm::Wasm(WasmHandleSharedPtr& base_wasm_handle, Event::Dispatcher& dispatcher)
       scope_(base_wasm_handle->wasm()->scope_),
       cluster_manager_(base_wasm_handle->wasm()->cluster_manager_), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), base_wasm_handle_(base_wasm_handle),
-      wasm_stats_(base_wasm_handle->wasm()->wasm_stats_),
-      stat_name_table_(base_wasm_handle->wasm()->stat_name_table_) {
+      wasm_stats_(base_wasm_handle->wasm()->wasm_stats_) {
   if (started_from_ != Cloneable::NotCloneable) {
     wasm_vm_ = base_wasm_handle->wasm()->wasm_vm()->clone();
   } else {

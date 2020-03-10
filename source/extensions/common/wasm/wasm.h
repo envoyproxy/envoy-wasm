@@ -278,7 +278,6 @@ private:
   WasmStats wasm_stats_;
 
   // Plulgin Stats/Metrics
-  StatNameTableSharedPtr stat_name_table_;
   uint32_t next_counter_metric_id_ = kMetricTypeCounter;
   uint32_t next_gauge_metric_id_ = kMetricTypeGauge;
   uint32_t next_histogram_metric_id_ = kMetricTypeHistogram;
