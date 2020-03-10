@@ -281,8 +281,8 @@ WasmResult Context::setTickPeriod(std::chrono::milliseconds tick_period) {
   return WasmResult::Ok;
 }
 
-void Context::onCloseTCP(){
-  if(tcp_connection_closed_){
+void Context::onCloseTCP() {
+  if (tcp_connection_closed_) {
     return;
   }
   tcp_connection_closed_ = true;
@@ -1227,8 +1227,9 @@ void Context::onDownstreamConnectionClose(PeerType peer_type) {
     wasm_->on_downstream_connection_close_(this, id_, static_cast<uint32_t>(peer_type));
   }
   downstream_closed_ = true;
-  // Call close on TCP connection, if upstream connection closed or there was a failure seen in this connection.
-  if (upstream_closed_ || getRequestStreamInfo()->hasAnyResponseFlag() ) {
+  // Call close on TCP connection, if upstream connection closed or there was a failure seen in this
+  // connection.
+  if (upstream_closed_ || getRequestStreamInfo()->hasAnyResponseFlag()) {
     onCloseTCP();
   }
 }
