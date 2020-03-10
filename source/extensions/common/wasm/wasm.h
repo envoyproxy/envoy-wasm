@@ -30,12 +30,6 @@
 #include "absl/container/fixed_array.h"
 
 namespace Envoy {
-
-// TODO: move to source/common/stats/symbol_table_impl.h when upstreaming.
-namespace Stats {
-using StatNameSetSharedPtr = std::shared_ptr<Stats::StatNameSet>;
-} // namespace Stats
-
 namespace Extensions {
 namespace Common {
 namespace Wasm {
@@ -54,6 +48,20 @@ using VmConfig = envoy::extensions::wasm::v3::VmConfig;
 
 using WasmForeignFunction =
     std::function<WasmResult(Wasm&, absl::string_view, std::function<void*(size_t size)>)>;
+
+// Intern table for StatName(s).
+class StatNameTable {
+public:
+  explicit StatNameTable(std::unique_ptr<Stats::StatNameSet> stat_name_set)
+      : stat_name_set_(std::move(stat_name_set)) {}
+
+  Stats::StatName intern(absl::string_view str) ABSL_LOCKS_EXCLUDED(mutex_);
+
+private:
+  mutable Thread::MutexBasicLockable mutex_;
+  std::unique_ptr<Stats::StatNameSet> stat_name_set_ GUARDED_BY(mutex_);
+};
+using StatNameTableSharedPtr = std::shared_ptr<StatNameTable>;
 
 class WasmHandle;
 
@@ -75,7 +83,6 @@ public:
   absl::string_view vm_key() const { return vm_key_; }
   WasmVm* wasm_vm() const { return wasm_vm_.get(); }
   Context* vm_context() const { return vm_context_.get(); }
-  Stats::StatNameSetSharedPtr stat_name_set() const { return stat_name_set_; }
   Context* getRootContext(absl::string_view root_id) { return root_contexts_[root_id].get(); }
   Context* getOrCreateRootContext(const PluginSharedPtr& plugin);
   Context* getContext(uint32_t id) {
@@ -271,7 +278,7 @@ private:
   WasmStats wasm_stats_;
 
   // Plulgin Stats/Metrics
-  Stats::StatNameSetSharedPtr stat_name_set_;
+  StatNameTableSharedPtr stat_name_table_;
   uint32_t next_counter_metric_id_ = kMetricTypeCounter;
   uint32_t next_gauge_metric_id_ = kMetricTypeGauge;
   uint32_t next_histogram_metric_id_ = kMetricTypeHistogram;

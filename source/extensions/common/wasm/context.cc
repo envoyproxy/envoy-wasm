@@ -1407,7 +1407,7 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
 }
 
 WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
-  auto stat_name = wasm_->stat_name_set_->add(name);
+  auto stat_name = wasm_->stat_name_table_->intern(name);
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
     auto c = &wasm_->scope_->counterFromStatName(stat_name);
