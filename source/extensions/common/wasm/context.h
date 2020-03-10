@@ -337,6 +337,8 @@ public:
 protected:
   friend class Wasm;
 
+  void onCloseTCP();
+
   struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
     // Http::AsyncClient::Callbacks
     void onSuccess(Envoy::Http::ResponseMessagePtr&& response) override {
@@ -490,8 +492,13 @@ protected:
   std::map<uint32_t, GrpcCallClientHandler> grpc_call_request_;
   std::map<uint32_t, GrpcStreamClientHandler> grpc_stream_;
 
-  // Opaque state
+  // Opaque state.
   absl::flat_hash_map<std::string, std::unique_ptr<StorageObject>> data_storage_;
+
+  // TCP State.
+  bool upstream_closed_ = false;
+  bool downstream_closed_ = false;
+  bool tcp_connection_closed_ = false;
 };
 
 using ContextSharedPtr = std::shared_ptr<Context>;
