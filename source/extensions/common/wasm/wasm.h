@@ -49,20 +49,6 @@ using VmConfig = envoy::extensions::wasm::v3::VmConfig;
 using WasmForeignFunction =
     std::function<WasmResult(Wasm&, absl::string_view, std::function<void*(size_t size)>)>;
 
-// Intern table for StatName(s).
-class StatNameTable {
-public:
-  explicit StatNameTable(std::unique_ptr<Stats::StatNameSet> stat_name_set)
-      : stat_name_set_(std::move(stat_name_set)) {}
-
-  Stats::StatName intern(absl::string_view str) ABSL_LOCKS_EXCLUDED(mutex_);
-
-private:
-  mutable Thread::MutexBasicLockable mutex_;
-  std::unique_ptr<Stats::StatNameSet> stat_name_set_ GUARDED_BY(mutex_);
-};
-using StatNameTableSharedPtr = std::shared_ptr<StatNameTable>;
-
 class WasmHandle;
 
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
