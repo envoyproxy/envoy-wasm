@@ -64,7 +64,8 @@ public:
         envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
-        dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
+        dispatcher_, random_, *api,
+        std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
         remote_data_provider_, [this](Common::Wasm::WasmHandleSharedPtr wasm) { wasm_ = wasm; });
   }
 
@@ -78,6 +79,7 @@ public:
   Stats::ScopeSharedPtr scope_;
   NiceMock<Event::MockDispatcher> dispatcher_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
+  NiceMock<Runtime::MockRandomGenerator> random_;
   NiceMock<Init::MockManager> init_manager_;
   Common::Wasm::WasmHandleSharedPtr wasm_;
   Common::Wasm::PluginSharedPtr plugin_;

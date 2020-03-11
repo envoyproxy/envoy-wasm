@@ -20,6 +20,9 @@ envoy_extension_cc_test(
     extension_name = "envoy.filters.network.wasm",
     deps = [
         "//source/common/common:base64_lib",
+        "//source/common/common:hex_lib",
+        "//source/common/crypto:utility_lib",
+        "//source/extensions/common/crypto:utility_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/filters/network/wasm:config",
         "//test/mocks/server:server_mocks",

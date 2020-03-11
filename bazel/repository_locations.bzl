@@ -43,10 +43,10 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://commondatastorage.googleapis.com/chromium-boringssl-docs/fips/boringssl-66005f41fbc3529ffe8d007708756720529da20d.tar.xz"],
     ),
     com_google_absl = dict(
-        sha256 = "19391fb4882601a65cb648d638c11aa301ce5f525ef02da1a9eafd22f72d7c59",
-        strip_prefix = "abseil-cpp-37dd2562ec830d547a1524bb306be313ac3f2556",
-        # 2020-01-29
-        urls = ["https://github.com/abseil/abseil-cpp/archive/37dd2562ec830d547a1524bb306be313ac3f2556.tar.gz"],
+        sha256 = "2693730730247afb0e7cb2d41664ac2af3ad75c79944efd266be40ba944179b9",
+        strip_prefix = "abseil-cpp-06f0e767d13d4d68071c4fc51e25724e0fc8bc74",
+        # 2020-03-03
+        urls = ["https://github.com/abseil/abseil-cpp/archive/06f0e767d13d4d68071c4fc51e25724e0fc8bc74.tar.gz"],
     ),
     com_github_apache_thrift = dict(
         sha256 = "7d59ac4fdcb2c58037ebd4a9da5f9a49e3e034bf75b3f26d9fe48ba3d8806e6b",
@@ -102,11 +102,11 @@ REPOSITORY_LOCATIONS = dict(
     ),
     com_github_gperftools_gperftools = dict(
         # TODO(cmluciano): Bump to release 2.8
-        # This sha is specifically chosen to fix ppc64le builds that require inclusion
-        # of asm/ptrace.h
-        sha256 = "18574813a062eee487bc1b761e8024a346075a7cb93da19607af362dc09565ef",
-        strip_prefix = "gperftools-fc00474ddc21fff618fc3f009b46590e241e425e",
-        urls = ["https://github.com/gperftools/gperftools/archive/fc00474ddc21fff618fc3f009b46590e241e425e.tar.gz"],
+        # The currently used version is specifically chosen to fix ppc64le builds that require inclusion
+        # of asm/ptrace.h, and also s390x builds that require special handling of mmap syscall.
+        sha256 = "97f0bc2b389c29305f5d1d8cc4d95e9212c33b55827ae65476fc761d78e3ec5d",
+        strip_prefix = "gperftools-gperftools-2.7.90",
+        urls = ["https://github.com/gperftools/gperftools/archive/gperftools-2.7.90.tar.gz"],
     ),
     com_github_grpc_grpc = dict(
         # TODO(JimmyCYJ): Bump to release 1.27

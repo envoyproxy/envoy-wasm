@@ -101,7 +101,8 @@ public:
         name, root_id, vm_id, TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
-        dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
+        dispatcher_, random_, *api,
+        std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
         remote_data_provider_, [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; });
   }
 
@@ -123,7 +124,8 @@ public:
         name, root_id, vm_id, TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
-        dispatcher_, *api, std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
+        dispatcher_, random_, *api,
+        std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
         remote_data_provider_, [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; });
   }
 
@@ -138,6 +140,7 @@ public:
   Stats::ScopeSharedPtr scope_;
   NiceMock<ThreadLocal::MockInstance> tls_;
   NiceMock<Event::MockDispatcher> dispatcher_;
+  NiceMock<Runtime::MockRandomGenerator> random_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
   NiceMock<Init::MockManager> init_manager_;
   WasmHandleSharedPtr wasm_;
