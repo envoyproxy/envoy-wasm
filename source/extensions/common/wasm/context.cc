@@ -1407,8 +1407,9 @@ void Context::onGrpcReceiveTrailingMetadata(uint32_t token, Http::HeaderMapPtr&&
 }
 
 WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
+  // TODO: Consider rethinking the scoping policy as it does not help in this case.
   Stats::StatNameManagedStorage storage(name, wasm()->scope_->symbolTable());
-  auto stat_name = storage.statName();
+  Stats::StatName stat_name = storage.statName();
   if (type == MetricType::Counter) {
     auto id = wasm_->nextCounterMetricId();
     auto c = &wasm_->scope_->counterFromStatName(stat_name);
