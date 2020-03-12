@@ -113,8 +113,7 @@ Wasm::Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view
       time_source_(dispatcher.timeSource()), vm_configuration_(vm_configuration),
       wasm_stats_(WasmStats{
           ALL_WASM_STATS(POOL_COUNTER_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")),
-                         POOL_GAUGE_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")))}),
-      stat_name_set_(scope_->symbolTable().makeSet("Wasm").release()) {
+                         POOL_GAUGE_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")))}) {
   active_wasm_++;
   wasm_stats_.active_.set(active_wasm_);
   wasm_stats_.created_.inc();
@@ -270,8 +269,7 @@ Wasm::Wasm(WasmHandleSharedPtr& base_wasm_handle, Event::Dispatcher& dispatcher)
       scope_(base_wasm_handle->wasm()->scope_),
       cluster_manager_(base_wasm_handle->wasm()->cluster_manager_), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), base_wasm_handle_(base_wasm_handle),
-      wasm_stats_(base_wasm_handle->wasm()->wasm_stats_),
-      stat_name_set_(base_wasm_handle->wasm()->stat_name_set_) {
+      wasm_stats_(base_wasm_handle->wasm()->wasm_stats_) {
   if (started_from_ != Cloneable::NotCloneable) {
     wasm_vm_ = base_wasm_handle->wasm()->wasm_vm()->clone();
   } else {

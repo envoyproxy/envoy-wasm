@@ -30,12 +30,6 @@
 #include "absl/container/fixed_array.h"
 
 namespace Envoy {
-
-// TODO: move to source/common/stats/symbol_table_impl.h when upstreaming.
-namespace Stats {
-using StatNameSetSharedPtr = std::shared_ptr<Stats::StatNameSet>;
-} // namespace Stats
-
 namespace Extensions {
 namespace Common {
 namespace Wasm {
@@ -75,7 +69,6 @@ public:
   absl::string_view vm_key() const { return vm_key_; }
   WasmVm* wasm_vm() const { return wasm_vm_.get(); }
   Context* vm_context() const { return vm_context_.get(); }
-  Stats::StatNameSetSharedPtr stat_name_set() const { return stat_name_set_; }
   Context* getRootContext(absl::string_view root_id) { return root_contexts_[root_id].get(); }
   Context* getOrCreateRootContext(const PluginSharedPtr& plugin);
   Context* getContext(uint32_t id) {
@@ -271,7 +264,6 @@ private:
   WasmStats wasm_stats_;
 
   // Plulgin Stats/Metrics
-  Stats::StatNameSetSharedPtr stat_name_set_;
   uint32_t next_counter_metric_id_ = kMetricTypeCounter;
   uint32_t next_gauge_metric_id_ = kMetricTypeGauge;
   uint32_t next_histogram_metric_id_ = kMetricTypeHistogram;
