@@ -81,7 +81,7 @@ public:
 
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
   const std::string& code() const { return code_; }
-  const std::string& vm_configuration() const { return vm_configuration_; }
+  const std::string& vm_configuration() const;
   bool allow_precompiled() const { return allow_precompiled_; }
   void setInitialConfiguration(const std::string& vm_configuration) {
     vm_configuration_ = vm_configuration;
@@ -329,6 +329,12 @@ WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandleSharedPtr base_wasm,
                                                PluginSharedPtr plugin,
                                                absl::string_view configuration,
                                                Event::Dispatcher& dispatcher);
+
+inline const std::string& Wasm::vm_configuration() const {
+  if (base_wasm_handle_)
+    return base_wasm_handle_->wasm()->vm_configuration_;
+  return vm_configuration_;
+}
 
 inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
   Word a = malloc_(vm_context(), size);
