@@ -1665,8 +1665,9 @@ void Context::onDelete() {
 }
 
 void Context::continueRequest() {
-  if (decoder_callbacks_)
+  if (decoder_callbacks_) {
     decoder_callbacks_->continueDecoding();
+  }
   request_headers_ = nullptr;
   request_body_buffer_ = nullptr;
   request_trailers_ = nullptr;
@@ -1674,8 +1675,9 @@ void Context::continueRequest() {
 }
 
 void Context::continueResponse() {
-  if (encoder_callbacks_)
+  if (encoder_callbacks_) {
     encoder_callbacks_->continueEncoding();
+  }
   response_headers_ = nullptr;
   response_body_buffer_ = nullptr;
   response_trailers_ = nullptr;
