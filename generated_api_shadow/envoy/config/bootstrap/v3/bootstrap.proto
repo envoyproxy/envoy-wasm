@@ -6,12 +6,12 @@ import "envoy/config/cluster/v3/cluster.proto";
 import "envoy/config/core/v3/address.proto";
 import "envoy/config/core/v3/base.proto";
 import "envoy/config/core/v3/config_source.proto";
+import "envoy/config/core/v3/socket_option.proto";
 import "envoy/config/listener/v3/listener.proto";
 import "envoy/config/metrics/v3/stats.proto";
 import "envoy/config/overload/v3/overload.proto";
 import "envoy/config/trace/v3/trace.proto";
 import "envoy/extensions/transport_sockets/tls/v3/cert.proto";
-import "envoy/extensions/wasm/v3/wasm.proto";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
@@ -31,8 +31,8 @@ option java_multiple_files = true;
 // of the Envoy v2 configuration. See the :ref:`v2 configuration overview
 // <config_overview_bootstrap>` for more detail.
 
-// Bootstrap :ref:`configuration overview <config_overview_v2_bootstrap>`.
-// [#next-free-field: 22]
+// Bootstrap :ref:`configuration overview <config_overview_bootstrap>`.
+// [#next-free-field: 21]
 message Bootstrap {
   option (udpa.annotations.versioning).previous_message_type =
       "envoy.config.bootstrap.v2.Bootstrap";
@@ -176,9 +176,6 @@ message Bootstrap {
   // :ref:`use_tcp_for_dns_lookups <envoy_api_field_config.cluster.v3.Cluster.use_tcp_for_dns_lookups>` are
   // specified.
   bool use_tcp_for_dns_lookups = 20;
-
-  // Configuration for an wasm service provider(s).
-  repeated envoy.extensions.wasm.v3.WasmService wasm_service = 21;
 }
 
 // Administration interface :ref:`operations documentation
