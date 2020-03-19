@@ -221,14 +221,9 @@ public:
   virtual WasmResult setProperty(absl::string_view key, absl::string_view serialized_value);
 
   // Continue
-  virtual void continueRequest() {
-    if (decoder_callbacks_)
-      decoder_callbacks_->continueDecoding();
-  }
-  virtual void continueResponse() {
-    if (encoder_callbacks_)
-      encoder_callbacks_->continueEncoding();
-  }
+  virtual void continueRequest();
+  virtual void continueResponse();
+
   virtual void sendLocalResponse(Http::Code response_code, absl::string_view body_text,
                                  std::function<void(Http::HeaderMap& headers)> modify_headers,
                                  const absl::optional<Grpc::Status::GrpcStatus> grpc_status,

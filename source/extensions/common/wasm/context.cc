@@ -1561,7 +1561,9 @@ Network::FilterStatus Context::onData(Buffer::Instance& data, bool end_stream) {
   DeferAfterCallActions actions(this);
   network_downstream_data_buffer_ = &data;
   auto result = onDownstreamData(data.length(), end_stream);
-  network_downstream_data_buffer_ = nullptr;
+  if (result == Network::FilterStatus::Continue) {
+    network_downstream_data_buffer_ = nullptr;
+  }
   return result;
 }
 
@@ -1569,7 +1571,9 @@ Network::FilterStatus Context::onWrite(Buffer::Instance& data, bool end_stream) 
   DeferAfterCallActions actions(this);
   network_upstream_data_buffer_ = &data;
   auto result = onUpstreamData(data.length(), end_stream);
-  network_upstream_data_buffer_ = nullptr;
+  if (result == Network::FilterStatus::Continue) {
+    network_upstream_data_buffer_ = nullptr;
+  }
   if (end_stream) {
     // This is called when seeing end_stream=true and not on an upstream connection event,
     // because registering for latter requires replicating the whole TCP proxy extension.
@@ -1660,11 +1664,33 @@ void Context::onDelete() {
   }
 }
 
+void Context::continueRequest() {
+  if (decoder_callbacks_) {
+    decoder_callbacks_->continueDecoding();
+  }
+  request_headers_ = nullptr;
+  request_body_buffer_ = nullptr;
+  request_trailers_ = nullptr;
+  request_metadata_ = nullptr;
+}
+
+void Context::continueResponse() {
+  if (encoder_callbacks_) {
+    encoder_callbacks_->continueEncoding();
+  }
+  response_headers_ = nullptr;
+  response_body_buffer_ = nullptr;
+  response_trailers_ = nullptr;
+  response_metadata_ = nullptr;
+}
+
 Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers, bool end_stream) {
   request_headers_ = &headers;
   end_of_stream_ = end_stream;
   auto result = onRequestHeaders();
-  request_headers_ = nullptr;
+  if (result == Http::FilterHeadersStatus::Continue) {
+    request_headers_ = nullptr;
+  }
   return result;
 }
 
@@ -1672,21 +1698,27 @@ Http::FilterDataStatus Context::decodeData(Buffer::Instance& data, bool end_stre
   request_body_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = onRequestBody(end_stream);
-  request_body_buffer_ = nullptr;
+  if (result == Http::FilterDataStatus::Continue) {
+    request_body_buffer_ = nullptr;
+  }
   return result;
 }
 
 Http::FilterTrailersStatus Context::decodeTrailers(Http::RequestTrailerMap& trailers) {
   request_trailers_ = &trailers;
   auto result = onRequestTrailers();
-  request_trailers_ = nullptr;
+  if (result == Http::FilterTrailersStatus::Continue) {
+    request_trailers_ = nullptr;
+  }
   return result;
 }
 
 Http::FilterMetadataStatus Context::decodeMetadata(Http::MetadataMap& request_metadata) {
   request_metadata_ = &request_metadata;
   auto result = onRequestMetadata();
-  request_metadata_ = nullptr;
+  if (result == Http::FilterMetadataStatus::Continue) {
+    request_metadata_ = nullptr;
+  }
   return result;
 }
 
@@ -1703,7 +1735,9 @@ Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& header
   response_headers_ = &headers;
   end_of_stream_ = end_stream;
   auto result = onResponseHeaders();
-  response_headers_ = nullptr;
+  if (result == Http::FilterHeadersStatus::Continue) {
+    response_headers_ = nullptr;
+  }
   return result;
 }
 
@@ -1711,21 +1745,27 @@ Http::FilterDataStatus Context::encodeData(Buffer::Instance& data, bool end_stre
   response_body_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = onResponseBody(end_stream);
-  response_body_buffer_ = nullptr;
+  if (result == Http::FilterDataStatus::Continue) {
+    response_body_buffer_ = nullptr;
+  }
   return result;
 }
 
 Http::FilterTrailersStatus Context::encodeTrailers(Http::ResponseTrailerMap& trailers) {
   response_trailers_ = &trailers;
   auto result = onResponseTrailers();
-  response_trailers_ = nullptr;
+  if (result == Http::FilterTrailersStatus::Continue) {
+    response_trailers_ = nullptr;
+  }
   return result;
 }
 
 Http::FilterMetadataStatus Context::encodeMetadata(Http::MetadataMap& response_metadata) {
   response_metadata_ = &response_metadata;
   auto result = onResponseMetadata();
-  response_metadata_ = nullptr;
+  if (result == Http::FilterMetadataStatus::Continue) {
+    response_metadata_ = nullptr;
+  }
   return result;
 }
 
