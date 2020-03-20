@@ -103,7 +103,6 @@ public:
 
   void onGrpcReceive(uint64_t context_id, uint64_t token, size_t body_size);
   void onGrpcClose(uint64_t context_id, uint64_t token, uint64_t status_code);
-  void onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t token, uint64_t headers);
   void onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t token, uint64_t headers);
   void onGrpcReceiveTrailingMetadata(uint64_t context_id, uint64_t token, uint64_t trailers);
 
