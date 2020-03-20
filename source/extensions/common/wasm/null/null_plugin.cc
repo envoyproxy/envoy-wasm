@@ -102,11 +102,6 @@ void NullPlugin::getFunction(absl::string_view function_name, WasmCallVoid<3>* f
       SaveRestoreContext saved_context(context);
       plugin->onGrpcReceive(context_id.u64_, token.u64_, body_size.u64_);
     };
-  } else if (function_name == "proxy_on_grpc_create_initial_metadata") {
-    *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers) {
-      SaveRestoreContext saved_context(context);
-      plugin->onGrpcCreateInitialMetadata(context_id.u64_, token.u64_, headers.u64_);
-    };
   } else if (function_name == "proxy_on_grpc_receive_initial_metadata") {
     *f = [plugin](Common::Wasm::Context* context, Word context_id, Word token, Word headers) {
       SaveRestoreContext saved_context(context);
@@ -429,11 +424,6 @@ void NullPlugin::onGrpcReceive(uint64_t context_id, uint64_t token, size_t body_
 
 void NullPlugin::onGrpcClose(uint64_t context_id, uint64_t token, uint64_t status_code) {
   getRootContext(context_id)->onGrpcClose(token, static_cast<Plugin::GrpcStatus>(status_code));
-}
-
-void NullPlugin::onGrpcCreateInitialMetadata(uint64_t context_id, uint64_t token,
-                                             uint64_t headers) {
-  getRootContext(context_id)->onGrpcCreateInitialMetadata(token, headers);
 }
 
 void NullPlugin::onGrpcReceiveInitialMetadata(uint64_t context_id, uint64_t token,

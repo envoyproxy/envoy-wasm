@@ -303,7 +303,6 @@ public:
   // Low level HTTP/gRPC interface.
   virtual void onHttpCallResponse(uint32_t token, uint32_t headers, size_t body_size,
                                   uint32_t trailers);
-  virtual void onGrpcCreateInitialMetadata(uint32_t token, uint32_t headers);
   virtual void onGrpcReceiveInitialMetadata(uint32_t token, uint32_t headers);
   virtual void onGrpcReceiveTrailingMetadata(uint32_t token, uint32_t trailers);
   virtual void onGrpcReceive(uint32_t token, size_t body_size);
@@ -1247,23 +1246,6 @@ inline void GrpcStreamHandlerBase::send(StringView message, bool end_of_stream) 
     local_close_ = local_close_ || end_of_stream;
     if (local_close_ && remote_close_) {
       context_->grpc_streams_.erase(token_);
-    }
-  }
-}
-
-inline void RootContext::onGrpcCreateInitialMetadata(uint32_t token, uint32_t headers) {
-  {
-    auto it = grpc_calls_.find(token);
-    if (it != grpc_calls_.end()) {
-      it->second->onCreateInitialMetadata(headers);
-      return;
-    }
-  }
-  {
-    auto it = grpc_streams_.find(token);
-    if (it != grpc_streams_.end()) {
-      it->second->onCreateInitialMetadata(headers);
-      return;
     }
   }
 }

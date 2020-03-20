@@ -252,7 +252,6 @@ void Wasm::getFunctions() {
   _GET_PROXY(on_http_call_response);
   _GET_PROXY(on_grpc_receive);
   _GET_PROXY(on_grpc_close);
-  _GET_PROXY(on_grpc_create_initial_metadata);
   _GET_PROXY(on_grpc_receive_initial_metadata);
   _GET_PROXY(on_grpc_receive_trailing_metadata);
   _GET_PROXY(on_queue_ready);

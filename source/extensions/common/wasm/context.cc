@@ -661,8 +661,6 @@ Http::HeaderMap* Context::getMap(HeaderMapType type) {
     return response_headers_;
   case HeaderMapType::ResponseTrailers:
     return response_trailers_;
-  case HeaderMapType::GrpcCreateInitialMetadata:
-    return grpc_create_initial_metadata_;
   default:
     return nullptr;
   }
@@ -690,8 +688,6 @@ const Http::HeaderMap* Context::getConstMap(HeaderMapType type) {
       return access_log_response_trailers_;
     }
     return response_trailers_;
-  case HeaderMapType::GrpcCreateInitialMetadata:
-    return rootContext()->grpc_create_initial_metadata_;
   case HeaderMapType::GrpcReceiveInitialMetadata:
     return rootContext()->grpc_receive_initial_metadata_.get();
   case HeaderMapType::GrpcReceiveTrailingMetadata:
@@ -967,9 +963,6 @@ WasmResult Context::grpcCall(const GrpcService& grpc_service, absl::string_view 
   hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
   options.setHashPolicy(hash_policy);
 
-  // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
-  // returns. Consequently the grpc_request is not available. Attempting to close or reset from
-  // that callback will fail.
   auto grpc_request =
       grpc_client->sendRaw(service_name, method_name, std::make_unique<Buffer::OwnedImpl>(request),
                            handler, Tracing::NullSpan::instance(), options);
@@ -1014,9 +1007,6 @@ WasmResult Context::grpcStream(const GrpcService& grpc_service, absl::string_vie
   hash_policy.Add()->mutable_header()->set_header_name(Http::Headers::get().Host.get());
   options.setHashPolicy(hash_policy);
 
-  // NB: this call causes the onCreateInitialMetadata callback to occur inline *before* this call
-  // returns. Consequently the grpc_stream is not available. Attempting to close or reset from
-  // that callback will fail.
   auto grpc_stream = grpc_client->startRaw(service_name, method_name, handler, options);
   if (!grpc_stream) {
     grpc_stream_.erase(token);
@@ -1390,17 +1380,6 @@ void Context::onQueueReady(uint32_t token) {
     DeferAfterCallActions actions(this);
     wasm_->on_queue_ready_(this, id_, token);
   }
-}
-
-void Context::onGrpcCreateInitialMetadata(uint32_t token, Http::HeaderMap& metadata) {
-  if (!wasm_->on_grpc_create_initial_metadata_) {
-    return;
-  }
-  DeferAfterCallActions actions(this);
-  grpc_create_initial_metadata_ = &metadata;
-  wasm_->on_grpc_create_initial_metadata_(this, id_, token,
-                                          headerSize(grpc_create_initial_metadata_));
-  grpc_create_initial_metadata_ = nullptr;
 }
 
 void Context::onGrpcReceiveInitialMetadata(uint32_t token, Http::HeaderMapPtr&& metadata) {

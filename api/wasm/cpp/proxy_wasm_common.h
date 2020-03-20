@@ -59,12 +59,11 @@ enum class HeaderMapType : int32_t {
   RequestTrailers = 1,  // During the onLog callback these are immutable
   ResponseHeaders = 2,  // During the onLog callback these are immutable
   ResponseTrailers = 3, // During the onLog callback these are immutable
-  GrpcCreateInitialMetadata = 4,
-  GrpcReceiveInitialMetadata = 5,  // Immutable
-  GrpcReceiveTrailingMetadata = 6, // Immutable
-  HttpCallResponseHeaders = 7,     // Immutable
-  HttpCallResponseTrailers = 8,    // Immutable
-  MAX = 8,
+  GrpcReceiveInitialMetadata = 4,  // Immutable
+  GrpcReceiveTrailingMetadata = 5, // Immutable
+  HttpCallResponseHeaders = 6,     // Immutable
+  HttpCallResponseTrailers = 7,    // Immutable
+  MAX = 7,
 };
 enum class BufferType : int32_t {
   HttpRequestBody = 0,       // During the onLog callback these are immutable
