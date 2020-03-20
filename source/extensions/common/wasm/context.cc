@@ -516,6 +516,9 @@ Context::FindValue(absl::string_view name, Protobuf::Arena* arena) const {
       return CelValue::CreateString(&info->upstreamHost()->cluster().name());
     } else if (info && info->routeEntry()) {
       return CelValue::CreateString(&info->routeEntry()->clusterName());
+    } else if (info && info->upstreamClusterInfo().has_value() &&
+               info->upstreamClusterInfo().value()) {
+      return CelValue::CreateString(&info->upstreamClusterInfo().value()->name());
     }
     break;
   case PropertyToken::CLUSTER_METADATA:
