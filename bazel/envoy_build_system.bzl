@@ -22,6 +22,8 @@ load(
 )
 load(
     ":envoy_test.bzl",
+    _envoy_benchmark_test = "envoy_benchmark_test",
+    _envoy_cc_benchmark_binary = "envoy_cc_benchmark_binary",
     _envoy_cc_fuzz_test = "envoy_cc_fuzz_test",
     _envoy_cc_mock = "envoy_cc_mock",
     _envoy_cc_test = "envoy_cc_test",
@@ -187,5 +189,7 @@ envoy_cc_mock = _envoy_cc_mock
 envoy_cc_test = _envoy_cc_test
 envoy_cc_test_binary = _envoy_cc_test_binary
 envoy_cc_test_library = _envoy_cc_test_library
+envoy_cc_benchmark_binary = _envoy_cc_benchmark_binary
+envoy_benchmark_test = _envoy_benchmark_test
 envoy_py_test_binary = _envoy_py_test_binary
 envoy_sh_test = _envoy_sh_test
