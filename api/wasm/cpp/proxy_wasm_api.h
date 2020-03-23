@@ -179,7 +179,6 @@ public:
 
   void cancel();
 
-  virtual void onCreateInitialMetadata(uint32_t /* headers */) {}
   virtual void onSuccess(size_t body_size) = 0;
   virtual void onFailure(GrpcStatus status) = 0;
 
@@ -211,7 +210,6 @@ public:
   void close(); // NB: callbacks can still occur: reset() to prevent further callbacks.
   void reset();
 
-  virtual void onCreateInitialMetadata(uint32_t /* headers */) {}
   virtual void onReceiveInitialMetadata(uint32_t /* headers */) {}
   virtual void onReceiveTrailingMetadata(uint32_t /* trailers */) {}
   virtual void onReceive(size_t body_size) = 0;
