@@ -611,11 +611,15 @@ Word get_metric(void* raw_context, Word metric_id, Word result_uint64_ptr) {
 
 Word grpc_call(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
                Word service_name_size, Word method_name_ptr, Word method_name_size,
-               Word request_ptr, Word request_size, Word timeout_milliseconds, Word token_ptr) {
+               Word initial_metadata_ptr, Word initial_metadata_size, Word request_ptr,
+               Word request_size, Word timeout_milliseconds, Word token_ptr) {
   auto context = WASM_CONTEXT(raw_context)->rootContext();
   auto service = context->wasmVm()->getMemory(service_ptr.u64_, service_size.u64_);
   auto service_name = context->wasmVm()->getMemory(service_name_ptr.u64_, service_name_size.u64_);
   auto method_name = context->wasmVm()->getMemory(method_name_ptr.u64_, method_name_size.u64_);
+  auto initial_metadata_pairs =
+      context->wasmVm()->getMemory(initial_metadata_ptr.u64_, initial_metadata_size.u64_);
+  auto initial_metadata = toPairs(initial_metadata_pairs.value());
   auto request = context->wasmVm()->getMemory(request_ptr.u64_, request_size.u64_);
   if (!service || !service_name || !method_name || !request) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
@@ -625,9 +629,9 @@ Word grpc_call(void* raw_context, Word service_ptr, Word service_size, Word serv
     return wasmResultToWord(WasmResult::ParseFailure);
   }
   uint32_t token = 0;
-  auto result =
-      context->grpcCall(service_proto, service_name.value(), method_name.value(), request.value(),
-                        std::chrono::milliseconds(timeout_milliseconds.u64_), &token);
+  auto result = context->grpcCall(service_proto, service_name.value(), method_name.value(),
+                                  initial_metadata, request.value(),
+                                  std::chrono::milliseconds(timeout_milliseconds.u64_), &token);
   if (result != WasmResult::Ok) {
     return wasmResultToWord(result);
   }
@@ -639,7 +643,7 @@ Word grpc_call(void* raw_context, Word service_ptr, Word service_size, Word serv
 
 Word grpc_stream(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
                  Word service_name_size, Word method_name_ptr, Word method_name_size,
-                 Word token_ptr) {
+                 Word initial_metadata_ptr, Word initial_metadata_size, Word token_ptr) {
   auto context = WASM_CONTEXT(raw_context)->rootContext();
   auto service = context->wasmVm()->getMemory(service_ptr.u64_, service_size.u64_);
   auto service_name = context->wasmVm()->getMemory(service_name_ptr.u64_, service_name_size.u64_);
@@ -651,9 +655,12 @@ Word grpc_stream(void* raw_context, Word service_ptr, Word service_size, Word se
   if (!service_proto.ParseFromArray(service.value().data(), service.value().size())) {
     return wasmResultToWord(WasmResult::ParseFailure);
   }
+  auto initial_metadata_pairs =
+      context->wasmVm()->getMemory(initial_metadata_ptr.u64_, initial_metadata_size.u64_);
+  auto initial_metadata = toPairs(initial_metadata_pairs.value());
   uint32_t token = 0;
-  auto result =
-      context->grpcStream(service_proto, service_name.value(), method_name.value(), &token);
+  auto result = context->grpcStream(service_proto, service_name.value(), method_name.value(),
+                                    initial_metadata, &token);
   if (result != WasmResult::Ok) {
     return wasmResultToWord(result);
   }

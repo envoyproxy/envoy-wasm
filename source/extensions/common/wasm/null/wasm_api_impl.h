@@ -198,20 +198,24 @@ inline WasmResult proxy_http_call(const char* uri_ptr, size_t uri_size, void* he
 inline WasmResult proxy_grpc_call(const char* service_ptr, size_t service_size,
                                   const char* service_name_ptr, size_t service_name_size,
                                   const char* method_name_ptr, size_t method_name_size,
+                                  void* initial_metadata_ptr, size_t initial_metadata_size,
                                   const char* request_ptr, size_t request_size,
                                   uint64_t timeout_milliseconds, uint32_t* token_ptr) {
-  return wordToWasmResult(Exports::grpc_call(
-      current_context_, WR(service_ptr), WS(service_size), WR(service_name_ptr),
-      WS(service_name_size), WR(method_name_ptr), WS(method_name_size), WR(request_ptr),
-      WS(request_size), WS(timeout_milliseconds), WR(token_ptr)));
+  return wordToWasmResult(
+      Exports::grpc_call(current_context_, WR(service_ptr), WS(service_size), WR(service_name_ptr),
+                         WS(service_name_size), WR(method_name_ptr), WS(method_name_size),
+                         WR(initial_metadata_ptr), WS(initial_metadata_size), WR(request_ptr),
+                         WS(request_size), WS(timeout_milliseconds), WR(token_ptr)));
 }
 inline WasmResult proxy_grpc_stream(const char* service_ptr, size_t service_size,
                                     const char* service_name_ptr, size_t service_name_size,
                                     const char* method_name_ptr, size_t method_name_size,
+                                    void* initial_metadata_ptr, size_t initial_metadata_size,
                                     uint32_t* token_ptr) {
   return wordToWasmResult(Exports::grpc_stream(
       current_context_, WR(service_ptr), WS(service_size), WR(service_name_ptr),
-      WS(service_name_size), WR(method_name_ptr), WS(method_name_size), WR(token_ptr)));
+      WS(service_name_size), WR(method_name_ptr), WS(method_name_size), WR(initial_metadata_ptr),
+      WS(initial_metadata_size), WR(token_ptr)));
 }
 inline WasmResult proxy_grpc_cancel(uint64_t token) {
   return wordToWasmResult(Exports::grpc_cancel(current_context_, WS(token)));

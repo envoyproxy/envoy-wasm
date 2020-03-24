@@ -933,7 +933,8 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
 }
 
 WasmResult Context::grpcCall(const GrpcService& grpc_service, absl::string_view service_name,
-                             absl::string_view method_name, absl::string_view request,
+                             absl::string_view method_name, const Pairs& initial_metadata,
+                             absl::string_view request,
                              const absl::optional<std::chrono::milliseconds>& timeout,
                              uint32_t* token_ptr) {
   auto token = next_grpc_token_++;
@@ -958,6 +959,7 @@ WasmResult Context::grpcCall(const GrpcService& grpc_service, absl::string_view 
           .grpcAsyncClientManager()
           .factoryForGrpcService(grpc_service, *wasm()->scope_, true /* skip_cluster_check */)
           ->create();
+  grpc_initial_metadata_ = buildRequestHeaderMapFromPairs(initial_metadata);
 
   // set default hash policy to be based on :authority to enable consistent hash
   Http::AsyncClient::RequestOptions options;
@@ -980,7 +982,8 @@ WasmResult Context::grpcCall(const GrpcService& grpc_service, absl::string_view 
 }
 
 WasmResult Context::grpcStream(const GrpcService& grpc_service, absl::string_view service_name,
-                               absl::string_view method_name, uint32_t* token_ptr) {
+                               absl::string_view method_name, const Pairs& initial_metadata,
+                               uint32_t* token_ptr) {
   auto token = next_grpc_token_++;
   if (IsGrpcCallToken(token)) {
     token = next_grpc_token_++;
@@ -1003,6 +1006,7 @@ WasmResult Context::grpcStream(const GrpcService& grpc_service, absl::string_vie
           .grpcAsyncClientManager()
           .factoryForGrpcService(grpc_service, *wasm()->scope_, true /* skip_cluster_check */)
           ->create();
+  grpc_initial_metadata_ = buildRequestHeaderMapFromPairs(initial_metadata);
 
   // set default hash policy to be based on :authority to enable consistent hash
   Http::AsyncClient::StreamOptions options;
@@ -1019,6 +1023,16 @@ WasmResult Context::grpcStream(const GrpcService& grpc_service, absl::string_vie
   handler.stream_ = grpc_stream;
   *token_ptr = token;
   return WasmResult::Ok;
+}
+
+// NB: this is currently called inline, so the token is known to be that of the currently
+// executing grpcCall or grpcStream.
+void Context::onCreateInitialMetadata(uint32_t /* token */,
+                                      Http::RequestHeaderMap& initial_metadata) {
+  if (grpc_initial_metadata_) {
+    initial_metadata = std::move(*grpc_initial_metadata_);
+    grpc_initial_metadata_.reset();
+  }
 }
 
 void Context::httpRespond(const Pairs& response_headers, absl::string_view body,

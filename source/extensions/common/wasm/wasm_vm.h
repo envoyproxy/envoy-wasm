@@ -121,8 +121,8 @@ using WasmCallback_dd = double (*)(void*, double);
           _f(WasmCallbackWord<2>) _f(WasmCallbackWord<3>) _f(WasmCallbackWord<4>)                  \
               _f(WasmCallbackWord<5>) _f(WasmCallbackWord<6>) _f(WasmCallbackWord<7>)              \
                   _f(WasmCallbackWord<8>) _f(WasmCallbackWord<9>) _f(WasmCallbackWord<10>)         \
-                      _f(WasmCallback_WWl) _f(WasmCallback_WWlWW) _f(WasmCallback_WWm)             \
-                          _f(WasmCallback_dd)
+                      _f(WasmCallbackWord<12>) _f(WasmCallback_WWl) _f(WasmCallback_WWlWW)         \
+                          _f(WasmCallback_WWm) _f(WasmCallback_dd)
 
 enum class Cloneable {
   NotCloneable,      // VMs can not be cloned and should be created from scratch.
