@@ -654,55 +654,55 @@ WasmResult Context::enqueueSharedQueue(uint32_t token, absl::string_view value) 
 }
 
 // Header/Trailer/Metadata Maps.
-Http::HeaderMap* Context::getMap(HeaderMapType type) {
+Http::HeaderMap* Context::getMap(WasmHeaderMapType type) {
   switch (type) {
-  case HeaderMapType::RequestHeaders:
+  case WasmHeaderMapType::RequestHeaders:
     return request_headers_;
-  case HeaderMapType::RequestTrailers:
+  case WasmHeaderMapType::RequestTrailers:
     return request_trailers_;
-  case HeaderMapType::ResponseHeaders:
+  case WasmHeaderMapType::ResponseHeaders:
     return response_headers_;
-  case HeaderMapType::ResponseTrailers:
+  case WasmHeaderMapType::ResponseTrailers:
     return response_trailers_;
   default:
     return nullptr;
   }
 }
 
-const Http::HeaderMap* Context::getConstMap(HeaderMapType type) {
+const Http::HeaderMap* Context::getConstMap(WasmHeaderMapType type) {
   switch (type) {
-  case HeaderMapType::RequestHeaders:
+  case WasmHeaderMapType::RequestHeaders:
     if (access_log_request_headers_) {
       return access_log_request_headers_;
     }
     return request_headers_;
-  case HeaderMapType::RequestTrailers:
+  case WasmHeaderMapType::RequestTrailers:
     if (access_log_request_trailers_) {
       return access_log_request_trailers_;
     }
     return request_trailers_;
-  case HeaderMapType::ResponseHeaders:
+  case WasmHeaderMapType::ResponseHeaders:
     if (access_log_response_headers_) {
       return access_log_response_headers_;
     }
     return response_headers_;
-  case HeaderMapType::ResponseTrailers:
+  case WasmHeaderMapType::ResponseTrailers:
     if (access_log_response_trailers_) {
       return access_log_response_trailers_;
     }
     return response_trailers_;
-  case HeaderMapType::GrpcReceiveInitialMetadata:
+  case WasmHeaderMapType::GrpcReceiveInitialMetadata:
     return rootContext()->grpc_receive_initial_metadata_.get();
-  case HeaderMapType::GrpcReceiveTrailingMetadata:
+  case WasmHeaderMapType::GrpcReceiveTrailingMetadata:
     return rootContext()->grpc_receive_trailing_metadata_.get();
-  case HeaderMapType::HttpCallResponseHeaders: {
+  case WasmHeaderMapType::HttpCallResponseHeaders: {
     Envoy::Http::ResponseMessagePtr* response = rootContext()->http_call_response_;
     if (response) {
       return &(*response)->headers();
     }
     return nullptr;
   }
-  case HeaderMapType::HttpCallResponseTrailers: {
+  case WasmHeaderMapType::HttpCallResponseTrailers: {
     Envoy::Http::ResponseMessagePtr* response = rootContext()->http_call_response_;
     if (response) {
       return (*response)->trailers();
@@ -713,7 +713,7 @@ const Http::HeaderMap* Context::getConstMap(HeaderMapType type) {
   return nullptr;
 }
 
-void Context::addHeaderMapValue(HeaderMapType type, absl::string_view key,
+void Context::addHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
                                 absl::string_view value) {
   auto map = getMap(type);
   if (!map) {
@@ -723,7 +723,7 @@ void Context::addHeaderMapValue(HeaderMapType type, absl::string_view key,
   map->addCopy(lower_key, std::string(value));
 }
 
-absl::string_view Context::getHeaderMapValue(HeaderMapType type, absl::string_view key) {
+absl::string_view Context::getHeaderMapValue(WasmHeaderMapType type, absl::string_view key) {
   auto map = getConstMap(type);
   if (!map) {
     return "";
@@ -753,9 +753,11 @@ Pairs headerMapToPairs(const Http::HeaderMap* map) {
   return pairs;
 }
 
-Pairs Context::getHeaderMapPairs(HeaderMapType type) { return headerMapToPairs(getConstMap(type)); }
+Pairs Context::getHeaderMapPairs(WasmHeaderMapType type) {
+  return headerMapToPairs(getConstMap(type));
+}
 
-void Context::setHeaderMapPairs(HeaderMapType type, const Pairs& pairs) {
+void Context::setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs) {
   auto map = getMap(type);
   if (!map) {
     return;
@@ -778,7 +780,7 @@ void Context::setHeaderMapPairs(HeaderMapType type, const Pairs& pairs) {
   }
 }
 
-void Context::removeHeaderMapValue(HeaderMapType type, absl::string_view key) {
+void Context::removeHeaderMapValue(WasmHeaderMapType type, absl::string_view key) {
   auto map = getMap(type);
   if (!map) {
     return;
@@ -787,7 +789,7 @@ void Context::removeHeaderMapValue(HeaderMapType type, absl::string_view key) {
   map->remove(lower_key);
 }
 
-void Context::replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
+void Context::replaceHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
                                     absl::string_view value) {
   auto map = getMap(type);
   if (!map) {
@@ -797,7 +799,7 @@ void Context::replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
   map->setCopy(lower_key, value);
 }
 
-uint32_t Context::getHeaderMapSize(HeaderMapType type) {
+uint32_t Context::getHeaderMapSize(WasmHeaderMapType type) {
   auto map = getMap(type);
   if (!map) {
     return 0;
@@ -807,29 +809,29 @@ uint32_t Context::getHeaderMapSize(HeaderMapType type) {
 
 // Buffer
 
-const Buffer::Instance* Context::getBuffer(BufferType type) {
+const Buffer::Instance* Context::getBuffer(WasmBufferType type) {
   switch (type) {
-  case BufferType::HttpRequestBody:
+  case WasmBufferType::HttpRequestBody:
     if (buffering_request_body_) {
       return decoder_callbacks_->decodingBuffer();
     }
     return request_body_buffer_;
-  case BufferType::HttpResponseBody:
+  case WasmBufferType::HttpResponseBody:
     if (buffering_response_body_) {
       return encoder_callbacks_->encodingBuffer();
     }
     return response_body_buffer_;
-  case BufferType::NetworkDownstreamData:
+  case WasmBufferType::NetworkDownstreamData:
     return network_downstream_data_buffer_;
-  case BufferType::NetworkUpstreamData:
+  case WasmBufferType::NetworkUpstreamData:
     return network_upstream_data_buffer_;
-  case BufferType::HttpCallResponseBody: {
+  case WasmBufferType::HttpCallResponseBody: {
     Envoy::Http::ResponseMessagePtr* response = rootContext()->http_call_response_;
     if (response) {
       return (*response)->body().get();
     }
   } break;
-  case BufferType::GrpcReceiveBuffer:
+  case WasmBufferType::GrpcReceiveBuffer:
     return rootContext()->grpc_receive_buffer_.get();
   default:
     break;
@@ -837,26 +839,27 @@ const Buffer::Instance* Context::getBuffer(BufferType type) {
   return nullptr;
 }
 
-WasmResult Context::setBuffer(BufferType type, std::function<void(Buffer::Instance&)> callback) {
+WasmResult Context::setBuffer(WasmBufferType type,
+                              std::function<void(Buffer::Instance&)> callback) {
   switch (type) {
-  case BufferType::HttpRequestBody:
+  case WasmBufferType::HttpRequestBody:
     if (buffering_request_body_) {
       decoder_callbacks_->modifyDecodingBuffer(callback);
     } else {
       callback(*request_body_buffer_);
     }
     return WasmResult::Ok;
-  case BufferType::HttpResponseBody:
+  case WasmBufferType::HttpResponseBody:
     if (buffering_response_body_) {
       encoder_callbacks_->modifyEncodingBuffer(callback);
     } else {
       callback(*response_body_buffer_);
     }
     return WasmResult::Ok;
-  case BufferType::NetworkDownstreamData:
+  case WasmBufferType::NetworkDownstreamData:
     callback(*network_downstream_data_buffer_);
     return WasmResult::Ok;
-  case BufferType::NetworkUpstreamData:
+  case WasmBufferType::NetworkUpstreamData:
     callback(*network_upstream_data_buffer_);
     return WasmResult::Ok;
   default:
@@ -1259,7 +1262,7 @@ Http::FilterDataStatus Context::onRequestBody(bool end_of_stream) {
     return Http::FilterDataStatus::Continue;
   }
   DeferAfterCallActions actions(this);
-  const auto buffer = getBuffer(BufferType::HttpRequestBody);
+  const auto buffer = getBuffer(WasmBufferType::HttpRequestBody);
   const auto buffer_length = (buffer == nullptr) ? 0 : buffer->length();
   switch (wasm_
               ->on_request_body_(this, id_, static_cast<uint32_t>(buffer_length),
@@ -1326,7 +1329,7 @@ Http::FilterDataStatus Context::onResponseBody(bool end_of_stream) {
     return Http::FilterDataStatus::Continue;
   }
   DeferAfterCallActions actions(this);
-  const auto buffer = getBuffer(BufferType::HttpResponseBody);
+  const auto buffer = getBuffer(WasmBufferType::HttpResponseBody);
   const auto buffer_length = (buffer == nullptr) ? 0 : buffer->length();
   switch (wasm_
               ->on_response_body_(this, id_, static_cast<uint32_t>(buffer_length),

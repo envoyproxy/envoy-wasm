@@ -128,57 +128,58 @@ inline WasmResult proxy_enqueue_shared_queue(uint32_t token, const char* data_pt
 }
 
 // Buffer
-inline WasmResult proxy_get_buffer_bytes(BufferType type, uint64_t start, uint64_t length,
+inline WasmResult proxy_get_buffer_bytes(WasmBufferType type, uint64_t start, uint64_t length,
                                          const char** ptr, size_t* size) {
   return wordToWasmResult(Exports::get_buffer_bytes(current_context_, WS(type), WS(start),
                                                     WS(length), WR(ptr), WR(size)));
 }
 
-inline WasmResult proxy_get_buffer_status(BufferType type, size_t* length_ptr,
+inline WasmResult proxy_get_buffer_status(WasmBufferType type, size_t* length_ptr,
                                           uint32_t* flags_ptr) {
   return wordToWasmResult(
       Exports::get_buffer_status(current_context_, WS(type), WR(length_ptr), WR(flags_ptr)));
 }
 
-inline WasmResult proxy_set_buffer_bytes(BufferType type, uint64_t start, uint64_t length,
+inline WasmResult proxy_set_buffer_bytes(WasmBufferType type, uint64_t start, uint64_t length,
                                          const char* data_ptr, size_t data_size) {
   return wordToWasmResult(Exports::set_buffer_bytes(current_context_, WS(type), WS(start),
                                                     WS(length), WR(data_ptr), WS(data_size)));
 }
 
 // Headers/Trailers/Metadata Maps
-inline WasmResult proxy_add_header_map_value(HeaderMapType type, const char* key_ptr,
+inline WasmResult proxy_add_header_map_value(WasmHeaderMapType type, const char* key_ptr,
                                              size_t key_size, const char* value_ptr,
                                              size_t value_size) {
   return wordToWasmResult(Exports::add_header_map_value(
       current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr), WS(value_size)));
 }
-inline WasmResult proxy_get_header_map_value(HeaderMapType type, const char* key_ptr,
+inline WasmResult proxy_get_header_map_value(WasmHeaderMapType type, const char* key_ptr,
                                              size_t key_size, const char** value_ptr,
                                              size_t* value_size) {
   return wordToWasmResult(Exports::get_header_map_value(
       current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr), WR(value_size)));
 }
-inline WasmResult proxy_get_header_map_pairs(HeaderMapType type, const char** ptr, size_t* size) {
+inline WasmResult proxy_get_header_map_pairs(WasmHeaderMapType type, const char** ptr,
+                                             size_t* size) {
   return wordToWasmResult(
       Exports::get_header_map_pairs(current_context_, WS(type), WR(ptr), WR(size)));
 }
-inline WasmResult proxy_set_header_map_pairs(HeaderMapType type, const char* ptr, size_t size) {
+inline WasmResult proxy_set_header_map_pairs(WasmHeaderMapType type, const char* ptr, size_t size) {
   return wordToWasmResult(
       Exports::set_header_map_pairs(current_context_, WS(type), WR(ptr), WS(size)));
 }
-inline WasmResult proxy_replace_header_map_value(HeaderMapType type, const char* key_ptr,
+inline WasmResult proxy_replace_header_map_value(WasmHeaderMapType type, const char* key_ptr,
                                                  size_t key_size, const char* value_ptr,
                                                  size_t value_size) {
   return wordToWasmResult(Exports::replace_header_map_value(
       current_context_, WS(type), WR(key_ptr), WS(key_size), WR(value_ptr), WS(value_size)));
 }
-inline WasmResult proxy_remove_header_map_value(HeaderMapType type, const char* key_ptr,
+inline WasmResult proxy_remove_header_map_value(WasmHeaderMapType type, const char* key_ptr,
                                                 size_t key_size) {
   return wordToWasmResult(
       Exports::remove_header_map_value(current_context_, WS(type), WR(key_ptr), WS(key_size)));
 }
-inline WasmResult proxy_get_header_map_size(HeaderMapType type, size_t* size) {
+inline WasmResult proxy_get_header_map_size(WasmHeaderMapType type, size_t* size) {
   return wordToWasmResult(Exports::get_header_map_size(current_context_, WS(type), WR(size)));
 }
 

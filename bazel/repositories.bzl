@@ -149,6 +149,8 @@ def envoy_dependencies(skip_targets = []):
     _io_opentracing_cpp()
     _net_zlib()
     _upb()
+    _proxy_wasm_cpp_sdk()
+    _proxy_wasm_cpp_host()
     _repository_impl("com_googlesource_code_re2")
     _com_google_cel_cpp()
     _repository_impl("bazel_toolchains")
@@ -730,6 +732,18 @@ def _upb():
     native.bind(
         name = "upb_lib",
         actual = "@upb//:upb",
+    )
+
+def _proxy_wasm_cpp_sdk():
+    _repository_impl(
+        name = "proxy_wasm_cpp_sdk",
+        build_file = "@envoy//bazel/external:proxy_wasm_cpp_sdk.BUILD",
+    )
+
+def _proxy_wasm_cpp_host():
+    _repository_impl(
+        name = "proxy_wasm_cpp_host",
+        build_file = "@envoy//bazel/external:proxy_wasm_cpp_host.BUILD",
     )
 
 def _com_github_google_jwt_verify():

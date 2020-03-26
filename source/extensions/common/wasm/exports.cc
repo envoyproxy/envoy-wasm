@@ -352,7 +352,7 @@ Word enqueue_shared_queue(void* raw_context, Word token, Word data_ptr, Word dat
 // Header/Trailer/Metadata Maps
 Word add_header_map_value(void* raw_context, Word type, Word key_ptr, Word key_size, Word value_ptr,
                           Word value_size) {
-  if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmHeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
@@ -361,13 +361,13 @@ Word add_header_map_value(void* raw_context, Word type, Word key_ptr, Word key_s
   if (!key || !value) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  context->addHeaderMapValue(static_cast<HeaderMapType>(type.u64_), key.value(), value.value());
+  context->addHeaderMapValue(static_cast<WasmHeaderMapType>(type.u64_), key.value(), value.value());
   return wasmResultToWord(WasmResult::Ok);
 }
 
 Word get_header_map_value(void* raw_context, Word type, Word key_ptr, Word key_size,
                           Word value_ptr_ptr, Word value_size_ptr) {
-  if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmHeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
@@ -375,14 +375,14 @@ Word get_header_map_value(void* raw_context, Word type, Word key_ptr, Word key_s
   if (!key) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  auto result = context->getHeaderMapValue(static_cast<HeaderMapType>(type.u64_), key.value());
+  auto result = context->getHeaderMapValue(static_cast<WasmHeaderMapType>(type.u64_), key.value());
   context->wasm()->copyToPointerSize(result, value_ptr_ptr.u64_, value_size_ptr.u64_);
   return wasmResultToWord(WasmResult::Ok);
 }
 
 Word replace_header_map_value(void* raw_context, Word type, Word key_ptr, Word key_size,
                               Word value_ptr, Word value_size) {
-  if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmHeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
@@ -391,12 +391,13 @@ Word replace_header_map_value(void* raw_context, Word type, Word key_ptr, Word k
   if (!key || !value) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  context->replaceHeaderMapValue(static_cast<HeaderMapType>(type.u64_), key.value(), value.value());
+  context->replaceHeaderMapValue(static_cast<WasmHeaderMapType>(type.u64_), key.value(),
+                                 value.value());
   return wasmResultToWord(WasmResult::Ok);
 }
 
 Word remove_header_map_value(void* raw_context, Word type, Word key_ptr, Word key_size) {
-  if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmHeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
@@ -404,16 +405,16 @@ Word remove_header_map_value(void* raw_context, Word type, Word key_ptr, Word ke
   if (!key) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  context->removeHeaderMapValue(static_cast<HeaderMapType>(type.u64_), key.value());
+  context->removeHeaderMapValue(static_cast<WasmHeaderMapType>(type.u64_), key.value());
   return wasmResultToWord(WasmResult::Ok);
 }
 
 Word get_header_map_pairs(void* raw_context, Word type, Word ptr_ptr, Word size_ptr) {
-  if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmHeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
-  auto result = context->getHeaderMapPairs(static_cast<HeaderMapType>(type.u64_));
+  auto result = context->getHeaderMapPairs(static_cast<WasmHeaderMapType>(type.u64_));
   if (!getPairs(context, result, ptr_ptr.u64_, size_ptr.u64_)) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
@@ -421,7 +422,7 @@ Word get_header_map_pairs(void* raw_context, Word type, Word ptr_ptr, Word size_
 }
 
 Word set_header_map_pairs(void* raw_context, Word type, Word ptr, Word size) {
-  if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmHeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
@@ -429,16 +430,16 @@ Word set_header_map_pairs(void* raw_context, Word type, Word ptr, Word size) {
   if (!data) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
-  context->setHeaderMapPairs(static_cast<HeaderMapType>(type.u64_), toPairs(data.value()));
+  context->setHeaderMapPairs(static_cast<WasmHeaderMapType>(type.u64_), toPairs(data.value()));
   return wasmResultToWord(WasmResult::Ok);
 }
 
 Word get_header_map_size(void* raw_context, Word type, Word result_ptr) {
-  if (type.u64_ > static_cast<uint64_t>(HeaderMapType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmHeaderMapType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
-  size_t result = context->getHeaderMapSize(static_cast<HeaderMapType>(type.u64_));
+  size_t result = context->getHeaderMapSize(static_cast<WasmHeaderMapType>(type.u64_));
   if (!context->wasmVm()->setWord(result_ptr.u64_, Word(result))) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
@@ -448,11 +449,11 @@ Word get_header_map_size(void* raw_context, Word type, Word result_ptr) {
 // Buffer
 Word get_buffer_bytes(void* raw_context, Word type, Word start, Word length, Word ptr_ptr,
                       Word size_ptr) {
-  if (type.u64_ > static_cast<uint64_t>(BufferType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmBufferType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
-  auto buffer = context->getBuffer(static_cast<BufferType>(type.u64_));
+  auto buffer = context->getBuffer(static_cast<WasmBufferType>(type.u64_));
   if (!buffer) {
     return wasmResultToWord(WasmResult::NotFound);
   }
@@ -480,16 +481,17 @@ Word get_buffer_bytes(void* raw_context, Word type, Word start, Word length, Wor
 }
 
 Word get_buffer_status(void* raw_context, Word type, Word length_ptr, Word flags_ptr) {
-  if (type.u64_ > static_cast<uint64_t>(BufferType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmBufferType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
-  auto buffer = context->getBuffer(static_cast<BufferType>(type.u64_));
+  auto buffer = context->getBuffer(static_cast<WasmBufferType>(type.u64_));
   if (!buffer) {
     return wasmResultToWord(WasmResult::NotFound);
   }
   auto length = buffer->length();
-  uint32_t flags = context->end_of_stream() ? static_cast<uint32_t>(BufferFlags::EndOfStream) : 0;
+  uint32_t flags =
+      context->end_of_stream() ? static_cast<uint32_t>(WasmBufferFlags::EndOfStream) : 0;
   if (!context->wasmVm()->setWord(length_ptr.u64_, Word(length))) {
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
@@ -501,11 +503,11 @@ Word get_buffer_status(void* raw_context, Word type, Word length_ptr, Word flags
 
 Word set_buffer_bytes(void* raw_context, Word type, Word start, Word length, Word data_ptr,
                       Word data_size) {
-  if (type.u64_ > static_cast<uint64_t>(BufferType::MAX)) {
+  if (type.u64_ > static_cast<uint64_t>(WasmBufferType::MAX)) {
     return wasmResultToWord(WasmResult::BadArgument);
   }
   auto context = WASM_CONTEXT(raw_context);
-  auto buffer = context->getBuffer(static_cast<BufferType>(type.u64_));
+  auto buffer = context->getBuffer(static_cast<WasmBufferType>(type.u64_));
   if (!buffer) {
     return wasmResultToWord(WasmResult::NotFound);
   }
@@ -514,7 +516,7 @@ Word set_buffer_bytes(void* raw_context, Word type, Word start, Word length, Wor
     return wasmResultToWord(WasmResult::InvalidMemoryAccess);
   }
   WasmResult result = WasmResult::InternalFailure;
-  if (context->setBuffer(static_cast<BufferType>(type.u64_),
+  if (context->setBuffer(static_cast<WasmBufferType>(type.u64_),
                          [start = start.u64_, length = length.u64_, data, &result](auto& buffer) {
                            if (start == 0) {
                              if (length == 0) {
