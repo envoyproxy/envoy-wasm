@@ -975,7 +975,7 @@ class CallHandler : public GrpcCallHandler<google::protobuf::Empty> {
         /* override onSuccess code */
     }
     /*
-        more callbacks such as onFailure, onCreateInitialMetadata
+        more callbacks such as onFailure
     */
 };
 ```
@@ -1011,15 +1011,6 @@ Called when the async gRPC request fails. No further callbacks will be
 invoked. *status* is returned grpc status. *error\_message* is the gRPC
 status message or empty string if not present.
 
-#### onCreateInitialMetadata
-
-``` {.sourceCode .cpp}
-void onCreateInitialMetadata()
-```
-
-Called when populating the headers to send with initial metadata. TODO:
-how to add metadata?
-
 #### cancel
 
 ``` {.sourceCode .cpp}
@@ -1043,7 +1034,7 @@ class StreamHandler : public GrpcStreamHandler<google::protobuf::Struct, google:
         /* override onReceive code */
     }
     /*
-        more callbacks such as onCreateInitialMetadat, onReceiveTrailingMetadata, onReceive, onRemoteClose
+        more callbacks such as onReceiveTrailingMetadata, onReceive, onRemoteClose
     */
 };
 ```
@@ -1089,15 +1080,6 @@ void reset()
 Close the stream locally and remotely (as needed). No further methods
 may be invoked on the handler object and no further callbacks will be
 invoked.
-
-#### onCreateInitialMetadata
-
-``` {.sourceCode .cpp}
-void onCreateInitialMetadata()
-```
-
-Called when populating the headers to send with initial metadata. TODO:
-how to add initial metadata?
 
 #### onReceiveInitialMetadata
 

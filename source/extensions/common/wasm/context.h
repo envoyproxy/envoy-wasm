@@ -290,11 +290,13 @@ public:
   // gRPC
   // Returns a token which will be used with the corresponding onGrpc and grpc calls.
   virtual WasmResult grpcCall(const GrpcService& grpc_service, absl::string_view service_name,
-                              absl::string_view method_name, absl::string_view request,
+                              absl::string_view method_name, const Pairs& initial_metadata,
+                              absl::string_view request,
                               const absl::optional<std::chrono::milliseconds>& timeout,
                               uint32_t* token_ptr);
   virtual WasmResult grpcStream(const GrpcService& grpc_service, absl::string_view service_name,
-                                absl::string_view method_name, uint32_t* token_ptr);
+                                absl::string_view method_name, const Pairs& initial_metadat,
+                                uint32_t* token_ptr);
   virtual WasmResult grpcClose(uint32_t token);  // cancel on call, close on stream.
   virtual WasmResult grpcCancel(uint32_t token); // cancel on call, reset on stream.
   virtual WasmResult grpcSend(uint32_t token, absl::string_view message,
@@ -350,7 +352,9 @@ protected:
 
   struct GrpcCallClientHandler : public Grpc::RawAsyncRequestCallbacks {
     // Grpc::AsyncRequestCallbacks
-    void onCreateInitialMetadata(Http::RequestHeaderMap&) override {}
+    void onCreateInitialMetadata(Http::RequestHeaderMap& initial_metadata) override {
+      context_->onCreateInitialMetadata(token_, initial_metadata);
+    }
     void onSuccessRaw(Buffer::InstancePtr&& response, Tracing::Span& /* span */) override {
       context_->onGrpcReceive(token_, std::move(response));
     }
@@ -394,6 +398,7 @@ protected:
   void onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr& response);
   void onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
 
+  virtual void onCreateInitialMetadata(uint32_t token, Http::RequestHeaderMap& initial_metadata);
   virtual void onGrpcReceive(uint32_t token,
                              Buffer::InstancePtr response); // Call (implies OK close) and Stream.
   virtual void onGrpcClose(uint32_t token, const Grpc::Status::GrpcStatus& status,
@@ -460,8 +465,11 @@ protected:
   Http::HeaderMapPtr grpc_receive_initial_metadata_{};
   Http::HeaderMapPtr grpc_receive_trailing_metadata_{};
 
-  // NB: this are only available (non-nullptr) during onGrpcReceive.
+  // NB: this is only available (non-nullptr) during onGrpcReceive.
   Buffer::InstancePtr grpc_receive_buffer_;
+
+  // NB: this is only available (non-nullptr) during grpcCall and grpcStream.
+  Http::RequestHeaderMapPtr grpc_initial_metadata_;
 
   const StreamInfo::StreamInfo* access_log_stream_info_{};
   const Http::RequestHeaderMap* access_log_request_headers_{};

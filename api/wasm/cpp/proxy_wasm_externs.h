@@ -107,12 +107,15 @@ extern "C" WasmResult proxy_http_call(const char* uri_ptr, size_t uri_size, void
 extern "C" WasmResult proxy_grpc_call(const char* service_ptr, size_t service_size,
                                       const char* service_name_ptr, size_t service_name_size,
                                       const char* method_name_ptr, size_t method_name_size,
-                                      const char* request_ptr, size_t request_size,
-                                      uint32_t timeout_milliseconds, uint32_t* token_ptr);
+                                      void* initial_metadata_pairs_ptr,
+                                      size_t initial_metadata_pairs_size, const char* request_ptr,
+                                      size_t request_size, uint32_t timeout_milliseconds,
+                                      uint32_t* token_ptr);
 extern "C" WasmResult proxy_grpc_stream(const char* service_ptr, size_t service_size,
                                         const char* service_name_ptr, size_t service_name_size,
                                         const char* method_name_ptr, size_t method_name_size,
-                                        uint32_t* token_ptr);
+                                        void* initial_metadata_pairs_ptr,
+                                        size_t initial_metadata_pairs_size, uint32_t* token_ptr);
 extern "C" WasmResult proxy_grpc_cancel(uint32_t token);
 extern "C" WasmResult proxy_grpc_close(uint32_t token);
 extern "C" WasmResult proxy_grpc_send(uint32_t token, const char* message_ptr, size_t message_size,

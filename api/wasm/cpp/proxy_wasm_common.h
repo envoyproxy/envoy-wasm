@@ -55,10 +55,10 @@ inline std::string toString(WasmResult r) {
 #undef _CASE
 
 enum class HeaderMapType : int32_t {
-  RequestHeaders = 0,   // During the onLog callback these are immutable
-  RequestTrailers = 1,  // During the onLog callback these are immutable
-  ResponseHeaders = 2,  // During the onLog callback these are immutable
-  ResponseTrailers = 3, // During the onLog callback these are immutable
+  RequestHeaders = 0,              // During the onLog callback these are immutable
+  RequestTrailers = 1,             // During the onLog callback these are immutable
+  ResponseHeaders = 2,             // During the onLog callback these are immutable
+  ResponseTrailers = 3,            // During the onLog callback these are immutable
   GrpcReceiveInitialMetadata = 4,  // Immutable
   GrpcReceiveTrailingMetadata = 5, // Immutable
   HttpCallResponseHeaders = 6,     // Immutable

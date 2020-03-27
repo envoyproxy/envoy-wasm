@@ -179,7 +179,6 @@ public:
 
   void cancel();
 
-  virtual void onCreateInitialMetadata(uint32_t /* headers */) {}
   virtual void onSuccess(size_t body_size) = 0;
   virtual void onFailure(GrpcStatus status) = 0;
 
@@ -211,7 +210,6 @@ public:
   void close(); // NB: callbacks can still occur: reset() to prevent further callbacks.
   void reset();
 
-  virtual void onCreateInitialMetadata(uint32_t /* headers */) {}
   virtual void onReceiveInitialMetadata(uint32_t /* headers */) {}
   virtual void onReceiveTrailingMetadata(uint32_t /* trailers */) {}
   virtual void onReceive(size_t body_size) = 0;
@@ -316,9 +314,11 @@ public:
   // NB: the message is the response if status == OK and an error message otherwise.
   // Returns false on setup error.
   WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
+                            const HeaderStringPairs& initial_metadata,
                             const google::protobuf::MessageLite& request,
                             uint32_t timeout_milliseconds, GrpcSimpleCallCallback callback);
   WasmResult grpcSimpleCall(StringView service, StringView service_name, StringView method_name,
+                            const HeaderStringPairs& initial_metadata,
                             const google::protobuf::MessageLite& request,
                             uint32_t timeout_milliseconds,
                             std::function<void(size_t body_size)> success_callback,
@@ -330,16 +330,18 @@ public:
         failure_callback(status);
       }
     };
-    return grpcSimpleCall(service, service_name, method_name, request, timeout_milliseconds,
-                          callback);
+    return grpcSimpleCall(service, service_name, method_name, initial_metadata, request,
+                          timeout_milliseconds, callback);
   }
   // Returns false on setup error.
   WasmResult grpcCallHandler(StringView service, StringView service_name, StringView method_name,
+                             const HeaderStringPairs& initial_metadata,
                              const google::protobuf::MessageLite& request,
                              uint32_t timeout_milliseconds,
                              std::unique_ptr<GrpcCallHandlerBase> handler);
   // Returns false on setup error.
   WasmResult grpcStreamHandler(StringView service, StringView service_name, StringView method_name,
+                               const HeaderStringPairs& initial_metadata,
                                std::unique_ptr<GrpcStreamHandlerBase> handler);
 
 private:
@@ -1161,19 +1163,28 @@ inline Histogram<Tags...>* Histogram<Tags...>::New(StringView name,
 }
 
 inline WasmResult grpcCall(StringView service, StringView service_name, StringView method_name,
+                           const HeaderStringPairs& initial_metadata,
                            const google::protobuf::MessageLite& request,
                            uint32_t timeout_milliseconds, uint32_t* token_ptr) {
+  void* metadata_ptr = nullptr;
+  size_t metadata_size = 0;
+  MakeHeaderStringPairsBuffer(initial_metadata, &metadata_ptr, &metadata_size);
   std::string serialized_request;
   request.SerializeToString(&serialized_request);
   return proxy_grpc_call(service.data(), service.size(), service_name.data(), service_name.size(),
-                         method_name.data(), method_name.size(), serialized_request.data(),
-                         serialized_request.size(), timeout_milliseconds, token_ptr);
+                         method_name.data(), method_name.size(), metadata_ptr, metadata_size,
+                         serialized_request.data(), serialized_request.size(), timeout_milliseconds,
+                         token_ptr);
 }
 
 inline WasmResult grpcStream(StringView service, StringView service_name, StringView method_name,
-                             uint32_t* token_ptr) {
+                             const HeaderStringPairs& initial_metadata, uint32_t* token_ptr) {
+  void* metadata_ptr = nullptr;
+  size_t metadata_size = 0;
+  MakeHeaderStringPairsBuffer(initial_metadata, &metadata_ptr, &metadata_size);
   return proxy_grpc_stream(service.data(), service.size(), service_name.data(), service_name.size(),
-                           method_name.data(), method_name.size(), token_ptr);
+                           method_name.data(), method_name.size(), metadata_ptr, metadata_size,
+                           token_ptr);
 }
 
 inline WasmResult grpcCancel(uint32_t token) { return proxy_grpc_cancel(token); }
@@ -1208,12 +1219,13 @@ inline void RootContext::onHttpCallResponse(uint32_t token, uint32_t headers, si
 
 inline WasmResult RootContext::grpcSimpleCall(StringView service, StringView service_name,
                                               StringView method_name,
+                                              const HeaderStringPairs& initial_metadata,
                                               const google::protobuf::MessageLite& request,
                                               uint32_t timeout_milliseconds,
                                               Context::GrpcSimpleCallCallback callback) {
   uint32_t token = 0;
-  WasmResult result =
-      grpcCall(service, service_name, method_name, request, timeout_milliseconds, &token);
+  WasmResult result = grpcCall(service, service_name, method_name, initial_metadata, request,
+                               timeout_milliseconds, &token);
   if (result == WasmResult::Ok) {
     asRoot()->simple_grpc_calls_[token] = std::move(callback);
   }
@@ -1339,11 +1351,13 @@ inline void RootContext::onGrpcClose(uint32_t token, GrpcStatus status) {
 
 inline WasmResult RootContext::grpcCallHandler(StringView service, StringView service_name,
                                                StringView method_name,
+                                               const HeaderStringPairs& initial_metadata,
                                                const google::protobuf::MessageLite& request,
                                                uint32_t timeout_milliseconds,
                                                std::unique_ptr<GrpcCallHandlerBase> handler) {
   uint32_t token = 0;
-  auto result = grpcCall(service, service_name, method_name, request, timeout_milliseconds, &token);
+  auto result = grpcCall(service, service_name, method_name, initial_metadata, request,
+                         timeout_milliseconds, &token);
   if (result == WasmResult::Ok) {
     handler->token_ = token;
     handler->context_ = this;
@@ -1354,9 +1368,10 @@ inline WasmResult RootContext::grpcCallHandler(StringView service, StringView se
 
 inline WasmResult RootContext::grpcStreamHandler(StringView service, StringView service_name,
                                                  StringView method_name,
+                                                 const HeaderStringPairs& initial_metadata,
                                                  std::unique_ptr<GrpcStreamHandlerBase> handler) {
   uint32_t token = 0;
-  auto result = grpcStream(service, service_name, method_name, &token);
+  auto result = grpcStream(service, service_name, method_name, initial_metadata, &token);
   if (result == WasmResult::Ok) {
     handler->token_ = token;
     handler->context_ = this;

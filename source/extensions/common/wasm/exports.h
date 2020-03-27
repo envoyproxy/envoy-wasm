@@ -64,10 +64,11 @@ Word record_metric(void* raw_context, Word metric_id, uint64_t value);
 Word get_metric(void* raw_context, Word metric_id, Word result_uint64_ptr);
 Word grpc_call(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
                Word service_name_size, Word method_name_ptr, Word method_name_size,
-               Word request_ptr, Word request_size, Word timeout_milliseconds, Word token_ptr);
+               Word initial_metadata_ptr, Word initial_metadatda_size, Word request_ptr,
+               Word request_size, Word timeout_milliseconds, Word token_ptr);
 Word grpc_stream(void* raw_context, Word service_ptr, Word service_size, Word service_name_ptr,
                  Word service_name_size, Word method_name_ptr, Word method_name_size,
-                 Word token_ptr);
+                 Word initial_metadata_ptr, Word initial_metadatda_size, Word token_ptr);
 Word grpc_cancel(void* raw_context, Word token);
 Word grpc_close(void* raw_context, Word token);
 Word grpc_send(void* raw_context, Word token, Word message_ptr, Word message_size, Word end_stream);
