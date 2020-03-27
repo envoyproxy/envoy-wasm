@@ -1759,7 +1759,8 @@ void Context::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallback
 
 void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr& response) {
   http_call_response_ = &response;
-  onHttpCallResponse(token, response->headers().size(), response->body()->length(),
+  uint32_t body_size = response->body() ? response->body()->length() : 0;
+  onHttpCallResponse(token, response->headers().size(), body_size,
                      headerSize(response->trailers()));
   http_call_response_ = nullptr;
   http_request_.erase(token);
