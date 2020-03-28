@@ -71,6 +71,8 @@ envoy_cc_library(
         "//source/extensions/filters/http:well_known_names",
         "@com_google_cel_cpp//eval/public:activation",
         "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
+        "@proxy_wasm_cpp_host//:include",
+        "@proxy_wasm_cpp_sdk//:common_lib",
     ],
 )
 
@@ -100,7 +102,6 @@ envoy_cc_library(
         ":wasm_hdr",
         ":wasm_interoperation_lib",
         ":wasm_vm_lib",
-        "//api/wasm/cpp:common_lib",
         "//external:abseil_base",
         "//external:abseil_node_hash_map",
         "//source/common/buffer:buffer_lib",

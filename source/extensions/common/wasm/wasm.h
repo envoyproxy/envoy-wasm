@@ -34,8 +34,6 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-#include "api/wasm/cpp/proxy_wasm_common.h"
-
 #define ALL_WASM_STATS(COUNTER, GAUGE)                                                             \
   COUNTER(created)                                                                                 \
   GAUGE(active, NeverImport)

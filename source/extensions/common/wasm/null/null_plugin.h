@@ -38,7 +38,7 @@ namespace Common {
 namespace Wasm {
 namespace Null {
 namespace Plugin {
-#include "api/wasm/cpp/proxy_wasm_api.h"
+#include "proxy_wasm_api.h"
 } // namespace Plugin
 
 /**

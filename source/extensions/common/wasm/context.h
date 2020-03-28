@@ -22,7 +22,7 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-#include "api/wasm/cpp/proxy_wasm_common.h"
+#include "proxy_wasm_common.h"
 
 class Wasm;
 class WasmVm;
@@ -250,21 +250,22 @@ public:
   virtual WasmResult enqueueSharedQueue(uint32_t token, absl::string_view value);
 
   // Header/Trailer/Metadata Maps
-  virtual void addHeaderMapValue(HeaderMapType type, absl::string_view key,
+  virtual void addHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
                                  absl::string_view value);
-  virtual absl::string_view getHeaderMapValue(HeaderMapType type, absl::string_view key);
-  virtual Pairs getHeaderMapPairs(HeaderMapType type);
-  virtual void setHeaderMapPairs(HeaderMapType type, const Pairs& pairs);
+  virtual absl::string_view getHeaderMapValue(WasmHeaderMapType type, absl::string_view key);
+  virtual Pairs getHeaderMapPairs(WasmHeaderMapType type);
+  virtual void setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs);
 
-  virtual void removeHeaderMapValue(HeaderMapType type, absl::string_view key);
-  virtual void replaceHeaderMapValue(HeaderMapType type, absl::string_view key,
+  virtual void removeHeaderMapValue(WasmHeaderMapType type, absl::string_view key);
+  virtual void replaceHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
                                      absl::string_view value);
 
-  virtual uint32_t getHeaderMapSize(HeaderMapType type);
+  virtual uint32_t getHeaderMapSize(WasmHeaderMapType type);
 
   // Buffer
-  virtual const Buffer::Instance* getBuffer(BufferType type);
-  virtual WasmResult setBuffer(BufferType type, std::function<void(Buffer::Instance&)> callback);
+  virtual const Buffer::Instance* getBuffer(WasmBufferType type);
+  virtual WasmResult setBuffer(WasmBufferType type,
+                               std::function<void(Buffer::Instance&)> callback);
   bool end_of_stream() { return end_of_stream_; }
 
   // HTTP
@@ -412,8 +413,8 @@ protected:
   bool IsGrpcStreamToken(uint32_t token) { return (token & 1) == 0; }
   bool IsGrpcCallToken(uint32_t token) { return (token & 1) == 1; }
 
-  Http::HeaderMap* getMap(HeaderMapType type);
-  const Http::HeaderMap* getConstMap(HeaderMapType type);
+  Http::HeaderMap* getMap(WasmHeaderMapType type);
+  const Http::HeaderMap* getConstMap(WasmHeaderMapType type);
 
   Wasm* wasm_{nullptr};
   uint32_t id_{0};

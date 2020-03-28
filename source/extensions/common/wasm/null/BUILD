@@ -58,13 +58,12 @@ envoy_cc_library(
     deps = [
         ":null_lib",
         ":null_vm_plugin_interface",
-        "//api/wasm/cpp:api_lib",
-        "//api/wasm/cpp:common_lib",
         "//external:abseil_base",
         "//external:abseil_node_hash_map",
         "//source/common/common:assert_lib",
         "//source/common/protobuf",
         "//source/extensions/common/wasm:wasm_hdr",
         "//source/extensions/common/wasm:well_known_names",
+        "@proxy_wasm_cpp_sdk//:api_lib",
     ],
 )
