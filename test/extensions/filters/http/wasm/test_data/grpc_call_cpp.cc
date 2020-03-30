@@ -65,9 +65,8 @@ FilterHeadersStatus ExampleContext::onRequestHeadersSimple(uint32_t) {
   grpc_service.SerializeToString(&grpc_service_string);
   google::protobuf::Value value;
   value.set_string_value("request");
-  HeaderStringPairs initial_metadata;
-  root()->grpcSimpleCall(grpc_service_string, "service", "method", initial_metadata, value, 1000,
-                         success_callback, failure_callback);
+  root()->grpcSimpleCall(grpc_service_string, "service", "method", value, 1000, success_callback,
+                         failure_callback);
   return FilterHeadersStatus::StopIteration;
 }
 

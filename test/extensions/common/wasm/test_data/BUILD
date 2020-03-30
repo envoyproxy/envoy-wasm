@@ -16,7 +16,7 @@ filegroup(
 envoy_cc_library(
     name = "test_cpp_plugin",
     srcs = [
-        "test_cpp.cc",
+        "test_cpp/test_cpp.cc",
         "test_cpp_null_plugin.cc",
     ],
     copts = ["-DNULL_PLUGIN=1"],
