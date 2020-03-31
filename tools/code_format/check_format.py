@@ -634,7 +634,8 @@ def checkSourceLine(line, file_path, reportError):
 
 
 def checkBuildLine(line, file_path, reportError):
-  if not isBazelToolsCheckExcludedFile(file_path) and "@bazel_tools" in line and not (isSkylarkFile(file_path) or file_path.startswith("./bazel/")):
+  if not isBazelToolsCheckExcludedFile(file_path) and "@bazel_tools" in line and not (
+      isSkylarkFile(file_path) or file_path.startswith("./bazel/")):
     reportError("unexpected @bazel_tools reference, please indirect via a definition in //bazel")
   if not whitelistedForProtobufDeps(file_path) and '"protobuf"' in line:
     reportError("unexpected direct external dependency on protobuf, use "
