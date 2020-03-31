@@ -1,10 +1,11 @@
-load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl",
-     "feature",
-     "flag_group",
-     "flag_set",
-     "tool_path")
+load(
+    "@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl",
+    "feature",
+    "flag_group",
+    "flag_set",
+    "tool_path",
+)
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
-
 
 def _impl(ctx):
     tool_paths = [
@@ -85,11 +86,12 @@ def _impl(ctx):
         abi_libc_version = "unknown",
         tool_paths = tool_paths,
         # we don't need to use features, as emcc already adds the directories.
-        # we just need to include them here so that bazel doesn't complain on 
+        # we just need to include them here so that bazel doesn't complain on
         # "this rule is missing dependency declarations for the following files included".
-        cxx_builtin_include_directories = ["external/emscripten_toolchain/upstream/emscripten/system/include/libcxx",
-        "external/emscripten_toolchain/upstream/emscripten/system/include/libc",
-        ]
+        cxx_builtin_include_directories = [
+            "external/emscripten_toolchain/upstream/emscripten/system/include/libcxx",
+            "external/emscripten_toolchain/upstream/emscripten/system/include/libc",
+        ],
         # features = [toolchain_include_directories_feature],
     )
 

@@ -1,7 +1,6 @@
 workspace(name = "envoy")
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
-
+load("//bazel/tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 load("//bazel:api_binding.bzl", "envoy_api_binding")
 
 envoy_api_binding()
