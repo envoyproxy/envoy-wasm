@@ -914,6 +914,8 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
     token = next_http_call_token_++;
   }
   auto& handler = http_request_[token];
+  handler.context_ = this;
+  handler.token_ = token;
 
   // set default hash policy to be based on :authority to enable consistent hash
   Http::AsyncClient::RequestOptions options;
@@ -928,8 +930,6 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
     http_request_.erase(token);
     return WasmResult::InternalFailure;
   }
-  handler.context_ = this;
-  handler.token_ = token;
   handler.request_ = http_request;
   *token_ptr = token;
   return WasmResult::Ok;
