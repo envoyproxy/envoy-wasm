@@ -928,7 +928,7 @@ if __name__ == "__main__":
       "./tools/clang_tools",
   ]
   bazel_tools_check_excluded_paths = args.bazel_tools_check_excluded_paths + [
-      "./test/",
+      "./test/extensions/common/wasm/test_data/",
   ]
   include_dir_order = args.include_dir_order
   if args.add_excluded_prefixes:
