@@ -742,7 +742,6 @@ def _upb():
 def _proxy_wasm_cpp_sdk():
     _repository_impl(
         name = "proxy_wasm_cpp_sdk",
-        build_file = "@envoy//bazel/external:proxy_wasm_cpp_sdk.BUILD",
     )
 
 def _proxy_wasm_cpp_host():
