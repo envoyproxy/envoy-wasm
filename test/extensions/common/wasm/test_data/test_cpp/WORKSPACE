@@ -34,9 +34,8 @@ git_repository(
     remote = "https://github.com/protocolbuffers/protobuf",
 )
 
-new_git_repository(
+git_repository(
     name = "proxy_wasm_cpp_sdk",
-    build_file = "//bazel/external:proxy-wasm-cpp-sdk.BUILD",
     commit = "b6f17d04066d4505dc1c495beef51af506c70a5c",
     remote = "https://github.com/proxy-wasm/proxy-wasm-cpp-sdk",
 )
