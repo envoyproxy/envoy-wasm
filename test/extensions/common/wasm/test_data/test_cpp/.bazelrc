@@ -14,7 +14,7 @@ build --linkopt=-Wl,--gc-sections
 # build --cxxopt=-fno-canonical-system-headers
 # as a work around we use `sed` to "fix" the *.d files.
 
-build --crosstool_top=//toolchain:emscripten
+build --crosstool_top=@proxy_wasm_cpp_sdk//toolchain:emscripten
 
 # Use --cpu as a differentiator.
 build --cpu=wasm
