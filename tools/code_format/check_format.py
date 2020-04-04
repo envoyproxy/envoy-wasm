@@ -386,6 +386,13 @@ def isBuildFixerExcludedFile(file_path):
   return False
 
 
+def isBazelToolsCheckExcludedFile(file_path):
+  for excluded_path in bazel_tools_check_excluded_paths:
+    if file_path.startswith(excluded_path):
+      return True
+  return False
+
+
 def hasInvalidAngleBracketDirectory(line):
   if not line.startswith(INCLUDE_ANGLE):
     return False
@@ -627,7 +634,8 @@ def checkSourceLine(line, file_path, reportError):
 
 
 def checkBuildLine(line, file_path, reportError):
-  if "@bazel_tools" in line and not (isSkylarkFile(file_path) or file_path.startswith("./bazel/")):
+  if not isBazelToolsCheckExcludedFile(file_path) and "@bazel_tools" in line and not (
+      isSkylarkFile(file_path) or file_path.startswith("./bazel/")):
     reportError("unexpected @bazel_tools reference, please indirect via a definition in //bazel")
   if not whitelistedForProtobufDeps(file_path) and '"protobuf"' in line:
     reportError("unexpected direct external dependency on protobuf, use "
@@ -894,6 +902,11 @@ if __name__ == "__main__":
                       nargs="+",
                       default=[],
                       help="exclude paths from envoy_build_fixer check.")
+  parser.add_argument("--bazel_tools_check_excluded_paths",
+                      type=str,
+                      nargs="+",
+                      default=[],
+                      help="exclude paths from bazel_tools check.")
   parser.add_argument("--include_dir_order",
                       type=str,
                       default=",".join(common.includeDirOrder()),
@@ -913,6 +926,9 @@ if __name__ == "__main__":
       "./bazel/toolchains/",
       "./bazel/BUILD",
       "./tools/clang_tools",
+  ]
+  bazel_tools_check_excluded_paths = args.bazel_tools_check_excluded_paths + [
+      "./test/extensions/common/wasm/test_data/",
   ]
   include_dir_order = args.include_dir_order
   if args.add_excluded_prefixes:

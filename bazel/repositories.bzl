@@ -166,6 +166,11 @@ def envoy_dependencies(skip_targets = []):
     _go_deps(skip_targets)
     _kafka_deps()
 
+    native.local_repository(
+        name = "common_wasm_test_cpp",
+        path = "test/extensions/common/wasm/test_data/test_cpp",
+    )
+
     switched_rules_by_language(
         name = "com_google_googleapis_imports",
         cc = True,
@@ -735,10 +740,7 @@ def _upb():
     )
 
 def _proxy_wasm_cpp_sdk():
-    _repository_impl(
-        name = "proxy_wasm_cpp_sdk",
-        build_file = "@envoy//bazel/external:proxy_wasm_cpp_sdk.BUILD",
-    )
+    _repository_impl(name = "proxy_wasm_cpp_sdk")
 
 def _proxy_wasm_cpp_host():
     _repository_impl(
