@@ -541,6 +541,30 @@ Word set_buffer_bytes(void* raw_context, Word type, Word start, Word length, Wor
   return wasmResultToWord(result);
 }
 
+Word get_peer_certificate_info(void* raw_context, Word value_ptr_ptr, Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto result = context->getSslPeerCertificate();
+  if (!result.has_value()) {
+    return wasmResultToWord(WasmResult::NotFound);
+  }
+  if (!getPairs(context, result.value(), value_ptr_ptr.u64_, value_size_ptr.u64_)) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  return wasmResultToWord(WasmResult::Ok);
+}
+
+Word get_local_certificate_info(void* raw_context, Word value_ptr_ptr, Word value_size_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto result = context->getSslLocalCertificate();
+  if (!result.has_value()) {
+    return wasmResultToWord(WasmResult::NotFound);
+  }
+  if (!getPairs(context, result.value(), value_ptr_ptr.u64_, value_size_ptr.u64_)) {
+    return wasmResultToWord(WasmResult::InvalidMemoryAccess);
+  }
+  return wasmResultToWord(WasmResult::Ok);
+}
+
 Word http_call(void* raw_context, Word uri_ptr, Word uri_size, Word header_pairs_ptr,
                Word header_pairs_size, Word body_ptr, Word body_size, Word trailer_pairs_ptr,
                Word trailer_pairs_size, Word timeout_milliseconds, Word token_ptr) {

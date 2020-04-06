@@ -80,9 +80,10 @@ Word set_effective_context(void* raw_context, Word context_id);
 Word done(void* raw_context);
 Word call_foreign_function(void* raw_context, Word function_name, Word function_name_size,
                            Word arguments, Word warguments_size, Word results, Word results_size);
+Word get_peer_certificate_info(void* raw_context, Word value_ptr_ptr, Word value_size_ptr);
+Word get_local_certificate_info(void* raw_context, Word value_ptr_ptr, Word value_size_ptr);
 
 // Runtime environment functions exported from envoy to wasm.
-
 Word wasi_unstable_fd_write(void* raw_context, Word fd, Word iovs, Word iovs_len,
                             Word nwritten_ptr);
 Word wasi_unstable_fd_read(void*, Word, Word, Word, Word);

@@ -183,6 +183,14 @@ inline WasmResult proxy_get_header_map_size(WasmHeaderMapType type, size_t* size
   return wordToWasmResult(Exports::get_header_map_size(current_context_, WS(type), WR(size)));
 }
 
+// TLS
+inline WasmResult proxy_get_peer_certificate_info(const char** ptr, size_t* size) {
+  return wordToWasmResult(Exports::get_peer_certificate_info(current_context_, WR(ptr), WR(size)));
+}
+inline WasmResult proxy_get_local_certificate_info(const char** ptr, size_t* size) {
+  return wordToWasmResult(Exports::get_local_certificate_info(current_context_, WR(ptr), WR(size)));
+}
+
 // HTTP
 // Returns token, used in callback onHttpCallResponse
 inline WasmResult proxy_http_call(const char* uri_ptr, size_t uri_size, void* header_pairs_ptr,

@@ -189,6 +189,9 @@ void Wasm::registerCallbacks() {
   _REGISTER_PROXY(get_buffer_bytes);
   _REGISTER_PROXY(set_buffer_bytes);
 
+  _REGISTER_PROXY(get_peer_certificate_info)
+  _REGISTER_PROXY(get_local_certificate_info)
+
   _REGISTER_PROXY(http_call);
 
   _REGISTER_PROXY(grpc_call);

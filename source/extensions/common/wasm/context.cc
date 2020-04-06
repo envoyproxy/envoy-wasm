@@ -1087,6 +1087,44 @@ const Network::Connection* Context::getConnection() const {
   return nullptr;
 }
 
+std::string spanToString(const absl::Span<const std::string>& span) {
+  std::string result;
+  for (size_t i = 0; i < span.size() - 1; ++i) {
+    result += span[i];
+    if (i != span.size() - 1) {
+      result += ",";
+    }
+  }
+  return result;
+}
+
+absl::optional<CertificateInfo> Context::getSslPeerCertificate() const {
+  if (!getConnection() || !getConnection()->ssl()) {
+    return absl::nullopt;
+  }
+  CertificateInfo certificate;
+  pairs.push_back("serial_number", getConnection()->ssl()->serialNumberPeerCertificate());
+  pairs.push_back("issuer", getConnection()->ssl()->issuerPeerCertificate());
+  pairs.push_back("subject", getConnection()->ssl()->subjectPeerCertificate());
+  pairs.push_back("sha256_digest", getConnection()->ssl()->sha256PeerCertificateDigest());
+  pairs.push_back("validated", std::to_string(getConnection()->ssl()->peerCertificateValidated()));
+  pairs.push_back("presented", std::to_string(getConnection()->ssl()->peerCertificatePresented()));
+  pairs.push_back("uri_sans", spanToString(getConnection()->ssl()->uriSanPeerCertificate()));
+  pairs.push_back("dns_sans", spanToString(getConnection()->ssl()->dnsSanPeerCertificate()));
+  return certificate;
+}
+
+absl::optional<CertificateInfo> Context::getSslLocalCertificate() const {
+  if (!getConnection() || !getConnection()->ssl()) {
+    return absl::nullopt;
+  }
+  CertificateInfo certificate;
+  pairs.push_back("subject", getConnection()->ssl()->subjectLocalCertificate());
+  pairs.push_back("uri_sans", spanToString(getConnection()->ssl()->uriSanLocalCertificate()));
+  pairs.push_back("dns_sans", spanToString(getConnection()->ssl()->dnsSanLocalCertificate()));
+  return certificate;
+}
+
 WasmResult Context::setProperty(absl::string_view key, absl::string_view serialized_value) {
   auto* stream_info = getRequestStreamInfo();
   if (!stream_info) {

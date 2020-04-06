@@ -28,6 +28,7 @@ class Wasm;
 class WasmVm;
 
 using Pairs = std::vector<std::pair<absl::string_view, absl::string_view>>;
+using CertificateInfo = std::vector<std::pair<absl::string_view, absl::string_view>>;
 using PairsWithStringValues = std::vector<std::pair<absl::string_view, std::string>>;
 
 using GrpcService = envoy::config::core::v3::GrpcService;
@@ -102,6 +103,10 @@ public:
   // callback. As long as any one of the callbacks is invoked, the value should be
   // available.
   const Network::Connection* getConnection() const;
+
+  // Retrieves ssl certificates info associated with connection.
+  const absl::optional<CertificateInfo> Context::getSslPeerCertificate() const;
+  const absl::optional<CertificateInfo> Context::getSslLocalCertificate() const;
 
   //
   // VM level downcalls into the WASM code on Context(id == 0).
