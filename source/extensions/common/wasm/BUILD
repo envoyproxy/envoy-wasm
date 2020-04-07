@@ -4,7 +4,6 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
-    "envoy_select_wasm_wavm",
 )
 
 envoy_package()
@@ -84,7 +83,7 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/public:cel_value",
         "@com_google_cel_cpp//eval/public:value_export_util",
         "@com_google_cel_cpp//parser",
-        "@proxy_wasm_cpp_host//:lib",
         "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
+        "@proxy_wasm_cpp_host//:lib",
     ],
 )

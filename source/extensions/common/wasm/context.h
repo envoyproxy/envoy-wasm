@@ -16,7 +16,6 @@
 #include "extensions/filters/common/expr/evaluator.h"
 
 #include "eval/public/activation.h"
-
 #include "include/proxy-wasm/context.h"
 #include "include/proxy-wasm/wasm.h"
 

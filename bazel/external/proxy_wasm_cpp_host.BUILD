@@ -12,7 +12,13 @@ cc_library(
 
 cc_library(
     name = "lib",
-		srcs = glob(["src/**/*.h", "src/**/*.cc"], exclude = ["src/**/wavm*"]),
+    srcs = glob(
+        [
+            "src/**/*.h",
+            "src/**/*.cc",
+        ],
+        exclude = ["src/**/wavm*"],
+    ),
     copts = ["-std=c++14"],
     deps = [
         ":include",

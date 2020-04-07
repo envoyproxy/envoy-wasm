@@ -29,5 +29,6 @@ envoy_cc_library(
         "//source/common/common:c_smart_ptr_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/common/wasm:well_known_names",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],
 )
