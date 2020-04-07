@@ -65,14 +65,16 @@ enum class HeaderMapType : int32_t {
   HttpCallResponseTrailers = 7,    // Immutable
   MAX = 7,
 };
-enum class BufferType : int32_t {
+enum class WasmBufferType : int32_t {
   HttpRequestBody = 0,       // During the onLog callback these are immutable
   HttpResponseBody = 1,      // During the onLog callback these are immutable
   NetworkDownstreamData = 2, // During the onLog callback these are immutable
   NetworkUpstreamData = 3,   // During the onLog callback these are immutable
   HttpCallResponseBody = 4,  // Immutable
   GrpcReceiveBuffer = 5,     // Immutable
-  MAX = 5,
+  VmConfiguration = 6,       // Immutable
+  PluginConfiguration = 7,   // Immutable
+  MAX = 7,
 };
 enum class BufferFlags : int32_t {
   // These must be powers of 2.

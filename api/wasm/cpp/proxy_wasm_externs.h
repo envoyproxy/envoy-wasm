@@ -90,11 +90,11 @@ extern "C" WasmResult proxy_remove_header_map_value(HeaderMapType type, const ch
 extern "C" WasmResult proxy_get_header_map_size(HeaderMapType type, size_t* size);
 
 // Buffer
-extern "C" WasmResult proxy_get_buffer_bytes(BufferType type, uint32_t start, uint32_t length,
+extern "C" WasmResult proxy_get_buffer_bytes(WasmBufferType type, uint32_t start, uint32_t length,
                                              const char** ptr, size_t* size);
-extern "C" WasmResult proxy_get_buffer_status(BufferType type, size_t* length_ptr,
+extern "C" WasmResult proxy_get_buffer_status(WasmBufferType type, size_t* length_ptr,
                                               uint32_t* flags_ptr);
-extern "C" WasmResult proxy_set_buffer_bytes(BufferType type, uint32_t start, uint32_t length,
+extern "C" WasmResult proxy_set_buffer_bytes(WasmBufferType type, uint32_t start, uint32_t length,
                                              const char* ptr, size_t size);
 
 // HTTP

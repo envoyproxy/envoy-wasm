@@ -6,7 +6,9 @@
 // Required Proxy-Wasm ABI version.
 extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
 #else
-#include "extensions/common/wasm/null/null_plugin.h"
+#include "envoy/config/core/v3/grpc_service.pb.h"
+using envoy::config::core::v3::GrpcService;
+#include "include/proxy-wasm/null_plugin.h"
 #endif
 
 START_WASM_PLUGIN(WasmSpeedCpp)
@@ -67,10 +69,11 @@ void grpc_service1000_test() {
   }
 }
 
-WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t)) {
+WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)) {
   const char* configuration_ptr = nullptr;
   size_t size;
-  proxy_get_configuration(&configuration_ptr, &size);
+  proxy_get_buffer_bytes(WasmBufferType::VmConfiguration, 0, configuration_size, &configuration_ptr,
+                         &size);
   std::string configuration(configuration_ptr, size);
   if (configuration == "empty") {
     test_fn = &empty_test;

@@ -119,7 +119,7 @@ TEST_P(WasmFactoryTest, MissingImport) {
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, random, local_info);
   EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context, [](Server::WasmServicePtr) {});
-                          , Extensions::Common::Wasm::WasmVmException,
+                          , Extensions::Common::Wasm::WasmException,
                           "Failed to load WASM module due to a missing import: env.missing");
 }
 
@@ -146,7 +146,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, random, local_info);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
-                            Extensions::Common::Wasm::WasmVmException,
+                            Extensions::Common::Wasm::WasmException,
                             "Failed to create WASM VM with unspecified runtime.");
 }
 
@@ -173,7 +173,7 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
                                                         tls, *api, scope, random, local_info);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
-                            Extensions::Common::Wasm::WasmVmException,
+                            Extensions::Common::Wasm::WasmException,
                             "Failed to create WASM VM using envoy.wasm.runtime.invalid runtime. "
                             "Envoy was compiled without support for it.");
 }

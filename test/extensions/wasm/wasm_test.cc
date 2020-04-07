@@ -24,11 +24,12 @@ class TestContext : public Extensions::Common::Wasm::Context {
 public:
   TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
   ~TestContext() override {}
-  void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
+  proxy_wasm::WasmResult log(uint64_t level, absl::string_view message) override {
     std::cerr << std::string(message) << "\n";
-    scriptLog_(level, message);
+    log_(static_cast<spdlog::level::level_enum>(level), message);
+    return proxy_wasm::WasmResult::Ok;
   }
-  MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
+  MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
   MOCK_METHOD1(setTickPeriodMilliseconds, void(uint32_t tick_period_milliseconds));
 };
 
@@ -65,9 +66,10 @@ TEST_P(WasmTestMatrix, Logging) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "configure-test";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", std::get<0>(GetParam())), vm_id, vm_configuration, vm_key,
       scope, cluster_manager, *dispatcher);
@@ -80,23 +82,23 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_weak.lock().get());
 
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("warn configure-test")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("test trace logging")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, Eq("test debug logging")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("test error logging")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("test tick logging")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("onDone logging")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("onDelete logging")));
+  EXPECT_CALL(*context, log_(spdlog::level::warn, Eq("warn configure-test")));
+  EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("test trace logging")));
+  EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("test debug logging")));
+  EXPECT_CALL(*context, log_(spdlog::level::err, Eq("test error logging")));
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("test tick logging")));
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("onDone logging")));
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("onDelete logging")));
 
   EXPECT_TRUE(wasm_weak.lock()->initialize(code, false));
   wasm_weak.lock()->setContext(context.get());
   auto root_context = context.get();
   wasm_weak.lock()->startForTesting(std::move(context), plugin);
-  wasm_weak.lock()->configure(root_context, plugin, "configure-test");
+  wasm_weak.lock()->configure(root_context, plugin);
   wasm_handler.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   // This will SEGV on nullptr if wasm has been deleted.
-  wasm_weak.lock()->tickHandler(root_context->id());
+  root_context->onTick();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher->clearDeferredDeleteList();
 }
@@ -113,9 +115,10 @@ TEST_P(WasmTest, BadSignature) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
@@ -123,8 +126,7 @@ TEST_P(WasmTest, BadSignature) {
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  EXPECT_THROW_WITH_MESSAGE(wasm->initialize(code, false),
-                            Extensions::Common::Wasm::WasmVmException,
+  EXPECT_THROW_WITH_MESSAGE(wasm->initialize(code, false), Extensions::Common::Wasm::WasmException,
                             "Bad function signature for: proxy_on_configure");
 }
 
@@ -140,9 +142,10 @@ TEST_P(WasmTest, Segv) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
@@ -150,7 +153,7 @@ TEST_P(WasmTest, Segv) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("before badptr")));
+  EXPECT_CALL(*context, log_(spdlog::level::err, Eq("before badptr")));
   EXPECT_TRUE(wasm->initialize(code, false));
 
   if (GetParam() == "v8") {
@@ -178,9 +181,10 @@ TEST_P(WasmTest, DivByZero) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
@@ -189,7 +193,7 @@ TEST_P(WasmTest, DivByZero) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("before div by zero")));
+  EXPECT_CALL(*context, log_(spdlog::level::err, Eq("before div by zero")));
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
 
@@ -217,9 +221,10 @@ TEST_P(WasmTest, EmscriptenVersion) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
@@ -250,9 +255,10 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
@@ -261,8 +267,8 @@ TEST_P(WasmTest, IntrinsicGlobals) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("NaN nan")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("inf inf"))).Times(3);
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("NaN nan")));
+  EXPECT_CALL(*context, log_(spdlog::level::warn, Eq("inf inf"))).Times(3);
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->startForTesting(std::move(context), plugin);
 }
@@ -285,9 +291,10 @@ TEST_P(WasmTest, Asm2Wasm) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
@@ -296,7 +303,7 @@ TEST_P(WasmTest, Asm2Wasm) {
       "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("out 0 0 0")));
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("out 0 0 0")));
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->startForTesting(std::move(context), plugin);
 }
@@ -313,9 +320,10 @@ TEST_P(WasmTest, Stats) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
@@ -325,13 +333,13 @@ TEST_P(WasmTest, Stats) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("get counter = 1")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, Eq("get counter = 2")));
+  EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("get counter = 1")));
+  EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("get counter = 2")));
   // recordMetric on a Counter is the same as increment.
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("get counter = 5")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("get gauge = 2")));
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("get counter = 5")));
+  EXPECT_CALL(*context, log_(spdlog::level::warn, Eq("get gauge = 2")));
   // Get is not supported on histograms.
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("get histogram = Unsupported")));
+  EXPECT_CALL(*context, log_(spdlog::level::err, Eq("get histogram = Unsupported")));
 
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->startForTesting(std::move(context), plugin);
@@ -349,9 +357,10 @@ TEST_P(WasmTest, StatsHigherLevel) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
@@ -361,21 +370,20 @@ TEST_P(WasmTest, StatsHigherLevel) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("get counter = 1")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, Eq("get counter = 2")));
+  EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("get counter = 1")));
+  EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("get counter = 2")));
   // recordMetric on a Counter is the same as increment.
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("get counter = 5")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("get gauge = 2")));
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("get counter = 5")));
+  EXPECT_CALL(*context, log_(spdlog::level::warn, Eq("get gauge = 2")));
   // Get is not supported on histograms.
-  EXPECT_CALL(*context,
-              scriptLog_(spdlog::level::err,
-                         Eq(std::string("resolved histogram name = "
-                                        "histogram_int_tag.7.histogram_string_tag.test_tag."
-                                        "histogram_bool_tag.true.test_histogram"))));
+  EXPECT_CALL(*context, log_(spdlog::level::err,
+                             Eq(std::string("resolved histogram name = "
+                                            "histogram_int_tag.7.histogram_string_tag.test_tag."
+                                            "histogram_bool_tag.true.test_histogram"))));
 
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
-  wasm->tickHandler(context->id());
+  context->onTick();
 }
 
 TEST_P(WasmTest, StatsHighLevel) {
@@ -390,9 +398,10 @@ TEST_P(WasmTest, StatsHighLevel) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
@@ -402,21 +411,21 @@ TEST_P(WasmTest, StatsHighLevel) {
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm.get());
 
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::trace, Eq("get counter = 1")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::debug, Eq("get counter = 2")));
+  EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("get counter = 1")));
+  EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("get counter = 2")));
   // recordMetric on a Counter is the same as increment.
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::info, Eq("get counter = 5")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::warn, Eq("get gauge = 2")));
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("get counter = 5")));
+  EXPECT_CALL(*context, log_(spdlog::level::warn, Eq("get gauge = 2")));
   // Get is not supported on histograms.
-  // EXPECT_CALL(*context, scriptLog(spdlog::level::err, Eq(std::string("resolved histogram name
+  // EXPECT_CALL(*context, log_(spdlog::level::err, Eq(std::string("resolved histogram name
   // = int_tag.7_string_tag.test_tag.bool_tag.true.test_histogram"))));
   EXPECT_CALL(*context,
-              scriptLog_(spdlog::level::err,
-                         Eq("h_id = int_tag.7.string_tag.test_tag.bool_tag.true.test_histogram")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("stack_c = 1")));
-  EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("stack_g = 2")));
+              log_(spdlog::level::err,
+                   Eq("h_id = int_tag.7.string_tag.test_tag.bool_tag.true.test_histogram")));
+  EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_c = 1")));
+  EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_g = 2")));
   // Get is not supported on histograms.
-  // EXPECT_CALL(*context, scriptLog_(spdlog::level::err, Eq("stack_h = 3")));
+  // EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_h = 3")));
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
   context->onLog();
