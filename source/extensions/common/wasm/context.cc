@@ -33,6 +33,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_map.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/synchronization/mutex.h"
 #include "eval/eval/field_access.h"
 #include "eval/eval/field_backed_list_impl.h"
@@ -1087,41 +1088,30 @@ const Network::Connection* Context::getConnection() const {
   return nullptr;
 }
 
-std::string spanToString(const absl::Span<const std::string>& span) {
-  std::string result;
-  for (size_t i = 0; i < span.size() - 1; ++i) {
-    result += span[i];
-    if (i != span.size() - 1) {
-      result += ",";
-    }
-  }
-  return result;
-}
-
-absl::optional<CertificateInfo> Context::getSslPeerCertificate() const {
+const absl::optional<CertificateInfo> Context::getSslPeerCertificate() const {
   if (!getConnection() || !getConnection()->ssl()) {
     return absl::nullopt;
   }
   CertificateInfo certificate;
-  pairs.push_back("serial_number", getConnection()->ssl()->serialNumberPeerCertificate());
-  pairs.push_back("issuer", getConnection()->ssl()->issuerPeerCertificate());
-  pairs.push_back("subject", getConnection()->ssl()->subjectPeerCertificate());
-  pairs.push_back("sha256_digest", getConnection()->ssl()->sha256PeerCertificateDigest());
-  pairs.push_back("validated", std::to_string(getConnection()->ssl()->peerCertificateValidated()));
-  pairs.push_back("presented", std::to_string(getConnection()->ssl()->peerCertificatePresented()));
-  pairs.push_back("uri_sans", spanToString(getConnection()->ssl()->uriSanPeerCertificate()));
-  pairs.push_back("dns_sans", spanToString(getConnection()->ssl()->dnsSanPeerCertificate()));
+  certificate.push_back(std::make_pair<absl::string_view>("serial_number", getConnection()->ssl()->serialNumberPeerCertificate()));
+  certificate.push_back(std::make_pair<absl::string_view>("issuer", getConnection()->ssl()->issuerPeerCertificate()));
+  certificate.push_back(std::make_pair<absl::string_view>("subject", getConnection()->ssl()->subjectPeerCertificate()));
+  certificate.push_back(std::make_pair<absl::string_view>("sha256_digest", getConnection()->ssl()->sha256PeerCertificateDigest()));
+  certificate.push_back(std::make_pair<absl::string_view>("validated", std::to_string(getConnection()->ssl()->peerCertificateValidated())));
+  certificate.push_back(std::make_pair<absl::string_view>("presented", std::to_string(getConnection()->ssl()->peerCertificatePresented())));
+  certificate.push_back(std::make_pair<absl::string_view>("uri_sans", absl::StrJoin(getConnection()->ssl()->uriSanPeerCertificate().begin(), getConnection()->ssl()->uriSanPeerCertificate().end(), ",")));
+  certificate.push_back(std::make_pair<absl::string_view>("dns_sans", absl::StrJoin(getConnection()->ssl()->dnsSansPeerCertificate().begin(), getConnection()->ssl()->dnsSansPeerCertificate().end(), ",")));
   return certificate;
 }
 
-absl::optional<CertificateInfo> Context::getSslLocalCertificate() const {
+const absl::optional<CertificateInfo> Context::getSslLocalCertificate() const {
   if (!getConnection() || !getConnection()->ssl()) {
     return absl::nullopt;
   }
   CertificateInfo certificate;
-  pairs.push_back("subject", getConnection()->ssl()->subjectLocalCertificate());
-  pairs.push_back("uri_sans", spanToString(getConnection()->ssl()->uriSanLocalCertificate()));
-  pairs.push_back("dns_sans", spanToString(getConnection()->ssl()->dnsSanLocalCertificate()));
+  certificate.push_back(std::make_pair<absl::string_view>("subject", getConnection()->ssl()->subjectLocalCertificate()));
+  certificate.push_back(std::make_pair<absl::string_view>("uri_sans", absl::StrJoin(getConnection()->ssl()->uriSanPeerCertificate().begin(), getConnection()->ssl()->uriSanLocalCertificate().end(), ",")));
+  certificate.push_back(std::make_pair<absl::string_view>("dns_sans", absl::StrJoin(getConnection()->ssl()->dnsSansPeerCertificate().begin(), getConnection()->ssl()->dnsSansLocalCertificate().end(), ",")));
   return certificate;
 }
 

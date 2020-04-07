@@ -105,8 +105,8 @@ public:
   const Network::Connection* getConnection() const;
 
   // Retrieves ssl certificates info associated with connection.
-  const absl::optional<CertificateInfo> Context::getSslPeerCertificate() const;
-  const absl::optional<CertificateInfo> Context::getSslLocalCertificate() const;
+  const absl::optional<CertificateInfo> getSslPeerCertificate() const;
+  const absl::optional<CertificateInfo> getSslLocalCertificate() const;
 
   //
   // VM level downcalls into the WASM code on Context(id == 0).
