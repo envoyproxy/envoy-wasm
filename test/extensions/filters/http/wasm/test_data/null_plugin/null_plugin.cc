@@ -7,7 +7,7 @@ namespace HttpFilterTestPlugin {
 NullPluginRegistry* context_registry_;
 } // namespace HttpFilterTestPlugin
 
-RegisterNullVmPluginFactory register_common_wasm_test_cpp_plugin("HttpFilterTestPlugin", []() {
+RegisterNullVmPluginFactory register_http_filter_test_plugin("HttpFilterTestPlugin", []() {
   return std::make_unique<NullPlugin>(HttpFilterTestPlugin::context_registry_);
 });
 

@@ -7,7 +7,7 @@ namespace WasmSpeedCpp {
 NullPluginRegistry* context_registry_;
 } // namespace WasmSpeedCpp
 
-RegisterNullVmPluginFactory register_common_wasm_test_cpp_plugin("WasmSpeedCpp", []() {
+RegisterNullVmPluginFactory register_wasm_speed_test_plugin("WasmSpeedCpp", []() {
   return std::make_unique<NullPlugin>(WasmSpeedCpp::context_registry_);
 });
 
