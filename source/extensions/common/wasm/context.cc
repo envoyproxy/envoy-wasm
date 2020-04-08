@@ -1774,7 +1774,14 @@ void Context::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallback
   encoder_callbacks_ = &callbacks;
 }
 
-void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr& response) {
+void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&& response) {
+  if (current_context_ != nullptr) {
+    // We are in a reentrant call, so defer.
+    auto response_ptr = response.release();
+    wasm()->addAfterVmCallAction([this, token, response_ptr] {
+        onHttpCallSuccess(token, std::unique_ptr<Envoy::Http::ResponseMessage>(response_ptr));
+        });
+  }
   http_call_response_ = &response;
   uint32_t body_size = response->body() ? response->body()->length() : 0;
   onHttpCallResponse(token, response->headers().size(), body_size,
