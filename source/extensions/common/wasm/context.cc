@@ -1591,7 +1591,7 @@ void Context::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallback
 }
 
 void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&& response) {
-  if (current_context_ != nullptr) {
+  if (proxy_wasm::current_context_ != nullptr) {
     // We are in a reentrant call, so defer.
     auto response_ptr = response.release();
     wasm()->addAfterVmCallAction([this, token, response_ptr] {
@@ -1607,6 +1607,12 @@ void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&
 }
 
 void Context::onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason) {
+  if (proxy_wasm::current_context_ != nullptr) {
+    // We are in a reentrant call, so defer.
+    wasm()->addAfterVmCallAction([this, token, reason] {
+        onHttpCallFailure(token, reason);
+        });
+  }
   status_code_ = static_cast<uint32_t>(WasmResult::BrokenConnection);
   // This is the only value currently.
   ASSERT(reason == Http::AsyncClient::FailureReason::Reset);
@@ -1617,6 +1623,7 @@ void Context::onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason
 }
 
 void Context::onGrpcReceiveWrapper(uint32_t token, ::Envoy::Buffer::InstancePtr response) {
+  ASSERT(proxy_wasm::current_context_ == nullptr); // Non-reentrant.
   if (wasm()->on_grpc_receive_) {
     grpc_receive_buffer_ = std::move(response);
     uint32_t response_size = grpc_receive_buffer_->length();
@@ -1630,6 +1637,13 @@ void Context::onGrpcReceiveWrapper(uint32_t token, ::Envoy::Buffer::InstancePtr 
 
 void Context::onGrpcCloseWrapper(uint32_t token, const Grpc::Status::GrpcStatus& status,
                                  const absl::string_view message) {
+  if (proxy_wasm::current_context_ != nullptr) {
+    // We are in a reentrant call, so defer.
+    auto message_string = std::string(message);
+    wasm()->addAfterVmCallAction([this, token, status, message_string] {
+        onGrpcCloseWrapper(token, status, message_string);
+        });
+  }
   if (wasm()->on_grpc_close_) {
     status_code_ = static_cast<uint32_t>(status);
     status_message_ = message;
