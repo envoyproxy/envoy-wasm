@@ -6,10 +6,11 @@
 // Required Proxy-Wasm ABI version.
 extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
 
-extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_configure(uint32_t, uint32_t) {
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_configure(uint32_t, uint32_t configuration_size) {
   const char* configuration = nullptr;
   size_t size;
-  proxy_get_configuration(&configuration, &size);
+  proxy_get_buffer_bytes(WasmBufferType::PluginConfiguration, 0, configuration_size, &configuration,
+                         &size);
   logWarn(std::string("warn " + std::string(configuration, size)));
   ::free((void*)configuration);
   return 1;

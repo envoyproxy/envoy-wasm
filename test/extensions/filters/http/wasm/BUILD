@@ -22,8 +22,8 @@ envoy_extension_cc_test(
     deps = [
         "//source/common/stream_info:stream_info_lib",
         "//source/extensions/common/wasm:wasm_interoperation_lib",
-        "//source/extensions/common/wasm/null/sample_plugin:plugin",
         "//source/extensions/filters/http/wasm:wasm_filter_lib",
+        "//test/extensions/filters/http/wasm/test_data/null_plugin:plugin",
         "//test/mocks/grpc:grpc_mocks",
         "//test/mocks/http:http_mocks",
         "//test/mocks/network:network_mocks",
