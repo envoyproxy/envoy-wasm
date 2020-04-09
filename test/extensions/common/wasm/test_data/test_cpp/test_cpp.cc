@@ -10,10 +10,8 @@
 
 #ifndef NULL_PLUGIN
 #include "proxy_wasm_intrinsics.h"
-// Required Proxy-Wasm ABI version.
-extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
 #else
-#include "extensions/common/wasm/null/null_plugin.h"
+#include "include/proxy-wasm/null_plugin.h"
 #endif
 
 START_WASM_PLUGIN(CommonWasmTestCpp)
@@ -39,10 +37,11 @@ static float gInfinity = INFINITY;
     abort();                                                                                       \
   } while (0)
 
-WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t context_id)) {
+WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configuration_size)) {
   const char* configuration_ptr = nullptr;
   size_t size;
-  proxy_get_configuration(&configuration_ptr, &size);
+  proxy_get_buffer_bytes(WasmBufferType::VmConfiguration, 0, configuration_size, &configuration_ptr,
+                         &size);
   std::string configuration(configuration_ptr, size);
   if (configuration == "logging") {
     std::string trace_message = "test trace logging";
@@ -178,10 +177,11 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t context_id)) {
   return 1;
 }
 
-WASM_EXPORT(uint32_t, proxy_on_configure, (uint32_t, uint32_t)) {
+WASM_EXPORT(uint32_t, proxy_on_configure, (uint32_t, uint32_t configuration_size)) {
   const char* configuration_ptr = nullptr;
   size_t size;
-  proxy_get_configuration(&configuration_ptr, &size);
+  proxy_get_buffer_bytes(WasmBufferType::PluginConfiguration, 0, configuration_size,
+                         &configuration_ptr, &size);
   std::string configuration(configuration_ptr, size);
   if (configuration == "done") {
     proxy_done();

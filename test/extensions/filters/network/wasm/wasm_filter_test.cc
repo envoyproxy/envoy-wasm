@@ -25,20 +25,22 @@ public:
   TestFilter(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
       : Context(wasm, root_context_id, plugin) {}
 
-  void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
-    scriptLog_(level, message);
+  proxy_wasm::WasmResult log(uint64_t level, absl::string_view message) override {
+    log_(static_cast<spdlog::level::level_enum>(level), message);
+    return proxy_wasm::WasmResult::Ok;
   }
-  MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
+  MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
 class TestRoot : public Context {
 public:
   TestRoot() {}
 
-  void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
-    scriptLog_(level, message);
+  proxy_wasm::WasmResult log(uint64_t level, absl::string_view message) override {
+    log_(static_cast<spdlog::level::level_enum>(level), message);
+    return proxy_wasm::WasmResult::Ok;
   }
-  MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
+  MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
 class WasmNetworkFilterTest : public testing::TestWithParam<std::string> {
@@ -60,7 +62,7 @@ public:
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        "", proto_config.config().root_id(), proto_config.config().vm_config().vm_id(),
+        "", proto_config.config().root_id(), proto_config.config().vm_config().vm_id(), "",
         envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
@@ -102,7 +104,7 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest,
 // Bad code in initial config.
 TEST_P(WasmNetworkFilterTest, BadCode) {
   EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException,
-                            "Failed to initialize WASM code from <inline>");
+                            "Failed to initialize WASM code");
 }
 
 // Test happy path.
@@ -111,26 +113,23 @@ TEST_P(WasmNetworkFilterTest, HappyPath) {
       "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm")));
   setupFilter();
 
-  EXPECT_CALL(*filter_,
-              scriptLog_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
+  EXPECT_CALL(*filter_, log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onNewConnection());
 
   Buffer::OwnedImpl fake_downstream_data("Fake");
-  EXPECT_CALL(*filter_,
-              scriptLog_(spdlog::level::trace,
-                         Eq(absl::string_view("onDownstreamData 2 len=4 end_stream=0\nFake"))));
+  EXPECT_CALL(*filter_, log_(spdlog::level::trace,
+                             Eq(absl::string_view("onDownstreamData 2 len=4 end_stream=0\nFake"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onData(fake_downstream_data, false));
 
   Buffer::OwnedImpl fake_upstream_data("Done");
+  EXPECT_CALL(*filter_, log_(spdlog::level::trace,
+                             Eq(absl::string_view("onUpstreamData 2 len=4 end_stream=1\nDone"))));
   EXPECT_CALL(*filter_,
-              scriptLog_(spdlog::level::trace,
-                         Eq(absl::string_view("onUpstreamData 2 len=4 end_stream=1\nDone"))));
-  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::trace,
-                                   Eq(absl::string_view("onUpstreamConnectionClose 2 0"))));
+              log_(spdlog::level::trace, Eq(absl::string_view("onUpstreamConnectionClose 2 0"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onWrite(fake_upstream_data, true));
 
-  EXPECT_CALL(*filter_, scriptLog_(spdlog::level::trace,
-                                   Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
+  EXPECT_CALL(*filter_,
+              log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
 }
 

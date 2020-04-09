@@ -1,38 +1,15 @@
-#include "extensions/common/wasm/null/null_plugin.h"
+// NOLINT(namespace-envoy)
+#include "include/proxy-wasm/null_plugin.h"
 
-namespace Envoy {
-namespace Extensions {
-namespace Common {
-namespace Wasm {
-namespace Null {
-namespace Plugin {
+namespace proxy_wasm {
+namespace null_plugin {
 namespace CommonWasmTestCpp {
-ThreadSafeSingleton<NullPluginRegistry> null_plugin_registry_;
+NullPluginRegistry* context_registry_;
 } // namespace CommonWasmTestCpp
 
-/**
- * Config registration for a Wasm filter plugin. @see NamedHttpFilterConfigFactory.
- */
-class CommonWasmTestPluginFactory : public NullVmPluginFactory {
-public:
-  CommonWasmTestPluginFactory() {}
+RegisterNullVmPluginFactory register_common_wasm_test_cpp_plugin("CommonWasmTestCpp", []() {
+  return std::make_unique<NullPlugin>(CommonWasmTestCpp::context_registry_);
+});
 
-  std::string name() const override { return "CommonWasmTestCpp"; }
-
-  std::unique_ptr<NullVmPlugin> create() const override {
-    return std::make_unique<NullPlugin>(
-        &Envoy::Extensions::Common::Wasm::Null::Plugin::CommonWasmTestCpp::null_plugin_registry_
-             .get());
-  }
-};
-
-/**
- * Static registration for the null Wasm filter. @see RegisterFactory.
- */
-static Registry::RegisterFactory<CommonWasmTestPluginFactory, NullVmPluginFactory> register_;
-} // namespace Plugin
-} // namespace Null
-} // namespace Wasm
-} // namespace Common
-} // namespace Extensions
-} // namespace Envoy
+} // namespace null_plugin
+} // namespace proxy_wasm

@@ -26,26 +26,23 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   const auto& config = MessageUtil::downcastAndValidate<
       const envoy::extensions::access_loggers::wasm::v3::WasmAccessLog&>(
       proto_config, context.messageValidationVisitor());
-  auto vm_id = config.config().vm_config().vm_id();
-  auto root_id = config.config().root_id();
-  auto configuration = std::make_shared<std::string>(config.config().configuration());
-  auto access_log = std::make_shared<WasmAccessLog>(root_id, nullptr, std::move(filter));
+  auto access_log =
+      std::make_shared<WasmAccessLog>(config.config().root_id(), nullptr, std::move(filter));
 
   // Create a base WASM to verify that the code loads before setting/cloning the for the
   // individual threads.
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.localInfo(),
-      nullptr /* listener_metadata */);
+      config.config().configuration(), envoy::config::core::v3::TrafficDirection::UNSPECIFIED,
+      context.localInfo(), nullptr /* listener_metadata */);
 
-  auto callback = [access_log, &context, plugin,
-                   configuration](Common::Wasm::WasmHandleSharedPtr base_wasm) {
+  auto callback = [access_log, &context, plugin](Common::Wasm::WasmHandleSharedPtr base_wasm) {
     auto tls_slot = context.threadLocal().allocateSlot();
 
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
-    tls_slot->set([base_wasm, plugin, configuration](Event::Dispatcher& dispatcher) {
+    tls_slot->set([base_wasm, plugin](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
-          Common::Wasm::getOrCreateThreadLocalWasm(base_wasm, plugin, *configuration, dispatcher));
+          Common::Wasm::getOrCreateThreadLocalWasm(base_wasm, plugin, dispatcher));
     });
     access_log->setTlsSlot(std::move(tls_slot));
   };

@@ -35,10 +35,11 @@ class TestRoot : public Envoy::Extensions::Common::Wasm::Context {
 public:
   TestRoot() {}
 
-  void scriptLog(spdlog::level::level_enum level, absl::string_view message) override {
-    scriptLog_(level, message);
+  proxy_wasm::WasmResult log(uint64_t level, absl::string_view message) override {
+    log_(static_cast<spdlog::level::level_enum>(level), message);
+    return proxy_wasm::WasmResult::Ok;
   }
-  MOCK_METHOD2(scriptLog_, void(spdlog::level::level_enum level, absl::string_view message));
+  MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
 static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test, std::string vm) {
@@ -55,9 +56,10 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
   auto vm_id = "";
   auto vm_configuration = test;
   auto vm_key = "";
+  auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info,
-      nullptr);
+      name, root_id, vm_id, plugin_configuration,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", vm), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);

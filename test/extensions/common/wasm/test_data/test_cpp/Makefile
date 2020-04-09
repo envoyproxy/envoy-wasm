@@ -1,3 +1,3 @@
 all:
 	bazel build :all
-	cp bazel-bin/*.wasm ..
+	cp -f bazel-bin/*.wasm ..

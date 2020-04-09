@@ -719,18 +719,18 @@ inline WasmResult getResponseTrailerSize(size_t* size) {
 }
 
 // Buffer
-inline WasmDataPtr getBufferBytes(BufferType type, size_t start, size_t length) {
+inline WasmDataPtr getBufferBytes(WasmBufferType type, size_t start, size_t length) {
   const char* ptr = nullptr;
   size_t size = 0;
   proxy_get_buffer_bytes(type, start, length, &ptr, &size);
   return std::make_unique<WasmData>(ptr, size);
 }
 
-inline WasmResult getBufferStatus(BufferType type, size_t* size, uint32_t* flags) {
+inline WasmResult getBufferStatus(WasmBufferType type, size_t* size, uint32_t* flags) {
   return proxy_get_buffer_status(type, size, flags);
 }
 
-inline WasmResult setBuffer(BufferType type, size_t start, size_t length, StringView data) {
+inline WasmResult setBuffer(WasmBufferType type, size_t start, size_t length, StringView data) {
   return proxy_set_buffer_bytes(type, start, length, data.data(), data.size());
 }
 

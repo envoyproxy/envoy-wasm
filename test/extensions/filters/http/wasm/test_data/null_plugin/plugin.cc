@@ -4,12 +4,12 @@
 #ifndef NULL_PLUGIN
 #include "proxy_wasm_intrinsics.h"
 #else
-#include "extensions/common/wasm/null/null_plugin.h"
+#include "include/proxy-wasm/null_plugin.h"
 #include "absl/base/casts.h"
 #endif
 
 // NOLINT(namespace-envoy)
-START_WASM_PLUGIN(ExamplePlugin)
+START_WASM_PLUGIN(HttpFilterTestPlugin)
 
 // For performance testing: see wasm_speed_test.cc.
 class PluginRootContext : public RootContext {
@@ -67,7 +67,7 @@ void PluginContext::onLog() {
                                ->toString());
     int64_t responseCode;
     if (getValue({"response", "code"}, &responseCode)) {
-      logWarn("response.code: " + absl::StrCat(responseCode));
+      logWarn("response.code: " + std::to_string(responseCode));
     }
     logWarn("state: " + getProperty({"filter_state", "wasm_state"}).value()->toString());
   } else {
