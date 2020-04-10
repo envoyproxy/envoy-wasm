@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <cstdio>
 
 #include <algorithm>
 #include <cctype>
@@ -56,9 +56,9 @@ class SharedData {
 public:
   WasmResult get(absl::string_view vm_id, const absl::string_view key,
                  std::pair<std::string, uint32_t>* result) {
-    absl::ReaderMutexLock l(&mutex);
-    auto map = data.find(vm_id);
-    if (map == data.end()) {
+    absl::ReaderMutexLock l(&mutex_);
+    auto map = data_.find(vm_id);
+    if (map == data_.end()) {
       return WasmResult::NotFound;
     }
     auto it = map->second.find(key);
@@ -71,11 +71,11 @@ public:
 
   WasmResult set(absl::string_view vm_id, absl::string_view key, absl::string_view value,
                  uint32_t cas) {
-    absl::WriterMutexLock l(&mutex);
+    absl::WriterMutexLock l(&mutex_);
     absl::flat_hash_map<std::string, std::pair<std::string, uint32_t>>* map;
-    auto map_it = data.find(vm_id);
-    if (map_it == data.end()) {
-      map = &data[vm_id];
+    auto map_it = data_.find(vm_id);
+    if (map_it == data_.end()) {
+      map = &data_[vm_id];
     } else {
       map = &map_it->second;
     }
@@ -93,15 +93,15 @@ public:
 
   uint32_t registerQueue(absl::string_view vm_id, absl::string_view queue_name, uint32_t context_id,
                          Event::Dispatcher& dispatcher) {
-    absl::WriterMutexLock l(&mutex);
+    absl::WriterMutexLock l(&mutex_);
     auto key = std::make_pair(std::string(vm_id), std::string(queue_name));
-    auto it = queue_tokens.insert(std::make_pair(key, static_cast<uint32_t>(0)));
+    auto it = queue_tokens_.insert(std::make_pair(key, static_cast<uint32_t>(0)));
     if (it.second) {
       it.first->second = nextQueueToken();
-      queue_token_set.insert(it.first->second);
+      queue_token_set_.insert(it.first->second);
     }
     uint32_t token = it.first->second;
-    auto& q = queues[token];
+    auto& q = queues_[token];
     q.vm_id = std::string(vm_id);
     q.context_id = context_id;
     q.dispatcher = &dispatcher;
@@ -110,19 +110,19 @@ public:
   }
 
   uint32_t resolveQueue(absl::string_view vm_id, absl::string_view queue_name) {
-    absl::WriterMutexLock l(&mutex);
+    absl::WriterMutexLock l(&mutex_);
     auto key = std::make_pair(std::string(vm_id), std::string(queue_name));
-    auto it = queue_tokens.find(key);
-    if (it != queue_tokens.end()) {
+    auto it = queue_tokens_.find(key);
+    if (it != queue_tokens_.end()) {
       return it->second;
     }
     return 0; // N.B. zero indicates that the queue was not found.
   }
 
   WasmResult dequeue(uint32_t token, std::string* data) {
-    absl::ReaderMutexLock l(&mutex);
-    auto it = queues.find(token);
-    if (it == queues.end()) {
+    absl::ReaderMutexLock l(&mutex_);
+    auto it = queues_.find(token);
+    if (it == queues_.end()) {
       return WasmResult::NotFound;
     }
     if (it->second.queue.empty()) {
@@ -134,12 +134,12 @@ public:
   }
 
   WasmResult enqueue(uint32_t token, absl::string_view value) {
-    absl::WriterMutexLock l(&mutex);
-    auto it = queues.find(token);
-    if (it == queues.end()) {
+    absl::WriterMutexLock l(&mutex_);
+    auto it = queues_.find(token);
+    if (it == queues_.end()) {
       return WasmResult::NotFound;
     }
-    it->second.queue.push_back(std::string(value));
+    it->second.queue.emplace_back(value);
     auto vm_id = it->second.vm_id;
     auto context_id = it->second.context_id;
     it->second.dispatcher->post([vm_id, context_id, token] {
@@ -152,10 +152,10 @@ public:
   }
 
   uint32_t nextCas() {
-    auto result = cas;
-    cas++;
-    if (!cas) { // 0 is not a valid CAS value.
-      cas++;
+    auto result = cas_;
+    cas_++;
+    if (!cas_) { // 0 is not a valid CAS value.
+      cas_++;
     }
     return result;
   }
@@ -163,11 +163,11 @@ public:
 private:
   uint32_t nextQueueToken() {
     while (true) {
-      uint32_t token = next_queue_token++;
+      uint32_t token = next_queue_token_++;
       if (token == 0) {
         continue; // 0 is an illegal token.
       }
-      if (queue_token_set.find(token) == queue_token_set.end()) {
+      if (queue_token_set_.find(token) == queue_token_set_.end()) {
         return token;
       }
     }
@@ -180,20 +180,20 @@ private:
     std::deque<std::string> queue;
   };
 
-  absl::Mutex mutex;
-  uint32_t cas = 1;
-  uint32_t next_queue_token = 1;
+  absl::Mutex mutex_;
+  uint32_t cas_ = 1;
+  uint32_t next_queue_token_ = 1;
   absl::node_hash_map<std::string,
                       absl::flat_hash_map<std::string, std::pair<std::string, uint32_t>>>
-      data;
-  absl::node_hash_map<uint32_t, Queue> queues;
-  struct pair_hash {
+      data_;
+  absl::node_hash_map<uint32_t, Queue> queues_;
+  struct PairHash {
     template <class T1, class T2> std::size_t operator()(const std::pair<T1, T2>& pair) const {
       return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
     }
   };
-  absl::flat_hash_map<std::pair<std::string, std::string>, uint32_t, pair_hash> queue_tokens;
-  absl::flat_hash_set<uint32_t> queue_token_set;
+  absl::flat_hash_map<std::pair<std::string, std::string>, uint32_t, PairHash> queue_tokens_;
+  absl::flat_hash_set<uint32_t> queue_token_set_;
 };
 
 SharedData global_shared_data;
@@ -290,12 +290,12 @@ WasmResult Buffer::copyFrom(size_t start, size_t length, absl::string_view data)
   return WasmResult::BadArgument;
 }
 
-Context::Context() {}
+Context::Context() = default;
 Context::Context(Wasm* wasm) : ContextBase(wasm) {}
 
-Context::Context(Wasm* wasm, PluginSharedPtr plugin) : ContextBase(wasm, plugin) {}
+Context::Context(Wasm* wasm, const PluginSharedPtr& plugin) : ContextBase(wasm, plugin) {}
 
-Context::Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
+Context::Context(Wasm* wasm, uint32_t root_context_id, const PluginSharedPtr& plugin)
     : ContextBase(wasm, root_context_id, plugin) {}
 
 Wasm* Context::wasm() const { return static_cast<Wasm*>(wasm_); }
@@ -753,7 +753,7 @@ void Context::addHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
   if (!map) {
     return;
   }
-  const Http::LowerCaseString lower_key(std::move(std::string(key)));
+  const Http::LowerCaseString lower_key{std::string(key)};
   map->addCopy(lower_key, std::string(value));
 }
 
@@ -762,7 +762,7 @@ absl::string_view Context::getHeaderMapValue(WasmHeaderMapType type, absl::strin
   if (!map) {
     return "";
   }
-  const Http::LowerCaseString lower_key(std::move(std::string(key)));
+  const Http::LowerCaseString lower_key{std::string(key)};
   auto entry = map->get(lower_key);
   if (!entry) {
     return "";
@@ -805,12 +805,12 @@ void Context::setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs) {
       },
       &keys);
   for (auto& k : keys) {
-    const Http::LowerCaseString lower_key(std::move(k));
+    const Http::LowerCaseString lower_key{k};
     map->remove(lower_key);
   }
   for (auto& p : pairs) {
-    const Http::LowerCaseString lower_key(std::move(std::string(p.first)));
-    map->addCopy(lower_key, std::move(std::string(p.second)));
+    const Http::LowerCaseString lower_key{std::string(p.first)};
+    map->addCopy(lower_key, std::string(p.second));
   }
 }
 
@@ -819,7 +819,7 @@ void Context::removeHeaderMapValue(WasmHeaderMapType type, absl::string_view key
   if (!map) {
     return;
   }
-  const Http::LowerCaseString lower_key(std::move(std::string(key)));
+  const Http::LowerCaseString lower_key{std::string(key)};
   map->remove(lower_key);
 }
 
@@ -829,7 +829,7 @@ void Context::replaceHeaderMapValue(WasmHeaderMapType type, absl::string_view ke
   if (!map) {
     return;
   }
-  const Http::LowerCaseString lower_key(std::move(std::string(key)));
+  const Http::LowerCaseString lower_key{std::string(key)};
   map->setCopy(lower_key, value);
 }
 
@@ -848,8 +848,9 @@ BufferInterface* Context::getBuffer(WasmBufferType type) {
   case WasmBufferType::VmConfiguration:
     return buffer_.set(wasm()->vm_configuration());
   case WasmBufferType::PluginConfiguration:
-    if (plugin_)
+    if (plugin_) {
       return buffer_.set(plugin_->plugin_configuration_);
+    }
     break;
   case WasmBufferType::HttpRequestBody:
     if (buffering_request_body_) {
@@ -928,11 +929,11 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
   }
 
   if (!request_body.empty()) {
-    message->body().reset(new ::Envoy::Buffer::OwnedImpl(request_body.data(), request_body.size()));
+    message->body() = std::make_unique<::Envoy::Buffer::OwnedImpl>(request_body.data(), request_body.size());
     message->headers().setContentLength(request_body.size());
   }
 
-  if (request_trailers.size() > 0) {
+  if (!request_trailers.empty()) {
     message->trailers(buildRequestTrailerMapFromPairs(request_trailers));
   }
 
@@ -1173,7 +1174,7 @@ WasmResult Context::log(uint64_t level, absl::string_view message) {
 // Calls into the WASM code.
 //
 bool Context::validateConfiguration(absl::string_view configuration,
-                                    std::shared_ptr<PluginBase> plugin_base) {
+                                    const std::shared_ptr<PluginBase>& plugin_base) {
   auto plugin = std::static_pointer_cast<Plugin>(plugin_base);
   if (!wasm()->validate_configuration_) {
     return true;
@@ -1470,13 +1471,14 @@ void Context::sendLocalResponse(uint64_t response_code, absl::string_view body_t
 
   auto modify_headers = [additional_headers](Http::HeaderMap& headers) {
     for (auto& p : additional_headers) {
-      const Http::LowerCaseString lower_key(std::move(std::string(p.first)));
+      const Http::LowerCaseString lower_key{std::string(p.first)};
       headers.addCopy(lower_key, std::string(p.second));
     }
   };
-  if (decoder_callbacks_)
+  if (decoder_callbacks_) {
     decoder_callbacks_->sendLocalReply(static_cast<Envoy::Http::Code>(response_code), body_text,
                                        modify_headers, grpc_status, details);
+  }
 }
 
 Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers, bool end_stream) {
@@ -1502,7 +1504,6 @@ Http::FilterDataStatus Context::decodeData(::Envoy::Buffer::Instance& data, bool
     buffering_request_body_ = true;
     break;
   case Http::FilterDataStatus::StopIterationAndWatermark:
-    break;
   case Http::FilterDataStatus::StopIterationNoBuffer:
     break;
   }
@@ -1559,7 +1560,6 @@ Http::FilterDataStatus Context::encodeData(::Envoy::Buffer::Instance& data, bool
     buffering_response_body_ = true;
     break;
   case Http::FilterDataStatus::StopIterationAndWatermark:
-    break;
   case Http::FilterDataStatus::StopIterationNoBuffer:
     break;
   }

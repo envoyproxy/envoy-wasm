@@ -743,8 +743,9 @@ def _proxy_wasm_cpp_sdk():
     _repository_impl(name = "proxy_wasm_cpp_sdk")
 
 def _proxy_wasm_cpp_host():
-    _repository_impl(
+    native.new_local_repository(
         name = "proxy_wasm_cpp_host",
+        path = "/home/jplevyak/work/proxy-wasm-cpp-host",
         build_file = "@envoy//bazel/external:proxy_wasm_cpp_host.BUILD",
     )
 

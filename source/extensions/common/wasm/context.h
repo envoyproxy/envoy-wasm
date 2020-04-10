@@ -36,7 +36,6 @@ using proxy_wasm::WasmBufferType;
 using proxy_wasm::WasmHandleBase;
 using proxy_wasm::WasmHeaderMapType;
 using proxy_wasm::WasmResult;
-using proxy_wasm::WasmVm;
 
 using GrpcService = envoy::config::core::v3::GrpcService;
 
@@ -52,7 +51,7 @@ public:
 
 class Buffer : public proxy_wasm::BufferInterface {
 public:
-  Buffer() {}
+  Buffer() = default;
 
   Buffer* set(absl::string_view data) {
     data_ = data;
@@ -107,9 +106,9 @@ class Context : public proxy_wasm::ContextBase,
 public:
   Context();                                                             // Testing.
   Context(Wasm* wasm);                                                   // Vm Context.
-  Context(Wasm* wasm, PluginSharedPtr plugin);                           // Root Context.
-  Context(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin); // Stream context.
-  ~Context();
+  Context(Wasm* wasm, const PluginSharedPtr& plugin);                           // Root Context.
+  Context(Wasm* wasm, uint32_t root_context_id, const PluginSharedPtr& plugin); // Stream context.
+  ~Context() override;
 
   Wasm* wasm() const;
   Plugin* plugin() const;
@@ -137,7 +136,7 @@ public:
   // VM level downcalls into the WASM code on Context(id == 0).
   //
   virtual bool validateConfiguration(absl::string_view configuration,
-                                     std::shared_ptr<PluginBase> plugin); // deprecated
+                                     const std::shared_ptr<PluginBase>& plugin); // deprecated
 
   // AccessLog::Instance
   void log(const Http::RequestHeaderMap* request_headers,
@@ -257,16 +256,16 @@ public:
 
   WasmResult grpcClose(uint32_t token) override;
   WasmResult grpcCancel(uint32_t token) override;
-  virtual WasmResult grpcSend(uint32_t token, absl::string_view message, bool end_stream) override;
+  WasmResult grpcSend(uint32_t token, absl::string_view message, bool end_stream) override;
 
   // CEL evaluation
-  virtual std::vector<const google::api::expr::runtime::CelFunction*>
+  std::vector<const google::api::expr::runtime::CelFunction*>
   FindFunctionOverloads(absl::string_view) const override {
     return {};
   }
-  virtual absl::optional<google::api::expr::runtime::CelValue>
+  absl::optional<google::api::expr::runtime::CelValue>
   FindValue(absl::string_view name, Protobuf::Arena* arena) const override;
-  virtual bool IsPathUnknown(absl::string_view) const override { return false; }
+  bool IsPathUnknown(absl::string_view) const override { return false; }
 
   // Foreign function state
   virtual void setForeignData(absl::string_view data_name, std::unique_ptr<StorageObject> data) {
@@ -293,8 +292,9 @@ protected:
   virtual absl::string_view getConfiguration();
   virtual WasmResult setTickPeriod(std::chrono::milliseconds tick_period);
   virtual void clearRouteCache() {
-    if (decoder_callbacks_)
+    if (decoder_callbacks_) {
       decoder_callbacks_->clearRouteCache();
+    }
   }
 
   struct AsyncClientHandler : public Http::AsyncClient::Callbacks {

@@ -1,6 +1,6 @@
 #include "extensions/common/wasm/wasm.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 #include <algorithm>
 #include <cctype>
@@ -52,7 +52,7 @@ inline Wasm* getWasm(WasmHandleSharedPtr& base_wasm_handle) {
 } // namespace
 
 Wasm::Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
-           absl::string_view vm_key, Stats::ScopeSharedPtr scope,
+           absl::string_view vm_key, const Stats::ScopeSharedPtr& scope,
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher)
     : WasmBase(createWasmVm(runtime, scope), vm_id, vm_configuration, vm_key), scope_(scope),
       cluster_manager_(cluster_manager), dispatcher_(dispatcher),
@@ -123,12 +123,13 @@ Wasm::~Wasm() {
 
 proxy_wasm::CallOnThreadFunction Wasm::callOnThreadFunction() {
   auto& dispatcher = dispatcher_;
-  return [&dispatcher](std::function<void()> f) { return dispatcher.post(f); };
+  return [&dispatcher](const std::function<void()>& f) { return dispatcher.post(f); };
 }
 
 ContextBase* Wasm::createContext(std::shared_ptr<PluginBase> plugin) {
-  if (plugin)
+  if (plugin) {
     return new Context(this, std::static_pointer_cast<Plugin>(plugin));
+  }
   return new Context(this);
 }
 
@@ -140,7 +141,7 @@ void Wasm::log(absl::string_view root_id, const Http::RequestHeaderMap* request_
   context->log(request_headers, response_headers, response_trailers, stream_info);
 }
 
-static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin,
+static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                                Stats::ScopeSharedPtr scope,
                                Upstream::ClusterManager& cluster_manager,
                                Init::Manager& init_manager, Event::Dispatcher& dispatcher,
@@ -188,18 +189,19 @@ static void createWasmInternal(const VmConfig& vm_config, PluginSharedPtr plugin
   }
 }
 
-void createWasm(const VmConfig& vm_config, PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
-                Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
-                Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random, Api::Api& api,
-                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
-                CreateWasmCallback&& cb) {
+void createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
+    const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
+    Init::Manager& init_manager, Event::Dispatcher& dispatcher,
+    Runtime::RandomGenerator& random, Api::Api& api,
+    Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+    CreateWasmCallback&& cb) {
   createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, random,
                      api, nullptr /* root_context_for_testing */, remote_data_provider,
                      std::move(cb));
 }
 
-void createWasmForTesting(const VmConfig& vm_config, PluginSharedPtr plugin,
-                          Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+void createWasmForTesting(const VmConfig& vm_config, const PluginSharedPtr& plugin,
+                          const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                           Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                           Runtime::RandomGenerator& random, Api::Api& api,
                           std::unique_ptr<Context> root_context_for_testing,
@@ -209,12 +211,12 @@ void createWasmForTesting(const VmConfig& vm_config, PluginSharedPtr plugin,
                      api, std::move(root_context_for_testing), remote_data_provider, std::move(cb));
 }
 
-WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandleSharedPtr base_wasm,
-                                               PluginSharedPtr plugin,
+WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm,
+                                               const PluginSharedPtr& plugin,
                                                Event::Dispatcher& dispatcher) {
   auto wasm_handle = proxy_wasm::getOrCreateThreadLocalWasm(
       std::static_pointer_cast<WasmHandle>(base_wasm), plugin,
-      [&dispatcher](WasmHandleBaseSharedPtr base_wasm) -> WasmHandleBaseSharedPtr {
+      [&dispatcher](const WasmHandleBaseSharedPtr& base_wasm) -> WasmHandleBaseSharedPtr {
         return std::make_shared<WasmHandle>(
             std::make_shared<Wasm>(std::static_pointer_cast<WasmHandle>(base_wasm), dispatcher));
       });

@@ -22,7 +22,7 @@ template <typename T> WasmForeignFunction createFromClass() {
 RegisterForeignFunction registerCompressForeignFunction(
     "compress",
     [](WasmBase&, absl::string_view arguments,
-       std::function<void*(size_t size)> alloc_result) -> WasmResult {
+       const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
       unsigned long dest_len = compressBound(arguments.size());
       std::unique_ptr<unsigned char[]> b(new unsigned char[dest_len]);
       if (compress(b.get(), &dest_len, reinterpret_cast<const unsigned char*>(arguments.data()),
@@ -37,9 +37,9 @@ RegisterForeignFunction registerCompressForeignFunction(
 RegisterForeignFunction registerUncompressForeignFunction(
     "uncompress",
     [](WasmBase&, absl::string_view arguments,
-       std::function<void*(size_t size)> alloc_result) -> WasmResult {
+       const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
       unsigned long dest_len = arguments.size() * 2 + 2; // output estimate.
-      while (1) {
+      while (true) {
         std::unique_ptr<unsigned char[]> b(new unsigned char[dest_len]);
         auto r =
             uncompress(b.get(), &dest_len, reinterpret_cast<const unsigned char*>(arguments.data()),
@@ -112,7 +112,7 @@ class CreateExpressionFactory : public ExpressionFactory {
 public:
   WasmForeignFunction create(std::shared_ptr<CreateExpressionFactory> self) const {
     WasmForeignFunction f = [self](WasmBase&, absl::string_view expr,
-                                   std::function<void*(size_t size)> alloc_result) -> WasmResult {
+                                   const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
       auto parse_status = google::api::expr::parser::Parse(std::string(expr));
       if (!parse_status.ok()) {
         ENVOY_LOG(info, "expr_create parse error: {}", parse_status.status().message());
@@ -148,7 +148,7 @@ class EvaluateExpressionFactory : public ExpressionFactory {
 public:
   WasmForeignFunction create(std::shared_ptr<EvaluateExpressionFactory> self) const {
     WasmForeignFunction f = [self](WasmBase&, absl::string_view argument,
-                                   std::function<void*(size_t size)> alloc_result) -> WasmResult {
+                                   const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
       auto& expr_context = getOrCreateContext(proxy_wasm::current_context_->root_context());
       if (argument.size() != sizeof(uint32_t)) {
         return WasmResult::BadArgument;
@@ -185,7 +185,7 @@ class DeleteExpressionFactory : public ExpressionFactory {
 public:
   WasmForeignFunction create(std::shared_ptr<DeleteExpressionFactory> self) const {
     WasmForeignFunction f = [self](WasmBase&, absl::string_view argument,
-                                   std::function<void*(size_t size)>) -> WasmResult {
+                                   const std::function<void*(size_t size)>&) -> WasmResult {
       auto& expr_context = getOrCreateContext(proxy_wasm::current_context_->root_context());
       if (argument.size() != sizeof(uint32_t)) {
         return WasmResult::BadArgument;
