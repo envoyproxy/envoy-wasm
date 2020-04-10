@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstdio>
 #include <limits>
 #include <memory>
 #include <string>
