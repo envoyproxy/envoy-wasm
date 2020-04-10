@@ -104,8 +104,8 @@ class Context : public proxy_wasm::ContextBase,
                 public google::api::expr::runtime::BaseActivation,
                 public std::enable_shared_from_this<Context> {
 public:
-  Context();                                                             // Testing.
-  Context(Wasm* wasm);                                                   // Vm Context.
+  Context();                                                                    // Testing.
+  Context(Wasm* wasm);                                                          // Vm Context.
   Context(Wasm* wasm, const PluginSharedPtr& plugin);                           // Root Context.
   Context(Wasm* wasm, uint32_t root_context_id, const PluginSharedPtr& plugin); // Stream context.
   ~Context() override;

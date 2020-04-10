@@ -111,8 +111,9 @@ protected:
 class CreateExpressionFactory : public ExpressionFactory {
 public:
   WasmForeignFunction create(std::shared_ptr<CreateExpressionFactory> self) const {
-    WasmForeignFunction f = [self](WasmBase&, absl::string_view expr,
-                                   const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
+    WasmForeignFunction f =
+        [self](WasmBase&, absl::string_view expr,
+               const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
       auto parse_status = google::api::expr::parser::Parse(std::string(expr));
       if (!parse_status.ok()) {
         ENVOY_LOG(info, "expr_create parse error: {}", parse_status.status().message());
@@ -147,8 +148,9 @@ RegisterForeignFunction
 class EvaluateExpressionFactory : public ExpressionFactory {
 public:
   WasmForeignFunction create(std::shared_ptr<EvaluateExpressionFactory> self) const {
-    WasmForeignFunction f = [self](WasmBase&, absl::string_view argument,
-                                   const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
+    WasmForeignFunction f =
+        [self](WasmBase&, absl::string_view argument,
+               const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
       auto& expr_context = getOrCreateContext(proxy_wasm::current_context_->root_context());
       if (argument.size() != sizeof(uint32_t)) {
         return WasmResult::BadArgument;

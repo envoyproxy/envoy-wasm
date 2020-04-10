@@ -1,7 +1,6 @@
-#include <cstdio>
-
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <limits>
 #include <memory>
 #include <string>
@@ -929,7 +928,8 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
   }
 
   if (!request_body.empty()) {
-    message->body() = std::make_unique<::Envoy::Buffer::OwnedImpl>(request_body.data(), request_body.size());
+    message->body() =
+        std::make_unique<::Envoy::Buffer::OwnedImpl>(request_body.data(), request_body.size());
     message->headers().setContentLength(request_body.size());
   }
 

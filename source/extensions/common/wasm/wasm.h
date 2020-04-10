@@ -112,10 +112,10 @@ void createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                 CreateWasmCallback&& cb);
 
 void createWasmForTesting(const VmConfig& vm_config, const PluginSharedPtr& plugin,
-                          const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
-                          Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                          Runtime::RandomGenerator& random, Api::Api& api,
-                          std::unique_ptr<Context> root_context_for_testing,
+                          const Stats::ScopeSharedPtr& scope,
+                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                          Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random,
+                          Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                           CreateWasmCallback&& cb);
 

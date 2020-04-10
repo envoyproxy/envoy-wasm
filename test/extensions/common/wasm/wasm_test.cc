@@ -14,7 +14,6 @@
 #include "absl/types/optional.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
 #include "openssl/bytestring.h"
 #include "openssl/hmac.h"
 #include "openssl/sha.h"

@@ -1,9 +1,8 @@
 #include "extensions/common/wasm/wasm.h"
 
-#include <cstdio>
-
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <limits>
 #include <memory>
 #include <string>
@@ -190,21 +189,21 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
 }
 
 void createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
-    const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
-    Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-    Runtime::RandomGenerator& random, Api::Api& api,
-    Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
-    CreateWasmCallback&& cb) {
+                const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
+                Init::Manager& init_manager, Event::Dispatcher& dispatcher,
+                Runtime::RandomGenerator& random, Api::Api& api,
+                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                CreateWasmCallback&& cb) {
   createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, random,
                      api, nullptr /* root_context_for_testing */, remote_data_provider,
                      std::move(cb));
 }
 
 void createWasmForTesting(const VmConfig& vm_config, const PluginSharedPtr& plugin,
-                          const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
-                          Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                          Runtime::RandomGenerator& random, Api::Api& api,
-                          std::unique_ptr<Context> root_context_for_testing,
+                          const Stats::ScopeSharedPtr& scope,
+                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                          Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random,
+                          Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                           CreateWasmCallback&& cb) {
   createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, random,
