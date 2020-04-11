@@ -1,5 +1,6 @@
 #include "extensions/common/wasm/wasm_vm.h"
 
+#include <algorithm>
 #include <memory>
 
 #include "extensions/common/wasm/well_known_names.h"
@@ -21,11 +22,11 @@ WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& s
     throw WasmException("Failed to create WASM VM with unspecified runtime.");
   } else if (runtime == WasmRuntimeNames::get().Null) {
     auto wasm = proxy_wasm::createNullVm();
-    wasm->integration().reset(new EnvoyWasmVmIntegration(scope, runtime, "null"));
+    wasm->integration() = std::make_unique<EnvoyWasmVmIntegration>(scope, runtime, "null");
     return wasm;
   } else if (runtime == WasmRuntimeNames::get().V8) {
     auto wasm = proxy_wasm::createV8Vm();
-    wasm->integration().reset(new EnvoyWasmVmIntegration(scope, runtime, "v8"));
+    wasm->integration() = std::make_unique<EnvoyWasmVmIntegration>(scope, runtime, "v8");
     return wasm;
   } else {
     throw WasmException(fmt::format(
