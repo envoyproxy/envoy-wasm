@@ -21,6 +21,7 @@ envoy_cc_library(
         "//source/common/common:assert_lib",
         "//source/common/common:c_smart_ptr_lib",
         "//source/common/protobuf",
+        "//source/extensions/common/wasm:declare_property_cc_proto",
         "//source/extensions/common/wasm:wasm_hdr",
         "//source/extensions/common/wasm:well_known_names",
         "//source/extensions/common/wasm/null:null_plugin_lib",
