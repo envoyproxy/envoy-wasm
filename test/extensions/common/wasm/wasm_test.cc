@@ -496,6 +496,8 @@ TEST_P(WasmCommonTest, RemoteCode) {
   vm_config.mutable_code()->mutable_remote()->mutable_http_uri()->mutable_timeout()->set_seconds(5);
   WasmHandleSharedPtr wasm_handle;
   auto root_context = new Extensions::Common::Wasm::TestContext();
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
 
   EXPECT_CALL(*root_context, scriptLog_(spdlog::level::info, Eq("on_vm_start vm_cache")));
   EXPECT_CALL(*root_context, scriptLog_(spdlog::level::info, Eq("on_done logging")));
@@ -511,7 +513,7 @@ TEST_P(WasmCommonTest, RemoteCode) {
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
             response->body() = std::make_unique<Buffer::OwnedImpl>(code);
-            callbacks.onSuccess(std::move(response));
+            callbacks.onSuccess(request, std::move(response));
             return nullptr;
           }));
 
@@ -581,6 +583,8 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
       ->set_value(num_retries);
   WasmHandleSharedPtr wasm_handle;
   auto root_context = new Extensions::Common::Wasm::TestContext();
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
 
   EXPECT_CALL(*root_context, scriptLog_(spdlog::level::info, Eq("on_vm_start vm_cache")));
   EXPECT_CALL(*root_context, scriptLog_(spdlog::level::info, Eq("on_done logging")));
@@ -596,13 +600,13 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
         if (retry-- == 0) {
           Http::ResponseMessagePtr response(new Http::ResponseMessageImpl(
               Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "503"}}}));
-          callbacks.onSuccess(std::move(response));
+          callbacks.onSuccess(request, std::move(response));
           return nullptr;
         } else {
           Http::ResponseMessagePtr response(new Http::ResponseMessageImpl(
               Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
           response->body() = std::make_unique<Buffer::OwnedImpl>(code);
-          callbacks.onSuccess(std::move(response));
+          callbacks.onSuccess(request, std::move(response));
           return nullptr;
         }
       }));
