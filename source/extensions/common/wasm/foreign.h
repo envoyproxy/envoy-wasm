@@ -17,7 +17,7 @@ using proxy_wasm::WasmForeignFunction;
  */
 class ForeignFunctionFactory : public Config::UntypedFactory {
 public:
-  virtual ~ForeignFunctionFactory() = default;
+  ~ForeignFunctionFactory() override = default;
 
   /**
    * Category of the factory.

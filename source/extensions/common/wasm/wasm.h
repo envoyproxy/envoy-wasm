@@ -45,10 +45,10 @@ using VmConfig = envoy::extensions::wasm::v3::VmConfig;
 class Wasm : public WasmBase, Logger::Loggable<Logger::Id::wasm> {
 public:
   Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
-       absl::string_view vm_key, Stats::ScopeSharedPtr scope,
+       absl::string_view vm_key, const Stats::ScopeSharedPtr& scope,
        Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher);
   Wasm(std::shared_ptr<WasmHandle> other, Event::Dispatcher& dispatcher);
-  virtual ~Wasm();
+  ~Wasm() override;
 
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
   Event::Dispatcher& dispatcher() { return dispatcher_; }
@@ -92,7 +92,7 @@ class WasmHandle : public WasmHandleBase,
                    public Envoy::Server::Wasm,
                    public ThreadLocal::ThreadLocalObject {
 public:
-  explicit WasmHandle(WasmSharedPtr wasm)
+  explicit WasmHandle(const WasmSharedPtr& wasm)
       : WasmHandleBase(std::static_pointer_cast<WasmBase>(wasm)), wasm_(wasm) {}
 
   WasmSharedPtr& wasm() { return wasm_; }
@@ -104,23 +104,23 @@ using WasmHandleSharedPtr = std::shared_ptr<WasmHandle>;
 
 using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 
-void createWasm(const VmConfig& vm_config, PluginSharedPtr plugin_config,
-                Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+void createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
+                const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                 Runtime::RandomGenerator& random, Api::Api& api,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb);
 
-void createWasmForTesting(const VmConfig& vm_config, PluginSharedPtr plugin,
-                          Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
-                          Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                          Runtime::RandomGenerator& random, Api::Api& api,
-                          std::unique_ptr<Context> root_context_for_testing,
+void createWasmForTesting(const VmConfig& vm_config, const PluginSharedPtr& plugin,
+                          const Stats::ScopeSharedPtr& scope,
+                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                          Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random,
+                          Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                           CreateWasmCallback&& cb);
 
-WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandleSharedPtr base_wasm,
-                                               PluginSharedPtr plugin,
+WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm,
+                                               const PluginSharedPtr& plugin,
                                                Event::Dispatcher& dispatcher);
 
 } // namespace Wasm
