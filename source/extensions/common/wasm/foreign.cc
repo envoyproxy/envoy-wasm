@@ -207,12 +207,11 @@ RegisterForeignFunction
 
 // TODO(kyessenov) The factories should be separated into individual compilaton units.
 // TODO(kyessenov) Leverage the host argument marshaller instead of the protobuf argument list.
-class DeclarePropertyFactory : public ForeignFunctionFactory {
+class DeclarePropertyFactory {
 public:
-  std::string name() const override { return "declare_property"; }
-  WasmForeignFunction create() const override {
-    WasmForeignFunction f = [](Wasm&, absl::string_view arguments,
-                               std::function<void*(size_t size)>) -> WasmResult {
+  WasmForeignFunction create(std::shared_ptr<DeclarePropertyFactory> self) const {
+    WasmForeignFunction f = [self](WasmBase&, absl::string_view arguments,
+                                   const std::function<void*(size_t size)>&) -> WasmResult {
       envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
       if (args.ParseFromArray(arguments.data(), arguments.size())) {
         WasmType type = WasmType::Bytes;
@@ -248,7 +247,8 @@ public:
           // do nothing
           break;
         }
-        return current_context_->declareProperty(
+        auto context = static_cast<Context*>(proxy_wasm::current_context_);
+        return context->declareProperty(
             args.name(),
             std::make_unique<const WasmStatePrototype>(args.readonly(), type, args.schema(), span));
       }
@@ -257,7 +257,9 @@ public:
     return f;
   }
 };
-REGISTER_FACTORY(DeclarePropertyFactory, ForeignFunctionFactory);
+RegisterForeignFunction
+    registerDeclarePropertyForeignFunction("declare_property",
+                                           createFromClass<DeclarePropertyFactory>());
 
 } // namespace Wasm
 } // namespace Common

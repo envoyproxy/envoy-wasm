@@ -192,8 +192,8 @@ public:
   std::pair<uint32_t, absl::string_view> getStatus() override;
 
   // State accessors
-  WasmResult getProperty(absl::string_view path, std::string* result);
-  WasmResult setProperty(absl::string_view path, absl::string_view value);
+  WasmResult getProperty(absl::string_view path, std::string* result) override;
+  WasmResult setProperty(absl::string_view path, absl::string_view value) override;
   WasmResult declareProperty(absl::string_view path,
                              std::unique_ptr<const WasmStatePrototype> state_prototype);
 
