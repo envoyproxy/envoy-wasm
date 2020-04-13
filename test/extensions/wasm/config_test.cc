@@ -15,6 +15,7 @@
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace Envoy {
@@ -42,23 +43,20 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/start_cpp.wasm"));
   config.set_singleton(true);
-  Upstream::MockClusterManager cluster_manager;
-  Init::ManagerImpl init_manager{"init_manager"};
+  NiceMock<Server::MockInstance> server;
   Init::ExpectableWatcherImpl init_watcher;
-  Event::MockDispatcher dispatcher;
-  ThreadLocal::MockInstance tls;
-  NiceMock<Runtime::MockRandomGenerator> random;
   Stats::IsolatedStoreImpl stats_store;
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, scope, random, local_info);
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  EXPECT_CALL(server, api()).WillRepeatedly(testing::ReturnRef(*api));
+  Init::ManagerImpl init_manager{"init_manager"};
+  EXPECT_CALL(server, initManager()).WillRepeatedly(testing::ReturnRef(init_manager));
+  Server::Configuration::WasmFactoryContextImpl context(server, scope);
   Server::WasmServicePtr wasmptr = nullptr;
   factory->createWasm(config, context,
                       [&wasmptr](Server::WasmServicePtr wasm) { wasmptr = std::move(wasm); });
   EXPECT_CALL(init_watcher, ready());
-  init_manager.initialize(init_watcher);
+  server.initManager().initialize(init_watcher);
   EXPECT_NE(wasmptr, nullptr);
   wasmptr.reset();
 }
@@ -73,26 +71,23 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/start_cpp.wasm"));
-  Upstream::MockClusterManager cluster_manager;
-  Init::ManagerImpl init_manager{"init_manager"};
+  NiceMock<Server::MockInstance> server;
   Init::ExpectableWatcherImpl init_watcher;
-  Event::MockDispatcher dispatcher;
-  testing::NiceMock<ThreadLocal::MockInstance> tls;
   Stats::IsolatedStoreImpl stats_store;
-  NiceMock<Runtime::MockRandomGenerator> random;
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, scope, random, local_info);
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  EXPECT_CALL(server, api()).WillRepeatedly(testing::ReturnRef(*api));
+  Init::ManagerImpl init_manager{"init_manager"};
+  EXPECT_CALL(server, initManager()).WillRepeatedly(testing::ReturnRef(init_manager));
+  Server::Configuration::WasmFactoryContextImpl context(server, scope);
   Server::WasmServicePtr wasmptr = nullptr;
   factory->createWasm(config, context,
                       [&wasmptr](Server::WasmServicePtr wasm) { wasmptr = std::move(wasm); });
   EXPECT_CALL(init_watcher, ready());
-  init_manager.initialize(init_watcher);
+  server.initManager().initialize(init_watcher);
   EXPECT_NE(wasmptr, nullptr);
   wasmptr.reset();
-  tls.shutdownThread();
+  server.threadLocal().shutdownThread();
 }
 
 TEST_P(WasmFactoryTest, MissingImport) {
@@ -106,18 +101,12 @@ TEST_P(WasmFactoryTest, MissingImport) {
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/missing_cpp.wasm"));
   config.set_singleton(true);
-  Upstream::MockClusterManager cluster_manager;
-  Init::ManagerImpl init_manager{"init_manager"};
-  Init::ExpectableWatcherImpl init_watcher;
-  Event::MockDispatcher dispatcher;
-  ThreadLocal::MockInstance tls;
+  NiceMock<Server::MockInstance> server;
   Stats::IsolatedStoreImpl stats_store;
-  NiceMock<Runtime::MockRandomGenerator> random;
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, scope, random, local_info);
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  EXPECT_CALL(server, api()).WillRepeatedly(testing::ReturnRef(*api));
+  Server::Configuration::WasmFactoryContextImpl context(server, scope);
   EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context, [](Server::WasmServicePtr) {});
                           , Extensions::Common::Wasm::WasmException,
                           "Failed to load WASM module due to a missing import: env.missing");
@@ -133,18 +122,12 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/start_cpp.wasm"));
   config.set_singleton(true);
-  Upstream::MockClusterManager cluster_manager;
-  Init::ManagerImpl init_manager{"init_manager"};
-  Init::ExpectableWatcherImpl init_watcher;
-  Event::MockDispatcher dispatcher;
-  ThreadLocal::MockInstance tls;
+  NiceMock<Server::MockInstance> server;
   Stats::IsolatedStoreImpl stats_store;
-  NiceMock<Runtime::MockRandomGenerator> random;
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, scope, random, local_info);
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  EXPECT_CALL(server, api()).WillRepeatedly(testing::ReturnRef(*api));
+  Server::Configuration::WasmFactoryContextImpl context(server, scope);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
                             Extensions::Common::Wasm::WasmException,
                             "Failed to create WASM VM with unspecified runtime.");
@@ -160,18 +143,12 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/wasm/test_data/start_cpp.wasm"));
   config.set_singleton(true);
-  Upstream::MockClusterManager cluster_manager;
-  Init::ManagerImpl init_manager{"init_manager"};
-  Init::ExpectableWatcherImpl init_watcher;
-  Event::MockDispatcher dispatcher;
-  ThreadLocal::MockInstance tls;
+  NiceMock<Server::MockInstance> server;
   Stats::IsolatedStoreImpl stats_store;
-  NiceMock<Runtime::MockRandomGenerator> random;
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  Server::Configuration::WasmFactoryContextImpl context(cluster_manager, init_manager, dispatcher,
-                                                        tls, *api, scope, random, local_info);
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  EXPECT_CALL(server, api()).WillRepeatedly(testing::ReturnRef(*api));
+  Server::Configuration::WasmFactoryContextImpl context(server, scope);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
                             Extensions::Common::Wasm::WasmException,
                             "Failed to create WASM VM using envoy.wasm.runtime.invalid runtime. "

@@ -69,6 +69,7 @@ envoy_cc_library(
         ":wasm_interoperation_lib",
         "//external:abseil_base",
         "//external:abseil_node_hash_map",
+        "//include/envoy/server:lifecycle_notifier_interface",
         "//source/common/buffer:buffer_lib",
         "//source/common/common:enum_to_int",
         "//source/common/http:message_lib",

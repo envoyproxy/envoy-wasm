@@ -23,7 +23,7 @@ FilterConfig::FilterConfig(const envoy::extensions::filters::http::wasm::v3::Was
       &context.listenerMetadata());
 
   auto plugin = plugin_;
-  auto callback = [plugin, this](Common::Wasm::WasmHandleSharedPtr base_wasm) {
+  auto callback = [plugin, this](const Common::Wasm::WasmHandleSharedPtr& base_wasm) {
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
     tls_slot_->set([base_wasm, plugin](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
@@ -33,8 +33,8 @@ FilterConfig::FilterConfig(const envoy::extensions::filters::http::wasm::v3::Was
 
   Common::Wasm::createWasm(config.config().vm_config(), plugin_, context.scope().createScope(""),
                            context.clusterManager(), context.initManager(), context.dispatcher(),
-                           context.random(), context.api(), remote_data_provider_,
-                           std::move(callback));
+                           context.random(), context.api(), context.lifecycleNotifier(),
+                           remote_data_provider_, std::move(callback));
 }
 
 } // namespace Wasm

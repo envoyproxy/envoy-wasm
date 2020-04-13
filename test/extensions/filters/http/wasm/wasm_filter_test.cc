@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include "envoy/server/lifecycle_notifier.h"
+
 #include "common/buffer/buffer_impl.h"
 #include "common/http/message_impl.h"
 #include "common/stats/isolated_store_impl.h"
@@ -115,9 +117,9 @@ public:
         &listener_metadata_);
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
-        dispatcher_, random_, *api,
+        dispatcher_, random_, *api, lifecycle_notifier_, remote_data_provider_,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
-        remote_data_provider_, [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; });
+        [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; });
   }
 
   void setupNullConfig(const std::string& name) {
@@ -140,9 +142,9 @@ public:
         &listener_metadata_);
     Extensions::Common::Wasm::createWasmForTesting(
         proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
-        dispatcher_, random_, *api,
+        dispatcher_, random_, *api, lifecycle_notifier_, remote_data_provider_,
         std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
-        remote_data_provider_, [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; });
+        [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; });
   }
 
   void setupFilter(const std::string root_id = "") {
@@ -168,6 +170,7 @@ public:
   NiceMock<Http::MockStreamEncoderFilterCallbacks> encoder_callbacks_;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> request_stream_info_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
+  NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier_;
   envoy::config::core::v3::Metadata listener_metadata_;
   TestRoot* root_context_ = nullptr;
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
