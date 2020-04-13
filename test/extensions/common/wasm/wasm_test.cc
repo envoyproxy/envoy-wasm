@@ -1,8 +1,9 @@
+#include "envoy/server/lifecycle_notifier.h"
+
 #include "common/common/hex.h"
 #include "common/event/dispatcher_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
-#include "envoy/server/lifecycle_notifier.h"
 #include "extensions/common/wasm/wasm.h"
 
 #include "test/mocks/server/mocks.h"

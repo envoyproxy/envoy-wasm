@@ -1,11 +1,12 @@
 #include <stdio.h>
 
+#include "envoy/server/lifecycle_notifier.h"
+
 #include "common/buffer/buffer_impl.h"
 #include "common/http/message_impl.h"
 #include "common/stats/isolated_store_impl.h"
 #include "common/stream_info/stream_info_impl.h"
 
-#include "envoy/server/lifecycle_notifier.h"
 #include "extensions/common/wasm/wasm.h"
 #include "extensions/common/wasm/wasm_state.h"
 #include "extensions/filters/http/wasm/wasm_filter.h"
