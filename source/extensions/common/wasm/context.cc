@@ -1590,6 +1590,7 @@ void Context::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallback
 }
 
 void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&& response) {
+  // TODO: convert this into a function in proxy-wasm-cpp-host and use here.
   if (proxy_wasm::current_context_ != nullptr) {
     // We are in a reentrant call, so defer.
     wasm()->addAfterVmCallAction([this, token, response = response.release()] {
