@@ -9,13 +9,15 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
+using proxy_wasm::WasmForeignFunction;
+
 /**
  * Foreign functtions for Wasm extensions should implement this factory and register via
  * Registry::registerFactory or the convenience class RegisterFactory.
  */
 class ForeignFunctionFactory : public Config::UntypedFactory {
 public:
-  virtual ~ForeignFunctionFactory() = default;
+  ~ForeignFunctionFactory() override = default;
 
   /**
    * Category of the factory.

@@ -15,7 +15,7 @@ envoy_cc_test(
         "//test/extensions/common/wasm/test_data:modules",
     ],
     deps = [
-        "//source/extensions/common/wasm:wasm_vm_lib",
+        "//source/extensions/common/wasm:wasm_lib",
         "//test/test_common:environment_lib",
         "//test/test_common:utility_lib",
     ],

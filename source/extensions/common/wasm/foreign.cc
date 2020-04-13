@@ -9,17 +9,22 @@
 #include "parser/parser.h"
 #include "zlib.h"
 
+using proxy_wasm::RegisterForeignFunction;
+
 namespace Envoy {
 namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-class CompressFactory : public ForeignFunctionFactory {
-public:
-  std::string name() const override { return "compress"; }
-  WasmForeignFunction create() const override {
-    WasmForeignFunction f = [](Wasm&, absl::string_view arguments,
-                               std::function<void*(size_t size)> alloc_result) -> WasmResult {
+template <typename T> WasmForeignFunction createFromClass() {
+  auto c = std::make_shared<T>();
+  return c->create(c);
+}
+
+RegisterForeignFunction registerCompressForeignFunction(
+    "compress",
+    [](WasmBase&, absl::string_view arguments,
+       const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
       unsigned long dest_len = compressBound(arguments.size());
       std::unique_ptr<unsigned char[]> b(new unsigned char[dest_len]);
       if (compress(b.get(), &dest_len, reinterpret_cast<const unsigned char*>(arguments.data()),
@@ -29,20 +34,14 @@ public:
       auto result = alloc_result(dest_len);
       memcpy(result, b.get(), dest_len);
       return WasmResult::Ok;
-    };
-    return f;
-  }
-};
-REGISTER_FACTORY(CompressFactory, ForeignFunctionFactory);
+    });
 
-class UncompressFactory : public ForeignFunctionFactory {
-public:
-  std::string name() const override { return "uncompress"; }
-  WasmForeignFunction create() const override {
-    WasmForeignFunction f = [](Wasm&, absl::string_view arguments,
-                               std::function<void*(size_t size)> alloc_result) -> WasmResult {
+RegisterForeignFunction registerUncompressForeignFunction(
+    "uncompress",
+    [](WasmBase&, absl::string_view arguments,
+       const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
       unsigned long dest_len = arguments.size() * 2 + 2; // output estimate.
-      while (1) {
+      while (true) {
         std::unique_ptr<unsigned char[]> b(new unsigned char[dest_len]);
         auto r =
             uncompress(b.get(), &dest_len, reinterpret_cast<const unsigned char*>(arguments.data()),
@@ -57,11 +56,7 @@ public:
         }
         dest_len = dest_len * 2;
       }
-    };
-    return f;
-  }
-};
-REGISTER_FACTORY(UncompressFactory, ForeignFunctionFactory);
+    });
 
 class ExpressionFactory : public Logger::Loggable<Logger::Id::wasm> {
 protected:
@@ -95,7 +90,8 @@ protected:
     absl::flat_hash_map<uint32_t, ExpressionData> expr_;
   };
 
-  static ExpressionContext& getOrCreateContext(Context* context) {
+  static ExpressionContext& getOrCreateContext(ContextBase* context_base) {
+    auto context = static_cast<Context*>(context_base);
     std::string data_name = "cel";
     auto expr_context = context->getForeignData<ExpressionContext>(data_name);
     if (!expr_context) {
@@ -114,19 +110,19 @@ protected:
   }
 };
 
-class CreateExpressionFactory : public ExpressionFactory, public ForeignFunctionFactory {
+class CreateExpressionFactory : public ExpressionFactory {
 public:
-  std::string name() const override { return "expr_create"; }
-  WasmForeignFunction create() const override {
-    WasmForeignFunction f = [](Wasm&, absl::string_view expr,
-                               std::function<void*(size_t size)> alloc_result) -> WasmResult {
+  WasmForeignFunction create(std::shared_ptr<CreateExpressionFactory> self) const {
+    WasmForeignFunction f =
+        [self](WasmBase&, absl::string_view expr,
+               const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
       auto parse_status = google::api::expr::parser::Parse(std::string(expr));
       if (!parse_status.ok()) {
         ENVOY_LOG(info, "expr_create parse error: {}", parse_status.status().message());
         return WasmResult::BadArgument;
       }
 
-      auto& expr_context = getOrCreateContext(current_context_->rootContext());
+      auto& expr_context = getOrCreateContext(proxy_wasm::current_context_->root_context());
       auto token = expr_context.createToken();
       auto& handler = expr_context.getExpression(token);
 
@@ -147,15 +143,17 @@ public:
     return f;
   }
 };
-REGISTER_FACTORY(CreateExpressionFactory, ForeignFunctionFactory);
+RegisterForeignFunction
+    registerCreateExpressionForeignFunction("expr_create",
+                                            createFromClass<CreateExpressionFactory>());
 
-class EvaluateExpressionFactory : public ExpressionFactory, public ForeignFunctionFactory {
+class EvaluateExpressionFactory : public ExpressionFactory {
 public:
-  std::string name() const override { return "expr_evaluate"; }
-  WasmForeignFunction create() const override {
-    WasmForeignFunction f = [](Wasm&, absl::string_view argument,
-                               std::function<void*(size_t size)> alloc_result) -> WasmResult {
-      auto& expr_context = getOrCreateContext(current_context_->rootContext());
+  WasmForeignFunction create(std::shared_ptr<EvaluateExpressionFactory> self) const {
+    WasmForeignFunction f =
+        [self](WasmBase&, absl::string_view argument,
+               const std::function<void*(size_t size)>& alloc_result) -> WasmResult {
+      auto& expr_context = getOrCreateContext(proxy_wasm::current_context_->root_context());
       if (argument.size() != sizeof(uint32_t)) {
         return WasmResult::BadArgument;
       }
@@ -165,7 +163,8 @@ public:
       }
       Protobuf::Arena arena;
       auto& handler = expr_context.getExpression(token);
-      auto eval_status = handler.compiled_expr_->Evaluate(*current_context_, &arena);
+      auto context = static_cast<Context*>(proxy_wasm::current_context_);
+      auto eval_status = handler.compiled_expr_->Evaluate(*context, &arena);
       if (!eval_status.ok()) {
         ENVOY_LOG(debug, "expr_evaluate error: {}", eval_status.status().message());
         return WasmResult::InternalFailure;
@@ -182,15 +181,16 @@ public:
     return f;
   }
 };
-REGISTER_FACTORY(EvaluateExpressionFactory, ForeignFunctionFactory);
+RegisterForeignFunction
+    registerEvaluateExpressionForeignFunction("expr_evaluate",
+                                              createFromClass<EvaluateExpressionFactory>());
 
-class DeleteExpressionFactory : public ExpressionFactory, public ForeignFunctionFactory {
+class DeleteExpressionFactory : public ExpressionFactory {
 public:
-  std::string name() const override { return "expr_delete"; }
-  WasmForeignFunction create() const override {
-    WasmForeignFunction f = [](Wasm&, absl::string_view argument,
-                               std::function<void*(size_t size)>) -> WasmResult {
-      auto& expr_context = getOrCreateContext(current_context_->rootContext());
+  WasmForeignFunction create(std::shared_ptr<DeleteExpressionFactory> self) const {
+    WasmForeignFunction f = [self](WasmBase&, absl::string_view argument,
+                                   const std::function<void*(size_t size)>&) -> WasmResult {
+      auto& expr_context = getOrCreateContext(proxy_wasm::current_context_->root_context());
       if (argument.size() != sizeof(uint32_t)) {
         return WasmResult::BadArgument;
       }
@@ -201,7 +201,9 @@ public:
     return f;
   }
 };
-REGISTER_FACTORY(DeleteExpressionFactory, ForeignFunctionFactory);
+RegisterForeignFunction
+    registerDeleteExpressionForeignFunction("expr_delete",
+                                            createFromClass<DeleteExpressionFactory>());
 
 // TODO(kyessenov) The factories should be separated into individual compilaton units.
 // TODO(kyessenov) Leverage the host argument marshaller instead of the protobuf argument list.

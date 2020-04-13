@@ -1,38 +1,35 @@
 #include "extensions/common/wasm/wasm_vm.h"
 
+#include <algorithm>
 #include <memory>
 
-#include "extensions/common/wasm/null/null.h"
-#include "extensions/common/wasm/v8/v8.h"
-
-#ifdef ENVOY_WASM_WAVM
-#include "extensions/common/wasm/wavm/wavm.h"
-#endif
 #include "extensions/common/wasm/well_known_names.h"
+
+#include "include/proxy-wasm/null.h"
+#include "include/proxy-wasm/v8.h"
 
 namespace Envoy {
 namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-thread_local Envoy::Extensions::Common::Wasm::Context* current_context_ = nullptr;
-thread_local uint32_t effective_context_id_ = 0;
+void EnvoyWasmVmIntegration::error(absl::string_view message) {
+  throw WasmException(std::string(message));
+}
 
 WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& scope) {
   if (runtime.empty()) {
-    throw WasmVmException("Failed to create WASM VM with unspecified runtime.");
+    throw WasmException("Failed to create WASM VM with unspecified runtime.");
   } else if (runtime == WasmRuntimeNames::get().Null) {
-    return Null::createVm(scope);
+    auto wasm = proxy_wasm::createNullVm();
+    wasm->integration() = std::make_unique<EnvoyWasmVmIntegration>(scope, runtime, "null");
+    return wasm;
   } else if (runtime == WasmRuntimeNames::get().V8) {
-    return V8::createVm(scope);
-  } else
-#ifdef ENVOY_WASM_WAVM
-      if (runtime == WasmRuntimeNames::get().Wavm) {
-    return Wavm::createVm(scope);
-  } else
-#endif
-  {
-    throw WasmVmException(fmt::format(
+    auto wasm = proxy_wasm::createV8Vm();
+    wasm->integration() = std::make_unique<EnvoyWasmVmIntegration>(scope, runtime, "v8");
+    return wasm;
+  } else {
+    throw WasmException(fmt::format(
         "Failed to create WASM VM using {} runtime. Envoy was compiled without support for it.",
         runtime));
   }

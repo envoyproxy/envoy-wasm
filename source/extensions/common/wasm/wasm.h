@@ -1,16 +1,11 @@
 #pragma once
 
 #include <atomic>
-#include <deque>
 #include <map>
 #include <memory>
 
-#include "envoy/access_log/access_log.h"
-#include "envoy/buffer/buffer.h"
 #include "envoy/common/exception.h"
 #include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
-#include "envoy/http/filter.h"
-#include "envoy/server/wasm.h"
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats.h"
 #include "envoy/thread_local/thread_local.h"
@@ -22,12 +17,11 @@
 #include "common/stats/symbol_table_impl.h"
 
 #include "extensions/common/wasm/context.h"
-#include "extensions/common/wasm/exports.h"
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
-#include "extensions/filters/http/well_known_names.h"
 
-#include "absl/container/fixed_array.h"
+#include "include/proxy-wasm/exports.h"
+#include "include/proxy-wasm/wasm.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -42,247 +36,64 @@ struct WasmStats {
   ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
 };
 
-using VmConfig = envoy::extensions::wasm::v3::VmConfig;
-
-using WasmForeignFunction =
-    std::function<WasmResult(Wasm&, absl::string_view, std::function<void*(size_t size)>)>;
-
+class Context;
 class WasmHandle;
 
+using VmConfig = envoy::extensions::wasm::v3::VmConfig;
+
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
-class Wasm : public Logger::Loggable<Logger::Id::wasm>, public std::enable_shared_from_this<Wasm> {
+class Wasm : public WasmBase, Logger::Loggable<Logger::Id::wasm> {
 public:
   Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
-       absl::string_view vm_key, Stats::ScopeSharedPtr scope,
+       absl::string_view vm_key, const Stats::ScopeSharedPtr& scope,
        Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher);
-  Wasm(std::shared_ptr<WasmHandle>& other, Event::Dispatcher& dispatcher);
-  ~Wasm();
-
-  bool initialize(const std::string& code, bool allow_precompiled = false);
-  void startVm(Context* root_context);
-  bool configure(Context* root_context, PluginSharedPtr plugin, absl::string_view configuration);
-  Context* start(PluginSharedPtr plugin); // returns the root Context.
-
-  absl::string_view vm_id() const { return vm_id_; }
-  absl::string_view vm_key() const { return vm_key_; }
-  WasmVm* wasm_vm() const { return wasm_vm_.get(); }
-  Context* vm_context() const { return vm_context_.get(); }
-  Context* getRootContext(absl::string_view root_id) { return root_contexts_[root_id].get(); }
-  Context* getOrCreateRootContext(const PluginSharedPtr& plugin);
-  Context* getContext(uint32_t id) {
-    auto it = contexts_.find(id);
-    if (it != contexts_.end())
-      return it->second;
-    return nullptr;
-  }
-  uint32_t allocContextId();
+  Wasm(std::shared_ptr<WasmHandle> other, Event::Dispatcher& dispatcher);
+  ~Wasm() override;
 
   Upstream::ClusterManager& clusterManager() const { return cluster_manager_; }
-  const std::string& code() const { return code_; }
-  const std::string& vm_configuration() const;
-  bool allow_precompiled() const { return allow_precompiled_; }
-  void setInitialConfiguration(const std::string& vm_configuration) {
-    vm_configuration_ = vm_configuration;
-  }
   Event::Dispatcher& dispatcher() { return dispatcher_; }
+  Context* getRootContext(absl::string_view root_id) {
+    return static_cast<Context*>(WasmBase::getRootContext(root_id));
+  }
+  void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period) override;
+  virtual void tickHandler(uint32_t root_context_id);
 
-  void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
+  // WasmBsae
+  void error(absl::string_view message) override { throw WasmException(std::string(message)); }
+  proxy_wasm::CallOnThreadFunction callOnThreadFunction() override;
+  ContextBase* createContext(std::shared_ptr<PluginBase> plugin) override;
 
-  void tickHandler(uint32_t root_context_id);
-  void queueReady(uint32_t root_context_id, uint32_t token);
-
-  void startShutdown();
-  WasmResult done(Context* root_context);
-  void finishShutdown();
-
-  //
   // AccessLog::Instance
-  //
   void log(absl::string_view root_id, const Http::RequestHeaderMap* request_headers,
            const Http::ResponseHeaderMap* response_headers,
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info);
 
-  // Support functions.
-  void* allocMemory(uint64_t size, uint64_t* address);
-  // Allocate a null-terminated string in the VM and return the pointer to use as a call arguments.
-  uint64_t copyString(absl::string_view s);
-  uint64_t copyBuffer(const Buffer::Instance& buffer);
-  // Copy the data in 's' into the VM along with the pointer-size pair. Returns true on success.
-  bool copyToPointerSize(absl::string_view s, uint64_t ptr_ptr, uint64_t size_ptr);
-  bool copyToPointerSize(const Buffer::Instance& buffer, uint64_t start, uint64_t length,
-                         uint64_t ptr_ptr, uint64_t size_ptr);
-  template <typename T> bool setDatatype(uint64_t ptr, const T& t);
-
-  WasmForeignFunction getForeignFunction(absl::string_view function_name);
-
-  // For testing.
-  void setContext(Context* context) { contexts_[context->id()] = context; }
-  void startForTesting(std::unique_ptr<Context> root_context, PluginSharedPtr plugin);
-
-  bool getEmscriptenVersion(uint32_t* emscripten_metadata_major_version,
-                            uint32_t* emscripten_metadata_minor_version,
-                            uint32_t* emscripten_abi_major_version,
-                            uint32_t* emscripten_abi_minor_version) {
-    if (!is_emscripten_) {
-      return false;
-    }
-    *emscripten_metadata_major_version = emscripten_metadata_major_version_;
-    *emscripten_metadata_minor_version = emscripten_metadata_minor_version_;
-    *emscripten_abi_major_version = emscripten_abi_major_version_;
-    *emscripten_abi_minor_version = emscripten_abi_minor_version_;
-    return true;
-  }
-
-  void addAfterVmCallAction(std::function<void()> f) { after_vm_call_actions_.push_back(f); }
-  void doAfterVmCallActions() {
-    while (!after_vm_call_actions_.empty()) {
-      auto f = std::move(after_vm_call_actions_.front());
-      after_vm_call_actions_.pop_front();
-      f();
-    }
-  }
-
 private:
   friend class Context;
-  class ShutdownHandle;
-  // These are the same as the values of the Context::MetricType enum, here separately for
-  // convenience.
-  static const uint32_t kMetricTypeCounter = 0x0;
-  static const uint32_t kMetricTypeGauge = 0x1;
-  static const uint32_t kMetricTypeHistogram = 0x2;
-  static const uint32_t kMetricTypeMask = 0x3;
-  static const uint32_t kMetricIdIncrement = 0x4;
-  static void StaticAsserts() {
-    static_assert(static_cast<uint32_t>(Context::MetricType::Counter) == kMetricTypeCounter, "");
-    static_assert(static_cast<uint32_t>(Context::MetricType::Gauge) == kMetricTypeGauge, "");
-    static_assert(static_cast<uint32_t>(Context::MetricType::Histogram) == kMetricTypeHistogram,
-                  "");
-  }
 
-  bool isCounterMetricId(uint32_t metric_id) {
-    return (metric_id & kMetricTypeMask) == kMetricTypeCounter;
-  }
-  bool isGaugeMetricId(uint32_t metric_id) {
-    return (metric_id & kMetricTypeMask) == kMetricTypeGauge;
-  }
-  bool isHistogramMetricId(uint32_t metric_id) {
-    return (metric_id & kMetricTypeMask) == kMetricTypeHistogram;
-  }
-  uint32_t nextCounterMetricId() { return next_counter_metric_id_ += kMetricIdIncrement; }
-  uint32_t nextGaugeMetricId() { return next_gauge_metric_id_ += kMetricIdIncrement; }
-  uint32_t nextHistogramMetricId() { return next_histogram_metric_id_ += kMetricIdIncrement; }
-
-  void registerCallbacks();    // Register functions called out from WASM.
-  void establishEnvironment(); // Language specific environments.
-  void getFunctions();         // Get functions call into WASM.
-
-  std::string vm_id_;  // User-provided vm_id.
-  std::string vm_key_; // Hash(code, vm configuration data, vm_id_)
-  std::unique_ptr<WasmVm> wasm_vm_;
-  Cloneable started_from_{Cloneable::NotCloneable};
   Stats::ScopeSharedPtr scope_;
-
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
-
-  uint32_t next_context_id_ = 1; // 0 is reserved for the VM context.
-  ContextSharedPtr vm_context_;  // Context unrelated to any specific root or stream
-                                 // (e.g. for global constructors).
-  absl::flat_hash_map<std::string, std::unique_ptr<Context>> root_contexts_;
-  absl::flat_hash_map<uint32_t, Context*> contexts_;                     // Contains all contexts.
-  absl::flat_hash_map<uint32_t, std::chrono::milliseconds> tick_period_; // per root_id.
-  std::unordered_map<uint32_t, Event::TimerPtr> timer_;                  // per root_id.
-  std::unique_ptr<ShutdownHandle> shutdown_handle_;
-  absl::flat_hash_set<Context*> pending_done_; // Root contexts not done during shutdown.
-  bool shutdown_ready_{false};                 // All pending RootContexts are now done.
-
+  std::unordered_map<uint32_t, Event::TimerPtr> timer_; // per root_id.
   TimeSource& time_source_;
-
-  WasmCallVoid<0> abi_version_0_1_0_;
-
-  WasmCallVoid<0> _start_; /* Emscripten v1.39.0+ */
-  WasmCallVoid<0> __wasm_call_ctors_;
-
-  WasmCallWord<1> malloc_;
-
-  // Calls into the VM.
-  WasmCallWord<2> validate_configuration_;
-  WasmCallWord<2> on_vm_start_;
-  WasmCallWord<2> on_configure_;
-  WasmCallVoid<1> on_tick_;
-
-  WasmCallVoid<2> on_context_create_;
-
-  WasmCallWord<1> on_new_connection_;
-  WasmCallWord<3> on_downstream_data_;
-  WasmCallWord<3> on_upstream_data_;
-  WasmCallVoid<2> on_downstream_connection_close_;
-  WasmCallVoid<2> on_upstream_connection_close_;
-
-  WasmCallWord<2> on_request_headers_;
-  WasmCallWord<3> on_request_body_;
-  WasmCallWord<2> on_request_trailers_;
-  WasmCallWord<2> on_request_metadata_;
-
-  WasmCallWord<2> on_response_headers_;
-  WasmCallWord<3> on_response_body_;
-  WasmCallWord<2> on_response_trailers_;
-  WasmCallWord<2> on_response_metadata_;
-
-  WasmCallVoid<5> on_http_call_response_;
-
-  WasmCallVoid<3> on_grpc_receive_;
-  WasmCallVoid<3> on_grpc_close_;
-  WasmCallVoid<3> on_grpc_receive_initial_metadata_;
-  WasmCallVoid<3> on_grpc_receive_trailing_metadata_;
-
-  WasmCallVoid<2> on_queue_ready_;
-
-  WasmCallWord<1> on_done_;
-  WasmCallVoid<1> on_log_;
-  WasmCallVoid<1> on_delete_;
-
-  std::shared_ptr<WasmHandle> base_wasm_handle_;
-
-  // Used by the base_wasm to enable non-clonable thread local Wasm(s) to be constructed.
-  std::string code_;
-  std::string vm_configuration_;
-  bool allow_precompiled_ = false;
-
-  bool is_emscripten_ = false;
-  uint32_t emscripten_metadata_major_version_ = 0;
-  uint32_t emscripten_metadata_minor_version_ = 0;
-  uint32_t emscripten_abi_major_version_ = 0;
-  uint32_t emscripten_abi_minor_version_ = 0;
-  uint32_t emscripten_standalone_wasm_ = 0;
 
   // Host Stats/Metrics
   WasmStats wasm_stats_;
 
-  // Plulgin Stats/Metrics
-  uint32_t next_counter_metric_id_ = kMetricTypeCounter;
-  uint32_t next_gauge_metric_id_ = kMetricTypeGauge;
-  uint32_t next_histogram_metric_id_ = kMetricTypeHistogram;
+  // Plugin Stats/Metrics
   absl::flat_hash_map<uint32_t, Stats::Counter*> counters_;
   absl::flat_hash_map<uint32_t, Stats::Gauge*> gauges_;
   absl::flat_hash_map<uint32_t, Stats::Histogram*> histograms_;
-
-  // Foreign Functions.
-  absl::flat_hash_map<std::string, WasmForeignFunction> foreign_functions_;
-
-  // Actions to be done after the call into the VM returns.
-  std::deque<std::function<void()>> after_vm_call_actions_;
 };
 using WasmSharedPtr = std::shared_ptr<Wasm>;
 
-// Handle which enables shutdown operations to run post deletion (e.g. post listener drain).
-class WasmHandle : public Envoy::Server::Wasm,
-                   public ThreadLocal::ThreadLocalObject,
-                   public std::enable_shared_from_this<WasmHandle> {
+class WasmHandle : public WasmHandleBase,
+                   public Envoy::Server::Wasm,
+                   public ThreadLocal::ThreadLocalObject {
 public:
-  explicit WasmHandle(WasmSharedPtr wasm) : wasm_(wasm) {}
-  ~WasmHandle() { wasm_->startShutdown(); }
+  explicit WasmHandle(const WasmSharedPtr& wasm)
+      : WasmHandleBase(std::static_pointer_cast<WasmBase>(wasm)), wasm_(wasm) {}
 
   WasmSharedPtr& wasm() { return wasm_; }
 
@@ -291,163 +102,26 @@ private:
 };
 using WasmHandleSharedPtr = std::shared_ptr<WasmHandle>;
 
-std::string Sha256(absl::string_view data);
-
 using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 
-// Create a high level Wasm VM with Envoy API support. Note: 'id' may be empty if this VM will not
-// be shared by APIs (e.g. HTTP Filter + AccessLog).
-void createWasm(const VmConfig& vm_config, PluginSharedPtr plugin_config,
-                Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
+void createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
+                const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                 Runtime::RandomGenerator& random, Api::Api& api,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb);
 
-// Create a ThreadLocal VM from an existing VM (e.g. from createWasm() above).
-WasmHandleSharedPtr createThreadLocalWasm(WasmHandle& base_wasm_handle, PluginSharedPtr plugin,
-                                          absl::string_view configuration,
-                                          Event::Dispatcher& dispatcher);
-
-void createWasmForTesting(const VmConfig& vm_config, PluginSharedPtr plugin,
-                          Stats::ScopeSharedPtr scope, Upstream::ClusterManager& cluster_manager,
-                          Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                          Runtime::RandomGenerator& random, Api::Api& api,
-                          std::unique_ptr<Context> root_context_for_testing,
+void createWasmForTesting(const VmConfig& vm_config, const PluginSharedPtr& plugin,
+                          const Stats::ScopeSharedPtr& scope,
+                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
+                          Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random,
+                          Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                           CreateWasmCallback&& cb);
 
-// Get an existing ThreadLocal VM matching 'vm_id' or nullptr if there isn't one.
-WasmHandleSharedPtr getThreadLocalWasmPtr(absl::string_view vm_id);
-// Get an existing ThreadLocal VM matching 'vm_id' or create one using 'base_wavm' by cloning or by
-// using it it as a template. Note that 'base_wasm' typically is a const lambda capture and needs
-// to be copied to be passed, hence the pass-by-value interface.
-WasmHandleSharedPtr getOrCreateThreadLocalWasm(WasmHandleSharedPtr base_wasm,
-                                               PluginSharedPtr plugin,
-                                               absl::string_view configuration,
+WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm,
+                                               const PluginSharedPtr& plugin,
                                                Event::Dispatcher& dispatcher);
-
-inline const std::string& Wasm::vm_configuration() const {
-  if (base_wasm_handle_)
-    return base_wasm_handle_->wasm()->vm_configuration_;
-  return vm_configuration_;
-}
-
-inline void* Wasm::allocMemory(uint64_t size, uint64_t* address) {
-  Word a = malloc_(vm_context(), size);
-  if (!a.u64_) {
-    throw WasmException("malloc_ returns nullptr (OOM)");
-  }
-  auto memory = wasm_vm_->getMemory(a.u64_, size);
-  if (!memory) {
-    throw WasmException("malloc_ returned illegal address");
-  }
-  *address = a.u64_;
-  return const_cast<void*>(reinterpret_cast<const void*>(memory.value().data()));
-}
-
-inline uint64_t Wasm::copyString(absl::string_view s) {
-  if (s.empty()) {
-    return 0; // nullptr
-  }
-  uint64_t pointer;
-  uint8_t* m = static_cast<uint8_t*>(allocMemory((s.size() + 1), &pointer));
-  memcpy(m, s.data(), s.size());
-  m[s.size()] = 0;
-  return pointer;
-}
-
-inline uint64_t Wasm::copyBuffer(const Buffer::Instance& buffer) {
-  uint64_t pointer;
-  auto length = buffer.length();
-  if (length <= 0) {
-    return 0;
-  }
-  Buffer::RawSlice oneRawSlice;
-  // NB: we need to pass in >= 1 in order to get the real "n" (see Buffer::Instance for details).
-  int nSlices = buffer.getRawSlices(&oneRawSlice, 1);
-  if (nSlices <= 0) {
-    return 0;
-  }
-  uint8_t* m = static_cast<uint8_t*>(allocMemory(length, &pointer));
-  if (nSlices == 1) {
-    memcpy(m, oneRawSlice.mem_, oneRawSlice.len_);
-    return pointer;
-  }
-  absl::FixedArray<Buffer::RawSlice> manyRawSlices(nSlices);
-  buffer.getRawSlices(manyRawSlices.begin(), nSlices);
-  auto p = m;
-  for (int i = 0; i < nSlices; i++) {
-    memcpy(p, manyRawSlices[i].mem_, manyRawSlices[i].len_);
-    p += manyRawSlices[i].len_;
-  }
-  return pointer;
-}
-
-inline bool Wasm::copyToPointerSize(absl::string_view s, uint64_t ptr_ptr, uint64_t size_ptr) {
-  uint64_t pointer = 0;
-  uint64_t size = s.size();
-  void* p = nullptr;
-  if (size > 0) {
-    p = allocMemory(size, &pointer);
-    if (!p) {
-      return false;
-    }
-    memcpy(p, s.data(), size);
-  }
-  if (!wasm_vm_->setWord(ptr_ptr, Word(pointer))) {
-    return false;
-  }
-  if (!wasm_vm_->setWord(size_ptr, Word(size))) {
-    return false;
-  }
-  return true;
-}
-
-inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t start, uint64_t length,
-                                    uint64_t ptr_ptr, uint64_t size_ptr) {
-  uint64_t size = buffer.length();
-  if (size < start + length) {
-    return false;
-  }
-  auto nslices = buffer.getRawSlices(nullptr, 0);
-  auto slices = std::make_unique<Buffer::RawSlice[]>(nslices + 10 /* pad for evbuffer overrun */);
-  auto actual_slices = buffer.getRawSlices(&slices[0], nslices);
-  uint64_t pointer = 0;
-  char* p = static_cast<char*>(allocMemory(length, &pointer));
-  auto s = start;
-  auto l = length;
-  if (!p) {
-    return false;
-  }
-  for (uint64_t i = 0; i < actual_slices; i++) {
-    if (slices[i].len_ <= s) {
-      s -= slices[i].len_;
-      continue;
-    }
-    auto ll = l;
-    if (ll > s + slices[i].len_)
-      ll = s + slices[i].len_;
-    memcpy(p, static_cast<char*>(slices[i].mem_) + s, ll);
-    l -= ll;
-    if (l <= 0) {
-      break;
-    }
-    s = 0;
-    p += ll;
-  }
-  if (!wasm_vm_->setWord(ptr_ptr, Word(pointer))) {
-    return false;
-  }
-  if (!wasm_vm_->setWord(size_ptr, Word(length))) {
-    return false;
-  }
-  return true;
-}
-
-template <typename T> inline bool Wasm::setDatatype(uint64_t ptr, const T& t) {
-  return wasm_vm_->setMemory(ptr, sizeof(T), &t);
-}
 
 } // namespace Wasm
 } // namespace Common

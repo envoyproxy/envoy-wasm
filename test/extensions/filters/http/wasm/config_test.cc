@@ -155,7 +155,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
-                            "Failed to initialize WASM code from <inline>");
+                            "Failed to initialize WASM code");
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASM) {
@@ -442,7 +442,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
   EXPECT_CALL(init_watcher_, ready());
   EXPECT_THROW_WITH_MESSAGE(context_.initManager().initialize(init_watcher_),
                             Extensions::Common::Wasm::WasmException,
-                            "Failed to initialize WASM code from https://example.com/data");
+                            "Failed to initialize WASM code");
 }
 
 } // namespace Wasm
