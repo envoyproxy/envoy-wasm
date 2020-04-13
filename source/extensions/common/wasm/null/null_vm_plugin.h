@@ -30,7 +30,7 @@ public:
  */
 class NullVmPluginFactory : public Config::UntypedFactory {
 public:
-  virtual ~NullVmPluginFactory() = default;
+  ~NullVmPluginFactory() override = default;
 
   /**
    * Name of the plugin.
