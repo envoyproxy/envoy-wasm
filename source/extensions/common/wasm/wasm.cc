@@ -49,6 +49,23 @@ inline Wasm* getWasm(WasmHandleSharedPtr& base_wasm_handle) {
 
 } // namespace
 
+void Wasm::initializeStats() {
+  active_wasm_++;
+  wasm_stats_.active_.set(active_wasm_);
+  wasm_stats_.created_.inc();
+}
+
+void Wasm::initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier) {
+  auto weak = std::weak_ptr<Wasm>(std::static_pointer_cast<Wasm>(shared_from_this()));
+  lifecycle_notifier.registerCallback(Server::ServerLifecycleNotifier::Stage::ShutdownExit,
+                                      [this, weak](Event::PostCb post_cb) {
+                                        auto lock = weak.lock();
+                                        if (lock) { // See if we are still alive.
+                                          server_shutdown_post_cb_ = post_cb;
+                                        }
+                                      });
+}
+
 Wasm::Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view vm_configuration,
            absl::string_view vm_key, const Stats::ScopeSharedPtr& scope,
            Upstream::ClusterManager& cluster_manager, Event::Dispatcher& dispatcher)
@@ -58,9 +75,7 @@ Wasm::Wasm(absl::string_view runtime, absl::string_view vm_id, absl::string_view
       wasm_stats_(WasmStats{
           ALL_WASM_STATS(POOL_COUNTER_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")),
                          POOL_GAUGE_PREFIX(*scope_, absl::StrCat("wasm.", runtime, ".")))}) {
-  active_wasm_++;
-  wasm_stats_.active_.set(active_wasm_);
-  wasm_stats_.created_.inc();
+  initializeStats();
   ENVOY_LOG(debug, "Base Wasm created {} now active", active_wasm_);
 }
 
@@ -74,9 +89,7 @@ Wasm::Wasm(WasmHandleSharedPtr base_wasm_handle, Event::Dispatcher& dispatcher)
       scope_(getWasm(base_wasm_handle)->scope_),
       cluster_manager_(getWasm(base_wasm_handle)->clusterManager()), dispatcher_(dispatcher),
       time_source_(dispatcher.timeSource()), wasm_stats_(getWasm(base_wasm_handle)->wasm_stats_) {
-  active_wasm_++;
-  wasm_stats_.active_.set(active_wasm_);
-  wasm_stats_.created_.inc();
+  initializeStats();
   ENVOY_LOG(debug, "Thread-Local Wasm created {} now active", active_wasm_);
 }
 
@@ -117,6 +130,9 @@ Wasm::~Wasm() {
   active_wasm_--;
   wasm_stats_.active_.set(active_wasm_);
   ENVOY_LOG(debug, "~Wasm {} remaining active", active_wasm_);
+  if (server_shutdown_post_cb_) {
+    dispatcher_.post(server_shutdown_post_cb_);
+  }
 }
 
 proxy_wasm::CallOnThreadFunction Wasm::callOnThreadFunction() {
@@ -144,8 +160,9 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
                                Upstream::ClusterManager& cluster_manager,
                                Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                                Runtime::RandomGenerator& random, Api::Api& api,
-                               std::unique_ptr<Context> root_context_for_testing,
+                               Server::ServerLifecycleNotifier& lifecycle_notifier,
                                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                               std::unique_ptr<Context> root_context_for_testing,
                                CreateWasmCallback&& cb) {
   std::string source, code;
   if (vm_config.code().has_remote()) {
@@ -156,7 +173,8 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
                  .value_or(code.empty() ? EMPTY_STRING : INLINE_STRING);
   }
 
-  auto callback = [vm_config, scope, &cluster_manager, &dispatcher, plugin, cb, source,
+  auto callback = [vm_config, scope, &cluster_manager, &dispatcher, &lifecycle_notifier, plugin, cb,
+                   source,
                    context_ptr = root_context_for_testing ? root_context_for_testing.release()
                                                           : nullptr](const std::string& code) {
     if (code.empty()) {
@@ -167,11 +185,13 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
     auto vm_key = proxy_wasm::makeVmKey(vm_config.vm_id(), configuration, code);
     cb(std::static_pointer_cast<WasmHandle>(proxy_wasm::createWasm(
         vm_key, code, plugin,
-        [&vm_config, &configuration, &scope, &cluster_manager,
-         &dispatcher](absl::string_view vm_key) {
-          return std::static_pointer_cast<WasmHandleBase>(std::make_shared<WasmHandle>(
-              std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), configuration, vm_key,
-                                     scope, cluster_manager, dispatcher)));
+        [&vm_config, &configuration, &scope, &cluster_manager, &dispatcher,
+         &lifecycle_notifier](absl::string_view vm_key) {
+          auto wasm = std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(), configuration,
+                                             vm_key, scope, cluster_manager, dispatcher);
+          // NB: we need the shared_ptr to have been created for shared_from_this() to work.
+          wasm->initializeLifecycle(lifecycle_notifier);
+          return std::static_pointer_cast<WasmHandleBase>(std::make_shared<WasmHandle>(wasm));
         },
         vm_config.allow_precompiled(), std::move(context))));
   };
@@ -191,22 +211,25 @@ void createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                 const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                 Runtime::RandomGenerator& random, Api::Api& api,
+                Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb) {
   createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, random,
-                     api, nullptr /* root_context_for_testing */, remote_data_provider,
-                     std::move(cb));
+                     api, lifecycle_notifier, remote_data_provider,
+                     nullptr /* root_context_for_testing */, std::move(cb));
 }
 
 void createWasmForTesting(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                           const Stats::ScopeSharedPtr& scope,
                           Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
                           Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random,
-                          Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
+                          Api::Api& api, Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                          std::unique_ptr<Context> root_context_for_testing,
                           CreateWasmCallback&& cb) {
   createWasmInternal(vm_config, plugin, scope, cluster_manager, init_manager, dispatcher, random,
-                     api, std::move(root_context_for_testing), remote_data_provider, std::move(cb));
+                     api, lifecycle_notifier, remote_data_provider,
+                     std::move(root_context_for_testing), std::move(cb));
 }
 
 WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm,

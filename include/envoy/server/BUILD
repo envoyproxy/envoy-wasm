@@ -297,7 +297,6 @@ envoy_cc_library(
     hdrs = ["wasm_config.h"],
     deps = [
         ":wasm_interface",
-        "//include/envoy/api:api_interface",
-        "//include/envoy/event:dispatcher_interface",
+        "//include/envoy/server:instance_interface",
     ],
 )

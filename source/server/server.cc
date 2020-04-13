@@ -434,9 +434,7 @@ void InstanceImpl::initialize(const Options& options,
     if (factory) {
       for (auto& config : bootstrap_.wasm_service()) {
         auto scope = Stats::ScopeSharedPtr(stats_store_.createScope(config.stat_prefix()));
-        Configuration::WasmFactoryContextImpl wasm_factory_context(
-            clusterManager(), initManager(), *dispatcher_, thread_local_, api(), scope, random(),
-            *local_info_);
+        Configuration::WasmFactoryContextImpl wasm_factory_context(*this, scope);
         factory->createWasm(config, wasm_factory_context, [this](WasmServicePtr wasm) {
           if (wasm) {
             // If not nullptr, this is a singleton WASM service.

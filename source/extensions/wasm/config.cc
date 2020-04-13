@@ -22,7 +22,7 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
       config.config().configuration(), envoy::config::core::v3::TrafficDirection::UNSPECIFIED,
-      context.localInfo(), nullptr);
+      context.server().localInfo(), nullptr);
 
   bool singleton = config.singleton();
   auto callback = [&context, singleton, plugin, cb](Common::Wasm::WasmHandleSharedPtr base_wasm) {
@@ -36,7 +36,7 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
     }
     // Per-thread WASM VM.
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
-    auto tls_slot = context.threadLocal().allocateSlot();
+    auto tls_slot = context.server().threadLocal().allocateSlot();
     tls_slot->set([base_wasm, plugin](Event::Dispatcher& dispatcher) {
       return std::static_pointer_cast<ThreadLocal::ThreadLocalObject>(
           Common::Wasm::getOrCreateThreadLocalWasm(base_wasm, plugin, dispatcher));
@@ -45,9 +45,10 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
   };
 
   Common::Wasm::createWasm(config.config().vm_config(), plugin, context.scope(),
-                           context.clusterManager(), context.initManager(), context.dispatcher(),
-                           context.random(), context.api(), remote_data_provider_,
-                           std::move(callback));
+                           context.server().clusterManager(), context.server().initManager(),
+                           context.server().dispatcher(), context.server().random(),
+                           context.server().api(), context.server().lifecycleNotifier(),
+                           remote_data_provider_, std::move(callback));
 }
 
 /**

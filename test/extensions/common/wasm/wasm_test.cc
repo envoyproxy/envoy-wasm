@@ -2,6 +2,7 @@
 #include "common/event/dispatcher_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
+#include "envoy/server/lifecycle_notifier.h"
 #include "extensions/common/wasm/wasm.h"
 
 #include "test/mocks/server/mocks.h"
@@ -428,8 +429,9 @@ TEST_P(WasmCommonTest, VmCache) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random_;
+  NiceMock<Runtime::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
+  NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider;
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
@@ -461,16 +463,18 @@ TEST_P(WasmCommonTest, VmCache) {
   EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("on_vm_start vm_cache")));
   EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("on_done logging")));
   EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("on_delete logging")));
-  createWasmForTesting(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher,
-                       random_, *api, std::unique_ptr<Context>(root_context), remote_data_provider,
+  createWasmForTesting(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random,
+                       *api, lifecycle_notifier, remote_data_provider,
+                       std::unique_ptr<Context>(root_context),
                        [&wasm_handle](const WasmHandleSharedPtr& w) { wasm_handle = w; });
 
   EXPECT_NE(wasm_handle, nullptr);
 
   WasmHandleSharedPtr wasm_handle2;
   auto root_context2 = new Extensions::Common::Wasm::Context();
-  createWasmForTesting(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher,
-                       random_, *api, std::unique_ptr<Context>(root_context2), remote_data_provider,
+  createWasmForTesting(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random,
+                       *api, lifecycle_notifier, remote_data_provider,
+                       std::unique_ptr<Context>(root_context2),
                        [&wasm_handle2](const WasmHandleSharedPtr& w) { wasm_handle2 = w; });
   EXPECT_NE(wasm_handle2, nullptr);
   EXPECT_EQ(wasm_handle, wasm_handle2);
@@ -493,8 +497,9 @@ TEST_P(WasmCommonTest, RemoteCode) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random_;
+  NiceMock<Runtime::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
+  NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider;
@@ -548,8 +553,9 @@ TEST_P(WasmCommonTest, RemoteCode) {
   EXPECT_CALL(init_manager, add(_)).WillOnce(Invoke([&](const Init::Target& target) {
     init_target_handle = target.createHandle("test");
   }));
-  createWasmForTesting(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher,
-                       random_, *api, std::unique_ptr<Context>(root_context), remote_data_provider,
+  createWasmForTesting(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random,
+                       *api, lifecycle_notifier, remote_data_provider,
+                       std::unique_ptr<Context>(root_context),
                        [&wasm_handle](const WasmHandleSharedPtr& w) { wasm_handle = w; });
 
   EXPECT_CALL(init_watcher, ready());
@@ -573,8 +579,9 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random_;
+  NiceMock<Runtime::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
+  NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher());
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider;
@@ -641,8 +648,9 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   EXPECT_CALL(init_manager, add(_)).WillOnce(Invoke([&](const Init::Target& target) {
     init_target_handle = target.createHandle("test");
   }));
-  createWasmForTesting(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher,
-                       random_, *api, std::unique_ptr<Context>(root_context), remote_data_provider,
+  createWasmForTesting(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random,
+                       *api, lifecycle_notifier, remote_data_provider,
+                       std::unique_ptr<Context>(root_context),
                        [&wasm_handle](const WasmHandleSharedPtr& w) { wasm_handle = w; });
 
   EXPECT_CALL(init_watcher, ready());

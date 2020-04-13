@@ -28,8 +28,8 @@ FilterConfig::FilterConfig(const envoy::extensions::filters::network::wasm::v3::
 
   Common::Wasm::createWasm(config.config().vm_config(), plugin_, context.scope().createScope(""),
                            context.clusterManager(), context.initManager(), context.dispatcher(),
-                           context.random(), context.api(), remote_data_provider_,
-                           std::move(callback));
+                           context.random(), context.api(), context.lifecycleNotifier(),
+                           remote_data_provider_, std::move(callback));
 }
 
 } // namespace Wasm

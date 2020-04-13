@@ -2,11 +2,8 @@
 
 #include "envoy/api/api.h"
 #include "envoy/common/pure.h"
-#include "envoy/event/dispatcher.h"
-#include "envoy/init/manager.h"
+#include "envoy/server/instance.h"
 #include "envoy/server/wasm.h"
-#include "envoy/thread_local/thread_local.h"
-#include "envoy/upstream/cluster_manager.h"
 
 #include "common/protobuf/protobuf.h"
 
@@ -16,46 +13,17 @@ namespace Configuration {
 
 class WasmFactoryContext {
 public:
-  virtual ~WasmFactoryContext() {}
+  virtual ~WasmFactoryContext() = default;
 
   /**
-   * @return Upstream::ClusterManager& singleton for use by the entire server.
+   * @return Server::Instance&.
    */
-  virtual Upstream::ClusterManager& clusterManager() PURE;
+  virtual Server::Instance& server() PURE;
 
-  /**
-   * @return Init:Manager& used by synchronizing the WASM initialization.
-   */
-  virtual Init::Manager& initManager() PURE;
-
-  /**
-   * @return Event::Dispatcher& the main thread's dispatcher. This dispatcher should be used
-   *         for all singleton processing.
-   */
-  virtual Event::Dispatcher& dispatcher() PURE;
-
-  /**
-   * @return ThreadLocal::SlotAllocator& the thread local storage engine for the server. This is
-   *         used to allow runtime lockless updates to configuration, etc. across multiple threads.
-   */
-  virtual ThreadLocal::SlotAllocator& threadLocal() PURE;
-  /**
-   * @return Api::Api& a reference to the api object.
-   */
-  virtual Api::Api& api() PURE;
   /**
    * @return Stats::ScopeSharedPtr the service's stats scope.
    */
   virtual Stats::ScopeSharedPtr& scope() PURE;
-  /**
-   * @return information about the local environment the server is running in.
-   */
-  virtual const LocalInfo::LocalInfo& localInfo() const PURE;
-
-  /**
-   * @return RandomGenerator& the random generator for the server.
-   */
-  virtual Envoy::Runtime::RandomGenerator& random() PURE;
 };
 
 /**
@@ -64,7 +32,7 @@ public:
  */
 class WasmFactory {
 public:
-  virtual ~WasmFactory() {}
+  virtual ~WasmFactory() = default;
 
   virtual std::string name() PURE;
 

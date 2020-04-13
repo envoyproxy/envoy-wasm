@@ -6,6 +6,7 @@
 
 #include "envoy/common/exception.h"
 #include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
+#include "envoy/server/lifecycle_notifier.h"
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats.h"
 #include "envoy/thread_local/thread_local.h"
@@ -69,12 +70,17 @@ public:
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info);
 
+  void initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier);
+
 private:
   friend class Context;
+
+  void initializeStats();
 
   Stats::ScopeSharedPtr scope_;
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
+  Event::PostCb server_shutdown_post_cb_;
   std::unordered_map<uint32_t, Event::TimerPtr> timer_; // per root_id.
   TimeSource& time_source_;
 
@@ -108,6 +114,7 @@ void createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                 const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                 Runtime::RandomGenerator& random, Api::Api& api,
+                Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb);
 
@@ -115,8 +122,9 @@ void createWasmForTesting(const VmConfig& vm_config, const PluginSharedPtr& plug
                           const Stats::ScopeSharedPtr& scope,
                           Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
                           Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random,
-                          Api::Api& api, std::unique_ptr<Context> root_context_for_testing,
+                          Api::Api& api, Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                           Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
+                          std::unique_ptr<Context> root_context_for_testing,
                           CreateWasmCallback&& cb);
 
 WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm,
