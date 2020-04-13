@@ -8,6 +8,7 @@
 #include "extensions/common/wasm/wasm.h"
 #include "extensions/filters/http/wasm/config.h"
 
+#include "test/mocks/http/mocks.h"
 #include "test/mocks/server/mocks.h"
 #include "test/test_common/environment.h"
 
@@ -179,6 +180,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASM) {
   envoy::extensions::filters::http::wasm::v3::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
 
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
@@ -190,8 +193,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASM) {
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
             response->body() = std::make_unique<Buffer::OwnedImpl>(code);
-            callbacks.onSuccess(std::move(response));
-            return nullptr;
+            callbacks.onSuccess(request, std::move(response));
+            return &request;
           }));
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
@@ -227,6 +230,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
   envoy::extensions::filters::http::wasm::v3::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
 
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
@@ -234,8 +239,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
       .WillOnce(
           Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
-            callbacks.onFailure(Envoy::Http::AsyncClient::FailureReason::Reset);
-            return nullptr;
+            callbacks.onFailure(request, Envoy::Http::AsyncClient::FailureReason::Reset);
+            return &request;
           }));
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
@@ -268,6 +273,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
   envoy::extensions::filters::http::wasm::v3::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
 
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
@@ -276,9 +283,10 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
           Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             callbacks.onSuccess(
+                request,
                 Http::ResponseMessagePtr{new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "503"}}})});
-            return nullptr;
+            return &request;
           }));
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
@@ -310,6 +318,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
   envoy::extensions::filters::http::wasm::v3::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
 
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
@@ -321,8 +331,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
             response->body() = std::make_unique<Buffer::OwnedImpl>(code);
-            callbacks.onSuccess(std::move(response));
-            return nullptr;
+            callbacks.onSuccess(request, std::move(response));
+            return &request;
           }));
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
@@ -356,6 +366,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteMultipleRetries) {
   envoy::extensions::filters::http::wasm::v3::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
   int num_retries = 3;
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
       .WillRepeatedly(ReturnRef(cluster_manager_.async_client_));
@@ -368,8 +380,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteMultipleRetries) {
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "503"}}}));
             response->body() = std::make_unique<Buffer::OwnedImpl>(code);
-            callbacks.onSuccess(std::move(response));
-            return nullptr;
+            callbacks.onSuccess(request, std::move(response));
+            return &request;
           }));
 
   EXPECT_CALL(*retry_timer_, enableTimer(_, _))
@@ -383,9 +395,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteMultipleRetries) {
                         new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                             new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
                     response->body() = std::make_unique<Buffer::OwnedImpl>(code);
-
-                    callbacks.onSuccess(std::move(response));
-                    return nullptr;
+                    callbacks.onSuccess(request, std::move(response));
+                    return &request;
                   }));
         }
 
@@ -423,6 +434,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
   envoy::extensions::filters::http::wasm::v3::Wasm proto_config;
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
 
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
       .WillOnce(ReturnRef(cluster_manager_.async_client_));
@@ -434,7 +447,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
             response->body() = std::make_unique<Buffer::OwnedImpl>(code);
-            callbacks.onSuccess(std::move(response));
+            callbacks.onSuccess(request, std::move(response));
             return nullptr;
           }));
 

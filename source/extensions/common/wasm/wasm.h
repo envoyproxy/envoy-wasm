@@ -365,23 +365,15 @@ inline uint64_t Wasm::copyBuffer(const Buffer::Instance& buffer) {
   if (length <= 0) {
     return 0;
   }
-  Buffer::RawSlice oneRawSlice;
-  // NB: we need to pass in >= 1 in order to get the real "n" (see Buffer::Instance for details).
-  int nSlices = buffer.getRawSlices(&oneRawSlice, 1);
-  if (nSlices <= 0) {
+  auto slices = buffer.getRawSlices(absl::nullopt);
+  if (slices.size() <= 0) {
     return 0;
   }
   uint8_t* m = static_cast<uint8_t*>(allocMemory(length, &pointer));
-  if (nSlices == 1) {
-    memcpy(m, oneRawSlice.mem_, oneRawSlice.len_);
-    return pointer;
-  }
-  absl::FixedArray<Buffer::RawSlice> manyRawSlices(nSlices);
-  buffer.getRawSlices(manyRawSlices.begin(), nSlices);
   auto p = m;
-  for (int i = 0; i < nSlices; i++) {
-    memcpy(p, manyRawSlices[i].mem_, manyRawSlices[i].len_);
-    p += manyRawSlices[i].len_;
+  for (auto& slice : slices) {
+    memcpy(p, slice.mem_, slice.len_);
+    p += slice.len_;
   }
   return pointer;
 }
@@ -412,9 +404,7 @@ inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t sta
   if (size < start + length) {
     return false;
   }
-  auto nslices = buffer.getRawSlices(nullptr, 0);
-  auto slices = std::make_unique<Buffer::RawSlice[]>(nslices + 10 /* pad for evbuffer overrun */);
-  auto actual_slices = buffer.getRawSlices(&slices[0], nslices);
+  auto slices = buffer.getRawSlices(absl::nullopt);
   uint64_t pointer = 0;
   char* p = static_cast<char*>(allocMemory(length, &pointer));
   auto s = start;
@@ -422,15 +412,15 @@ inline bool Wasm::copyToPointerSize(const Buffer::Instance& buffer, uint64_t sta
   if (!p) {
     return false;
   }
-  for (uint64_t i = 0; i < actual_slices; i++) {
-    if (slices[i].len_ <= s) {
-      s -= slices[i].len_;
+  for (auto& slice : slices) {
+    if (slice.len_ <= s) {
+      s -= slice.len_;
       continue;
     }
     auto ll = l;
-    if (ll > s + slices[i].len_)
-      ll = s + slices[i].len_;
-    memcpy(p, static_cast<char*>(slices[i].mem_) + s, ll);
+    if (ll > s + slice.len_)
+      ll = s + slice.len_;
+    memcpy(p, static_cast<char*>(slice.mem_) + s, ll);
     l -= ll;
     if (l <= 0) {
       break;
