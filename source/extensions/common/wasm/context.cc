@@ -1592,10 +1592,10 @@ void Context::setEncoderFilterCallbacks(Envoy::Http::StreamEncoderFilterCallback
 void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&& response) {
   if (proxy_wasm::current_context_ != nullptr) {
     // We are in a reentrant call, so defer.
-    auto response_ptr = response.release();
-    wasm()->addAfterVmCallAction([this, token, response_ptr] {
-      onHttpCallSuccess(token, std::unique_ptr<Envoy::Http::ResponseMessage>(response_ptr));
+    wasm()->addAfterVmCallAction([this, token, response = response.release()] {
+      onHttpCallSuccess(token, std::unique_ptr<Envoy::Http::ResponseMessage>(response));
     });
+    return;
   }
   http_call_response_ = &response;
   uint32_t body_size = response->body() ? response->body()->length() : 0;
@@ -1609,6 +1609,7 @@ void Context::onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason
   if (proxy_wasm::current_context_ != nullptr) {
     // We are in a reentrant call, so defer.
     wasm()->addAfterVmCallAction([this, token, reason] { onHttpCallFailure(token, reason); });
+    return;
   }
   status_code_ = static_cast<uint32_t>(WasmResult::BrokenConnection);
   // This is the only value currently.
@@ -1636,10 +1637,10 @@ void Context::onGrpcCloseWrapper(uint32_t token, const Grpc::Status::GrpcStatus&
                                  const absl::string_view message) {
   if (proxy_wasm::current_context_ != nullptr) {
     // We are in a reentrant call, so defer.
-    auto message_string = std::string(message);
-    wasm()->addAfterVmCallAction([this, token, status, message_string] {
-      onGrpcCloseWrapper(token, status, message_string);
+    wasm()->addAfterVmCallAction([this, token, status, message = std::string(message)] {
+      onGrpcCloseWrapper(token, status, message);
     });
+    return;
   }
   if (wasm()->on_grpc_close_) {
     status_code_ = static_cast<uint32_t>(status);
