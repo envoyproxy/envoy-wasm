@@ -205,7 +205,7 @@ RegisterForeignFunction
     registerDeleteExpressionForeignFunction("expr_delete",
                                             createFromClass<DeleteExpressionFactory>());
 
-// TODO(kyessenov) The factories should be separated into individual compilaton units.
+// TODO(kyessenov) The factories should be separated into individual compilation units.
 // TODO(kyessenov) Leverage the host argument marshaller instead of the protobuf argument list.
 class DeclarePropertyFactory {
 public:
