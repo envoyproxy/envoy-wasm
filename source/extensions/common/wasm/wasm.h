@@ -8,7 +8,7 @@
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/exception.h"
-#include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3/wasm.pb.validate.h"
 #include "envoy/http/filter.h"
 #include "envoy/server/wasm.h"
 #include "envoy/stats/scope.h"
@@ -44,7 +44,7 @@ struct WasmStats {
   ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
 };
 
-using VmConfig = envoy::extensions::wasm::v3::VmConfig;
+using VmConfig = envoy::config::wasm::v3::VmConfig;
 
 using WasmForeignFunction =
     std::function<WasmResult(Wasm&, absl::string_view, std::function<void*(size_t size)>)>;

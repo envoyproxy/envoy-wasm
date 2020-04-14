@@ -67,7 +67,7 @@ envoy_cc_library(
         "//source/extensions/filters/common/expr:evaluator_lib",
         "//source/extensions/filters/http:well_known_names",
         "@com_google_cel_cpp//eval/public:activation",
-        "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
+        "@envoy_api//envoy/config/wasm/v3:pkg_cc_proto",
     ],
 )
 
@@ -115,6 +115,6 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/public:cel_value",
         "@com_google_cel_cpp//eval/public:value_export_util",
         "@com_google_cel_cpp//parser",
-        "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
+        "@envoy_api//envoy/config/wasm/v3:pkg_cc_proto",
     ],
 )

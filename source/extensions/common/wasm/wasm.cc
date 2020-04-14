@@ -9,7 +9,7 @@
 #include <string>
 
 #include "envoy/common/exception.h"
-#include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3/wasm.pb.validate.h"
 #include "envoy/grpc/status.h"
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"
@@ -596,7 +596,7 @@ void createWasm(const VmConfig& vm_config, PluginSharedPtr plugin, Stats::ScopeS
                      std::move(cb));
 }
 
-void createWasmForTesting(const envoy::extensions::wasm::v3::VmConfig& vm_config,
+void createWasmForTesting(const envoy::config::wasm::v3::VmConfig& vm_config,
                           PluginSharedPtr plugin, Stats::ScopeSharedPtr scope,
                           Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
                           Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random,

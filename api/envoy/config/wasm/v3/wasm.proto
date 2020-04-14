@@ -2,16 +2,15 @@ syntax = "proto3";
 
 package envoy.config.wasm.v3;
 
-import "envoy/api/v2/core/base.proto";
+import "envoy/api/v3/core/base.proto";
 
 import "udpa/annotations/migrate.proto";
 import "udpa/annotations/status.proto";
 
-option java_package = "io.envoyproxy.envoy.config.wasm.v2";
+option java_package = "io.envoyproxy.envoy.config.wasm.v3";
 option java_outer_classname = "WasmProto";
 option java_multiple_files = true;
 option (udpa.annotations.file_status).package_version_status = ACTIVE;
-
 
 // [#protodoc-title: Wasm service]
 
@@ -27,7 +26,7 @@ message VmConfig {
   string runtime = 2;
 
   // The Wasm code that Envoy will execute.
-  api.v2.core.AsyncDataSource code = 3;
+  api.v3.core.AsyncDataSource code = 3;
 
   // The Wasm configuration string used on initialization of a new VM (proxy_onStart).
   string configuration = 4;
