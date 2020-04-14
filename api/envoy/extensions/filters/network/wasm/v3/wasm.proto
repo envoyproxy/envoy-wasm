@@ -17,9 +17,6 @@ option (udpa.annotations.file_status).package_version_status = ACTIVE;
 // Wasm :ref:`configuration overview <config_network_filters_wasm>`.
 
 message Wasm {
-  option (udpa.annotations.versioning).previous_message_type =
-      "envoy.config.filter.network.wasm.v2.Wasm";
-
   // General Plugin configuration.
   config.wasm.v3.PluginConfig config = 1;
 }
