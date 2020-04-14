@@ -12,7 +12,7 @@ import "envoy/config/listener/v3/listener.proto";
 import "envoy/config/metrics/v3/stats.proto";
 import "envoy/config/overload/v3/overload.proto";
 import "envoy/config/trace/v4alpha/trace.proto";
-import "envoy/config/wasm/v4alpha/wasm.proto";
+import "envoy/config/wasm/v3/wasm.proto";
 import "envoy/extensions/transport_sockets/tls/v4alpha/cert.proto";
 
 import "google/protobuf/duration.proto";
@@ -177,7 +177,7 @@ message Bootstrap {
   bool use_tcp_for_dns_lookups = 20;
 
   // Configuration for an wasm service provider(s).
-  repeated wasm.v4alpha.WasmService wasm_service = 21;
+  repeated wasm.v3.WasmService wasm_service = 21;
 }
 
 // Administration interface :ref:`operations documentation

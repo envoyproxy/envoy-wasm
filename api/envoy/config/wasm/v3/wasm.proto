@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package envoy.config.wasm.v3;
 
-import "envoy/api/v3/core/base.proto";
+import "envoy/config/core/v3/base.proto";
 
 import "udpa/annotations/migrate.proto";
 import "udpa/annotations/status.proto";
@@ -26,7 +26,7 @@ message VmConfig {
   string runtime = 2;
 
   // The Wasm code that Envoy will execute.
-  api.v3.core.AsyncDataSource code = 3;
+  core.v3.AsyncDataSource code = 3;
 
   // The Wasm configuration string used on initialization of a new VM (proxy_onStart).
   string configuration = 4;
