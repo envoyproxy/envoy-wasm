@@ -23,7 +23,7 @@ envoy_cc_library(
     name = "config",
     srcs = ["config.cc"],
     hdrs = ["config.h"],
-    security_posture = "unknown",
+    # security_posture = "unknown",
     deps = [
         ":wasm_access_log_lib",
         "//include/envoy/registry",
