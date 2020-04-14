@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package envoy.extensions.filters.http.wasm.v3;
 
-import "envoy/extensions/wasm/v3/wasm.proto";
+import "envoy/config/wasm/v3/wasm.proto";
 
 import "udpa/annotations/versioning.proto";
 
@@ -20,5 +20,5 @@ message Wasm {
       "envoy.config.filter.http.wasm.v2.Wasm";
 
   // General Plugin configuration.
-  envoy.extensions.wasm.v3.PluginConfig config = 1;
+  envoy.config.wasm.v3.PluginConfig config = 1;
 }
