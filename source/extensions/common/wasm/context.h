@@ -300,7 +300,7 @@ protected:
   struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
     // Http::AsyncClient::Callbacks
     void onSuccess(Envoy::Http::ResponseMessagePtr&& response) override {
-      context_->onHttpCallSuccess(token_, response);
+      context_->onHttpCallSuccess(token_, std::move(response));
     }
     void onFailure(Http::AsyncClient::FailureReason reason) override {
       context_->onHttpCallFailure(token_, reason);
@@ -353,7 +353,7 @@ protected:
     Grpc::RawAsyncStream* stream_;
   };
 
-  void onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr& response);
+  void onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&& response);
   void onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason);
 
   void onGrpcCreateInitialMetadata(uint32_t token, Http::RequestHeaderMap& metadata);
