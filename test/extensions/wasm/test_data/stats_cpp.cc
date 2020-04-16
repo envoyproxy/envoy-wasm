@@ -28,7 +28,7 @@ extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_vm_start(uint32_t, uint32_t) {
   logInfo(std::string("get counter = ") + std::to_string(value));
   CHECK_RESULT(getMetric(g, &value));
   logWarn(std::string("get gauge = ") + std::to_string(value));
-  // Get on histograms is not suppoorted.
+  // Get on histograms is not supported.
   if (getMetric(h, &value) != WasmResult::Ok) {
     logError(std::string("get histogram = Unsupported"));
   }

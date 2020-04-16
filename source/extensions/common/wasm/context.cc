@@ -202,7 +202,7 @@ Http::RequestTrailerMapPtr buildRequestTrailerMapFromPairs(const Pairs& pairs) {
     // Note: because of the lack of a string_view interface for addCopy and
     // the lack of an interface to add an entry with an empty value and return
     // the entry, there is no efficient way to prevent either a double copy
-    // of the valueor a double lookup of the entry.
+    // of the value or a double lookup of the entry.
     map->addCopy(Http::LowerCaseString(std::string(p.first)), std::string(p.second));
   }
   return map;
@@ -214,7 +214,7 @@ Http::RequestHeaderMapPtr buildRequestHeaderMapFromPairs(const Pairs& pairs) {
     // Note: because of the lack of a string_view interface for addCopy and
     // the lack of an interface to add an entry with an empty value and return
     // the entry, there is no efficient way to prevent either a double copy
-    // of the valueor a double lookup of the entry.
+    // of the value or a double lookup of the entry.
     map->addCopy(Http::LowerCaseString(std::string(p.first)), std::string(p.second));
   }
   return map;
@@ -360,13 +360,13 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     return WasmResult::Ok;
   }
   case CelValue::Type::kDuration: {
-    // Warning: loss of precision to nano-seconds
+    // Warning: loss of precision to nanoseconds
     int64_t out = absl::ToInt64Nanoseconds(value.DurationOrDie());
     result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
     return WasmResult::Ok;
   }
   case CelValue::Type::kTimestamp: {
-    // Warning: loss of precision to nano-seconds
+    // Warning: loss of precision to nanoseconds
     int64_t out = absl::ToUnixNanos(value.TimestampOrDie());
     result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
     return WasmResult::Ok;
