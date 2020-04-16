@@ -5,8 +5,10 @@
 #include <memory>
 
 #include "envoy/common/exception.h"
-#include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
+#include "envoy/config/wasm/v3/wasm.pb.validate.h"
 #include "envoy/server/lifecycle_notifier.h"
+#include "envoy/http/filter.h"
+#include "envoy/server/wasm.h"
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats.h"
 #include "envoy/thread_local/thread_local.h"
@@ -37,7 +39,11 @@ struct WasmStats {
   ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
 };
 
-class Context;
+using VmConfig = envoy::config::wasm::v3::VmConfig;
+
+using WasmForeignFunction =
+    std::function<WasmResult(Wasm&, absl::string_view, std::function<void*(size_t size)>)>;
+
 class WasmHandle;
 
 using VmConfig = envoy::extensions::wasm::v3::VmConfig;

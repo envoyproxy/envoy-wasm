@@ -16,7 +16,7 @@ namespace Wasm {
 
 static const std::string INLINE_STRING = "<inline>";
 
-void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& config,
+void WasmFactory::createWasm(const envoy::config::wasm::v3::WasmService& config,
                              Server::Configuration::WasmFactoryContext& context,
                              Server::CreateWasmServiceCallback&& cb) {
   auto plugin = std::make_shared<Common::Wasm::Plugin>(

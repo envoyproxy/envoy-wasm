@@ -12,7 +12,7 @@
 #include "envoy/config/bootstrap/v3/bootstrap.pb.h"
 #include "envoy/config/trace/v3/trace.pb.h"
 #include "envoy/config/typed_config.h"
-#include "envoy/extensions/wasm/v3/wasm.pb.h"
+#include "envoy/config/wasm/v3/wasm.pb.h"
 #include "envoy/http/filter.h"
 #include "envoy/network/filter.h"
 #include "envoy/server/configuration.h"
@@ -34,7 +34,7 @@ namespace Configuration {
  */
 class StatsSinkFactory : public Config::TypedFactory {
 public:
-  virtual ~StatsSinkFactory() = default;
+  ~StatsSinkFactory() override = default;
 
   /**
    * Create a particular Stats::Sink implementation. If the implementation is unable to produce a
