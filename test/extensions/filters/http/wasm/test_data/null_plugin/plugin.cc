@@ -31,7 +31,16 @@ void PluginRootContext::onTick() {
     args.set_name("structured_state");
     args.set_type(envoy::source::extensions::common::wasm::WasmType::FlatBuffers);
     args.set_span(envoy::source::extensions::common::wasm::LifeSpan::DownstreamConnection);
-    // simple table {i : int64}
+    // Reflection flatbuffer for a simple table {i : int64}.
+    // Generated using the following schema.jbs:
+    //
+    // namespace Wasm.Common;
+    // table T {
+    //   i: int64;
+    // }
+    // root_type T;
+    //
+    // flatc --cpp --bfbs-gen-embed schema.fbs
     static const char bfbsData[192] = {
         0x18, 0x00, 0x00, 0x00, 0x42, 0x46, 0x42, 0x53, 0x10, 0x00, 0x1C, 0x00, 0x04, 0x00, 0x08,
         0x00, 0x0C, 0x00, 0x10, 0x00, 0x14, 0x00, 0x18, 0x00, 0x10, 0x00, 0x00, 0x00, 0x30, 0x00,
@@ -109,6 +118,11 @@ void PluginContext::onLog() {
   }
 
   // Wasm state property set and read validation for {i: 1337}
+  // Generated using the following input.json:
+  // {
+  //   "i": 1337
+  // }
+  // flatc -b schema.fbs input.json
   {
     static const char data[24] = {0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00,
                                   0x0c, 0x00, 0x04, 0x00, 0x06, 0x00, 0x00, 0x00,
