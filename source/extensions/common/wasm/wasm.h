@@ -6,8 +6,8 @@
 
 #include "envoy/common/exception.h"
 #include "envoy/config/wasm/v3/wasm.pb.validate.h"
-#include "envoy/server/lifecycle_notifier.h"
 #include "envoy/http/filter.h"
+#include "envoy/server/lifecycle_notifier.h"
 #include "envoy/server/wasm.h"
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats.h"
@@ -41,12 +41,7 @@ struct WasmStats {
 
 using VmConfig = envoy::config::wasm::v3::VmConfig;
 
-using WasmForeignFunction =
-    std::function<WasmResult(Wasm&, absl::string_view, std::function<void*(size_t size)>)>;
-
 class WasmHandle;
-
-using VmConfig = envoy::extensions::wasm::v3::VmConfig;
 
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
 class Wasm : public WasmBase, Logger::Loggable<Logger::Id::wasm> {
