@@ -32,7 +32,7 @@ void PluginRootContext::onTick() {
     args.set_type(envoy::source::extensions::common::wasm::WasmType::FlatBuffers);
     args.set_span(envoy::source::extensions::common::wasm::LifeSpan::DownstreamConnection);
     // Reflection flatbuffer for a simple table {i : int64}.
-    // Generated using the following schema.jbs:
+    // Generated using the following schema.fbs:
     //
     // namespace Wasm.Common;
     // table T {
