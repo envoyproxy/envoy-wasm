@@ -495,7 +495,7 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
 
   EXPECT_NE(callbacks, nullptr);
   if (callbacks) {
-    callbacks->onSuccess(std::move(response_message));
+    callbacks->onSuccess(request, std::move(response_message));
   }
 }
 
@@ -540,7 +540,7 @@ TEST_P(WasmHttpFilterTest, AsyncCallAfterDestroyed) {
   // (Don't) Make the callback on the destroyed VM.
   EXPECT_EQ(callbacks, nullptr);
   if (callbacks) {
-    callbacks->onSuccess(std::move(response_message));
+    callbacks->onSuccess(request, std::move(response_message));
   }
 }
 

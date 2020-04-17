@@ -299,10 +299,12 @@ protected:
 
   struct AsyncClientHandler : public Http::AsyncClient::Callbacks {
     // Http::AsyncClient::Callbacks
-    void onSuccess(Envoy::Http::ResponseMessagePtr&& response) override {
+    void onSuccess(const Http::AsyncClient::Request&,
+                   Envoy::Http::ResponseMessagePtr&& response) override {
       context_->onHttpCallSuccess(token_, std::move(response));
     }
-    void onFailure(Http::AsyncClient::FailureReason reason) override {
+    void onFailure(const Http::AsyncClient::Request&,
+                   Http::AsyncClient::FailureReason reason) override {
       context_->onHttpCallFailure(token_, reason);
     }
 
