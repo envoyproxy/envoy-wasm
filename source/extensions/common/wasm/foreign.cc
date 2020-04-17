@@ -2,6 +2,8 @@
 
 #include "common/common/logger.h"
 
+#include "source/extensions/common/wasm/declare_property.pb.h"
+
 #include "eval/public/builtin_func_registrar.h"
 #include "eval/public/cel_expr_builder_factory.h"
 #include "parser/parser.h"
@@ -124,7 +126,7 @@ public:
       auto token = expr_context.createToken();
       auto& handler = expr_context.getExpression(token);
 
-      handler.parsed_expr_ = parse_status.ValueOrDie();
+      handler.parsed_expr_ = parse_status.value();
       auto cel_expression_status = expr_context.builder()->CreateExpression(
           &handler.parsed_expr_.expr(), &handler.parsed_expr_.source_info());
       if (!cel_expression_status.ok()) {
@@ -133,7 +135,7 @@ public:
         return WasmResult::BadArgument;
       }
 
-      handler.compiled_expr_ = std::move(cel_expression_status.ValueOrDie());
+      handler.compiled_expr_ = std::move(cel_expression_status.value());
       auto result = reinterpret_cast<uint32_t*>(alloc_result(sizeof(uint32_t)));
       *result = token;
       return WasmResult::Ok;
@@ -168,7 +170,7 @@ public:
         return WasmResult::InternalFailure;
       }
       std::string result;
-      auto serialize_status = serializeValue(eval_status.ValueOrDie(), &result);
+      auto serialize_status = serializeValue(eval_status.value(), &result);
       if (serialize_status != WasmResult::Ok) {
         return serialize_status;
       }
@@ -202,6 +204,62 @@ public:
 RegisterForeignFunction
     registerDeleteExpressionForeignFunction("expr_delete",
                                             createFromClass<DeleteExpressionFactory>());
+
+// TODO(kyessenov) The factories should be separated into individual compilation units.
+// TODO(kyessenov) Leverage the host argument marshaller instead of the protobuf argument list.
+class DeclarePropertyFactory {
+public:
+  WasmForeignFunction create(std::shared_ptr<DeclarePropertyFactory> self) const {
+    WasmForeignFunction f = [self](WasmBase&, absl::string_view arguments,
+                                   const std::function<void*(size_t size)>&) -> WasmResult {
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      if (args.ParseFromArray(arguments.data(), arguments.size())) {
+        WasmType type = WasmType::Bytes;
+        switch (args.type()) {
+        case envoy::source::extensions::common::wasm::WasmType::Bytes:
+          type = WasmType::Bytes;
+          break;
+        case envoy::source::extensions::common::wasm::WasmType::Protobuf:
+          type = WasmType::Protobuf;
+          break;
+        case envoy::source::extensions::common::wasm::WasmType::String:
+          type = WasmType::String;
+          break;
+        case envoy::source::extensions::common::wasm::WasmType::FlatBuffers:
+          type = WasmType::FlatBuffers;
+          break;
+        default:
+          // do nothing
+          break;
+        }
+        StreamInfo::FilterState::LifeSpan span = StreamInfo::FilterState::LifeSpan::FilterChain;
+        switch (args.span()) {
+        case envoy::source::extensions::common::wasm::LifeSpan::FilterChain:
+          span = StreamInfo::FilterState::LifeSpan::FilterChain;
+          break;
+        case envoy::source::extensions::common::wasm::LifeSpan::DownstreamRequest:
+          span = StreamInfo::FilterState::LifeSpan::DownstreamRequest;
+          break;
+        case envoy::source::extensions::common::wasm::LifeSpan::DownstreamConnection:
+          span = StreamInfo::FilterState::LifeSpan::DownstreamConnection;
+          break;
+        default:
+          // do nothing
+          break;
+        }
+        auto context = static_cast<Context*>(proxy_wasm::current_context_);
+        return context->declareProperty(
+            args.name(),
+            std::make_unique<const WasmStatePrototype>(args.readonly(), type, args.schema(), span));
+      }
+      return WasmResult::BadArgument;
+    };
+    return f;
+  }
+};
+RegisterForeignFunction
+    registerDeclarePropertyForeignFunction("declare_property",
+                                           createFromClass<DeclarePropertyFactory>());
 
 } // namespace Wasm
 } // namespace Common

@@ -13,6 +13,7 @@
 #include "common/common/assert.h"
 #include "common/common/logger.h"
 
+#include "extensions/common/wasm/wasm_state.h"
 #include "extensions/filters/common/expr/evaluator.h"
 
 #include "eval/public/activation.h"
@@ -192,7 +193,9 @@ public:
 
   // State accessors
   WasmResult getProperty(absl::string_view path, std::string* result) override;
-  WasmResult setProperty(absl::string_view key, absl::string_view serialized_value) override;
+  WasmResult setProperty(absl::string_view path, absl::string_view value) override;
+  WasmResult declareProperty(absl::string_view path,
+                             std::unique_ptr<const WasmStatePrototype> state_prototype);
 
   // Continue
   void continueRequest() override;
@@ -266,6 +269,14 @@ public:
   absl::optional<google::api::expr::runtime::CelValue>
   FindValue(absl::string_view name, Protobuf::Arena* arena) const override;
   bool IsPathUnknown(absl::string_view) const override { return false; }
+  const std::vector<google::api::expr::runtime::CelAttributePattern>&
+  unknown_attribute_patterns() const override {
+    static const std::vector<google::api::expr::runtime::CelAttributePattern> empty;
+    return empty;
+  }
+  const Protobuf::FieldMask unknown_paths() const override {
+    return Protobuf::FieldMask::default_instance();
+  }
 
   // Foreign function state
   virtual void setForeignData(absl::string_view data_name, std::unique_ptr<StorageObject> data) {
@@ -441,6 +452,9 @@ protected:
   bool upstream_closed_ = false;
   bool downstream_closed_ = false;
   bool tcp_connection_closed_ = false;
+
+  // Filter state prototype declaration.
+  absl::flat_hash_map<std::string, std::unique_ptr<const WasmStatePrototype>> state_prototypes_;
 };
 using ContextSharedPtr = std::shared_ptr<Context>;
 

@@ -4,6 +4,7 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
+    "envoy_proto_library",
 )
 
 envoy_package()
@@ -23,6 +24,7 @@ envoy_cc_library(
         "context.h",
         "foreign.h",
         "wasm.h",
+        "wasm_state.h",
         "wasm_vm.h",
     ],
     deps = [
@@ -32,6 +34,7 @@ envoy_cc_library(
         "//include/envoy/server:wasm_interface",
         "//include/envoy/upstream:cluster_manager_interface",
         "//source/common/config:datasource_lib",
+        "//source/common/singleton:const_singleton",
         "//source/common/stats:stats_lib",
         "//source/extensions/filters/common/expr:evaluator_lib",
         "//source/extensions/filters/http:well_known_names",
@@ -53,6 +56,10 @@ envoy_cc_library(
     deps = [
         "//include/envoy/stream_info:filter_state_interface",
         "//source/common/protobuf",
+        "//source/common/singleton:const_singleton",
+        "@com_github_google_flatbuffers//:flatbuffers",
+        "@com_google_cel_cpp//eval/public:cel_value",
+        "@com_google_cel_cpp//tools:flatbuffers_backed_impl",
     ],
 )
 
@@ -65,6 +72,7 @@ envoy_cc_library(
         "wasm_vm.cc",
     ],
     deps = [
+        ":declare_property_cc_proto",
         ":wasm_hdr",
         ":wasm_interoperation_lib",
         "//external:abseil_base",
@@ -87,4 +95,9 @@ envoy_cc_library(
         "@envoy_api//envoy/config/wasm/v3:pkg_cc_proto",
         "@proxy_wasm_cpp_host//:lib",
     ],
+)
+
+envoy_proto_library(
+    name = "declare_property",
+    srcs = ["declare_property.proto"],
 )

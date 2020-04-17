@@ -9,26 +9,72 @@
 #include "envoy/stream_info/filter_state.h"
 
 #include "common/protobuf/protobuf.h"
+#include "common/singleton/const_singleton.h"
+
+#include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
+#include "eval/public/cel_value.h"
 
 namespace Envoy {
 namespace Extensions {
 namespace Common {
 namespace Wasm {
 
+// FilterState prefix for WasmState values.
+const absl::string_view WasmStateKeyPrefix = "wasm.";
+
+// WasmState content declaration.
+enum class WasmType {
+  Bytes,
+  String,
+  // Schema contains the reflection flatbuffer
+  FlatBuffers,
+  // Schema contains the type URL
+  Protobuf,
+};
+
+// WasmState type declaration.
+class WasmStatePrototype {
+public:
+  WasmStatePrototype(bool readonly, WasmType type, absl::string_view schema,
+                     StreamInfo::FilterState::LifeSpan life_span)
+      : readonly_(readonly), type_(type), schema_(schema), life_span_(life_span) {}
+  WasmStatePrototype()
+      : readonly_(false), type_(WasmType::Bytes), schema_(""),
+        life_span_(StreamInfo::FilterState::LifeSpan::FilterChain) {}
+  const bool readonly_;
+  const WasmType type_;
+  const std::string schema_;
+  const StreamInfo::FilterState::LifeSpan life_span_;
+};
+
+using DefaultWasmStatePrototype = ConstSingleton<WasmStatePrototype>;
+
 // A simple wrapper around generic values
 class WasmState : public StreamInfo::FilterState::Object {
 public:
-  WasmState(absl::string_view type, absl::string_view value);
-
-  explicit WasmState(absl::string_view value) : WasmState("", value) {}
+  explicit WasmState(const WasmStatePrototype& proto)
+      : readonly_(proto.readonly_), type_(proto.type_), schema_(proto.schema_) {}
 
   const std::string& value() const { return value_; }
+  google::api::expr::runtime::CelValue exprValue(Protobuf::Arena* arena) const;
+  bool setValue(absl::string_view value) {
+    if (initialized_ && readonly_) {
+      return false;
+    }
+    value_.assign(value.data(), value.size());
+    initialized_ = true;
+    return true;
+  }
 
   ProtobufTypes::MessagePtr serializeAsProto() const override;
 
 private:
-  const std::string type_;
-  const std::string value_;
+  const bool readonly_;
+  const WasmType type_;
+  absl::string_view schema_;
+  std::string value_{};
+  bool initialized_{false};
 };
 
 } // namespace Wasm

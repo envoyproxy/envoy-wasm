@@ -23,7 +23,6 @@
 #include "common/tracing/http_tracer_impl.h"
 
 #include "extensions/common/wasm/wasm.h"
-#include "extensions/common/wasm/wasm_state.h"
 #include "extensions/common/wasm/well_known_names.h"
 #include "extensions/filters/common/expr/context.h"
 
@@ -409,47 +408,9 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
   return WasmResult::SerializationFailure;
 }
 
-// An expression wrapper for the WASM state
-class WasmStateWrapper : public google::api::expr::runtime::CelMap {
-public:
-  WasmStateWrapper(const StreamInfo::FilterState& filter_state,
-                   const StreamInfo::FilterState* upstream_connection_filter_state)
-      : filter_state_(filter_state),
-        upstream_connection_filter_state_(upstream_connection_filter_state) {}
-  absl::optional<google::api::expr::runtime::CelValue>
-  operator[](google::api::expr::runtime::CelValue key) const override {
-    if (!key.IsString()) {
-      return {};
-    }
-    auto value = key.StringOrDie().value();
-    if (filter_state_.hasData<WasmState>(value)) {
-      const WasmState& result = filter_state_.getDataReadOnly<WasmState>(value);
-      return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
-    }
-
-    if (upstream_connection_filter_state_ &&
-        upstream_connection_filter_state_->hasData<WasmState>(value)) {
-      const WasmState& result =
-          upstream_connection_filter_state_->getDataReadOnly<WasmState>(value);
-      return google::api::expr::runtime::CelValue::CreateBytes(&result.value());
-    }
-    return {};
-  }
-
-  int size() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
-  bool empty() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
-  const google::api::expr::runtime::CelList* ListKeys() const override {
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
-  }
-
-private:
-  const StreamInfo::FilterState& filter_state_;
-  const StreamInfo::FilterState* upstream_connection_filter_state_;
-};
-
 #define PROPERTY_TOKENS(_f)                                                                        \
-  _f(METADATA) _f(FILTER_STATE) _f(REQUEST) _f(RESPONSE) _f(CONNECTION) _f(UPSTREAM) _f(NODE)      \
-      _f(SOURCE) _f(DESTINATION) _f(LISTENER_DIRECTION) _f(LISTENER_METADATA) _f(CLUSTER_NAME)     \
+  _f(METADATA) _f(REQUEST) _f(RESPONSE) _f(CONNECTION) _f(UPSTREAM) _f(NODE) _f(SOURCE)            \
+      _f(DESTINATION) _f(LISTENER_DIRECTION) _f(LISTENER_METADATA) _f(CLUSTER_NAME)                \
           _f(CLUSTER_METADATA) _f(ROUTE_NAME) _f(ROUTE_METADATA) _f(PLUGIN_NAME)                   \
               _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID)
 
@@ -470,23 +431,31 @@ absl::optional<google::api::expr::runtime::CelValue>
 Context::FindValue(absl::string_view name, Protobuf::Arena* arena) const {
   using google::api::expr::runtime::CelValue;
 
+  const StreamInfo::StreamInfo* info = getConstRequestStreamInfo();
+
   // Convert into a dense token to enable a jump table implementation.
   auto part_token = property_tokens.find(name);
   if (part_token == property_tokens.end()) {
+    if (info) {
+      std::string key;
+      absl::StrAppend(&key, WasmStateKeyPrefix, name);
+      const WasmState* state;
+      if (info->filterState().hasData<WasmState>(key)) {
+        state = &info->filterState().getDataReadOnly<WasmState>(key);
+      } else if (info->upstreamFilterState()->hasData<WasmState>(key)) {
+        state = &info->upstreamFilterState()->getDataReadOnly<WasmState>(key);
+      } else {
+        return {};
+      }
+      return state->exprValue(arena);
+    }
     return {};
   }
 
-  const StreamInfo::StreamInfo* info = getConstRequestStreamInfo();
   switch (part_token->second) {
   case PropertyToken::METADATA:
     if (info) {
       return CelValue::CreateMessage(&info->dynamicMetadata(), arena);
-    }
-    break;
-  case PropertyToken::FILTER_STATE:
-    if (info) {
-      return CelValue::CreateMap(Protobuf::Arena::Create<WasmStateWrapper>(
-          arena, info->filterState(), info->upstreamFilterState().get()));
     }
     break;
   case PropertyToken::REQUEST:
@@ -1134,13 +1103,34 @@ const Network::Connection* Context::getConnection() const {
   return nullptr;
 }
 
-WasmResult Context::setProperty(absl::string_view key, absl::string_view serialized_value) {
+WasmResult Context::setProperty(absl::string_view path, absl::string_view value) {
   auto* stream_info = getRequestStreamInfo();
   if (!stream_info) {
     return WasmResult::NotFound;
   }
-  stream_info->filterState()->setData(key, std::make_unique<WasmState>(serialized_value),
-                                      StreamInfo::FilterState::StateType::Mutable);
+  std::string key;
+  absl::StrAppend(&key, WasmStateKeyPrefix, path);
+  WasmState* state;
+  if (stream_info->filterState()->hasData<WasmState>(key)) {
+    state = &stream_info->filterState()->getDataMutable<WasmState>(key);
+  } else {
+    const auto& it = rootContext()->state_prototypes_.find(path);
+    auto state_ptr = std::make_unique<WasmState>(it == rootContext()->state_prototypes_.end()
+                                                     ? DefaultWasmStatePrototype::get()
+                                                     : *it->second.get());
+    state = state_ptr.get();
+    stream_info->filterState()->setData(key, std::move(state_ptr),
+                                        StreamInfo::FilterState::StateType::ReadOnly);
+  }
+  if (!state->setValue(value)) {
+    return WasmResult::BadArgument;
+  }
+  return WasmResult::Ok;
+}
+
+WasmResult Context::declareProperty(absl::string_view path,
+                                    std::unique_ptr<const WasmStatePrototype> state_prototype) {
+  state_prototypes_[path] = std::move(state_prototype);
   return WasmResult::Ok;
 }
 

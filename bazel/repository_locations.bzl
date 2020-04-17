@@ -296,10 +296,15 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://storage.googleapis.com/quiche-envoy-integration/googleurl_dbf5ad147f60afc125e99db7549402af49a5eae8.tar.gz"],
     ),
     com_google_cel_cpp = dict(
-        sha256 = "d942a8d2e5831bcf7f5b1e99b07f90534eb082f40fd9bda05bcc24ff9c0c3571",
-        strip_prefix = "cel-cpp-a9eec4686b72c28980a09fe2e253ec897a781c32",
-        # 2019-12-09
-        urls = ["https://github.com/google/cel-cpp/archive/a9eec4686b72c28980a09fe2e253ec897a781c32.tar.gz"],
+        sha256 = "7eddffdb231e7c82f60c597cd38e742fbc0c48f54ca33015ac0a3d22bd51bba3",
+        strip_prefix = "cel-cpp-d88a4822af1864b481b31b12c2ecc4e631a7f8a9",
+        # 2019-04-13
+        urls = ["https://github.com/google/cel-cpp/archive/d88a4822af1864b481b31b12c2ecc4e631a7f8a9.tar.gz"],
+    ),
+    com_github_google_flatbuffers = dict(
+        sha256 = "b8efbc25721e76780752bad775a97c3f77a0250271e2db37fc747b20e8b0f24a",
+        strip_prefix = "flatbuffers-a83caf5910644ba1c421c002ef68e42f21c15f9f",
+        urls = ["https://github.com/google/flatbuffers/archive/a83caf5910644ba1c421c002ef68e42f21c15f9f.tar.gz"],
     ),
     com_googlesource_code_re2 = dict(
         sha256 = "04ee2aaebaa5038554683329afc494e684c30f82f2a1e47eb62450e59338f84d",
