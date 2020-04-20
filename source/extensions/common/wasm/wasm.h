@@ -60,7 +60,7 @@ public:
   void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period) override;
   virtual void tickHandler(uint32_t root_context_id);
 
-  // WasmBsae
+  // WasmBase
   void error(absl::string_view message) override { throw WasmException(std::string(message)); }
   proxy_wasm::CallOnThreadFunction callOnThreadFunction() override;
   ContextBase* createContext(std::shared_ptr<PluginBase> plugin) override;
