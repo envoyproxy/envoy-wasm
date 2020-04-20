@@ -428,7 +428,7 @@ static absl::flat_hash_map<std::string, PropertyToken> property_tokens = {PROPER
 #undef _PARI
 
 absl::optional<google::api::expr::runtime::CelValue>
-Context::FindValue(absl::string_view name, Protobuf::Arena* arena) const {
+Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) const {
   using google::api::expr::runtime::CelValue;
 
   const StreamInfo::StreamInfo* info = getConstRequestStreamInfo();
@@ -442,10 +442,14 @@ Context::FindValue(absl::string_view name, Protobuf::Arena* arena) const {
       const WasmState* state;
       if (info->filterState().hasData<WasmState>(key)) {
         state = &info->filterState().getDataReadOnly<WasmState>(key);
-      } else if (info->upstreamFilterState()->hasData<WasmState>(key)) {
+      } else if (info->upstreamFilterState() &&
+                 info->upstreamFilterState()->hasData<WasmState>(key)) {
         state = &info->upstreamFilterState()->getDataReadOnly<WasmState>(key);
       } else {
         return {};
+      }
+      if (last) {
+        return CelValue::CreateBytes(&state->value());
       }
       return state->exprValue(arena);
     }
@@ -573,7 +577,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
     if (first) {
       // top-level ident
       first = false;
-      auto top_value = FindValue(part, &arena);
+      auto top_value = findValue(part, &arena, start >= path.size());
       if (!top_value.has_value()) {
         return WasmResult::NotFound;
       }
@@ -1115,12 +1119,14 @@ WasmResult Context::setProperty(absl::string_view path, absl::string_view value)
     state = &stream_info->filterState()->getDataMutable<WasmState>(key);
   } else {
     const auto& it = rootContext()->state_prototypes_.find(path);
-    auto state_ptr = std::make_unique<WasmState>(it == rootContext()->state_prototypes_.end()
-                                                     ? DefaultWasmStatePrototype::get()
-                                                     : *it->second.get());
+    const WasmStatePrototype& prototype = it == rootContext()->state_prototypes_.end()
+                                              ? DefaultWasmStatePrototype::get()
+                                              : *it->second.get();
+    auto state_ptr = std::make_unique<WasmState>(prototype);
     state = state_ptr.get();
     stream_info->filterState()->setData(key, std::move(state_ptr),
-                                        StreamInfo::FilterState::StateType::ReadOnly);
+                                        StreamInfo::FilterState::StateType::Mutable,
+                                        prototype.life_span_);
   }
   if (!state->setValue(value)) {
     return WasmResult::BadArgument;
