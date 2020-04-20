@@ -267,7 +267,11 @@ public:
     return {};
   }
   absl::optional<google::api::expr::runtime::CelValue>
-  FindValue(absl::string_view name, Protobuf::Arena* arena) const override;
+  findValue(absl::string_view name, Protobuf::Arena* arena, bool last) const;
+  absl::optional<google::api::expr::runtime::CelValue>
+  FindValue(absl::string_view name, Protobuf::Arena* arena) const override {
+    return findValue(name, arena, false);
+  }
   bool IsPathUnknown(absl::string_view) const override { return false; }
   const std::vector<google::api::expr::runtime::CelAttributePattern>&
   unknown_attribute_patterns() const override {
