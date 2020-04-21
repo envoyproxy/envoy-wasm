@@ -34,6 +34,8 @@ protected:
     ON_CALL(context_, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
   }
 
+  void SetUp() { Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(false); }
+
   void initializeForRemote() {
     retry_timer_ = new Event::MockTimer();
 
@@ -207,6 +209,76 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASM) {
   cb(filter_callback);
 }
 
+TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailOnUncachedThenSucceed) {
+  Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(true);
+  const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
+  const std::string sha256 = Hex::encode(
+      Envoy::Common::Crypto::UtilitySingleton::get().getSha256Digest(Buffer::OwnedImpl(code)));
+  const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
+                                                                    GetParam(), R"EOF("
+      code:
+        remote:
+          http_uri:
+            uri: https://example.com/data
+            cluster: cluster_1
+            timeout: 5s
+          sha256: )EOF",
+                                                                    sha256));
+  envoy::extensions::filters::http::wasm::v3::Wasm proto_config;
+  TestUtility::loadFromYaml(yaml, proto_config);
+  WasmFilterConfig factory;
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
+
+  EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
+      .WillOnce(ReturnRef(cluster_manager_.async_client_));
+  EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
+      .WillOnce(
+          Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
+                     const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
+            Http::ResponseMessagePtr response(
+                new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                    new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
+            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            callbacks.onSuccess(request, std::move(response));
+            return &request;
+          }));
+
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
+                            Extensions::Common::Wasm::WasmException,
+                            "Failed to load WASM code (fetching) from https://example.com/data");
+  EXPECT_CALL(init_watcher_, ready());
+  context_.initManager().initialize(init_watcher_);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
+
+  NiceMock<Server::Configuration::MockFactoryContext> context2;
+  Init::ManagerImpl init_manager2{"init_manager2"};
+  Init::ExpectableWatcherImpl init_watcher2;
+
+  ON_CALL(context2, api()).WillByDefault(ReturnRef(*api_));
+  ON_CALL(context2, scope()).WillByDefault(ReturnRef(stats_store_));
+  ON_CALL(context2, listenerMetadata()).WillByDefault(ReturnRef(listener_metadata_));
+  ON_CALL(context2, initManager()).WillByDefault(ReturnRef(init_manager2));
+  ON_CALL(context2, clusterManager()).WillByDefault(ReturnRef(cluster_manager_));
+  ON_CALL(context2, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
+
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context2);
+
+  EXPECT_CALL(init_watcher2, ready());
+  init_manager2.initialize(init_watcher2);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
+
+  Http::MockFilterChainFactoryCallbacks filter_callback;
+  EXPECT_CALL(filter_callback, addStreamFilter(_));
+  EXPECT_CALL(filter_callback, addAccessLogHandler(_));
+
+  cb(filter_callback);
+}
+
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"));
@@ -245,9 +317,9 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(context_.initManager().initialize(init_watcher_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load WASM code from https://example.com/data");
+  EXPECT_THROW_WITH_MESSAGE(
+      context_.initManager().initialize(init_watcher_), Extensions::Common::Wasm::WasmException,
+      "Failed to load WASM code (fetch failed) from https://example.com/data");
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
@@ -291,9 +363,9 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(context_.initManager().initialize(init_watcher_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load WASM code from https://example.com/data");
+  EXPECT_THROW_WITH_MESSAGE(
+      context_.initManager().initialize(init_watcher_), Extensions::Common::Wasm::WasmException,
+      "Failed to load WASM code (fetch failed) from https://example.com/data");
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
@@ -337,9 +409,9 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(context_.initManager().initialize(init_watcher_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load WASM code from https://example.com/data");
+  EXPECT_THROW_WITH_MESSAGE(
+      context_.initManager().initialize(init_watcher_), Extensions::Common::Wasm::WasmException,
+      "Failed to load WASM code (fetch failed) from https://example.com/data");
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteMultipleRetries) {

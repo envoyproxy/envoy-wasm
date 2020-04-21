@@ -32,6 +32,8 @@ protected:
     ON_CALL(context_, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
   }
 
+  void SetUp() { Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(false); }
+
   void initializeForRemote() {
     retry_timer_ = new Event::MockTimer();
 
@@ -170,6 +172,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromRemoteWASM) {
   EXPECT_CALL(init_watcher_, ready());
   context_.initManager().initialize(init_watcher_);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
+
   Network::MockConnection connection;
   EXPECT_CALL(connection, addFilter(_));
   cb(connection);
@@ -213,9 +216,9 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
 
   Network::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(context_.initManager().initialize(init_watcher_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load WASM code from https://example.com/data");
+  EXPECT_THROW_WITH_MESSAGE(
+      context_.initManager().initialize(init_watcher_), Extensions::Common::Wasm::WasmException,
+      "Failed to load WASM code (fetch failed) from https://example.com/data");
 }
 
 TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
@@ -259,9 +262,9 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
 
   Network::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(context_.initManager().initialize(init_watcher_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load WASM code from https://example.com/data");
+  EXPECT_THROW_WITH_MESSAGE(
+      context_.initManager().initialize(init_watcher_), Extensions::Common::Wasm::WasmException,
+      "Failed to load WASM code (fetch failed) from https://example.com/data");
 }
 
 TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
@@ -305,9 +308,9 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
 
   Network::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(context_.initManager().initialize(init_watcher_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load WASM code from https://example.com/data");
+  EXPECT_THROW_WITH_MESSAGE(
+      context_.initManager().initialize(init_watcher_), Extensions::Common::Wasm::WasmException,
+      "Failed to load WASM code (fetch failed) from https://example.com/data");
 }
 
 TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromRemoteMultipleRetries) {
