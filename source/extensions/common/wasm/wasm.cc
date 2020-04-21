@@ -2,8 +2,9 @@
 
 #include <chrono>
 
-#include "absl/strings/str_cat.h"
 #include "envoy/event/deferred_deletable.h"
+
+#include "absl/strings/str_cat.h"
 
 namespace Envoy {
 namespace Extensions {
