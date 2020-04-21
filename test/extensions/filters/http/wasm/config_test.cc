@@ -277,6 +277,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailOnUncachedThenSucceed) {
   EXPECT_CALL(filter_callback, addAccessLogHandler(_));
 
   cb(filter_callback);
+  dispatcher_.clearDeferredDeleteList();
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {

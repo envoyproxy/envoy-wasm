@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "absl/strings/str_cat.h"
+#include "envoy/event/deferred_deletable.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -210,7 +211,7 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
     // immediately rather than completing the async fetch, so allow for self-delete.
     auto remote_data_provider_holder =
         std::make_shared<std::unique_ptr<Config::DataSource::RemoteAsyncDataProvider>>();
-    auto fetch_callback = [vm_config, complete_cb, source,
+    auto fetch_callback = [vm_config, complete_cb, source, &dispatcher,
                            remote_data_provider_holder](const std::string& code) {
       {
         std::lock_guard<std::mutex> guard(code_cache_mutex);
@@ -226,6 +227,8 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         complete_cb(code);
       }
       // NB: must be deleted explicitly.
+      dispatcher.deferredDelete(
+          Envoy::Event::DeferredDeletablePtr{remote_data_provider_holder->release()});
       remote_data_provider_holder->reset();
     };
     remote_data_provider = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
