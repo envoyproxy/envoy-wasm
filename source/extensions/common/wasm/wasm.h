@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "envoy/common/exception.h"
-#include "envoy/config/wasm/v3/wasm.pb.validate.h"
+#include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
 #include "envoy/http/filter.h"
 #include "envoy/server/lifecycle_notifier.h"
 #include "envoy/server/wasm.h"
@@ -39,7 +39,7 @@ struct WasmStats {
   ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
 };
 
-using VmConfig = envoy::config::wasm::v3::VmConfig;
+using VmConfig = envoy::extensions::wasm::v3::VmConfig;
 
 class WasmHandle;
 
