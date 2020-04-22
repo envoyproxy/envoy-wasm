@@ -1161,6 +1161,7 @@ WasmResult Context::log(uint64_t level, absl::string_view message) {
     ENVOY_LOG(critical, "wasm log{}: {}", log_prefix(), message);
     return WasmResult::Ok;
   case spdlog::level::off:
+  default:
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 }
@@ -1321,6 +1322,8 @@ Network::FilterStatus convertNetworkFilterStatus(proxy_wasm::FilterStatus status
     return Network::FilterStatus::Continue;
   case proxy_wasm::FilterStatus::StopIteration:
     return Network::FilterStatus::StopIteration;
+  default:
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 };
 
@@ -1330,6 +1333,8 @@ Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersSt
     return Http::FilterHeadersStatus::Continue;
   case proxy_wasm::FilterHeadersStatus::StopIteration:
     return Http::FilterHeadersStatus::StopIteration;
+  default:
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 };
 
@@ -1339,6 +1344,8 @@ Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailer
     return Http::FilterTrailersStatus::Continue;
   case proxy_wasm::FilterTrailersStatus::StopIteration:
     return Http::FilterTrailersStatus::StopIteration;
+  default:
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 };
 
@@ -1346,6 +1353,8 @@ Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadat
   switch (status) {
   case proxy_wasm::FilterMetadataStatus::Continue:
     return Http::FilterMetadataStatus::Continue;
+  default:
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 };
 
@@ -1359,6 +1368,8 @@ Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus stat
     return Http::FilterDataStatus::StopIterationAndWatermark;
   case proxy_wasm::FilterDataStatus::StopIterationNoBuffer:
     return Http::FilterDataStatus::StopIterationNoBuffer;
+  default:
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 };
 
