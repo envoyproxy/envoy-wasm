@@ -46,6 +46,7 @@
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/logging.h"
 #include "test/test_common/printers.h"
+#include "test/test_common/simulated_time_system.h"
 #include "test/test_common/test_time.h"
 
 #include "gmock/gmock.h"
