@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include "common/common/logger.h"
 #include "envoy/event/deferred_deletable.h"
 
 #include "absl/strings/str_cat.h"
@@ -16,6 +17,7 @@ namespace {
 struct CodeCacheEntry {
   std::string code;
   bool in_progress;
+  MonotonicTime fetch_time;
 };
 
 const std::string INLINE_STRING = "<inline>";
@@ -23,6 +25,7 @@ const std::string INLINE_STRING = "<inline>";
 // if remote Wasm code is not cached and do a background fill.
 const bool DEFAULT_FAIL_IF_NOT_CACHED = true;
 bool fail_if_code_not_cached = DEFAULT_FAIL_IF_NOT_CACHED;
+const int CODE_CACHE_SECONDS_NEGATIVE_CACHING = 10;
 
 std::atomic<int64_t> active_wasms;
 std::mutex code_cache_mutex;
@@ -170,17 +173,28 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
     auto it = code_cache->find(vm_config.code().remote().sha256());
     if (it != code_cache->end()) {
       if (it->second.in_progress) {
+        ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
+                            "createWasm: failed to load (in prpgress) from {}", source);
         throw WasmException(
             fmt::format("Failed to load WASM code (fetch in progress) from {}", source));
       }
       code = it->second.code;
       if (code.empty()) {
+        if (dispatcher.timeSource().monotonicTime() - it->second.fetch_time <
+            std::chrono::seconds(CODE_CACHE_SECONDS_NEGATIVE_CACHING)) {
+          ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
+                              "createWasm: failed to load (cached) from {}", source);
+          throw WasmException(fmt::format("Failed to load WASM code (cached) from {}", source));
+        }
         fetch = true; // Fetch failed, retry.
         it->second.in_progress = true;
+        it->second.fetch_time = dispatcher.timeSource().monotonicTime();
       }
     } else {
       fetch = true; // Not in cache, fetch.
-      (*code_cache)[vm_config.code().remote().sha256()].in_progress = true;
+      auto& e = (*code_cache)[vm_config.code().remote().sha256()];
+      e.in_progress = true;
+      e.fetch_time = dispatcher.timeSource().monotonicTime();
     }
   } else if (vm_config.code().has_local()) {
     code = Config::DataSource::read(vm_config.code().local(), true, api);

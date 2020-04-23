@@ -7,7 +7,7 @@
 #include "common/stream_info/filter_state_impl.h"
 
 #include "test/mocks/upstream/host.h"
-#include "test/test_common/simulated_time_system.h"
+#include "test/test_common/test_time.h"
 
 #include "gmock/gmock.h"
 
@@ -98,7 +98,7 @@ public:
 
   std::shared_ptr<testing::NiceMock<Upstream::MockHostDescription>> host_{
       new testing::NiceMock<Upstream::MockHostDescription>()};
-  Envoy::Event::SimulatedTimeSystem ts_;
+  Event::GlobalTimeSystem time_system_;
   SystemTime start_time_;
   MonotonicTime start_time_monotonic_;
   absl::optional<std::chrono::nanoseconds> last_downstream_rx_byte_received_;
