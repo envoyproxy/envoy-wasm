@@ -16,7 +16,7 @@ namespace Envoy {
 namespace StreamInfo {
 
 MockStreamInfo::MockStreamInfo()
-    : start_time_(time_system_.systemTime()),
+    : start_time_(ts_.systemTime()),
       filter_state_(std::make_shared<FilterStateImpl>(FilterState::LifeSpan::FilterChain)),
       downstream_local_address_(new Network::Address::Ipv4Instance("127.0.0.2")),
       downstream_direct_remote_address_(new Network::Address::Ipv4Instance("127.0.0.1")),
@@ -46,8 +46,7 @@ MockStreamInfo::MockStreamInfo()
   ON_CALL(*this, requestComplete()).WillByDefault(ReturnPointee(&end_time_));
   ON_CALL(*this, onRequestComplete()).WillByDefault(Invoke([this]() {
     end_time_ = absl::make_optional<std::chrono::nanoseconds>(
-        std::chrono::duration_cast<std::chrono::nanoseconds>(time_system_.systemTime() -
-                                                             start_time_)
+        std::chrono::duration_cast<std::chrono::nanoseconds>(ts_.systemTime() - start_time_)
             .count());
   }));
   ON_CALL(*this, setUpstreamLocalAddress(_))
