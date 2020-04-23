@@ -31,7 +31,7 @@ protected:
     ON_CALL(context_, api()).WillByDefault(ReturnRef(*api_));
     ON_CALL(context_, scope()).WillByDefault(ReturnRef(stats_store_));
     ON_CALL(context_, listenerMetadata()).WillByDefault(ReturnRef(listener_metadata_));
-    ON_CALL(context_, initManager()).WillByDefault(ReturnRef(init_manager_));
+    EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager_));
     ON_CALL(context_, clusterManager()).WillByDefault(ReturnRef(cluster_manager_));
     ON_CALL(context_, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
   }
@@ -257,22 +257,16 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailOnUncachedThenSucceed) {
   context_.initManager().initialize(init_watcher_);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
 
-  NiceMock<Server::Configuration::MockFactoryContext> context2;
   Init::ManagerImpl init_manager2{"init_manager2"};
   Init::ExpectableWatcherImpl init_watcher2;
 
-  ON_CALL(context2, api()).WillByDefault(ReturnRef(*api_));
-  ON_CALL(context2, scope()).WillByDefault(ReturnRef(stats_store_));
-  ON_CALL(context2, listenerMetadata()).WillByDefault(ReturnRef(listener_metadata_));
-  ON_CALL(context2, initManager()).WillByDefault(ReturnRef(init_manager2));
-  ON_CALL(context2, clusterManager()).WillByDefault(ReturnRef(cluster_manager_));
-  ON_CALL(context2, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
+  EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager2));
 
-  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context2);
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
 
   EXPECT_CALL(init_watcher2, ready());
   init_manager2.initialize(init_watcher2);
-  EXPECT_EQ(context2.initManager().state(), Init::Manager::State::Initialized);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
 
   Http::MockFilterChainFactoryCallbacks filter_callback;
   EXPECT_CALL(filter_callback, addStreamFilter(_));
@@ -330,37 +324,24 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailCachedThenSucceed) {
   context_.initManager().initialize(init_watcher_);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
 
-  NiceMock<Server::Configuration::MockFactoryContext> context2;
   Init::ManagerImpl init_manager2{"init_manager2"};
   Init::ExpectableWatcherImpl init_watcher2;
 
-  ON_CALL(context2, api()).WillByDefault(ReturnRef(*api_));
-  ON_CALL(context2, scope()).WillByDefault(ReturnRef(stats_store_));
-  ON_CALL(context2, listenerMetadata()).WillByDefault(ReturnRef(listener_metadata_));
-  ON_CALL(context2, initManager()).WillByDefault(ReturnRef(init_manager2));
-  ON_CALL(context2, clusterManager()).WillByDefault(ReturnRef(cluster_manager_));
-  ON_CALL(context2, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
-
-  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context2),
+  EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager2));
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
                             "Failed to load WASM code (cached) from https://example.com/data");
 
   EXPECT_CALL(init_watcher2, ready());
   init_manager2.initialize(init_watcher2);
-  EXPECT_EQ(context2.initManager().state(), Init::Manager::State::Initialized);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
 
-  NiceMock<Server::Configuration::MockFactoryContext> context3;
   Init::ManagerImpl init_manager3{"init_manager3"};
   Init::ExpectableWatcherImpl init_watcher3;
 
   dispatcher_.time_system_.advanceTimeWait(std::chrono::seconds(30));
 
-  ON_CALL(context3, api()).WillByDefault(ReturnRef(*api_));
-  ON_CALL(context3, scope()).WillByDefault(ReturnRef(stats_store_));
-  ON_CALL(context3, listenerMetadata()).WillByDefault(ReturnRef(listener_metadata_));
-  ON_CALL(context3, initManager()).WillByDefault(ReturnRef(init_manager3));
-  ON_CALL(context3, clusterManager()).WillByDefault(ReturnRef(cluster_manager_));
-  ON_CALL(context2, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
+  EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager3));
 
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
@@ -374,29 +355,23 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailCachedThenSucceed) {
             return &request;
           }));
 
-  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context3),
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
                             "Failed to load WASM code (fetching) from https://example.com/data");
   EXPECT_CALL(init_watcher3, ready());
   init_manager3.initialize(init_watcher3);
-  EXPECT_EQ(context3.initManager().state(), Init::Manager::State::Initialized);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
 
-  NiceMock<Server::Configuration::MockFactoryContext> context4;
   Init::ManagerImpl init_manager4{"init_manager4"};
   Init::ExpectableWatcherImpl init_watcher4;
 
-  ON_CALL(context4, api()).WillByDefault(ReturnRef(*api_));
-  ON_CALL(context4, scope()).WillByDefault(ReturnRef(stats_store_));
-  ON_CALL(context4, listenerMetadata()).WillByDefault(ReturnRef(listener_metadata_));
-  ON_CALL(context4, initManager()).WillByDefault(ReturnRef(init_manager4));
-  ON_CALL(context4, clusterManager()).WillByDefault(ReturnRef(cluster_manager_));
-  ON_CALL(context4, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
+  EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager4));
 
-  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context4);
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
 
   EXPECT_CALL(init_watcher4, ready());
   init_manager4.initialize(init_watcher4);
-  EXPECT_EQ(context4.initManager().state(), Init::Manager::State::Initialized);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
 
   Http::MockFilterChainFactoryCallbacks filter_callback;
   EXPECT_CALL(filter_callback, addStreamFilter(_));
