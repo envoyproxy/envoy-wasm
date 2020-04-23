@@ -2,8 +2,9 @@
 
 #include <chrono>
 
-#include "common/common/logger.h"
 #include "envoy/event/deferred_deletable.h"
+
+#include "common/common/logger.h"
 
 #include "absl/strings/str_cat.h"
 

@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "envoy/extensions/filters/http/wasm/v3/wasm.pb.validate.h"
 
 #include "common/common/base64.h"
@@ -14,7 +16,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <chrono>
 
 using testing::_;
 using testing::ReturnRef;
