@@ -1,6 +1,21 @@
 licenses(["notice"])  # Apache 2
 
+load("@io_bazel_rules_rust//rust:rust.bzl", "rust_library")
 load("//bazel:wasm_binary.bzl", "wasm_binary")
+
+# TODO(shikugawa): Prefer to use bazel on proxy_wasm_rust_sdk
+rust_library(
+    name = "proxy_wasm_rust_sdk",
+    srcs = glob(["proxy-wasm/**/*"]),
+)
+
+# rust_binary(
+#     name = "logging_rust.wasm",
+#     srcs = ["logging_rust/src/lib.rs"],
+#     deps = [
+#       ":proxy_wasm_rust_sdk",
+#     ]
+# )
 
 wasm_binary(
     name = "asm2wasm_cpp",
@@ -58,18 +73,6 @@ wasm_binary(
         "segv_cpp.cc",
     ],
     deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
-    ],
-)
-
-wasm_binary(
-    name = "speed_cpp_null_plugin",
-    srcs = [
-        "speed_cpp_null_plugin.cc",
-    ],
-    deps = [
-        "@com_google_protobuf//:protobuf",
-        "@proxy_wasm_cpp_host//:include",
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
 )

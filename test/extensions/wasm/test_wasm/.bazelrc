@@ -17,3 +17,6 @@ build --cpu=wasm
 # Use the default Bazel C++ toolchain to build the tools used during the
 # build.
 build --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+
+# wasm32-unknown-unknown for rust
+build --platforms=@io_bazel_rules_rust//rust/platform:wasm

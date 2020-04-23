@@ -10,6 +10,8 @@ def wasm_dependencies():
     _com_github_proxy_wasm_cpp_sdk()
     _com_github_proxy_wasm_cpp_host()
     _com_github_protocolbuffers_protobuf()
+    _com_github_bazelbuild_rules_rust()
+    _com_github_proxy_wasm_rust_sdk()
 
 def _envoy_build_tools():
     http_archive(
@@ -56,7 +58,7 @@ def _com_github_bazelbuild_rules_proto():
 def _com_github_proxy_wasm_cpp_sdk():
     git_repository(
         name = "proxy_wasm_cpp_sdk",
-        commit = "b6f17d04066d4505dc1c495beef51af506c70a5c",
+        commit = "9ab06092c4579a74efee16ec37becd42aca66074",
         remote = "https://github.com/proxy-wasm/proxy-wasm-cpp-sdk",
     )
 
@@ -73,4 +75,18 @@ def _com_github_protocolbuffers_protobuf():
         name = "com_google_protobuf",
         commit = "655310ca192a6e3a050e0ca0b7084a2968072260",
         remote = "https://github.com/protocolbuffers/protobuf",
+    )
+
+def _com_github_bazelbuild_rules_rust():
+    git_repository(
+        name = "io_bazel_rules_rust",
+        commit = "8d3cb6878cf1447e81cd3d7f97057e70285fc833",
+        remote = "https://github.com/bazelbuild/rules_rust",
+    )
+
+def _com_github_proxy_wasm_rust_sdk():
+    git_repository(
+        name = "proxy_wasm_rust_sdk",
+        commit = "3ebf309fd72d2545f3909d2adc13b2450567057e",
+        remote = "https://github.com/proxy-wasm/proxy-wasm-rust-sdk",
     )
