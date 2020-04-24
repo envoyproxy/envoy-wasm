@@ -24,6 +24,6 @@ envoy_cc_library(
         "//source/common/protobuf:utility_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/grpc_credentials:well_known_names",
-        "@envoy_api//envoy/config/wasm/v3:pkg_cc_proto",
+        "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
     ],
 )

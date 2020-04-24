@@ -436,7 +436,7 @@ void InstanceImpl::initialize(const Options& options,
     auto factory = Registry::FactoryRegistry<Configuration::WasmFactory>::getFactory("envoy.wasm");
     if (factory) {
       for (auto& config : bootstrap_.wasm_service()) {
-        auto scope = Stats::ScopeSharedPtr(stats_store_.createScope(config.stat_prefix()));
+        auto scope = Stats::ScopeSharedPtr(stats_store_.createScope(""));
         Configuration::WasmFactoryContextImpl wasm_factory_context(*this, scope);
         factory->createWasm(config, wasm_factory_context, [this](WasmServicePtr wasm) {
           if (wasm) {
