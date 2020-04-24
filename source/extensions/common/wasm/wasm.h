@@ -132,6 +132,8 @@ WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_w
                                                const PluginSharedPtr& plugin,
                                                Event::Dispatcher& dispatcher);
 
+void clearCodeCacheForTesting(bool fail_if_not_cached);
+
 } // namespace Wasm
 } // namespace Common
 } // namespace Extensions
