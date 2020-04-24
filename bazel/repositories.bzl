@@ -1,6 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load(":dev_binding.bzl", "envoy_dev_binding")
 load(":genrule_repository.bzl", "genrule_repository")
+load(":bazel_repository.bzl", "bazel_wasm_repository")
 load("@envoy_api//bazel:envoy_http_archive.bzl", "envoy_http_archive")
 load(":repository_locations.bzl", "REPOSITORY_LOCATIONS")
 load("@com_google_googleapis//:repository_rules.bzl", "switched_rules_by_language")
@@ -166,10 +167,7 @@ def envoy_dependencies(skip_targets = []):
     _go_deps(skip_targets)
     _kafka_deps()
 
-    native.local_repository(
-        name = "common_wasm_test_cpp",
-        path = "test/extensions/common/wasm/test_data/test_cpp",
-    )
+    bazel_wasm_repository(name = "common_wasm_test_cpp", reldir = "test/extensions/common/wasm/test_data/test_cpp")
 
     switched_rules_by_language(
         name = "com_google_googleapis_imports",

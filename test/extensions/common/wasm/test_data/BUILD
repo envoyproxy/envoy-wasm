@@ -10,13 +10,13 @@ envoy_package()
 
 filegroup(
     name = "modules",
-    srcs = glob(["*.wasm"]),
+    srcs = glob(["*.wasm"]) + [":test_cpp.wasm"],
 )
 
 envoy_cc_library(
     name = "test_cpp_plugin",
     srcs = [
-        "test_cpp/test_cpp.cc",
+        "//test/extensions/common/wasm/test_data/test_cpp:test_cpp.cc",
         "test_cpp_null_plugin.cc",
     ],
     copts = ["-DNULL_PLUGIN=1"],
@@ -28,4 +28,9 @@ envoy_cc_library(
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/common/wasm:well_known_names",
     ],
+)
+
+alias(
+    name = "test_cpp.wasm",
+    actual = "@common_wasm_test_cpp//:test_cpp.wasm",
 )
