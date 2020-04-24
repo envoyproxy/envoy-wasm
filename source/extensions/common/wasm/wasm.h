@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <map>
 #include <memory>
 
@@ -133,6 +134,7 @@ WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_w
                                                Event::Dispatcher& dispatcher);
 
 void clearCodeCacheForTesting(bool fail_if_not_cached);
+void setTimeOffsetForCodeCacheForTesting(MonotonicTime::duration d);
 
 } // namespace Wasm
 } // namespace Common

@@ -317,6 +317,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailCachedThenSucceed) {
             return &request;
           }));
 
+  // Case 1: fail and fetch in the background, got 503, cache failure.
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
                             "Failed to load WASM code (fetching) from https://example.com/data");
@@ -324,6 +325,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailCachedThenSucceed) {
   context_.initManager().initialize(init_watcher_);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
 
+  // Case 2: fail immediately with negatively cached result.
   Init::ManagerImpl init_manager2{"init_manager2"};
   Init::ExpectableWatcherImpl init_watcher2;
 
@@ -336,15 +338,11 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailCachedThenSucceed) {
   init_manager2.initialize(init_watcher2);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
 
-  Init::ManagerImpl init_manager3{"init_manager3"};
-  Init::ExpectableWatcherImpl init_watcher3;
-
-  dispatcher_.time_system_.advanceTimeWait(std::chrono::seconds(30));
-
-  EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager3));
+  // Wait for negative cache to timeout.
+  ::Envoy::Extensions::Common::Wasm::setTimeOffsetForCodeCacheForTesting(std::chrono::seconds(10));
 
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
-      .WillOnce(
+      .WillRepeatedly(
           Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             Http::ResponseMessagePtr response(
@@ -355,6 +353,12 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailCachedThenSucceed) {
             return &request;
           }));
 
+  // Case 3: fail and fetch in the background, got 200, cache success.
+  Init::ManagerImpl init_manager3{"init_manager3"};
+  Init::ExpectableWatcherImpl init_watcher3;
+
+  EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager3));
+
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
                             "Failed to load WASM code (fetching) from https://example.com/data");
@@ -362,6 +366,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailCachedThenSucceed) {
   init_manager3.initialize(init_watcher3);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
 
+  // Case 4: success from cache.
   Init::ManagerImpl init_manager4{"init_manager4"};
   Init::ExpectableWatcherImpl init_watcher4;
 
@@ -378,6 +383,75 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWASMFailCachedThenSucceed) {
   EXPECT_CALL(filter_callback, addAccessLogHandler(_));
 
   cb(filter_callback);
+
+  // Wait for cache to timeout.
+  ::Envoy::Extensions::Common::Wasm::setTimeOffsetForCodeCacheForTesting(
+      std::chrono::seconds(10 + 24 * 3600));
+
+  // Case 5: flush the stale cache.
+  const std::string sha256_2 = sha256 + "new";
+  const std::string yaml2 = TestEnvironment::substitute(absl::StrCat(R"EOF(
+  config:
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
+                                                                     GetParam(), R"EOF("
+      code:
+        remote:
+          http_uri:
+            uri: https://example.com/data
+            cluster: cluster_1
+            timeout: 5s
+          retry_policy:
+            num_retries: 0
+          sha256: )EOF",
+                                                                     sha256_2));
+
+  envoy::extensions::filters::http::wasm::v3::Wasm proto_config2;
+  TestUtility::loadFromYaml(yaml2, proto_config2);
+
+  Init::ManagerImpl init_manager5{"init_manager4"};
+  Init::ExpectableWatcherImpl init_watcher5;
+
+  EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager5));
+
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config2, "stats", context_),
+                            Extensions::Common::Wasm::WasmException,
+                            "Failed to load WASM code (fetching) from https://example.com/data");
+  EXPECT_CALL(init_watcher_, ready());
+  context_.initManager().initialize(init_watcher_);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
+
+  // Case 6: fail and fetch in the background, got 200, cache success.
+  Init::ManagerImpl init_manager6{"init_manager6"};
+  Init::ExpectableWatcherImpl init_watcher6;
+
+  EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager6));
+
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
+                            Extensions::Common::Wasm::WasmException,
+                            "Failed to load WASM code (fetching) from https://example.com/data");
+  EXPECT_CALL(init_watcher6, ready());
+  init_manager6.initialize(init_watcher6);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
+
+  // Case 7: success from cache.
+  Init::ManagerImpl init_manager7{"init_manager7"};
+  Init::ExpectableWatcherImpl init_watcher7;
+
+  EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager7));
+
+  Http::FilterFactoryCb cb2 = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+
+  EXPECT_CALL(init_watcher7, ready());
+  init_manager7.initialize(init_watcher7);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
+
+  Http::MockFilterChainFactoryCallbacks filter_callback2;
+  EXPECT_CALL(filter_callback2, addStreamFilter(_));
+  EXPECT_CALL(filter_callback2, addAccessLogHandler(_));
+
+  cb2(filter_callback2);
+
   dispatcher_.clearDeferredDeleteList();
 }
 

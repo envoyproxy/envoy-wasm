@@ -1,5 +1,6 @@
 #include "extensions/common/wasm/wasm.h"
 
+#include <algorithm>
 #include <chrono>
 
 #include "envoy/event/deferred_deletable.h"
@@ -18,6 +19,7 @@ namespace {
 struct CodeCacheEntry {
   std::string code;
   bool in_progress;
+  MonotonicTime use_time;
   MonotonicTime fetch_time;
 };
 
@@ -27,6 +29,8 @@ const std::string INLINE_STRING = "<inline>";
 const bool DEFAULT_FAIL_IF_NOT_CACHED = true;
 bool fail_if_code_not_cached = DEFAULT_FAIL_IF_NOT_CACHED;
 const int CODE_CACHE_SECONDS_NEGATIVE_CACHING = 10;
+const int CODE_CACHE_SECONDS_CACHING_TTL = 24 * 3600; // 24 hours.
+MonotonicTime::duration cache_time_offset_for_testing{};
 
 std::atomic<int64_t> active_wasms;
 std::mutex code_cache_mutex;
@@ -154,6 +158,11 @@ void clearCodeCacheForTesting(bool fail_if_not_cached) {
   }
 }
 
+// TODO: remove this post #4160: Switch default to SimulatedTimeSystem.
+void setTimeOffsetForCodeCacheForTesting(MonotonicTime::duration d) {
+  cache_time_offset_for_testing = d;
+}
+
 static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                                const Stats::ScopeSharedPtr& scope,
                                Upstream::ClusterManager& cluster_manager,
@@ -166,13 +175,24 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
   std::string source, code;
   bool fetch = false;
   if (vm_config.code().has_remote()) {
+    auto now = dispatcher.timeSource().monotonicTime() + cache_time_offset_for_testing;
     source = vm_config.code().remote().http_uri().uri();
     std::lock_guard<std::mutex> guard(code_cache_mutex);
     if (!code_cache) {
       code_cache = new std::remove_reference<decltype(*code_cache)>::type;
     }
+    // Remove entries older than CODE_CACHE_SECONDS_CACHING_TTL except for our target.
+    for (auto it = code_cache->begin(); it != code_cache->end();) {
+      if (now - it->second.use_time > std::chrono::seconds(CODE_CACHE_SECONDS_CACHING_TTL) &&
+          it->first != vm_config.code().remote().sha256()) {
+        it = code_cache->erase(it);
+      } else {
+        ++it;
+      }
+    }
     auto it = code_cache->find(vm_config.code().remote().sha256());
     if (it != code_cache->end()) {
+      it->second.use_time = now;
       if (it->second.in_progress) {
         ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
                             "createWasm: failed to load (in prpgress) from {}", source);
@@ -181,7 +201,7 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       }
       code = it->second.code;
       if (code.empty()) {
-        if (dispatcher.timeSource().monotonicTime() - it->second.fetch_time <
+        if (now - it->second.fetch_time <
             std::chrono::seconds(CODE_CACHE_SECONDS_NEGATIVE_CACHING)) {
           ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
                               "createWasm: failed to load (cached) from {}", source);
@@ -189,13 +209,13 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         }
         fetch = true; // Fetch failed, retry.
         it->second.in_progress = true;
-        it->second.fetch_time = dispatcher.timeSource().monotonicTime();
+        it->second.fetch_time = now;
       }
     } else {
       fetch = true; // Not in cache, fetch.
       auto& e = (*code_cache)[vm_config.code().remote().sha256()];
       e.in_progress = true;
-      e.fetch_time = dispatcher.timeSource().monotonicTime();
+      e.use_time = e.fetch_time = now;
     }
   } else if (vm_config.code().has_local()) {
     code = Config::DataSource::read(vm_config.code().local(), true, api);
