@@ -21,6 +21,7 @@ bazel_build(
     outs = {},
     log = "log.txt",
     script = "build.sh",
+    visibility = ["//visibility:public"],
 )
 
 filegroup(
