@@ -24,7 +24,7 @@ class TestContext : public Extensions::Common::Wasm::Context {
 public:
   TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
   ~TestContext() override {}
-  proxy_wasm::WasmResult log(uint64_t level, absl::string_view message) override {
+  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     std::cerr << std::string(message) << "\n";
     log_(static_cast<spdlog::level::level_enum>(level), message);
     return proxy_wasm::WasmResult::Ok;
@@ -98,7 +98,7 @@ TEST_P(WasmTestMatrix, Logging) {
   wasm_handler.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   // This will SEGV on nullptr if wasm has been deleted.
-  root_context->onTick();
+  root_context->onTick(0);
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher->clearDeferredDeleteList();
 }
@@ -199,10 +199,10 @@ TEST_P(WasmTest, DivByZero) {
 
   if (GetParam() == "v8") {
     EXPECT_THROW_WITH_MESSAGE(
-        context->onLog(), Extensions::Common::Wasm::WasmException,
+        context->onFinalized(), Extensions::Common::Wasm::WasmException,
         "Function: proxy_on_log failed: Uncaught RuntimeError: divide by zero");
   } else if (GetParam() == "wavm") {
-    EXPECT_THROW_WITH_REGEX(context->onLog(), Extensions::Common::Wasm::WasmException,
+    EXPECT_THROW_WITH_REGEX(context->onFinalized(), Extensions::Common::Wasm::WasmException,
                             "Function: proxy_on_log failed: wavm.integerDivideByZeroOrOverflow.*");
   } else {
     ASSERT_FALSE(true); // Neither of the above was matched.
@@ -383,7 +383,7 @@ TEST_P(WasmTest, StatsHigherLevel) {
 
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
-  context->onTick();
+  context->onTick(0);
 }
 
 TEST_P(WasmTest, StatsHighLevel) {
@@ -428,7 +428,7 @@ TEST_P(WasmTest, StatsHighLevel) {
   // EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_h = 3")));
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
-  context->onLog();
+  context->onFinalized();
 }
 
 } // namespace Wasm
