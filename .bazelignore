@@ -1,2 +1,3 @@
 examples/grpc-bridge/script
 tools/clang_tools
+test/extensions/common/wasm/test_data/test_cpp

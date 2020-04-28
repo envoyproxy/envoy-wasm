@@ -95,6 +95,8 @@ public:
   WasmHttpFilterTest() {}
   ~WasmHttpFilterTest() {}
 
+  void SetUp() { Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(false); }
+
   void setupConfig(const std::string& code, std::string root_id = "") {
     root_context_ = new TestRoot();
     WasmFilterConfig proto_config;

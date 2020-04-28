@@ -1,6 +1,6 @@
-workspace(name = "common_test_wasm")
+workspace(name = "wasm_test_flakes")
 
-load("//bazel:wasm_repositories.bzl", "wasm_dependencies")
+load("//bazel:repositories.bzl", "wasm_dependencies")
 
 wasm_dependencies()
 

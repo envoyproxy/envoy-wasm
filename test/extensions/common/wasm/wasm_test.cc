@@ -58,7 +58,10 @@ public:
   MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-class WasmCommonTest : public testing::TestWithParam<std::string> {};
+class WasmCommonTest : public testing::TestWithParam<std::string> {
+public:
+  void SetUp() { clearCodeCacheForTesting(false); }
+};
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest,
                          testing::Values("v8",
@@ -80,8 +83,8 @@ TEST_P(WasmCommonTest, Logging) {
   auto plugin_configuration = "configure-test";
   std::string code;
   if (GetParam() == "v8") {
-    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+    code = TestEnvironment::readFileToStringForTest(
+        TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
   } else {
     // The name of the Null VM plugin.
     code = "CommonWasmTestCpp";
@@ -175,8 +178,8 @@ TEST_P(WasmCommonTest, Segv) {
   auto vm_id = "";
   auto vm_configuration = "segv";
   auto plugin_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm"));
+  const auto code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, plugin_configuration,
@@ -209,8 +212,8 @@ TEST_P(WasmCommonTest, DivByZero) {
   auto vm_id = "";
   auto vm_configuration = "divbyzero";
   auto plugin_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm"));
+  const auto code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, plugin_configuration,
@@ -244,8 +247,8 @@ TEST_P(WasmCommonTest, EmscriptenVersion) {
   auto vm_id = "";
   auto vm_configuration = "";
   auto plugin_configuration = "";
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm"));
+  const auto code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, plugin_configuration,
@@ -281,8 +284,8 @@ TEST_P(WasmCommonTest, IntrinsicGlobals) {
   auto plugin_configuration = "";
   std::string code;
   if (GetParam() == "v8") {
-    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+    code = TestEnvironment::readFileToStringForTest(
+        TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
   } else {
     // The name of the Null VM plugin.
     code = "CommonWasmTestCpp";
@@ -317,8 +320,8 @@ TEST_P(WasmCommonTest, Stats) {
   auto plugin_configuration = "";
   std::string code;
   if (GetParam() == "v8") {
-    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+    code = TestEnvironment::readFileToStringForTest(
+        TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
   } else {
     // The name of the Null VM plugin.
     code = "CommonWasmTestCpp";
@@ -368,8 +371,8 @@ TEST_P(WasmCommonTest, Foreign) {
   EXPECT_NE(wasm, nullptr);
   std::string code;
   if (GetParam() != "null") {
-    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+    code = TestEnvironment::readFileToStringForTest(
+        TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
   } else {
     // The name of the Null VM plugin.
     code = "CommonWasmTestCpp";
@@ -410,8 +413,8 @@ TEST_P(WasmCommonTest, WASI) {
   EXPECT_NE(wasm, nullptr);
   std::string code;
   if (GetParam() != "null") {
-    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+    code = TestEnvironment::readFileToStringForTest(
+        TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
   } else {
     // The name of the Null VM plugin.
     code = "CommonWasmTestCpp";
@@ -451,8 +454,8 @@ TEST_P(WasmCommonTest, VmCache) {
   vm_config.set_configuration(vm_configuration);
   std::string code;
   if (GetParam() != "null") {
-    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+    code = TestEnvironment::readFileToStringForTest(
+        TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
   } else {
     // The name of the Null VM plugin.
     code = "CommonWasmTestCpp";
@@ -515,8 +518,8 @@ TEST_P(WasmCommonTest, RemoteCode) {
       name, root_id, vm_id, plugin_configuration,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
 
-  std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+  std::string code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
 
   VmConfig vm_config;
   vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));
@@ -599,8 +602,8 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
       name, root_id, vm_id, plugin_configuration,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
 
-  std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+  std::string code = TestEnvironment::readFileToStringForTest(
+      TestEnvironment::runfilesPath("test_cpp.wasm", "common_wasm_test_cpp"));
 
   VmConfig vm_config;
   vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));

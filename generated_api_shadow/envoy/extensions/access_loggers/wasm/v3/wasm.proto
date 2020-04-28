@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package envoy.extensions.access_loggers.wasm.v3;
 
-import "envoy/config/wasm/v3/wasm.proto";
+import "envoy/extensions/wasm/v3/wasm.proto";
 
 import "udpa/annotations/status.proto";
 import "udpa/annotations/versioning.proto";
@@ -18,8 +18,5 @@ option (udpa.annotations.file_status).package_version_status = ACTIVE;
 // that calls into a WASM VM. Configures the built-in *envoy.access_loggers.wasm*
 // AccessLog.
 message WasmAccessLog {
-  option (udpa.annotations.versioning).previous_message_type =
-      "envoy.config.accesslog.v2.WasmAccessLog";
-
-  config.wasm.v3.PluginConfig config = 1;
+  envoy.extensions.wasm.v3.PluginConfig config = 1;
 }
