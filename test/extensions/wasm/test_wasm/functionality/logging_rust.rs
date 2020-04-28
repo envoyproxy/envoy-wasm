@@ -6,7 +6,7 @@ use proxy_wasm;
 #[no_mangle]
 pub fn proxy_abi_version_0_1_0() {}
 
-use log::{debug, error, info, trace, warn};
+use log::*;
 
 extern "C" {
   fn proxy_done() -> u32;

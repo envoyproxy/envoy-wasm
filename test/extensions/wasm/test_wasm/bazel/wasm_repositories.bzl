@@ -1,5 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
 def wasm_dependencies():
     _envoy_build_tools()
@@ -12,6 +12,8 @@ def wasm_dependencies():
     _com_github_protocolbuffers_protobuf()
     _com_github_bazelbuild_rules_rust()
     _com_github_proxy_wasm_rust_sdk()
+    _com_github_cfg_if()
+    _com_github_rustlang_log()
 
 def _envoy_build_tools():
     http_archive(
@@ -77,11 +79,12 @@ def _com_github_protocolbuffers_protobuf():
         remote = "https://github.com/protocolbuffers/protobuf",
     )
 
+# TODO(shikugawa): replace this to upstream after being merged needed patches.
 def _com_github_bazelbuild_rules_rust():
     git_repository(
         name = "io_bazel_rules_rust",
-        commit = "8d3cb6878cf1447e81cd3d7f97057e70285fc833",
-        remote = "https://github.com/bazelbuild/rules_rust",
+        commit = "c056d676c8bc67c1e63d0496776cfcc43e7110d7",
+        remote = "https://github.com/Shikugawa/rules_rust",
     )
 
 def _com_github_proxy_wasm_rust_sdk():
@@ -89,4 +92,22 @@ def _com_github_proxy_wasm_rust_sdk():
         name = "proxy_wasm_rust_sdk",
         commit = "3ebf309fd72d2545f3909d2adc13b2450567057e",
         remote = "https://github.com/proxy-wasm/proxy-wasm-rust-sdk",
+    )
+
+def _com_github_cfg_if():
+    new_git_repository(
+        name = "cfg_if",
+        commit = "f71bf60f212312faddee7da525fcf47daac66499",
+        remote = "https://github.com/alexcrichton/cfg-if",
+        build_file = "@//:cfg_if.BUILD",
+    )
+
+def _com_github_rustlang_log():
+    http_archive(
+        name = "log",
+        build_file = "@//:log.BUILD",
+        strip_prefix = "log-0.4.0",
+        urls = [
+            "https://github.com/rust-lang/log/archive/0.4.0.zip"
+        ],
     )

@@ -11,5 +11,4 @@ bazel_skylib_workspace()
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
 rules_proto_dependencies()
-
 rules_proto_toolchains()
