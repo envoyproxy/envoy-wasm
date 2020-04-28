@@ -75,3 +75,13 @@ wasm_binary(
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
 )
+
+# wasm_binary(
+#   name = "plugin_cpp",
+#   srcs = [
+#     "plugin_cpp.cc"
+#   ],
+#   deps = [
+#     "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
+#   ],
+# )

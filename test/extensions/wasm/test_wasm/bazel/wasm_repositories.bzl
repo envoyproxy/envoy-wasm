@@ -108,6 +108,6 @@ def _com_github_rustlang_log():
         build_file = "@//:log.BUILD",
         strip_prefix = "log-0.4.0",
         urls = [
-            "https://github.com/rust-lang/log/archive/0.4.0.zip"
+            "https://github.com/rust-lang/log/archive/0.4.0.zip",
         ],
     )
