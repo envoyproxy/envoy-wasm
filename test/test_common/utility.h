@@ -468,7 +468,7 @@ public:
   static std::string convertTime(const std::string& input, const std::string& input_format,
                                  const std::string& output_format);
 
-  static constexpr std::chrono::milliseconds DefaultTimeout = std::chrono::milliseconds(30000);
+  static constexpr std::chrono::milliseconds DefaultTimeout = std::chrono::milliseconds(10000);
 
   /**
    * Return a prefix string matcher.
