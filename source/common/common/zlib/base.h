@@ -4,7 +4,7 @@
 
 #include "envoy/buffer/buffer.h"
 
-#include "zlib.h"
+#include <zlib.h>
 
 namespace Envoy {
 namespace Zlib {

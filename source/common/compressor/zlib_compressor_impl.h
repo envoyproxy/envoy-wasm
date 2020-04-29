@@ -4,8 +4,6 @@
 
 #include "common/common/zlib/base.h"
 
-#include "zlib.h"
-
 namespace Envoy {
 namespace Compressor {
 
