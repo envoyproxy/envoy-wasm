@@ -324,7 +324,7 @@ void Context::onCloseTCP() {
   }
   tcp_connection_closed_ = true;
   onDone();
-  onFinalized();
+  onLog();
   onDelete();
 }
 
@@ -1425,7 +1425,7 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
   access_log_response_trailers_ = response_trailers;
   access_log_stream_info_ = &stream_info;
 
-  onFinalized();
+  onLog();
 
   access_log_request_headers_ = nullptr;
   // ? request_trailers  ?

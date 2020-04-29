@@ -199,10 +199,10 @@ TEST_P(WasmTest, DivByZero) {
 
   if (GetParam() == "v8") {
     EXPECT_THROW_WITH_MESSAGE(
-        context->onFinalized(), Extensions::Common::Wasm::WasmException,
+        context->onLog(), Extensions::Common::Wasm::WasmException,
         "Function: proxy_on_log failed: Uncaught RuntimeError: divide by zero");
   } else if (GetParam() == "wavm") {
-    EXPECT_THROW_WITH_REGEX(context->onFinalized(), Extensions::Common::Wasm::WasmException,
+    EXPECT_THROW_WITH_REGEX(context->onLog(), Extensions::Common::Wasm::WasmException,
                             "Function: proxy_on_log failed: wavm.integerDivideByZeroOrOverflow.*");
   } else {
     ASSERT_FALSE(true); // Neither of the above was matched.
@@ -428,7 +428,7 @@ TEST_P(WasmTest, StatsHighLevel) {
   // EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_h = 3")));
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
-  context->onFinalized();
+  context->onLog();
 }
 
 } // namespace Wasm
