@@ -2,6 +2,9 @@ def _wasm_transition_impl(settings, attr):
     return {
         "//command_line_option:cpu": "wasm",
         "//command_line_option:crosstool_top": "@proxy_wasm_cpp_sdk//toolchain:emscripten",
+        "//command_line_option:copt": [],
+        "//command_line_option:cxxopt": [],
+        "//command_line_option:linkopt": [],
     }
 
 wasm_transition = transition(
@@ -9,6 +12,9 @@ wasm_transition = transition(
     inputs = [],
     outputs = [
         "//command_line_option:cpu",
+        "//command_line_option:copt",
+        "//command_line_option:cxxopt",
+        "//command_line_option:linkopt",
         "//command_line_option:crosstool_top",
     ],
 )
