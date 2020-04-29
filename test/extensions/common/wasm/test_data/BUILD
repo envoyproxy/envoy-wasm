@@ -5,6 +5,7 @@ load(
     "envoy_cc_library",
     "envoy_package",
 )
+load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
 
 envoy_package()
 
@@ -16,7 +17,7 @@ filegroup(
 envoy_cc_library(
     name = "test_cpp_plugin",
     srcs = [
-        "test_cpp/test_cpp.cc",
+        "test_cpp.cc",
         "test_cpp_null_plugin.cc",
     ],
     copts = ["-DNULL_PLUGIN=1"],
@@ -27,5 +28,21 @@ envoy_cc_library(
         "//source/extensions/common/wasm:wasm_hdr",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/common/wasm:well_known_names",
+    ],
+)
+
+wasm_cc_binary(
+    name = "test_cpp.wasm",
+    srcs = [
+        "test_cpp.cc",
+    ],
+    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
+    linkopts = [
+        "--js-library",
+        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
 )
