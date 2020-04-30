@@ -1,10 +1,10 @@
 #pragma once
 
-#include <zlib.h>
-
 #include <memory>
 
 #include "envoy/buffer/buffer.h"
+
+#include "zlib.h"
 
 namespace Envoy {
 namespace Zlib {

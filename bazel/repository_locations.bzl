@@ -245,10 +245,10 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/bazelbuild/rules_go/releases/download/v0.20.3/rules_go-v0.20.3.tar.gz"],
     ),
     rules_foreign_cc = dict(
-        sha256 = "f43c72e85240c1fb9585494285f414ccb6adff35919c7e4c1ca17abd5a21cf2d",
-        strip_prefix = "rules_foreign_cc-52b22973c96c8634a7f9afd87f067a8618d8625f",
-        #TODO(lizan): revert this
-        urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/52b22973c96c8634a7f9afd87f067a8618d8625f.tar.gz"],
+        sha256 = "3184c244b32e65637a74213fc448964b687390eeeca42a36286f874c046bba15",
+        strip_prefix = "rules_foreign_cc-7bc4be735b0560289f6b86ab6136ee25d20b65b7",
+        # 2019-09-26
+        urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/7bc4be735b0560289f6b86ab6136ee25d20b65b7.tar.gz"],
     ),
     rules_python = dict(
         sha256 = "aa96a691d3a8177f3215b14b0edc9641787abaaa30363a080165d06ab65e1161",
@@ -347,9 +347,9 @@ REPOSITORY_LOCATIONS = dict(
     ),
     proxy_wasm_cpp_sdk = dict(
         #TODO(lizan): Revert
-        sha256 = "af2ead7b08524b5d6f2ed9b013dd345022bc58e6857cef566cc1cac38fc355f6",
-        strip_prefix = "proxy-wasm-cpp-sdk-ee4a82d1f2ffaac14b540d06b888f2504b3fe7fd",
-        urls = ["https://github.com/lizan/proxy-wasm-cpp-sdk/archive/ee4a82d1f2ffaac14b540d06b888f2504b3fe7fd.tar.gz"],
+        sha256 = "6bf492e378e478e43f202185af5b96b11ad7f973dd62e693d8f062d6e17f56b1",
+        strip_prefix = "proxy-wasm-cpp-sdk-b2e8e924f8dd5339a09092d1c6139ab24dc0945c",
+        urls = ["https://github.com/lizan/proxy-wasm-cpp-sdk/archive/b2e8e924f8dd5339a09092d1c6139ab24dc0945c.tar.gz"],
     ),
     proxy_wasm_cpp_host = dict(
         sha256 = "40558ce134552ba9afb082ad5cf7c2cf157baeb38539810edb43b6eb109596dc",

@@ -5,6 +5,8 @@
 #include "common/common/logger.h"
 #include "common/common/zlib/base.h"
 
+#include "zlib.h"
+
 namespace Envoy {
 namespace Decompressor {
 

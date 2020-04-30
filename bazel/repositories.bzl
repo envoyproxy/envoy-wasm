@@ -323,18 +323,20 @@ def _com_github_libevent_libevent():
 def _net_zlib():
     _repository_impl(
         name = "net_zlib",
-        build_file = "@com_google_protobuf//third_party:zlib.BUILD",
+        build_file_content = BUILD_ALL_CONTENT,
+        patch_args = ["-p1"],
+        patches = ["@envoy//bazel/foreign_cc:zlib.patch"],
     )
 
     native.bind(
         name = "zlib",
-        actual = "@net_zlib//:zlib",
+        actual = "@envoy//bazel/foreign_cc:zlib",
     )
 
     # Bind for grpc.
     native.bind(
         name = "madler_zlib",
-        actual = "@net_zlib//:zlib",
+        actual = "@envoy//bazel/foreign_cc:zlib",
     )
 
 def _com_google_cel_cpp():
