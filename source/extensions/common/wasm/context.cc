@@ -1161,8 +1161,9 @@ WasmResult Context::log(uint64_t level, absl::string_view message) {
     ENVOY_LOG(critical, "wasm log{}: {}", log_prefix(), message);
     return WasmResult::Ok;
   case spdlog::level::off:
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+    return WasmResult::Ok;
   }
+  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 }
 
 //
@@ -1322,6 +1323,7 @@ Network::FilterStatus convertNetworkFilterStatus(proxy_wasm::FilterStatus status
   case proxy_wasm::FilterStatus::StopIteration:
     return Network::FilterStatus::StopIteration;
   }
+  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersStatus status) {
@@ -1331,6 +1333,7 @@ Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersSt
   case proxy_wasm::FilterHeadersStatus::StopIteration:
     return Http::FilterHeadersStatus::StopIteration;
   }
+  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailersStatus status) {
@@ -1340,6 +1343,7 @@ Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailer
   case proxy_wasm::FilterTrailersStatus::StopIteration:
     return Http::FilterTrailersStatus::StopIteration;
   }
+  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadataStatus status) {
@@ -1347,6 +1351,7 @@ Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadat
   case proxy_wasm::FilterMetadataStatus::Continue:
     return Http::FilterMetadataStatus::Continue;
   }
+  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus status) {
@@ -1360,6 +1365,7 @@ Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus stat
   case proxy_wasm::FilterDataStatus::StopIterationNoBuffer:
     return Http::FilterDataStatus::StopIterationNoBuffer;
   }
+  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 };
 
 Network::FilterStatus Context::onNewConnection() {
