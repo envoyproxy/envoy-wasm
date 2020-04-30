@@ -24,7 +24,7 @@ class TestContext : public Extensions::Common::Wasm::Context {
 public:
   TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
   ~TestContext() override {}
-  proxy_wasm::WasmResult log(uint64_t level, absl::string_view message) override {
+  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     std::cerr << std::string(message) << "\n";
     log_(static_cast<spdlog::level::level_enum>(level), message);
     return proxy_wasm::WasmResult::Ok;
@@ -98,7 +98,7 @@ TEST_P(WasmTestMatrix, Logging) {
   wasm_handler.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   // This will SEGV on nullptr if wasm has been deleted.
-  root_context->onTick();
+  root_context->onTick(0);
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher->clearDeferredDeleteList();
 }
@@ -383,7 +383,7 @@ TEST_P(WasmTest, StatsHigherLevel) {
 
   EXPECT_TRUE(wasm->initialize(code, false));
   wasm->setContext(context.get());
-  context->onTick();
+  context->onTick(0);
 }
 
 TEST_P(WasmTest, StatsHighLevel) {

@@ -35,7 +35,7 @@ class TestRoot : public Envoy::Extensions::Common::Wasm::Context {
 public:
   TestRoot() {}
 
-  proxy_wasm::WasmResult log(uint64_t level, absl::string_view message) override {
+  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     log_(static_cast<spdlog::level::level_enum>(level), message);
     return proxy_wasm::WasmResult::Ok;
   }

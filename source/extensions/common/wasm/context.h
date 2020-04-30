@@ -28,10 +28,14 @@ namespace Wasm {
 #include "proxy_wasm_common.h"
 
 using proxy_wasm::BufferInterface;
+using proxy_wasm::CloseType;
 using proxy_wasm::MetricType;
 using proxy_wasm::Pairs;
 using proxy_wasm::PairsWithStringValues;
 using proxy_wasm::PluginBase;
+using proxy_wasm::SharedQueueDequeueToken;
+using proxy_wasm::SharedQueueEnqueueToken;
+using proxy_wasm::StreamType;
 using proxy_wasm::WasmBase;
 using proxy_wasm::WasmBufferType;
 using proxy_wasm::WasmHandleBase;
@@ -160,8 +164,8 @@ public:
   void initializeWriteFilterCallbacks(Network::WriteFilterCallbacks& callbacks) override;
 
   // proxy_wasm::ContextBase
-  void onDownstreamConnectionClose(PeerType) override;
-  void onUpstreamConnectionClose(PeerType) override;
+  void onDownstreamConnectionClose(CloseType) override;
+  void onUpstreamConnectionClose(CloseType) override;
 
   // Http::StreamFilterBase. Note: This calls onDone() in WASM.
   void onDestroy() override;
@@ -187,7 +191,7 @@ public:
   // proxy_wasm::ContextBase
 
   // General
-  WasmResult log(uint64_t level, absl::string_view message) override;
+  WasmResult log(uint32_t level, absl::string_view message) override;
   uint64_t getCurrentTimeNanoseconds() override;
   std::pair<uint32_t, absl::string_view> getStatus() override;
 
@@ -198,11 +202,10 @@ public:
                              std::unique_ptr<const WasmStatePrototype> state_prototype);
 
   // Continue
-  void continueRequest() override;
-  void continueResponse() override;
-  void sendLocalResponse(uint64_t response_code, absl::string_view body_text,
-                         Pairs additional_headers, uint64_t grpc_status,
-                         absl::string_view details) override;
+  WasmResult continueStream(StreamType stream_type) override;
+  WasmResult sendLocalResponse(uint32_t response_code, absl::string_view body_text,
+                               Pairs additional_headers, uint32_t grpc_status,
+                               absl::string_view details) override;
 
   // Shared Data
   WasmResult getSharedData(absl::string_view key,
@@ -210,35 +213,36 @@ public:
   WasmResult setSharedData(absl::string_view key, absl::string_view value, uint32_t cas) override;
 
   // Shared Queue
-  uint32_t registerSharedQueue(absl::string_view queue_name) override;
-  WasmResult resolveSharedQueue(absl::string_view vm_id, absl::string_view queue_name,
-                                uint32_t* token) override;
+  WasmResult registerSharedQueue(absl::string_view queue_name,
+                                 SharedQueueDequeueToken* token) override;
+  WasmResult lookupSharedQueue(absl::string_view vm_id, absl::string_view queue_name,
+                               SharedQueueEnqueueToken* token) override;
   WasmResult dequeueSharedQueue(uint32_t token, std::string* data) override;
   WasmResult enqueueSharedQueue(uint32_t token, absl::string_view value) override;
 
   // Header/Trailer/Metadata Maps
-  void addHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
-                         absl::string_view value) override;
-  absl::string_view getHeaderMapValue(WasmHeaderMapType type, absl::string_view key) override;
-  Pairs getHeaderMapPairs(WasmHeaderMapType type) override;
-  void setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs) override;
+  WasmResult addHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
+                               absl::string_view value) override;
+  WasmResult getHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
+                               absl::string_view* value) override;
+  WasmResult getHeaderMapPairs(WasmHeaderMapType type, Pairs* result) override;
+  WasmResult setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs) override;
 
-  void removeHeaderMapValue(WasmHeaderMapType type, absl::string_view key) override;
-  void replaceHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
-                             absl::string_view value) override;
+  WasmResult removeHeaderMapValue(WasmHeaderMapType type, absl::string_view key) override;
+  WasmResult replaceHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
+                                   absl::string_view value) override;
 
-  uint32_t getHeaderMapSize(WasmHeaderMapType type) override;
+  WasmResult getHeaderMapSize(WasmHeaderMapType type, uint32_t* size) override;
 
   // Buffer
   BufferInterface* getBuffer(WasmBufferType type) override;
-  bool end_of_stream() override { return end_of_stream_; }
+  // TODO: use stream_type.
+  bool endOfStream(StreamType /* stream_type */) override { return end_of_stream_; }
 
   // HTTP
   WasmResult httpCall(absl::string_view cluster, const Pairs& request_headers,
                       absl::string_view request_body, const Pairs& request_trailers,
                       int timeout_millisconds, uint32_t* token_ptr) override;
-  void httpRespond(const Pairs& response_headers, absl::string_view body,
-                   const Pairs& response_trailers);
 
   // Stats/Metrics
   WasmResult defineMetric(MetricType type, absl::string_view name,
@@ -250,8 +254,7 @@ public:
   // gRPC
   WasmResult grpcCall(absl::string_view grpc_service, absl::string_view service_name,
                       absl::string_view method_name, const Pairs& initial_metadata,
-                      absl::string_view request,
-                      const absl::optional<std::chrono::milliseconds>& timeout,
+                      absl::string_view request, std::chrono::milliseconds timeout,
                       uint32_t* token_ptr) override;
   WasmResult grpcStream(absl::string_view grpc_service, absl::string_view service_name,
                         absl::string_view method_name, const Pairs& initial_metadat,

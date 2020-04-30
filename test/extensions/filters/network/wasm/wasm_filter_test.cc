@@ -27,7 +27,7 @@ public:
   TestFilter(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
       : Context(wasm, root_context_id, plugin) {}
 
-  proxy_wasm::WasmResult log(uint64_t level, absl::string_view message) override {
+  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     log_(static_cast<spdlog::level::level_enum>(level), message);
     return proxy_wasm::WasmResult::Ok;
   }
@@ -38,7 +38,7 @@ class TestRoot : public Context {
 public:
   TestRoot() {}
 
-  proxy_wasm::WasmResult log(uint64_t level, absl::string_view message) override {
+  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     log_(static_cast<spdlog::level::level_enum>(level), message);
     return proxy_wasm::WasmResult::Ok;
   }

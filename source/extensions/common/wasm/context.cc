@@ -633,15 +633,17 @@ WasmResult Context::setSharedData(absl::string_view key, absl::string_view value
 
 // Shared Queue
 
-uint32_t Context::registerSharedQueue(absl::string_view queue_name) {
+WasmResult Context::registerSharedQueue(absl::string_view queue_name,
+                                        SharedQueueDequeueToken* token) {
   // Get the id of the root context if this is a stream context because onQueueReady is on the
   // root.
-  return global_shared_data.registerQueue(
+  *token = global_shared_data.registerQueue(
       wasm()->vm_id(), queue_name, isRootContext() ? id_ : root_context_id_, wasm()->dispatcher_);
+  return WasmResult::Ok;
 }
 
-WasmResult Context::resolveSharedQueue(absl::string_view vm_id, absl::string_view queue_name,
-                                       uint32_t* token_ptr) {
+WasmResult Context::lookupSharedQueue(absl::string_view vm_id, absl::string_view queue_name,
+                                      SharedQueueEnqueueToken* token_ptr) {
   uint32_t token = global_shared_data.resolveQueue(vm_id, queue_name);
   if (!token) {
     return WasmResult::NotFound;
@@ -718,27 +720,30 @@ const Http::HeaderMap* Context::getConstMap(WasmHeaderMapType type) {
   return nullptr;
 }
 
-void Context::addHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
-                                absl::string_view value) {
+WasmResult Context::addHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
+                                      absl::string_view value) {
   auto map = getMap(type);
   if (!map) {
-    return;
+    return WasmResult::BadArgument;
   }
   const Http::LowerCaseString lower_key{std::string(key)};
   map->addCopy(lower_key, std::string(value));
+  return WasmResult::Ok;
 }
 
-absl::string_view Context::getHeaderMapValue(WasmHeaderMapType type, absl::string_view key) {
+WasmResult Context::getHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
+                                      absl::string_view* value) {
   auto map = getConstMap(type);
   if (!map) {
-    return "";
+    return WasmResult::BadArgument;
   }
   const Http::LowerCaseString lower_key{std::string(key)};
   auto entry = map->get(lower_key);
   if (!entry) {
-    return "";
+    return WasmResult::NotFound;
   }
-  return entry->value().getStringView();
+  *value = entry->value().getStringView();
+  return WasmResult::Ok;
 }
 
 Pairs headerMapToPairs(const Http::HeaderMap* map) {
@@ -758,14 +763,15 @@ Pairs headerMapToPairs(const Http::HeaderMap* map) {
   return pairs;
 }
 
-Pairs Context::getHeaderMapPairs(WasmHeaderMapType type) {
-  return headerMapToPairs(getConstMap(type));
+WasmResult Context::getHeaderMapPairs(WasmHeaderMapType type, Pairs* result) {
+  *result = headerMapToPairs(getConstMap(type));
+  return WasmResult::Ok;
 }
 
-void Context::setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs) {
+WasmResult Context::setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs) {
   auto map = getMap(type);
   if (!map) {
-    return;
+    return WasmResult::BadArgument;
   }
   std::vector<std::string> keys;
   map->iterate(
@@ -783,33 +789,37 @@ void Context::setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs) {
     const Http::LowerCaseString lower_key{std::string(p.first)};
     map->addCopy(lower_key, std::string(p.second));
   }
+  return WasmResult::Ok;
 }
 
-void Context::removeHeaderMapValue(WasmHeaderMapType type, absl::string_view key) {
+WasmResult Context::removeHeaderMapValue(WasmHeaderMapType type, absl::string_view key) {
   auto map = getMap(type);
   if (!map) {
-    return;
+    return WasmResult::BadArgument;
   }
   const Http::LowerCaseString lower_key{std::string(key)};
   map->remove(lower_key);
+  return WasmResult::Ok;
 }
 
-void Context::replaceHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
-                                    absl::string_view value) {
+WasmResult Context::replaceHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
+                                          absl::string_view value) {
   auto map = getMap(type);
   if (!map) {
-    return;
+    return WasmResult::BadArgument;
   }
   const Http::LowerCaseString lower_key{std::string(key)};
   map->setCopy(lower_key, value);
+  return WasmResult::Ok;
 }
 
-uint32_t Context::getHeaderMapSize(WasmHeaderMapType type) {
+WasmResult Context::getHeaderMapSize(WasmHeaderMapType type, uint32_t* result) {
   auto map = getMap(type);
   if (!map) {
-    return 0;
+    return WasmResult::BadArgument;
   }
-  return map->byteSize();
+  *result = map->byteSize();
+  return WasmResult::Ok;
 }
 
 // Buffer
@@ -860,8 +870,8 @@ BufferInterface* Context::getBuffer(WasmBufferType type) {
   return nullptr;
 }
 
-void Context::onDownstreamConnectionClose(PeerType peer_type) {
-  ContextBase::onDownstreamConnectionClose(peer_type);
+void Context::onDownstreamConnectionClose(CloseType close_type) {
+  ContextBase::onDownstreamConnectionClose(close_type);
   downstream_closed_ = true;
   // Call close on TCP connection, if upstream connection closed or there was a failure seen in this
   // connection.
@@ -870,8 +880,8 @@ void Context::onDownstreamConnectionClose(PeerType peer_type) {
   }
 }
 
-void Context::onUpstreamConnectionClose(PeerType peer_type) {
-  ContextBase::onUpstreamConnectionClose(peer_type);
+void Context::onUpstreamConnectionClose(CloseType close_type) {
+  ContextBase::onUpstreamConnectionClose(close_type);
   upstream_closed_ = true;
   if (downstream_closed_) {
     onCloseTCP();
@@ -949,8 +959,7 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
 
 WasmResult Context::grpcCall(absl::string_view grpc_service, absl::string_view service_name,
                              absl::string_view method_name, const Pairs& initial_metadata,
-                             absl::string_view request,
-                             const absl::optional<std::chrono::milliseconds>& timeout,
+                             absl::string_view request, std::chrono::milliseconds timeout,
                              uint32_t* token_ptr) {
   GrpcService service_proto;
   if (!service_proto.ParseFromArray(grpc_service.data(), grpc_service.size())) {
@@ -1058,13 +1067,6 @@ void Context::onGrpcCreateInitialMetadata(uint32_t /* token */,
   }
 }
 
-void Context::httpRespond(const Pairs& response_headers, absl::string_view body,
-                          const Pairs& response_trailers) {
-  (void)response_headers;
-  (void)body;
-  (void)response_trailers;
-}
-
 // StreamInfo
 const StreamInfo::StreamInfo* Context::getConstRequestStreamInfo() const {
   if (encoder_callbacks_) {
@@ -1140,7 +1142,7 @@ WasmResult Context::declareProperty(absl::string_view path,
   return WasmResult::Ok;
 }
 
-WasmResult Context::log(uint64_t level, absl::string_view message) {
+WasmResult Context::log(uint32_t level, absl::string_view message) {
   switch (static_cast<spdlog::level::level_enum>(level)) {
   case spdlog::level::trace:
     ENVOY_LOG(trace, "wasm log{}: {}", log_prefix(), message);
@@ -1374,6 +1376,7 @@ Network::FilterStatus Context::onNewConnection() {
 
 Network::FilterStatus Context::onData(::Envoy::Buffer::Instance& data, bool end_stream) {
   network_downstream_data_buffer_ = &data;
+  end_of_stream_ = end_stream;
   auto result = convertNetworkFilterStatus(onDownstreamData(data.length(), end_stream));
   if (result == Network::FilterStatus::Continue) {
     network_downstream_data_buffer_ = nullptr;
@@ -1383,6 +1386,7 @@ Network::FilterStatus Context::onData(::Envoy::Buffer::Instance& data, bool end_
 
 Network::FilterStatus Context::onWrite(::Envoy::Buffer::Instance& data, bool end_stream) {
   network_upstream_data_buffer_ = &data;
+  end_of_stream_ = end_stream;
   auto result = convertNetworkFilterStatus(onUpstreamData(data.length(), end_stream));
   if (result == Network::FilterStatus::Continue) {
     network_upstream_data_buffer_ = nullptr;
@@ -1390,7 +1394,7 @@ Network::FilterStatus Context::onWrite(::Envoy::Buffer::Instance& data, bool end
   if (end_stream) {
     // This is called when seeing end_stream=true and not on an upstream connection event,
     // because registering for latter requires replicating the whole TCP proxy extension.
-    onUpstreamConnectionClose(PeerType::Unknown);
+    onUpstreamConnectionClose(CloseType::Unknown);
   }
   return result;
 }
@@ -1398,10 +1402,10 @@ Network::FilterStatus Context::onWrite(::Envoy::Buffer::Instance& data, bool end
 void Context::onEvent(Network::ConnectionEvent event) {
   switch (event) {
   case Network::ConnectionEvent::LocalClose:
-    onDownstreamConnectionClose(PeerType::Local);
+    onDownstreamConnectionClose(CloseType::Local);
     break;
   case Network::ConnectionEvent::RemoteClose:
-    onDownstreamConnectionClose(PeerType::Remote);
+    onDownstreamConnectionClose(CloseType::Remote);
     break;
   default:
     break;
@@ -1446,29 +1450,30 @@ void Context::onDestroy() {
   onDone();
 }
 
-void Context::continueRequest() {
-  if (decoder_callbacks_) {
-    decoder_callbacks_->continueDecoding();
+WasmResult Context::continueStream(StreamType stream_type) {
+  switch (stream_type) {
+  case StreamType::Request:
+    if (decoder_callbacks_) {
+      decoder_callbacks_->continueDecoding();
+    }
+  case StreamType::Response:
+    if (encoder_callbacks_) {
+      encoder_callbacks_->continueEncoding();
+    }
+    break;
+  default:
+    return WasmResult::BadArgument;
   }
   request_headers_ = nullptr;
   request_body_buffer_ = nullptr;
   request_trailers_ = nullptr;
   request_metadata_ = nullptr;
+  return WasmResult::Ok;
 }
 
-void Context::continueResponse() {
-  if (encoder_callbacks_) {
-    encoder_callbacks_->continueEncoding();
-  }
-  response_headers_ = nullptr;
-  response_body_buffer_ = nullptr;
-  response_trailers_ = nullptr;
-  response_metadata_ = nullptr;
-}
-
-void Context::sendLocalResponse(uint64_t response_code, absl::string_view body_text,
-                                Pairs additional_headers, uint64_t grpc_status,
-                                absl::string_view details) {
+WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view body_text,
+                                      Pairs additional_headers, uint32_t grpc_status,
+                                      absl::string_view details) {
 
   auto modify_headers = [additional_headers](Http::HeaderMap& headers) {
     for (auto& p : additional_headers) {
@@ -1480,6 +1485,7 @@ void Context::sendLocalResponse(uint64_t response_code, absl::string_view body_t
     decoder_callbacks_->sendLocalReply(static_cast<Envoy::Http::Code>(response_code), body_text,
                                        modify_headers, grpc_status, details);
   }
+  return WasmResult::Ok;
 }
 
 Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers, bool end_stream) {
