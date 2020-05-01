@@ -20,20 +20,8 @@ envoy_extension_cc_test(
     ],
     extension_name = "envoy.filters.http.wasm",
     deps = [
-        "//source/common/stream_info:stream_info_lib",
-        "//source/extensions/common/wasm:wasm_interoperation_lib",
         "//source/extensions/filters/http/wasm:wasm_filter_lib",
-        "//test/extensions/filters/http/wasm/test_data/null_plugin:plugin",
-        "//test/mocks/grpc:grpc_mocks",
-        "//test/mocks/http:http_mocks",
-        "//test/mocks/network:network_mocks",
-        "//test/mocks/server:server_mocks",
-        "//test/mocks/ssl:ssl_mocks",
-        "//test/mocks/stream_info:stream_info_mocks",
-        "//test/mocks/thread_local:thread_local_mocks",
-        "//test/mocks/upstream:upstream_mocks",
-        "//test/test_common:environment_lib",
-        "//test/test_common:utility_lib",
+        "//test/test_common:wasm_lib",
     ],
 )
 
