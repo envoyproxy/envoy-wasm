@@ -44,7 +44,7 @@ def wasm_cc_binary(name, **kwargs):
     wasm_name = "_wasm_" + name
     native.cc_binary(
         name = wasm_name,
-        # Adding tag so it wonn't be built in non-wasm config automatically.
+        # Adding manual tag so it won't be built in non-wasm config automatically.
         tags = ["manual"],
         **kwargs
     )
