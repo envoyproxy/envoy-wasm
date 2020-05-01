@@ -346,13 +346,22 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/dpkp/kafka-python/archive/2.0.0.tar.gz"],
     ),
     proxy_wasm_cpp_sdk = dict(
-        sha256 = "02319bd4f148829289f525643e87d01b07ba03da39a0dcd36cfb2e3fb02e0bc3",
-        strip_prefix = "proxy-wasm-cpp-sdk-c12553951d01bb60cb1448ba1fcfeb8f843aad62",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/c12553951d01bb60cb1448ba1fcfeb8f843aad62.tar.gz"],
+        sha256 = "22eda326365e8da60108c18574a957971520a82120466f1758bb7f0c6ed4a477",
+        strip_prefix = "proxy-wasm-cpp-sdk-91133828df69a07fa16b21bec6d31f73168a2a1c",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/91133828df69a07fa16b21bec6d31f73168a2a1c.tar.gz"],
     ),
     proxy_wasm_cpp_host = dict(
         sha256 = "e75690db9e43d6fde0f9e36e14a7b5d3a66627ff19b19405c0664e49d3ab2fa7",
         strip_prefix = "proxy-wasm-cpp-host-c94264aff2deeb6952f0395704b48affb13c9b95",
         urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/c94264aff2deeb6952f0395704b48affb13c9b95.tar.gz"],
+    ),
+    emscripten_toolchain = dict(
+        sha256 = "4ac0f1f3de8b3f1373d435cd7e58bd94de4146e751f099732167749a229b443b",
+        patch_cmds = [
+            "./emsdk install 1.39.6-upstream",
+            "./emsdk activate --embedded 1.39.6-upstream",
+        ],
+        strip_prefix = "emsdk-1.39.6",
+        urls = ["https://github.com/emscripten-core/emsdk/archive/1.39.6.tar.gz"],
     ),
 )

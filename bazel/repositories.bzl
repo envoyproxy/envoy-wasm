@@ -150,6 +150,7 @@ def envoy_dependencies(skip_targets = []):
     _upb()
     _proxy_wasm_cpp_sdk()
     _proxy_wasm_cpp_host()
+    _emscripten_toolchain()
     _repository_impl("com_googlesource_code_re2")
     _com_google_cel_cpp()
     _repository_impl("com_github_google_flatbuffers")
@@ -165,11 +166,6 @@ def envoy_dependencies(skip_targets = []):
     _cc_deps()
     _go_deps(skip_targets)
     _kafka_deps()
-
-    native.local_repository(
-        name = "common_wasm_test_cpp",
-        path = "test/extensions/common/wasm/test_data/test_cpp",
-    )
 
     switched_rules_by_language(
         name = "com_google_googleapis_imports",
@@ -325,12 +321,11 @@ def _com_github_libevent_libevent():
     )
 
 def _net_zlib():
-    location = REPOSITORY_LOCATIONS["net_zlib"]
-
-    http_archive(
+    _repository_impl(
         name = "net_zlib",
         build_file_content = BUILD_ALL_CONTENT,
-        **location
+        patch_args = ["-p1"],
+        patches = ["@envoy//bazel/foreign_cc:zlib.patch"],
     )
 
     native.bind(
@@ -765,6 +760,13 @@ def _proxy_wasm_cpp_host():
     _repository_impl(
         name = "proxy_wasm_cpp_host",
         build_file = "@envoy//bazel/external:proxy_wasm_cpp_host.BUILD",
+    )
+
+def _emscripten_toolchain():
+    _repository_impl(
+        name = "emscripten_toolchain",
+        build_file_content = BUILD_ALL_CONTENT,
+        patch_cmds = REPOSITORY_LOCATIONS["emscripten_toolchain"]["patch_cmds"],
     )
 
 def _com_github_google_jwt_verify():
