@@ -2,6 +2,7 @@ def _wasm_transition_impl(settings, attr):
     return {
         "//command_line_option:cpu": "wasm",
         "//command_line_option:crosstool_top": "@proxy_wasm_cpp_sdk//toolchain:emscripten",
+        # Overriding copt/cxxopt/linkopt to prevent sanitizers/coverage options leak into WASM build
         "//command_line_option:copt": [],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
@@ -43,6 +44,7 @@ def wasm_cc_binary(name, **kwargs):
     wasm_name = "_wasm_" + name
     native.cc_binary(
         name = wasm_name,
+        # Adding tag so it wonn't be built in non-wasm config automatically.
         tags = ["manual"],
         **kwargs
     )
