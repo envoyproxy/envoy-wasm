@@ -1,7 +1,6 @@
-#include "extensions/common/wasm/foreign.h"
-
 #include "common/common/logger.h"
 
+#include "extensions/common/wasm/wasm.h"
 #include "source/extensions/common/wasm/declare_property.pb.h"
 
 #include "eval/public/builtin_func_registrar.h"
@@ -10,6 +9,7 @@
 #include "zlib.h"
 
 using proxy_wasm::RegisterForeignFunction;
+using proxy_wasm::WasmForeignFunction;
 
 namespace Envoy {
 namespace Extensions {
