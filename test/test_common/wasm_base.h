@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
 #include "envoy/server/lifecycle_notifier.h"
 
 #include "common/buffer/buffer_impl.h"
@@ -9,8 +10,6 @@
 
 #include "extensions/common/wasm/wasm.h"
 #include "extensions/common/wasm/wasm_state.h"
-
-#include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
 
 #include "test/mocks/grpc/mocks.h"
 #include "test/mocks/http/mocks.h"
