@@ -1,7 +1,8 @@
 #include "common/common/logger.h"
 
-#include "extensions/common/wasm/wasm.h"
 #include "source/extensions/common/wasm/declare_property.pb.h"
+
+#include "extensions/common/wasm/wasm.h"
 
 #include "eval/public/builtin_func_registrar.h"
 #include "eval/public/cel_expr_builder_factory.h"
