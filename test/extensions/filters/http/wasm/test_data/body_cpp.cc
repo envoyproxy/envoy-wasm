@@ -16,8 +16,8 @@ public:
   FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
 
 private:
-  FilterDataStatus onBody(BufferType type, size_t buffer_length, bool end);
-  static void logBody(BufferType type);
+  FilterDataStatus onBody(WasmBufferType type, size_t buffer_length, bool end);
+  static void logBody(WasmBufferType type);
 
   std::string test_op_;
   int num_chunks_ = 0;
@@ -34,7 +34,7 @@ FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t) {
   return FilterHeadersStatus::Continue;
 }
 
-void ExampleContext::logBody(BufferType type) {
+void ExampleContext::logBody(WasmBufferType type) {
   size_t buffered_size;
   uint32_t flags;
   getBufferStatus(type, &buffered_size, &flags);
@@ -42,7 +42,8 @@ void ExampleContext::logBody(BufferType type) {
   logError(std::string("onRequestBody ") + std::string(body->view()));
 }
 
-FilterDataStatus ExampleContext::onBody(BufferType type, size_t buffer_length, bool end_of_stream) {
+FilterDataStatus ExampleContext::onBody(WasmBufferType type, size_t buffer_length,
+                                        bool end_of_stream) {
   size_t size;
   uint32_t flags;
   if (test_op_ == "ReadBody") {
@@ -50,23 +51,23 @@ FilterDataStatus ExampleContext::onBody(BufferType type, size_t buffer_length, b
     logError("onRequestBody " + std::string(body->view()));
 
   } else if (test_op_ == "PrependAndAppendToBody") {
-    setBuffer(BufferType::HttpRequestBody, 0, 0, "prepend.");
-    getBufferStatus(BufferType::HttpRequestBody, &size, &flags);
-    setBuffer(BufferType::HttpRequestBody, size, 0, ".append");
-    getBufferStatus(BufferType::HttpRequestBody, &size, &flags);
-    auto updated = getBufferBytes(BufferType::HttpRequestBody, 0, size);
+    setBuffer(WasmBufferType::HttpRequestBody, 0, 0, "prepend.");
+    getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
+    setBuffer(WasmBufferType::HttpRequestBody, size, 0, ".append");
+    getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
+    auto updated = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
     logError("onRequestBody " + std::string(updated->view()));
 
   } else if (test_op_ == "ReplaceBody") {
-    setBuffer(BufferType::HttpRequestBody, 0, buffer_length, "replace");
-    getBufferStatus(BufferType::HttpRequestBody, &size, &flags);
-    auto replaced = getBufferBytes(BufferType::HttpRequestBody, 0, size);
+    setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "replace");
+    getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
+    auto replaced = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
     logError("onRequestBody " + std::string(replaced->view()));
 
   } else if (test_op_ == "RemoveBody") {
-    setBuffer(BufferType::HttpRequestBody, 0, buffer_length, "");
-    getBufferStatus(BufferType::HttpRequestBody, &size, &flags);
-    auto erased = getBufferBytes(BufferType::HttpRequestBody, 0, size);
+    setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "");
+    getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
+    auto erased = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
     logError("onRequestBody " + std::string(erased->view()));
 
   } else if (test_op_ == "BufferBody") {
@@ -74,23 +75,23 @@ FilterDataStatus ExampleContext::onBody(BufferType type, size_t buffer_length, b
     return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
 
   } else if (test_op_ == "PrependAndAppendToBufferedBody") {
-    setBuffer(BufferType::HttpRequestBody, 0, 0, "prepend.");
-    getBufferStatus(BufferType::HttpRequestBody, &size, &flags);
-    setBuffer(BufferType::HttpRequestBody, size, 0, ".append");
+    setBuffer(WasmBufferType::HttpRequestBody, 0, 0, "prepend.");
+    getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
+    setBuffer(WasmBufferType::HttpRequestBody, size, 0, ".append");
     logBody(type);
     return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
 
   } else if (test_op_ == "ReplaceBufferedBody") {
-    setBuffer(BufferType::HttpRequestBody, 0, buffer_length, "replace");
-    getBufferStatus(BufferType::HttpRequestBody, &size, &flags);
-    auto replaced = getBufferBytes(BufferType::HttpRequestBody, 0, size);
+    setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "replace");
+    getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
+    auto replaced = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
     logBody(type);
     return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
 
   } else if (test_op_ == "RemoveBufferedBody") {
-    setBuffer(BufferType::HttpRequestBody, 0, buffer_length, "");
-    getBufferStatus(BufferType::HttpRequestBody, &size, &flags);
-    auto erased = getBufferBytes(BufferType::HttpRequestBody, 0, size);
+    setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "");
+    getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
+    auto erased = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
     logBody(type);
     return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
 
@@ -111,9 +112,9 @@ FilterDataStatus ExampleContext::onBody(BufferType type, size_t buffer_length, b
 }
 
 FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
-  return onBody(BufferType::HttpRequestBody, body_buffer_length, end_of_stream);
+  return onBody(WasmBufferType::HttpRequestBody, body_buffer_length, end_of_stream);
 }
 
 FilterDataStatus ExampleContext::onResponseBody(size_t body_buffer_length, bool end_of_stream) {
-  return onBody(BufferType::HttpResponseBody, body_buffer_length, end_of_stream);
+  return onBody(WasmBufferType::HttpResponseBody, body_buffer_length, end_of_stream);
 }

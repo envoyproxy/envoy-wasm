@@ -49,3 +49,19 @@ wasm_cc_binary(
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
 )
+
+wasm_cc_binary(
+    name = "bad_signature_cpp.wasm",
+    srcs = [
+        "bad_signature_cpp.cc",
+    ],
+    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
+    linkopts = [
+        "--js-library",
+        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
+    ],
+)

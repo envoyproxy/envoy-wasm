@@ -16,7 +16,14 @@ envoy_extension_cc_test(
     size = "large",
     srcs = ["wasm_filter_test.cc"],
     data = [
-        "//test/extensions/filters/http/wasm/test_data:modules",
+        "//test/extensions/filters/http/wasm/test_data:async_call_cpp.wasm",
+        "//test/extensions/filters/http/wasm/test_data:body_cpp.wasm",
+        "//test/extensions/filters/http/wasm/test_data:grpc_call_cpp.wasm",
+        "//test/extensions/filters/http/wasm/test_data:headers_cpp.wasm",
+        "//test/extensions/filters/http/wasm/test_data:metadata_cpp.wasm",
+        "//test/extensions/filters/http/wasm/test_data:queue_cpp.wasm",
+        "//test/extensions/filters/http/wasm/test_data:root_id_cpp.wasm",
+        "//test/extensions/filters/http/wasm/test_data:shared_cpp.wasm",
     ],
     extension_name = "envoy.filters.http.wasm",
     deps = [
@@ -29,7 +36,7 @@ envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
     data = [
-        "//test/extensions/filters/http/wasm/test_data:modules",
+        "//test/extensions/filters/http/wasm/test_data:headers_cpp.wasm",
     ],
     extension_name = "envoy.filters.http.wasm",
     deps = [

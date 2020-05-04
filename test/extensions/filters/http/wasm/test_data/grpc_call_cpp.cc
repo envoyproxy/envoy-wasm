@@ -2,8 +2,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "proxy_wasm_intrinsics.h"
-#include "proxy_wasm_intrinsics_lite.pb.h"
+#include "proxy_wasm_intrinsics_lite.h"
 
 class ExampleContext : public Context {
 public:
@@ -19,7 +18,7 @@ class MyGrpcCallHandler : public GrpcCallHandler<google::protobuf::Value> {
 public:
   MyGrpcCallHandler() : GrpcCallHandler<google::protobuf::Value>() {}
   void onSuccess(size_t body_size) override {
-    auto response = getBufferBytes(BufferType::GrpcReceiveBuffer, 0, body_size);
+    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
     logDebug(response->proto<google::protobuf::Value>().string_value());
   }
   void onFailure(GrpcStatus status) override {
@@ -37,7 +36,7 @@ public:
   void onReceiveInitialMetadata(uint32_t) override {}
   void onReceiveTrailingMetadata(uint32_t) override {}
   void onReceive(size_t body_size) override {
-    auto response = getBufferBytes(BufferType::GrpcReceiveBuffer, 0, body_size);
+    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
     logDebug(response->proto<google::protobuf::Value>().string_value());
   }
   void onRemoteClose(GrpcStatus status) override {
@@ -51,7 +50,7 @@ public:
 // Currently unused.
 FilterHeadersStatus ExampleContext::onRequestHeadersSimple(uint32_t) {
   std::function<void(size_t body_size)> success_callback = [](size_t body_size) {
-    auto response = getBufferBytes(BufferType::GrpcReceiveBuffer, 0, body_size);
+    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
     logDebug(response->proto<google::protobuf::Value>().string_value());
   };
   std::function<void(GrpcStatus status)> failure_callback = [](GrpcStatus status) {

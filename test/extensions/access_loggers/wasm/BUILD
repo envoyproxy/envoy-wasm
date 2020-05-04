@@ -15,7 +15,7 @@ envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
     data = [
-        "//test/extensions/access_loggers/wasm/test_data:modules",
+        "//test/extensions/access_loggers/wasm/test_data:logging_cpp.wasm",
     ],
     extension_name = "envoy.access_loggers.wasm",
     deps = [

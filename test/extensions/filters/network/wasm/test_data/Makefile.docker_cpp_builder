@@ -1,6 +1,0 @@
-DOCKER_SDK=/external_sdk
-
-all: logging_cpp.wasm
-	chown ${uid}.${gid} *.wasm
-
-include ${DOCKER_SDK}/Makefile.base_lite

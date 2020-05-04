@@ -4,4 +4,3 @@ RUST_API:=$(shell git rev-parse --show-toplevel)/api/wasm/rust
 	cd $* && cargo build --target=wasm32-unknown-unknown --release
 	mv $*/target/wasm32-unknown-unknown/release/$*.wasm .
 	rm -rf $*/target
-	wasm-gc $*.wasm
