@@ -30,7 +30,7 @@ def _wasm_binary_impl(ctx):
         inputs = ctx.files.binary,
     )
 
-    return [DefaultInfo(runfiles=ctx.runfiles([out]))]
+    return [DefaultInfo(runfiles = ctx.runfiles([out]))]
 
 # WASM binary rule implementation.
 # This copies the binary specified in binary attribute in WASM configuration to
