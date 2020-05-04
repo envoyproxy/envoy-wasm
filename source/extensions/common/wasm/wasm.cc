@@ -23,6 +23,22 @@ struct CodeCacheEntry {
   MonotonicTime fetch_time;
 };
 
+class RemoteDataFetcherAdapter : public Config::DataFetcher::RemoteDataFetcherCallback,
+                                 public Event::DeferredDeletable {
+public:
+  RemoteDataFetcherAdapter(std::function<void(std::string cb)> cb) : cb_(cb) {}
+  ~RemoteDataFetcherAdapter() = default;
+  void onSuccess(const std::string& data) override { cb_(data); }
+  virtual void onFailure(Config::DataFetcher::FailureReason) override { cb_(""); }
+  void setFetcher(std::unique_ptr<Config::DataFetcher::RemoteDataFetcher>&& fetcher) {
+    fetcher_ = std::move(fetcher);
+  }
+
+private:
+  std::function<void(std::string)> cb_;
+  std::unique_ptr<Config::DataFetcher::RemoteDataFetcher> fetcher_;
+};
+
 const std::string INLINE_STRING = "<inline>";
 // NB: xDS currently does not support failing asynchronously, so we fail immediately
 // if remote Wasm code is not cached and do a background fill.
@@ -195,7 +211,7 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       it->second.use_time = now;
       if (it->second.in_progress) {
         ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
-                            "createWasm: failed to load (in prpgress) from {}", source);
+                            "createWasm: failed to load (in progress) from {}", source);
         throw WasmException(
             fmt::format("Failed to load WASM code (fetch in progress) from {}", source));
       }
@@ -243,12 +259,9 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       };
 
   if (fetch) {
-    // NB: if the (fetching) exception is thrown below, the remote_data provider will be deleted
-    // immediately rather than completing the async fetch, so allow for self-delete.
-    auto remote_data_provider_holder =
-        std::make_shared<std::unique_ptr<Config::DataSource::RemoteAsyncDataProvider>>();
+    auto holder = std::make_shared<std::unique_ptr<Event::DeferredDeletable>>();
     auto fetch_callback = [vm_config, complete_cb, source, &dispatcher,
-                           remote_data_provider_holder](const std::string& code) {
+                           holder](const std::string& code) {
       {
         std::lock_guard<std::mutex> guard(code_cache_mutex);
         auto& e = (*code_cache)[vm_config.code().remote().sha256()];
@@ -263,16 +276,24 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         complete_cb(code);
       }
       // NB: must be deleted explicitly.
-      dispatcher.deferredDelete(
-          Envoy::Event::DeferredDeletablePtr{remote_data_provider_holder->release()});
-      remote_data_provider_holder->reset();
+      if (*holder) {
+        dispatcher.deferredDelete(Envoy::Event::DeferredDeletablePtr{holder->release()});
+      }
     };
-    remote_data_provider = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
-        cluster_manager, init_manager, vm_config.code().remote(), dispatcher, random, true,
-        fetch_callback);
     if (fail_if_code_not_cached) {
-      *remote_data_provider_holder = std::move(remote_data_provider);
+      auto adapter = std::make_unique<RemoteDataFetcherAdapter>(fetch_callback);
+      auto fetcher = std::make_unique<Config::DataFetcher::RemoteDataFetcher>(
+          cluster_manager, vm_config.code().remote().http_uri(), vm_config.code().remote().sha256(),
+          *adapter);
+      auto fetcher_ptr = fetcher.get();
+      adapter->setFetcher(std::move(fetcher));
+      *holder = std::move(adapter);
+      fetcher_ptr->fetch();
       throw WasmException(fmt::format("Failed to load WASM code (fetching) from {}", source));
+    } else {
+      remote_data_provider = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
+          cluster_manager, init_manager, vm_config.code().remote(), dispatcher, random, true,
+          fetch_callback);
     }
   } else {
     complete_cb(code);
