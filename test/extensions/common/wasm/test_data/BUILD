@@ -12,6 +12,9 @@ envoy_package()
 filegroup(
     name = "modules",
     srcs = glob(["*.wasm"]),
+    data = [
+        ":test_cpp.wasm",
+    ],
 )
 
 envoy_cc_library(
