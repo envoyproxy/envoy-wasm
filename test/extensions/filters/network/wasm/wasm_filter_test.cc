@@ -5,7 +5,7 @@
 
 #include "test/mocks/network/mocks.h"
 #include "test/mocks/server/mocks.h"
-#include "test/test_common/environment.h"
+#include "test/test_common/wasm_base.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -26,75 +26,29 @@ class TestFilter : public Context {
 public:
   TestFilter(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
       : Context(wasm, root_context_id, plugin) {}
-
-  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
-    log_(static_cast<spdlog::level::level_enum>(level), message);
-    return proxy_wasm::WasmResult::Ok;
-  }
-  MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
+  MOCK_CONTEXT_LOG_;
 };
 
 class TestRoot : public Context {
 public:
   TestRoot() {}
-
-  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
-    log_(static_cast<spdlog::level::level_enum>(level), message);
-    return proxy_wasm::WasmResult::Ok;
-  }
-  MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
+  MOCK_CONTEXT_LOG_;
 };
 
-class WasmNetworkFilterTest : public testing::TestWithParam<std::string> {
+class WasmNetworkFilterTest
+    : public Common::Wasm::WasmNetworkFilterTestBase<testing::TestWithParam<std::string>> {
 public:
   WasmNetworkFilterTest() {}
   ~WasmNetworkFilterTest() {}
 
   void setupConfig(const std::string& code) {
-    root_context_ = new TestRoot();
-    envoy::extensions::filters::network::wasm::v3::Wasm proto_config;
-    proto_config.mutable_config()->mutable_vm_config()->set_vm_id("vm_id");
-    proto_config.mutable_config()->mutable_vm_config()->set_runtime(
-        absl::StrCat("envoy.wasm.runtime.", GetParam()));
-    proto_config.mutable_config()
-        ->mutable_vm_config()
-        ->mutable_code()
-        ->mutable_local()
-        ->set_inline_bytes(code);
-    Api::ApiPtr api = Api::createApiForTest(stats_store_);
-    scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
-    plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        "", proto_config.config().root_id(), proto_config.config().vm_config().vm_id(), "",
-        envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
-    Extensions::Common::Wasm::createWasmForTesting(
-        proto_config.config().vm_config(), plugin_, scope_, cluster_manager_, init_manager_,
-        dispatcher_, random_, *api, lifecycle_notifier_, remote_data_provider_,
-        std::unique_ptr<Envoy::Extensions::Common::Wasm::Context>(root_context_),
-        [this](Common::Wasm::WasmHandleSharedPtr wasm) { wasm_ = wasm; });
+    setupBase(GetParam(), code, std::make_unique<TestRoot>());
   }
 
-  void setupFilter() {
-    filter_ = std::make_unique<TestFilter>(wasm_->wasm().get(),
-                                           wasm_->wasm()->getRootContext("")->id(), plugin_);
-    filter_->initializeReadFilterCallbacks(read_filter_callbacks_);
-  }
+  void setupFilter() { setupFilterBase<TestFilter>(""); }
 
-  Stats::IsolatedStoreImpl stats_store_;
-  Stats::ScopeSharedPtr scope_;
-  NiceMock<Event::MockDispatcher> dispatcher_;
-  NiceMock<Upstream::MockClusterManager> cluster_manager_;
-  NiceMock<Runtime::MockRandomGenerator> random_;
-  NiceMock<Init::MockManager> init_manager_;
-  NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier_;
-  Common::Wasm::WasmHandleSharedPtr wasm_;
-  Common::Wasm::PluginSharedPtr plugin_;
-  std::unique_ptr<TestFilter> filter_;
-  NiceMock<Network::MockReadFilterCallbacks> read_filter_callbacks_;
-  NiceMock<LocalInfo::MockLocalInfo> local_info_;
-  envoy::config::core::v3::Metadata listener_metadata_;
-  TestRoot* root_context_ = nullptr;
-  Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
-}; // namespace Wasm
+  TestFilter& filter() { return *static_cast<TestFilter*>(filter_.get()); }
+};
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest,
                          testing::Values("v8"
@@ -116,22 +70,22 @@ TEST_P(WasmNetworkFilterTest, HappyPath) {
       "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm")));
   setupFilter();
 
-  EXPECT_CALL(*filter_, log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onNewConnection());
 
   Buffer::OwnedImpl fake_downstream_data("Fake");
-  EXPECT_CALL(*filter_, log_(spdlog::level::trace,
+  EXPECT_CALL(filter(), log_(spdlog::level::trace,
                              Eq(absl::string_view("onDownstreamData 2 len=4 end_stream=0\nFake"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onData(fake_downstream_data, false));
 
   Buffer::OwnedImpl fake_upstream_data("Done");
-  EXPECT_CALL(*filter_, log_(spdlog::level::trace,
+  EXPECT_CALL(filter(), log_(spdlog::level::trace,
                              Eq(absl::string_view("onUpstreamData 2 len=4 end_stream=1\nDone"))));
-  EXPECT_CALL(*filter_,
+  EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onUpstreamConnectionClose 2 0"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter_->onWrite(fake_upstream_data, true));
 
-  EXPECT_CALL(*filter_,
+  EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
 }
