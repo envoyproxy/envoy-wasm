@@ -34,12 +34,6 @@ envoy_cc_library(
 wasm_cc_binary(
     name = "asm2wasm_cpp.wasm",
     srcs = ["asm2wasm_cpp.cc"],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
@@ -48,12 +42,6 @@ wasm_cc_binary(
 wasm_cc_binary(
     name = "bad_signature_cpp.wasm",
     srcs = ["bad_signature_cpp.cc"],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
@@ -62,12 +50,6 @@ wasm_cc_binary(
 wasm_cc_binary(
     name = "emscripten_cpp.wasm",
     srcs = ["emscripten_cpp.cc"],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
@@ -76,12 +58,6 @@ wasm_cc_binary(
 wasm_cc_binary(
     name = "logging_cpp.wasm",
     srcs = ["logging_cpp.cc"],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
@@ -90,13 +66,10 @@ wasm_cc_binary(
 wasm_cc_binary(
     name = "missing_cpp.wasm",
     srcs = ["missing_cpp.cc"],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
     linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
+        "--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
         "-s ERROR_ON_UNDEFINED_SYMBOLS=0",
     ],
-    visibility = ["//visibility:public"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
@@ -105,12 +78,6 @@ wasm_cc_binary(
 wasm_cc_binary(
     name = "segv_cpp.wasm",
     srcs = ["segv_cpp.cc"],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
@@ -119,12 +86,6 @@ wasm_cc_binary(
 wasm_cc_binary(
     name = "speed_cpp.wasm",
     srcs = ["speed_cpp.cc"],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_lite",
     ],
@@ -133,12 +94,6 @@ wasm_cc_binary(
 wasm_cc_binary(
     name = "start_cpp.wasm",
     srcs = ["start_cpp.cc"],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
@@ -147,12 +102,6 @@ wasm_cc_binary(
 wasm_cc_binary(
     name = "stats_cpp.wasm",
     srcs = ["stats_cpp.cc"],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
