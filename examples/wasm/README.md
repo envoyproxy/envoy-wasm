@@ -46,7 +46,7 @@ and build the WASM module ([envoy_filter_http_wasm_example.wasm](envoy_filter_ht
 
 1. Build WASM module
    ```shell
-   bazel build envoy_filter_http_wasm_example.wasm
+   bazel build //examples/wasm:envoy_filter_http_wasm_example.wasm
    ```
 
 ## Build the Envoy WASM Image
