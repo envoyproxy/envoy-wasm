@@ -42,41 +42,12 @@ example body
 ## Build WASM Module
 
 Now you want to make changes to the C++ filter ([envoy_filter_http_wasm_example.cc](envoy_filter_http_wasm_example.cc))
-and regenerate to WASM module ([envoy_filter_http_wasm_example.wasm](envoy_filter_http_wasm_example.wasm)).
+and build the WASM module ([envoy_filter_http_wasm_example.wasm](envoy_filter_http_wasm_example.wasm)).
 
-### Build using Docker image with WASM toolchain
-
-1. Build Docker image with WASM toolchain
+1. Build WASM module
    ```shell
-   docker build -t wasmsdk:v2 -f ../../api/wasm/cpp/Dockerfile-sdk ../../api/wasm/cpp/
+   bazel build //examples/wasm:envoy_filter_http_wasm_example.wasm
    ```
-2. Build example WASM Module
-   ```shell
-   ./docker_build_cpp_wasm.sh
-   ```
-
-### Build using WASM toolchain installed on a host
-
-1. Download and install [`protobuf`](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md).
-2. Download and install [`WAVM`](https://github.com/WAVM/WAVM).
-3. Download and install [`emscripten`](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions)
-4. Activate emsdk archived version 1.39.2 (Note: as of 2019/10/18 the latest known working version is 1.39.2).
-
-    ```shell
-    # in emsdk directory
-    ./emsdk install 1.39.2
-    ./emsdk activate 1.39.2
-    source emsdk_env.sh
-    # verify, should output 1.39.2
-    em++ -v 2>&1 |grep Emscripten
-    ```
-
-5. Build WASM filter in envoy directory.
-
-    ```shell
-    envoy/examples/wasm$ source <path/to/emsdk>/emsdk_env.sh  # Only needed if in another shell session
-    envoy/examples/wasm$ touch envoy_filter_http_wasm_example.cc && make
-    ```
 
 ## Build the Envoy WASM Image
 

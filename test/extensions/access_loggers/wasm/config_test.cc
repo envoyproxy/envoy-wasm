@@ -76,7 +76,7 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging.wasm"));
+          "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging_cpp.wasm"));
 
   AccessLog::FilterPtr filter;
   Stats::IsolatedStoreImpl stats_store;

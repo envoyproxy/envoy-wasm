@@ -2,7 +2,7 @@ WebAssembly Extension Support
 
 # C++ SDK
 
-A C++ SDK is available including a docker image build environment. See api/wasm/cpp/README.md.
+A C++ SDK is available at https://github.com/proxy-wasm/proxy-wasm-cpp-sdk.
 
 # Rust SDK
 

@@ -2,8 +2,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "proxy_wasm_intrinsics.h"
-#include "proxy_wasm_intrinsics_lite.pb.h"
+#include "proxy_wasm_intrinsics_lite.h"
 #include "contrib/proxy_expr.h"
 
 class ExampleContext : public Context {
@@ -104,14 +103,12 @@ FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool e
   logError(std::string("onRequestBody ") + value);
   std::string request_string;
   std::string request_string2;
-  if (!getValue(
-          {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
-          &request_string)) {
+  if (!getValue({"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
+                &request_string)) {
     logDebug("missing request metadata");
   }
-  if (!getValue(
-          {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
-          &request_string2)) {
+  if (!getValue({"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
+                &request_string2)) {
     logDebug("missing request metadata");
   }
   logTrace(std::string("Struct ") + request_string + " " + request_string2);

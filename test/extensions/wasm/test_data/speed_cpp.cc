@@ -2,7 +2,7 @@
 #include <string>
 
 #ifndef NULL_PLUGIN
-#include "proxy_wasm_intrinsics.h"
+#include "proxy_wasm_intrinsics_lite.h"
 // Required Proxy-Wasm ABI version.
 extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
 #else
