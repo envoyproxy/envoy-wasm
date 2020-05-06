@@ -59,13 +59,15 @@ inline Wasm* getWasm(WasmHandleSharedPtr& base_wasm_handle) {
 
 } // namespace
 
-std::string anyToBytes(const google::protobuf::Any& any) {
-  google::protobuf::StringValue s;
-  if (any.UnpackTo(&s)) {
+std::string anyToBytes(const Protobuf::Any& any) {
+  if (any.Is<Protobuf::StringValue>()) {
+    Protobuf::StringValue s;
+    MessageUtil::unpackTo(any, s);
     return s.value();
   }
-  google::protobuf::BytesValue b;
-  if (any.UnpackTo(&b)) {
+  if (any.Is<Protobuf::BytesValue>()) {
+    Protobuf::BytesValue b;
+    MessageUtil::unpackTo(any, b);
     return b.value();
   }
   return any.value();
