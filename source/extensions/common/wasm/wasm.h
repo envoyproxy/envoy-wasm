@@ -134,6 +134,7 @@ WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_w
                                                Event::Dispatcher& dispatcher);
 
 void clearCodeCacheForTesting(bool fail_if_not_cached);
+std::string anyToBytes(const google::protobuf::Any& any);
 void setTimeOffsetForCodeCacheForTesting(MonotonicTime::duration d);
 
 } // namespace Wasm
