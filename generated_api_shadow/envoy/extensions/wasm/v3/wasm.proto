@@ -44,8 +44,7 @@ message VmConfig {
 }
 
 // Base Configuration for Wasm Plugins e.g. filters and services.
-// [#next-free-field: 5]
-//  [#not-implemented-hide:] pending implementation.
+//   [#not-implemented-hide:] pending implementation.
 message PluginConfig {
   // A unique name for a filters/services in a VM for use in identifying the filter/service if
   // multiple filters/services are handled by the same *vm_id* and *group_name* and for
