@@ -170,8 +170,13 @@ public:
         ENVOY_LOG(debug, "expr_evaluate error: {}", eval_status.status().message());
         return WasmResult::InternalFailure;
       }
+      auto value = eval_status.value();
+      if (value.IsError()) {
+        ENVOY_LOG(debug, "expr_evaluate value error: {}", value.ErrorOrDie()->message());
+        return WasmResult::InternalFailure;
+      }
       std::string result;
-      auto serialize_status = serializeValue(eval_status.value(), &result);
+      auto serialize_status = serializeValue(value, &result);
       if (serialize_status != WasmResult::Ok) {
         return serialize_status;
       }
