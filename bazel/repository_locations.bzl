@@ -297,7 +297,7 @@ REPOSITORY_LOCATIONS = dict(
     ),
     com_google_cel_cpp = dict(
         sha256 = "d773ee368053f404eada87b59c9e545b2e21118ebb0577ac3e942a06518f6fd2",
-        strip_prefix = "cel-cpp-v0.2.0",
+        strip_prefix = "cel-cpp-0.2.0",
         # 2020-05-11
         urls = ["https://github.com/google/cel-cpp/archive/v0.2.0.tar.gz"],
     ),
