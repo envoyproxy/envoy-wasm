@@ -73,6 +73,10 @@ TEST_P(WasmFilterConfigTest, JsonLoadFromFileWASM) {
   "vm_config": {
     "runtime": "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF(",
+    "configuration": {
+       "@type": "type.googleapis.com/google.protobuf.StringValue",
+       "value": "some configuration"
+    },
     "code": {
       "local": {
         "filename": "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"
@@ -100,6 +104,9 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromFileWASM) {
     vm_config:
       runtime: "envoy.wasm.runtime.)EOF",
                                                                     GetParam(), R"EOF("
+      configuration:
+         "@type": "type.googleapis.com/google.protobuf.StringValue"
+         value: "some configuration"
       code:
         local:
           filename: "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm"

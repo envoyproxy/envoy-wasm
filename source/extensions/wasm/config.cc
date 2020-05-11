@@ -21,8 +21,9 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
                              Server::CreateWasmServiceCallback&& cb) {
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      config.config().configuration(), envoy::config::core::v3::TrafficDirection::UNSPECIFIED,
-      context.server().localInfo(), nullptr);
+      Common::Wasm::anyToBytes(config.config().configuration()),
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.server().localInfo(),
+      nullptr);
 
   bool singleton = config.singleton();
   auto callback = [&context, singleton, plugin, cb](Common::Wasm::WasmHandleSharedPtr base_wasm) {
