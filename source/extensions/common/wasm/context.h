@@ -281,7 +281,7 @@ public:
     static const std::vector<google::api::expr::runtime::CelAttributePattern> empty;
     return empty;
   }
-  const Protobuf::FieldMask unknown_paths() const override {
+  const Protobuf::FieldMask& unknown_paths() const override {
     return Protobuf::FieldMask::default_instance();
   }
 
