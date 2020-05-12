@@ -6,12 +6,39 @@ load(
     "envoy_package",
 )
 load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
+load("@io_bazel_rules_rust//rust:rust.bzl", "rust_library", "rust_binary")
 
 envoy_package()
 
 filegroup(
     name = "modules",
     srcs = glob(["*.wasm"]),
+)
+
+rust_library(
+    name = "proxy_wasm",
+    srcs = ["proxy_wasm/lib.rs"],
+    rustc_flags = [
+        "--edition=2018",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@log",
+    ],
+)
+
+rust_binary(
+    name = "logging_rust",
+    srcs = ["logging_rust.rs"],
+    rustc_flags = [
+        "--edition=2018",
+    ],
+    deps = [
+        ":proxy_wasm",
+        "@log",
+    ],
+    crate_type = "cdylib",
+    out_binary = True,
 )
 
 envoy_cc_library(
