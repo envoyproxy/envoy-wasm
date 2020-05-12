@@ -59,6 +59,20 @@ inline Wasm* getWasm(WasmHandleSharedPtr& base_wasm_handle) {
 
 } // namespace
 
+std::string anyToBytes(const ProtobufWkt::Any& any) {
+  if (any.Is<ProtobufWkt::StringValue>()) {
+    ProtobufWkt::StringValue s;
+    MessageUtil::unpackTo(any, s);
+    return s.value();
+  }
+  if (any.Is<ProtobufWkt::BytesValue>()) {
+    Protobuf::BytesValue b;
+    MessageUtil::unpackTo(any, b);
+    return b.value();
+  }
+  return any.value();
+}
+
 void Wasm::initializeStats() {
   active_wasms++;
   wasm_stats_.active_.set(active_wasms);
@@ -243,14 +257,15 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       [cb, vm_config, plugin, scope, &cluster_manager, &dispatcher, &lifecycle_notifier,
        root_context_for_testing_ptr = root_context_for_testing.release()](std::string code) {
         auto root_context = std::unique_ptr<Context>(root_context_for_testing_ptr);
-        auto vm_key = proxy_wasm::makeVmKey(vm_config.vm_id(), vm_config.configuration(), code);
+        auto vm_key =
+            proxy_wasm::makeVmKey(vm_config.vm_id(), anyToBytes(vm_config.configuration()), code);
         cb(std::static_pointer_cast<WasmHandle>(proxy_wasm::createWasm(
             vm_key, code, plugin,
             [&vm_config, &scope, &cluster_manager, &dispatcher,
              &lifecycle_notifier](absl::string_view vm_key) {
               auto wasm = std::make_shared<Wasm>(vm_config.runtime(), vm_config.vm_id(),
-                                                 vm_config.configuration(), vm_key, scope,
-                                                 cluster_manager, dispatcher);
+                                                 anyToBytes(vm_config.configuration()), vm_key,
+                                                 scope, cluster_manager, dispatcher);
               // NB: we need the shared_ptr to have been created for shared_from_this() to work.
               wasm->initializeLifecycle(lifecycle_notifier);
               return std::static_pointer_cast<WasmHandleBase>(std::make_shared<WasmHandle>(wasm));

@@ -36,15 +36,7 @@ envoy_cc_library(
 
 wasm_cc_binary(
     name = "test_cpp.wasm",
-    srcs = [
-        "test_cpp.cc",
-    ],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
+    srcs = ["test_cpp.cc"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
@@ -52,15 +44,7 @@ wasm_cc_binary(
 
 wasm_cc_binary(
     name = "bad_signature_cpp.wasm",
-    srcs = [
-        "bad_signature_cpp.cc",
-    ],
-    additional_linker_inputs = ["@proxy_wasm_cpp_sdk//:jslib"],
-    linkopts = [
-        "--js-library",
-        "external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-    ],
-    visibility = ["//visibility:public"],
+    srcs = ["bad_signature_cpp.cc"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],

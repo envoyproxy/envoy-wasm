@@ -33,8 +33,9 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   // individual threads.
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      config.config().configuration(), envoy::config::core::v3::TrafficDirection::UNSPECIFIED,
-      context.localInfo(), nullptr /* listener_metadata */);
+      Common::Wasm::anyToBytes(config.config().configuration()),
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.localInfo(),
+      nullptr /* listener_metadata */);
 
   auto callback = [access_log, &context, plugin](Common::Wasm::WasmHandleSharedPtr base_wasm) {
     auto tls_slot = context.threadLocal().allocateSlot();

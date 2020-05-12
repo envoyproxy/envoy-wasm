@@ -19,8 +19,8 @@ FilterConfig::FilterConfig(const envoy::extensions::filters::http::wasm::v3::Was
     : tls_slot_(context.threadLocal().allocateSlot()) {
   plugin_ = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      config.config().configuration(), context.direction(), context.localInfo(),
-      &context.listenerMetadata());
+      Common::Wasm::anyToBytes(config.config().configuration()), context.direction(),
+      context.localInfo(), &context.listenerMetadata());
 
   auto plugin = plugin_;
   auto callback = [plugin, this](const Common::Wasm::WasmHandleSharedPtr& base_wasm) {

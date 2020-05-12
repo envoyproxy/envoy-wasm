@@ -451,7 +451,9 @@ TEST_P(WasmCommonTest, VmCache) {
 
   VmConfig vm_config;
   vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  vm_config.set_configuration(vm_configuration);
+  ProtobufWkt::StringValue vm_configuration_string;
+  vm_configuration_string.set_value(vm_configuration);
+  vm_config.mutable_configuration()->PackFrom(vm_configuration_string);
   std::string code;
   if (GetParam() != "null") {
     code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -523,7 +525,9 @@ TEST_P(WasmCommonTest, RemoteCode) {
 
   VmConfig vm_config;
   vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  vm_config.set_configuration(vm_configuration);
+  ProtobufWkt::StringValue vm_configuration_string;
+  vm_configuration_string.set_value(vm_configuration);
+  vm_config.mutable_configuration()->PackFrom(vm_configuration_string);
   std::string sha256 = Extensions::Common::Wasm::Sha256(code);
   std::string sha256Hex =
       Hex::encode(reinterpret_cast<const uint8_t*>(&*sha256.begin()), sha256.size());
@@ -607,7 +611,9 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
 
   VmConfig vm_config;
   vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  vm_config.set_configuration(vm_configuration);
+  ProtobufWkt::StringValue vm_configuration_string;
+  vm_configuration_string.set_value(vm_configuration);
+  vm_config.mutable_configuration()->PackFrom(vm_configuration_string);
   std::string sha256 = Extensions::Common::Wasm::Sha256(code);
   std::string sha256Hex =
       Hex::encode(reinterpret_cast<const uint8_t*>(&*sha256.begin()), sha256.size());
