@@ -296,10 +296,10 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://storage.googleapis.com/quiche-envoy-integration/googleurl_dbf5ad147f60afc125e99db7549402af49a5eae8.tar.gz"],
     ),
     com_google_cel_cpp = dict(
-        sha256 = "7eddffdb231e7c82f60c597cd38e742fbc0c48f54ca33015ac0a3d22bd51bba3",
-        strip_prefix = "cel-cpp-d88a4822af1864b481b31b12c2ecc4e631a7f8a9",
-        # 2019-04-13
-        urls = ["https://github.com/google/cel-cpp/archive/d88a4822af1864b481b31b12c2ecc4e631a7f8a9.tar.gz"],
+        sha256 = "d773ee368053f404eada87b59c9e545b2e21118ebb0577ac3e942a06518f6fd2",
+        strip_prefix = "cel-cpp-0.2.0",
+        # 2020-05-11
+        urls = ["https://github.com/google/cel-cpp/archive/v0.2.0.tar.gz"],
     ),
     com_github_google_flatbuffers = dict(
         sha256 = "b8efbc25721e76780752bad775a97c3f77a0250271e2db37fc747b20e8b0f24a",
