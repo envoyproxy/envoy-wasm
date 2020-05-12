@@ -20,6 +20,7 @@ envoy_extension_cc_test(
         "//test/extensions/wasm/test_data:bad_signature_cpp.wasm",
         "//test/extensions/wasm/test_data:emscripten_cpp.wasm",
         "//test/extensions/wasm/test_data:logging_cpp.wasm",
+        "//test/extensions/wasm/test_data:logging_rust",
         "//test/extensions/wasm/test_data:modules",
         "//test/extensions/wasm/test_data:segv_cpp.wasm",
         "//test/extensions/wasm/test_data:stats_cpp.wasm",

@@ -28,6 +28,7 @@ envoy_cc_test(
     data = [
         "//test/extensions/common/wasm/test_data:bad_signature_cpp.wasm",
         "//test/extensions/common/wasm/test_data:test_cpp.wasm",
+        "//test/extensions/common/wasm/test_data:test_rust.wasm",
     ],
     external_deps = ["abseil_optional"],
     deps = [

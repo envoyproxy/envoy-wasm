@@ -6,6 +6,7 @@ load(
     "envoy_package",
 )
 load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
+load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary")
 
 envoy_package()
 
@@ -15,6 +16,19 @@ filegroup(
     data = [
         ":test_cpp.wasm",
     ],
+)
+
+rust_binary(
+    name = "test_rust",
+    srcs = ["test_rust.rs"],
+    rustc_flags = [
+        "--edition=2018",
+    ],
+    deps = [
+        "//test/extensions/wasm/test_data:proxy_wasm",
+    ],
+    crate_type = "cdylib",
+    out_binary = True,
 )
 
 envoy_cc_library(
