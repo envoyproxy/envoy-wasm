@@ -4,6 +4,8 @@ load("@envoy_build_tools//toolchains:rbe_toolchains_config.bzl", "rbe_toolchains
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
 load("@upb//bazel:repository_defs.bzl", upb_bazel_version_repository = "bazel_version_repository")
+load("@io_bazel_rules_rust//rust:repositories.bzl", "rust_repositories")
+load("@io_bazel_rules_rust//:workspace.bzl", "bazel_version")
 
 # go version for rules_go
 GO_VERSION = "1.13.5"
@@ -15,6 +17,8 @@ def envoy_dependency_imports(go_version = GO_VERSION):
     rbe_toolchains_config()
     gazelle_dependencies()
     apple_rules_dependencies()
+    rust_repositories()
+    bazel_version(name = "bazel_version")
     upb_bazel_version_repository(name = "upb_bazel_version")
 
     go_repository(

@@ -21,14 +21,14 @@ filegroup(
 rust_binary(
     name = "test_rust",
     srcs = ["test_rust.rs"],
+    crate_type = "cdylib",
+    out_binary = True,
     rustc_flags = [
         "--edition=2018",
     ],
     deps = [
         "//test/extensions/wasm/test_data:proxy_wasm",
     ],
-    crate_type = "cdylib",
-    out_binary = True,
 )
 
 envoy_cc_library(
