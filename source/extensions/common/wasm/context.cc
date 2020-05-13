@@ -1375,6 +1375,9 @@ Network::FilterStatus Context::onNewConnection() {
 };
 
 Network::FilterStatus Context::onData(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!in_vm_context_created_) {
+    return Network::FilterStatus::Continue;
+  }
   network_downstream_data_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertNetworkFilterStatus(onDownstreamData(data.length(), end_stream));
@@ -1385,6 +1388,9 @@ Network::FilterStatus Context::onData(::Envoy::Buffer::Instance& data, bool end_
 }
 
 Network::FilterStatus Context::onWrite(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!in_vm_context_created_) {
+    return Network::FilterStatus::Continue;
+  }
   network_upstream_data_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertNetworkFilterStatus(onUpstreamData(data.length(), end_stream));
@@ -1400,6 +1406,9 @@ Network::FilterStatus Context::onWrite(::Envoy::Buffer::Instance& data, bool end
 }
 
 void Context::onEvent(Network::ConnectionEvent event) {
+  if (!in_vm_context_created_) {
+    return;
+  }
   switch (event) {
   case Network::ConnectionEvent::LocalClose:
     onDownstreamConnectionClose(CloseType::Local);
