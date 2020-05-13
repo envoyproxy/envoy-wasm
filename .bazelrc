@@ -207,6 +207,3 @@ build:compdb --define=ENVOY_CONFIG_COMPILATION_DATABASE=1
 
 try-import %workspace%/clang.bazelrc
 try-import %workspace%/user.bazelrc
-
-# wasm32-unknown-unknown for rust
-build --platforms=@io_bazel_rules_rust//rust/platform:wasm

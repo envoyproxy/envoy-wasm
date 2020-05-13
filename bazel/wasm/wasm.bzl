@@ -1,5 +1,8 @@
+load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary")
+
 def _wasm_transition_impl(settings, attr):
     return {
+        "//command_line_option:platforms": "@io_bazel_rules_rust//rust/platform:wasm" if attr.type == "rust" else "",
         "//command_line_option:cpu": "wasm",
         "//command_line_option:crosstool_top": "@proxy_wasm_cpp_sdk//toolchain:emscripten",
 
@@ -14,6 +17,7 @@ wasm_transition = transition(
     implementation = _wasm_transition_impl,
     inputs = [],
     outputs = [
+        "//command_line_option:platforms",
         "//command_line_option:cpu",
         "//command_line_option:crosstool_top",
         "//command_line_option:copt",
@@ -39,6 +43,7 @@ wasm_binary = rule(
     implementation = _wasm_binary_impl,
     attrs = {
         "binary": attr.label(mandatory = True, cfg = wasm_transition),
+        "type": attr.string(default = "cc"),
         "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
     },
 )
@@ -60,4 +65,22 @@ def wasm_cc_binary(name, **kwargs):
     wasm_binary(
         name = name,
         binary = ":" + wasm_name,
+    )
+
+def wasm_rust_binary(name, **kwargs):
+    wasm_name = "_wasm_" + name
+    kwargs.setdefault("visibility", ["//visibility:public"])
+    kwargs.setdefault("rustc_flags", ["--edition=2018"])
+    kwargs.setdefault("out_binary", True)
+    kwargs.setdefault("crate_type", "cdylib")
+
+    rust_binary(
+        name = wasm_name,
+        **kwargs
+    )
+
+    wasm_binary(
+        name = name + ".wasm",
+        binary = ":" + wasm_name,
+        type = "rust",
     )

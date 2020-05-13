@@ -5,8 +5,8 @@ load(
     "envoy_cc_library",
     "envoy_package",
 )
-load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
-load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary", "rust_library")
+load("//bazel/wasm:wasm.bzl", "wasm_cc_binary", "wasm_rust_binary")
+load("@io_bazel_rules_rust//rust:rust.bzl", "rust_library")
 
 envoy_package()
 
@@ -27,14 +27,9 @@ rust_library(
     ],
 )
 
-rust_binary(
+wasm_rust_binary(
     name = "logging_rust",
     srcs = ["logging_rust.rs"],
-    crate_type = "cdylib",
-    out_binary = True,
-    rustc_flags = [
-        "--edition=2018",
-    ],
     deps = [
         ":proxy_wasm",
         "@log",
