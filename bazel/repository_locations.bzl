@@ -351,9 +351,9 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/db6f3defb20dab6b2bafe5a26c7652c9eb1146b7.tar.gz"],
     ),
     proxy_wasm_cpp_host = dict(
-        sha256 = "bdaa582d994bfb886e15e7be09b6f1b05f8ff65e906050f8d4713837f1f4dff0",
-        strip_prefix = "proxy-wasm-cpp-host-2ae1c2081d6724d1da21d1bed30503b27cc68b59",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/2ae1c2081d6724d1da21d1bed30503b27cc68b59.tar.gz"],
+        sha256 = "3f4f5f3560492d4bdac6fc6d7dc0390e01156b43705703d537a07ae6a5c90e88",
+        strip_prefix = "proxy-wasm-cpp-host-8a8ad70296b82d21cdd9d416a0f5bbbdd972acf6",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/8a8ad70296b82d21cdd9d416a0f5bbbdd972acf6.tar.gz"],
     ),
     emscripten_toolchain = dict(
         sha256 = "4ac0f1f3de8b3f1373d435cd7e58bd94de4146e751f099732167749a229b443b",
