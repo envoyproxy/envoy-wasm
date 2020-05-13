@@ -364,4 +364,19 @@ REPOSITORY_LOCATIONS = dict(
         strip_prefix = "emsdk-1.39.6",
         urls = ["https://github.com/emscripten-core/emsdk/archive/1.39.6.tar.gz"],
     ),
+    io_bazel_rules_rust = dict(
+        sha256 = "e133b51af2d7d77973f5ebfd7ebc9e347f0e44b32beedd7fe36b77b8fd92a609",
+        strip_prefix = "rules_rust-master-patched",
+        urls = ["https://github.com/Shikugawa/rules_rust/archive/master-patched.zip"],
+    ),
+    cfg_if = dict(
+        sha256 = "2ba2ee0201d67f1e0c00bd31276c4570271ffca1701081a8377fb0400075c4b1",
+        strip_prefix = "cfg-if-0.1.10",
+        urls = ["https://github.com/alexcrichton/cfg-if/archive/0.1.10.zip"],
+    ),
+    log = dict(
+        sha256 = "87bb846f307c1cd82ed385c4e25ae4a3efb2e765d0ac9a077be08caabdbb3392",
+        strip_prefix = "log-0.4.0",
+        urls = ["https://github.com/rust-lang/log/archive/0.4.0.zip"],
+    ),
 )

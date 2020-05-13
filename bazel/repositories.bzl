@@ -1,5 +1,4 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 load(":dev_binding.bzl", "envoy_dev_binding")
 load(":genrule_repository.bzl", "genrule_repository")
 load("@envoy_api//bazel:envoy_http_archive.bzl", "envoy_http_archive")
@@ -92,24 +91,19 @@ def _go_deps(skip_targets):
         _repository_impl("bazel_gazelle")
 
 def _rust_deps():
-    git_repository(
+    http_archive(
         name = "io_bazel_rules_rust",
-        commit = "c056d676c8bc67c1e63d0496776cfcc43e7110d7",
-        remote = "https://github.com/Shikugawa/rules_rust",
+        **REPOSITORY_LOCATIONS["io_bazel_rules_rust"]
     )
-    new_git_repository(
+    http_archive(
         name = "cfg_if",
-        commit = "f71bf60f212312faddee7da525fcf47daac66499",
-        remote = "https://github.com/alexcrichton/cfg-if",
         build_file = "@envoy//bazel/external:cfg_if.BUILD",
+        **REPOSITORY_LOCATIONS["cfg_if"]
     )
     http_archive(
         name = "log",
         build_file = "//bazel/external:log.BUILD",
-        strip_prefix = "log-0.4.0",
-        urls = [
-            "https://github.com/rust-lang/log/archive/0.4.0.zip",
-        ],
+        **REPOSITORY_LOCATIONS["log"]
     )
 
 def envoy_dependencies(skip_targets = []):
