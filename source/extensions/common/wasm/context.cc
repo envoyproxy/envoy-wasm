@@ -1371,6 +1371,9 @@ Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus stat
 };
 
 Network::FilterStatus Context::onNewConnection() {
+  if (!in_vm_context_created_) {
+    onCreate(root_context_id_);
+  }
   return convertNetworkFilterStatus(onNetworkNewConnection());
 };
 
