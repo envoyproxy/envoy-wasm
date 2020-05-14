@@ -20,9 +20,6 @@ filegroup(
 wasm_rust_binary(
     name = "test_rust",
     srcs = ["test_rust.rs"],
-    deps = [
-        "//test/extensions/wasm/test_data:proxy_wasm",
-    ],
 )
 
 envoy_cc_library(
