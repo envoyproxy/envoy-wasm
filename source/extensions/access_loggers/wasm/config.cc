@@ -26,6 +26,9 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   const auto& config = MessageUtil::downcastAndValidate<
       const envoy::extensions::access_loggers::wasm::v3::WasmAccessLog&>(
       proto_config, context.messageValidationVisitor());
+
+  AccessLog::FormatterPtr formatter;
+
   auto access_log =
       std::make_shared<WasmAccessLog>(config.config().root_id(), nullptr, std::move(filter));
 
@@ -62,18 +65,6 @@ ProtobufTypes::MessagePtr WasmAccessLogFactory::createEmptyConfigProto() {
 }
 
 std::string WasmAccessLogFactory::name() const { return AccessLogNames::get().Wasm; }
-
-std::unordered_map<std::string, std::string>
-WasmAccessLogFactory::convertJsonFormatToMap(ProtobufWkt::Struct json_format) {
-  std::unordered_map<std::string, std::string> output;
-  for (const auto& pair : json_format.fields()) {
-    if (pair.second.kind_case() != ProtobufWkt::Value::kStringValue) {
-      throw EnvoyException("Only string values are supported in the JSON access log format.");
-    }
-    output.emplace(pair.first, pair.second.string_value());
-  }
-  return output;
-}
 
 /**
  * Static registration for the wasm access log. @see RegisterFactory.
