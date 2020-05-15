@@ -26,7 +26,6 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   const auto& config = MessageUtil::downcastAndValidate<
       const envoy::extensions::access_loggers::wasm::v3::WasmAccessLog&>(
       proto_config, context.messageValidationVisitor());
-
   auto access_log =
       std::make_shared<WasmAccessLog>(config.config().root_id(), nullptr, std::move(filter));
 
