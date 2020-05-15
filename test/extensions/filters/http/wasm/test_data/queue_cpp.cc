@@ -26,8 +26,12 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
 
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   uint32_t token;
+  if (resolveSharedQueue("vm_id", "bad_shared_queue", &token) != WasmResult::NotFound) {
+    // Should not be called.
+    logWarn("onRequestHeaders found bad_shared_queue");
+  }
   CHECK_RESULT(resolveSharedQueue("vm_id", "my_shared_queue", &token));
-  if (WasmResult::Ok == enqueueSharedQueue(token, "data1")) {
+  if (enqueueSharedQueue(token, "data1") == WasmResult::Ok) {
     logWarn("onRequestHeaders enqueue Ok");
   }
   return FilterHeadersStatus::Continue;
@@ -43,7 +47,15 @@ void ExampleRootContext::onQueueReady(uint32_t token) {
     logInfo("onQueueReady");
   }
   std::unique_ptr<WasmData> data;
-  if (WasmResult::Ok == dequeueSharedQueue(token, &data)) {
+  if (dequeueSharedQueue(9999999 /* bad token */, &data) != WasmResult::NotFound) {
+    // Should not be called.
+    logWarn("onQueueReady bad token found");
+  }
+  if (dequeueSharedQueue(token, &data) == WasmResult::Ok) {
     logDebug("data " + data->toString() + " Ok");
+  }
+  if (dequeueSharedQueue(token, &data) != WasmResult::Empty) {
+    // Should not be called.
+    logWarn("onQueueReady extra data found");
   }
 }

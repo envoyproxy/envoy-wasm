@@ -49,152 +49,6 @@ namespace {
 
 using HashPolicy = envoy::config::route::v3::RouteAction::HashPolicy;
 
-class SharedData {
-public:
-  WasmResult get(absl::string_view vm_id, const absl::string_view key,
-                 std::pair<std::string, uint32_t>* result) {
-    absl::ReaderMutexLock l(&mutex_);
-    auto map = data_.find(vm_id);
-    if (map == data_.end()) {
-      return WasmResult::NotFound;
-    }
-    auto it = map->second.find(key);
-    if (it != map->second.end()) {
-      *result = it->second;
-      return WasmResult::Ok;
-    }
-    return WasmResult::NotFound;
-  }
-
-  WasmResult set(absl::string_view vm_id, absl::string_view key, absl::string_view value,
-                 uint32_t cas) {
-    absl::WriterMutexLock l(&mutex_);
-    absl::flat_hash_map<std::string, std::pair<std::string, uint32_t>>* map;
-    auto map_it = data_.find(vm_id);
-    if (map_it == data_.end()) {
-      map = &data_[vm_id];
-    } else {
-      map = &map_it->second;
-    }
-    auto it = map->find(key);
-    if (it != map->end()) {
-      if (cas && cas != it->second.second) {
-        return WasmResult::CasMismatch;
-      }
-      it->second = std::make_pair(std::string(value), nextCas());
-    } else {
-      map->emplace(key, std::make_pair(std::string(value), nextCas()));
-    }
-    return WasmResult::Ok;
-  }
-
-  uint32_t registerQueue(absl::string_view vm_id, absl::string_view queue_name, uint32_t context_id,
-                         Event::Dispatcher& dispatcher) {
-    absl::WriterMutexLock l(&mutex_);
-    auto key = std::make_pair(std::string(vm_id), std::string(queue_name));
-    auto it = queue_tokens_.insert(std::make_pair(key, static_cast<uint32_t>(0)));
-    if (it.second) {
-      it.first->second = nextQueueToken();
-      queue_token_set_.insert(it.first->second);
-    }
-    uint32_t token = it.first->second;
-    auto& q = queues_[token];
-    q.vm_id = std::string(vm_id);
-    q.context_id = context_id;
-    q.dispatcher = &dispatcher;
-    // Preserve any existing data.
-    return token;
-  }
-
-  uint32_t resolveQueue(absl::string_view vm_id, absl::string_view queue_name) {
-    absl::WriterMutexLock l(&mutex_);
-    auto key = std::make_pair(std::string(vm_id), std::string(queue_name));
-    auto it = queue_tokens_.find(key);
-    if (it != queue_tokens_.end()) {
-      return it->second;
-    }
-    return 0; // N.B. zero indicates that the queue was not found.
-  }
-
-  WasmResult dequeue(uint32_t token, std::string* data) {
-    absl::ReaderMutexLock l(&mutex_);
-    auto it = queues_.find(token);
-    if (it == queues_.end()) {
-      return WasmResult::NotFound;
-    }
-    if (it->second.queue.empty()) {
-      return WasmResult::Empty;
-    }
-    *data = it->second.queue.front();
-    it->second.queue.pop_front();
-    return WasmResult::Ok;
-  }
-
-  WasmResult enqueue(uint32_t token, absl::string_view value) {
-    absl::WriterMutexLock l(&mutex_);
-    auto it = queues_.find(token);
-    if (it == queues_.end()) {
-      return WasmResult::NotFound;
-    }
-    it->second.queue.emplace_back(value);
-    auto vm_id = it->second.vm_id;
-    auto context_id = it->second.context_id;
-    it->second.dispatcher->post([vm_id, context_id, token] {
-      auto wasm = proxy_wasm::getThreadLocalWasm(vm_id);
-      if (wasm) {
-        wasm->wasm()->queueReady(context_id, token);
-      }
-    });
-    return WasmResult::Ok;
-  }
-
-  uint32_t nextCas() {
-    auto result = cas_;
-    cas_++;
-    if (!cas_) { // 0 is not a valid CAS value.
-      cas_++;
-    }
-    return result;
-  }
-
-private:
-  uint32_t nextQueueToken() {
-    while (true) {
-      uint32_t token = next_queue_token_++;
-      if (token == 0) {
-        continue; // 0 is an illegal token.
-      }
-      if (queue_token_set_.find(token) == queue_token_set_.end()) {
-        return token;
-      }
-    }
-  }
-
-  struct Queue {
-    std::string vm_id;
-    uint32_t context_id;
-    Event::Dispatcher* dispatcher;
-    std::deque<std::string> queue;
-  };
-
-  absl::Mutex mutex_;
-  uint32_t cas_ = 1;
-  uint32_t next_queue_token_ = 1;
-  absl::node_hash_map<std::string,
-                      absl::flat_hash_map<std::string, std::pair<std::string, uint32_t>>>
-      data_;
-  absl::node_hash_map<uint32_t, Queue> queues_;
-  struct PairHash {
-    template <class T1, class T2> std::size_t operator()(const std::pair<T1, T2>& pair) const {
-      return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
-    }
-  };
-  absl::flat_hash_map<std::pair<std::string, std::string>, uint32_t, PairHash> queue_tokens_;
-  absl::flat_hash_set<uint32_t> queue_token_set_;
-};
-
-SharedData global_shared_data;
-
 Http::RequestTrailerMapPtr buildRequestTrailerMapFromPairs(const Pairs& pairs) {
   auto map = std::make_unique<Http::RequestTrailerMapImpl>();
   for (auto& p : pairs) {
@@ -224,10 +78,6 @@ template <typename P> static uint32_t headerSize(const P& p) { return p ? p->siz
 } // namespace
 
 // Test support.
-
-uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_name) {
-  return global_shared_data.resolveQueue(vm_id, queue_name);
-}
 
 size_t Buffer::size() const {
   if (buffer_instance_) {
@@ -620,44 +470,6 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
   }
 
   return serializeValue(value, result);
-}
-
-// Shared Data
-WasmResult Context::getSharedData(absl::string_view key, std::pair<std::string, uint32_t>* data) {
-  return global_shared_data.get(wasm()->vm_id(), key, data);
-}
-
-WasmResult Context::setSharedData(absl::string_view key, absl::string_view value, uint32_t cas) {
-  return global_shared_data.set(wasm()->vm_id(), key, value, cas);
-}
-
-// Shared Queue
-
-WasmResult Context::registerSharedQueue(absl::string_view queue_name,
-                                        SharedQueueDequeueToken* token) {
-  // Get the id of the root context if this is a stream context because onQueueReady is on the
-  // root.
-  *token = global_shared_data.registerQueue(
-      wasm()->vm_id(), queue_name, isRootContext() ? id_ : root_context_id_, wasm()->dispatcher_);
-  return WasmResult::Ok;
-}
-
-WasmResult Context::lookupSharedQueue(absl::string_view vm_id, absl::string_view queue_name,
-                                      SharedQueueEnqueueToken* token_ptr) {
-  uint32_t token = global_shared_data.resolveQueue(vm_id, queue_name);
-  if (!token) {
-    return WasmResult::NotFound;
-  }
-  *token_ptr = token;
-  return WasmResult::Ok;
-}
-
-WasmResult Context::dequeueSharedQueue(uint32_t token, std::string* data) {
-  return global_shared_data.dequeue(token, data);
-}
-
-WasmResult Context::enqueueSharedQueue(uint32_t token, absl::string_view value) {
-  return global_shared_data.enqueue(token, value);
 }
 
 // Header/Trailer/Metadata Maps.

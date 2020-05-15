@@ -207,19 +207,6 @@ public:
                                Pairs additional_headers, uint32_t grpc_status,
                                absl::string_view details) override;
 
-  // Shared Data
-  WasmResult getSharedData(absl::string_view key,
-                           std::pair<std::string /* data */, uint32_t /* cas */>* data) override;
-  WasmResult setSharedData(absl::string_view key, absl::string_view value, uint32_t cas) override;
-
-  // Shared Queue
-  WasmResult registerSharedQueue(absl::string_view queue_name,
-                                 SharedQueueDequeueToken* token) override;
-  WasmResult lookupSharedQueue(absl::string_view vm_id, absl::string_view queue_name,
-                               SharedQueueEnqueueToken* token) override;
-  WasmResult dequeueSharedQueue(uint32_t token, std::string* data) override;
-  WasmResult enqueueSharedQueue(uint32_t token, absl::string_view value) override;
-
   // Header/Trailer/Metadata Maps
   WasmResult addHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
                                absl::string_view value) override;
@@ -464,8 +451,6 @@ protected:
   absl::flat_hash_map<std::string, std::unique_ptr<const WasmStatePrototype>> state_prototypes_;
 };
 using ContextSharedPtr = std::shared_ptr<Context>;
-
-uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_name);
 
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result);
 
