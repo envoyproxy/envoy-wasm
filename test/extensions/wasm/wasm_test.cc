@@ -23,7 +23,7 @@ namespace Wasm {
 class TestContext : public Extensions::Common::Wasm::Context {
 public:
   TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
-  ~TestContext() override {}
+  ~TestContext() override = default;
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     std::cerr << std::string(message) << "\n";
     log_(static_cast<spdlog::level::level_enum>(level), message);
@@ -33,7 +33,43 @@ public:
   MOCK_METHOD1(setTickPeriodMilliseconds, void(uint32_t tick_period_milliseconds));
 };
 
-class WasmTest : public testing::TestWithParam<std::string> {};
+class WasmTestBase {
+public:
+  WasmTestBase()
+      : api_(Api::createApiForTest(stats_store_)),
+        dispatcher_(api_->allocateDispatcher("wasm_test")),
+        scope_(stats_store_.createScope("wasm.")) {}
+
+  void createWasm(absl::string_view runtime) {
+    plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
+        name_, root_id_, vm_id_, plugin_configuration_,
+        envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info_, nullptr);
+    wasm_ = std::make_shared<Extensions::Common::Wasm::Wasm>(
+        absl::StrCat("envoy.wasm.runtime.", runtime), vm_id_, vm_configuration_, vm_key_, scope_,
+        cluster_manager, *dispatcher_);
+    EXPECT_NE(wasm_, nullptr);
+  }
+
+  Stats::IsolatedStoreImpl stats_store_;
+  Api::ApiPtr api_;
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherPtr dispatcher_;
+  Stats::ScopeSharedPtr scope_;
+  NiceMock<LocalInfo::MockLocalInfo> local_info_;
+  std::string name_;
+  std::string root_id_;
+  std::string vm_id_;
+  std::string vm_configuration_;
+  std::string vm_key_;
+  std::string plugin_configuration_;
+  std::shared_ptr<Extensions::Common::Wasm::Plugin> plugin_;
+  std::shared_ptr<Extensions::Common::Wasm::Wasm> wasm_;
+};
+
+class WasmTest : public WasmTestBase, public testing::TestWithParam<std::string> {
+public:
+  void createWasm() { WasmTestBase::createWasm(GetParam()); }
+};
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
                          testing::Values("v8"
@@ -43,7 +79,11 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
 #endif
                                          ));
 
-class WasmTestMatrix : public testing::TestWithParam<std::tuple<std::string, std::string>> {};
+class WasmTestMatrix : public WasmTestBase,
+                       public testing::TestWithParam<std::tuple<std::string, std::string>> {
+public:
+  void createWasm() { WasmTestBase::createWasm(std::get<0>(GetParam())); }
+};
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
                          testing::Combine(testing::Values("v8"
@@ -55,27 +95,10 @@ INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
                                           testing::Values("cpp", "rust")));
 
 TEST_P(WasmTestMatrix, Logging) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "configure-test";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", std::get<0>(GetParam())), vm_id, vm_configuration, vm_key,
-      scope, cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
-  auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm);
-  auto wasm_handler = std::make_unique<Extensions::Common::Wasm::WasmHandle>(std::move(wasm));
+  plugin_configuration_ = "configure-test";
+  createWasm();
+  auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm_);
+  auto wasm_handler = std::make_unique<Extensions::Common::Wasm::WasmHandle>(std::move(wasm_));
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
                    std::get<1>(GetParam()), ".wasm")));
@@ -93,75 +116,41 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_TRUE(wasm_weak.lock()->initialize(code, false));
   wasm_weak.lock()->setContext(context.get());
   auto root_context = context.get();
-  wasm_weak.lock()->startForTesting(std::move(context), plugin);
-  wasm_weak.lock()->configure(root_context, plugin);
+  wasm_weak.lock()->startForTesting(std::move(context), plugin_);
+  wasm_weak.lock()->configure(root_context, plugin_);
   wasm_handler.reset();
-  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
   // This will SEGV on nullptr if wasm has been deleted.
   root_context->onTick(0);
-  dispatcher->run(Event::Dispatcher::RunType::NonBlock);
-  dispatcher->clearDeferredDeleteList();
+  dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
+  dispatcher_->clearDeferredDeleteList();
 }
 
 TEST_P(WasmTest, BadSignature) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
-      cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
+  createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  EXPECT_THROW_WITH_MESSAGE(wasm->initialize(code, false), Extensions::Common::Wasm::WasmException,
+  EXPECT_THROW_WITH_MESSAGE(wasm_->initialize(code, false), Extensions::Common::Wasm::WasmException,
                             "Bad function signature for: proxy_on_configure");
 }
 
 TEST_P(WasmTest, Segv) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
-      cluster_manager, *dispatcher);
+  createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
+  auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("before badptr")));
-  EXPECT_TRUE(wasm->initialize(code, false));
+  EXPECT_TRUE(wasm_->initialize(code, false));
 
   if (GetParam() == "v8") {
     EXPECT_THROW_WITH_MESSAGE(
-        wasm->startForTesting(std::move(context), plugin), Extensions::Common::Wasm::WasmException,
+        wasm_->startForTesting(std::move(context), plugin_),
+        Extensions::Common::Wasm::WasmException,
         "Function: proxy_on_vm_start failed: Uncaught RuntimeError: unreachable");
   } else if (GetParam() == "wavm") {
-    EXPECT_THROW_WITH_REGEX(wasm->startForTesting(std::move(context), plugin),
+    EXPECT_THROW_WITH_REGEX(wasm_->startForTesting(std::move(context), plugin_),
                             Extensions::Common::Wasm::WasmException,
                             "Function: proxy_on_vm_start failed: wavm.reachedUnreachable.*");
   } else {
@@ -170,32 +159,14 @@ TEST_P(WasmTest, Segv) {
 }
 
 TEST_P(WasmTest, DivByZero) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
-      cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
+  createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
+  auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("before div by zero")));
-  EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->setContext(context.get());
+  EXPECT_TRUE(wasm_->initialize(code, false));
+  wasm_->setContext(context.get());
 
   if (GetParam() == "v8") {
     EXPECT_THROW_WITH_MESSAGE(
@@ -210,32 +181,14 @@ TEST_P(WasmTest, DivByZero) {
 }
 
 TEST_P(WasmTest, EmscriptenVersion) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
-      cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
+  createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
-  EXPECT_TRUE(wasm->initialize(code, false));
+  auto context = std::make_unique<TestContext>(wasm_.get());
+  EXPECT_TRUE(wasm_->initialize(code, false));
   uint32_t major = 9, minor = 9, abi_major = 9, abi_minor = 9;
-  EXPECT_TRUE(wasm->getEmscriptenVersion(&major, &minor, &abi_major, &abi_minor));
+  EXPECT_TRUE(wasm_->getEmscriptenVersion(&major, &minor, &abi_major, &abi_minor));
   EXPECT_EQ(major, 0);
   EXPECT_LE(minor, 3);
   // Up to (at least) emsdk 1.39.6.
@@ -244,33 +197,15 @@ TEST_P(WasmTest, EmscriptenVersion) {
 }
 
 TEST_P(WasmTest, IntrinsicGlobals) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
-      cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
+  createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
+  auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("NaN nan")));
   EXPECT_CALL(*context, log_(spdlog::level::warn, Eq("inf inf"))).Times(3);
-  EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->startForTesting(std::move(context), plugin);
+  EXPECT_TRUE(wasm_->initialize(code, false));
+  wasm_->startForTesting(std::move(context), plugin_);
 }
 
 // The asm2wasm.wasm file uses operations which would require the asm2wasm Emscripten module *if*
@@ -280,58 +215,22 @@ TEST_P(WasmTest, IntrinsicGlobals) {
 // change this behavior by providing non-trapping instructions, but in the mean time we support the
 // default Emscripten behavior.
 TEST_P(WasmTest, Asm2Wasm) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
-      cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
+  createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
+  auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("out 0 0 0")));
-  EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->startForTesting(std::move(context), plugin);
+  EXPECT_TRUE(wasm_->initialize(code, false));
+  wasm_->startForTesting(std::move(context), plugin_);
 }
 
 TEST_P(WasmTest, Stats) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
-      cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
+  createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
+  auto context = std::make_unique<TestContext>(wasm_.get());
 
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("get counter = 1")));
   EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("get counter = 2")));
@@ -341,34 +240,16 @@ TEST_P(WasmTest, Stats) {
   // Get is not supported on histograms.
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("get histogram = Unsupported")));
 
-  EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->startForTesting(std::move(context), plugin);
+  EXPECT_TRUE(wasm_->initialize(code, false));
+  wasm_->startForTesting(std::move(context), plugin_);
 }
 
 TEST_P(WasmTest, StatsHigherLevel) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
-      cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
+  createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
+  auto context = std::make_unique<TestContext>(wasm_.get());
 
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("get counter = 1")));
   EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("get counter = 2")));
@@ -381,35 +262,17 @@ TEST_P(WasmTest, StatsHigherLevel) {
                                             "histogram_int_tag.7.histogram_string_tag.test_tag."
                                             "histogram_bool_tag.true.test_histogram"))));
 
-  EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->setContext(context.get());
+  EXPECT_TRUE(wasm_->initialize(code, false));
+  wasm_->setContext(context.get());
   context->onTick(0);
 }
 
 TEST_P(WasmTest, StatsHighLevel) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
-      cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
+  createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
   EXPECT_FALSE(code.empty());
-  auto context = std::make_unique<TestContext>(wasm.get());
+  auto context = std::make_unique<TestContext>(wasm_.get());
 
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("get counter = 1")));
   EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("get counter = 2")));
@@ -426,8 +289,8 @@ TEST_P(WasmTest, StatsHighLevel) {
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_g = 2")));
   // Get is not supported on histograms.
   // EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_h = 3")));
-  EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->setContext(context.get());
+  EXPECT_TRUE(wasm_->initialize(code, false));
+  wasm_->setContext(context.get());
   context->onLog();
 }
 

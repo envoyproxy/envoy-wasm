@@ -282,8 +282,8 @@ REPOSITORY_LOCATIONS = dict(
     com_googlesource_chromium_v8 = dict(
         # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
         # and contains complete checkout of V8 with all dependencies necessary to build wee8.
-        sha256 = "03ff00e41cf259db473dfade9548493e4a2372c0b701a66cd7ff76215bd55a64",
-        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-8.1.307.28.tar.gz"],
+        sha256 = "cc6f5357cd10922bfcf667bd882624ad313e21b009b919ce00f322f390012476",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-8.3.110.9.tar.gz"],
     ),
     com_googlesource_quiche = dict(
         # Static snapshot of https://quiche.googlesource.com/quiche/+archive/41c9fdead26b31deefae3c325a2cf1a873688ba3.tar.gz
@@ -346,14 +346,14 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/dpkp/kafka-python/archive/2.0.0.tar.gz"],
     ),
     proxy_wasm_cpp_sdk = dict(
-        sha256 = "a864ffe1cb3c3dfb52980d3cecf806665e033746d6c766956dbb51b1ccdd002e",
-        strip_prefix = "proxy-wasm-cpp-sdk-db6f3defb20dab6b2bafe5a26c7652c9eb1146b7",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/db6f3defb20dab6b2bafe5a26c7652c9eb1146b7.tar.gz"],
+        sha256 = "31e72756adfdefd6a5d1254a1131347c694a84bb1157d729c805663e97296e2c",
+        strip_prefix = "proxy-wasm-cpp-sdk-e81783ca9a41219995ef4ad7ca21a328485eb789",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/e81783ca9a41219995ef4ad7ca21a328485eb789.tar.gz"],
     ),
     proxy_wasm_cpp_host = dict(
-        sha256 = "3f4f5f3560492d4bdac6fc6d7dc0390e01156b43705703d537a07ae6a5c90e88",
-        strip_prefix = "proxy-wasm-cpp-host-8a8ad70296b82d21cdd9d416a0f5bbbdd972acf6",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/8a8ad70296b82d21cdd9d416a0f5bbbdd972acf6.tar.gz"],
+        sha256 = "643630ce308e4cde573bf1e283ccef335ee2a6d3075b69a742213c4f558264ff",
+        strip_prefix = "proxy-wasm-cpp-host-7cfd4e2e2af00ca593c6e6b638752d062b2dcee0",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/7cfd4e2e2af00ca593c6e6b638752d062b2dcee0.tar.gz"],
     ),
     emscripten_toolchain = dict(
         sha256 = "4ac0f1f3de8b3f1373d435cd7e58bd94de4146e751f099732167749a229b443b",
