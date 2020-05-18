@@ -658,6 +658,10 @@ TEST_P(WasmHttpFilterTest, SharedData) {
               log_(spdlog::level::debug, Eq(absl::string_view("get 1 shared_data_value1"))));
   EXPECT_CALL(filter(),
               log_(spdlog::level::warn, Eq(absl::string_view("get 2 shared_data_value2"))));
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::debug, Eq(absl::string_view("get of bad key not found"))));
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::debug, Eq(absl::string_view("second get of bad key not found"))));
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
@@ -671,11 +675,17 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
   setupFilter();
   EXPECT_CALL(filter(),
               log_(spdlog::level::warn, Eq(absl::string_view("onRequestHeaders enqueue Ok"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::warn,
+                             Eq(absl::string_view("onRequestHeaders not found bad_shared_queue"))));
+  EXPECT_CALL(root_context(),
+              log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady bad token not found"))));
+  EXPECT_CALL(root_context(), log_(spdlog::level::warn,
+                                   Eq(absl::string_view("onQueueReady extra data not found"))));
   EXPECT_CALL(root_context(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))));
   EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
-  auto token = Common::Wasm::resolveQueueForTest("vm_id", "my_shared_queue");
+  auto token = proxy_wasm::resolveQueueForTest("vm_id", "my_shared_queue");
   wasm_->wasm()->queueReady(root_context_->id(), token);
 }
 
