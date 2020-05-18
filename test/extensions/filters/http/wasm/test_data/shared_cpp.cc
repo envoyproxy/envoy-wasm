@@ -15,9 +15,8 @@ static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleCon
 
 FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   WasmDataPtr value0;
-  if (getSharedData("shared_data_key_bad", &value0) != WasmResult::NotFound) {
-    // Should not be printed.
-    logDebug("get 0 " + value0->toString());
+  if (getSharedData("shared_data_key_bad", &value0) == WasmResult::NotFound) {
+    logDebug("get of bad key not found");
   }
   CHECK_RESULT(setSharedData("shared_data_key1", "shared_data_value0"));
   CHECK_RESULT(setSharedData("shared_data_key1", "shared_data_value1"));
@@ -33,9 +32,8 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
 
 void ExampleContext::onLog() {
   WasmDataPtr value0;
-  if (getSharedData("shared_data_key_bad", &value0) != WasmResult::NotFound) {
-    // Should not be printed.
-    logDebug("get 0 " + value0->toString());
+  if (getSharedData("shared_data_key_bad", &value0) == WasmResult::NotFound) {
+    logDebug("second get of bad key not found");
   }
   auto value1 = getSharedDataValue("shared_data_key1");
   logDebug("get 1 " + value1->toString());
