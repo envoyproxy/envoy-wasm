@@ -52,7 +52,7 @@ INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
                                                           "wavm"
 #endif
                                                           ),
-                                          testing::Values("cpp", "rust")));
+                                          testing::Values("logging_cpp", "wee8_logging_rust")));
 
 TEST_P(WasmTestMatrix, Logging) {
   Stats::IsolatedStoreImpl stats_store;
@@ -76,9 +76,10 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_NE(wasm, nullptr);
   auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm);
   auto wasm_handler = std::make_unique<Extensions::Common::Wasm::WasmHandle>(std::move(wasm));
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
-                   std::get<1>(GetParam()), ".wasm")));
+  const auto code =
+      TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
+          "{{ test_rundir }}/test/extensions/wasm/test_data/", std::get<1>(GetParam()), ".wasm")));
+
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_weak.lock().get());
 

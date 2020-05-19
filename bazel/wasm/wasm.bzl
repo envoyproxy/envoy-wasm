@@ -1,8 +1,7 @@
 load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary")
 
-def _wasm_transition_impl(settings, attr):
+def _wasm_cc_transition_impl(settings, attr):
     return {
-        "//command_line_option:platforms": "@io_bazel_rules_rust//rust/platform:wasm" if attr.type == "rust" else "",
         "//command_line_option:cpu": "wasm",
         "//command_line_option:crosstool_top": "@proxy_wasm_cpp_sdk//toolchain:emscripten",
 
@@ -13,11 +12,15 @@ def _wasm_transition_impl(settings, attr):
         "//command_line_option:linkopt": [],
     }
 
-wasm_transition = transition(
-    implementation = _wasm_transition_impl,
+def _wasm_rust_transition_impl(settings, attr):
+    return {
+        "//command_line_option:platforms": "@io_bazel_rules_rust//rust/platform:wasm",
+    }
+
+wasm_cc_transition = transition(
+    implementation = _wasm_cc_transition_impl,
     inputs = [],
     outputs = [
-        "//command_line_option:platforms",
         "//command_line_option:cpu",
         "//command_line_option:crosstool_top",
         "//command_line_option:copt",
@@ -26,7 +29,15 @@ wasm_transition = transition(
     ],
 )
 
-def _wasm_binary_impl(ctx):
+wasm_rust_transition = transition(
+    implementation = _wasm_rust_transition_impl,
+    inputs = [],
+    outputs = [
+        "//command_line_option:platforms",
+    ],
+)
+
+def _wasm_cc_binary_impl(ctx):
     out = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.run_shell(
         command = 'cp "{}" "{}"'.format(ctx.files.binary[0].path, out.path),
@@ -36,14 +47,30 @@ def _wasm_binary_impl(ctx):
 
     return [DefaultInfo(runfiles = ctx.runfiles([out]))]
 
+def _wasm_rust_binary_impl(ctx):
+    out = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.run_shell(
+        command = 'cp "{}" "{}"'.format(ctx.files.binary[0].path, out.path),
+        outputs = [out],
+        inputs = ctx.files.binary,
+    )
+    return [DefaultInfo(files = depset([out]))]
+
 # WASM binary rule implementation.
 # This copies the binary specified in binary attribute in WASM configuration to
 # target configuration, so a binary in non-WASM configuration can depend on them.
-wasm_binary = rule(
-    implementation = _wasm_binary_impl,
+wasm_cc_binary_rule = rule(
+    implementation = _wasm_cc_binary_impl,
     attrs = {
-        "binary": attr.label(mandatory = True, cfg = wasm_transition),
-        "type": attr.string(default = "cc"),
+        "binary": attr.label(mandatory = True, cfg = wasm_cc_transition),
+        "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
+    },
+)
+
+wasm_rust_binary_rule = rule(
+    implementation = _wasm_rust_binary_impl,
+    attrs = {
+        "binary": attr.label(mandatory = True, cfg = wasm_rust_transition),
         "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
     },
 )
@@ -62,15 +89,15 @@ def wasm_cc_binary(name, **kwargs):
         **kwargs
     )
 
-    wasm_binary(
+    wasm_cc_binary_rule(
         name = name,
         binary = ":" + wasm_name,
     )
 
 def wasm_rust_binary(name, **kwargs):
-    wasm_name = "_wasm_" + name
+    wasm_name = "_wasm_" + (name if not ".wasm" in name else name.strip(".wasm"))
     kwargs.setdefault("visibility", ["//visibility:public"])
-    kwargs.setdefault("rustc_flags", ["--edition=2018"])
+    kwargs.setdefault("rustc_flags", ["--edition=2018", "-Clto=yes", "-Copt-level=3", "-Cpanic=abort"])
     kwargs.setdefault("out_binary", True)
     kwargs.setdefault("crate_type", "cdylib")
 
@@ -79,8 +106,15 @@ def wasm_rust_binary(name, **kwargs):
         **kwargs
     )
 
-    wasm_binary(
-        name = name + ".wasm",
+    wasm_rust_binary_rule(
+        name = name,
         binary = ":" + wasm_name,
-        type = "rust",
+    )
+
+    native.genrule(
+        name = "wee8_" + name,
+        srcs = [":" + name],
+        outs = ["wee8_" + name],
+        tools = ["//test/tools/wee8_compile:wee8_compile_tool"],
+        cmd = "$(location //test/tools/wee8_compile:wee8_compile_tool) $(SRCS) $(OUTS)",
     )

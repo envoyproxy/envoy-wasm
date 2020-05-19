@@ -143,9 +143,8 @@ TEST_P(WasmVmTest, V8Code) {
   auto wasm_vm = createWasmVm("envoy.wasm.runtime.v8", scope_);
   ASSERT_TRUE(wasm_vm != nullptr);
   EXPECT_TRUE(wasm_vm->runtime() == "v8");
-
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   // Sanity checks for the expected test file.
@@ -164,7 +163,7 @@ TEST_P(WasmVmTest, V8BadHostFunctions) {
   ASSERT_TRUE(wasm_vm != nullptr);
 
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   wasm_vm->registerCallback("env", "random", &random, CONVERT_FUNCTION_WORD_TO_UINT32(random));
@@ -192,7 +191,7 @@ TEST_P(WasmVmTest, V8BadModuleFunctions) {
   ASSERT_TRUE(wasm_vm != nullptr);
 
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   wasm_vm->registerCallback("env", "pong", &pong, CONVERT_FUNCTION_WORD_TO_UINT32(pong));
@@ -220,7 +219,7 @@ TEST_P(WasmVmTest, V8FunctionCalls) {
   ASSERT_TRUE(wasm_vm != nullptr);
 
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   wasm_vm->registerCallback("env", "pong", &pong, CONVERT_FUNCTION_WORD_TO_UINT32(pong));
@@ -258,14 +257,14 @@ TEST_P(WasmVmTest, V8Memory) {
   ASSERT_TRUE(wasm_vm != nullptr);
 
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   wasm_vm->registerCallback("env", "pong", &pong, CONVERT_FUNCTION_WORD_TO_UINT32(pong));
   wasm_vm->registerCallback("env", "random", &random, CONVERT_FUNCTION_WORD_TO_UINT32(random));
   wasm_vm->link("test");
 
-  EXPECT_EQ(wasm_vm->getMemorySize(), 65536 /* stack size requested at the build-time */);
+  EXPECT_EQ(wasm_vm->getMemorySize(), 1114112 /* stack size requested at the build-time */);
 
   const uint64_t test_addr = 128;
 
@@ -275,16 +274,16 @@ TEST_P(WasmVmTest, V8Memory) {
   EXPECT_EQ(sizeof("test") - 1, got.size());
   EXPECT_STREQ("test", got.data());
 
-  EXPECT_FALSE(wasm_vm->setMemory(1024 * 1024 /* out of bound */, 1 /* size */, nullptr));
-  EXPECT_FALSE(wasm_vm->getMemory(1024 * 1024 /* out of bound */, 1 /* size */).has_value());
+  EXPECT_FALSE(wasm_vm->setMemory(1056 * 1056 /* out of bound */, 1 /* size */, nullptr));
+  EXPECT_FALSE(wasm_vm->getMemory(1056 * 1056 /* out of bound */, 1 /* size */).has_value());
 
   Word word(0);
   EXPECT_TRUE(wasm_vm->setWord(test_addr, std::numeric_limits<uint32_t>::max()));
   EXPECT_TRUE(wasm_vm->getWord(test_addr, &word));
   EXPECT_EQ(std::numeric_limits<uint32_t>::max(), word.u64_);
 
-  EXPECT_FALSE(wasm_vm->setWord(1024 * 1024 /* out of bound */, 1));
-  EXPECT_FALSE(wasm_vm->getWord(1024 * 1024 /* out of bound */, &word));
+  EXPECT_FALSE(wasm_vm->setWord(1056 * 1056 /* out of bound */, 1));
+  EXPECT_FALSE(wasm_vm->getWord(1056 * 1056 /* out of bound */, &word));
 }
 
 } // namespace

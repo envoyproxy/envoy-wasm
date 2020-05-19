@@ -10,11 +10,6 @@ load("@io_bazel_rules_rust//rust:rust.bzl", "rust_library")
 
 envoy_package()
 
-filegroup(
-    name = "modules",
-    srcs = glob(["*.wasm"]),
-)
-
 rust_library(
     name = "proxy_wasm",
     srcs = ["proxy_wasm/lib.rs"],
@@ -28,7 +23,7 @@ rust_library(
 )
 
 wasm_rust_binary(
-    name = "logging_rust",
+    name = "logging_rust.wasm",
     srcs = ["logging_rust.rs"],
     deps = [
         ":proxy_wasm",
