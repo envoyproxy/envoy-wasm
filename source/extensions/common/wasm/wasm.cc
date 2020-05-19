@@ -1,6 +1,5 @@
 #include "extensions/common/wasm/wasm.h"
 
-#include <algorithm>
 #include <chrono>
 
 #include "envoy/event/deferred_deletable.h"
@@ -10,11 +9,27 @@
 #include "absl/strings/str_cat.h"
 
 namespace Envoy {
+
+using ScopeWeakPtr = std::weak_ptr<Stats::Scope>;
+
 namespace Extensions {
 namespace Common {
 namespace Wasm {
 
 namespace {
+
+#define CREATE_WASM_STATS(COUNTER, GAUGE)                                                          \
+  COUNTER(remote_load_cache_hits)                                                                  \
+  COUNTER(remote_load_cache_negative_hits)                                                         \
+  COUNTER(remote_load_cache_misses)                                                                \
+  COUNTER(remote_load_fetch_successes)                                                             \
+  COUNTER(remote_load_fetch_failures)                                                              \
+  GAUGE(remote_load_cache_entries, NeverImport)
+
+struct CreateWasmStats {
+  ScopeWeakPtr scope_;
+  CREATE_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
+};
 
 struct CodeCacheEntry {
   std::string code;
@@ -27,9 +42,9 @@ class RemoteDataFetcherAdapter : public Config::DataFetcher::RemoteDataFetcherCa
                                  public Event::DeferredDeletable {
 public:
   RemoteDataFetcherAdapter(std::function<void(std::string cb)> cb) : cb_(cb) {}
-  ~RemoteDataFetcherAdapter() = default;
+  ~RemoteDataFetcherAdapter() override = default;
   void onSuccess(const std::string& data) override { cb_(data); }
-  virtual void onFailure(Config::DataFetcher::FailureReason) override { cb_(""); }
+  void onFailure(Config::DataFetcher::FailureReason) override { cb_(""); }
   void setFetcher(std::unique_ptr<Config::DataFetcher::RemoteDataFetcher>&& fetcher) {
     fetcher_ = std::move(fetcher);
   }
@@ -51,6 +66,7 @@ MonotonicTime::duration cache_time_offset_for_testing{};
 std::atomic<int64_t> active_wasms;
 std::mutex code_cache_mutex;
 std::unordered_map<std::string, CodeCacheEntry>* code_cache = nullptr;
+CreateWasmStats* create_wasm_stats = nullptr;
 
 // Downcast WasmBase to the actual Wasm.
 inline Wasm* getWasm(WasmHandleSharedPtr& base_wasm_handle) {
@@ -186,6 +202,10 @@ void clearCodeCacheForTesting(bool fail_if_not_cached) {
     delete code_cache;
     code_cache = nullptr;
   }
+  if (create_wasm_stats) {
+    delete create_wasm_stats;
+    create_wasm_stats = nullptr;
+  }
 }
 
 // TODO: remove this post #4160: Switch default to SimulatedTimeSystem.
@@ -211,6 +231,15 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
     if (!code_cache) {
       code_cache = new std::remove_reference<decltype(*code_cache)>::type;
     }
+    Stats::ScopeSharedPtr create_wasm_stats_scope;
+    if (!create_wasm_stats || !(create_wasm_stats_scope = create_wasm_stats->scope_.lock())) {
+      if (create_wasm_stats) {
+        delete create_wasm_stats;
+      }
+      create_wasm_stats =
+          new CreateWasmStats{scope, CREATE_WASM_STATS(POOL_COUNTER_PREFIX(*scope, "wasm."),
+                                                       POOL_GAUGE_PREFIX(*scope, "wasm."))};
+    }
     // Remove entries older than CODE_CACHE_SECONDS_CACHING_TTL except for our target.
     for (auto it = code_cache->begin(); it != code_cache->end();) {
       if (now - it->second.use_time > std::chrono::seconds(CODE_CACHE_SECONDS_CACHING_TTL) &&
@@ -220,10 +249,12 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         ++it;
       }
     }
+    create_wasm_stats->remote_load_cache_entries_.set(code_cache->size());
     auto it = code_cache->find(vm_config.code().remote().sha256());
     if (it != code_cache->end()) {
       it->second.use_time = now;
       if (it->second.in_progress) {
+        create_wasm_stats->remote_load_cache_misses_.inc();
         ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
                             "createWasm: failed to load (in progress) from {}", source);
         throw WasmException(
@@ -233,6 +264,7 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       if (code.empty()) {
         if (now - it->second.fetch_time <
             std::chrono::seconds(CODE_CACHE_SECONDS_NEGATIVE_CACHING)) {
+          create_wasm_stats->remote_load_cache_negative_hits_.inc();
           ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
                               "createWasm: failed to load (cached) from {}", source);
           throw WasmException(fmt::format("Failed to load WASM code (cached) from {}", source));
@@ -240,12 +272,16 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         fetch = true; // Fetch failed, retry.
         it->second.in_progress = true;
         it->second.fetch_time = now;
+      } else {
+        create_wasm_stats->remote_load_cache_hits_.inc();
       }
     } else {
       fetch = true; // Not in cache, fetch.
       auto& e = (*code_cache)[vm_config.code().remote().sha256()];
       e.in_progress = true;
       e.use_time = e.fetch_time = now;
+      create_wasm_stats->remote_load_cache_entries_.set(code_cache->size());
+      create_wasm_stats->remote_load_cache_misses_.inc();
     }
   } else if (vm_config.code().has_local()) {
     code = Config::DataSource::read(vm_config.code().local(), true, api);
@@ -275,13 +311,28 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
 
   if (fetch) {
     auto holder = std::make_shared<std::unique_ptr<Event::DeferredDeletable>>();
-    auto fetch_callback = [vm_config, complete_cb, source, &dispatcher,
+    auto fetch_callback = [vm_config, complete_cb, source, &dispatcher, scope,
                            holder](const std::string& code) {
       {
         std::lock_guard<std::mutex> guard(code_cache_mutex);
         auto& e = (*code_cache)[vm_config.code().remote().sha256()];
         e.in_progress = false;
         e.code = code;
+        Stats::ScopeSharedPtr create_wasm_stats_scope;
+        if (!create_wasm_stats || !(create_wasm_stats_scope = create_wasm_stats->scope_.lock())) {
+          if (create_wasm_stats) {
+            delete create_wasm_stats;
+          }
+          create_wasm_stats =
+              new CreateWasmStats{scope, CREATE_WASM_STATS(POOL_COUNTER_PREFIX(*scope, "wasm."),
+                                                           POOL_GAUGE_PREFIX(*scope, "wasm."))};
+        }
+        if (code.empty()) {
+          create_wasm_stats->remote_load_fetch_failures_.inc();
+        } else {
+          create_wasm_stats->remote_load_fetch_successes_.inc();
+        }
+        create_wasm_stats->remote_load_cache_entries_.set(code_cache->size());
       }
       if (!fail_if_code_not_cached) {
         if (code.empty()) {
