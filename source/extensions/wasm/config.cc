@@ -31,7 +31,7 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
       // Return the WASM VM which will be stored as a singleton by the Server.
       auto root_context = base_wasm->wasm()->getOrCreateRootContext(plugin);
       if (!base_wasm->wasm()->configure(root_context, plugin)) {
-        cb(nullptr);
+        return cb(nullptr);
       }
       return cb(std::make_unique<Server::WasmService>(base_wasm));
     }
