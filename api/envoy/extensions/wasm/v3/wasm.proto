@@ -68,7 +68,7 @@ message PluginConfig {
   // If there is a fatal error on the VM (e.g. exception, abort(), on_start or on_configure return false),
   // then all plugins associated with the VM will either fail closed (by default), e.g. by returning an HTTP 503 error,
   // or fail open (if 'fail_open' is set to true) by bypassing the filter. Note: when on_start or on_configure return false
-  // during xDS updates the xDS configuation will be rejected and when on_start or on_configuration return false on initial
+  // during xDS updates the xDS configuration will be rejected and when on_start or on_configuration return false on initial
   // startup the proxy will not start.
   bool fail_open = 5;
 }
