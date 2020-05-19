@@ -192,8 +192,8 @@ public:
 
   // General
   WasmResult log(uint32_t level, absl::string_view message) override;
-  uint64_t getCurrentTimeNanoseconds() override;
   WasmResult setTimerPeriod(std::chrono::milliseconds tick_period, uint32_t* token) override;
+  uint64_t getCurrentTimeNanoseconds() override;
   std::pair<uint32_t, absl::string_view> getStatus() override;
 
   // State accessors

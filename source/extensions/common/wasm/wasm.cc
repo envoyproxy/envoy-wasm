@@ -117,7 +117,7 @@ Wasm::Wasm(WasmHandleSharedPtr base_wasm_handle, Event::Dispatcher& dispatcher)
   ENVOY_LOG(debug, "Thread-Local Wasm created {} now active", active_wasms);
 }
 
-void Wasm::setTickPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {
+void Wasm::setTimerPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {
   auto& tick_period = tick_period_[context_id];
   auto& timer = timer_[context_id];
   bool was_running = timer && tick_period.count() > 0;
