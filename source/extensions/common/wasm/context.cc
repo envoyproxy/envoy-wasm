@@ -157,8 +157,8 @@ void Context::initializeRoot(WasmBase* wasm, std::shared_ptr<PluginBase> plugin)
   root_local_info_ = &std::static_pointer_cast<Plugin>(plugin)->local_info_;
 }
 
-WasmResult Context::setTickPeriod(std::chrono::milliseconds tick_period) {
-  wasm()->setTickPeriod(root_context_id_ ? root_context_id_ : id_, tick_period);
+WasmResult Context::setTimerPeriod(std::chrono::milliseconds tick_period, uint32_t*) {
+  wasm()->setTimerPeriod(root_context_id_ ? root_context_id_ : id_, tick_period);
   return WasmResult::Ok;
 }
 

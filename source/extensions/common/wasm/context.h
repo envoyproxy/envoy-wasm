@@ -192,6 +192,7 @@ public:
 
   // General
   WasmResult log(uint32_t level, absl::string_view message) override;
+  WasmResult setTimerPeriod(std::chrono::milliseconds tick_period, uint32_t* token) override;
   uint64_t getCurrentTimeNanoseconds() override;
   std::pair<uint32_t, absl::string_view> getStatus() override;
 
@@ -295,7 +296,6 @@ protected:
   void onCloseTCP();
 
   virtual absl::string_view getConfiguration();
-  virtual WasmResult setTickPeriod(std::chrono::milliseconds tick_period);
   virtual void clearRouteCache() {
     if (decoder_callbacks_) {
       decoder_callbacks_->clearRouteCache();
