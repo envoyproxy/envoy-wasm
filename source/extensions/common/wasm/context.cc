@@ -1146,6 +1146,12 @@ Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersSt
     return Http::FilterHeadersStatus::Continue;
   case proxy_wasm::FilterHeadersStatus::StopIteration:
     return Http::FilterHeadersStatus::StopIteration;
+  case proxy_wasm::FilterHeadersStatus::ContinueAndEndStream:
+    return Http::FilterHeadersStatus::ContinueAndEndStream;
+  case proxy_wasm::FilterHeadersStatus::StopAllIterationAndBuffer:
+    return Http::FilterHeadersStatus::StopAllIterationAndBuffer;
+  case proxy_wasm::FilterHeadersStatus::StopAllIterationAndWatermark:
+    return Http::FilterHeadersStatus::StopAllIterationAndWatermark;
   }
   NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 };
