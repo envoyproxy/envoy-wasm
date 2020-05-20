@@ -389,7 +389,7 @@ TEST_P(WasmCommonTest, Foreign) {
 
 TEST_P(WasmCommonTest, WASI) {
   if (GetParam() == "null") {
-    // This test has no meaning unless it is invoked by actual WASM code
+    // This test has no meaning unless it is invoked by actual Wasm code
     return;
   }
   Stats::IsolatedStoreImpl stats_store;

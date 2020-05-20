@@ -85,7 +85,7 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest,
 // Bad code in initial config.
 TEST_P(WasmHttpFilterTest, BadCode) {
   EXPECT_THROW_WITH_MESSAGE(setup("bad code"), Common::Wasm::WasmException,
-                            "Failed to initialize WASM code");
+                            "Failed to initialize Wasm code");
 }
 
 // Script touching headers only, request that is headers only.

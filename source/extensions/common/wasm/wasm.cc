@@ -258,7 +258,7 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
                             "createWasm: failed to load (in progress) from {}", source);
         throw WasmException(
-            fmt::format("Failed to load WASM code (fetch in progress) from {}", source));
+            fmt::format("Failed to load Wasm code (fetch in progress) from {}", source));
       }
       code = it->second.code;
       if (code.empty()) {
@@ -267,7 +267,7 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
           create_wasm_stats->remote_load_cache_negative_hits_.inc();
           ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
                               "createWasm: failed to load (cached) from {}", source);
-          throw WasmException(fmt::format("Failed to load WASM code (cached) from {}", source));
+          throw WasmException(fmt::format("Failed to load Wasm code (cached) from {}", source));
         }
         fetch = true; // Fetch failed, retry.
         it->second.in_progress = true;
@@ -337,7 +337,7 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       if (!fail_if_code_not_cached) {
         if (code.empty()) {
           throw WasmException(
-              fmt::format("Failed to load WASM code (fetch failed) from {}", source));
+              fmt::format("Failed to load Wasm code (fetch failed) from {}", source));
         }
         complete_cb(code);
       }
@@ -355,7 +355,7 @@ static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       adapter->setFetcher(std::move(fetcher));
       *holder = std::move(adapter);
       fetcher_ptr->fetch();
-      throw WasmException(fmt::format("Failed to load WASM code (fetching) from {}", source));
+      throw WasmException(fmt::format("Failed to load Wasm code (fetching) from {}", source));
     } else {
       remote_data_provider = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
           cluster_manager, init_manager, vm_config.code().remote(), dispatcher, random, true,
@@ -401,7 +401,7 @@ WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_w
             std::make_shared<Wasm>(std::static_pointer_cast<WasmHandle>(base_wasm), dispatcher));
       });
   if (!wasm_handle) {
-    throw WasmException("Failed to configure WASM code");
+    throw WasmException("Failed to configure Wasm code");
   }
   return std::static_pointer_cast<WasmHandle>(wasm_handle);
 }

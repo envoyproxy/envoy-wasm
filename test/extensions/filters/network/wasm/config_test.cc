@@ -63,7 +63,7 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterConfigTest,
 #endif
                                          ));
 
-TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWASM) {
+TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWasm) {
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
@@ -86,7 +86,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWASM) {
   cb(connection);
 }
 
-TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineWASM) {
+TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineWasm) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm"));
   EXPECT_FALSE(code.empty());
@@ -127,7 +127,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCode) {
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, context_),
                             Extensions::Common::Wasm::WasmException,
-                            "Failed to initialize WASM code");
+                            "Failed to initialize Wasm code");
 }
 
 } // namespace Wasm

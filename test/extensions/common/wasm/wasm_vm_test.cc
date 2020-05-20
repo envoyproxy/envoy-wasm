@@ -49,12 +49,12 @@ protected:
 
 TEST_F(BaseVmTest, NoRuntime) {
   EXPECT_THROW_WITH_MESSAGE(createWasmVm("", scope_), WasmException,
-                            "Failed to create WASM VM with unspecified runtime.");
+                            "Failed to create Wasm VM with unspecified runtime.");
 }
 
 TEST_F(BaseVmTest, BadRuntime) {
   EXPECT_THROW_WITH_MESSAGE(createWasmVm("envoy.wasm.runtime.invalid", scope_), WasmException,
-                            "Failed to create WASM VM using envoy.wasm.runtime.invalid runtime. "
+                            "Failed to create Wasm VM using envoy.wasm.runtime.invalid runtime. "
                             "Envoy was compiled without support for it.");
 }
 
@@ -169,21 +169,21 @@ TEST_P(WasmVmTest, V8BadHostFunctions) {
 
   wasm_vm->registerCallback("env", "random", &random, CONVERT_FUNCTION_WORD_TO_UINT32(random));
   EXPECT_THROW_WITH_MESSAGE(wasm_vm->link("test"), WasmException,
-                            "Failed to load WASM module due to a missing import: env.pong");
+                            "Failed to load Wasm module due to a missing import: env.pong");
 
   wasm_vm->registerCallback("env", "pong", &bad_pong1, CONVERT_FUNCTION_WORD_TO_UINT32(bad_pong1));
   EXPECT_THROW_WITH_MESSAGE(wasm_vm->link("test"), WasmException,
-                            "Failed to load WASM module due to an import type mismatch: env.pong, "
+                            "Failed to load Wasm module due to an import type mismatch: env.pong, "
                             "want: i32 -> void, but host exports: void -> void");
 
   wasm_vm->registerCallback("env", "pong", &bad_pong2, CONVERT_FUNCTION_WORD_TO_UINT32(bad_pong2));
   EXPECT_THROW_WITH_MESSAGE(wasm_vm->link("test"), WasmException,
-                            "Failed to load WASM module due to an import type mismatch: env.pong, "
+                            "Failed to load Wasm module due to an import type mismatch: env.pong, "
                             "want: i32 -> void, but host exports: i32 -> i32");
 
   wasm_vm->registerCallback("env", "pong", &bad_pong3, CONVERT_FUNCTION_WORD_TO_UINT32(bad_pong3));
   EXPECT_THROW_WITH_MESSAGE(wasm_vm->link("test"), WasmException,
-                            "Failed to load WASM module due to an import type mismatch: env.pong, "
+                            "Failed to load Wasm module due to an import type mismatch: env.pong, "
                             "want: i32 -> void, but host exports: f64 -> f64");
 }
 

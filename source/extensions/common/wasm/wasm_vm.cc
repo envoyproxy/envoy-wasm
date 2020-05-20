@@ -19,7 +19,7 @@ void EnvoyWasmVmIntegration::error(absl::string_view message) {
 
 WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& scope) {
   if (runtime.empty()) {
-    throw WasmException("Failed to create WASM VM with unspecified runtime.");
+    throw WasmException("Failed to create Wasm VM with unspecified runtime.");
   } else if (runtime == WasmRuntimeNames::get().Null) {
     auto wasm = proxy_wasm::createNullVm();
     wasm->integration() = std::make_unique<EnvoyWasmVmIntegration>(scope, runtime, "null");
@@ -30,7 +30,7 @@ WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& s
     return wasm;
   } else {
     throw WasmException(fmt::format(
-        "Failed to create WASM VM using {} runtime. Envoy was compiled without support for it.",
+        "Failed to create Wasm VM using {} runtime. Envoy was compiled without support for it.",
         runtime));
   }
 }
