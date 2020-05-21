@@ -58,7 +58,7 @@ public:
   Context* getRootContext(absl::string_view root_id) {
     return static_cast<Context*>(WasmBase::getRootContext(root_id));
   }
-  void setTickPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period) override;
+  void setTimerPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
   virtual void tickHandler(uint32_t root_context_id);
 
   // WasmBase

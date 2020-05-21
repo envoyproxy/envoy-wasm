@@ -30,7 +30,6 @@ public:
     return proxy_wasm::WasmResult::Ok;
   }
   MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
-  MOCK_METHOD1(setTickPeriodMilliseconds, void(uint32_t tick_period_milliseconds));
 };
 
 class WasmTestBase {

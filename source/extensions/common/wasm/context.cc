@@ -157,8 +157,8 @@ void Context::initializeRoot(WasmBase* wasm, std::shared_ptr<PluginBase> plugin)
   root_local_info_ = &std::static_pointer_cast<Plugin>(plugin)->local_info_;
 }
 
-WasmResult Context::setTickPeriod(std::chrono::milliseconds tick_period) {
-  wasm()->setTickPeriod(root_context_id_ ? root_context_id_ : id_, tick_period);
+WasmResult Context::setTimerPeriod(std::chrono::milliseconds tick_period, uint32_t*) {
+  wasm()->setTimerPeriod(root_context_id_ ? root_context_id_ : id_, tick_period);
   return WasmResult::Ok;
 }
 
@@ -1146,6 +1146,12 @@ Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersSt
     return Http::FilterHeadersStatus::Continue;
   case proxy_wasm::FilterHeadersStatus::StopIteration:
     return Http::FilterHeadersStatus::StopIteration;
+  case proxy_wasm::FilterHeadersStatus::ContinueAndEndStream:
+    return Http::FilterHeadersStatus::ContinueAndEndStream;
+  case proxy_wasm::FilterHeadersStatus::StopAllIterationAndBuffer:
+    return Http::FilterHeadersStatus::StopAllIterationAndBuffer;
+  case proxy_wasm::FilterHeadersStatus::StopAllIterationAndWatermark:
+    return Http::FilterHeadersStatus::StopAllIterationAndWatermark;
   }
   NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 };

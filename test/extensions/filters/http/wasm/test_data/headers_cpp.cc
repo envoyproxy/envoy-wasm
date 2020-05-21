@@ -37,6 +37,12 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   replaceRequestHeader("server", "envoy-wasm");
   if (server->view() == "envoy-wasm-pause") {
     return FilterHeadersStatus::StopIteration;
+  } else if (server->view() == "envoy-wasm-end-stream") {
+    return FilterHeadersStatus::ContinueAndEndStream;
+  } else if (server->view() == "envoy-wasm-stop-buffer") {
+    return FilterHeadersStatus::StopAllIterationAndBuffer;
+  } else if (server->view() == "envoy-wasm-stop-watermark") {
+    return FilterHeadersStatus::StopAllIterationAndWatermark;
   } else {
     return FilterHeadersStatus::Continue;
   }

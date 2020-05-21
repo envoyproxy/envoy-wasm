@@ -19,7 +19,6 @@ option (udpa.annotations.file_status).package_version_status = ACTIVE;
 
 // Configuration for a Wasm VM.
 // [#next-free-field: 6]
-// [#not-implemented-hide:] pending implementation.
 message VmConfig {
   // An ID which will be used along with a hash of the wasm code (or the name of the registered Null
   // VM plugin) to determine which VM will be used for the plugin. All plugins which use the same
@@ -44,7 +43,7 @@ message VmConfig {
 }
 
 // Base Configuration for Wasm Plugins e.g. filters and services.
-//   [#not-implemented-hide:] pending implementation.
+// [#next-free-field: 6]
 message PluginConfig {
   // A unique name for a filters/services in a VM for use in identifying the filter/service if
   // multiple filters/services are handled by the same *vm_id* and *group_name* and for
@@ -65,12 +64,18 @@ message PluginConfig {
   // Filter/service configuration used to configure or reconfigure a plugin
   // (proxy_on_configuration).
   google.protobuf.Any configuration = 4;
+
+  // If there is a fatal error on the VM (e.g. exception, abort(), on_start or on_configure return false),
+  // then all plugins associated with the VM will either fail closed (by default), e.g. by returning an HTTP 503 error,
+  // or fail open (if 'fail_open' is set to true) by bypassing the filter. Note: when on_start or on_configure return false
+  // during xDS updates the xDS configuration will be rejected and when on_start or on_configuration return false on initial
+  // startup the proxy will not start.
+  bool fail_open = 5;
 }
 
 // WasmService is configured as a built-in *envoy.wasm_service* :ref:`ServiceConfig
 // <envoy_api_msg_extensions.wasm.v3.WasmService>`. This opaque configuration will be used to
 // create a Wasm Service.
-// [#not-implemented-hide:] pending implementation.
 message WasmService {
   // General plugin configuration.
   PluginConfig config = 1;
