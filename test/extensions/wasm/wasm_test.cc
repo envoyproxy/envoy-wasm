@@ -22,9 +22,10 @@ namespace Wasm {
 
 class TestContext : public Extensions::Common::Wasm::Context {
 public:
+  using Extensions::Common::Wasm::Context::log;
   TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
   ~TestContext() override = default;
-  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
+  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) {
     std::cerr << std::string(message) << "\n";
     log_(static_cast<spdlog::level::level_enum>(level), message);
     return proxy_wasm::WasmResult::Ok;
