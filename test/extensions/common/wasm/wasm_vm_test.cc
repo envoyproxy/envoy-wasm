@@ -144,7 +144,7 @@ TEST_P(WasmVmTest, V8Code) {
   ASSERT_TRUE(wasm_vm != nullptr);
   EXPECT_TRUE(wasm_vm->runtime() == "v8");
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   // Sanity checks for the expected test file.
@@ -163,7 +163,7 @@ TEST_P(WasmVmTest, V8BadHostFunctions) {
   ASSERT_TRUE(wasm_vm != nullptr);
 
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   wasm_vm->registerCallback("env", "random", &random, CONVERT_FUNCTION_WORD_TO_UINT32(random));
@@ -191,7 +191,7 @@ TEST_P(WasmVmTest, V8BadModuleFunctions) {
   ASSERT_TRUE(wasm_vm != nullptr);
 
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   wasm_vm->registerCallback("env", "pong", &pong, CONVERT_FUNCTION_WORD_TO_UINT32(pong));
@@ -219,7 +219,7 @@ TEST_P(WasmVmTest, V8FunctionCalls) {
   ASSERT_TRUE(wasm_vm != nullptr);
 
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   wasm_vm->registerCallback("env", "pong", &pong, CONVERT_FUNCTION_WORD_TO_UINT32(pong));
@@ -257,7 +257,7 @@ TEST_P(WasmVmTest, V8Memory) {
   ASSERT_TRUE(wasm_vm != nullptr);
 
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/common/wasm/test_data/wee8_test_rust.wasm"));
+      "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   wasm_vm->registerCallback("env", "pong", &pong, CONVERT_FUNCTION_WORD_TO_UINT32(pong));

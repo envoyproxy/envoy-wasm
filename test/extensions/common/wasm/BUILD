@@ -12,7 +12,7 @@ envoy_cc_test(
     name = "wasm_vm_test",
     srcs = ["wasm_vm_test.cc"],
     data = [
-        "//test/extensions/common/wasm/test_data:wee8_test_rust.wasm",
+        "//test/extensions/common/wasm/test_data:test_rust.wasm",
     ],
     deps = [
         "//source/extensions/common/wasm:wasm_lib",
