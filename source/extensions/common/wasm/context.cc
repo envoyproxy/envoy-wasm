@@ -1310,7 +1310,7 @@ WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view 
 Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers, bool end_stream) {
   request_headers_ = &headers;
   end_of_stream_ = end_stream;
-  auto result = convertFilterHeadersStatus(onRequestHeaders(headerSize(&headers)));
+  auto result = convertFilterHeadersStatus(onRequestHeaders(headerSize(&headers), end_stream));
   if (result == Http::FilterHeadersStatus::Continue) {
     request_headers_ = nullptr;
   }
@@ -1366,7 +1366,7 @@ Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& header
                                                  bool end_stream) {
   response_headers_ = &headers;
   end_of_stream_ = end_stream;
-  auto result = convertFilterHeadersStatus(onResponseHeaders(headerSize(&headers)));
+  auto result = convertFilterHeadersStatus(onResponseHeaders(headerSize(&headers), end_stream));
   if (result == Http::FilterHeadersStatus::Continue) {
     response_headers_ = nullptr;
   }
