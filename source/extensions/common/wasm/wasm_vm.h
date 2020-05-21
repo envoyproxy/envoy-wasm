@@ -81,7 +81,7 @@ public:
 
 using WasmVmPtr = std::unique_ptr<WasmVm>;
 
-// Create a new low-level WASM VM using runtime of the given type (e.g. "envoy.wasm.runtime.wavm").
+// Create a new low-level Wasm VM using runtime of the given type (e.g. "envoy.wasm.runtime.wavm").
 WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& scope);
 
 } // namespace Wasm
