@@ -61,7 +61,7 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest,
 // Bad code in initial config.
 TEST_P(WasmNetworkFilterTest, BadCode) {
   EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException,
-                            "Failed to initialize WASM code");
+                            "Failed to initialize Wasm code");
 }
 
 // Test happy path.

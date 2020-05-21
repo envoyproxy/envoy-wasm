@@ -33,7 +33,7 @@ ProtobufTypes::MessagePtr WasmState::serializeAsProto() const {
     value.set_value(value_);
     any->PackFrom(value);
   } else {
-    // The WASM extension serialized in its own type.
+    // The Wasm extension serialized in its own type.
     any->set_type_url(std::string(schema_));
     any->set_value(value_);
   }

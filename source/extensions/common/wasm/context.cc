@@ -9,6 +9,7 @@
 #include "envoy/grpc/status.h"
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"
+#include "envoy/network/filter.h"
 #include "envoy/server/wasm.h"
 #include "envoy/thread_local/thread_local.h"
 
@@ -981,7 +982,7 @@ WasmResult Context::log(uint32_t level, absl::string_view message) {
 }
 
 //
-// Calls into the WASM code.
+// Calls into the Wasm code.
 //
 bool Context::validateConfiguration(absl::string_view configuration,
                                     const std::shared_ptr<PluginBase>& plugin_base) {

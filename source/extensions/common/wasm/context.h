@@ -138,7 +138,7 @@ public:
   const Network::Connection* getConnection() const;
 
   //
-  // VM level downcalls into the WASM code on Context(id == 0).
+  // VM level downcalls into the Wasm code on Context(id == 0).
   //
   virtual bool validateConfiguration(absl::string_view configuration,
                                      const std::shared_ptr<PluginBase>& plugin); // deprecated
@@ -167,7 +167,7 @@ public:
   void onDownstreamConnectionClose(CloseType) override;
   void onUpstreamConnectionClose(CloseType) override;
 
-  // Http::StreamFilterBase. Note: This calls onDone() in WASM.
+  // Http::StreamFilterBase. Note: This calls onDone() in Wasm.
   void onDestroy() override;
 
   // Http::StreamDecoderFilter
