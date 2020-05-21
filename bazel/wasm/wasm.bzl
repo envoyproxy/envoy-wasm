@@ -98,14 +98,14 @@ def wasm_rust_binary(name, **kwargs):
     )
 
     wasm_rust_binary_rule(
-        name = name,
+        name = "precompile_" + name,
         binary = ":" + wasm_name,
     )
 
     native.genrule(
-        name = "wee8_" + name,
-        srcs = [":" + name],
-        outs = ["wee8_" + name],
+        name = name,
+        srcs = [":precompile_" + name],
+        outs = [name],
         tools = ["//test/tools/wee8_compile:wee8_compile_tool"],
-        cmd = "$(location //test/tools/wee8_compile:wee8_compile_tool) $(SRCS).runfiles $(OUTS).runtimes",
+        cmd = "$(location //test/tools/wee8_compile:wee8_compile_tool) $(SRCS).runfiles $(OUTS).runfiles",
     )
