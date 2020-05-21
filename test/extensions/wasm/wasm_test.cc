@@ -91,30 +91,13 @@ INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
                                                           "wavm"
 #endif
                                                           ),
-                                          testing::Values("logging_cpp", "wee8_logging_rust")));
+                                          testing::Values("cpp", "rust")));
 
 TEST_P(WasmTestMatrix, Logging) {
-  Stats::IsolatedStoreImpl stats_store;
-  Api::ApiPtr api = Api::createApiForTest(stats_store);
-  Upstream::MockClusterManager cluster_manager;
-  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
-  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
-  NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto name = "";
-  auto root_id = "";
-  auto vm_id = "";
-  auto vm_configuration = "";
-  auto vm_key = "";
-  auto plugin_configuration = "configure-test";
-  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
-      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
-  auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
-      absl::StrCat("envoy.wasm.runtime.", std::get<0>(GetParam())), vm_id, vm_configuration, vm_key,
-      scope, cluster_manager, *dispatcher);
-  EXPECT_NE(wasm, nullptr);
-  auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm);
-  auto wasm_handler = std::make_unique<Extensions::Common::Wasm::WasmHandle>(std::move(wasm));
+  plugin_configuration_ = "configure-test";
+  createWasm();
+  auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm_);
+  auto wasm_handler = std::make_unique<Extensions::Common::Wasm::WasmHandle>(std::move(wasm_));
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
                    std::get<1>(GetParam()), ".wasm")));
