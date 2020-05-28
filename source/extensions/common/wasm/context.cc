@@ -1275,6 +1275,7 @@ WasmResult Context::continueStream(StreamType stream_type) {
     if (decoder_callbacks_) {
       decoder_callbacks_->continueDecoding();
     }
+    break;
   case StreamType::Response:
     if (encoder_callbacks_) {
       encoder_callbacks_->continueEncoding();
