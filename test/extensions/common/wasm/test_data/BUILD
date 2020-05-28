@@ -48,7 +48,7 @@ envoy_cc_library(
         "//source/extensions/common/wasm:wasm_hdr",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/common/wasm:well_known_names",
-        "//source/extensions/common/wasm/ext:envoy_proxy_wasm_api",
+        "//source/extensions/common/wasm/ext:envoy_null_vm_wasm_api",
     ],
 )
 
@@ -64,8 +64,7 @@ wasm_cc_binary(
     name = "test_context_cpp.wasm",
     srcs = ["test_context_cpp.cc"],
     deps = [
-        "//source/extensions/common/wasm/ext:envoy_context",
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
+        "//source/extensions/common/wasm/ext:envoy_proxy_wasm_api_lib",
     ],
 )
 

@@ -172,12 +172,12 @@ void Context::onCloseTCP() {
 void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::ResolutionStatus status,
                            std::list<Envoy::Network::DnsResponse>&& response) {
   proxy_wasm::DeferAfterCallActions actions(this);
-  if (!wasm()->on_dns_resolved_) {
+  if (!wasm()->on_resolve_dns_) {
     return;
   }
   if (status != Network::DnsResolver::ResolutionStatus::Success) {
     buffer_.set("");
-    wasm()->on_dns_resolved_(this, id_, token, 0);
+    wasm()->on_resolve_dns_(this, id_, token, 0);
     return;
   }
   // buffer format:
@@ -191,7 +191,8 @@ void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::Resoluti
   }
   auto buffer = std::unique_ptr<char[]>(new char[s]);
   char* b = buffer.get();
-  memcpy(b, &s, sizeof(uint32_t));
+  uint32_t n = response.size();
+  memcpy(b, &n, sizeof(uint32_t));
   b += sizeof(uint32_t);
   for (auto& e : response) {
     uint32_t ttl = e.ttl_.count();
@@ -204,7 +205,7 @@ void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::Resoluti
     *b++ = 0;
   };
   buffer_.set(std::move(buffer), s);
-  wasm()->on_dns_resolved_(this, id_, token, s);
+  wasm()->on_resolve_dns_(this, id_, token, s);
 }
 
 // Native serializer carrying over bit representation from CEL value to the extension

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <memory>
 
-#include "extensions/common/wasm/ext/envoy_proxy_wasm_api.h"
+#include "extensions/common/wasm/ext/envoy_null_vm_wasm_api.h"
 #include "extensions/common/wasm/context.h"
 #include "extensions/common/wasm/well_known_names.h"
 
@@ -27,7 +27,7 @@ bool EnvoyWasmVmIntegration::getNullVmFunction(absl::string_view function_name, 
                                                int number_of_arguments,
                                                proxy_wasm::NullPlugin* plugin,
                                                void* ptr_to_function_return) {
-  if (function_name == "envoy_on_dns_resolved" && returns_word == false &&
+  if (function_name == "envoy_on_resolve_dns" && returns_word == false &&
       number_of_arguments == 3) {
     *reinterpret_cast<proxy_wasm::WasmCallVoid<3>*>(ptr_to_function_return) =
         [plugin](ContextBase* context, Word context_id, Word token, Word result_size) {

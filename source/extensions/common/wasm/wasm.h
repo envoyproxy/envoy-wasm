@@ -89,7 +89,7 @@ private:
 
   void initializeStats();
   // Calls into the VM.
-  proxy_wasm::WasmCallVoid<3> on_dns_resolved_;
+  proxy_wasm::WasmCallVoid<3> on_resolve_dns_;
 
   Stats::ScopeSharedPtr scope_;
   Upstream::ClusterManager& cluster_manager_;

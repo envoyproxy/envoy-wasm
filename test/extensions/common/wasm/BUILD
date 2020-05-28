@@ -39,6 +39,7 @@ envoy_cc_test(
         "//source/common/stats:stats_lib",
         "//source/extensions/common/crypto:utility_lib",
         "//source/extensions/common/wasm:wasm_lib",
+        "//test/extensions/common/wasm/test_data:test_context_cpp_plugin",
         "//test/extensions/common/wasm/test_data:test_cpp_plugin",
         "//test/mocks/server:server_mocks",
         "//test/test_common:environment_lib",

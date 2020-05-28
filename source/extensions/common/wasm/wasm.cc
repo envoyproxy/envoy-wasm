@@ -202,7 +202,7 @@ void Wasm::registerCallbacks() {
 void Wasm::getFunctions() {
   WasmBase::getFunctions();
 #define _GET(_fn) wasm_vm_->getFunction("envoy_" #_fn, &_fn##_);
-  _GET(on_dns_resolved)
+  _GET(on_resolve_dns)
 #undef _GET
 }
 

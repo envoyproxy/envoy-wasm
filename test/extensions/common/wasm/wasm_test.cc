@@ -729,11 +729,11 @@ public:
   WasmCommonContextTest() = default;
 
   void setup(const std::string& code, std::string root_id = "") {
-    setupBase(GetParam(), code, std::make_unique<TestContext>(wasm_->wasm().get(), plugin_),
-              root_id);
+    setupBase(GetParam(), code, std::make_unique<TestContext>(), root_id);
   }
   void setupContext() {
     context_ = std::make_unique<TestContext>(wasm_->wasm().get(), root_context_->id(), plugin_);
+    context_->onCreate(root_context_->id());
   }
 
   TestContext& root_context() { return *static_cast<TestContext*>(root_context_); }
@@ -741,6 +741,13 @@ public:
 
   std::unique_ptr<TestContext> context_;
 };
+
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonContextTest,
+                         testing::Values("v8",
+#if defined(ENVOY_WASM_WAVM)
+                                         "wavm",
+#endif
+                                         "null"));
 
 TEST_P(WasmCommonContextTest, OnDnsResolve) {
   std::string code;
@@ -755,17 +762,21 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   setup(code);
   setupContext();
 
-  EXPECT_CALL(context(), log_(spdlog::level::debug, Eq("on_foreign start")));
-  EXPECT_CALL(context(), log_(spdlog::level::info, Eq("on_foreign_function 7 13")));
+  EXPECT_CALL(context(), log_(spdlog::level::warn, Eq("TestContext::onResolveDns 7")));
+  EXPECT_CALL(context(),
+              log_(spdlog::level::info, Eq("TestContext::onResolveDns dns 1 192.168.1.101:1001")));
+  EXPECT_CALL(context(),
+              log_(spdlog::level::info, Eq("TestContext::onResolveDns dns 2 192.168.1.102:1002")));
+  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
 
   uint32_t token = 7;
   std::list<Envoy::Network::DnsResponse> dns_results;
   dns_results.emplace(dns_results.end(),
-                      std::make_shared<Network::Address::Ipv4Instance>("192.168.1.101"),
-                      std::chrono::seconds(101));
+                      std::make_shared<Network::Address::Ipv4Instance>("192.168.1.101", 1001),
+                      std::chrono::seconds(1));
   dns_results.emplace(dns_results.end(),
-                      std::make_shared<Network::Address::Ipv4Instance>("192.168.1.102"),
-                      std::chrono::seconds(102));
+                      std::make_shared<Network::Address::Ipv4Instance>("192.168.1.102", 1002),
+                      std::chrono::seconds(2));
   context_->onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
                          std::move(dns_results));
 }
