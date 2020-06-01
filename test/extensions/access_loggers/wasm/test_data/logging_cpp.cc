@@ -8,14 +8,14 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders(uint32_t headers) override;
+  FilterHeadersStatus onRequestHeaders(uint32_t headers, bool) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
   void onDone() override;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   logDebug(std::string("onRequestHeaders ") + std::to_string(id()));
   auto path = getRequestHeader(":path");
   logInfo(std::string("header path ") + std::string(path->view()));
