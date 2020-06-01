@@ -13,7 +13,7 @@ using StringView = absl::string_view;
 
 /*
  * The following headers are used in two different environments, in the Null VM and in Wasm code
- * which require different headers to preceed these  such that they can not include the above
+ * which require different headers to precede these  such that they can not include the above
  * headers directly. These macros prevent header reordering
  */
 #define _THE_FOLLOWING_INCLUDE_MUST_COME_AFTER_THOSE_ABOVE_ 1
