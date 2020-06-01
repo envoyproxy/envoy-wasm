@@ -15,23 +15,25 @@ envoy_cc_library(
         "envoy_proxy_wasm_api.h",
     ],
     deps = [
-        ":envoy_proxy_wasm_api",
         "@proxy_wasm_cpp_sdk//:api_lib",
         "@proxy_wasm_cpp_sdk//:common_lib",
     ],
 )
 
 cc_library(
-    name = "envoy_proxy_wasm_api",
-    hdrs = ["envoy_proxy_wasm_api.h"],
+    name = "envoy_null_plugin",
+    hdrs = [
+        "envoy_null_plugin.h",
+        "envoy_proxy_wasm_api.h",
+    ],
 )
 
 cc_library(
     name = "envoy_proxy_wasm_api_lib",
     srcs = ["envoy_proxy_wasm_api.cc"],
+    hdrs = ["envoy_proxy_wasm_api.h"],
     tags = ["manual"],
     deps = [
-        ":envoy_proxy_wasm_api",
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
     alwayslink = 1,
