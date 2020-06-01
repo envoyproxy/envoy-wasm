@@ -10,8 +10,8 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders(uint32_t) override;
-  FilterHeadersStatus onResponseHeaders(uint32_t) override;
+  FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
+  FilterHeadersStatus onResponseHeaders(uint32_t, bool) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
 
@@ -24,12 +24,12 @@ private:
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   test_op_ = getRequestHeader("x-test-operation")->toString();
   return FilterHeadersStatus::Continue;
 }
 
-FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
   test_op_ = getResponseHeader("x-test-operation")->toString();
   return FilterHeadersStatus::Continue;
 }
