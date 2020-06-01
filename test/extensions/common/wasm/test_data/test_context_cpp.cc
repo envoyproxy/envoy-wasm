@@ -21,9 +21,9 @@ public:
   void onResolveDns(uint32_t token, uint32_t results_size) override;
 };
 
-class TestRootContext : public RootContext {
+class TestRootContext : public EnvoyRootContext {
 public:
-  explicit TestRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
+  explicit TestRootContext(uint32_t id, StringView root_id) : EnvoyRootContext(id, root_id) {}
 
   bool onDone() override;
 };
