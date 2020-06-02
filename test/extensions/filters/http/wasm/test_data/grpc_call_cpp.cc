@@ -10,7 +10,7 @@ public:
 
   FilterHeadersStatus onRequestHeadersSimple(uint32_t);
   FilterHeadersStatus onRequestHeadersStream(uint32_t);
-  FilterHeadersStatus onRequestHeaders(uint32_t) override;
+  FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
@@ -82,7 +82,7 @@ FilterHeadersStatus ExampleContext::onRequestHeadersStream(uint32_t) {
   return FilterHeadersStatus::StopIteration;
 }
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
   std::string grpc_service_string;

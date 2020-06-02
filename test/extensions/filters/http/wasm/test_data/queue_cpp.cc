@@ -8,7 +8,7 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders(uint32_t) override;
+  FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
 };
 
 class ExampleRootContext : public RootContext {
@@ -24,7 +24,7 @@ public:
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
                                                       ROOT_FACTORY(ExampleRootContext));
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   uint32_t token;
   if (resolveSharedQueue("vm_id", "bad_shared_queue", &token) == WasmResult::NotFound) {
     logWarn("onRequestHeaders not found bad_shared_queue");
