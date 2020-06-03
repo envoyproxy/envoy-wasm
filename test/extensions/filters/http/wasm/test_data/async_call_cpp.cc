@@ -8,11 +8,11 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders(uint32_t) override;
+  FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   auto context_id = id();
   auto callback = [context_id](uint32_t, size_t body_size, uint32_t) {
     auto response_headers = getHeaderMapPairs(WasmHeaderMapType::HttpCallResponseHeaders);

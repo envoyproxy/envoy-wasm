@@ -9,7 +9,7 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders(uint32_t) override;
+  FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
   void onDone() override;
@@ -30,7 +30,7 @@ void ExampleRootContext::onTick() {
   logDebug(std::string("onTick ") + value);
 }
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   std::string value;
   if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
     logDebug("missing node metadata");

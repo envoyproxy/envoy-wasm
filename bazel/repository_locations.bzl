@@ -346,14 +346,14 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://github.com/dpkp/kafka-python/archive/2.0.0.tar.gz"],
     ),
     proxy_wasm_cpp_sdk = dict(
-        sha256 = "9ba21add517a8407f8f5247856f3964b86aac3baed083ee9eece1d7d286378f9",
-        strip_prefix = "proxy-wasm-cpp-sdk-5669dfad87f43146ce5ca3bf80a63a87c5d36a53",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/5669dfad87f43146ce5ca3bf80a63a87c5d36a53.tar.gz"],
+        sha256 = "701150a9396f81623061fda4d9fa919523166d6d8613dbe44b6ac155bd1f9e97",
+        strip_prefix = "proxy-wasm-cpp-sdk-e93a4988b90d726bcbe174301cc2607f95b46f25",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/e93a4988b90d726bcbe174301cc2607f95b46f25.tar.gz"],
     ),
     proxy_wasm_cpp_host = dict(
-        sha256 = "8cfffe0f63b4c14a29390bfbc8192e76c2b3880842a53553b0c5fab6e434db74",
-        strip_prefix = "proxy-wasm-cpp-host-55cb53d2999a5f33f3dee66957691e1498481441",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/55cb53d2999a5f33f3dee66957691e1498481441.tar.gz"],
+        sha256 = "010bc0238dcb87b1f790b3512c245a37c524f3b97d6810cec79f9376cfbf1241",
+        strip_prefix = "proxy-wasm-cpp-host-8cc8602d51d85553b0b6a901315a46cd3f4ef787",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/8cc8602d51d85553b0b6a901315a46cd3f4ef787.tar.gz"],
     ),
     emscripten_toolchain = dict(
         sha256 = "4ac0f1f3de8b3f1373d435cd7e58bd94de4146e751f099732167749a229b443b",
