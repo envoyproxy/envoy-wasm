@@ -20,7 +20,7 @@ envoy_cc_library(
     ],
 )
 
-cc_library(
+envoy_cc_library(
     name = "envoy_null_plugin",
     hdrs = [
         "envoy_null_plugin.h",

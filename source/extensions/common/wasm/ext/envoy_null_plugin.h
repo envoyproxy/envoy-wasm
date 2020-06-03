@@ -5,7 +5,7 @@
 
 namespace proxy_wasm {
 namespace null_plugin {
-#include "source/extensions/common/wasm/ext/envoy_proxy_wasm_api.h"
+#include "extensions/common/wasm/ext/envoy_proxy_wasm_api.h"
 } // namespace null_plugin
 } // namespace proxy_wasm
 using namespace proxy_wasm::null_plugin;
