@@ -1,17 +1,20 @@
 #include <memory>
 
 #include "envoy/config/core/v3/base.pb.h"
+#include "envoy/server/bootstrap_extension_config.h"
 
 #include "common/common/assert.h"
 #include "common/common/version.h"
 #include "common/network/address_impl.h"
 #include "common/network/listen_socket_impl.h"
 #include "common/network/socket_option_impl.h"
+#include "common/protobuf/protobuf.h"
 #include "common/thread_local/thread_local_impl.h"
 
 #include "server/process_context_impl.h"
 #include "server/server.h"
 
+#include "test/common/config/dummy_config.pb.h"
 #include "test/common/stats/stat_test_utility.h"
 #include "test/integration/server.h"
 #include "test/mocks/server/mocks.h"
@@ -47,6 +50,7 @@ TEST(ServerInstanceUtil, flushHelper) {
   c.inc();
   store.gauge("world", Stats::Gauge::ImportMode::Accumulate).set(5);
   store.histogram("histogram", Stats::Histogram::Unit::Unspecified);
+  store.textReadout("text").set("is important");
 
   std::list<Stats::SinkPtr> sinks;
   InstanceUtil::flushMetricsToSinks(sinks, store);
@@ -64,6 +68,10 @@ TEST(ServerInstanceUtil, flushHelper) {
     ASSERT_EQ(snapshot.gauges().size(), 1);
     EXPECT_EQ(snapshot.gauges()[0].get().name(), "world");
     EXPECT_EQ(snapshot.gauges()[0].get().value(), 5);
+
+    ASSERT_EQ(snapshot.textReadouts().size(), 1);
+    EXPECT_EQ(snapshot.textReadouts()[0].get().name(), "text");
+    EXPECT_EQ(snapshot.textReadouts()[0].get().value(), "is important");
   }));
   c.inc();
   InstanceUtil::flushMetricsToSinks(sinks, store);
@@ -77,6 +85,7 @@ TEST(ServerInstanceUtil, flushHelper) {
     EXPECT_TRUE(snapshot.counters().empty());
     EXPECT_TRUE(snapshot.gauges().empty());
     EXPECT_EQ(snapshot.histograms().size(), 1);
+    EXPECT_TRUE(snapshot.textReadouts().empty());
   }));
   InstanceUtil::flushMetricsToSinks(sinks, mock_store);
 }
@@ -86,10 +95,12 @@ public:
   RunHelperTest() {
     InSequence s;
 
+#ifndef WIN32
     sigterm_ = new Event::MockSignalEvent(&dispatcher_);
     sigint_ = new Event::MockSignalEvent(&dispatcher_);
     sigusr1_ = new Event::MockSignalEvent(&dispatcher_);
     sighup_ = new Event::MockSignalEvent(&dispatcher_);
+#endif
     EXPECT_CALL(overload_manager_, start());
     EXPECT_CALL(cm_, setInitializedCb(_)).WillOnce(SaveArg<0>(&cm_init_callback_));
     ON_CALL(server_, shutdown()).WillByDefault(Assign(&shutdown_, true));
@@ -109,10 +120,12 @@ public:
   ReadyWatcher start_workers_;
   std::unique_ptr<RunHelper> helper_;
   std::function<void()> cm_init_callback_;
+#ifndef WIN32
   Event::MockSignalEvent* sigterm_;
   Event::MockSignalEvent* sigint_;
   Event::MockSignalEvent* sigusr1_;
   Event::MockSignalEvent* sighup_;
+#endif
   bool shutdown_ = false;
 };
 
@@ -121,13 +134,18 @@ TEST_F(RunHelperTest, Normal) {
   cm_init_callback_();
 }
 
+// no signals on Windows
+#ifndef WIN32
 TEST_F(RunHelperTest, ShutdownBeforeCmInitialize) {
   EXPECT_CALL(start_workers_, ready()).Times(0);
   sigterm_->callback_();
   EXPECT_CALL(server_, isShutdown()).WillOnce(Return(shutdown_));
   cm_init_callback_();
 }
+#endif
 
+// no signals on Windows
+#ifndef WIN32
 TEST_F(RunHelperTest, ShutdownBeforeInitManagerInit) {
   EXPECT_CALL(start_workers_, ready()).Times(0);
   Init::ExpectableTargetImpl target;
@@ -138,6 +156,7 @@ TEST_F(RunHelperTest, ShutdownBeforeInitManagerInit) {
   EXPECT_CALL(server_, isShutdown()).WillOnce(Return(shutdown_));
   target.ready();
 }
+#endif
 
 class InitializingInitManager : public Init::ManagerImpl {
 public:
@@ -170,7 +189,7 @@ protected:
         std::make_unique<NiceMock<Runtime::MockRandomGenerator>>(), *thread_local_,
         Thread::threadFactoryForTest(), Filesystem::fileSystemForTest(),
         std::move(process_context_));
-    EXPECT_TRUE(server_->api().fileSystem().fileExists("/dev/null"));
+    EXPECT_TRUE(server_->api().fileSystem().fileExists(TestEnvironment::nullDevicePath()));
   }
 
   void initializeWithHealthCheckParams(const std::string& bootstrap_path, const double timeout,
@@ -189,7 +208,7 @@ protected:
         std::make_unique<NiceMock<Runtime::MockRandomGenerator>>(), *thread_local_,
         Thread::threadFactoryForTest(), Filesystem::fileSystemForTest(), nullptr);
 
-    EXPECT_TRUE(server_->api().fileSystem().fileExists("/dev/null"));
+    EXPECT_TRUE(server_->api().fileSystem().fileExists(TestEnvironment::nullDevicePath()));
   }
 
   Thread::ThreadPtr startTestServer(const std::string& bootstrap_path,
@@ -566,6 +585,7 @@ TEST_P(ServerInstanceImplTest, ValidationRejectDynamic) {
   options_.service_cluster_name_ = "some_cluster_name";
   options_.service_node_name_ = "some_node_name";
   options_.reject_unknown_dynamic_fields_ = true;
+  options_.ignore_unknown_dynamic_fields_ = true; // reject takes precedence over ignore
   EXPECT_NO_THROW(initialize("test/server/test_data/server/empty_bootstrap.yaml"));
   EXPECT_THAT_THROWS_MESSAGE(
       server_->messageValidationContext().staticValidationVisitor().onUnknownField("foo"),
@@ -632,6 +652,48 @@ TEST_P(ServerInstanceImplTest, DEPRECATED_FEATURE_TEST(LoadsV2BootstrapFromPbTex
   EXPECT_FALSE(server_->localInfo().node().hidden_envoy_deprecated_build_version().empty());
 }
 
+// Validate that bootstrap v3 pb_text with new fields loads fails if V2 config is specified.
+TEST_P(ServerInstanceImplTest, FailToLoadV3ConfigWhenV2SelectedFromPbText) {
+  options_.bootstrap_version_ = 2;
+
+  EXPECT_THROW_WITH_REGEX(
+      initialize("test/server/test_data/server/valid_v3_but_invalid_v2_bootstrap.pb_text"),
+      EnvoyException, "Unable to parse file");
+}
+
+// Validate that we correctly parse a V2 file when configured to do so.
+TEST_P(ServerInstanceImplTest, DEPRECATED_FEATURE_TEST(LoadsV2ConfigWhenV2SelectedFromPbText)) {
+  options_.bootstrap_version_ = 2;
+
+  initialize("test/server/test_data/server/valid_v2_but_invalid_v3_bootstrap.pb_text");
+  EXPECT_EQ(server_->localInfo().node().id(), "bootstrap_id");
+}
+
+// Validate that we correctly parse a V3 file when configured to do so.
+TEST_P(ServerInstanceImplTest, LoadsV3ConfigWhenV2SelectedFromPbText) {
+  options_.bootstrap_version_ = 3;
+
+  initialize("test/server/test_data/server/valid_v3_but_invalid_v2_bootstrap.pb_text");
+}
+
+// Validate that bootstrap v2 pb_text with deprecated fields loads fails if V3 config is specified.
+TEST_P(ServerInstanceImplTest, FailToLoadV2ConfigWhenV3SelectedFromPbText) {
+  options_.bootstrap_version_ = 3;
+
+  EXPECT_THROW_WITH_REGEX(
+      initialize("test/server/test_data/server/valid_v2_but_invalid_v3_bootstrap.pb_text"),
+      EnvoyException, "Unable to parse file");
+}
+
+// Validate that we blow up on invalid version number.
+TEST_P(ServerInstanceImplTest, InvalidBootstrapVersion) {
+  options_.bootstrap_version_ = 1;
+
+  EXPECT_THROW_WITH_REGEX(
+      initialize("test/server/test_data/server/valid_v2_but_invalid_v3_bootstrap.pb_text"),
+      EnvoyException, "Unknown bootstrap version 1.");
+}
+
 TEST_P(ServerInstanceImplTest, LoadsBootstrapFromConfigProtoOptions) {
   options_.config_proto_.mutable_node()->set_id("foo");
   initialize("test/server/test_data/server/node_bootstrap.yaml");
@@ -671,7 +733,6 @@ TEST_P(ServerInstanceImplTest, BootstrapRuntime) {
   EXPECT_EQ("bar", server_->runtime().snapshot().get("foo").value().get());
   // This should access via the override/some_service overlay.
   EXPECT_EQ("fozz", server_->runtime().snapshot().get("fizz").value().get());
-  EXPECT_EQ("foobar", server_->runtime().snapshot().getLayers()[3]->name());
 }
 
 // Validate that a runtime absent an admin layer will fail mutating operations
@@ -688,6 +749,22 @@ TEST_P(ServerInstanceImplTest, RuntimeNoAdminLayer) {
       Http::Code::ServiceUnavailable,
       server_->admin().request("/runtime_modify?foo=bar", "POST", response_headers, response_body));
   EXPECT_EQ("No admin layer specified", response_body);
+}
+
+// Verify that bootstrap fails if RTDS is configured through an EDS cluster
+TEST_P(ServerInstanceImplTest, BootstrapRtdsThroughEdsFails) {
+  options_.service_cluster_name_ = "some_service";
+  options_.service_node_name_ = "some_node_name";
+  EXPECT_THROW_WITH_REGEX(initialize("test/server/test_data/server/runtime_bootstrap_eds.yaml"),
+                          EnvoyException, "must have a statically defined non-EDS cluster");
+}
+
+// Verify that bootstrap fails if RTDS is configured through an ADS using EDS cluster
+TEST_P(ServerInstanceImplTest, BootstrapRtdsThroughAdsViaEdsFails) {
+  options_.service_cluster_name_ = "some_service";
+  options_.service_node_name_ = "some_node_name";
+  EXPECT_THROW_WITH_REGEX(initialize("test/server/test_data/server/runtime_bootstrap_ads_eds.yaml"),
+                          EnvoyException, "Unknown gRPC client cluster");
 }
 
 TEST_P(ServerInstanceImplTest, DEPRECATED_FEATURE_TEST(InvalidLegacyBootstrapRuntime)) {
@@ -729,6 +806,14 @@ TEST_P(ServerInstanceImplTest, InvalidLayeredBootstrapNoLayerSpecifier) {
 TEST_P(ServerInstanceImplTest, BootstrapClusterManagerInitializationFail) {
   EXPECT_THROW_WITH_MESSAGE(initialize("test/server/test_data/server/cluster_dupe_bootstrap.yaml"),
                             EnvoyException, "cluster manager: duplicate cluster 'service_google'");
+}
+
+// Regression tests for SdsApi throwing exceptions in initialize().
+TEST_P(ServerInstanceImplTest, BadSdsConfigSource) {
+  EXPECT_THROW_WITH_MESSAGE(
+      initialize("test/server/test_data/server/bad_sds_config_source.yaml"), EnvoyException,
+      "envoy.config.core.v3.ApiConfigSource must have a statically defined non-EDS cluster: "
+      "'sds-grpc' does not exist, was added via api, or is an EDS cluster");
 }
 
 // Test for protoc-gen-validate constraint on invalid timeout entry of a health check config entry.
@@ -786,9 +871,10 @@ namespace {
 void bindAndListenTcpSocket(const Network::Address::InstanceConstSharedPtr& address,
                             const Network::Socket::OptionsSharedPtr& options) {
   auto socket = std::make_unique<Network::TcpListenSocket>(address, options, true);
+  auto& os_sys_calls = Api::OsSysCallsSingleton::get();
   // Some kernels erroneously allow `bind` without SO_REUSEPORT for addresses
   // with some other socket already listening on it, see #7636.
-  if (::listen(socket->ioHandle().fd(), 1) != 0) {
+  if (SOCKET_FAILURE(os_sys_calls.listen(socket->ioHandle().fd(), 1).rc_)) {
     // Mimic bind exception for the test simplicity.
     throw Network::SocketBindException(fmt::format("cannot listen: {}", strerror(errno)), errno);
   }
@@ -966,6 +1052,53 @@ TEST_P(ServerInstanceImplTest, WithProcessContext) {
 
   object.boolean_flag_ = false;
   EXPECT_FALSE(object_from_context.boolean_flag_);
+}
+
+class FooBootstrapExtension : public BootstrapExtension {};
+
+TEST_P(ServerInstanceImplTest, WithBootstrapExtensions) {
+  NiceMock<Configuration::MockBootstrapExtensionFactory> mock_factory;
+  EXPECT_CALL(mock_factory, createEmptyConfigProto()).WillRepeatedly(Invoke([]() {
+    return std::make_unique<test::common::config::DummyConfig>();
+  }));
+  EXPECT_CALL(mock_factory, name()).WillRepeatedly(Return("envoy_test.bootstrap.foo"));
+  EXPECT_CALL(mock_factory, createBootstrapExtension(_, _))
+      .WillOnce(Invoke([](const Protobuf::Message& config, Configuration::ServerFactoryContext&) {
+        const auto* proto = dynamic_cast<const test::common::config::DummyConfig*>(&config);
+        EXPECT_NE(nullptr, proto);
+        EXPECT_EQ(proto->a(), "foo");
+        return std::make_unique<FooBootstrapExtension>();
+      }));
+
+  Registry::InjectFactory<Configuration::BootstrapExtensionFactory> registered_factory(
+      mock_factory);
+
+  EXPECT_NO_THROW(initialize("test/server/test_data/server/bootstrap_extensions.yaml"));
+}
+
+TEST_P(ServerInstanceImplTest, WithBootstrapExtensionsThrowingError) {
+  NiceMock<Configuration::MockBootstrapExtensionFactory> mock_factory;
+  EXPECT_CALL(mock_factory, createEmptyConfigProto()).WillRepeatedly(Invoke([]() {
+    return std::make_unique<test::common::config::DummyConfig>();
+  }));
+  EXPECT_CALL(mock_factory, name()).WillRepeatedly(Return("envoy_test.bootstrap.foo"));
+  EXPECT_CALL(mock_factory, createBootstrapExtension(_, _))
+      .WillOnce(Invoke([](const Protobuf::Message&,
+                          Configuration::ServerFactoryContext&) -> BootstrapExtensionPtr {
+        throw EnvoyException("Unable to initiate mock_bootstrap_extension.");
+      }));
+
+  Registry::InjectFactory<Configuration::BootstrapExtensionFactory> registered_factory(
+      mock_factory);
+
+  EXPECT_THROW_WITH_REGEX(initialize("test/server/test_data/server/bootstrap_extensions.yaml"),
+                          EnvoyException, "Unable to initiate mock_bootstrap_extension.");
+}
+
+TEST_P(ServerInstanceImplTest, WithUnknownBootstrapExtensions) {
+  EXPECT_THROW_WITH_REGEX(
+      initialize("test/server/test_data/server/bootstrap_extensions.yaml"), EnvoyException,
+      "Didn't find a registered implementation for name: 'envoy_test.bootstrap.foo'");
 }
 
 // Static configuration validation. We test with both allow/reject settings various aspects of

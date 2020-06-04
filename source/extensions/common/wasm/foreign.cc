@@ -244,10 +244,10 @@ public:
           span = StreamInfo::FilterState::LifeSpan::FilterChain;
           break;
         case envoy::source::extensions::common::wasm::LifeSpan::DownstreamRequest:
-          span = StreamInfo::FilterState::LifeSpan::DownstreamRequest;
+          span = StreamInfo::FilterState::LifeSpan::Request;
           break;
         case envoy::source::extensions::common::wasm::LifeSpan::DownstreamConnection:
-          span = StreamInfo::FilterState::LifeSpan::DownstreamConnection;
+          span = StreamInfo::FilterState::LifeSpan::Connection;
           break;
         default:
           // do nothing

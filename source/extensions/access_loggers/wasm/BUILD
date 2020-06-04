@@ -1,13 +1,13 @@
-licenses(["notice"])  # Apache 2
-
-# Access log implementation that calls into a WASM VM.
-
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_extension",
     "envoy_cc_library",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
+
+# Access log implementation that calls into a WASM VM.
 
 envoy_package()
 
@@ -29,7 +29,6 @@ envoy_cc_extension(
         ":wasm_access_log_lib",
         "//include/envoy/registry",
         "//include/envoy/server:access_log_config_interface",
-        "//source/common/access_log:access_log_formatter_lib",
         "//source/common/config:datasource_lib",
         "//source/common/protobuf",
         "//source/extensions/access_loggers:well_known_names",
