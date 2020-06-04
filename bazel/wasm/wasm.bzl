@@ -10,6 +10,7 @@ def _wasm_transition_impl(settings, attr):
         "//command_line_option:copt": [],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
+        "//command_line_option:collect_code_coverage": "false",
     }
 
 wasm_transition = transition(
@@ -21,6 +22,7 @@ wasm_transition = transition(
         "//command_line_option:copt",
         "//command_line_option:cxxopt",
         "//command_line_option:linkopt",
+        "//command_line_option:collect_code_coverage",
     ],
 )
 
