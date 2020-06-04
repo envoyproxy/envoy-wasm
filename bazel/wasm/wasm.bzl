@@ -1,3 +1,5 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
 def _wasm_transition_impl(settings, attr):
     return {
         "//command_line_option:cpu": "wasm",
@@ -48,7 +50,7 @@ def wasm_cc_binary(name, **kwargs):
     kwargs.setdefault("additional_linker_inputs", ["@proxy_wasm_cpp_sdk//:jslib"])
     kwargs.setdefault("linkopts", ["--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js"])
     kwargs.setdefault("visibility", ["//visibility:public"])
-    native.cc_binary(
+    cc_binary(
         name = wasm_name,
         # Adding manual tag it won't be built in non-WASM (e.g. x86_64 config)
         # when an wildcard is specified, but it will be built in WASM configuration

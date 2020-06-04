@@ -1,11 +1,11 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
 )
 load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
