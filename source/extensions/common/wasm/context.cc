@@ -1393,10 +1393,11 @@ Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& header
                                                  bool end_stream) {
   if (!in_vm_context_created_) {
     // If the request is invalid then onRequestHeaders() will not be called and neither will
-    // onCreate() then sendLocalReply be called which will call this function. In this case we
-    // need to call onCreate() so that the Context inside the VM is created before the
-    // onResponseHeaders() call.
-    onCreate(root_context_id_);
+    // onCreate() then sendLocalReply be called which will call this function. We have two choices,
+    // we can call onCreate() so that the Context inside the VM is created before the
+    // onResponseHeaders() call or we can just return. Since the Filter has not seen the request it
+    // makes more sense to just return here.
+    return Http::FilterHeadersStatus::Continue;
   }
   response_headers_ = &headers;
   end_of_stream_ = end_stream;
