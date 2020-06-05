@@ -1,3 +1,5 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
 def _wasm_transition_impl(settings, attr):
     return {
         "//command_line_option:cpu": "wasm",
@@ -8,6 +10,7 @@ def _wasm_transition_impl(settings, attr):
         "//command_line_option:copt": [],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
+        "//command_line_option:collect_code_coverage": "false",
     }
 
 wasm_transition = transition(
@@ -19,6 +22,7 @@ wasm_transition = transition(
         "//command_line_option:copt",
         "//command_line_option:cxxopt",
         "//command_line_option:linkopt",
+        "//command_line_option:collect_code_coverage",
     ],
 )
 
@@ -48,7 +52,7 @@ def wasm_cc_binary(name, **kwargs):
     kwargs.setdefault("additional_linker_inputs", ["@proxy_wasm_cpp_sdk//:jslib"])
     kwargs.setdefault("linkopts", ["--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js"])
     kwargs.setdefault("visibility", ["//visibility:public"])
-    native.cc_binary(
+    cc_binary(
         name = wasm_name,
         # Adding manual tag it won't be built in non-WASM (e.g. x86_64 config)
         # when an wildcard is specified, but it will be built in WASM configuration

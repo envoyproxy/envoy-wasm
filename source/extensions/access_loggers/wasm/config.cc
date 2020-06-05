@@ -6,7 +6,6 @@
 #include "envoy/registry/registry.h"
 #include "envoy/server/filter_config.h"
 
-#include "common/access_log/access_log_formatter.h"
 #include "common/common/logger.h"
 #include "common/protobuf/protobuf.h"
 
