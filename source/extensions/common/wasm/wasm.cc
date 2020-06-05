@@ -214,11 +214,6 @@ void setTimeOffsetForCodeCacheForTesting(MonotonicTime::duration d) {
   cache_time_offset_for_testing = d;
 }
 
-// TODO: remove this post #4160: Switch default to SimulatedTimeSystem.
-void setTimeOffsetForCodeCacheForTesting(MonotonicTime::duration d) {
-  cache_time_offset_for_testing = d;
-}
-
 static void createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                                const Stats::ScopeSharedPtr& scope,
                                Upstream::ClusterManager& cluster_manager,
