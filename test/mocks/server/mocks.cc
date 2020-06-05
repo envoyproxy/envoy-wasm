@@ -226,6 +226,7 @@ MockServerFactoryContext::MockServerFactoryContext()
       .WillByDefault(ReturnRef(ProtobufMessage::getStrictValidationVisitor()));
   ON_CALL(*this, api()).WillByDefault(ReturnRef(api_));
   ON_CALL(*this, drainManager()).WillByDefault(ReturnRef(drain_manager_));
+  ON_CALL(*this, lifecycleNotifier()).WillByDefault(ReturnRef(lifecycle_notifier_));
 }
 MockServerFactoryContext::~MockServerFactoryContext() = default;
 

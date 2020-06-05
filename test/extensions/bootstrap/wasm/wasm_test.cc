@@ -99,7 +99,7 @@ TEST_P(WasmTestMatrix, Logging) {
   auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm_);
   auto wasm_handler = std::make_unique<Extensions::Common::Wasm::WasmHandle>(std::move(wasm_));
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      absl::StrCat("{{ test_rundir }}/test/extensions/wasm/test_data/logging_",
+      absl::StrCat("{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/logging_",
                    std::get<1>(GetParam()), ".wasm")));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_weak.lock().get());
@@ -128,7 +128,7 @@ TEST_P(WasmTestMatrix, Logging) {
 TEST_P(WasmTest, BadSignature) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/bad_signature_cpp.wasm"));
+      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/bad_signature_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   EXPECT_THROW_WITH_MESSAGE(wasm_->initialize(code, false), Extensions::Common::Wasm::WasmException,
                             "Bad function signature for: proxy_on_configure");
@@ -137,7 +137,7 @@ TEST_P(WasmTest, BadSignature) {
 TEST_P(WasmTest, Segv) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
+      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("before badptr")));
@@ -160,7 +160,7 @@ TEST_P(WasmTest, Segv) {
 TEST_P(WasmTest, DivByZero) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
+      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("before div by zero")));
@@ -182,7 +182,7 @@ TEST_P(WasmTest, DivByZero) {
 TEST_P(WasmTest, EmscriptenVersion) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/segv_cpp.wasm"));
+      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/segv_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_TRUE(wasm_->initialize(code, false));
@@ -198,7 +198,7 @@ TEST_P(WasmTest, EmscriptenVersion) {
 TEST_P(WasmTest, IntrinsicGlobals) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/emscripten_cpp.wasm"));
+      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/emscripten_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("NaN nan")));
@@ -216,7 +216,7 @@ TEST_P(WasmTest, IntrinsicGlobals) {
 TEST_P(WasmTest, Asm2Wasm) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/asm2wasm_cpp.wasm"));
+      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/asm2wasm_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("out 0 0 0")));
@@ -227,7 +227,7 @@ TEST_P(WasmTest, Asm2Wasm) {
 TEST_P(WasmTest, Stats) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
+      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/stats_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_.get());
 
@@ -246,7 +246,7 @@ TEST_P(WasmTest, Stats) {
 TEST_P(WasmTest, StatsHigherLevel) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
+      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/stats_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_.get());
 
@@ -269,7 +269,7 @@ TEST_P(WasmTest, StatsHigherLevel) {
 TEST_P(WasmTest, StatsHighLevel) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/wasm/test_data/stats_cpp.wasm"));
+      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/stats_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto context = std::make_unique<TestContext>(wasm_.get());
 

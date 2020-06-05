@@ -1,6 +1,6 @@
 #pragma once
 
-#include "envoy/server/wasm_config.h"
+#include "extensions/bootstrap/wasm/wasm_config.h"
 #include "envoy/thread_local/thread_local.h"
 
 namespace Envoy {

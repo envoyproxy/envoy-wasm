@@ -20,7 +20,6 @@
 #include "envoy/registry/registry.h"
 #include "envoy/server/bootstrap_extension_config.h"
 #include "envoy/server/options.h"
-#include "envoy/server/wasm_config.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "common/api/api_impl.h"
@@ -49,7 +48,6 @@
 #include "server/guarddog_impl.h"
 #include "server/listener_hooks.h"
 #include "server/ssl_context_manager.h"
-#include "server/wasm_config_impl.h"
 
 namespace Envoy {
 namespace Server {

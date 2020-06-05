@@ -10,7 +10,6 @@
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"
 #include "envoy/network/filter.h"
-#include "envoy/server/wasm.h"
 #include "envoy/thread_local/thread_local.h"
 
 #include "common/buffer/buffer_impl.h"

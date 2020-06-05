@@ -3,7 +3,7 @@
  *
  * Run with:
  * TEST_SRCDIR=`pwd` TEST_WORKSPACE=bazel-$(basename `pwd`) bazel run --define wasm=enabled
- * --config=libc++ -c opt //test/extensions/wasm:wasm_speed_test
+ * --config=libc++ -c opt //test/extensions/bootstrap/wasm:wasm_speed_test
  * Note: "--linkopt -fuse-ld=ldd" may be required as well depending on the build environment.
  */
 #include <stdio.h>
@@ -68,7 +68,7 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
     code = "WasmSpeedCpp";
   } else {
     code = TestEnvironment::readFileToStringForTest(
-        TestEnvironment::runfilesPath("test/extensions/wasm/test_data/speed_cpp.wasm"));
+        TestEnvironment::runfilesPath("test/extensions/bootstrap/wasm/test_data/speed_cpp.wasm"));
   }
   EXPECT_FALSE(code.empty());
   EXPECT_TRUE(wasm->initialize(code, false));

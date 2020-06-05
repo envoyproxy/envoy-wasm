@@ -9,7 +9,6 @@
 #include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
 #include "envoy/http/filter.h"
 #include "envoy/server/lifecycle_notifier.h"
-#include "envoy/server/wasm.h"
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats.h"
 #include "envoy/thread_local/thread_local.h"
@@ -96,9 +95,7 @@ private:
 };
 using WasmSharedPtr = std::shared_ptr<Wasm>;
 
-class WasmHandle : public WasmHandleBase,
-                   public Envoy::Server::Wasm,
-                   public ThreadLocal::ThreadLocalObject {
+class WasmHandle : public WasmHandleBase, public ThreadLocal::ThreadLocalObject {
 public:
   explicit WasmHandle(const WasmSharedPtr& wasm)
       : WasmHandleBase(std::static_pointer_cast<WasmBase>(wasm)), wasm_(wasm) {}
