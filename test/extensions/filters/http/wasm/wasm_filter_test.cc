@@ -85,7 +85,7 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest,
 // Bad code in initial config.
 TEST_P(WasmHttpFilterTest, BadCode) {
   EXPECT_THROW_WITH_MESSAGE(setup("bad code"), Common::Wasm::WasmException,
-                            "Failed to initialize WASM code");
+                            "Failed to initialize Wasm code");
 }
 
 // Script touching headers only, request that is headers only.
@@ -130,6 +130,60 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndContinue) {
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy-wasm-pause"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter_->decodeHeaders(request_headers, true));
+  root_context_->onTick(0);
+  EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
+  EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm-continue"));
+  filter_->onDestroy();
+}
+
+TEST_P(WasmHttpFilterTest, HeadersStopAndEndStream) {
+  setup(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm")));
+  setupFilter();
+  EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
+  EXPECT_CALL(filter(), log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
+                                                 {"server", "envoy-wasm-end-stream"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::ContinueAndEndStream,
+            filter_->decodeHeaders(request_headers, true));
+  root_context_->onTick(0);
+  EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
+  EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm-continue"));
+  filter_->onDestroy();
+}
+
+TEST_P(WasmHttpFilterTest, HeadersStopAndBuffer) {
+  setup(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm")));
+  setupFilter();
+  EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
+  EXPECT_CALL(filter(), log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
+                                                 {"server", "envoy-wasm-stop-buffer"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::StopAllIterationAndBuffer,
+            filter_->decodeHeaders(request_headers, true));
+  root_context_->onTick(0);
+  EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
+  EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm-continue"));
+  filter_->onDestroy();
+}
+
+TEST_P(WasmHttpFilterTest, HeadersStopAndWatermark) {
+  setup(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+      "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/headers_cpp.wasm")));
+  setupFilter();
+  EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
+  EXPECT_CALL(filter(), log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
+                                                 {"server", "envoy-wasm-stop-watermark"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::StopAllIterationAndWatermark,
             filter_->decodeHeaders(request_headers, true));
   root_context_->onTick(0);
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
@@ -658,6 +712,10 @@ TEST_P(WasmHttpFilterTest, SharedData) {
               log_(spdlog::level::debug, Eq(absl::string_view("get 1 shared_data_value1"))));
   EXPECT_CALL(filter(),
               log_(spdlog::level::warn, Eq(absl::string_view("get 2 shared_data_value2"))));
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::debug, Eq(absl::string_view("get of bad key not found"))));
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::debug, Eq(absl::string_view("second get of bad key not found"))));
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
@@ -671,11 +729,17 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
   setupFilter();
   EXPECT_CALL(filter(),
               log_(spdlog::level::warn, Eq(absl::string_view("onRequestHeaders enqueue Ok"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::warn,
+                             Eq(absl::string_view("onRequestHeaders not found bad_shared_queue"))));
+  EXPECT_CALL(root_context(),
+              log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady bad token not found"))));
+  EXPECT_CALL(root_context(), log_(spdlog::level::warn,
+                                   Eq(absl::string_view("onQueueReady extra data not found"))));
   EXPECT_CALL(root_context(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))));
   EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
-  auto token = Common::Wasm::resolveQueueForTest("vm_id", "my_shared_queue");
+  auto token = proxy_wasm::resolveQueueForTest("vm_id", "my_shared_queue");
   wasm_->wasm()->queueReady(root_context_->id(), token);
 }
 

@@ -138,7 +138,7 @@ public:
   const Network::Connection* getConnection() const;
 
   //
-  // VM level downcalls into the WASM code on Context(id == 0).
+  // VM level downcalls into the Wasm code on Context(id == 0).
   //
   virtual bool validateConfiguration(absl::string_view configuration,
                                      const std::shared_ptr<PluginBase>& plugin); // deprecated
@@ -167,7 +167,7 @@ public:
   void onDownstreamConnectionClose(CloseType) override;
   void onUpstreamConnectionClose(CloseType) override;
 
-  // Http::StreamFilterBase. Note: This calls onDone() in WASM.
+  // Http::StreamFilterBase. Note: This calls onDone() in Wasm.
   void onDestroy() override;
 
   // Http::StreamDecoderFilter
@@ -192,6 +192,7 @@ public:
 
   // General
   WasmResult log(uint32_t level, absl::string_view message) override;
+  WasmResult setTimerPeriod(std::chrono::milliseconds tick_period, uint32_t* token) override;
   uint64_t getCurrentTimeNanoseconds() override;
   std::pair<uint32_t, absl::string_view> getStatus() override;
 
@@ -206,19 +207,6 @@ public:
   WasmResult sendLocalResponse(uint32_t response_code, absl::string_view body_text,
                                Pairs additional_headers, uint32_t grpc_status,
                                absl::string_view details) override;
-
-  // Shared Data
-  WasmResult getSharedData(absl::string_view key,
-                           std::pair<std::string /* data */, uint32_t /* cas */>* data) override;
-  WasmResult setSharedData(absl::string_view key, absl::string_view value, uint32_t cas) override;
-
-  // Shared Queue
-  WasmResult registerSharedQueue(absl::string_view queue_name,
-                                 SharedQueueDequeueToken* token) override;
-  WasmResult lookupSharedQueue(absl::string_view vm_id, absl::string_view queue_name,
-                               SharedQueueEnqueueToken* token) override;
-  WasmResult dequeueSharedQueue(uint32_t token, std::string* data) override;
-  WasmResult enqueueSharedQueue(uint32_t token, absl::string_view value) override;
 
   // Header/Trailer/Metadata Maps
   WasmResult addHeaderMapValue(WasmHeaderMapType type, absl::string_view key,
@@ -308,7 +296,6 @@ protected:
   void onCloseTCP();
 
   virtual absl::string_view getConfiguration();
-  virtual WasmResult setTickPeriod(std::chrono::milliseconds tick_period);
   virtual void clearRouteCache() {
     if (decoder_callbacks_) {
       decoder_callbacks_->clearRouteCache();
@@ -464,8 +451,6 @@ protected:
   absl::flat_hash_map<std::string, std::unique_ptr<const WasmStatePrototype>> state_prototypes_;
 };
 using ContextSharedPtr = std::shared_ptr<Context>;
-
-uint32_t resolveQueueForTest(absl::string_view vm_id, absl::string_view queue_name);
 
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result);
 

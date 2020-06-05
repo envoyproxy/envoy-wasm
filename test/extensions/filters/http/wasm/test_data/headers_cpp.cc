@@ -8,7 +8,7 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders(uint32_t) override;
+  FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
   void onDone() override;
@@ -26,7 +26,7 @@ public:
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
                                                       ROOT_FACTORY(ExampleRootContext));
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   static_cast<ExampleRootContext*>(root())->stream_context_id_ = id();
   logDebug(std::string("onRequestHeaders ") + std::to_string(id()));
   auto path = getRequestHeader(":path");
@@ -37,6 +37,12 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   replaceRequestHeader("server", "envoy-wasm");
   if (server->view() == "envoy-wasm-pause") {
     return FilterHeadersStatus::StopIteration;
+  } else if (server->view() == "envoy-wasm-end-stream") {
+    return FilterHeadersStatus::ContinueAndEndStream;
+  } else if (server->view() == "envoy-wasm-stop-buffer") {
+    return FilterHeadersStatus::StopAllIterationAndBuffer;
+  } else if (server->view() == "envoy-wasm-stop-watermark") {
+    return FilterHeadersStatus::StopAllIterationAndWatermark;
   } else {
     return FilterHeadersStatus::Continue;
   }

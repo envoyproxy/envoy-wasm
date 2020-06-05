@@ -32,7 +32,7 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest,
 #endif
                                          ));
 
-TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
+TEST_P(WasmFactoryTest, CreateWasmFromWasm) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
@@ -61,7 +61,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWASM) {
   wasmptr.reset();
 }
 
-TEST_P(WasmFactoryTest, CreateWasmFromWASMPerThread) {
+TEST_P(WasmFactoryTest, CreateWasmFromWasmPerThread) {
   auto factory =
       Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
   ASSERT_NE(factory, nullptr);
@@ -109,7 +109,7 @@ TEST_P(WasmFactoryTest, MissingImport) {
   Server::Configuration::WasmFactoryContextImpl context(server, scope);
   EXPECT_THROW_WITH_REGEX(factory->createWasm(config, context, [](Server::WasmServicePtr) {});
                           , Extensions::Common::Wasm::WasmException,
-                          "Failed to load WASM module due to a missing import: env.missing");
+                          "Failed to load Wasm module due to a missing import: env.missing");
 }
 
 TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
@@ -130,7 +130,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
   Server::Configuration::WasmFactoryContextImpl context(server, scope);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
                             Extensions::Common::Wasm::WasmException,
-                            "Failed to create WASM VM with unspecified runtime.");
+                            "Failed to create Wasm VM with unspecified runtime.");
 }
 
 TEST_P(WasmFactoryTest, UnknownRuntime) {
@@ -151,8 +151,41 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   Server::Configuration::WasmFactoryContextImpl context(server, scope);
   EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
                             Extensions::Common::Wasm::WasmException,
-                            "Failed to create WASM VM using envoy.wasm.runtime.invalid runtime. "
+                            "Failed to create Wasm VM using envoy.wasm.runtime.invalid runtime. "
                             "Envoy was compiled without support for it.");
+}
+
+TEST_P(WasmFactoryTest, StartFailed) {
+  auto factory =
+      Registry::FactoryRegistry<Server::Configuration::WasmFactory>::getFactory("envoy.wasm");
+  ASSERT_NE(factory, nullptr);
+  envoy::extensions::wasm::v3::WasmService config;
+  config.mutable_config()->mutable_vm_config()->set_runtime(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()));
+  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
+      TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/wasm/test_data/start_cpp.wasm"));
+  ProtobufWkt::StringValue plugin_configuration;
+  plugin_configuration.set_value("bad");
+  config.set_singleton(true);
+  config.mutable_config()->mutable_vm_config()->mutable_configuration()->PackFrom(
+      plugin_configuration);
+  NiceMock<Server::MockInstance> server;
+  Init::ExpectableWatcherImpl init_watcher;
+  Stats::IsolatedStoreImpl stats_store;
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  EXPECT_CALL(server, api()).WillRepeatedly(testing::ReturnRef(*api));
+  Init::ManagerImpl init_manager{"init_manager"};
+  EXPECT_CALL(server, initManager()).WillRepeatedly(testing::ReturnRef(init_manager));
+  Server::Configuration::WasmFactoryContextImpl context(server, scope);
+  Server::WasmServicePtr wasmptr = nullptr;
+  EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
+                            Extensions::Common::Wasm::WasmException, "Failed to start base Wasm");
+  EXPECT_CALL(init_watcher, ready());
+  server.initManager().initialize(init_watcher);
+  EXPECT_EQ(wasmptr, nullptr);
+  wasmptr.reset();
 }
 
 TEST_P(WasmFactoryTest, ConfigureFailed) {
@@ -179,8 +212,9 @@ TEST_P(WasmFactoryTest, ConfigureFailed) {
   EXPECT_CALL(server, initManager()).WillRepeatedly(testing::ReturnRef(init_manager));
   Server::Configuration::WasmFactoryContextImpl context(server, scope);
   Server::WasmServicePtr wasmptr = nullptr;
-  factory->createWasm(config, context,
-                      [&wasmptr](Server::WasmServicePtr wasm) { wasmptr = std::move(wasm); });
+  EXPECT_THROW_WITH_MESSAGE(factory->createWasm(config, context, [](Server::WasmServicePtr) {}),
+                            Extensions::Common::Wasm::WasmException,
+                            "Failed to configure base Wasm plugin");
   EXPECT_CALL(init_watcher, ready());
   server.initManager().initialize(init_watcher);
   EXPECT_EQ(wasmptr, nullptr);

@@ -8,7 +8,7 @@ class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
-  FilterHeadersStatus onRequestHeaders(uint32_t) override;
+  FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
 };
 
 class ExampleRootContext : public RootContext {
@@ -24,10 +24,13 @@ public:
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
                                                       ROOT_FACTORY(ExampleRootContext));
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   uint32_t token;
+  if (resolveSharedQueue("vm_id", "bad_shared_queue", &token) == WasmResult::NotFound) {
+    logWarn("onRequestHeaders not found bad_shared_queue");
+  }
   CHECK_RESULT(resolveSharedQueue("vm_id", "my_shared_queue", &token));
-  if (WasmResult::Ok == enqueueSharedQueue(token, "data1")) {
+  if (enqueueSharedQueue(token, "data1") == WasmResult::Ok) {
     logWarn("onRequestHeaders enqueue Ok");
   }
   return FilterHeadersStatus::Continue;
@@ -43,7 +46,13 @@ void ExampleRootContext::onQueueReady(uint32_t token) {
     logInfo("onQueueReady");
   }
   std::unique_ptr<WasmData> data;
-  if (WasmResult::Ok == dequeueSharedQueue(token, &data)) {
+  if (dequeueSharedQueue(9999999 /* bad token */, &data) == WasmResult::NotFound) {
+    logWarn("onQueueReady bad token not found");
+  }
+  if (dequeueSharedQueue(token, &data) == WasmResult::Ok) {
     logDebug("data " + data->toString() + " Ok");
+  }
+  if (dequeueSharedQueue(token, &data) == WasmResult::Empty) {
+    logWarn("onQueueReady extra data not found");
   }
 }
