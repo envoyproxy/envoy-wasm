@@ -436,7 +436,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
 
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
-                            "Failed to load Wasm code (fetching) from https://example.com/data");
+                            "Failed to load WASM code (fetching) from https://example.com/data");
   EXPECT_CALL(init_watcher6, ready());
   init_manager6.initialize(init_watcher6);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);

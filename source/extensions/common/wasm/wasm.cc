@@ -1,5 +1,6 @@
 #include "extensions/common/wasm/wasm.h"
 
+#include <algorithm>
 #include <chrono>
 
 #include "envoy/event/deferred_deletable.h"
@@ -206,6 +207,11 @@ void clearCodeCacheForTesting(bool fail_if_not_cached) {
     delete create_wasm_stats;
     create_wasm_stats = nullptr;
   }
+}
+
+// TODO: remove this post #4160: Switch default to SimulatedTimeSystem.
+void setTimeOffsetForCodeCacheForTesting(MonotonicTime::duration d) {
+  cache_time_offset_for_testing = d;
 }
 
 // TODO: remove this post #4160: Switch default to SimulatedTimeSystem.
