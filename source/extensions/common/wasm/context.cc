@@ -170,7 +170,7 @@ uint64_t Context::getCurrentTimeNanoseconds() {
 }
 
 void Context::onCloseTCP() {
-  if (tcp_connection_closed_) {
+  if (tcp_connection_closed_ || !in_vm_context_created_) {
     return;
   }
   tcp_connection_closed_ = true;
@@ -1190,10 +1190,16 @@ Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus stat
 };
 
 Network::FilterStatus Context::onNewConnection() {
+  if (!in_vm_context_created_) {
+    onCreate(root_context_id_);
+  }
   return convertNetworkFilterStatus(onNetworkNewConnection());
 };
 
 Network::FilterStatus Context::onData(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!in_vm_context_created_) {
+    return Network::FilterStatus::Continue;
+  }
   network_downstream_data_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertNetworkFilterStatus(onDownstreamData(data.length(), end_stream));
@@ -1204,6 +1210,9 @@ Network::FilterStatus Context::onData(::Envoy::Buffer::Instance& data, bool end_
 }
 
 Network::FilterStatus Context::onWrite(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!in_vm_context_created_) {
+    return Network::FilterStatus::Continue;
+  }
   network_upstream_data_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertNetworkFilterStatus(onUpstreamData(data.length(), end_stream));
@@ -1219,6 +1228,9 @@ Network::FilterStatus Context::onWrite(::Envoy::Buffer::Instance& data, bool end
 }
 
 void Context::onEvent(Network::ConnectionEvent event) {
+  if (!in_vm_context_created_) {
+    return;
+  }
   switch (event) {
   case Network::ConnectionEvent::LocalClose:
     onDownstreamConnectionClose(CloseType::Local);
@@ -1244,6 +1256,9 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
                   const Http::ResponseHeaderMap* response_headers,
                   const Http::ResponseTrailerMap* response_trailers,
                   const StreamInfo::StreamInfo& stream_info) {
+  if (!in_vm_context_created_) {
+    return;
+  }
   access_log_request_headers_ = request_headers;
   // ? request_trailers  ?
   access_log_response_headers_ = response_headers;
@@ -1262,7 +1277,7 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
 }
 
 void Context::onDestroy() {
-  if (destroyed_) {
+  if (destroyed_ || !in_vm_context_created_) {
     return;
   }
   destroyed_ = true;
@@ -1309,6 +1324,9 @@ WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view 
 }
 
 Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers, bool end_stream) {
+  if (!in_vm_context_created_) {
+    onCreate(root_context_id_);
+  }
   request_headers_ = &headers;
   end_of_stream_ = end_stream;
   auto result = convertFilterHeadersStatus(onRequestHeaders(headerSize(&headers), end_stream));
@@ -1319,6 +1337,9 @@ Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers
 }
 
 Http::FilterDataStatus Context::decodeData(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!in_vm_context_created_) {
+    return Http::FilterDataStatus::Continue;
+  }
   request_body_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertFilterDataStatus(onRequestBody(data.length(), end_stream));
@@ -1338,6 +1359,9 @@ Http::FilterDataStatus Context::decodeData(::Envoy::Buffer::Instance& data, bool
 }
 
 Http::FilterTrailersStatus Context::decodeTrailers(Http::RequestTrailerMap& trailers) {
+  if (!in_vm_context_created_) {
+    return Http::FilterTrailersStatus::Continue;
+  }
   request_trailers_ = &trailers;
   auto result = convertFilterTrailersStatus(onRequestTrailers(headerSize(&trailers)));
   if (result == Http::FilterTrailersStatus::Continue) {
@@ -1347,6 +1371,9 @@ Http::FilterTrailersStatus Context::decodeTrailers(Http::RequestTrailerMap& trai
 }
 
 Http::FilterMetadataStatus Context::decodeMetadata(Http::MetadataMap& request_metadata) {
+  if (!in_vm_context_created_) {
+    return Http::FilterMetadataStatus::Continue;
+  }
   request_metadata_ = &request_metadata;
   auto result = convertFilterMetadataStatus(onRequestMetadata(headerSize(&request_metadata)));
   if (result == Http::FilterMetadataStatus::Continue) {
@@ -1365,6 +1392,14 @@ Http::FilterHeadersStatus Context::encode100ContinueHeaders(Http::ResponseHeader
 
 Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& headers,
                                                  bool end_stream) {
+  if (!in_vm_context_created_) {
+    // If the request is invalid then onRequestHeaders() will not be called and neither will
+    // onCreate() then sendLocalReply be called which will call this function. We have two choices,
+    // we can call onCreate() so that the Context inside the VM is created before the
+    // onResponseHeaders() call or we can just return. Since the Filter has not seen the request it
+    // makes more sense to just return here.
+    return Http::FilterHeadersStatus::Continue;
+  }
   response_headers_ = &headers;
   end_of_stream_ = end_stream;
   auto result = convertFilterHeadersStatus(onResponseHeaders(headerSize(&headers), end_stream));
@@ -1375,6 +1410,9 @@ Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& header
 }
 
 Http::FilterDataStatus Context::encodeData(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!in_vm_context_created_) {
+    return Http::FilterDataStatus::Continue;
+  }
   response_body_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertFilterDataStatus(onResponseBody(data.length(), end_stream));
@@ -1394,6 +1432,9 @@ Http::FilterDataStatus Context::encodeData(::Envoy::Buffer::Instance& data, bool
 }
 
 Http::FilterTrailersStatus Context::encodeTrailers(Http::ResponseTrailerMap& trailers) {
+  if (!in_vm_context_created_) {
+    return Http::FilterTrailersStatus::Continue;
+  }
   response_trailers_ = &trailers;
   auto result = convertFilterTrailersStatus(onResponseTrailers(headerSize(&trailers)));
   if (result == Http::FilterTrailersStatus::Continue) {
@@ -1403,6 +1444,9 @@ Http::FilterTrailersStatus Context::encodeTrailers(Http::ResponseTrailerMap& tra
 }
 
 Http::FilterMetadataStatus Context::encodeMetadata(Http::MetadataMap& response_metadata) {
+  if (!in_vm_context_created_) {
+    return Http::FilterMetadataStatus::Continue;
+  }
   response_metadata_ = &response_metadata;
   auto result = convertFilterMetadataStatus(onResponseMetadata(headerSize(&response_metadata)));
   if (result == Http::FilterMetadataStatus::Continue) {
