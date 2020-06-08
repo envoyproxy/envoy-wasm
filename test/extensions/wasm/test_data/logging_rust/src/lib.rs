@@ -13,13 +13,13 @@ extern "C" {
 }
 
 #[no_mangle]
+pub fn proxy_on_context_create(_context_id: u32, _parent_context_id_: u32) {}
+
+#[no_mangle]
 pub fn proxy_on_configure(_context_id: u32, _plugin_configuration_size: u32) -> u32 {
     warn!("warn configure-test");
     1
 }
-
-#[no_mangle]
-pub fn proxy_on_context_create(_context_id: u32, _parent_context_id_: u32) {}
 
 #[no_mangle]
 pub fn proxy_on_vm_start(_context_id: u32, _vm_configuration_size: u32) -> u32 {

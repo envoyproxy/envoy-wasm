@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_fuzz_test",
@@ -8,12 +6,15 @@ load(
     "envoy_package",
 )
 
+licenses(["notice"])  # Apache 2
+
 envoy_package()
 
 envoy_cc_test(
     name = "codec_impl_test",
     srcs = ["codec_impl_test.cc"],
     shard_count = 5,
+    tags = ["fails_on_windows"],
     deps = [
         ":codec_impl_test_util",
         "//source/common/event:dispatcher_lib",
@@ -50,28 +51,10 @@ envoy_cc_test_library(
 envoy_cc_test(
     name = "conn_pool_test",
     srcs = ["conn_pool_test.cc"],
+    tags = ["fails_on_windows"],
     deps = [
         "//source/common/event:dispatcher_lib",
         "//source/common/http/http2:conn_pool_lib",
-        "//source/common/network:utility_lib",
-        "//source/common/upstream:upstream_includes",
-        "//source/common/upstream:upstream_lib",
-        "//test/common/http:common_lib",
-        "//test/common/upstream:utility_lib",
-        "//test/mocks/event:event_mocks",
-        "//test/mocks/http:http_mocks",
-        "//test/mocks/network:network_mocks",
-        "//test/mocks/runtime:runtime_mocks",
-        "//test/mocks/upstream:upstream_mocks",
-    ],
-)
-
-envoy_cc_test(
-    name = "conn_pool_legacy_test",
-    srcs = ["conn_pool_legacy_test.cc"],
-    deps = [
-        "//source/common/event:dispatcher_lib",
-        "//source/common/http/http2:conn_pool_legacy_lib",
         "//source/common/network:utility_lib",
         "//source/common/upstream:upstream_includes",
         "//source/common/upstream:upstream_lib",
@@ -121,6 +104,7 @@ envoy_cc_test(
         "response_header_corpus/simple_example_huffman",
         "response_header_corpus/simple_example_plain",
     ],
+    tags = ["fails_on_windows"],
     deps = [":frame_replay_lib"],
 )
 

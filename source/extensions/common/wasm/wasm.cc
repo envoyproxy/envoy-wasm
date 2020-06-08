@@ -1,5 +1,6 @@
 #include "extensions/common/wasm/wasm.h"
 
+#include <algorithm>
 #include <chrono>
 
 #include "envoy/event/deferred_deletable.h"
