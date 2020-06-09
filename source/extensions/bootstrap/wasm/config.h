@@ -1,14 +1,15 @@
 #pragma once
 
-#include "common/protobuf/protobuf.h"
+#include "envoy/common/pure.h"
 #include "envoy/extensions/wasm/v3/wasm.pb.h"
 #include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
-
-#include "extensions/common/wasm/wasm.h"
 #include "envoy/server/bootstrap_extension_config.h"
 #include "envoy/server/filter_config.h"
-#include "envoy/common/pure.h"
 #include "envoy/server/instance.h"
+
+#include "common/protobuf/protobuf.h"
+
+#include "extensions/common/wasm/wasm.h"
 
 namespace Envoy {
 namespace Extensions {
