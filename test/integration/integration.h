@@ -448,6 +448,10 @@ protected:
   Grpc::SotwOrDelta sotw_or_delta_{Grpc::SotwOrDelta::Sotw};
   std::vector<uint32_t> ports_;
 
+  // By default the test server will use custom stats to notify on increment.
+  // This override exists for tests measuring stats memory.
+  bool use_real_stats_{};
+
 private:
   // The type for the Envoy-to-backend connection
   FakeHttpConnection::Type upstream_protocol_{FakeHttpConnection::Type::HTTP1};
