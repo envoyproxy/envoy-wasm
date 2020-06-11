@@ -16,21 +16,6 @@ namespace Extensions {
 namespace Bootstrap {
 namespace Wasm {
 
-class WasmFactoryContext {
-public:
-  virtual ~WasmFactoryContext() = default;
-
-  /**
-   * @return Server::Instance&.
-   */
-  virtual Server::Configuration::ServerFactoryContext& server() PURE;
-
-  /**
-   * @return Stats::ScopeSharedPtr the service's stats scope.
-   */
-  virtual Stats::ScopeSharedPtr& scope() PURE;
-};
-
 class WasmService {
 public:
   WasmService(Common::Wasm::WasmHandleSharedPtr singleton) : singleton_(std::move(singleton)) {}
