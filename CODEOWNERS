@@ -74,6 +74,8 @@ extensions/filters/common/original_src @snowp @klarose
 /*/extensions/filters/common/expr @kyessenov @yangminzhu @lizan
 # webassembly access logger extensions
 /*/extensions/access_loggers/wasm @jplevyak @PiotrSikora @lizan
+# webassembly bootstrap extensions
+/*/extensions/bootstrap/wasm @jplevyak @PiotrSikora @lizan
 # webassembly http extensions
 /*/extensions/filters/http/wasm @jplevyak @PiotrSikora @lizan
 # webassembly network extensions

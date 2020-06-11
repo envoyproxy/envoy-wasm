@@ -34,7 +34,7 @@ EXTENSIONS = {
     #
     # WASM
     #
-    "envoy.wasm":                                      "//source/extensions/wasm:config",
+    "envoy.bootstrap.wasm":                             "//source/extensions/bootstrap/wasm:config",
 
     #
     # Health checkers

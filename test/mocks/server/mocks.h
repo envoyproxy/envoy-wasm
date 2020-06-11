@@ -526,6 +526,7 @@ public:
   testing::NiceMock<Stats::MockIsolatedStatsStore> scope_;
   testing::NiceMock<ThreadLocal::MockInstance> thread_local_;
   testing::NiceMock<ProtobufMessage::MockValidationContext> validation_context_;
+  testing::NiceMock<MockServerLifecycleNotifier> lifecycle_notifier_;
   Singleton::ManagerPtr singleton_manager_;
   testing::NiceMock<MockAdmin> admin_;
   Event::GlobalTimeSystem time_system_;

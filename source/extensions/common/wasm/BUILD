@@ -30,7 +30,6 @@ envoy_cc_library(
         ":well_known_names",
         "//include/envoy/http:codes_interface",
         "//include/envoy/http:filter_interface",
-        "//include/envoy/server:wasm_interface",
         "//include/envoy/upstream:cluster_manager_interface",
         "//source/common/config:datasource_lib",
         "//source/common/singleton:const_singleton",
