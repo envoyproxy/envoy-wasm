@@ -950,8 +950,12 @@ WasmResult Context::setProperty(absl::string_view path, absl::string_view value)
 
 WasmResult Context::declareProperty(absl::string_view path,
                                     std::unique_ptr<const WasmStatePrototype> state_prototype) {
-  state_prototypes_[path] = std::move(state_prototype);
-  return WasmResult::Ok;
+  // Do not delete existing schema since it can be referenced by state objects.
+  if (state_prototypes_.find(path) == state_prototypes_.end()) {
+    state_prototypes_[path] = std::move(state_prototype);
+    return WasmResult::Ok;
+  }
+  return WasmResult::BadArgument;
 }
 
 WasmResult Context::log(uint32_t level, absl::string_view message) {
