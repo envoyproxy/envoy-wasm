@@ -1222,7 +1222,7 @@ Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus stat
 };
 
 Network::FilterStatus Context::onNewConnection() {
-  onCreate(id_);
+  onCreate();
   return convertNetworkFilterStatus(onNetworkNewConnection());
 };
 
@@ -1354,7 +1354,7 @@ WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view 
 }
 
 Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers, bool end_stream) {
-  onCreate(id_);
+  onCreate();
   http_request_started_ = true;
   request_headers_ = &headers;
   end_of_stream_ = end_stream;
