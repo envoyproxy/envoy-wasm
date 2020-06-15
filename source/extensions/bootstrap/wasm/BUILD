@@ -13,11 +13,15 @@ envoy_package()
 envoy_cc_library(
     name = "config",
     srcs = ["config.cc"],
-    hdrs = ["config.h"],
+    hdrs = [
+        "config.h",
+    ],
     # security_posture = "unknown", docs requires it, bazel fails if it is included.
     deps = [
         "//include/envoy/registry",
-        "//include/envoy/server:wasm_config_interface",
+        "//include/envoy/server:bootstrap_extension_config_interface",
+        "//include/envoy/server:factory_context_interface",
+        "//include/envoy/server:instance_interface",
         "//source/common/common:assert_lib",
         "//source/common/common:empty_string",
         "//source/common/config:datasource_lib",

@@ -12,7 +12,6 @@
 #include "envoy/config/bootstrap/v3/bootstrap.pb.h"
 #include "envoy/config/trace/v3/http_tracer.pb.h"
 #include "envoy/config/typed_config.h"
-#include "envoy/extensions/wasm/v3/wasm.pb.h"
 #include "envoy/http/filter.h"
 #include "envoy/network/filter.h"
 #include "envoy/server/configuration.h"

@@ -17,7 +17,6 @@
 #include "envoy/server/process_context.h"
 #include "envoy/server/tracer_config.h"
 #include "envoy/server/transport_socket_config.h"
-#include "envoy/server/wasm.h"
 #include "envoy/ssl/context_manager.h"
 #include "envoy/stats/stats_macros.h"
 #include "envoy/stats/timespan.h"
