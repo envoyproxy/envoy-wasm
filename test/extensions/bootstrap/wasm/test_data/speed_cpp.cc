@@ -1,6 +1,7 @@
 // NOLINT(namespace-envoy)
-#include <string>
 #include <google/protobuf/util/json_util.h>
+
+#include <string>
 
 #ifndef NULL_PLUGIN
 #include "proxy_wasm_intrinsics_full.h"
@@ -139,7 +140,7 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)
   } else if (configuration == "json_serialize") {
     test_fn = &json_serialize_test;
   } else if (configuration == "json_deserialize") {
-    test_fn = &json_deserialize_test; 
+    test_fn = &json_deserialize_test;
   } else {
     std::string message = "on_start " + configuration;
     proxy_log(LogLevel::info, message.c_str(), message.size());
