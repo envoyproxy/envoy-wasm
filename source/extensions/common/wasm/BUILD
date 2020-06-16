@@ -96,7 +96,13 @@ envoy_cc_library(
     ],
 )
 
-envoy_proto_library(
-    name = "declare_property",
+cc_proto_library(
+    name = "declare_property_cc_proto",
+    deps = [":declare_property_wasm_proto"],
+)
+
+proto_library(
+    name = "declare_property_wasm_proto",
     srcs = ["declare_property.proto"],
+    visibility = ["//visibility:public"],
 )

@@ -1,8 +1,9 @@
 // NOLINT(namespace-envoy)
 #include <string>
+#include <google/protobuf/util/json_util.h>
 
 #ifndef NULL_PLUGIN
-#include "proxy_wasm_intrinsics_lite.h"
+#include "proxy_wasm_intrinsics_full.h"
 // Required Proxy-Wasm ABI version.
 extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
 #else
@@ -10,6 +11,8 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
 using envoy::config::core::v3::GrpcService;
 #include "include/proxy-wasm/null_plugin.h"
 #endif
+
+#include "source/extensions/common/wasm/declare_property.pb.h"
 
 START_WASM_PLUGIN(WasmSpeedCpp)
 
@@ -69,6 +72,46 @@ void grpc_service1000_test() {
   }
 }
 
+void modify_metadata_test() {
+  auto path = getRequestHeader(":path");
+  addRequestHeader("newheader", "newheadervalue");
+  auto server = getRequestHeader("server");
+  replaceRequestHeader("server", "envoy-wasm");
+  replaceRequestHeader("envoy-wasm", "server");
+  removeRequestHeader("newheader");
+}
+
+void modify_metadata1000_test() {
+  for (int x = 0; x < 1000; x++) {
+    auto path = getRequestHeader(":path");
+    addRequestHeader("newheader", "newheadervalue");
+    auto server = getRequestHeader("server");
+    replaceRequestHeader("server", "envoy-wasm");
+    replaceRequestHeader("envoy-wasm", "server");
+    removeRequestHeader("newheader");
+  }
+}
+
+void json_serialize_test() {
+  const std::string configuration = R"EOF(
+  "NAME": "example",
+  "READONLY":true
+  )EOF";
+  envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+  google::protobuf::util::JsonStringToMessage(configuration, &args);
+}
+
+void json_deserialize_test() {
+  std::string json;
+  std::string value = "foo";
+  envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+
+  args.set_name(value);
+  args.set_readonly(true);
+  args.set_allocated_schema(&value);
+  google::protobuf::util::MessageToJsonString(args, &json);
+}
+
 WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)) {
   const char* configuration_ptr = nullptr;
   size_t size;
@@ -89,6 +132,14 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)
     test_fn = &grpc_service_test;
   } else if (configuration == "grpc_service1000") {
     test_fn = &grpc_service1000_test;
+  } else if (configuration == "modify_metadata") {
+    test_fn = &modify_metadata_test;
+  } else if (configuration == "modify_metadata1000") {
+    test_fn = &modify_metadata1000_test;
+  } else if (configuration == "json_serialize") {
+    test_fn = &json_serialize_test;
+  } else if (configuration == "json_deserialize") {
+    test_fn = &json_deserialize_test; 
   } else {
     std::string message = "on_start " + configuration;
     proxy_log(LogLevel::info, message.c_str(), message.size());

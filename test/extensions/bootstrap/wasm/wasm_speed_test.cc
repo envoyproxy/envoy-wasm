@@ -103,6 +103,10 @@ B(string1000)
 B(get_property)
 B(grpc_service)
 B(grpc_service1000)
+B(modify_metadata)
+B(modify_metadata1000)
+B(json_serialize)
+B(json_deserialize)
 
 } // namespace Wasm
 } // namespace Extensions
