@@ -200,8 +200,13 @@ using os_fd_t = int;
 #define MSG_WAITFORONE 0x10000 // recvmmsg(): block until 1+ packets avail.
 // Posix structure for describing messages sent by 'sendmmsg` and received by
 // 'recvmmsg'
+
+#ifndef __EMSCRIPTEN__
+
 struct mmsghdr {
   struct msghdr msg_hdr;
   unsigned int msg_len;
 };
+
+#endif
 #endif
