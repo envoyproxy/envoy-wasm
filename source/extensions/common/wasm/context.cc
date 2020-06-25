@@ -50,7 +50,7 @@ namespace {
 using HashPolicy = envoy::config::route::v3::RouteAction::HashPolicy;
 
 Http::RequestTrailerMapPtr buildRequestTrailerMapFromPairs(const Pairs& pairs) {
-  auto map = std::make_unique<Http::RequestTrailerMapImpl>();
+  auto map = Http::RequestTrailerMapImpl::create();
   for (auto& p : pairs) {
     // Note: because of the lack of a string_view interface for addCopy and
     // the lack of an interface to add an entry with an empty value and return
@@ -62,7 +62,7 @@ Http::RequestTrailerMapPtr buildRequestTrailerMapFromPairs(const Pairs& pairs) {
 }
 
 Http::RequestHeaderMapPtr buildRequestHeaderMapFromPairs(const Pairs& pairs) {
-  auto map = std::make_unique<Http::RequestHeaderMapImpl>();
+  auto map = Http::RequestHeaderMapImpl::create();
   for (auto& p : pairs) {
     // Note: because of the lack of a string_view interface for addCopy and
     // the lack of an interface to add an entry with an empty value and return
