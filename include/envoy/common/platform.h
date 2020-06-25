@@ -193,7 +193,7 @@ using os_fd_t = int;
 // Therefore, we decided to remove the Android check introduced here in
 // https://github.com/envoyproxy/envoy/pull/10120. If someone out there encounters problems with
 // this please bring up in Envoy's slack channel #envoy-udp-quic-dev.
-#if defined(__linux__)
+#if defined(__linux__) || defined(__EMSCRIPTEN__)
 #define ENVOY_MMSG_MORE 1
 #else
 #define ENVOY_MMSG_MORE 0
@@ -201,12 +201,9 @@ using os_fd_t = int;
 // Posix structure for describing messages sent by 'sendmmsg` and received by
 // 'recvmmsg'
 
-#ifndef __EMSCRIPTEN__
-
 struct mmsghdr {
   struct msghdr msg_hdr;
   unsigned int msg_len;
 };
 
-#endif
 #endif
