@@ -24,6 +24,7 @@ FilterStatus ExampleContext::onDownstreamData(size_t data_length, bool end_strea
   WasmDataPtr data = getBufferBytes(WasmBufferType::NetworkDownstreamData, 0, data_length);
   logTrace("onDownstreamData " + std::to_string(id()) + " len=" + std::to_string(data_length) +
            " end_stream=" + std::to_string(end_stream) + "\n" + std::string(data->view()));
+  setBuffer(WasmBufferType::NetworkDownstreamData, 0, 5, "write");
   return FilterStatus::Continue;
 }
 
