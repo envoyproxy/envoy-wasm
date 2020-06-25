@@ -10,8 +10,8 @@ public:
   FilterStatus onNewConnection() override;
   FilterStatus onDownstreamData(size_t data_length, bool end_stream) override;
   FilterStatus onUpstreamData(size_t data_length, bool end_stream) override;
-  void onDownstreamConnectionClose(PeerType peer_type) override;
-  void onUpstreamConnectionClose(PeerType peer_type) override;
+  void onDownstreamConnectionClose(CloseType close_type) override;
+  void onUpstreamConnectionClose(CloseType close_type) override;
 };
 static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext));
 
@@ -34,12 +34,12 @@ FilterStatus ExampleContext::onUpstreamData(size_t data_length, bool end_stream)
   return FilterStatus::Continue;
 }
 
-void ExampleContext::onDownstreamConnectionClose(PeerType peer_type) {
+void ExampleContext::onDownstreamConnectionClose(CloseType close_type) {
   logTrace("onDownstreamConnectionClose " + std::to_string(id()) + " " +
-           std::to_string(static_cast<uint32_t>(peer_type)));
+           std::to_string(static_cast<uint32_t>(close_type)));
 }
 
-void ExampleContext::onUpstreamConnectionClose(PeerType peer_type) {
+void ExampleContext::onUpstreamConnectionClose(CloseType close_type) {
   logTrace("onUpstreamConnectionClose " + std::to_string(id()) + " " +
-           std::to_string(static_cast<uint32_t>(peer_type)));
+           std::to_string(static_cast<uint32_t>(close_type)));
 }
