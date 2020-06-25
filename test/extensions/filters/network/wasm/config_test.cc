@@ -115,6 +115,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineWasm) {
 TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCode) {
   const std::string yaml = absl::StrCat(R"EOF(
   config:
+    name: "test"
     vm_config:
       runtime: "envoy.wasm.runtime.)EOF",
                                         GetParam(), R"EOF("
@@ -127,7 +128,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCode) {
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, context_),
                             Extensions::Common::Wasm::WasmException,
-                            "Failed to initialize Wasm code");
+                            "Unable to create Wasm network filter test");
 }
 
 } // namespace Wasm

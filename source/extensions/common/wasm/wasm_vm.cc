@@ -13,25 +13,33 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-void EnvoyWasmVmIntegration::error(absl::string_view message) {
-  throw WasmException(std::string(message));
-}
+void EnvoyWasmVmIntegration::error(absl::string_view message) { ENVOY_LOG(trace, message); }
 
 WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& scope) {
   if (runtime.empty()) {
-    throw WasmException("Failed to create Wasm VM with unspecified runtime.");
+    ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
+                        "Failed to create Wasm VM with unspecified runtime");
+    return nullptr;
   } else if (runtime == WasmRuntimeNames::get().Null) {
     auto wasm = proxy_wasm::createNullVm();
+    if (!wasm) {
+      return nullptr;
+    }
     wasm->integration() = std::make_unique<EnvoyWasmVmIntegration>(scope, runtime, "null");
     return wasm;
   } else if (runtime == WasmRuntimeNames::get().V8) {
     auto wasm = proxy_wasm::createV8Vm();
+    if (!wasm) {
+      return nullptr;
+    }
     wasm->integration() = std::make_unique<EnvoyWasmVmIntegration>(scope, runtime, "v8");
     return wasm;
   } else {
-    throw WasmException(fmt::format(
-        "Failed to create Wasm VM using {} runtime. Envoy was compiled without support for it.",
-        runtime));
+    ENVOY_LOG_TO_LOGGER(
+        Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
+        "Failed to create Wasm VM using {} runtime. Envoy was compiled without support for it",
+        runtime);
+    return nullptr;
   }
 }
 

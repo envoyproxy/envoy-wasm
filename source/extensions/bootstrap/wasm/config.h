@@ -29,7 +29,8 @@ private:
 using WasmServicePtr = std::unique_ptr<WasmService>;
 using CreateWasmServiceCallback = std::function<void(WasmServicePtr)>;
 
-class WasmFactory : public Server::Configuration::BootstrapExtensionFactory {
+class WasmFactory : public Server::Configuration::BootstrapExtensionFactory,
+                    Logger::Loggable<Logger::Id::wasm> {
 public:
   virtual ~WasmFactory() = default;
   std::string name() const override { return "envoy.bootstrap.wasm"; }

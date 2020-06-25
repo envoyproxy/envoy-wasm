@@ -19,8 +19,10 @@ namespace NetworkFilters {
 namespace Wasm {
 
 using Envoy::Extensions::Common::Wasm::Context;
+using Envoy::Extensions::Common::Wasm::Plugin;
 using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
 using Envoy::Extensions::Common::Wasm::Wasm;
+using proxy_wasm::ContextBase;
 
 class TestFilter : public Context {
 public:
@@ -31,7 +33,7 @@ public:
 
 class TestRoot : public Context {
 public:
-  TestRoot() {}
+  TestRoot(Wasm* wasm, const std::shared_ptr<Plugin>& plugin) : Context(wasm, plugin) {}
   MOCK_CONTEXT_LOG_;
 };
 
@@ -42,7 +44,10 @@ public:
   ~WasmNetworkFilterTest() {}
 
   void setupConfig(const std::string& code) {
-    setupBase(GetParam(), code, std::make_unique<TestRoot>());
+    setupBase(GetParam(), code,
+              [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
+                return new TestRoot(wasm, plugin);
+              });
   }
 
   void setupFilter() { setupFilterBase<TestFilter>(""); }
@@ -60,8 +65,13 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest,
 
 // Bad code in initial config.
 TEST_P(WasmNetworkFilterTest, BadCode) {
-  EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException,
-                            "Failed to initialize Wasm code");
+  setupConfig("bad code");
+  EXPECT_EQ(wasm_, nullptr);
+  setupFilter();
+  filter().isFailed();
+  EXPECT_CALL(read_filter_callbacks_.connection_,
+              close(Envoy::Network::ConnectionCloseType::FlushWrite));
+  EXPECT_EQ(Network::FilterStatus::StopIteration, filter().onNewConnection());
 }
 
 // Test happy path.

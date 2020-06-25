@@ -1,3 +1,3 @@
 all: logging_rust.wasm
 
-include ../../../../api/wasm/rust/Makefile.base
+include ../../../../../api/wasm/rust/Makefile.base

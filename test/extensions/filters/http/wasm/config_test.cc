@@ -25,7 +25,8 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-class WasmFilterConfigTest : public testing::TestWithParam<std::string> {
+class WasmFilterConfigTest : public Event::TestUsingSimulatedTime,
+                             public testing::TestWithParam<std::string> {
 protected:
   WasmFilterConfigTest() : api_(Api::createApiForTest(stats_store_)) {
     ON_CALL(context_, api()).WillByDefault(ReturnRef(*api_));
@@ -167,7 +168,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             Extensions::Common::Wasm::WasmException,
-                            "Failed to initialize Wasm code");
+                            "Unable to create Wasm HTTP filter ");
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasm) {
@@ -257,9 +258,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailOnUncachedThenSucceed) {
             return &request;
           }));
 
-  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load Wasm code (fetching) from https://example.com/data");
+  factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+
   EXPECT_CALL(init_watcher_, ready());
   context_.initManager().initialize(init_watcher_);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
@@ -314,7 +314,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
       .WillRepeatedly(ReturnRef(cluster_manager_.async_client_));
 
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
-      .WillOnce(
+      .WillRepeatedly(
           Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
             callbacks.onSuccess(
@@ -325,9 +325,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
           }));
 
   // Case 1: fail and fetch in the background, got 503, cache failure.
-  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load Wasm code (fetching) from https://example.com/data");
+  factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+
   EXPECT_CALL(init_watcher_, ready());
   context_.initManager().initialize(init_watcher_);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
@@ -337,9 +336,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
   Init::ExpectableWatcherImpl init_watcher2;
 
   EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager2));
-  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load Wasm code (cached) from https://example.com/data");
+  factory.createFilterFactoryFromProto(proto_config, "stats", context_);
 
   EXPECT_CALL(init_watcher2, ready());
   init_manager2.initialize(init_watcher2);
@@ -366,9 +363,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
 
   EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager3));
 
-  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load Wasm code (fetching) from https://example.com/data");
+  factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+
   EXPECT_CALL(init_watcher3, ready());
   init_manager3.initialize(init_watcher3);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
@@ -421,9 +417,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
 
   EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager5));
 
-  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config2, "stats", context_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load Wasm code (fetching) from https://example.com/data");
+  factory.createFilterFactoryFromProto(proto_config2, "stats", context_);
+
   EXPECT_CALL(init_watcher_, ready());
   context_.initManager().initialize(init_watcher_);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
@@ -434,9 +429,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
 
   EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager6));
 
-  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to load Wasm code (fetching) from https://example.com/data");
+  factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+
   EXPECT_CALL(init_watcher6, ready());
   init_manager6.initialize(init_watcher6);
   EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
@@ -500,9 +494,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteConnectionReset) {
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(
-      context_.initManager().initialize(init_watcher_), Extensions::Common::Wasm::WasmException,
-      "Failed to load Wasm code (fetch failed) from https://example.com/data");
+  context_.initManager().initialize(init_watcher_);
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
@@ -546,9 +538,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessWith503) {
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(
-      context_.initManager().initialize(init_watcher_), Extensions::Common::Wasm::WasmException,
-      "Failed to load Wasm code (fetch failed) from https://example.com/data");
+  context_.initManager().initialize(init_watcher_);
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
@@ -592,9 +582,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(
-      context_.initManager().initialize(init_watcher_), Extensions::Common::Wasm::WasmException,
-      "Failed to load Wasm code (fetch failed) from https://example.com/data");
+  context_.initManager().initialize(init_watcher_);
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteMultipleRetries) {
@@ -708,9 +696,71 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
 
   Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
   EXPECT_CALL(init_watcher_, ready());
-  EXPECT_THROW_WITH_MESSAGE(context_.initManager().initialize(init_watcher_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Failed to initialize Wasm code");
+  context_.initManager().initialize(init_watcher_);
+
+  // Fail closed.
+  Http::MockFilterChainFactoryCallbacks filter_callback;
+  Extensions::Common::Wasm::ContextSharedPtr context;
+  EXPECT_CALL(filter_callback, addStreamFilter(_))
+      .WillOnce(Invoke([&context](Http::StreamFilterSharedPtr filter) {
+        context = std::static_pointer_cast<Extensions::Common::Wasm::Context>(filter);
+      }));
+  EXPECT_CALL(filter_callback, addAccessLogHandler(_));
+  cb(filter_callback);
+  EXPECT_EQ(context->wasm(), nullptr);
+  EXPECT_TRUE(context->isFailed());
+
+  Http::MockStreamDecoderFilterCallbacks decoder_callbacks;
+  context->setDecoderFilterCallbacks(decoder_callbacks);
+  EXPECT_CALL(decoder_callbacks, resetStream());
+
+  EXPECT_EQ(context->onRequestHeaders(10, false), proxy_wasm::FilterHeadersStatus::StopIteration);
+}
+
+TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcodeFailOpen) {
+  const std::string code = "foo";
+  const std::string sha256 = Hex::encode(
+      Envoy::Common::Crypto::UtilitySingleton::get().getSha256Digest(Buffer::OwnedImpl(code)));
+  const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
+  config:
+    fail_open: true
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
+                                                                    GetParam(), R"EOF("
+      code:
+        remote:
+          http_uri:
+            uri: https://example.com/data
+            cluster: cluster_1
+            timeout: 5s
+          sha256: )EOF",
+                                                                    sha256));
+  envoy::extensions::filters::http::wasm::v3::Wasm proto_config;
+  TestUtility::loadFromYaml(yaml, proto_config);
+  WasmFilterConfig factory;
+  NiceMock<Http::MockAsyncClient> client;
+  NiceMock<Http::MockAsyncClientRequest> request(&client);
+
+  EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
+      .WillOnce(ReturnRef(cluster_manager_.async_client_));
+  EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
+      .WillOnce(
+          Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
+                     const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
+            Http::ResponseMessagePtr response(
+                new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                    new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
+            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            callbacks.onSuccess(request, std::move(response));
+            return nullptr;
+          }));
+
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+  EXPECT_CALL(init_watcher_, ready());
+  context_.initManager().initialize(init_watcher_);
+  Http::MockFilterChainFactoryCallbacks filter_callback;
+  // The filter is not registered.
+  cb(filter_callback);
 }
 
 } // namespace Wasm
