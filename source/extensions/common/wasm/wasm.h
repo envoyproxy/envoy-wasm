@@ -122,7 +122,7 @@ using WasmHandleSharedPtr = std::shared_ptr<WasmHandle>;
 using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 
 // Returns false if createWasm failed synchronously. This is necessary because xDS *MUST* report
-// all failures syncronously as it has no facility to report configuration update failures
+// all failures synchronously as it has no facility to report configuration update failures
 // asynchronously. Callers should throw an exception if they are part of a synchronous xDS update
 // because that is the mechanism for reporting configuration errors.
 bool createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
