@@ -1287,14 +1287,14 @@ void Context::onDestroy() {
   onDone();
 }
 
-WasmResult Context::continueStream(StreamType stream_type) {
+WasmResult Context::continueStream(WasmStreamType stream_type) {
   switch (stream_type) {
-  case StreamType::Request:
+  case WasmStreamType::Request:
     if (decoder_callbacks_) {
       decoder_callbacks_->continueDecoding();
     }
     break;
-  case StreamType::Response:
+  case WasmStreamType::Response:
     if (encoder_callbacks_) {
       encoder_callbacks_->continueEncoding();
     }
@@ -1307,6 +1307,32 @@ WasmResult Context::continueStream(StreamType stream_type) {
   request_trailers_ = nullptr;
   request_metadata_ = nullptr;
   return WasmResult::Ok;
+}
+
+WasmResult Context::closeStream(WasmStreamType stream_type) {
+  switch (stream_type) {
+  case WasmStreamType::Request:
+    if (decoder_callbacks_) {
+      decoder_callbacks_->resetStream();
+    }
+    return WasmResult::Ok;
+  case WasmStreamType::Response:
+    if (encoder_callbacks_) {
+      encoder_callbacks_->resetStream();
+    }
+    return WasmResult::Ok;
+  case WasmStreamType::Downstream:
+    if (network_read_filter_callbacks_) {
+      network_read_filter_callbacks_->connection().close(
+          Envoy::Network::ConnectionCloseType::FlushWrite);
+    }
+    return WasmResult::Ok;
+  case WasmStreamType::Upstream:
+    network_write_filter_callbacks_->connection().close(
+        Envoy::Network::ConnectionCloseType::FlushWrite);
+    return WasmResult::Ok;
+  }
+  return WasmResult::BadArgument;
 }
 
 WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view body_text,

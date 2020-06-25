@@ -34,12 +34,12 @@ using proxy_wasm::PairsWithStringValues;
 using proxy_wasm::PluginBase;
 using proxy_wasm::SharedQueueDequeueToken;
 using proxy_wasm::SharedQueueEnqueueToken;
-using proxy_wasm::StreamType;
 using proxy_wasm::WasmBase;
 using proxy_wasm::WasmBufferType;
 using proxy_wasm::WasmHandleBase;
 using proxy_wasm::WasmHeaderMapType;
 using proxy_wasm::WasmResult;
+using proxy_wasm::WasmStreamType;
 
 using GrpcService = envoy::config::core::v3::GrpcService;
 
@@ -202,7 +202,8 @@ public:
                              std::unique_ptr<const WasmStatePrototype> state_prototype);
 
   // Continue
-  WasmResult continueStream(StreamType stream_type) override;
+  WasmResult continueStream(WasmStreamType stream_type) override;
+  WasmResult closeStream(WasmStreamType stream_type) override;
   WasmResult sendLocalResponse(uint32_t response_code, absl::string_view body_text,
                                Pairs additional_headers, uint32_t grpc_status,
                                absl::string_view details) override;
@@ -224,7 +225,7 @@ public:
   // Buffer
   BufferInterface* getBuffer(WasmBufferType type) override;
   // TODO: use stream_type.
-  bool endOfStream(StreamType /* stream_type */) override { return end_of_stream_; }
+  bool endOfStream(WasmStreamType /* stream_type */) override { return end_of_stream_; }
 
   // HTTP
   WasmResult httpCall(absl::string_view cluster, const Pairs& request_headers,
