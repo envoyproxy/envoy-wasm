@@ -47,7 +47,7 @@ public:
 
   void setupFilter() { setupFilterBase<TestFilter>(""); }
 
-  TestFilter& filter() { return *static_cast<TestFilter*>(filter_.get()); }
+  TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest,
@@ -71,12 +71,12 @@ TEST_P(WasmNetworkFilterTest, HappyPath) {
   setupFilter();
 
   EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
-  EXPECT_EQ(Network::FilterStatus::Continue, filter_->onNewConnection());
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onNewConnection());
 
   Buffer::OwnedImpl fake_downstream_data("Fake");
   EXPECT_CALL(filter(), log_(spdlog::level::trace,
                              Eq(absl::string_view("onDownstreamData 2 len=4 end_stream=0\nFake"))));
-  EXPECT_EQ(Network::FilterStatus::Continue, filter_->onData(fake_downstream_data, false));
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onData(fake_downstream_data, false));
   EXPECT_EQ(fake_downstream_data.toString(), "write");
 
   Buffer::OwnedImpl fake_upstream_data("Done");
@@ -84,7 +84,7 @@ TEST_P(WasmNetworkFilterTest, HappyPath) {
                              Eq(absl::string_view("onUpstreamData 2 len=4 end_stream=1\nDone"))));
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onUpstreamConnectionClose 2 0"))));
-  EXPECT_EQ(Network::FilterStatus::Continue, filter_->onWrite(fake_upstream_data, true));
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onWrite(fake_upstream_data, true));
 
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));

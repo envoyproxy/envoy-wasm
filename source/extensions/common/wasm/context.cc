@@ -80,10 +80,10 @@ template <typename P> static uint32_t headerSize(const P& p) { return p ? p->siz
 // Test support.
 
 size_t Buffer::size() const {
-  if (buffer_instance_) {
-    return buffer_instance_->length();
+  if (const_buffer_instance_) {
+    return const_buffer_instance_->length();
   }
-  return data_.size();
+  return proxy_wasm::BufferBase::size();
 }
 
 WasmResult Buffer::copyTo(WasmBase* wasm, size_t start, size_t length, uint64_t ptr_ptr,
@@ -103,11 +103,7 @@ WasmResult Buffer::copyTo(WasmBase* wasm, size_t start, size_t length, uint64_t 
     }
     return WasmResult::Ok;
   }
-  absl::string_view s = data_.substr(start, length);
-  if (!wasm->copyToPointerSize(s, ptr_ptr, size_ptr)) {
-    return WasmResult::InvalidMemoryAccess;
-  }
-  return WasmResult::Ok;
+  return proxy_wasm::BufferBase::copyTo(wasm, start, length, ptr_ptr, size_ptr);
 }
 
 WasmResult Buffer::copyFrom(size_t start, size_t length, absl::string_view data) {
@@ -133,8 +129,7 @@ WasmResult Buffer::copyFrom(size_t start, size_t length, absl::string_view data)
   if (const_buffer_instance_) { // This buffer is immutable.
     return WasmResult::BadArgument;
   }
-  // Setting a string buffer not supported (no use case).
-  return WasmResult::BadArgument;
+  return proxy_wasm::BufferBase::copyFrom(start, length, data);
 }
 
 Context::Context() = default;
@@ -157,11 +152,6 @@ void Context::initializeRoot(WasmBase* wasm, std::shared_ptr<PluginBase> plugin)
   root_local_info_ = &std::static_pointer_cast<Plugin>(plugin)->local_info_;
 }
 
-WasmResult Context::setTimerPeriod(std::chrono::milliseconds tick_period, uint32_t*) {
-  wasm()->setTimerPeriod(root_context_id_ ? root_context_id_ : id_, tick_period);
-  return WasmResult::Ok;
-}
-
 uint64_t Context::getCurrentTimeNanoseconds() {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
              wasm()->time_source_.systemTime().time_since_epoch())
@@ -176,6 +166,45 @@ void Context::onCloseTCP() {
   onDone();
   onLog();
   onDelete();
+}
+
+void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::ResolutionStatus status,
+                           std::list<Envoy::Network::DnsResponse>&& response) {
+  proxy_wasm::DeferAfterCallActions actions(this);
+  if (!wasm()->on_resolve_dns_) {
+    return;
+  }
+  if (status != Network::DnsResolver::ResolutionStatus::Success) {
+    buffer_.set("");
+    wasm()->on_resolve_dns_(this, id_, token, 0);
+    return;
+  }
+  // buffer format:
+  //    4 bytes number of entries = N
+  //    N * 4 bytes TTL for each entry
+  //    N * null-terminated addresses
+  uint32_t s = 4; // length
+  for (auto& e : response) {
+    s += 4;                                     // for TTL
+    s += e.address_->asStringView().size() + 1; // null terminated.
+  }
+  auto buffer = std::unique_ptr<char[]>(new char[s]);
+  char* b = buffer.get();
+  uint32_t n = response.size();
+  memcpy(b, &n, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  for (auto& e : response) {
+    uint32_t ttl = e.ttl_.count();
+    memcpy(b, &ttl, sizeof(uint32_t));
+    b += sizeof(uint32_t);
+  };
+  for (auto& e : response) {
+    memcpy(b, e.address_->asStringView().data(), e.address_->asStringView().size());
+    b += e.address_->asStringView().size();
+    *b++ = 0;
+  };
+  buffer_.set(std::move(buffer), s);
+  wasm()->on_resolve_dns_(this, id_, token, s);
 }
 
 // Native serializer carrying over bit representation from CEL value to the extension
@@ -638,6 +667,9 @@ WasmResult Context::getHeaderMapSize(WasmHeaderMapType type, uint32_t* result) {
 
 BufferInterface* Context::getBuffer(WasmBufferType type) {
   switch (type) {
+  case WasmBufferType::CallData:
+    // Set before the call.
+    return &buffer_;
   case WasmBufferType::VmConfiguration:
     return buffer_.set(wasm()->vm_configuration());
   case WasmBufferType::PluginConfiguration:
@@ -1193,9 +1225,7 @@ Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus stat
 };
 
 Network::FilterStatus Context::onNewConnection() {
-  if (!in_vm_context_created_) {
-    onCreate(root_context_id_);
-  }
+  onCreate();
   return convertNetworkFilterStatus(onNetworkNewConnection());
 };
 
@@ -1259,7 +1289,7 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
                   const Http::ResponseHeaderMap* response_headers,
                   const Http::ResponseTrailerMap* response_trailers,
                   const StreamInfo::StreamInfo& stream_info) {
-  if (!in_vm_context_created_) {
+  if (!http_request_started_) {
     return;
   }
   access_log_request_headers_ = request_headers;
@@ -1353,9 +1383,8 @@ WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view 
 }
 
 Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers, bool end_stream) {
-  if (!in_vm_context_created_) {
-    onCreate(root_context_id_);
-  }
+  onCreate();
+  http_request_started_ = true;
   request_headers_ = &headers;
   end_of_stream_ = end_stream;
   auto result = convertFilterHeadersStatus(onRequestHeaders(headerSize(&headers), end_stream));
@@ -1366,7 +1395,7 @@ Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers
 }
 
 Http::FilterDataStatus Context::decodeData(::Envoy::Buffer::Instance& data, bool end_stream) {
-  if (!in_vm_context_created_) {
+  if (!http_request_started_) {
     return Http::FilterDataStatus::Continue;
   }
   request_body_buffer_ = &data;
@@ -1388,7 +1417,7 @@ Http::FilterDataStatus Context::decodeData(::Envoy::Buffer::Instance& data, bool
 }
 
 Http::FilterTrailersStatus Context::decodeTrailers(Http::RequestTrailerMap& trailers) {
-  if (!in_vm_context_created_) {
+  if (!http_request_started_) {
     return Http::FilterTrailersStatus::Continue;
   }
   request_trailers_ = &trailers;
@@ -1400,7 +1429,7 @@ Http::FilterTrailersStatus Context::decodeTrailers(Http::RequestTrailerMap& trai
 }
 
 Http::FilterMetadataStatus Context::decodeMetadata(Http::MetadataMap& request_metadata) {
-  if (!in_vm_context_created_) {
+  if (!http_request_started_) {
     return Http::FilterMetadataStatus::Continue;
   }
   request_metadata_ = &request_metadata;
@@ -1421,12 +1450,7 @@ Http::FilterHeadersStatus Context::encode100ContinueHeaders(Http::ResponseHeader
 
 Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& headers,
                                                  bool end_stream) {
-  if (!in_vm_context_created_) {
-    // If the request is invalid then onRequestHeaders() will not be called and neither will
-    // onCreate() then sendLocalReply be called which will call this function. We have two choices,
-    // we can call onCreate() so that the Context inside the VM is created before the
-    // onResponseHeaders() call or we can just return. Since the Filter has not seen the request it
-    // makes more sense to just return here.
+  if (!http_request_started_) {
     return Http::FilterHeadersStatus::Continue;
   }
   response_headers_ = &headers;
@@ -1439,7 +1463,7 @@ Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& header
 }
 
 Http::FilterDataStatus Context::encodeData(::Envoy::Buffer::Instance& data, bool end_stream) {
-  if (!in_vm_context_created_) {
+  if (!http_request_started_) {
     return Http::FilterDataStatus::Continue;
   }
   response_body_buffer_ = &data;
@@ -1461,7 +1485,7 @@ Http::FilterDataStatus Context::encodeData(::Envoy::Buffer::Instance& data, bool
 }
 
 Http::FilterTrailersStatus Context::encodeTrailers(Http::ResponseTrailerMap& trailers) {
-  if (!in_vm_context_created_) {
+  if (!http_request_started_) {
     return Http::FilterTrailersStatus::Continue;
   }
   response_trailers_ = &trailers;
@@ -1473,7 +1497,7 @@ Http::FilterTrailersStatus Context::encodeTrailers(Http::ResponseTrailerMap& tra
 }
 
 Http::FilterMetadataStatus Context::encodeMetadata(Http::MetadataMap& response_metadata) {
-  if (!in_vm_context_created_) {
+  if (!http_request_started_) {
     return Http::FilterMetadataStatus::Continue;
   }
   response_metadata_ = &response_metadata;

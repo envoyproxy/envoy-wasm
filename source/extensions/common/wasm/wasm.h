@@ -57,13 +57,17 @@ public:
   Context* getRootContext(absl::string_view root_id) {
     return static_cast<Context*>(WasmBase::getRootContext(root_id));
   }
-  void setTimerPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
+  void setTimerPeriod(uint32_t root_context_id, std::chrono::milliseconds period) override;
   virtual void tickHandler(uint32_t root_context_id);
+  std::shared_ptr<Wasm> sharedThis() { return std::static_pointer_cast<Wasm>(shared_from_this()); }
+  Network::DnsResolverSharedPtr& dnsResolver() { return dns_resolver_; }
 
   // WasmBase
-  void error(absl::string_view message) override { throw WasmException(std::string(message)); }
   proxy_wasm::CallOnThreadFunction callOnThreadFunction() override;
   ContextBase* createContext(std::shared_ptr<PluginBase> plugin) override;
+  void registerCallbacks() override;
+  void getFunctions() override;
+  void error(absl::string_view message) override { throw WasmException(std::string(message)); }
 
   // AccessLog::Instance
   void log(absl::string_view root_id, const Http::RequestHeaderMap* request_headers,
@@ -72,11 +76,19 @@ public:
            const StreamInfo::StreamInfo& stream_info);
 
   void initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier);
+  uint32_t nextDnsToken() {
+    do {
+      dns_token_++;
+    } while (!dns_token_);
+    return dns_token_;
+  }
 
 private:
   friend class Context;
 
   void initializeStats();
+  // Calls into the VM.
+  proxy_wasm::WasmCallVoid<3> on_resolve_dns_;
 
   Stats::ScopeSharedPtr scope_;
   Upstream::ClusterManager& cluster_manager_;
@@ -92,6 +104,9 @@ private:
   absl::flat_hash_map<uint32_t, Stats::Counter*> counters_;
   absl::flat_hash_map<uint32_t, Stats::Gauge*> gauges_;
   absl::flat_hash_map<uint32_t, Stats::Histogram*> histograms_;
+
+  Network::DnsResolverSharedPtr dns_resolver_;
+  uint32_t dns_token_ = 1;
 };
 using WasmSharedPtr = std::shared_ptr<Wasm>;
 

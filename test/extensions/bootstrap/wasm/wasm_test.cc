@@ -113,7 +113,7 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("onDelete logging")));
 
   EXPECT_TRUE(wasm_weak.lock()->initialize(code, false));
-  wasm_weak.lock()->setContext(context.get());
+  wasm_weak.lock()->setContextForTesting(context.get());
   auto root_context = context.get();
   wasm_weak.lock()->startForTesting(std::move(context), plugin_);
   wasm_weak.lock()->configure(root_context, plugin_);
@@ -165,7 +165,7 @@ TEST_P(WasmTest, DivByZero) {
   auto context = std::make_unique<TestContext>(wasm_.get());
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("before div by zero")));
   EXPECT_TRUE(wasm_->initialize(code, false));
-  wasm_->setContext(context.get());
+  wasm_->setContextForTesting(context.get());
 
   if (GetParam() == "v8") {
     EXPECT_THROW_WITH_MESSAGE(
@@ -262,7 +262,7 @@ TEST_P(WasmTest, StatsHigherLevel) {
                                             "histogram_bool_tag.true.test_histogram"))));
 
   EXPECT_TRUE(wasm_->initialize(code, false));
-  wasm_->setContext(context.get());
+  wasm_->setContextForTesting(context.get());
   context->onTick(0);
 }
 
@@ -289,7 +289,7 @@ TEST_P(WasmTest, StatsHighLevel) {
   // Get is not supported on histograms.
   // EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_h = 3")));
   EXPECT_TRUE(wasm_->initialize(code, false));
-  wasm_->setContext(context.get());
+  wasm_->setContextForTesting(context.get());
   context->onLog();
 }
 

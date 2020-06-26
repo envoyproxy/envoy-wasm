@@ -72,11 +72,11 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
   }
   EXPECT_FALSE(code.empty());
   EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->setContext(root_context);
+  wasm->setContextForTesting(root_context);
   wasm->startForTesting(std::unique_ptr<Common::Wasm::Context>(root_context), plugin);
   EXPECT_NE(wasm, nullptr);
   for (auto _ : state) {
-    wasm->tick(root_context->id());
+    wasm->timerReady(root_context->id());
   }
 }
 

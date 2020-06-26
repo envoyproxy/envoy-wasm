@@ -9,6 +9,10 @@
 
 #include "absl/strings/str_cat.h"
 
+#define WASM_CONTEXT(_c)                                                                           \
+  static_cast<Context*>(proxy_wasm::exports::ContextOrEffectiveContext(                            \
+      static_cast<proxy_wasm::ContextBase*>((void)_c, proxy_wasm::current_context_)))
+
 namespace Envoy {
 
 using ScopeWeakPtr = std::weak_ptr<Stats::Scope>;
@@ -134,36 +138,15 @@ Wasm::Wasm(WasmHandleSharedPtr base_wasm_handle, Event::Dispatcher& dispatcher)
   ENVOY_LOG(debug, "Thread-Local Wasm created {} now active", active_wasms);
 }
 
-void Wasm::setTimerPeriod(uint32_t context_id, std::chrono::milliseconds new_tick_period) {
-  auto& tick_period = tick_period_[context_id];
-  auto& timer = timer_[context_id];
-  bool was_running = timer && tick_period.count() > 0;
-  tick_period = new_tick_period;
-  if (was_running) {
-    timer->disableTimer();
-  }
-  if (tick_period.count() > 0) {
-    timer = dispatcher_.createTimer(
-        [weak = std::weak_ptr<Wasm>(std::static_pointer_cast<Wasm>(shared_from_this())),
-         context_id]() {
-          auto shared = weak.lock();
-          if (shared) {
-            shared->tickHandler(context_id);
-          }
-        });
-    timer->enableTimer(tick_period);
-  }
-}
-
 void Wasm::tickHandler(uint32_t root_context_id) {
-  auto tick_period = tick_period_.find(root_context_id);
+  auto period = timer_period_.find(root_context_id);
   auto timer = timer_.find(root_context_id);
-  if (tick_period == tick_period_.end() || timer == timer_.end() || !on_tick_) {
+  if (period == timer_period_.end() || timer == timer_.end() || !on_tick_) {
     return;
   }
-  tick(root_context_id);
-  if (timer->second && tick_period->second.count() > 0) {
-    timer->second->enableTimer(tick_period->second);
+  timerReady(root_context_id);
+  if (timer->second && period->second.count() > 0) {
+    timer->second->enableTimer(period->second);
   }
 }
 
@@ -176,6 +159,54 @@ Wasm::~Wasm() {
   }
 }
 
+// NOLINTNEXTLINE(readability-identifier-naming)
+Word resolve_dns(void* raw_context, Word dns_address_ptr, Word dns_address_size, Word token_ptr) {
+  auto context = WASM_CONTEXT(raw_context);
+  auto root_context = context->isRootContext() ? context : context->rootContext();
+  auto path = context->wasmVm()->getMemory(dns_address_ptr, dns_address_size);
+  if (!path) {
+    return WasmResult::InvalidMemoryAccess;
+  }
+  // Verify set and verify token_ptr before initiating the async resolve.
+  uint32_t token = context->wasm()->nextDnsToken();
+  if (!context->wasm()->setDatatype(token_ptr, token)) {
+    return WasmResult::InvalidMemoryAccess;
+  }
+  auto callback = [weak_wasm = std::weak_ptr<Wasm>(context->wasm()->sharedThis()), root_context,
+                   context_id = context->id(),
+                   token](Envoy::Network::DnsResolver::ResolutionStatus status,
+                          std::list<Envoy::Network::DnsResponse>&& response) {
+    auto wasm = weak_wasm.lock();
+    if (!wasm) {
+      return;
+    }
+    root_context->onResolveDns(token, status, std::move(response));
+  };
+  if (!context->wasm()->dnsResolver()) {
+    context->wasm()->dnsResolver() = context->wasm()->dispatcher().createDnsResolver({}, false);
+  }
+  context->wasm()->dnsResolver()->resolve(std::string(path.value()), Network::DnsLookupFamily::Auto,
+                                          callback);
+  return WasmResult::Ok;
+}
+
+void Wasm::registerCallbacks() {
+  WasmBase::registerCallbacks();
+#define _REGISTER(_fn)                                                                             \
+  wasm_vm_->registerCallback(                                                                      \
+      "env", "envoy_" #_fn, &_fn,                                                                  \
+      &proxy_wasm::ConvertFunctionWordToUint32<decltype(_fn), _fn>::convertFunctionWordToUint32)
+  _REGISTER(resolve_dns);
+#undef _REGISTER
+}
+
+void Wasm::getFunctions() {
+  WasmBase::getFunctions();
+#define _GET(_fn) wasm_vm_->getFunction("envoy_" #_fn, &_fn##_);
+  _GET(on_resolve_dns)
+#undef _GET
+}
+
 proxy_wasm::CallOnThreadFunction Wasm::callOnThreadFunction() {
   auto& dispatcher = dispatcher_;
   return [&dispatcher](const std::function<void()>& f) { return dispatcher.post(f); };
@@ -186,6 +217,27 @@ ContextBase* Wasm::createContext(std::shared_ptr<PluginBase> plugin) {
     return new Context(this, std::static_pointer_cast<Plugin>(plugin));
   }
   return new Context(this);
+}
+
+void Wasm::setTimerPeriod(uint32_t context_id, std::chrono::milliseconds new_period) {
+  auto& period = timer_period_[context_id];
+  auto& timer = timer_[context_id];
+  bool was_running = timer && period.count() > 0;
+  period = new_period;
+  if (was_running) {
+    timer->disableTimer();
+  }
+  if (period.count() > 0) {
+    timer = dispatcher_.createTimer(
+        [weak = std::weak_ptr<Wasm>(std::static_pointer_cast<Wasm>(shared_from_this())),
+         context_id]() {
+          auto shared = weak.lock();
+          if (shared) {
+            shared->tickHandler(context_id);
+          }
+        });
+    timer->enableTimer(period);
+  }
 }
 
 void Wasm::log(absl::string_view root_id, const Http::RequestHeaderMap* request_headers,

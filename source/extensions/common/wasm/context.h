@@ -16,7 +16,6 @@
 #include "extensions/filters/common/expr/evaluator.h"
 
 #include "eval/public/activation.h"
-#include "include/proxy-wasm/context.h"
 #include "include/proxy-wasm/wasm.h"
 
 namespace Envoy {
@@ -24,10 +23,9 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-#include "proxy_wasm_common.h"
-
 using proxy_wasm::BufferInterface;
 using proxy_wasm::CloseType;
+using proxy_wasm::ContextBase;
 using proxy_wasm::MetricType;
 using proxy_wasm::Pairs;
 using proxy_wasm::PairsWithStringValues;
@@ -40,6 +38,7 @@ using proxy_wasm::WasmHandleBase;
 using proxy_wasm::WasmHeaderMapType;
 using proxy_wasm::WasmResult;
 using proxy_wasm::WasmStreamType;
+using proxy_wasm::Word;
 
 using GrpcService = envoy::config::core::v3::GrpcService;
 
@@ -53,30 +52,43 @@ public:
   virtual ~StorageObject() = default;
 };
 
-class Buffer : public proxy_wasm::BufferInterface {
+class Buffer : public proxy_wasm::BufferBase {
 public:
   Buffer() = default;
 
-  Buffer* set(absl::string_view data) {
-    data_ = data;
-    const_buffer_instance_ = nullptr;
-    buffer_instance_ = nullptr;
-    return this;
-  }
-  Buffer* set(::Envoy::Buffer::Instance* buffer_instance) {
-    data_ = "";
-    buffer_instance_ = buffer_instance;
-    const_buffer_instance_ = buffer_instance;
-    return this;
-  }
-
+  // proxy_wasm::BufferInterface
   size_t size() const override;
   WasmResult copyTo(WasmBase* wasm, size_t start, size_t length, uint64_t ptr_ptr,
                     uint64_t size_ptr) const override;
   WasmResult copyFrom(size_t start, size_t length, absl::string_view data) override;
 
+  // proxy_wasm::BufferBase
+  void clear() override {
+    proxy_wasm::BufferBase::clear();
+    const_buffer_instance_ = nullptr;
+    buffer_instance_ = nullptr;
+  }
+  Buffer* set(absl::string_view data) {
+    return static_cast<Buffer*>(proxy_wasm::BufferBase::set(data));
+  }
+  Buffer* set(std::unique_ptr<char[]> owned_data, uint32_t owned_data_size) {
+    return static_cast<Buffer*>(
+        proxy_wasm::BufferBase::set(std::move(owned_data), owned_data_size));
+  }
+
+  Buffer* set(::Envoy::Buffer::Instance* buffer_instance) {
+    clear();
+    buffer_instance_ = buffer_instance;
+    const_buffer_instance_ = buffer_instance;
+    return this;
+  }
+  Buffer* set(const ::Envoy::Buffer::Instance* buffer_instance) {
+    clear();
+    const_buffer_instance_ = buffer_instance;
+    return this;
+  }
+
 private:
-  absl::string_view data_;
   const ::Envoy::Buffer::Instance* const_buffer_instance_{};
   ::Envoy::Buffer::Instance* buffer_instance_{};
 };
@@ -118,6 +130,7 @@ public:
   Plugin* plugin() const;
   Context* rootContext() const;
   Upstream::ClusterManager& clusterManager() const;
+  Buffer& buffer() { return buffer_; }
 
   // proxy_wasm::ContextBase
   void error(absl::string_view message) override;
@@ -191,7 +204,6 @@ public:
 
   // General
   WasmResult log(uint32_t level, absl::string_view message) override;
-  WasmResult setTimerPeriod(std::chrono::milliseconds tick_period, uint32_t* token) override;
   uint64_t getCurrentTimeNanoseconds() override;
   std::pair<uint32_t, absl::string_view> getStatus() override;
 
@@ -251,6 +263,10 @@ public:
   WasmResult grpcClose(uint32_t token) override;
   WasmResult grpcCancel(uint32_t token) override;
   WasmResult grpcSend(uint32_t token, absl::string_view message, bool end_stream) override;
+
+  // Envoy specific ABI
+  void onResolveDns(uint32_t token, Envoy::Network::DnsResolver::ResolutionStatus status,
+                    std::list<Envoy::Network::DnsResponse>&& response);
 
   // CEL evaluation
   std::vector<const google::api::expr::runtime::CelFunction*>
@@ -399,6 +415,7 @@ protected:
   ::Envoy::Buffer::Instance* network_upstream_data_buffer_{};
 
   // HTTP filter state.
+  bool http_request_started_ = false; // When decodeHeaders() is called the request is "started".
   Http::RequestHeaderMap* request_headers_{};
   Http::ResponseHeaderMap* response_headers_{};
   ::Envoy::Buffer::Instance* request_body_buffer_{};
