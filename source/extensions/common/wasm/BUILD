@@ -1,9 +1,8 @@
-load("@rules_proto//proto:defs.bzl", "proto_library")
-load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
+    "envoy_proto_library",
 )
 
 licenses(["notice"])  # Apache 2
@@ -97,13 +96,7 @@ envoy_cc_library(
     ],
 )
 
-cc_proto_library(
-    name = "declare_property_cc_proto",
-    deps = [":declare_property_wasm_proto"],
-)
-
-proto_library(
-    name = "declare_property_wasm_proto",
+envoy_proto_library(
+    name = "declare_property",
     srcs = ["declare_property.proto"],
-    visibility = ["//visibility:public"],
 )

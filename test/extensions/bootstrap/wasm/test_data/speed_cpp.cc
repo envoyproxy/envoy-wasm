@@ -13,11 +13,35 @@ using envoy::config::core::v3::GrpcService;
 #include "include/proxy-wasm/null_plugin.h"
 #endif
 
-#include "source/extensions/common/wasm/declare_property.pb.h"
-
 START_WASM_PLUGIN(WasmSpeedCpp)
 
 int xDoNotRemove = 0;
+
+google::protobuf::Arena arena;
+
+google::protobuf::Struct args;
+google::protobuf::Struct* args_arena =
+    google::protobuf::Arena::CreateMessage<google::protobuf::Struct>(&arena);
+const std::string configuration = R"EOF(
+  {
+    "NAME":"test_pod",
+    "NAMESPACE":"test_namespace",
+    "LABELS": {
+        "app": "productpage",
+        "version": "v1",
+        "pod-template-hash": "84975bc778"
+    },
+    "OWNER":"test_owner",
+    "WORKLOAD_NAME":"test_workload",
+    "PLATFORM_METADATA":{
+        "gcp_project":"test_project",
+        "gcp_cluster_location":"test_location",
+        "gcp_cluster_name":"test_cluster"
+    },
+    "ISTIO_VERSION":"istio-1.4",
+    "MESH_ID":"test-mesh"
+  }
+  )EOF";
 
 void (*test_fn)() = nullptr;
 
@@ -93,24 +117,20 @@ void modify_metadata1000_test() {
   }
 }
 
-void json_serialize_test() {
-  const std::string configuration = R"EOF(
-  "NAME": "example",
-  "READONLY":true
-  )EOF";
-  envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
-  google::protobuf::util::JsonStringToMessage(configuration, &args);
+void json_serialize_test() { google::protobuf::util::JsonStringToMessage(configuration, &args); }
+
+void json_serialize_arena_test() {
+  google::protobuf::util::JsonStringToMessage(configuration, args_arena);
 }
 
 void json_deserialize_test() {
   std::string json;
-  std::string value = "foo";
-  envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
-
-  args.set_name(value);
-  args.set_readonly(true);
-  args.set_allocated_schema(&value);
   google::protobuf::util::MessageToJsonString(args, &json);
+}
+
+void json_deserialize_arena_test() {
+  std::string json;
+  google::protobuf::util::MessageToJsonString(*args_arena, &json);
 }
 
 WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)) {
@@ -139,8 +159,12 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)
     test_fn = &modify_metadata1000_test;
   } else if (configuration == "json_serialize") {
     test_fn = &json_serialize_test;
+  } else if (configuration == "json_serialize_arena") {
+    test_fn = &json_serialize_arena_test;
   } else if (configuration == "json_deserialize") {
     test_fn = &json_deserialize_test;
+  } else if (configuration == "json_deserialize_arena") {
+    test_fn = &json_deserialize_arena_test;
   } else {
     std::string message = "on_start " + configuration;
     proxy_log(LogLevel::info, message.c_str(), message.size());

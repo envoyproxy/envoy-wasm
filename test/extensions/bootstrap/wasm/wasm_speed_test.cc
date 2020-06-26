@@ -106,7 +106,9 @@ B(grpc_service1000)
 B(modify_metadata)
 B(modify_metadata1000)
 B(json_serialize)
+B(json_serialize_arena)
 B(json_deserialize)
+B(json_deserialize_arena)
 
 } // namespace Wasm
 } // namespace Extensions
