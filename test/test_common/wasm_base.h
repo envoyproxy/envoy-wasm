@@ -72,6 +72,7 @@ public:
   }
 
   WasmHandleSharedPtr& wasm() { return wasm_; }
+  Context* root_context() { return root_context_; }
 
   Stats::IsolatedStoreImpl stats_store_;
   Stats::ScopeSharedPtr scope_;
@@ -82,7 +83,6 @@ public:
   NiceMock<Init::MockManager> init_manager_;
   WasmHandleSharedPtr wasm_;
   PluginSharedPtr plugin_;
-  std::unique_ptr<Context> filter_;
   NiceMock<Envoy::Ssl::MockConnectionInfo> ssl_;
   NiceMock<Envoy::Network::MockConnection> connection_;
   NiceMock<Http::MockStreamDecoderFilterCallbacks> decoder_callbacks_;
@@ -99,12 +99,12 @@ public:
   template <typename TestFilter> void setupFilterBase(const std::string root_id = "") {
     auto wasm = WasmTestBase<Base>::wasm_ ? WasmTestBase<Base>::wasm_->wasm().get() : nullptr;
     int root_context_id = wasm ? wasm->getRootContext(root_id)->id() : 0;
-    filter_ = std::make_unique<TestFilter>(wasm, root_context_id, WasmTestBase<Base>::plugin_);
-    filter_->setDecoderFilterCallbacks(decoder_callbacks_);
-    filter_->setEncoderFilterCallbacks(encoder_callbacks_);
+    context_ = std::make_unique<TestFilter>(wasm, root_context_id, WasmTestBase<Base>::plugin_);
+    context_->setDecoderFilterCallbacks(decoder_callbacks_);
+    context_->setEncoderFilterCallbacks(encoder_callbacks_);
   }
 
-  std::unique_ptr<Context> filter_;
+  std::unique_ptr<Context> context_;
   NiceMock<Http::MockStreamDecoderFilterCallbacks> decoder_callbacks_;
   NiceMock<Http::MockStreamEncoderFilterCallbacks> encoder_callbacks_;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> request_stream_info_;
@@ -116,12 +116,12 @@ public:
   template <typename TestFilter> void setupFilterBase(const std::string root_id = "") {
     auto wasm = WasmTestBase<Base>::wasm_ ? WasmTestBase<Base>::wasm_->wasm().get() : nullptr;
     int root_context_id = wasm ? wasm->getRootContext(root_id)->id() : 0;
-    filter_ = std::make_unique<TestFilter>(wasm, root_context_id, WasmTestBase<Base>::plugin_);
-    filter_->initializeReadFilterCallbacks(read_filter_callbacks_);
-    filter_->initializeWriteFilterCallbacks(write_filter_callbacks_);
+    context_ = std::make_unique<TestFilter>(wasm, root_context_id, WasmTestBase<Base>::plugin_);
+    context_->initializeReadFilterCallbacks(read_filter_callbacks_);
+    context_->initializeWriteFilterCallbacks(write_filter_callbacks_);
   }
 
-  std::unique_ptr<Context> filter_;
+  std::unique_ptr<Context> context_;
   NiceMock<Network::MockReadFilterCallbacks> read_filter_callbacks_;
   NiceMock<Network::MockWriteFilterCallbacks> write_filter_callbacks_;
 };

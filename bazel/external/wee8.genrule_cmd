@@ -54,11 +54,11 @@ fi
 # Debug/release build.
 if [[ $(COMPILATION_MODE) == "dbg" && $${ENVOY_UBSAN_VPTR-} != "1" && $${ENVOY_MSAN-} != "1" && $${ENVOY_TSAN-} != "1" ]]; then
   WEE8_BUILD_ARGS+=" is_debug=true"
-  WEE8_BUILD_ARGS+=" symbol_level=2"
+  WEE8_BUILD_ARGS+=" v8_symbol_level=2"
   WEE8_BUILD_ARGS+=" v8_optimized_debug=false"
 else
   WEE8_BUILD_ARGS+=" is_debug=false"
-  WEE8_BUILD_ARGS+=" symbol_level=1"
+  WEE8_BUILD_ARGS+=" v8_symbol_level=1"
   WEE8_BUILD_ARGS+=" v8_enable_handle_zapping=false"
 fi
 

@@ -79,7 +79,7 @@ public:
   void setupFilter(const std::string root_id = "") { setupFilterBase<TestFilter>(root_id); }
 
   TestRoot& root_context() { return *static_cast<TestRoot*>(root_context_); }
-  TestFilter& filter() { return *static_cast<TestFilter*>(filter_.get()); }
+  TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest,
@@ -106,10 +106,10 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm"));
-  filter_->onDestroy();
+  filter().onDestroy();
 }
 
 // Script touching headers only, request that is headers only.
@@ -122,10 +122,10 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
 }
 
 TEST_P(WasmHttpFilterTest, HeadersStopAndContinue) {
@@ -138,11 +138,11 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndContinue) {
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy-wasm-pause"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
-            filter_->decodeHeaders(request_headers, true));
+            filter().decodeHeaders(request_headers, true));
   root_context_->onTick(0);
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm-continue"));
-  filter_->onDestroy();
+  filter().onDestroy();
 }
 
 TEST_P(WasmHttpFilterTest, HeadersStopAndEndStream) {
@@ -156,11 +156,11 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndEndStream) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"server", "envoy-wasm-end-stream"}};
   EXPECT_EQ(Http::FilterHeadersStatus::ContinueAndEndStream,
-            filter_->decodeHeaders(request_headers, true));
+            filter().decodeHeaders(request_headers, true));
   root_context_->onTick(0);
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm-continue"));
-  filter_->onDestroy();
+  filter().onDestroy();
 }
 
 TEST_P(WasmHttpFilterTest, HeadersStopAndBuffer) {
@@ -174,11 +174,11 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndBuffer) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"server", "envoy-wasm-stop-buffer"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopAllIterationAndBuffer,
-            filter_->decodeHeaders(request_headers, true));
+            filter().decodeHeaders(request_headers, true));
   root_context_->onTick(0);
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm-continue"));
-  filter_->onDestroy();
+  filter().onDestroy();
 }
 
 TEST_P(WasmHttpFilterTest, HeadersStopAndWatermark) {
@@ -192,11 +192,11 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndWatermark) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"server", "envoy-wasm-stop-watermark"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopAllIterationAndWatermark,
-            filter_->decodeHeaders(request_headers, true));
+            filter().decodeHeaders(request_headers, true));
   root_context_->onTick(0);
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm-continue"));
-  filter_->onDestroy();
+  filter().onDestroy();
 }
 
 // Script that reads the body.
@@ -206,10 +206,10 @@ TEST_P(WasmHttpFilterTest, BodyRequestReadBody) {
   setupFilter();
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"x-test-operation", "ReadBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
 }
 
 // Script that prepends and appends to the body.
@@ -221,10 +221,10 @@ TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBody) {
                              Eq(absl::string_view("onRequestBody prepend.hello.append"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "PrependAndAppendToBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
 }
 
 // Script that replaces the body.
@@ -235,10 +235,10 @@ TEST_P(WasmHttpFilterTest, BodyRequestReplaceBody) {
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody replace"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "ReplaceBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
 }
 
 // Script that removes the body.
@@ -249,10 +249,10 @@ TEST_P(WasmHttpFilterTest, BodyRequestRemoveBody) {
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody "))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "RemoveBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
 }
 
 // Script that buffers the body.
@@ -263,7 +263,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "BufferBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, false));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
 
   Buffer::OwnedImpl bufferedBody;
   EXPECT_CALL(decoder_callbacks_, decodingBuffer()).WillRepeatedly(Return(&bufferedBody));
@@ -274,33 +274,33 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
   bufferedBody.add(data1);
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
       .Times(1);
-  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data1, false));
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().decodeData(data1, false));
 
   Buffer::OwnedImpl data2(" again ");
   bufferedBody.add(data2);
   EXPECT_CALL(filter(),
               log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello again "))))
       .Times(1);
-  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data2, false));
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().decodeData(data2, false));
 
   EXPECT_CALL(filter(),
               log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello again hello"))))
       .Times(1);
   Buffer::OwnedImpl data3("hello");
   bufferedBody.add(data3);
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data3, true));
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data3, true));
 
   // Verify that the response still works even though we buffered the request.
   Http::TestResponseHeaderMapImpl response_headers{{":status", "200"},
                                                    {"x-test-operation", "ReadBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->encodeHeaders(response_headers, false));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().encodeHeaders(response_headers, false));
   // Should not buffer this time
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
       .Times(2);
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->encodeData(data1, false));
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->encodeData(data1, true));
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data1, false));
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data1, true));
 
-  filter_->onDestroy();
+  filter().onDestroy();
 }
 
 // Script that prepends and appends to the buffered body.
@@ -312,10 +312,10 @@ TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBufferedBody) {
                              Eq(absl::string_view("onRequestBody prepend.hello.append"))));
   Http::TestRequestHeaderMapImpl request_headers{
       {":path", "/"}, {"x-test-operation", "PrependAndAppendToBufferedBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
 }
 
 // Script that replaces the buffered body.
@@ -326,10 +326,10 @@ TEST_P(WasmHttpFilterTest, BodyRequestReplaceBufferedBody) {
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody replace"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "ReplaceBufferedBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
 }
 
 // Script that removes the buffered body.
@@ -340,10 +340,10 @@ TEST_P(WasmHttpFilterTest, BodyRequestRemoveBufferedBody) {
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody "))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "RemoveBufferedBody"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
 }
 
 // Script that buffers the first part of the body and streams the rest
@@ -353,7 +353,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferThenStreamBody) {
   setupFilter();
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
 
   Buffer::OwnedImpl bufferedBody;
   EXPECT_CALL(decoder_callbacks_, decodingBuffer()).WillRepeatedly(Return(&bufferedBody));
@@ -362,12 +362,12 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferThenStreamBody) {
 
   Http::TestResponseHeaderMapImpl response_headers{{":status", "200"},
                                                    {"x-test-operation", "BufferTwoBodies"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->encodeHeaders(response_headers, false));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().encodeHeaders(response_headers, false));
 
   Buffer::OwnedImpl data1("hello");
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
       .Times(1);
-  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data1, false));
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().decodeData(data1, false));
   bufferedBody.add(data1);
 
   Buffer::OwnedImpl data2(", there, ");
@@ -375,7 +375,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferThenStreamBody) {
   EXPECT_CALL(filter(),
               log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello, there, "))))
       .Times(1);
-  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter_->decodeData(data2, false));
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().decodeData(data2, false));
 
   // Previous callbacks returned "Buffer" so we have buffered so far
   Buffer::OwnedImpl data3("world!");
@@ -383,21 +383,21 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferThenStreamBody) {
   EXPECT_CALL(filter(),
               log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello, there, world!"))))
       .Times(1);
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data3, false));
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data3, false));
 
   // Last callback returned "continue" so we just see individual chunks.
   Buffer::OwnedImpl data4("So it's ");
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody So it's "))))
       .Times(1);
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data4, false));
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data4, false));
 
   Buffer::OwnedImpl data5("goodbye, then!");
   EXPECT_CALL(filter(),
               log_(spdlog::level::err, Eq(absl::string_view("onRequestBody goodbye, then!"))))
       .Times(1);
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data5, true));
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data5, true));
 
-  filter_->onDestroy();
+  filter().onDestroy();
 }
 
 // Script testing AccessLog::Instance::log.
@@ -412,12 +412,12 @@ TEST_P(WasmHttpFilterTest, AccessLog) {
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
   StreamInfo::MockStreamInfo log_stream_info;
-  filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
+  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
 TEST_P(WasmHttpFilterTest, AsyncCall) {
@@ -447,7 +447,7 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
   EXPECT_CALL(filter(), log_(spdlog::level::debug, Eq("response")));
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(":status -> 200")));
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
-            filter_->decodeHeaders(request_headers, false));
+            filter().decodeHeaders(request_headers, false));
 
   Http::ResponseMessagePtr response_message(new Http::ResponseMessageImpl(
       Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
@@ -484,12 +484,12 @@ TEST_P(WasmHttpFilterTest, AsyncCallAfterDestroyed) {
           }));
 
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
-            filter_->decodeHeaders(request_headers, false));
+            filter().decodeHeaders(request_headers, false));
 
   EXPECT_CALL(request, cancel()).WillOnce([&]() { callbacks = nullptr; });
 
   // Destroy the Context, Plugin and VM.
-  filter_.reset();
+  context_.reset();
   plugin_.reset();
   wasm_.reset();
 
@@ -541,7 +541,7 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
   EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq("response")));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
-            filter_->decodeHeaders(request_headers, false));
+            filter().decodeHeaders(request_headers, false));
 
   ProtobufWkt::Value value;
   value.set_string_value("response");
@@ -592,12 +592,12 @@ TEST_P(WasmHttpFilterTest, GrpcCallAfterDestroyed) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
 
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
-            filter_->decodeHeaders(request_headers, false));
+            filter().decodeHeaders(request_headers, false));
 
   EXPECT_CALL(request, cancel()).WillOnce([&]() { callbacks = nullptr; });
 
   // Destroy the Context, Plugin and VM.
-  filter_.reset();
+  context_.reset();
   plugin_.reset();
   wasm_.reset();
 
@@ -648,13 +648,13 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("duration is 15000000"))));
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("grpc service: test"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter_->decodeData(data, true));
-  filter_->onDestroy();
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
 
   StreamInfo::MockStreamInfo log_stream_info;
-  filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
+  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
 
   const auto& result = request_stream_info_.filterState()->getDataReadOnly<Common::Wasm::WasmState>(
       "wasm.wasm_request_set_key");
@@ -669,10 +669,10 @@ TEST_F(WasmHttpFilterTest, NullPluginRequestHeadersOnly) {
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm"));
-  filter_->onDestroy();
+  filter().onDestroy();
 }
 
 TEST_F(WasmHttpFilterTest, NullVmResolver) {
@@ -706,9 +706,9 @@ TEST_F(WasmHttpFilterTest, NullVmResolver) {
 
   root_context_->onTick(0);
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/test_context"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   StreamInfo::MockStreamInfo log_stream_info;
-  filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
+  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
 TEST_P(WasmHttpFilterTest, SharedData) {
@@ -726,9 +726,9 @@ TEST_P(WasmHttpFilterTest, SharedData) {
               log_(spdlog::level::debug, Eq(absl::string_view("second get of bad key not found"))));
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   StreamInfo::MockStreamInfo log_stream_info;
-  filter_->log(&request_headers, nullptr, nullptr, log_stream_info);
+  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
 TEST_P(WasmHttpFilterTest, SharedQueue) {
@@ -746,7 +746,7 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
   EXPECT_CALL(root_context(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))));
   EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   auto token = proxy_wasm::resolveQueueForTest("vm_id", "my_shared_queue");
   root_context_->onQueueReady(token);
 }
@@ -757,7 +757,7 @@ TEST_P(WasmHttpFilterTest, RootIdNotRegistered) {
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/root_id_cpp.wasm")));
   setupFilter();
   Http::TestRequestHeaderMapImpl request_headers;
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
 }
 
 // Script using an explicit root_id which is registered.
@@ -768,7 +768,7 @@ TEST_P(WasmHttpFilterTest, RootId1) {
   setupFilter("context1");
   EXPECT_CALL(filter(), log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders1 2"))));
   Http::TestRequestHeaderMapImpl request_headers;
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
 }
 
 // Script using an explicit root_id which is registered.
@@ -779,7 +779,7 @@ TEST_P(WasmHttpFilterTest, RootId2) {
   setupFilter("context2");
   EXPECT_CALL(filter(), log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders2 2"))));
   Http::TestRequestHeaderMapImpl request_headers;
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter_->decodeHeaders(request_headers, true));
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
 }
 
 } // namespace Wasm

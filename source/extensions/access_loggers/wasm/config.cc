@@ -44,9 +44,9 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
         [base_wasm,
          plugin](Event::Dispatcher& dispatcher) -> std::shared_ptr<ThreadLocal::ThreadLocalObject> {
           if (!base_wasm) {
-            // Should this be a RELEASE_ASSERT? There is no way to prevent the connection at this
-            // point. The user could choose to use an HTTP Wasm plugin and only handle onLog() which
-            // would nevertheless correctly close the connection in onRequestHeaders().
+            // There is no way to prevent the connection at this point. The user could choose to use
+            // an HTTP Wasm plugin and only handle onLog() which would correctly close the
+            // connection in onRequestHeaders().
             if (!plugin->fail_open_) {
               ENVOY_LOG(critical, "Plugin configured to fail closed failed to load");
             }

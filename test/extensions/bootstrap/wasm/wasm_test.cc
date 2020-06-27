@@ -276,7 +276,6 @@ TEST_P(WasmTest, StatsHighLevel) {
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_g = 2")));
   // Get is not supported on histograms.
   // EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_h = 3")));
-
   context->onLog();
 }
 

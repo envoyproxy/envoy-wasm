@@ -10,6 +10,7 @@
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/utility.h"
+#include "test/test_common/wasm_base.h"
 
 #include "absl/types/optional.h"
 #include "gmock/gmock.h"
@@ -396,6 +397,49 @@ TEST_P(WasmCommonTest, Foreign) {
   wasm->start(plugin);
 }
 
+TEST_P(WasmCommonTest, OnForeign) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
+  auto name = "";
+  auto root_id = "";
+  auto vm_id = "";
+  auto vm_configuration = "on_foreign";
+  auto vm_key = "";
+  auto plugin_configuration = "";
+  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
+      name, root_id, vm_id, plugin_configuration, false,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
+  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
+      cluster_manager, *dispatcher);
+  EXPECT_NE(wasm, nullptr);
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+  } else {
+    // The name of the Null VM plugin.
+    code = "CommonWasmTestCpp";
+  }
+  EXPECT_FALSE(code.empty());
+  EXPECT_TRUE(wasm->initialize(code, false));
+  TestContext* test_context = nullptr;
+  wasm->setCreateContextForTesting(
+      nullptr, [&test_context](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
+        auto context = new TestContext(wasm, plugin);
+        EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("on_foreign start")));
+        EXPECT_CALL(*context, log_(spdlog::level::info, Eq("on_foreign_function 7 13")));
+        test_context = context;
+        return context;
+      });
+  wasm->start(plugin);
+  test_context->onForeignFunction(7, 13);
+}
+
 TEST_P(WasmCommonTest, WASI) {
   if (GetParam() == "null") {
     // This test has no meaning unless it is invoked by actual Wasm code
@@ -728,6 +772,69 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   plugin.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher->clearDeferredDeleteList();
+}
+
+class WasmCommonContextTest
+    : public Common::Wasm::WasmTestBase<testing::TestWithParam<std::string>> {
+public:
+  WasmCommonContextTest() = default;
+
+  void setup(const std::string& code, std::string root_id = "") {
+    setupBase(
+        GetParam(), code,
+        [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
+          return new TestContext(wasm, plugin);
+        },
+        root_id);
+  }
+  void setupContext() {
+    context_ = std::make_unique<TestContext>(wasm_->wasm().get(), root_context_->id(), plugin_);
+    context_->onCreate();
+  }
+
+  TestContext& root_context() { return *static_cast<TestContext*>(root_context_); }
+  TestContext& context() { return *context_; }
+
+  std::unique_ptr<TestContext> context_;
+};
+
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonContextTest,
+                         testing::Values("v8",
+#if defined(ENVOY_WASM_WAVM)
+                                         "wavm",
+#endif
+                                         "null"));
+
+TEST_P(WasmCommonContextTest, OnDnsResolve) {
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
+        "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_context_cpp.wasm")));
+  } else {
+    // The name of the Null VM plugin.
+    code = "CommonWasmTestContextCpp";
+  }
+  EXPECT_FALSE(code.empty());
+  setup(code);
+  setupContext();
+
+  EXPECT_CALL(context(), log_(spdlog::level::warn, Eq("TestContext::onResolveDns 7")));
+  EXPECT_CALL(context(),
+              log_(spdlog::level::info, Eq("TestContext::onResolveDns dns 1 192.168.1.101:1001")));
+  EXPECT_CALL(context(),
+              log_(spdlog::level::info, Eq("TestContext::onResolveDns dns 2 192.168.1.102:1002")));
+  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
+
+  uint32_t token = 7;
+  std::list<Envoy::Network::DnsResponse> dns_results;
+  dns_results.emplace(dns_results.end(),
+                      std::make_shared<Network::Address::Ipv4Instance>("192.168.1.101", 1001),
+                      std::chrono::seconds(1));
+  dns_results.emplace(dns_results.end(),
+                      std::make_shared<Network::Address::Ipv4Instance>("192.168.1.102", 1002),
+                      std::chrono::seconds(2));
+  context_->onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
+                         std::move(dns_results));
 }
 
 } // namespace Wasm

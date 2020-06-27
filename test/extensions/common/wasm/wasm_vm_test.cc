@@ -11,8 +11,10 @@
 #include "gtest/gtest.h"
 #include "include/proxy-wasm/null_vm_plugin.h"
 
+using proxy_wasm::Cloneable;
 using proxy_wasm::WasmCallVoid;
 using proxy_wasm::WasmCallWord;
+using proxy_wasm::Word;
 using testing::HasSubstr;
 using testing::Return;
 
