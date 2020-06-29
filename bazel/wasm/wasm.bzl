@@ -2,7 +2,7 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 def _wasm_transition_impl(settings, attr):
     return {
-        "//command_line_option:cpu": "wasm",
+        "//command_line_option:cpu": "wasm32",
         "//command_line_option:crosstool_top": "@proxy_wasm_cpp_sdk//toolchain:emscripten",
 
         # Overriding copt/cxxopt/linkopt to prevent sanitizers/coverage options leak
