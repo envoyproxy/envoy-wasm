@@ -16,7 +16,7 @@ double f64b = 1.0;
 
 // Emscripten in some modes and versions would use functions from the asm2wasm module to implement
 // these operations: int32_t % /, double conversion to int32_t and remainder().
-extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_vm_start(uint32_t, uint32_t) {
+extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_configure(uint32_t, uint32_t) {
   logInfo(std::string("out ") + std::to_string(i32a / i32b) + " " + std::to_string(i32a % i32b) +
           " " + std::to_string((int32_t)remainder(f64a, f64b)));
   return 1;

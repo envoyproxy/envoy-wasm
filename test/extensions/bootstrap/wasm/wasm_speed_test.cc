@@ -33,7 +33,9 @@ namespace Wasm {
 
 class TestRoot : public Envoy::Extensions::Common::Wasm::Context {
 public:
-  TestRoot() {}
+  TestRoot(Extensions::Common::Wasm::Wasm* wasm,
+           const std::shared_ptr<Extensions::Common::Wasm::Plugin>& plugin)
+      : Envoy::Extensions::Common::Wasm::Context(wasm, plugin) {}
 
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     log_(static_cast<spdlog::level::level_enum>(level), message);
@@ -50,7 +52,6 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
   Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   NiceMock<LocalInfo::MockLocalInfo> local_info;
-  auto root_context = new TestRoot();
   auto name = "";
   auto root_id = "some_long_root_id";
   auto vm_id = "";
@@ -58,7 +59,7 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
   auto vm_key = "";
   auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration,
+      name, root_id, vm_id, plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", vm), vm_id, vm_configuration, vm_key, scope,
@@ -72,11 +73,15 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
   }
   EXPECT_FALSE(code.empty());
   EXPECT_TRUE(wasm->initialize(code, false));
-  wasm->setContextForTesting(root_context);
-  wasm->startForTesting(std::unique_ptr<Common::Wasm::Context>(root_context), plugin);
-  EXPECT_NE(wasm, nullptr);
+  wasm->setCreateContextForTesting(
+      nullptr,
+      [](Extensions::Common::Wasm::Wasm* wasm,
+         const std::shared_ptr<Extensions::Common::Wasm::Plugin>& plugin)
+          -> proxy_wasm::ContextBase* { return new TestRoot(wasm, plugin); });
+
+  auto root_context = wasm->start(plugin);
   for (auto _ : state) {
-    wasm->timerReady(root_context->id());
+    root_context->onTick(0);
   }
 }
 

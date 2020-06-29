@@ -30,7 +30,7 @@ public:
       }
     }
 
-    if (tls_slot_ != nullptr) {
+    if (tls_slot_->get()) {
       tls_slot_->getTyped<WasmHandle>().wasm()->log(root_id_, request_headers, response_headers,
                                                     response_trailers, stream_info);
     }

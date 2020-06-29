@@ -16,6 +16,7 @@ namespace NetworkFilters {
 namespace Wasm {
 
 using Envoy::Extensions::Common::Wasm::Context;
+using Envoy::Extensions::Common::Wasm::Wasm;
 using Envoy::Extensions::Common::Wasm::WasmHandle;
 
 class FilterConfig : Logger::Loggable<Logger::Id::wasm> {
@@ -24,11 +25,17 @@ public:
                Server::Configuration::FactoryContext& context);
 
   std::shared_ptr<Context> createFilter() {
-    auto& wasm = tls_slot_->getTyped<WasmHandle>();
-    if (!root_context_id_) {
-      root_context_id_ = wasm.wasm()->getRootContext(plugin_->root_id_)->id();
+    if (plugin_->fail_open_) {
+      return nullptr;
     }
-    return std::make_shared<Context>(wasm.wasm().get(), root_context_id_, plugin_);
+    Wasm* wasm = nullptr;
+    if (tls_slot_->get()) {
+      wasm = tls_slot_->getTyped<WasmHandle>().wasm().get();
+    }
+    if (wasm && !root_context_id_) {
+      root_context_id_ = wasm->getRootContext(plugin_->root_id_)->id();
+    }
+    return std::make_shared<Context>(wasm, root_context_id_, plugin_);
   }
 
 private:
