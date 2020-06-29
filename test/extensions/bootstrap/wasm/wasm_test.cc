@@ -159,11 +159,6 @@ TEST_P(WasmTest, DivByZero) {
   EXPECT_TRUE(wasm_->initialize(code, false));
   auto context = static_cast<TestContext*>(wasm_->start(plugin_));
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("before div by zero")));
-  if (GetParam() == "v8") {
-    // We are not throwing out of V8 and V8 does not unwind the stack, but continues execution.
-    EXPECT_CALL(*context, log_(spdlog::level::err, Eq("divide by zero: 100")));
-    EXPECT_CALL(*context, log_(spdlog::level::err, Eq("after div by zero")));
-  }
   context->onLog();
   wasm_->isFailed();
 }
