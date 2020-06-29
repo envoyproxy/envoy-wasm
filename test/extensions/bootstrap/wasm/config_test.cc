@@ -84,6 +84,7 @@ TEST_P(WasmFactoryTest, CreateWasmFromWasmPerThread) {
 TEST_P(WasmFactoryTest, MissingImport) {
 
   envoy::extensions::wasm::v3::WasmService config;
+  config.mutable_config()->set_name("test");
   config.mutable_config()->mutable_vm_config()->set_runtime(
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
@@ -91,8 +92,8 @@ TEST_P(WasmFactoryTest, MissingImport) {
           "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/missing_cpp.wasm"));
   config.set_singleton(true);
 
-  EXPECT_THROW_WITH_REGEX(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
-                          "Failed to load Wasm module due to a missing import: env.missing");
+  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
+                            "Unable to create Wasm service test");
 }
 
 TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
@@ -110,6 +111,7 @@ TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
 
 TEST_P(WasmFactoryTest, UnknownRuntime) {
   envoy::extensions::wasm::v3::WasmService config;
+  config.mutable_config()->set_name("test");
   config.mutable_config()->mutable_vm_config()->set_runtime("envoy.wasm.runtime.invalid");
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
@@ -117,12 +119,12 @@ TEST_P(WasmFactoryTest, UnknownRuntime) {
   config.set_singleton(true);
 
   EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
-                            "Failed to create Wasm VM using envoy.wasm.runtime.invalid runtime. "
-                            "Envoy was compiled without support for it.");
+                            "Unable to create Wasm service test");
 }
 
 TEST_P(WasmFactoryTest, StartFailed) {
   envoy::extensions::wasm::v3::WasmService config;
+  config.mutable_config()->set_name("test");
   config.mutable_config()->mutable_vm_config()->set_runtime(
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
@@ -134,11 +136,12 @@ TEST_P(WasmFactoryTest, StartFailed) {
   config.mutable_config()->mutable_vm_config()->mutable_configuration()->PackFrom(
       plugin_configuration);
   EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
-                            "Failed to start base Wasm");
+                            "Unable to create Wasm service test");
 }
 
 TEST_P(WasmFactoryTest, ConfigureFailed) {
   envoy::extensions::wasm::v3::WasmService config;
+  config.mutable_config()->set_name("test");
   config.mutable_config()->mutable_vm_config()->set_runtime(
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
   config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
@@ -149,7 +152,7 @@ TEST_P(WasmFactoryTest, ConfigureFailed) {
   config.mutable_config()->mutable_configuration()->PackFrom(plugin_configuration);
   config.set_singleton(true);
   EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
-                            "Failed to configure base Wasm plugin");
+                            "Unable to create Wasm service test");
 }
 
 } // namespace Wasm

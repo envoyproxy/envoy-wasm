@@ -96,11 +96,11 @@ private:
 // Plugin contains the information for a filter/service.
 struct Plugin : public PluginBase {
   Plugin(absl::string_view name, absl::string_view root_id, absl::string_view vm_id,
-         absl::string_view plugin_configuration,
+         absl::string_view plugin_configuration, bool fail_open,
          envoy::config::core::v3::TrafficDirection direction,
          const LocalInfo::LocalInfo& local_info,
          const envoy::config::core::v3::Metadata* listener_metadata)
-      : PluginBase(name, root_id, vm_id, plugin_configuration), direction_(direction),
+      : PluginBase(name, root_id, vm_id, plugin_configuration, fail_open), direction_(direction),
         local_info_(local_info), listener_metadata_(listener_metadata) {}
 
   envoy::config::core::v3::TrafficDirection direction_;
@@ -308,7 +308,6 @@ protected:
   friend class Wasm;
 
   void addAfterVmCallAction(std::function<void()> f);
-  void initializeRoot(WasmBase* wasm, std::shared_ptr<PluginBase> plugin) override;
   void onCloseTCP();
 
   virtual absl::string_view getConfiguration();

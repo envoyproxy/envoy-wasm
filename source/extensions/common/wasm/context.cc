@@ -134,9 +134,9 @@ WasmResult Buffer::copyFrom(size_t start, size_t length, absl::string_view data)
 
 Context::Context() = default;
 Context::Context(Wasm* wasm) : ContextBase(wasm) {}
-
-Context::Context(Wasm* wasm, const PluginSharedPtr& plugin) : ContextBase(wasm, plugin) {}
-
+Context::Context(Wasm* wasm, const PluginSharedPtr& plugin) : ContextBase(wasm, plugin) {
+  root_local_info_ = &std::static_pointer_cast<Plugin>(plugin)->local_info_;
+}
 Context::Context(Wasm* wasm, uint32_t root_context_id, const PluginSharedPtr& plugin)
     : ContextBase(wasm, root_context_id, plugin) {}
 
@@ -145,12 +145,7 @@ Plugin* Context::plugin() const { return static_cast<Plugin*>(plugin_.get()); }
 Context* Context::rootContext() const { return static_cast<Context*>(root_context()); }
 Upstream::ClusterManager& Context::clusterManager() const { return wasm()->clusterManager(); }
 
-void Context::error(absl::string_view message) { throw WasmException(std::string(message)); }
-
-void Context::initializeRoot(WasmBase* wasm, std::shared_ptr<PluginBase> plugin) {
-  ContextBase::initializeRoot(wasm, plugin);
-  root_local_info_ = &std::static_pointer_cast<Plugin>(plugin)->local_info_;
-}
+void Context::error(absl::string_view message) { ENVOY_LOG(trace, message); }
 
 uint64_t Context::getCurrentTimeNanoseconds() {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(

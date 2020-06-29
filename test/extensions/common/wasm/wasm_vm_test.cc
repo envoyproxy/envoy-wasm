@@ -49,15 +49,10 @@ protected:
   Stats::ScopeSharedPtr scope_;
 };
 
-TEST_F(BaseVmTest, NoRuntime) {
-  EXPECT_THROW_WITH_MESSAGE(createWasmVm("", scope_), WasmException,
-                            "Failed to create Wasm VM with unspecified runtime.");
-}
+TEST_F(BaseVmTest, NoRuntime) { EXPECT_EQ(createWasmVm("", scope_), nullptr); }
 
 TEST_F(BaseVmTest, BadRuntime) {
-  EXPECT_THROW_WITH_MESSAGE(createWasmVm("envoy.wasm.runtime.invalid", scope_), WasmException,
-                            "Failed to create Wasm VM using envoy.wasm.runtime.invalid runtime. "
-                            "Envoy was compiled without support for it.");
+  EXPECT_EQ(createWasmVm("envoy.wasm.runtime.invalid", scope_), nullptr);
 }
 
 TEST_F(BaseVmTest, NullVmStartup) {
@@ -170,23 +165,16 @@ TEST_P(WasmVmTest, V8BadHostFunctions) {
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
 
   wasm_vm->registerCallback("env", "random", &random, CONVERT_FUNCTION_WORD_TO_UINT32(random));
-  EXPECT_THROW_WITH_MESSAGE(wasm_vm->link("test"), WasmException,
-                            "Failed to load Wasm module due to a missing import: env.pong");
+  EXPECT_FALSE(wasm_vm->link("test"));
 
   wasm_vm->registerCallback("env", "pong", &bad_pong1, CONVERT_FUNCTION_WORD_TO_UINT32(bad_pong1));
-  EXPECT_THROW_WITH_MESSAGE(wasm_vm->link("test"), WasmException,
-                            "Failed to load Wasm module due to an import type mismatch: env.pong, "
-                            "want: i32 -> void, but host exports: void -> void");
+  EXPECT_FALSE(wasm_vm->link("test"));
 
   wasm_vm->registerCallback("env", "pong", &bad_pong2, CONVERT_FUNCTION_WORD_TO_UINT32(bad_pong2));
-  EXPECT_THROW_WITH_MESSAGE(wasm_vm->link("test"), WasmException,
-                            "Failed to load Wasm module due to an import type mismatch: env.pong, "
-                            "want: i32 -> void, but host exports: i32 -> i32");
+  EXPECT_FALSE(wasm_vm->link("test"));
 
   wasm_vm->registerCallback("env", "pong", &bad_pong3, CONVERT_FUNCTION_WORD_TO_UINT32(bad_pong3));
-  EXPECT_THROW_WITH_MESSAGE(wasm_vm->link("test"), WasmException,
-                            "Failed to load Wasm module due to an import type mismatch: env.pong, "
-                            "want: i32 -> void, but host exports: f64 -> f64");
+  EXPECT_FALSE(wasm_vm->link("test"));
 }
 
 TEST_P(WasmVmTest, V8BadModuleFunctions) {
@@ -210,11 +198,11 @@ TEST_P(WasmVmTest, V8BadModuleFunctions) {
   wasm_vm->getFunction("nonexistent", &sum);
   EXPECT_TRUE(sum == nullptr);
 
-  EXPECT_THROW_WITH_MESSAGE(wasm_vm->getFunction("ping", &sum), WasmException,
-                            "Bad function signature for: ping");
+  wasm_vm->getFunction("ping", &sum);
+  EXPECT_TRUE(wasm_vm->isFailed());
 
-  EXPECT_THROW_WITH_MESSAGE(wasm_vm->getFunction("sum", &ping), WasmException,
-                            "Bad function signature for: sum");
+  wasm_vm->getFunction("sum", &ping);
+  EXPECT_TRUE(wasm_vm->isFailed());
 }
 
 TEST_P(WasmVmTest, V8FunctionCalls) {
@@ -246,13 +234,13 @@ TEST_P(WasmVmTest, V8FunctionCalls) {
 
   WasmCallWord<2> div;
   wasm_vm->getFunction("div", &div);
-  EXPECT_THROW_WITH_MESSAGE(div(nullptr /* no context */, 42, 0), WasmException,
-                            "Function: div failed: Uncaught RuntimeError: unreachable");
+  div(nullptr /* no context */, 42, 0);
+  EXPECT_TRUE(wasm_vm->isFailed());
 
   WasmCallVoid<0> abort;
   wasm_vm->getFunction("abort", &abort);
-  EXPECT_THROW_WITH_MESSAGE(abort(nullptr /* no context */), WasmException,
-                            "Function: abort failed: Uncaught RuntimeError: unreachable");
+  abort(nullptr /* no context */);
+  EXPECT_TRUE(wasm_vm->isFailed());
 }
 
 TEST_P(WasmVmTest, V8Memory) {

@@ -30,9 +30,12 @@ namespace HttpFilters {
 namespace Wasm {
 
 using envoy::config::core::v3::TrafficDirection;
+using Envoy::Extensions::Common::Wasm::CreateContextFn;
+using Envoy::Extensions::Common::Wasm::Plugin;
 using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
 using Envoy::Extensions::Common::Wasm::Wasm;
 using Envoy::Extensions::Common::Wasm::WasmHandleSharedPtr;
+using proxy_wasm::ContextBase;
 using GrpcService = envoy::config::core::v3::GrpcService;
 using WasmFilterConfig = envoy::extensions::filters::http::wasm::v3::Wasm;
 
@@ -54,8 +57,7 @@ public:
 
 class TestRoot : public Envoy::Extensions::Common::Wasm::Context {
 public:
-  TestRoot() {}
-
+  TestRoot(Wasm* wasm, const std::shared_ptr<Plugin>& plugin) : Context(wasm, plugin) {}
   MOCK_CONTEXT_LOG_;
 };
 
@@ -65,8 +67,14 @@ public:
   WasmHttpFilterTest() = default;
   ~WasmHttpFilterTest() override = default;
 
+  CreateContextFn createContextFn() {
+    return [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
+      return new TestRoot(wasm, plugin);
+    };
+  }
+
   void setup(const std::string& code, std::string root_id = "") {
-    setupBase(GetParam(), code, std::make_unique<TestRoot>(), root_id);
+    setupBase(GetParam(), code, createContextFn(), root_id);
   }
   void setupFilter(const std::string root_id = "") { setupFilterBase<TestFilter>(root_id); }
 
@@ -84,8 +92,8 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest,
 
 // Bad code in initial config.
 TEST_P(WasmHttpFilterTest, BadCode) {
-  EXPECT_THROW_WITH_MESSAGE(setup("bad code"), Common::Wasm::WasmException,
-                            "Failed to initialize Wasm code");
+  setup("bad code");
+  EXPECT_EQ(wasm_, nullptr);
 }
 
 // Script touching headers only, request that is headers only.
@@ -632,7 +640,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
           HttpFilters::HttpFilterNames::get().Wasm,
           MessageUtil::keyValueStruct("wasm_request_get_key", "wasm_request_get_value")));
 
-  root_context_->onTick(0);
+  root_context().onTick(0);
 
   EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
   absl::optional<std::chrono::nanoseconds> dur = std::chrono::nanoseconds(15000000);
@@ -655,7 +663,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
 
 // Null VM Plugin, headers only.
 TEST_F(WasmHttpFilterTest, NullPluginRequestHeadersOnly) {
-  setupBase("null", "HttpFilterTestPlugin", std::make_unique<TestRoot>());
+  setupBase("null", "HttpFilterTestPlugin", createContextFn());
   setupFilter();
   EXPECT_CALL(filter(), log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2"))));
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
@@ -668,7 +676,7 @@ TEST_F(WasmHttpFilterTest, NullPluginRequestHeadersOnly) {
 }
 
 TEST_F(WasmHttpFilterTest, NullVmResolver) {
-  setupBase("null", "HttpFilterTestPlugin", std::make_unique<TestRoot>());
+  setupBase("null", "HttpFilterTestPlugin", createContextFn());
   setupFilter();
   envoy::config::core::v3::Node node_data;
   ProtobufWkt::Value node_val;
@@ -740,7 +748,7 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   auto token = proxy_wasm::resolveQueueForTest("vm_id", "my_shared_queue");
-  wasm_->wasm()->queueReady(root_context_->id(), token);
+  root_context_->onQueueReady(token);
 }
 
 // Script using a root_id which is not registered.
