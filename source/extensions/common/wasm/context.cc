@@ -299,7 +299,7 @@ enum class PropertyToken { PROPERTY_TOKENS(_DECLARE) };
 
 #define _PAIR(_t) {downCase(#_t), PropertyToken::_t},
 static absl::flat_hash_map<std::string, PropertyToken> property_tokens = {PROPERTY_TOKENS(_PAIR)};
-#undef _PARI
+#undef _PAIR
 
 absl::optional<google::api::expr::runtime::CelValue>
 Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) const {
