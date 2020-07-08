@@ -327,6 +327,9 @@ protected:
                    Http::AsyncClient::FailureReason reason) override {
       context_->onHttpCallFailure(token_, reason);
     }
+    void
+    onBeforeFinalizeUpstreamSpan(Envoy::Tracing::Span& /* span */,
+                                 const Http::ResponseHeaderMap* /* response_headers */) override {}
 
     Context* context_;
     uint32_t token_;
