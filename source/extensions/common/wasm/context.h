@@ -7,6 +7,7 @@
 #include "envoy/access_log/access_log.h"
 #include "envoy/buffer/buffer.h"
 #include "envoy/http/filter.h"
+#include "envoy/stats/sink.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "common/common/assert.h"
@@ -267,6 +268,8 @@ public:
   // Envoy specific ABI
   void onResolveDns(uint32_t token, Envoy::Network::DnsResolver::ResolutionStatus status,
                     std::list<Envoy::Network::DnsResponse>&& response);
+
+  void onStat(Envoy::Stats::MetricSnapshot& snapshot);
 
   // CEL evaluation
   std::vector<const google::api::expr::runtime::CelFunction*>

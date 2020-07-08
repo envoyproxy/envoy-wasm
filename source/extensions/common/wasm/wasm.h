@@ -78,6 +78,8 @@ public:
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info);
 
+  void onStat(absl::string_view root_id, Envoy::Stats::MetricSnapshot& snapshot);
+
   void initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier);
   uint32_t nextDnsToken() {
     do {
@@ -98,6 +100,7 @@ private:
   void initializeStats();
   // Calls into the VM.
   proxy_wasm::WasmCallVoid<3> on_resolve_dns_;
+  proxy_wasm::WasmCallVoid<2> on_stat_;
 
   Stats::ScopeSharedPtr scope_;
   Upstream::ClusterManager& cluster_manager_;

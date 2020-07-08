@@ -6,6 +6,7 @@ public:
   virtual ~EnvoyContextBase() = default;
 
   virtual void onResolveDns(uint32_t /* token */, uint32_t /* result_size */) {}
+  virtual void onStat(uint32_t /* result_size */) {}
 };
 
 class EnvoyRootContext : public RootContext, public EnvoyContextBase {
@@ -39,6 +40,21 @@ inline std::vector<DnsResult> parseDnsResults(StringView data) {
     e.ttl_seconds = *pn++;
     auto alen = strlen(pa);
     e.address.assign(pa, alen);
+    pa += alen + 1;
+  }
+  return results;
+}
+
+inline std::vector<std::string> parseStatResults(StringView data) {
+  const uint32_t* pn = reinterpret_cast<const uint32_t*>(data.data());
+  uint32_t n = *pn++;
+  std::vector<std::string> results;
+  results.resize(n);
+  const char* pa = data.data() + sizeof(uint32_t);
+  for (uint32_t i = 0; i < n; i++) {
+    auto& e = results[i];
+    auto alen = strlen(pa);
+    e.assign(pa, alen);
     pa += alen + 1;
   }
   return results;

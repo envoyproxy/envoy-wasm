@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <string>
@@ -10,6 +11,7 @@
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"
 #include "envoy/network/filter.h"
+#include "envoy/stats/sink.h"
 #include "envoy/thread_local/thread_local.h"
 
 #include "common/buffer/buffer_impl.h"
@@ -200,6 +202,53 @@ void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::Resoluti
   };
   buffer_.set(std::move(buffer), s);
   wasm()->on_resolve_dns_(this, id_, token, s);
+}
+
+void Context::onStat(Envoy::Stats::MetricSnapshot& snapshot) {
+  // {name}.{delta/value}|{c/g}/n
+  proxy_wasm::DeferAfterCallActions actions(this);
+  uint32_t s = 0;
+  for (const auto& counter : snapshot.counters()) {
+    if (counter.counter_.get().used()) {
+      s += absl::StrCat(counter.counter_.get().name(), ".", counter.delta_, "|c/n").size() + 1;
+    }
+  }
+
+  for (const auto& gauge : snapshot.gauges()) {
+    if (gauge.get().used()) {
+      s += absl::StrCat(gauge.get().name(), ".", gauge.get().value(), "|g/n").size() + 1;
+    }
+  }
+  s += sizeof(uint32_t);
+
+  auto buffer = std::unique_ptr<char[]>(new char[s]);
+  char* b = buffer.get();
+
+  uint32_t n = snapshot.counters().size() + snapshot.gauges().size();
+  memcpy(b, &n, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+
+  for (const auto& counter : snapshot.counters()) {
+    if (counter.counter_.get().used()) {
+      absl::string_view flush_counter =
+          absl::StrCat(counter.counter_.get().name(), ".", counter.delta_, "|c/n");
+      memcpy(b, flush_counter.data(), flush_counter.size());
+      b += flush_counter.size();
+      *b++ = 0;
+    }
+  }
+
+  for (const auto& gauge : snapshot.gauges()) {
+    if (gauge.get().used()) {
+      absl::string_view gauge_counter =
+          absl::StrCat(gauge.get().name(), ".", gauge.get().value(), "|g/n");
+      memcpy(b, gauge_counter.data(), gauge_counter.size());
+      b += gauge_counter.size();
+      *b++ = 0;
+    }
+  }
+  buffer_.set(std::move(buffer), s);
+  wasm()->on_stat_(this, id_, s);
 }
 
 // Native serializer carrying over bit representation from CEL value to the extension

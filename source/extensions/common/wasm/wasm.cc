@@ -231,6 +231,9 @@ void Wasm::getFunctions() {
 #define _GET(_fn) wasm_vm_->getFunction("envoy_" #_fn, &_fn##_);
   _GET(on_resolve_dns)
 #undef _GET
+#define _GET(_fn) wasm_vm_->getFunction("" #_fn, &_fn##_);
+  _GET(on_stat)
+#undef _GET
 }
 
 proxy_wasm::CallOnThreadFunction Wasm::callOnThreadFunction() {
@@ -258,6 +261,11 @@ void Wasm::log(absl::string_view root_id, const Http::RequestHeaderMap* request_
                const StreamInfo::StreamInfo& stream_info) {
   auto context = getRootContext(root_id);
   context->log(request_headers, response_headers, response_trailers, stream_info);
+}
+
+void Wasm::onStat(absl::string_view root_id, Envoy::Stats::MetricSnapshot& snapshot) {
+  auto context = getRootContext(root_id);
+  context->onStat(snapshot);
 }
 
 void clearCodeCacheForTesting(bool fail_if_not_cached) {

@@ -115,6 +115,7 @@ proto_library(
         "//envoy/extensions/internal_redirect/safe_cross_scheme/v3:pkg",
         "//envoy/extensions/retry/host/omit_host_metadata/v3:pkg",
         "//envoy/extensions/retry/priority/previous_priorities/v3:pkg",
+        "//envoy/extensions/stat_sinks/wasm/v3:pkg",
         "//envoy/extensions/transport_sockets/alts/v3:pkg",
         "//envoy/extensions/transport_sockets/quic/v3:pkg",
         "//envoy/extensions/transport_sockets/raw_buffer/v3:pkg",
