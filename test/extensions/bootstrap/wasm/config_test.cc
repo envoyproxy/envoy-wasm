@@ -31,12 +31,15 @@ protected:
     api_ = Api::createApiForTest(stats_store_);
     EXPECT_CALL(context_, api()).WillRepeatedly(testing::ReturnRef(*api_));
     EXPECT_CALL(context_, initManager()).WillRepeatedly(testing::ReturnRef(init_manager_));
+    EXPECT_CALL(context_, lifecycleNotifier())
+        .WillRepeatedly(testing::ReturnRef(lifecycle_notifier_));
     extension_ = factory->createBootstrapExtension(config, context_);
     EXPECT_CALL(init_watcher_, ready());
     init_manager_.initialize(init_watcher_);
   }
 
   testing::NiceMock<Server::Configuration::MockServerFactoryContext> context_;
+  testing::NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier_;
   Init::ExpectableWatcherImpl init_watcher_;
   Stats::IsolatedStoreImpl stats_store_;
   Api::ApiPtr api_;

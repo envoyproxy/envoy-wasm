@@ -1006,6 +1006,7 @@ WasmResult Context::log(uint32_t level, absl::string_view message) {
     ENVOY_LOG(critical, "wasm log{}: {}", log_prefix(), message);
     return WasmResult::Ok;
   case spdlog::level::off:
+  case spdlog::level::n_levels:
     return WasmResult::Ok;
   }
   NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
