@@ -56,12 +56,11 @@ public:
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest,
-                         testing::Values("v8"
+                         testing::Values("v8",
 #if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
+                                         "wavm",
 #endif
-                                         ));
+                                         "null"));
 
 // Bad code in initial config.
 TEST_P(WasmNetworkFilterTest, BadCode) {
@@ -76,8 +75,14 @@ TEST_P(WasmNetworkFilterTest, BadCode) {
 
 // Test happy path.
 TEST_P(WasmNetworkFilterTest, HappyPath) {
-  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm")));
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+        "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/test_cpp.wasm"));
+  } else {
+    code = "NetworkTestCpp";
+  }
+  setupConfig(code);
   setupFilter();
 
   EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
