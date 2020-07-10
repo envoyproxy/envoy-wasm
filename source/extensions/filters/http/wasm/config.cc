@@ -20,6 +20,9 @@ Http::FilterFactoryCb WasmFilterConfig::createFilterFactoryFromProtoTyped(
   auto filter_config = std::make_shared<FilterConfig>(proto_config, context);
   return [filter_config](Http::FilterChainFactoryCallbacks& callbacks) -> void {
     auto filter = filter_config->createFilter();
+    if (!filter) { // Fail open
+      return;
+    }
     callbacks.addStreamFilter(filter);
     callbacks.addAccessLogHandler(filter);
   };

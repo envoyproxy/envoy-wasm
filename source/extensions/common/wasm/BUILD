@@ -82,6 +82,7 @@ envoy_cc_library(
         "//source/common/http:message_lib",
         "//source/common/http:utility_lib",
         "//source/common/tracing:http_tracer_lib",
+        "//source/extensions/common/wasm/ext:envoy_null_vm_wasm_api",
         "//source/extensions/filters/common/expr:context_lib",
         "@com_google_cel_cpp//eval/eval:field_access",
         "@com_google_cel_cpp//eval/eval:field_backed_list_impl",
