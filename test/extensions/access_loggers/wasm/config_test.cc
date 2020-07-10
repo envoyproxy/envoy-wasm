@@ -40,12 +40,11 @@ private:
 class WasmAccessLogConfigTest : public testing::TestWithParam<std::string> {};
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmAccessLogConfigTest,
-                         testing::Values("v8"
+                         testing::Values("v8",
 #if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
+                                         "wavm",
 #endif
-                                         ));
+                                         "null"));
 
 TEST_P(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
   auto factory =
@@ -74,9 +73,15 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
   envoy::extensions::access_loggers::wasm::v3::WasmAccessLog config;
   config.mutable_config()->mutable_vm_config()->set_runtime(
       absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
-      TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/logging_cpp.wasm"));
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+        "{{ test_rundir }}/test/extensions/access_loggers/wasm/test_data/test_cpp.wasm"));
+  } else {
+    code = "AccessLoggerTestCpp";
+  }
+  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_inline_bytes(
+      code);
 
   AccessLog::FilterPtr filter;
   Stats::IsolatedStoreImpl stats_store;
