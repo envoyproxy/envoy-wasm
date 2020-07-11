@@ -1,7 +1,13 @@
 // NOLINT(namespace-envoy)
 #include <string>
 
+#ifndef NULL_PLUGIN
 #include "proxy_wasm_intrinsics.h"
+#else
+#include "include/proxy-wasm/null_plugin.h"
+#endif
+
+START_WASM_PLUGIN(NetworkTestCpp)
 
 class ExampleContext : public Context {
 public:
@@ -44,3 +50,5 @@ void ExampleContext::onUpstreamConnectionClose(CloseType close_type) {
   logTrace("onUpstreamConnectionClose " + std::to_string(id()) + " " +
            std::to_string(static_cast<uint32_t>(close_type)));
 }
+
+END_WASM_PLUGIN
