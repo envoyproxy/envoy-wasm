@@ -75,13 +75,11 @@ TEST_P(WasmNetworkFilterTest, BadCode) {
 
 // Test happy path.
 TEST_P(WasmNetworkFilterTest, HappyPath) {
-  std::string code;
-  if (GetParam() != "null") {
-    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-        "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/test_cpp.wasm"));
-  } else {
-    code = "NetworkTestCpp";
-  }
+  const std::string code =
+      GetParam() != "null"
+          ? TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+                "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/test_cpp.wasm"))
+          : "NetworkTestCpp";
   setupConfig(code);
   setupFilter();
 
