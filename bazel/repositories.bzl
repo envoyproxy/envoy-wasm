@@ -801,14 +801,9 @@ def _proxy_wasm_cpp_sdk():
     _repository_impl(name = "proxy_wasm_cpp_sdk")
 
 def _proxy_wasm_cpp_host():
-    #_repository_impl(
-    #    name = "proxy_wasm_cpp_host",
-    #    build_file = "@envoy//bazel/external:proxy_wasm_cpp_host.BUILD",
-    #)
-    native.new_local_repository(
+    _repository_impl(
         name = "proxy_wasm_cpp_host",
         build_file = "@envoy//bazel/external:proxy_wasm_cpp_host.BUILD",
-        path = "/home/jplevyak/work/proxy-wasm-cpp-host",
     )
 
 def _emscripten_toolchain():
