@@ -302,8 +302,6 @@ def SyncBuildFiles(cmd, dst_root):
     is_proto_dir = any(f.endswith('.proto') for f in files)
     if not is_proto_dir:
       continue
-    if root.startswith("api/wasm"):
-      continue
     build_contents = BuildFileContents(root, files)
     build_path = os.path.join(root, 'BUILD')
     with open(build_path, 'w') as f:

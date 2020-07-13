@@ -83,7 +83,7 @@ TEST_P(WasmCommonTest, Logging) {
   auto vm_configuration = "logging";
   auto plugin_configuration = "configure-test";
   std::string code;
-  if (GetParam() == "v8") {
+  if (GetParam() != "null") {
     code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
         absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
   } else {
