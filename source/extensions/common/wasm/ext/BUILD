@@ -1,4 +1,5 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_proto_library")
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
@@ -30,6 +31,7 @@ envoy_cc_library(
     deps = [
         ":declare_property_cc_proto",
         "//source/common/grpc:async_client_lib",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],
 )
 
