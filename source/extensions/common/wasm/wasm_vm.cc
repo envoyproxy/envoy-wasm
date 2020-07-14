@@ -5,6 +5,7 @@
 
 #include "extensions/common/wasm/context.h"
 #include "extensions/common/wasm/ext/envoy_null_vm_wasm_api.h"
+#include "extensions/common/wasm/wasm_extension.h"
 #include "extensions/common/wasm/well_known_names.h"
 
 #include "include/proxy-wasm/null.h"
@@ -55,14 +56,14 @@ WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& s
     if (!wasm) {
       return nullptr;
     }
-    wasm->integration() = std::make_unique<EnvoyWasmVmIntegration>(scope, runtime, "null");
+    wasm->integration() = getWasmExtension()->createEnvoyWasmVmIntegration(scope, runtime, "null");
     return wasm;
   } else if (runtime == WasmRuntimeNames::get().V8) {
     auto wasm = proxy_wasm::createV8Vm();
     if (!wasm) {
       return nullptr;
     }
-    wasm->integration() = std::make_unique<EnvoyWasmVmIntegration>(scope, runtime, "v8");
+    wasm->integration() = getWasmExtension()->createEnvoyWasmVmIntegration(scope, runtime, "null");
     return wasm;
   } else {
     ENVOY_LOG_TO_LOGGER(
