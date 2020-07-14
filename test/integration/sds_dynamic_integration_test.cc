@@ -23,6 +23,7 @@
 #include "test/integration/server.h"
 #include "test/integration/ssl_utility.h"
 #include "test/mocks/secret/mocks.h"
+#include "test/mocks/server/mocks.h"
 #include "test/test_common/network_utility.h"
 #include "test/test_common/resources.h"
 #include "test/test_common/test_time_system.h"
