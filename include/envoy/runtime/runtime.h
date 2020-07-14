@@ -10,7 +10,6 @@
 
 #include "envoy/common/pure.h"
 #include "envoy/stats/store.h"
-#include "envoy/thread_local/thread_local.h"
 #include "envoy/type/v3/percent.pb.h"
 
 #include "common/common/assert.h"
@@ -71,8 +70,10 @@ using RandomGeneratorPtr = std::unique_ptr<RandomGenerator>;
 /**
  * A snapshot of runtime data.
  */
-class Snapshot : public ThreadLocal::ThreadLocalObject {
+class Snapshot {
 public:
+  virtual ~Snapshot() = default;
+
   struct Entry {
     std::string raw_string_value_;
     absl::optional<uint64_t> uint_value_;
