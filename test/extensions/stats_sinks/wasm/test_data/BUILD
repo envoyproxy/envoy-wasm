@@ -9,13 +9,13 @@ licenses(["notice"])  # Apache 2
 
 envoy_package()
 
-filegroup(
-    name = "modules",
-    srcs = glob(["*.wasm"]),
-    data = [
-        ":test_cpp.wasm",
-    ],
-)
+# filegroup(
+#     name = "modules",
+#     srcs = glob(["*.wasm"]),
+#     # data = [
+#     #     ":test_cpp.wasm",
+#     # ],
+# )
 
 envoy_cc_library(
     name = "test_context_cpp_plugin",

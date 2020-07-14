@@ -205,50 +205,95 @@ void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::Resoluti
 }
 
 void Context::onStat(Envoy::Stats::MetricSnapshot& snapshot) {
-  // {name}.{delta/value}|{c/g}/n
   proxy_wasm::DeferAfterCallActions actions(this);
-  uint32_t s = 0;
+  // buffer format:
+  //  uint32 size of block of this type
+  //  uint32 type
+  //  uint32 count
+  //    uint32 length of name
+  //    name
+  //    8 byte alignment padding
+  //    8 bytes of absolute value
+  //    8 bytes of delta  (if appropropriate, e.g. for counters)
+  //  uint32 size of block of this type
+  const uint64_t padding = 0;
+
+  uint32_t counter_block_size = 3 * sizeof(uint32_t); // type of stat
+  uint32_t num_counters = snapshot.counters().size();
+  uint32_t counter_type = 1;
+
+  uint32_t gauge_block_size = 3 * sizeof(uint32_t); // type of stat
+  uint32_t num_gauges = snapshot.gauges().size();
+  uint32_t gauge_type = 2;
+
+  uint32_t n = 0;
+  uint64_t v = 0;
+
   for (const auto& counter : snapshot.counters()) {
     if (counter.counter_.get().used()) {
-      s += absl::StrCat(counter.counter_.get().name(), ".", counter.delta_, "|c/n").size() + 1;
+      counter_block_size += sizeof(uint32_t) + counter.counter_.get().name().size();
+      counter_block_size += 24;
     }
   }
 
   for (const auto& gauge : snapshot.gauges()) {
     if (gauge.get().used()) {
-      s += absl::StrCat(gauge.get().name(), ".", gauge.get().value(), "|g/n").size() + 1;
+      gauge_block_size += sizeof(uint32_t) + gauge.get().name().size();
+      gauge_block_size += 16;
     }
   }
-  s += sizeof(uint32_t);
 
-  auto buffer = std::unique_ptr<char[]>(new char[s]);
+  auto buffer = std::unique_ptr<char[]>(new char[counter_block_size + gauge_block_size]);
   char* b = buffer.get();
 
-  uint32_t n = snapshot.counters().size() + snapshot.gauges().size();
-  memcpy(b, &n, sizeof(uint32_t));
+  memcpy(b, &counter_block_size, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  memcpy(b, &counter_type, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  memcpy(b, &num_counters, sizeof(uint32_t));
   b += sizeof(uint32_t);
 
   for (const auto& counter : snapshot.counters()) {
     if (counter.counter_.get().used()) {
-      absl::string_view flush_counter =
-          absl::StrCat(counter.counter_.get().name(), ".", counter.delta_, "|c/n");
-      memcpy(b, flush_counter.data(), flush_counter.size());
-      b += flush_counter.size();
-      *b++ = 0;
+      n = counter.counter_.get().name().size();
+      memcpy(b, &n, sizeof(uint32_t));
+      b += sizeof(uint32_t);
+      memcpy(b, counter.counter_.get().name().data(), counter.counter_.get().name().size());
+      b += counter.counter_.get().name().size();
+      memcpy(b, &padding, sizeof(uint64_t)); // padding
+      b += 8;
+      v = counter.counter_.get().value();
+      memcpy(b, &v, sizeof(uint64_t));
+      b += sizeof(uint64_t);
+      v = counter.delta_;
+      memcpy(b, &v, sizeof(uint64_t));
+      b += sizeof(uint64_t);
     }
   }
 
+  memcpy(b, &gauge_block_size, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  memcpy(b, &gauge_type, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  memcpy(b, &num_gauges, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+
   for (const auto& gauge : snapshot.gauges()) {
     if (gauge.get().used()) {
-      absl::string_view gauge_counter =
-          absl::StrCat(gauge.get().name(), ".", gauge.get().value(), "|g/n");
-      memcpy(b, gauge_counter.data(), gauge_counter.size());
-      b += gauge_counter.size();
-      *b++ = 0;
+      n = gauge.get().name().size();
+      memcpy(b, &n, sizeof(uint32_t));
+      b += sizeof(uint32_t);
+      memcpy(b, gauge.get().name().data(), gauge.get().name().size());
+      b += gauge.get().name().size();
+      memcpy(b, &padding, sizeof(uint64_t)); // padding
+      b += sizeof(uint64_t);
+      v = gauge.get().value();
+      memcpy(b, &v, sizeof(uint64_t));
+      b += sizeof(uint64_t);
     }
   }
-  buffer_.set(std::move(buffer), s);
-  wasm()->on_stat_(this, id_, s);
+  buffer_.set(std::move(buffer), counter_block_size + gauge_block_size);
+  wasm()->on_stat_(this, id_, counter_block_size + gauge_block_size);
 }
 
 // Native serializer carrying over bit representation from CEL value to the extension

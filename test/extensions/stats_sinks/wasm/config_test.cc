@@ -83,23 +83,43 @@ TEST_P(WasmCommonContextTest, OnStat) {
 
   EXPECT_CALL(context(), log_(spdlog::level::warn, Eq("TestContext::onStat")));
   EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onStats stat: test_counter.1|c/n")));
+              log_(spdlog::level::info, Eq("TestContext::onStat upstream_rq_2xx:1")));
+  
   EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onStats stat: test_gauge.2|g/n")));
+              log_(spdlog::level::info, Eq("TestContext::onStat upstream_rq_5xx:2")));
+
+  EXPECT_CALL(context(),
+              log_(spdlog::level::info, Eq("TestContext::onStat membership_total:3")));
+
+  EXPECT_CALL(context(),
+              log_(spdlog::level::info, Eq("TestContext::onStat duration_total:4")));
 
   EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
 
-  NiceMock<Stats::MockCounter> counter;
-  counter.name_ = "test_counter";
-  counter.latch_ = 1;
-  counter.used_ = true;
-  snapshot_.counters_.push_back({1, counter});
+  NiceMock<Stats::MockCounter> success_counter;
+  success_counter.name_ = "upstream_rq_2xx";
+  success_counter.latch_ = 1;
+  success_counter.used_ = true;
 
-  NiceMock<Stats::MockGauge> gauge;
-  gauge.name_ = "test_gauge";
-  gauge.value_ = 2;
-  gauge.used_ = true;
-  snapshot_.gauges_.push_back(gauge);
+  NiceMock<Stats::MockCounter> error_5xx_counter;
+  error_5xx_counter.name_ = "upstream_rq_5xx";
+  error_5xx_counter.latch_ = 1;
+  error_5xx_counter.used_ = true;
+
+  snapshot_.counters_.push_back({1, success_counter});
+  snapshot_.counters_.push_back({2, error_5xx_counter});
+
+  NiceMock<Stats::MockGauge> membership_total;
+  membership_total.name_ = "membership_total";
+  membership_total.value_ = 3;
+  membership_total.used_ = true;
+  snapshot_.gauges_.push_back(membership_total);
+
+  NiceMock<Stats::MockGauge> duration_total;
+  duration_total.name_ = "duration_total";
+  duration_total.value_ = 4;
+  duration_total.used_ = true;
+  snapshot_.gauges_.push_back(duration_total);
 
   context_->onStat(snapshot_);
 }

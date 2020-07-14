@@ -1,11 +1,11 @@
-#include "extensions/common/wasm/wasm.h"
-
 #include <algorithm>
 #include <chrono>
 
 #include "envoy/event/deferred_deletable.h"
 
 #include "common/common/logger.h"
+
+#include "extensions/common/wasm/wasm.h"
 
 #include "absl/strings/str_cat.h"
 
@@ -231,7 +231,7 @@ void Wasm::getFunctions() {
 #define _GET(_fn) wasm_vm_->getFunction("envoy_" #_fn, &_fn##_);
   _GET(on_resolve_dns)
 #undef _GET
-#define _GET(_fn) wasm_vm_->getFunction("" #_fn, &_fn##_);
+#define _GET(_fn) wasm_vm_->getFunction("envoy_" #_fn, &_fn##_);
   _GET(on_stat)
 #undef _GET
 }

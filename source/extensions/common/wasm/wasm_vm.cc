@@ -1,10 +1,9 @@
-#include "extensions/common/wasm/wasm_vm.h"
-
 #include <algorithm>
 #include <memory>
 
 #include "extensions/common/wasm/context.h"
 #include "extensions/common/wasm/ext/envoy_null_vm_wasm_api.h"
+#include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 
 #include "include/proxy-wasm/null.h"
@@ -41,7 +40,8 @@ bool EnvoyWasmVmIntegration::getNullVmFunction(absl::string_view function_name, 
           }
         };
     return true;
-  } else if (function_name == "on_stat" && returns_word == false && number_of_arguments == 2) {
+  } else if (function_name == "envoy_on_stat" && returns_word == false &&
+             number_of_arguments == 2) {
     *reinterpret_cast<proxy_wasm::WasmCallVoid<2>*>(ptr_to_function_return) =
         [plugin](ContextBase* context, Word context_id, Word result_size) {
           proxy_wasm::SaveRestoreContext saved_context(context);
