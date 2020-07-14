@@ -1,9 +1,10 @@
+#include "extensions/common/wasm/wasm_vm.h"
+
 #include <algorithm>
 #include <memory>
 
 #include "extensions/common/wasm/context.h"
 #include "extensions/common/wasm/ext/envoy_null_vm_wasm_api.h"
-#include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 
 #include "include/proxy-wasm/null.h"

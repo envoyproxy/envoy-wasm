@@ -1,11 +1,11 @@
+#include "extensions/common/wasm/wasm.h"
+
 #include <algorithm>
 #include <chrono>
 
 #include "envoy/event/deferred_deletable.h"
 
 #include "common/common/logger.h"
-
-#include "extensions/common/wasm/wasm.h"
 
 #include "absl/strings/str_cat.h"
 

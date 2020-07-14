@@ -82,17 +82,13 @@ TEST_P(WasmCommonContextTest, OnStat) {
   setupContext();
 
   EXPECT_CALL(context(), log_(spdlog::level::warn, Eq("TestContext::onStat")));
-  EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onStat upstream_rq_2xx:1")));
-  
-  EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onStat upstream_rq_5xx:2")));
+  EXPECT_CALL(context(), log_(spdlog::level::info, Eq("TestContext::onStat upstream_rq_2xx:1")));
 
-  EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onStat membership_total:3")));
+  EXPECT_CALL(context(), log_(spdlog::level::info, Eq("TestContext::onStat upstream_rq_5xx:2")));
 
-  EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onStat duration_total:4")));
+  EXPECT_CALL(context(), log_(spdlog::level::info, Eq("TestContext::onStat membership_total:3")));
+
+  EXPECT_CALL(context(), log_(spdlog::level::info, Eq("TestContext::onStat duration_total:4")));
 
   EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
 
