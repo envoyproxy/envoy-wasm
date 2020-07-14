@@ -33,7 +33,7 @@ public:
                                absl::string_view short_runtime) override;
   WasmHandleExtensionFactory wasmFactory() override;
   WasmHandleExtensionCloneFactory wasmCloneFactory() override;
-  void onEvent(WasmEvent event) override;
+  void onEvent(WasmEvent event, const PluginSharedPtr& plugin) override;
   void onRemoteCacheEntriesChanged(int remote_cache_entries) override;
   void createStats(const Stats::ScopeSharedPtr& scope, const PluginSharedPtr& plugin) override;
   void resetStats() override;
@@ -71,7 +71,7 @@ WasmHandleExtensionCloneFactory EnvoyWasm::wasmCloneFactory() {
   };
 }
 
-void EnvoyWasm::onEvent(WasmEvent event) {
+void EnvoyWasm::onEvent(WasmEvent event, const PluginSharedPtr&) {
   switch (event) {
   case WasmEvent::RemoteLoadCacheHit:
     create_wasm_stats_->remote_load_cache_hits_.inc();

@@ -306,7 +306,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
     if (it != code_cache->end()) {
       it->second.use_time = now;
       if (it->second.in_progress) {
-        wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheMiss);
+        wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheMiss, plugin);
         ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
                             "createWasm: failed to load (in progress) from {}", source);
         cb(nullptr);
@@ -315,7 +315,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       if (code.empty()) {
         if (now - it->second.fetch_time <
             std::chrono::seconds(CODE_CACHE_SECONDS_NEGATIVE_CACHING)) {
-          wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheNegativeHit);
+          wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheNegativeHit, plugin);
           ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,
                               "createWasm: failed to load (cached) from {}", source);
           cb(nullptr);
@@ -324,7 +324,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         it->second.in_progress = true;
         it->second.fetch_time = now;
       } else {
-        wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheHit);
+        wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheHit, plugin);
       }
     } else {
       fetch = true; // Not in cache, fetch.
@@ -332,7 +332,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       e.in_progress = true;
       e.use_time = e.fetch_time = now;
       wasm_extension->onRemoteCacheEntriesChanged(code_cache->size());
-      wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheMiss);
+      wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheMiss, plugin);
     }
   } else if (vm_config.code().has_local()) {
     code = Config::DataSource::read(vm_config.code().local(), true, api);
@@ -382,9 +382,9 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         Stats::ScopeSharedPtr create_wasm_stats_scope =
             wasm_extension->lockOrResetScope(scope, plugin);
         if (code.empty()) {
-          wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheFetchFailure);
+          wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheFetchFailure, plugin);
         } else {
-          wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheFetchSuccess);
+          wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheFetchSuccess, plugin);
         }
         wasm_extension->onRemoteCacheEntriesChanged(code_cache->size());
       }

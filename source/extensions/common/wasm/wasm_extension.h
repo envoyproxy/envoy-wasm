@@ -53,7 +53,7 @@ public:
     RemoteLoadCacheFetchSuccess,
     RemoteLoadCacheFetchFailure,
   };
-  virtual void onEvent(WasmEvent event) = 0;
+  virtual void onEvent(WasmEvent event, const PluginSharedPtr& plugin) = 0;
   virtual void onRemoteCacheEntriesChanged(int remote_cache_entries) = 0;
   virtual void createStats(const Stats::ScopeSharedPtr& scope, const PluginSharedPtr& plugin) = 0;
   virtual void resetStats() = 0; // Delete stats pointers
