@@ -113,6 +113,10 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_TRUE(wasm_weak.lock()->initialize(code, false));
   auto context = static_cast<TestContext*>(wasm_weak.lock()->start(plugin_));
 
+  if (std::get<1>(GetParam()) == "cpp") {
+    EXPECT_CALL(*context, log_(spdlog::level::info, Eq("printf stdout test")));
+    EXPECT_CALL(*context, log_(spdlog::level::err, Eq("printf stderr test")));
+  }
   EXPECT_CALL(*context, log_(spdlog::level::warn, Eq("warn configure-test")));
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("test trace logging")));
   EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("test debug logging")));
