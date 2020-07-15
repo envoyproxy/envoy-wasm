@@ -34,10 +34,10 @@ void TestContext::onStat(uint32_t result_size) {
   auto stats_buffer = getBufferBytes(WasmBufferType::CallData, 0, result_size);
   auto stats = parseStatResults(stats_buffer->view());
   for (auto& e : stats.counters) {
-    logInfo("TestContext::onStat " + e.name + ":" + std::to_string(e.delta));
+    logInfo("TestContext::onStat " + std::string(e.name) + ":" + std::to_string(e.delta));
   }
   for (auto& e : stats.gauges) {
-    logInfo("TestContext::onStat " + e.name + ":" + std::to_string(e.value));
+    logInfo("TestContext::onStat " + std::string(e.name) + ":" + std::to_string(e.value));
   }
 }
 

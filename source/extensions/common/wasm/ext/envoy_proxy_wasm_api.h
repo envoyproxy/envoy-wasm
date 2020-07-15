@@ -28,18 +28,23 @@ struct DnsResult {
 
 struct CounterResult {
   uint64_t delta;
-  std::string name;
+  StringView name;
   uint64_t value;
 };
 
 struct GaugeResult {
   uint64_t value;
-  std::string name;
+  StringView name;
 };
 
 struct StatResult {
   std::vector<CounterResult> counters;
   std::vector<GaugeResult> gauges;
+};
+
+enum class StatType : uint32_t {
+  Counter = 1,
+  Gauge = 2,
 };
 
 inline std::vector<DnsResult> parseDnsResults(StringView data) {
@@ -69,7 +74,7 @@ inline StatResult parseStatResults(StringView data) {
     uint32_t block_size = *n++;
     uint32_t block_type = *n++;
     uint32_t num_stats = *n++;
-    if (block_type == 1) { // counter
+    if (static_cast<StatType>(block_type) == StatType::Counter) { // counter
       std::vector<CounterResult> counters(num_stats);
       uint32_t stat_index = data_len + 3 * sizeof(uint32_t);
       for (uint32_t i = 0; i < num_stats; i++) {
@@ -78,7 +83,7 @@ inline StatResult parseStatResults(StringView data) {
         stat_index += sizeof(uint32_t);
 
         auto& e = counters[i];
-        e.name.assign(data.data() + stat_index, name_len);
+        e.name = {data.data() + stat_index, name_len};
         stat_index += name_len + sizeof(uint64_t);
 
         const uint64_t* stat_vals = reinterpret_cast<const uint64_t*>(data.data() + stat_index);
@@ -88,7 +93,7 @@ inline StatResult parseStatResults(StringView data) {
         stat_index += 2 * sizeof(uint64_t);
       }
       results.counters = counters;
-    } else if (block_type == 2) { // gauge
+    } else if (static_cast<StatType>(block_type) == StatType::Gauge) { // gauge
       std::vector<GaugeResult> gauges(num_stats);
       uint32_t stat_index = data_len + 3 * sizeof(uint32_t);
       for (uint32_t i = 0; i < num_stats; i++) {
@@ -97,7 +102,7 @@ inline StatResult parseStatResults(StringView data) {
         stat_index += sizeof(uint32_t);
 
         auto& e = gauges[i];
-        e.name.assign(data.data() + stat_index, name_len);
+        e.name = {data.data() + stat_index, name_len};
         stat_index += name_len + sizeof(uint64_t);
 
         const uint64_t* stat_vals = reinterpret_cast<const uint64_t*>(data.data() + stat_index);

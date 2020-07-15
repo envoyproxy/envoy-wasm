@@ -230,9 +230,7 @@ void Wasm::getFunctions() {
   WasmBase::getFunctions();
 #define _GET(_fn) wasm_vm_->getFunction("envoy_" #_fn, &_fn##_);
   _GET(on_resolve_dns)
-#undef _GET
-#define _GET(_fn) wasm_vm_->getFunction("envoy_" #_fn, &_fn##_);
-  _GET(on_stat)
+  _GET(on_stats_update)
 #undef _GET
 }
 

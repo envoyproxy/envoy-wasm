@@ -206,6 +206,9 @@ void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::Resoluti
 
 void Context::onStat(Envoy::Stats::MetricSnapshot& snapshot) {
   proxy_wasm::DeferAfterCallActions actions(this);
+  if (wasm()->isFailed() || !wasm()->on_stats_update_) {
+    return;
+  }
   // buffer format:
   //  uint32 size of block of this type
   //  uint32 type
@@ -216,6 +219,7 @@ void Context::onStat(Envoy::Stats::MetricSnapshot& snapshot) {
   //    8 bytes of absolute value
   //    8 bytes of delta  (if appropropriate, e.g. for counters)
   //  uint32 size of block of this type
+
   const uint64_t padding = 0;
 
   uint32_t counter_block_size = 3 * sizeof(uint32_t); // type of stat
@@ -261,7 +265,7 @@ void Context::onStat(Envoy::Stats::MetricSnapshot& snapshot) {
       memcpy(b, counter.counter_.get().name().data(), counter.counter_.get().name().size());
       b += counter.counter_.get().name().size();
       memcpy(b, &padding, sizeof(uint64_t)); // padding
-      b += 8;
+      b += sizeof(uint64_t);
       v = counter.counter_.get().value();
       memcpy(b, &v, sizeof(uint64_t));
       b += sizeof(uint64_t);
@@ -293,7 +297,7 @@ void Context::onStat(Envoy::Stats::MetricSnapshot& snapshot) {
     }
   }
   buffer_.set(std::move(buffer), counter_block_size + gauge_block_size);
-  wasm()->on_stat_(this, id_, counter_block_size + gauge_block_size);
+  wasm()->on_stats_update_(this, id_, counter_block_size + gauge_block_size);
 }
 
 // Native serializer carrying over bit representation from CEL value to the extension

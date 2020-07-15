@@ -34,6 +34,7 @@ extern "C" PROXY_WASM_KEEPALIVE void envoy_on_resolve_dns(uint32_t context_id, u
   getEnvoyContextBase(context_id)->onResolveDns(token, data_size);
 }
 
-extern "C" PROXY_WASM_KEEPALIVE void envoy_on_stat(uint32_t context_id, uint32_t data_size) {
+extern "C" PROXY_WASM_KEEPALIVE void envoy_on_stats_update(uint32_t context_id,
+                                                           uint32_t data_size) {
   getEnvoyContextBase(context_id)->onStat(data_size);
 }

@@ -28,11 +28,11 @@ using Envoy::Extensions::Common::Wasm::WasmHandle;
 
 class WasmStatSink : public Stats::Sink {
 public:
-  WasmStatSink(Common::Wasm::WasmHandleSharedPtr singleton) : singleton_(std::move(singleton)) {}
+  WasmStatSink(absl::string_view root_id, Common::Wasm::WasmHandleSharedPtr singleton)
+      : root_id_(root_id), singleton_(std::move(singleton)) {}
 
-  void flush(Stats::MetricSnapshot& snapshot) {
-    WasmHandle& wasm_handle = tls_slot_->getTyped<WasmHandle>();
-    wasm_handle.wasm()->onStat(root_id_, snapshot);
+  void flush(Stats::MetricSnapshot& snapshot) override {
+    singleton_->wasm()->onStat(root_id_, snapshot);
   }
 
   void setSingleton(Common::Wasm::WasmHandleSharedPtr singleton) {
@@ -40,9 +40,13 @@ public:
     singleton_ = std::move(singleton);
   }
 
-  void WasmStatSink::onHistogramComplete(const Stats::Histogram& histogram, uint64_t value) {}
+  void onHistogramComplete(const Stats::Histogram& histogram, uint64_t value) override {
+    (void)histogram;
+    (void)value;
+  }
 
 private:
+  std::string root_id_;
   Common::Wasm::WasmHandleSharedPtr singleton_;
 };
 

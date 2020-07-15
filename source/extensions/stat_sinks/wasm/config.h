@@ -2,7 +2,10 @@
 
 #include <string>
 
+#include "envoy/server/factory_context.h"
 #include "envoy/server/instance.h"
+
+#include "common/config/datasource.h"
 
 #include "server/configuration_impl.h"
 
@@ -19,11 +22,14 @@ class WasmSinkFactory : Logger::Loggable<Logger::Id::config>,
 public:
   // StatsSinkFactory
   Stats::SinkPtr createStatsSink(const Protobuf::Message& config,
-                                 Server::Instance& server) override;
+                                 Server::Instance& context) override;
 
   ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
   std::string name() const override;
+
+private:
+  Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
 
 } // namespace Wasm

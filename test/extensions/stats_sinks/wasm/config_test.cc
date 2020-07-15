@@ -1,126 +1,88 @@
-#include "envoy/server/lifecycle_notifier.h"
+#include "envoy/extensions/stat_sinks/wasm/v3/wasm.pb.validate.h"
+#include "envoy/registry/registry.h"
+
+#include "common/protobuf/protobuf.h"
 
 #include "extensions/common/wasm/wasm.h"
+#include "extensions/stat_sinks/wasm/config.h"
+#include "extensions/stat_sinks/wasm/wasm_stat_sink_impl.h"
+#include "extensions/stat_sinks/well_known_names.h"
 
-#include "test/mocks/upstream/mocks.h"
-#include "test/test_common/wasm_base.h"
+#include "test/mocks/server/mocks.h"
+#include "test/test_common/environment.h"
+#include "test/test_common/printers.h"
+#include "test/test_common/utility.h"
 
-#include "absl/types/optional.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using testing::Eq;
-
 namespace Envoy {
 namespace Extensions {
-namespace Common {
+namespace StatSinks {
 namespace Wasm {
 
-class TestContext : public Extensions::Common::Wasm::Context {
+class TestFactoryContext : public NiceMock<Server::Configuration::MockFactoryContext> {
 public:
-  TestContext() : Extensions::Common::Wasm::Context() {}
-  TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
-  TestContext(Extensions::Common::Wasm::Wasm* wasm,
-              const Extensions::Common::Wasm::PluginSharedPtr& plugin)
-      : Extensions::Common::Wasm::Context(wasm, plugin) {}
-  TestContext(Extensions::Common::Wasm::Wasm* wasm, uint32_t root_context_id,
-              const Extensions::Common::Wasm::PluginSharedPtr& plugin)
-      : Extensions::Common::Wasm::Context(wasm, root_context_id, plugin) {}
-  ~TestContext() override = default;
-  proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
-    std::cerr << std::string(message) << "\n";
-    log_(static_cast<spdlog::level::level_enum>(level), message);
-    Extensions::Common::Wasm::Context::log(static_cast<spdlog::level::level_enum>(level), message);
-    return proxy_wasm::WasmResult::Ok;
+  TestFactoryContext(Api::Api& api, Stats::Scope& scope) : api_(api), scope_(scope) {}
+  Api::Api& api() override { return api_; }
+  Stats::Scope& scope() override { return scope_; }
+  const envoy::config::core::v3::Metadata& listenerMetadata() const override {
+    return listener_metadata_;
   }
-  MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
+
+private:
+  Api::Api& api_;
+  Stats::Scope& scope_;
+  envoy::config::core::v3::Metadata listener_metadata_;
 };
 
-class WasmCommonContextTest
-    : public Common::Wasm::WasmTestBase<testing::TestWithParam<std::string>> {
-public:
-  WasmCommonContextTest() = default;
+class WasmStatSinkConfigTest : public testing::TestWithParam<std::string> {};
 
-  void setup(const std::string& code, std::string root_id = "") {
-    setupBase(
-        GetParam(), code,
-        [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
-          return new TestContext(wasm, plugin);
-        },
-        root_id);
-  }
-  void setupContext() {
-    context_ = std::make_unique<TestContext>(wasm_->wasm().get(), root_context_->id(), plugin_);
-    context_->onCreate();
-  }
-
-  TestContext& root_context() { return *static_cast<TestContext*>(root_context_); }
-  TestContext& context() { return *context_; }
-
-  std::unique_ptr<TestContext> context_;
-};
-
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonContextTest,
-                         testing::Values("v8",
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmStatSinkConfigTest,
+                         testing::Values("v8"
 #if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
+                                         ,
+                                         "wavm"
 #endif
-                                         "null"));
+                                         ));
 
-TEST_P(WasmCommonContextTest, OnStat) {
-  std::string code;
-  NiceMock<Stats::MockMetricSnapshot> snapshot_;
-  if (GetParam() != "null") {
-    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
-        "{{ test_rundir }}/test/extensions/stats_sinks/wasm/test_data/test_context_cpp.wasm")));
-  } else {
-    // The name of the Null VM plugin.
-    code = "CommonWasmTestContextCpp";
-  }
-  EXPECT_FALSE(code.empty());
-  setup(code);
-  setupContext();
+TEST_P(WasmStatSinkConfigTest, CreateWasmFromEmpty) {
+  auto factory = Registry::FactoryRegistry<Server::Configuration::StatsSinkFactory>::getFactory(
+      StatsSinkNames::get().Wasm);
+  ASSERT_NE(factory, nullptr);
 
-  EXPECT_CALL(context(), log_(spdlog::level::warn, Eq("TestContext::onStat")));
-  EXPECT_CALL(context(), log_(spdlog::level::info, Eq("TestContext::onStat upstream_rq_2xx:1")));
+  ProtobufTypes::MessagePtr message = factory->createEmptyConfigProto();
+  ASSERT_NE(nullptr, message);
 
-  EXPECT_CALL(context(), log_(spdlog::level::info, Eq("TestContext::onStat upstream_rq_5xx:2")));
+  NiceMock<Server::Configuration::MockFactoryContext> context;
 
-  EXPECT_CALL(context(), log_(spdlog::level::info, Eq("TestContext::onStat membership_total:3")));
+  AccessLog::InstanceSharedPtr instance;
+  EXPECT_THROW_WITH_MESSAGE(instance = factory->createStatsSink(*message, context),
+                            Common::Wasm::WasmException, "Unable to create Wasm access log ");
+}
 
-  EXPECT_CALL(context(), log_(spdlog::level::info, Eq("TestContext::onStat duration_total:4")));
+TEST_P(WasmStatSinkConfigTest, CreateWasmFromWASM) {
+  auto factory = Registry::FactoryRegistry<Server::Configuration::StatsSinkFactory>::getFactory(
+      StatsSinkNames::get().Wasm);
+  ASSERT_NE(factory, nullptr);
 
-  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
+  envoy::extensions::stat_sinks::wasm::v3::Wasm config;
+  config.mutable_config()->mutable_vm_config()->set_runtime(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()));
+  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
+      TestEnvironment::substitute(
+          "{{ test_rundir }}/test/extensions/stats_sinks/wasm/test_data/test_context_cpp.wasm"));
 
-  NiceMock<Stats::MockCounter> success_counter;
-  success_counter.name_ = "upstream_rq_2xx";
-  success_counter.latch_ = 1;
-  success_counter.used_ = true;
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  TestFactoryContext context(*api, stats_store);
 
-  NiceMock<Stats::MockCounter> error_5xx_counter;
-  error_5xx_counter.name_ = "upstream_rq_5xx";
-  error_5xx_counter.latch_ = 1;
-  error_5xx_counter.used_ = true;
-
-  snapshot_.counters_.push_back({1, success_counter});
-  snapshot_.counters_.push_back({2, error_5xx_counter});
-
-  NiceMock<Stats::MockGauge> membership_total;
-  membership_total.name_ = "membership_total";
-  membership_total.value_ = 3;
-  membership_total.used_ = true;
-  snapshot_.gauges_.push_back(membership_total);
-
-  NiceMock<Stats::MockGauge> duration_total;
-  duration_total.name_ = "duration_total";
-  duration_total.value_ = 4;
-  duration_total.used_ = true;
-  snapshot_.gauges_.push_back(duration_total);
-
-  context_->onStat(snapshot_);
+  AccessLog::InstanceSharedPtr instance = factory->createStatsSink(config, context);
+  EXPECT_NE(nullptr, instance);
+  EXPECT_NE(nullptr, dynamic_cast<WasmStatSink*>(instance.get()));
 }
 
 } // namespace Wasm
-} // namespace Common
+} // namespace StatSinks
 } // namespace Extensions
 } // namespace Envoy

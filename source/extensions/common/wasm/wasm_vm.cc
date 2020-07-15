@@ -41,7 +41,7 @@ bool EnvoyWasmVmIntegration::getNullVmFunction(absl::string_view function_name, 
           }
         };
     return true;
-  } else if (function_name == "envoy_on_stat" && returns_word == false &&
+  } else if (function_name == "envoy_on_stats_update" && returns_word == false &&
              number_of_arguments == 2) {
     *reinterpret_cast<proxy_wasm::WasmCallVoid<2>*>(ptr_to_function_return) =
         [plugin](ContextBase* context, Word context_id, Word result_size) {
