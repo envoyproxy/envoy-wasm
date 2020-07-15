@@ -9,38 +9,27 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 namespace {
-#define CREATE_WASM_STATS(COUNTER, GAUGE)                                                          \
-  COUNTER(remote_load_cache_hits)                                                                  \
-  COUNTER(remote_load_cache_negative_hits)                                                         \
-  COUNTER(remote_load_cache_misses)                                                                \
-  COUNTER(remote_load_fetch_successes)                                                             \
-  COUNTER(remote_load_fetch_failures)                                                              \
-  GAUGE(remote_load_cache_entries, NeverImport)
-
-struct CreateWasmStats {
-  CREATE_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
-};
 
 WasmExtension* wasm_extension = nullptr;
 
-class EnvoyWasm : public WasmExtension {
-public:
-  EnvoyWasm() = default;
-  ~EnvoyWasm() override = default;
-  void initialize() override {}
-  std::unique_ptr<EnvoyWasmVmIntegration>
-  createEnvoyWasmVmIntegration(const Stats::ScopeSharedPtr& scope, absl::string_view runtime,
-                               absl::string_view short_runtime) override;
-  WasmHandleExtensionFactory wasmFactory() override;
-  WasmHandleExtensionCloneFactory wasmCloneFactory() override;
-  void onEvent(WasmEvent event, const PluginSharedPtr& plugin) override;
-  void onRemoteCacheEntriesChanged(int remote_cache_entries) override;
-  void createStats(const Stats::ScopeSharedPtr& scope, const PluginSharedPtr& plugin) override;
-  void resetStats() override;
+} // namespace
 
-private:
-  std::unique_ptr<CreateWasmStats> create_wasm_stats_;
-};
+Stats::ScopeSharedPtr WasmExtension::lockOrResetScope(const Stats::ScopeSharedPtr& scope,
+                                                      const PluginSharedPtr& plugin) {
+  Stats::ScopeSharedPtr lock;
+  if (!(lock = scope_.lock())) {
+    createStats(scope, plugin);
+    scope_ = ScopeWeakPtr(scope);
+    return scope;
+  }
+  return lock;
+}
+
+// Register a Wasm extension. Note: only one extension may be registered.
+RegisterWasmExtension::RegisterWasmExtension(WasmExtension* extension) {
+  RELEASE_ASSERT(!wasm_extension, "Multiple Wasm extensions registered.");
+  wasm_extension = extension;
+}
 
 std::unique_ptr<EnvoyWasmVmIntegration>
 EnvoyWasm::createEnvoyWasmVmIntegration(const Stats::ScopeSharedPtr& scope,
@@ -101,25 +90,6 @@ void EnvoyWasm::createStats(const Stats::ScopeSharedPtr& scope, const PluginShar
 }
 
 void EnvoyWasm::resetStats() { create_wasm_stats_.reset(); }
-
-} // namespace
-
-Stats::ScopeSharedPtr WasmExtension::lockOrResetScope(const Stats::ScopeSharedPtr& scope,
-                                                      const PluginSharedPtr& plugin) {
-  Stats::ScopeSharedPtr lock;
-  if (!(lock = scope_.lock())) {
-    createStats(scope, plugin);
-    scope_ = ScopeWeakPtr(scope);
-    return scope;
-  }
-  return lock;
-}
-
-// Register a Wasm extension. Note: only one extension may be registered.
-RegisterWasmExtension::RegisterWasmExtension(WasmExtension* extension) {
-  RELEASE_ASSERT(!wasm_extension, "Multiple Wasm extensions registered.");
-  wasm_extension = extension;
-}
 
 WasmExtension* getWasmExtension() {
   static WasmExtension* extension = wasm_extension ? wasm_extension : new EnvoyWasm();

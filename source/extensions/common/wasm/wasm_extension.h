@@ -18,6 +18,14 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
+#define CREATE_WASM_STATS(COUNTER, GAUGE)                                                          \
+  COUNTER(remote_load_cache_hits)                                                                  \
+  COUNTER(remote_load_cache_negative_hits)                                                         \
+  COUNTER(remote_load_cache_misses)                                                                \
+  COUNTER(remote_load_fetch_successes)                                                             \
+  COUNTER(remote_load_fetch_failures)                                                              \
+  GAUGE(remote_load_cache_entries, NeverImport)
+
 class WasmHandle;
 class EnvoyWasmVmIntegration;
 
@@ -33,6 +41,10 @@ using WasmHandleExtensionCloneFactory = std::function<WasmHandleBaseSharedPtr(
     const WasmHandleSharedPtr& base_wasm, Event::Dispatcher& dispatcher,
     CreateContextFn create_root_context_for_testing)>;
 using ScopeWeakPtr = std::weak_ptr<Stats::Scope>;
+
+struct CreateWasmStats {
+  CREATE_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
+};
 
 // Extension point for Wasm clients in enbedded Envoy.
 class WasmExtension : Logger::Loggable<Logger::Id::wasm> {
@@ -66,6 +78,26 @@ public:
 
 protected:
   ScopeWeakPtr scope_;
+};
+
+// The default Envoy Wasm implementation.
+class EnvoyWasm : public WasmExtension {
+public:
+  EnvoyWasm() = default;
+  ~EnvoyWasm() override = default;
+  void initialize() override {}
+  std::unique_ptr<EnvoyWasmVmIntegration>
+  createEnvoyWasmVmIntegration(const Stats::ScopeSharedPtr& scope, absl::string_view runtime,
+                               absl::string_view short_runtime) override;
+  WasmHandleExtensionFactory wasmFactory() override;
+  WasmHandleExtensionCloneFactory wasmCloneFactory() override;
+  void onEvent(WasmEvent event, const PluginSharedPtr& plugin) override;
+  void onRemoteCacheEntriesChanged(int remote_cache_entries) override;
+  void createStats(const Stats::ScopeSharedPtr& scope, const PluginSharedPtr& plugin) override;
+  void resetStats() override;
+
+private:
+  std::unique_ptr<CreateWasmStats> create_wasm_stats_;
 };
 
 // Register a Wasm extension. Note: only one extension may be registered.
