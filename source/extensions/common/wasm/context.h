@@ -245,8 +245,7 @@ public:
                       int timeout_millisconds, uint32_t* token_ptr) override;
 
   // Stats/Metrics
-  WasmResult defineMetric(MetricType type, absl::string_view name,
-                          uint32_t* metric_id_ptr) override;
+  WasmResult defineMetric(uint32_t type, absl::string_view name, uint32_t* metric_id_ptr) override;
   WasmResult incrementMetric(uint32_t metric_id, int64_t offset) override;
   WasmResult recordMetric(uint32_t metric_id, uint64_t value) override;
   WasmResult getMetric(uint32_t metric_id, uint64_t* value_ptr) override;
