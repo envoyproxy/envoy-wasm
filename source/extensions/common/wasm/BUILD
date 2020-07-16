@@ -22,6 +22,7 @@ envoy_cc_library(
     hdrs = [
         "context.h",
         "wasm.h",
+        "wasm_extension.h",
         "wasm_state.h",
         "wasm_vm.h",
     ],
@@ -29,7 +30,9 @@ envoy_cc_library(
         ":well_known_names",
         "//include/envoy/http:codes_interface",
         "//include/envoy/http:filter_interface",
+        "//include/envoy/server:lifecycle_notifier_interface",
         "//include/envoy/upstream:cluster_manager_interface",
+        "//source/common/common:version_includes",
         "//source/common/config:datasource_lib",
         "//source/common/singleton:const_singleton",
         "//source/common/stats:stats_lib",
@@ -66,6 +69,7 @@ envoy_cc_library(
         "context.cc",
         "foreign.cc",
         "wasm.cc",
+        "wasm_extension.cc",
         "wasm_vm.cc",
     ],
     deps = [
