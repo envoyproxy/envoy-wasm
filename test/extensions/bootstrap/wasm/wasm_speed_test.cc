@@ -85,21 +85,11 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
   }
 }
 
-#if defined(ENVOY_WASM_WAVM)
-#define B(_t)                                                                                      \
-  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                \
-                    std::string("v8"));                                                            \
-  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),              \
-                    std::string("null"));                                                          \
-  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, WavmSpeedTest_##_t, std::string(#_t),              \
-                    std::string("wavm"));
-#else
 #define B(_t)                                                                                      \
   BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                \
                     std::string("v8"));                                                            \
   BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),              \
                     std::string("null"));
-#endif
 
 B(empty)
 B(get_current_time)

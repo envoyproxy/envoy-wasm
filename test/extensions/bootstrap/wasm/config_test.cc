@@ -66,12 +66,7 @@ protected:
   Server::BootstrapExtensionPtr extension_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest,
-                         testing::Values("v8",
-#if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
-#endif
-                                         "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest, testing::Values("v8", "null"));
 
 TEST_P(WasmFactoryTest, CreateWasmFromWasm) {
   initializeWithConfig(config_);

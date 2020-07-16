@@ -387,20 +387,6 @@ DEPENDENCY_REPOSITORIES = dict(
         urls = ["https://files.pythonhosted.org/packages/dd/bf/4138e7bfb757de47d1f4b6994648ec67a51efe58fa907c1e11e350cddfca/six-1.12.0.tar.gz"],
         use_category = ["other"],
     ),
-    org_llvm_llvm = dict(
-        sha256 = "44787a6d02f7140f145e2250d56c9f849334e11f9ae379827510ed72f12b75e7",
-        strip_prefix = "llvm-8.0.1.src",
-        urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-8.0.1/llvm-8.0.1.src.tar.xz"],
-        use_category = ["dataplane"],
-        cpe = "N/A",
-    ),
-    com_github_wavm_wavm = dict(
-        sha256 = "48939906ff44a0e26e2c4c63132eebd75cfd768fac989a874395121e139933ec",
-        strip_prefix = "WAVM-1ec06cd202a922015c9041c5ed84f875453c4dc7",
-        urls = ["https://github.com/WAVM/WAVM/archive/1ec06cd202a922015c9041c5ed84f875453c4dc7.tar.gz"],
-        use_category = ["dataplane"],
-        cpe = "N/A",
-    ),
     io_opencensus_cpp = dict(
         sha256 = "193ffb4e13bd7886757fd22b61b7f7a400634412ad8e7e1071e73f57bedd7fc6",
         strip_prefix = "opencensus-cpp-04ed0211931f12b03c1a76b3907248ca4db7bc90",

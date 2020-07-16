@@ -55,12 +55,7 @@ protected:
   Event::TimerCb retry_timer_cb_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterConfigTest,
-                         testing::Values("v8",
-#if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
-#endif
-                                         "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterConfigTest, testing::Values("v8", "null"));
 
 TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWasm) {
   if (GetParam() == "null") {
