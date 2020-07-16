@@ -15,8 +15,6 @@ namespace Wasm {
  */
 class WasmRuntimeValues {
 public:
-  // WAVM (https://github.com/WAVM/WAVM) Wasm VM.
-  const std::string Wavm = "envoy.wasm.runtime.wavm";
   // Null sandbox: modules must be compiled into envoy and registered name is given in the
   // DataSource.inline_string.
   const std::string Null = "envoy.wasm.runtime.null";

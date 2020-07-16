@@ -881,18 +881,6 @@ def _org_llvm_llvm():
         actual = "@envoy//bazel/foreign_cc:llvm",
     )
 
-def _com_github_wavm_wavm():
-    location = REPOSITORY_LOCATIONS["com_github_wavm_wavm"]
-    http_archive(
-        name = "com_github_wavm_wavm",
-        build_file_content = BUILD_ALL_CONTENT,
-        **location
-    )
-    native.bind(
-        name = "wavm",
-        actual = "@envoy//bazel/foreign_cc:wavm",
-    )
-
 def _kafka_deps():
     # This archive contains Kafka client source code.
     # We are using request/response message format files to generate parser code.
