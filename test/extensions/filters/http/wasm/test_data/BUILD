@@ -9,67 +9,32 @@ load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
 
 envoy_package()
 
-wasm_cc_binary(
-    name = "async_call_cpp.wasm",
-    srcs = ["async_call_cpp.cc"],
-    deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
+envoy_cc_library(
+    name = "test_cpp_plugin",
+    srcs = [
+        "test_cpp.cc",
+        "test_cpp_null_plugin.cc",
     ],
-)
-
-wasm_cc_binary(
-    name = "body_cpp.wasm",
-    srcs = ["body_cpp.cc"],
+    copts = ["-DNULL_PLUGIN=1"],
     deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
-    ],
-)
-
-wasm_cc_binary(
-    name = "grpc_call_cpp.wasm",
-    srcs = ["grpc_call_cpp.cc"],
-    deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_lite",
-    ],
-)
-
-wasm_cc_binary(
-    name = "headers_cpp.wasm",
-    srcs = ["headers_cpp.cc"],
-    deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
-    ],
-)
-
-wasm_cc_binary(
-    name = "metadata_cpp.wasm",
-    srcs = ["metadata_cpp.cc"],
-    deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_lite",
+        "//external:abseil_node_hash_map",
+        "//source/common/common:assert_lib",
+        "//source/common/common:c_smart_ptr_lib",
+        "//source/extensions/common/wasm:wasm_hdr",
+        "//source/extensions/common/wasm:wasm_lib",
+        "//source/extensions/common/wasm:well_known_names",
+        "//source/extensions/common/wasm/ext:envoy_null_plugin",
         "@proxy_wasm_cpp_sdk//contrib:contrib_lib",
     ],
 )
 
 wasm_cc_binary(
-    name = "queue_cpp.wasm",
-    srcs = ["queue_cpp.cc"],
+    name = "test_cpp.wasm",
+    srcs = ["test_cpp.cc"],
     deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
-    ],
-)
-
-wasm_cc_binary(
-    name = "root_id_cpp.wasm",
-    srcs = ["root_id_cpp.cc"],
-    deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
-    ],
-)
-
-wasm_cc_binary(
-    name = "shared_cpp.wasm",
-    srcs = ["shared_cpp.cc"],
-    deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
+        "//source/extensions/common/wasm/ext:declare_property_cc_proto",
+        "//source/extensions/common/wasm/ext:envoy_proxy_wasm_api_lib",
+        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_lite",
+        "@proxy_wasm_cpp_sdk//contrib:contrib_lib",
     ],
 )
