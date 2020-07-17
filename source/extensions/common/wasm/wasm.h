@@ -16,10 +16,12 @@
 
 #include "common/common/assert.h"
 #include "common/common/logger.h"
+#include "common/common/version.h"
 #include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
 
 #include "extensions/common/wasm/context.h"
+#include "extensions/common/wasm/wasm_extension.h"
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 
@@ -36,10 +38,6 @@ namespace Wasm {
   GAUGE(active, NeverImport)
 
 class WasmHandle;
-
-using VmConfig = envoy::extensions::wasm::v3::VmConfig;
-using CreateContextFn =
-    std::function<ContextBase*(Wasm* wasm, const std::shared_ptr<Plugin>& plugin)>;
 
 struct WasmStats {
   ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
@@ -78,6 +76,8 @@ public:
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info);
 
+  virtual std::string buildVersion() { return BUILD_VERSION_NUMBER; }
+
   void initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier);
   uint32_t nextDnsToken() {
     do {
@@ -92,7 +92,7 @@ public:
     create_root_context_for_testing_ = create_root_context;
   }
 
-private:
+protected:
   friend class Context;
 
   void initializeStats();
@@ -131,7 +131,6 @@ public:
 private:
   WasmSharedPtr wasm_;
 };
-using WasmHandleSharedPtr = std::shared_ptr<WasmHandle>;
 
 using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 

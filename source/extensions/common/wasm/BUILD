@@ -2,7 +2,6 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
-    "envoy_proto_library",
 )
 
 licenses(["notice"])  # Apache 2
@@ -23,6 +22,7 @@ envoy_cc_library(
     hdrs = [
         "context.h",
         "wasm.h",
+        "wasm_extension.h",
         "wasm_state.h",
         "wasm_vm.h",
     ],
@@ -30,7 +30,9 @@ envoy_cc_library(
         ":well_known_names",
         "//include/envoy/http:codes_interface",
         "//include/envoy/http:filter_interface",
+        "//include/envoy/server:lifecycle_notifier_interface",
         "//include/envoy/upstream:cluster_manager_interface",
+        "//source/common/common:version_includes",
         "//source/common/config:datasource_lib",
         "//source/common/singleton:const_singleton",
         "//source/common/stats:stats_lib",
@@ -67,10 +69,10 @@ envoy_cc_library(
         "context.cc",
         "foreign.cc",
         "wasm.cc",
+        "wasm_extension.cc",
         "wasm_vm.cc",
     ],
     deps = [
-        ":declare_property_cc_proto",
         ":wasm_hdr",
         ":wasm_interoperation_lib",
         "//external:abseil_base",
@@ -82,6 +84,7 @@ envoy_cc_library(
         "//source/common/http:message_lib",
         "//source/common/http:utility_lib",
         "//source/common/tracing:http_tracer_lib",
+        "//source/extensions/common/wasm/ext:declare_property_cc_proto",
         "//source/extensions/common/wasm/ext:envoy_null_vm_wasm_api",
         "//source/extensions/filters/common/expr:context_lib",
         "@com_google_cel_cpp//eval/eval:field_access",
@@ -95,9 +98,4 @@ envoy_cc_library(
         "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
         "@proxy_wasm_cpp_host//:lib",
     ],
-)
-
-envoy_proto_library(
-    name = "declare_property",
-    srcs = ["declare_property.proto"],
 )

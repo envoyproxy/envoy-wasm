@@ -1,13 +1,21 @@
 // NOLINT(namespace-envoy)
 #include <string>
 
+#ifndef NULL_PLUGIN
 #include "proxy_wasm_intrinsics.h"
+#else
+#include "include/proxy-wasm/null_plugin.h"
+#endif
+
+template <typename T> std::unique_ptr<T> wrap_unique(T* ptr) { return std::unique_ptr<T>(ptr); }
+
+START_WASM_PLUGIN(WasmStatsCpp)
 
 // Required Proxy-Wasm ABI version.
-extern "C" PROXY_WASM_KEEPALIVE void proxy_abi_version_0_1_0() {}
+WASM_EXPORT(void, proxy_abi_version_0_1_0, ()) {}
 
 // Test the low level interface.
-extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_configure(uint32_t, uint32_t) {
+WASM_EXPORT(uint32_t, proxy_on_configure, (uint32_t, uint32_t)) {
   uint32_t c, g, h;
   CHECK_RESULT(defineMetric(MetricType::Counter, "test_counter", &c));
   CHECK_RESULT(defineMetric(MetricType::Gauge, "test_gauges", &g));
@@ -36,7 +44,7 @@ extern "C" PROXY_WASM_KEEPALIVE uint32_t proxy_on_configure(uint32_t, uint32_t) 
 }
 
 // Test the higher level interface.
-extern "C" PROXY_WASM_KEEPALIVE void proxy_on_tick(uint32_t) {
+WASM_EXPORT(void, proxy_on_tick, (uint32_t)) {
   Metric c(MetricType::Counter, "test_counter",
            {MetricTag{"counter_tag", MetricTag::TagType::String}});
   Metric g(MetricType::Gauge, "test_gauge", {MetricTag{"gauge_int_tag", MetricTag::TagType::Int}});
@@ -62,12 +70,13 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_tick(uint32_t) {
 }
 
 // Test the high level interface.
-extern "C" PROXY_WASM_KEEPALIVE void proxy_on_log(uint32_t /* context_zero */) {
-  auto c =
-      Counter<std::string, int, bool>::New("test_counter", "string_tag", "int_tag", "bool_tag");
-  auto g = Gauge<std::string, std::string>::New("test_gauge", "string_tag1", "string_tag2");
-  auto h =
-      Histogram<int, std::string, bool>::New("test_histogram", "int_tag", "string_tag", "bool_tag");
+WASM_EXPORT(void, proxy_on_log, (uint32_t /* context_zero */)) {
+  auto c = wrap_unique(
+      Counter<std::string, int, bool>::New("test_counter", "string_tag", "int_tag", "bool_tag"));
+  auto g =
+      wrap_unique(Gauge<std::string, std::string>::New("test_gauge", "string_tag1", "string_tag2"));
+  auto h = wrap_unique(Histogram<int, std::string, bool>::New("test_histogram", "int_tag",
+                                                              "string_tag", "bool_tag"));
 
   c->increment(1, "test_tag", 7, true);
   logTrace(std::string("get counter = ") + std::to_string(c->get("test_tag", 7, true)));
@@ -81,8 +90,9 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_log(uint32_t /* context_zero */) {
   logWarn(std::string("get gauge = ") + std::to_string(g->get("test_tag1", "test_tag2")));
 
   h->record(3, 7, "test_tag", true);
-  auto base_h = Counter<int>::New("test_histogram", "int_tag");
-  auto complete_h = base_h->extendAndResolve<std::string, bool>(7, "string_tag", "bool_tag");
+  auto base_h = wrap_unique(Counter<int>::New("test_histogram", "int_tag"));
+  auto complete_h =
+      wrap_unique(base_h->extendAndResolve<std::string, bool>(7, "string_tag", "bool_tag"));
   auto simple_h = complete_h->resolve("test_tag", true);
   logError(std::string("h_id = ") + complete_h->nameFromIdSlow(simple_h.metric_id));
 
@@ -99,3 +109,5 @@ extern "C" PROXY_WASM_KEEPALIVE void proxy_on_log(uint32_t /* context_zero */) {
   StringView stack_test_tag = "stack_test_tag";
   stack_h.record(3, 7, stack_test_tag, true);
 }
+
+END_WASM_PLUGIN

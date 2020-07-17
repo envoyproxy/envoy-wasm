@@ -43,10 +43,13 @@ public:
   void SetUp() override { clearCodeCacheForTesting(false); }
 
   void setupBase(const std::string& runtime, const std::string& code, CreateContextFn create_root,
-                 std::string root_id = "") {
+                 std::string root_id = "", std::string vm_configuration = "") {
     envoy::extensions::wasm::v3::VmConfig vm_config;
     vm_config.set_vm_id("vm_id");
     vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", runtime));
+    ProtobufWkt::StringValue vm_configuration_string;
+    vm_configuration_string.set_value(vm_configuration);
+    vm_config.mutable_configuration()->PackFrom(vm_configuration_string);
     vm_config.mutable_code()->mutable_local()->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));

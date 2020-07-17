@@ -23,6 +23,24 @@ using Extensions::Bootstrap::Wasm::WasmServicePtr;
 
 class WasmFactoryTest : public testing::TestWithParam<std::string> {
 protected:
+  WasmFactoryTest() {
+    config_.mutable_config()->mutable_vm_config()->set_runtime(
+        absl::StrCat("envoy.wasm.runtime.", GetParam()));
+    if (GetParam() != "null") {
+      config_.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
+          TestEnvironment::substitute(
+              "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/start_cpp.wasm"));
+    } else {
+      config_.mutable_config()
+          ->mutable_vm_config()
+          ->mutable_code()
+          ->mutable_local()
+          ->set_inline_bytes("WasmStartCpp");
+    }
+    config_.mutable_config()->set_name("test");
+    config_.set_singleton(true);
+  }
+
   void initializeWithConfig(const envoy::extensions::wasm::v3::WasmService& config) {
     auto factory =
         Registry::FactoryRegistry<Server::Configuration::BootstrapExtensionFactory>::getFactory(
@@ -38,6 +56,7 @@ protected:
     init_manager_.initialize(init_watcher_);
   }
 
+  envoy::extensions::wasm::v3::WasmService config_;
   testing::NiceMock<Server::Configuration::MockServerFactoryContext> context_;
   testing::NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier_;
   Init::ExpectableWatcherImpl init_watcher_;
@@ -47,37 +66,17 @@ protected:
   Server::BootstrapExtensionPtr extension_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest,
-                         testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
-#endif
-                                         ));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest, testing::Values("v8", "null"));
 
 TEST_P(WasmFactoryTest, CreateWasmFromWasm) {
-  envoy::extensions::wasm::v3::WasmService config;
-  config.mutable_config()->mutable_vm_config()->set_runtime(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
-      TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/start_cpp.wasm"));
-  config.set_singleton(true);
-
-  initializeWithConfig(config);
+  initializeWithConfig(config_);
 
   EXPECT_NE(extension_, nullptr);
 }
 
 TEST_P(WasmFactoryTest, CreateWasmFromWasmPerThread) {
-  envoy::extensions::wasm::v3::WasmService config;
-  config.mutable_config()->mutable_vm_config()->set_runtime(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
-      TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/start_cpp.wasm"));
-
-  initializeWithConfig(config);
+  config_.set_singleton(false);
+  initializeWithConfig(config_);
 
   EXPECT_NE(extension_, nullptr);
   extension_.reset();
@@ -85,76 +84,47 @@ TEST_P(WasmFactoryTest, CreateWasmFromWasmPerThread) {
 }
 
 TEST_P(WasmFactoryTest, MissingImport) {
-
-  envoy::extensions::wasm::v3::WasmService config;
-  config.mutable_config()->set_name("test");
-  config.mutable_config()->mutable_vm_config()->set_runtime(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
+  if (GetParam() == "null") {
+    return;
+  }
+  config_.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
       TestEnvironment::substitute(
           "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/missing_cpp.wasm"));
-  config.set_singleton(true);
-
-  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
+  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config_), Extensions::Common::Wasm::WasmException,
                             "Unable to create Wasm service test");
 }
 
 TEST_P(WasmFactoryTest, UnspecifiedRuntime) {
-  envoy::extensions::wasm::v3::WasmService config;
-  config.mutable_config()->mutable_vm_config()->set_runtime("");
-  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
-      TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/start_cpp.wasm"));
-  config.set_singleton(true);
+  config_.mutable_config()->mutable_vm_config()->set_runtime("");
 
   EXPECT_THROW_WITH_REGEX(
-      initializeWithConfig(config), EnvoyException,
+      initializeWithConfig(config_), EnvoyException,
       "Proto constraint validation failed \\(WasmServiceValidationError\\.Config");
 }
 
 TEST_P(WasmFactoryTest, UnknownRuntime) {
-  envoy::extensions::wasm::v3::WasmService config;
-  config.mutable_config()->set_name("test");
-  config.mutable_config()->mutable_vm_config()->set_runtime("envoy.wasm.runtime.invalid");
-  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
-      TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/start_cpp.wasm"));
-  config.set_singleton(true);
+  config_.mutable_config()->mutable_vm_config()->set_runtime("envoy.wasm.runtime.invalid");
 
-  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
+  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config_), Extensions::Common::Wasm::WasmException,
                             "Unable to create Wasm service test");
 }
 
 TEST_P(WasmFactoryTest, StartFailed) {
-  envoy::extensions::wasm::v3::WasmService config;
-  config.mutable_config()->set_name("test");
-  config.mutable_config()->mutable_vm_config()->set_runtime(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
-      TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/start_cpp.wasm"));
   ProtobufWkt::StringValue plugin_configuration;
   plugin_configuration.set_value("bad");
-  config.set_singleton(true);
-  config.mutable_config()->mutable_vm_config()->mutable_configuration()->PackFrom(
+  config_.mutable_config()->mutable_vm_config()->mutable_configuration()->PackFrom(
       plugin_configuration);
-  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
+
+  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config_), Extensions::Common::Wasm::WasmException,
                             "Unable to create Wasm service test");
 }
 
 TEST_P(WasmFactoryTest, ConfigureFailed) {
-  envoy::extensions::wasm::v3::WasmService config;
-  config.mutable_config()->set_name("test");
-  config.mutable_config()->mutable_vm_config()->set_runtime(
-      absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  config.mutable_config()->mutable_vm_config()->mutable_code()->mutable_local()->set_filename(
-      TestEnvironment::substitute(
-          "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/start_cpp.wasm"));
   ProtobufWkt::StringValue plugin_configuration;
   plugin_configuration.set_value("bad");
-  config.mutable_config()->mutable_configuration()->PackFrom(plugin_configuration);
-  config.set_singleton(true);
-  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
+  config_.mutable_config()->mutable_configuration()->PackFrom(plugin_configuration);
+
+  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config_), Extensions::Common::Wasm::WasmException,
                             "Unable to create Wasm service test");
 }
 

@@ -248,16 +248,6 @@ config_setting(
     values = {"define": "quiche=enabled"},
 )
 
-config_setting(
-    name = "wasm_all",
-    values = {"define": "wasm=enabled"},
-)
-
-config_setting(
-    name = "wasm_wavm",
-    values = {"define": "wasm=wavm"},
-)
-
 # Alias pointing to the selected version of BoringSSL:
 # - BoringSSL FIPS from @boringssl_fips//:ssl,
 # - non-FIPS BoringSSL from @boringssl//:ssl.
