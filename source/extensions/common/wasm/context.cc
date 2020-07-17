@@ -352,7 +352,7 @@ Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) co
   case PropertyToken::CONNECTION:
     if (info) {
       return CelValue::CreateMap(
-          Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(arena, *info));
+          Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(arena, *info,*getConnection()));
     }
     break;
   case PropertyToken::UPSTREAM:

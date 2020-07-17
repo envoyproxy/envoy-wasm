@@ -130,11 +130,12 @@ private:
 
 class ConnectionWrapper : public BaseWrapper {
 public:
-  ConnectionWrapper(const StreamInfo::StreamInfo& info) : info_(info) {}
+  ConnectionWrapper(const StreamInfo::StreamInfo& info, const Network::Connection& conn) : info_(info),conn_(conn) {}
   absl::optional<CelValue> operator[](CelValue key) const override;
 
 private:
   const StreamInfo::StreamInfo& info_;
+  const Network::Connection& conn_;
 };
 
 class UpstreamWrapper : public BaseWrapper {
