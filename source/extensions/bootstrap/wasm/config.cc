@@ -27,7 +27,11 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
   bool singleton = config.singleton();
   auto callback = [&context, singleton, plugin, cb](Common::Wasm::WasmHandleSharedPtr base_wasm) {
     if (!base_wasm) {
-      ENVOY_LOG(error, "Unable to create Wasm service {}", plugin->name_);
+      if (plugin->fail_open_) {
+        ENVOY_LOG(error, "Unable to create Wasm service {}", plugin->name_);
+      } else {
+        ENVOY_LOG(critical, "Unable to create Wasm service {}", plugin->name_);
+      }
       return;
     }
     if (singleton) {
