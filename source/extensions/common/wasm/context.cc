@@ -355,9 +355,9 @@ Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) co
           Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(arena, *info));
     }
     break;
-  case PropertyToken::CONNECTION_ID:{
+  case PropertyToken::CONNECTION_ID: {
     auto conn = getConnection();
-    if(conn){
+    if (conn) {
       return CelValue::CreateUint64(conn->id());
     }
     break;
