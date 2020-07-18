@@ -164,8 +164,6 @@ absl::optional<CelValue> ConnectionWrapper::operator[](CelValue key) const {
                                 info_.downstreamSslConnection()->peerCertificatePresented());
   } else if (value == RequestedServerName) {
     return CelValue::CreateString(&info_.requestedServerName());
-  } else if (value == ID){
-    return CelValue::CreateUint64(conn_.id());
   }
 
   auto ssl_info = info_.downstreamSslConnection();
