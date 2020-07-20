@@ -6,8 +6,7 @@
 #include "common/protobuf/protobuf.h"
 
 #include "test/mocks/event/mocks.h"
-#include "test/mocks/init/mocks.h"
-#include "test/mocks/runtime/mocks.h"
+#include "test/mocks/server/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/utility.h"
 
