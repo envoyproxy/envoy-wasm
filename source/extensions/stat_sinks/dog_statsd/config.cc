@@ -5,6 +5,7 @@
 #include "envoy/config/metrics/v3/stats.pb.h"
 #include "envoy/config/metrics/v3/stats.pb.validate.h"
 #include "envoy/registry/registry.h"
+#include "envoy/server/filter_config.h"
 
 #include "common/network/resolver_impl.h"
 
@@ -16,8 +17,9 @@ namespace Extensions {
 namespace StatSinks {
 namespace DogStatsd {
 
-Stats::SinkPtr DogStatsdSinkFactory::createStatsSink(const Protobuf::Message& config,
-                                                     Server::Instance& server) {
+Stats::SinkPtr
+DogStatsdSinkFactory::createStatsSink(const Protobuf::Message& config,
+                                      Server::Configuration::ServerFactoryContext& server) {
   const auto& sink_config =
       MessageUtil::downcastAndValidate<const envoy::config::metrics::v3::DogStatsdSink&>(
           config, server.messageValidationContext().staticValidationVisitor());
