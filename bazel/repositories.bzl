@@ -19,6 +19,9 @@ WINDOWS_SKIP_TARGETS = [
 # archives, e.g. cares.
 BUILD_ALL_CONTENT = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
+def _build_all_content(exclude = []):
+    return """filegroup(name = "all", srcs = glob(["**"], exclude={}), visibility = ["//visibility:public"])""".format(repr(exclude))
+
 # Method for verifying content of the DEPENDENCY_REPOSITORIES defined in bazel/repository_locations.bzl
 # Verification is here so that bazel/repository_locations.bzl can be loaded into other tools written in Python,
 # and as such needs to be free of bazel specific constructs.
@@ -809,7 +812,10 @@ def _proxy_wasm_cpp_host():
 def _emscripten_toolchain():
     _repository_impl(
         name = "emscripten_toolchain",
-        build_file_content = BUILD_ALL_CONTENT,
+        build_file_content = _build_all_content(exclude = [
+            "upstream/emscripten/cache/is_vanilla.txt",
+            ".emscripten_sanity",
+        ]),
         patch_cmds = REPOSITORY_LOCATIONS["emscripten_toolchain"]["patch_cmds"],
     )
 
