@@ -59,7 +59,7 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
   auto vm_key = "";
   auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, vm, plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", vm), vm_id, vm_configuration, vm_key, scope,

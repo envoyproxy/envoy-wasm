@@ -32,6 +32,7 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
   // individual threads.
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
+      config.config().vm_config().runtime(),
       Common::Wasm::anyToBytes(config.config().configuration()), config.config().fail_open(),
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.localInfo(),
       nullptr /* listener_metadata */);

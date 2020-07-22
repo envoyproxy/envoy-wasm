@@ -57,7 +57,7 @@ public:
     auto vm_id = "";
     auto plugin_configuration = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        name, root_id, vm_id, plugin_configuration, false,
+        name, root_id, vm_id, runtime, plugin_configuration, false,
         envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     // Passes ownership of root_context_.
     Extensions::Common::Wasm::createWasm(

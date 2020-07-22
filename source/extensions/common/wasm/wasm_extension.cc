@@ -14,15 +14,23 @@ WasmExtension* wasm_extension = nullptr;
 
 } // namespace
 
-Stats::ScopeSharedPtr WasmExtension::lockOrResetScope(const Stats::ScopeSharedPtr& scope,
-                                                      const PluginSharedPtr& plugin) {
+Stats::ScopeSharedPtr WasmExtension::lockAndCreateStats(const Stats::ScopeSharedPtr& scope,
+                                                        const PluginSharedPtr& plugin) {
+  absl::MutexLock l(&mutex_);
   Stats::ScopeSharedPtr lock;
   if (!(lock = scope_.lock())) {
+    resetStats();
     createStats(scope, plugin);
     scope_ = ScopeWeakPtr(scope);
     return scope;
   }
+  createStats(scope, plugin);
   return lock;
+}
+
+void WasmExtension::resetStatsForTesting() {
+  absl::MutexLock l(&mutex_);
+  resetStats();
 }
 
 // Register a Wasm extension. Note: only one extension may be registered.
@@ -62,6 +70,8 @@ WasmHandleExtensionCloneFactory EnvoyWasm::wasmCloneFactory() {
 
 void EnvoyWasm::onEvent(WasmEvent event, const PluginSharedPtr&) {
   switch (event) {
+  default:
+    break;
   case WasmEvent::RemoteLoadCacheHit:
     create_wasm_stats_->remote_load_cache_hits_.inc();
     break;
@@ -85,8 +95,9 @@ void EnvoyWasm::onRemoteCacheEntriesChanged(int entries) {
 }
 
 void EnvoyWasm::createStats(const Stats::ScopeSharedPtr& scope, const PluginSharedPtr&) {
-  create_wasm_stats_.reset(new CreateWasmStats{
-      CREATE_WASM_STATS(POOL_COUNTER_PREFIX(*scope, "wasm."), POOL_GAUGE_PREFIX(*scope, "wasm."))});
+  if (!create_wasm_stats_)
+    create_wasm_stats_.reset(new CreateWasmStats{CREATE_WASM_STATS(
+        POOL_COUNTER_PREFIX(*scope, "wasm."), POOL_GAUGE_PREFIX(*scope, "wasm."))});
 }
 
 void EnvoyWasm::resetStats() { create_wasm_stats_.reset(); }
