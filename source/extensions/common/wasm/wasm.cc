@@ -299,6 +299,7 @@ static WasmEvent toWasmEvent(const std::shared_ptr<WasmHandleBase>& wasm) {
   case FailState::RuntimeError:
     return WasmEvent::RuntimeError;
   }
+  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 }
 
 static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr& plugin,

@@ -70,8 +70,6 @@ WasmHandleExtensionCloneFactory EnvoyWasm::wasmCloneFactory() {
 
 void EnvoyWasm::onEvent(WasmEvent event, const PluginSharedPtr&) {
   switch (event) {
-  default:
-    break;
   case WasmEvent::RemoteLoadCacheHit:
     create_wasm_stats_->remote_load_cache_hits_.inc();
     break;
@@ -86,6 +84,8 @@ void EnvoyWasm::onEvent(WasmEvent event, const PluginSharedPtr&) {
     break;
   case WasmEvent::RemoteLoadCacheFetchFailure:
     create_wasm_stats_->remote_load_fetch_failures_.inc();
+    break;
+  default:
     break;
   }
 }
