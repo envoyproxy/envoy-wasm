@@ -171,6 +171,9 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     if (errno != EBADF || tty != 0) {
       FAIL_NOW("isatty errors on bad fds. errno = " + std::to_string(errno));
     }
+  } else if (configuration == "on_foreign") {
+    std::string message = "on_foreign start";
+    proxy_log(LogLevel::debug, message.c_str(), message.size());
   } else {
     std::string message = "on_vm_start " + configuration;
     proxy_log(LogLevel::info, message.c_str(), message.size());
@@ -193,6 +196,12 @@ WASM_EXPORT(uint32_t, proxy_on_configure, (uint32_t, uint32_t configuration_size
   }
   ::free(const_cast<void*>(reinterpret_cast<const void*>(configuration_ptr)));
   return 1;
+}
+
+WASM_EXPORT(void, proxy_on_foreign_function, (uint32_t, uint32_t token, uint32_t data_size)) {
+  std::string message =
+      "on_foreign_function " + std::to_string(token) + " " + std::to_string(data_size);
+  proxy_log(LogLevel::info, message.c_str(), message.size());
 }
 
 WASM_EXPORT(uint32_t, proxy_on_done, (uint32_t)) {

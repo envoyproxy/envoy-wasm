@@ -148,11 +148,11 @@ void IntegrationStreamDecoder::onResetStream(Http::StreamResetReason reason, abs
   }
 }
 
-IntegrationTcpClient::IntegrationTcpClient(Event::Dispatcher& dispatcher,
-                                           MockBufferFactory& factory, uint32_t port,
-                                           Network::Address::IpVersion version,
-                                           bool enable_half_close)
-    : payload_reader_(new WaitForPayloadReader(dispatcher)),
+IntegrationTcpClient::IntegrationTcpClient(
+    Event::Dispatcher& dispatcher, Event::TestTimeSystem& time_system, MockBufferFactory& factory,
+    uint32_t port, Network::Address::IpVersion version, bool enable_half_close,
+    const Network::ConnectionSocket::OptionsSharedPtr& options)
+    : time_system_(time_system), payload_reader_(new WaitForPayloadReader(dispatcher)),
       callbacks_(new ConnectionCallbacks(*this)) {
   EXPECT_CALL(factory, create_(_, _, _))
       .WillOnce(Invoke([&](std::function<void()> below_low, std::function<void()> above_high,
@@ -165,7 +165,7 @@ IntegrationTcpClient::IntegrationTcpClient(Event::Dispatcher& dispatcher,
   connection_ = dispatcher.createClientConnection(
       Network::Utility::resolveUrl(
           fmt::format("tcp://{}:{}", Network::Test::getLoopbackAddressUrlString(version), port)),
-      Network::Address::InstanceConstSharedPtr(), Network::Test::createRawBufferSocket(), nullptr);
+      Network::Address::InstanceConstSharedPtr(), Network::Test::createRawBufferSocket(), options);
 
   ON_CALL(*client_write_buffer_, drain(_))
       .WillByDefault(testing::Invoke(client_write_buffer_, &MockWatermarkBuffer::baseDrain));
@@ -219,7 +219,9 @@ void IntegrationTcpClient::waitForHalfClose() {
 
 void IntegrationTcpClient::readDisable(bool disabled) { connection_->readDisable(disabled); }
 
-void IntegrationTcpClient::write(const std::string& data, bool end_stream, bool verify) {
+AssertionResult IntegrationTcpClient::write(const std::string& data, bool end_stream, bool verify,
+                                            std::chrono::milliseconds timeout) {
+  auto end_time = time_system_.monotonicTime() + timeout;
   Buffer::OwnedImpl buffer(data);
   if (verify) {
     EXPECT_CALL(*client_write_buffer_, move(_));
@@ -233,12 +235,21 @@ void IntegrationTcpClient::write(const std::string& data, bool end_stream, bool 
   connection_->write(buffer, end_stream);
   do {
     connection_->dispatcher().run(Event::Dispatcher::RunType::NonBlock);
-  } while (client_write_buffer_->bytes_written() != bytes_expected && !disconnected_);
-  if (verify) {
-    // If we disconnect part way through the write, then we should fail, since write() is always
-    // expected to succeed.
-    EXPECT_TRUE(!disconnected_ || client_write_buffer_->bytes_written() == bytes_expected);
+    if (client_write_buffer_->bytes_written() == bytes_expected || disconnected_) {
+      break;
+    }
+  } while (time_system_.monotonicTime() < end_time);
+
+  if (time_system_.monotonicTime() >= end_time) {
+    return AssertionFailure() << "Timed out completing write";
+  } else if (verify && (disconnected_ || client_write_buffer_->bytes_written() != bytes_expected)) {
+    return AssertionFailure()
+           << "Failed to complete write or unexpected disconnect. disconnected_: " << disconnected_
+           << " bytes_written: " << client_write_buffer_->bytes_written()
+           << " bytes_expected: " << bytes_expected;
   }
+
+  return AssertionSuccess();
 }
 
 void IntegrationTcpClient::ConnectionCallbacks::onEvent(Network::ConnectionEvent event) {
@@ -321,9 +332,10 @@ void BaseIntegrationTest::createUpstreams() {
 }
 
 void BaseIntegrationTest::createEnvoy() {
+  std::vector<uint32_t> ports;
   for (auto& upstream : fake_upstreams_) {
     if (upstream->localAddress()->ip()) {
-      ports_.push_back(upstream->localAddress()->ip()->port());
+      ports.push_back(upstream->localAddress()->ip()->port());
     }
   }
 
@@ -340,7 +352,7 @@ void BaseIntegrationTest::createEnvoy() {
   // Note that finalize assumes that every fake_upstream_ must correspond to a bootstrap config
   // static entry. So, if you want to manually create a fake upstream without specifying it in the
   // config, you will need to do so *after* initialize() (which calls this function) is done.
-  config_helper_.finalize(ports_);
+  config_helper_.finalize(ports);
 
   envoy::config::bootstrap::v3::Bootstrap bootstrap = config_helper_.bootstrap();
   if (use_lds_) {
@@ -363,7 +375,7 @@ void BaseIntegrationTest::createEnvoy() {
                  MessageUtil::getYamlStringFromMessage(bootstrap));
 
   const std::string bootstrap_path = TestEnvironment::writeStringToFileForTest(
-      "bootstrap.json", MessageUtil::getJsonStringFromMessage(bootstrap));
+      "bootstrap.pb", TestUtility::getProtobufBinaryStringFromMessage(bootstrap));
 
   std::vector<std::string> named_ports;
   const auto& static_resources = config_helper_.bootstrap().static_resources();
@@ -388,9 +400,11 @@ void BaseIntegrationTest::setUpstreamProtocol(FakeHttpConnection::Type protocol)
   }
 }
 
-IntegrationTcpClientPtr BaseIntegrationTest::makeTcpConnection(uint32_t port) {
-  return std::make_unique<IntegrationTcpClient>(*dispatcher_, *mock_buffer_factory_, port, version_,
-                                                enable_half_close_);
+IntegrationTcpClientPtr
+BaseIntegrationTest::makeTcpConnection(uint32_t port,
+                                       const Network::ConnectionSocket::OptionsSharedPtr& options) {
+  return std::make_unique<IntegrationTcpClient>(*dispatcher_, time_system_, *mock_buffer_factory_,
+                                                port, version_, enable_half_close_, options);
 }
 
 void BaseIntegrationTest::registerPort(const std::string& key, uint32_t port) {
@@ -456,25 +470,26 @@ void BaseIntegrationTest::createGeneratedApiTestServer(
   test_server_ = IntegrationTestServer::create(
       bootstrap_path, version_, on_server_ready_function_, on_server_init_function_, deterministic_,
       timeSystem(), *api_, defer_listener_finalization_, process_object_, validator_config,
-      concurrency_, drain_time_, use_real_stats_);
+      concurrency_, drain_time_, drain_strategy_, use_real_stats_);
   if (config_helper_.bootstrap().static_resources().listeners_size() > 0 &&
       !defer_listener_finalization_) {
 
     // Wait for listeners to be created before invoking registerTestServerPorts() below, as that
     // needs to know about the bound listener ports.
-    auto end_time = time_system_.monotonicTime() + (3 * TestUtility::DefaultTimeout);
+    auto end_time = time_system_.monotonicTime() + TestUtility::DefaultTimeout;
     const char* success = "listener_manager.listener_create_success";
     const char* rejected = "listener_manager.lds.update_rejected";
-    while ((test_server_->counter(success) == nullptr ||
-            test_server_->counter(success)->value() < concurrency_) &&
-           (!allow_lds_rejection || test_server_->counter(rejected) == nullptr ||
-            test_server_->counter(rejected)->value() == 0)) {
+    for (Stats::CounterSharedPtr success_counter = test_server_->counter(success),
+                                 rejected_counter = test_server_->counter(rejected);
+         (success_counter == nullptr || success_counter->value() < concurrency_) &&
+         (!allow_lds_rejection || rejected_counter == nullptr || rejected_counter->value() == 0);
+         success_counter = test_server_->counter(success),
+                                 rejected_counter = test_server_->counter(rejected)) {
       if (time_system_.monotonicTime() >= end_time) {
         RELEASE_ASSERT(0, "Timed out waiting for listeners.");
       }
       if (!allow_lds_rejection) {
-        RELEASE_ASSERT(test_server_->counter(rejected) == nullptr ||
-                           test_server_->counter(rejected)->value() == 0,
+        RELEASE_ASSERT(rejected_counter == nullptr || rejected_counter->value() == 0,
                        absl::StrCat("Lds update failed. Details\n",
                                     getListenerDetails(test_server_->server())));
       }
@@ -502,14 +517,6 @@ void BaseIntegrationTest::createApiTestServer(const ApiFilesystemConfig& api_fil
                                    {{"cds_json_path", cds_path}, {"lds_json_path", lds_path}},
                                    port_map_, version_),
                                port_names, validator_config, allow_lds_rejection);
-}
-
-void BaseIntegrationTest::createTestServer(const std::string& json_path,
-                                           const std::vector<std::string>& port_names) {
-  test_server_ = createIntegrationTestServer(
-      TestEnvironment::temporaryFileSubstitute(json_path, port_map_, version_), nullptr, nullptr,
-      timeSystem());
-  registerTestServerPorts(port_names);
 }
 
 void BaseIntegrationTest::sendRawHttpAndWaitForResponse(int port, const char* raw_http,
@@ -581,7 +588,7 @@ void BaseIntegrationTest::createXdsUpstream() {
   } else {
     envoy::extensions::transport_sockets::tls::v3::DownstreamTlsContext tls_context;
     auto* common_tls_context = tls_context.mutable_common_tls_context();
-    common_tls_context->add_alpn_protocols("h2");
+    common_tls_context->add_alpn_protocols(Http::Utility::AlpnNames::get().Http2);
     auto* tls_cert = common_tls_context->add_tls_certificates();
     tls_cert->mutable_certificate_chain()->set_filename(
         TestEnvironment::runfilesPath("test/config/integration/certs/upstreamcert.pem"));

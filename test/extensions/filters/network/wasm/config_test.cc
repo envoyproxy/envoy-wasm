@@ -55,15 +55,12 @@ protected:
   Event::TimerCb retry_timer_cb_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterConfigTest,
-                         testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
-#endif
-                                         ));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterConfigTest, testing::Values("v8", "null"));
 
 TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWasm) {
+  if (GetParam() == "null") {
+    return;
+  }
   const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
@@ -71,7 +68,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWasm) {
                                                                     GetParam(), R"EOF("
       code:
         local:
-          filename: "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm"
+          filename: "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/test_cpp.wasm"
   )EOF"));
 
   envoy::extensions::filters::network::wasm::v3::Wasm proto_config;
@@ -87,8 +84,11 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWasm) {
 }
 
 TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineWasm) {
-  const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm"));
+  const std::string code =
+      GetParam() != "null"
+          ? TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+                "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/test_cpp.wasm"))
+          : "NetworkTestCpp";
   EXPECT_FALSE(code.empty());
   const std::string yaml = absl::StrCat(R"EOF(
   config:
@@ -115,6 +115,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineWasm) {
 TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCode) {
   const std::string yaml = absl::StrCat(R"EOF(
   config:
+    name: "test"
     vm_config:
       runtime: "envoy.wasm.runtime.)EOF",
                                         GetParam(), R"EOF("
@@ -127,7 +128,7 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCode) {
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, context_),
                             Extensions::Common::Wasm::WasmException,
-                            "Failed to initialize Wasm code");
+                            "Unable to create Wasm network filter test");
 }
 
 } // namespace Wasm

@@ -54,6 +54,7 @@ namespace Server {
  */
 #define ALL_SERVER_STATS(COUNTER, GAUGE, HISTOGRAM)                                                \
   COUNTER(debug_assertion_failures)                                                                \
+  COUNTER(envoy_bug_failures)                                                                      \
   COUNTER(dynamic_unknown_fields)                                                                  \
   COUNTER(static_unknown_fields)                                                                   \
   GAUGE(concurrency, NeverImport)                                                                  \
@@ -117,8 +118,8 @@ public:
    * Load a bootstrap config and perform validation.
    * @param bootstrap supplies the bootstrap to fill.
    * @param options supplies the server options.
-   * @param api reference to the Api object
    * @param validation_visitor message validation visitor instance.
+   * @param api reference to the Api object
    */
   static void loadBootstrapConfig(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                   const Options& options,
@@ -318,6 +319,7 @@ private:
   Stats::StoreRoot& stats_store_;
   std::unique_ptr<ServerStats> server_stats_;
   Assert::ActionRegistrationPtr assert_action_registration_;
+  Assert::ActionRegistrationPtr envoy_bug_action_registration_;
   ThreadLocal::Instance& thread_local_;
   Api::ApiPtr api_;
   Event::DispatcherPtr dispatcher_;

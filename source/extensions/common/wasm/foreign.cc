@@ -1,6 +1,6 @@
 #include "common/common/logger.h"
 
-#include "source/extensions/common/wasm/declare_property.pb.h"
+#include "source/extensions/common/wasm/ext/declare_property.pb.h"
 
 #include "extensions/common/wasm/wasm.h"
 

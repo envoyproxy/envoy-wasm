@@ -12,7 +12,8 @@ namespace Wasm {
 /**
  * Config registration for the file access log. @see AccessLogInstanceFactory.
  */
-class WasmAccessLogFactory : public Server::Configuration::AccessLogInstanceFactory {
+class WasmAccessLogFactory : public Server::Configuration::AccessLogInstanceFactory,
+                             Logger::Loggable<Logger::Id::wasm> {
 public:
   AccessLog::InstanceSharedPtr
   createAccessLogInstance(const Protobuf::Message& config, AccessLog::FilterPtr&& filter,

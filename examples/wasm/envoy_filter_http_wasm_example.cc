@@ -16,9 +16,9 @@ public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
   void onCreate() override;
-  FilterHeadersStatus onRequestHeaders(uint32_t headers) override;
+  FilterHeadersStatus onRequestHeaders(uint32_t headers, bool end_of_stream) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
-  FilterHeadersStatus onResponseHeaders(uint32_t headers) override;
+  FilterHeadersStatus onResponseHeaders(uint32_t headers, bool end_of_stream) override;
   void onDone() override;
   void onLog() override;
   void onDelete() override;
@@ -34,7 +34,7 @@ bool ExampleRootContext::onStart(size_t) {
 
 void ExampleContext::onCreate() { LOG_WARN(std::string("onCreate " + std::to_string(id()))); }
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   LOG_DEBUG(std::string("onRequestHeaders ") + std::to_string(id()));
   auto result = getRequestHeaderPairs();
   auto pairs = result->pairs();
@@ -45,7 +45,7 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t) {
   return FilterHeadersStatus::Continue;
 }
 
-FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t) {
+FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
   LOG_DEBUG(std::string("onResponseHeaders ") + std::to_string(id()));
   auto result = getResponseHeaderPairs();
   auto pairs = result->pairs();

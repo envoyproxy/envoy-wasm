@@ -18,11 +18,6 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-using Word = proxy_wasm::Word;
-using WasmVm = proxy_wasm::WasmVm;
-using Cloneable = proxy_wasm::Cloneable;
-using ContextBase = proxy_wasm::ContextBase;
-
 /**
  * Wasm host stats.
  */
@@ -49,14 +44,18 @@ public:
     stats_.active_.inc();
     ENVOY_LOG(debug, "WasmVm created {} now active", runtime_, stats_.active_.value());
   }
-  virtual ~EnvoyWasmVmIntegration() {
+  ~EnvoyWasmVmIntegration() override {
     stats_.active_.dec();
     ENVOY_LOG(debug, "~WasmVm {} {} remaining active", runtime_, stats_.active_.value());
   }
+
+  // proxy_wasm::WasmVmIntegration
   proxy_wasm::WasmVmIntegration* clone() override {
     return new EnvoyWasmVmIntegration(scope_, runtime_, short_runtime_);
   }
-  // void log(proxy_wasm::LogLevel level, absl::string_view message) override;
+  bool getNullVmFunction(absl::string_view function_name, bool returns_word,
+                         int number_of_arguments, proxy_wasm::NullPlugin* plugin,
+                         void* ptr_to_function_return) override;
   void error(absl::string_view message) override;
 
   const std::string& runtime() const { return runtime_; }
@@ -79,9 +78,9 @@ public:
   using EnvoyException::EnvoyException;
 };
 
-using WasmVmPtr = std::unique_ptr<WasmVm>;
+using WasmVmPtr = std::unique_ptr<proxy_wasm::WasmVm>;
 
-// Create a new low-level Wasm VM using runtime of the given type (e.g. "envoy.wasm.runtime.wavm").
+// Create a new low-level Wasm VM using runtime of the given type (e.g. "envoy.wasm.runtime.v8").
 WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& scope);
 
 } // namespace Wasm

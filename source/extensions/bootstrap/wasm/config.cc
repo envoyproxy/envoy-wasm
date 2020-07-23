@@ -21,18 +21,20 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
                              CreateWasmServiceCallback&& cb) {
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
-      Common::Wasm::anyToBytes(config.config().configuration()),
+      Common::Wasm::anyToBytes(config.config().configuration()), false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.localInfo(), nullptr);
 
   bool singleton = config.singleton();
   auto callback = [&context, singleton, plugin, cb](Common::Wasm::WasmHandleSharedPtr base_wasm) {
+    if (!base_wasm) {
+      ENVOY_LOG(error, "Unable to create Wasm service {}", plugin->name_);
+      return;
+    }
     if (singleton) {
-      // Return the WASM VM which will be stored as a singleton by the Server.
-      auto root_context = base_wasm->wasm()->getOrCreateRootContext(plugin);
-      if (!base_wasm->wasm()->configure(root_context, plugin)) {
-        return cb(nullptr);
-      }
-      return cb(std::make_unique<WasmService>(base_wasm));
+      // Return a Wasm VM which will be stored as a singleton by the Server.
+      cb(std::make_unique<WasmService>(
+          Common::Wasm::getOrCreateThreadLocalWasm(base_wasm, plugin, context.dispatcher())));
+      return;
     }
     // Per-thread WASM VM.
     // NB: the Slot set() call doesn't complete inline, so all arguments must outlive this call.
@@ -44,10 +46,15 @@ void WasmFactory::createWasm(const envoy::extensions::wasm::v3::WasmService& con
     cb(std::make_unique<WasmService>(std::move(tls_slot)));
   };
 
-  Common::Wasm::createWasm(config.config().vm_config(), plugin, context.scope().createScope(""),
-                           context.clusterManager(), context.initManager(), context.dispatcher(),
-                           context.random(), context.api(), context.lifecycleNotifier(),
-                           remote_data_provider_, std::move(callback));
+  if (!Common::Wasm::createWasm(
+          config.config().vm_config(), plugin, context.scope().createScope(""),
+          context.clusterManager(), context.initManager(), context.dispatcher(), context.random(),
+          context.api(), context.lifecycleNotifier(), remote_data_provider_, std::move(callback))) {
+    // NB: throw if we get a synchronous configuration failures as this is how such failures are
+    // reported to xDS.
+    throw Common::Wasm::WasmException(
+        fmt::format("Unable to create Wasm service {}", plugin->name_));
+  }
 }
 
 Server::BootstrapExtensionPtr

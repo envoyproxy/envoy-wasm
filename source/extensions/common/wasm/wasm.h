@@ -16,10 +16,12 @@
 
 #include "common/common/assert.h"
 #include "common/common/logger.h"
+#include "common/common/version.h"
 #include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
 
 #include "extensions/common/wasm/context.h"
+#include "extensions/common/wasm/wasm_extension.h"
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 
@@ -35,13 +37,11 @@ namespace Wasm {
   COUNTER(created)                                                                                 \
   GAUGE(active, NeverImport)
 
+class WasmHandle;
+
 struct WasmStats {
   ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
 };
-
-using VmConfig = envoy::extensions::wasm::v3::VmConfig;
-
-class WasmHandle;
 
 // Wasm execution instance. Manages the Envoy side of the Wasm interface.
 class Wasm : public WasmBase, Logger::Loggable<Logger::Id::wasm> {
@@ -57,13 +57,18 @@ public:
   Context* getRootContext(absl::string_view root_id) {
     return static_cast<Context*>(WasmBase::getRootContext(root_id));
   }
-  void setTimerPeriod(uint32_t root_context_id, std::chrono::milliseconds tick_period);
+  void setTimerPeriod(uint32_t root_context_id, std::chrono::milliseconds period) override;
   virtual void tickHandler(uint32_t root_context_id);
+  std::shared_ptr<Wasm> sharedThis() { return std::static_pointer_cast<Wasm>(shared_from_this()); }
+  Network::DnsResolverSharedPtr& dnsResolver() { return dns_resolver_; }
 
   // WasmBase
-  void error(absl::string_view message) override { throw WasmException(std::string(message)); }
+  void error(absl::string_view message) override;
   proxy_wasm::CallOnThreadFunction callOnThreadFunction() override;
-  ContextBase* createContext(std::shared_ptr<PluginBase> plugin) override;
+  ContextBase* createContext(const std::shared_ptr<PluginBase>& plugin) override;
+  ContextBase* createRootContext(const std::shared_ptr<PluginBase>& plugin) override;
+  void registerCallbacks() override;
+  void getFunctions() override;
 
   // AccessLog::Instance
   void log(absl::string_view root_id, const Http::RequestHeaderMap* request_headers,
@@ -71,12 +76,28 @@ public:
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info);
 
-  void initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier);
+  virtual std::string buildVersion() { return BUILD_VERSION_NUMBER; }
 
-private:
+  void initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier);
+  uint32_t nextDnsToken() {
+    do {
+      dns_token_++;
+    } while (!dns_token_);
+    return dns_token_;
+  }
+
+  void setCreateContextForTesting(CreateContextFn create_context,
+                                  CreateContextFn create_root_context) {
+    create_context_for_testing_ = create_context;
+    create_root_context_for_testing_ = create_root_context;
+  }
+
+protected:
   friend class Context;
 
   void initializeStats();
+  // Calls into the VM.
+  proxy_wasm::WasmCallVoid<3> on_resolve_dns_;
 
   Stats::ScopeSharedPtr scope_;
   Upstream::ClusterManager& cluster_manager_;
@@ -92,6 +113,11 @@ private:
   absl::flat_hash_map<uint32_t, Stats::Counter*> counters_;
   absl::flat_hash_map<uint32_t, Stats::Gauge*> gauges_;
   absl::flat_hash_map<uint32_t, Stats::Histogram*> histograms_;
+
+  CreateContextFn create_context_for_testing_;
+  CreateContextFn create_root_context_for_testing_;
+  Network::DnsResolverSharedPtr dns_resolver_;
+  uint32_t dns_token_ = 1;
 };
 using WasmSharedPtr = std::shared_ptr<Wasm>;
 
@@ -105,30 +131,26 @@ public:
 private:
   WasmSharedPtr wasm_;
 };
-using WasmHandleSharedPtr = std::shared_ptr<WasmHandle>;
 
 using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 
-void createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
+// Returns false if createWasm failed synchronously. This is necessary because xDS *MUST* report
+// all failures synchronously as it has no facility to report configuration update failures
+// asynchronously. Callers should throw an exception if they are part of a synchronous xDS update
+// because that is the mechanism for reporting configuration errors.
+bool createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                 const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher,
                 Runtime::RandomGenerator& random, Api::Api& api,
                 Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
-                CreateWasmCallback&& cb);
+                CreateWasmCallback&& callback,
+                CreateContextFn create_root_context_for_testing = nullptr);
 
-void createWasmForTesting(const VmConfig& vm_config, const PluginSharedPtr& plugin,
-                          const Stats::ScopeSharedPtr& scope,
-                          Upstream::ClusterManager& cluster_manager, Init::Manager& init_manager,
-                          Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random,
-                          Api::Api& api, Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
-                          Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
-                          std::unique_ptr<Context> root_context_for_testing,
-                          CreateWasmCallback&& cb);
-
-WasmHandleSharedPtr getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm,
-                                               const PluginSharedPtr& plugin,
-                                               Event::Dispatcher& dispatcher);
+WasmHandleSharedPtr
+getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm, const PluginSharedPtr& plugin,
+                           Event::Dispatcher& dispatcher,
+                           CreateContextFn create_root_context_for_testing = nullptr);
 
 void clearCodeCacheForTesting(bool fail_if_not_cached);
 std::string anyToBytes(const ProtobufWkt::Any& any);

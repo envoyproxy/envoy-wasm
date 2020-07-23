@@ -19,8 +19,10 @@ namespace NetworkFilters {
 namespace Wasm {
 
 using Envoy::Extensions::Common::Wasm::Context;
+using Envoy::Extensions::Common::Wasm::Plugin;
 using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
 using Envoy::Extensions::Common::Wasm::Wasm;
+using proxy_wasm::ContextBase;
 
 class TestFilter : public Context {
 public:
@@ -31,7 +33,7 @@ public:
 
 class TestRoot : public Context {
 public:
-  TestRoot() {}
+  TestRoot(Wasm* wasm, const std::shared_ptr<Plugin>& plugin) : Context(wasm, plugin) {}
   MOCK_CONTEXT_LOG_;
 };
 
@@ -42,48 +44,55 @@ public:
   ~WasmNetworkFilterTest() {}
 
   void setupConfig(const std::string& code) {
-    setupBase(GetParam(), code, std::make_unique<TestRoot>());
+    setupBase(GetParam(), code,
+              [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
+                return new TestRoot(wasm, plugin);
+              });
   }
 
   void setupFilter() { setupFilterBase<TestFilter>(""); }
 
-  TestFilter& filter() { return *static_cast<TestFilter*>(filter_.get()); }
+  TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest,
-                         testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
-#endif
-                                         ));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest, testing::Values("v8", "null"));
 
 // Bad code in initial config.
 TEST_P(WasmNetworkFilterTest, BadCode) {
-  EXPECT_THROW_WITH_MESSAGE(setupConfig("bad code"), Common::Wasm::WasmException,
-                            "Failed to initialize Wasm code");
+  setupConfig("bad code");
+  EXPECT_EQ(wasm_, nullptr);
+  setupFilter();
+  filter().isFailed();
+  EXPECT_CALL(read_filter_callbacks_.connection_,
+              close(Envoy::Network::ConnectionCloseType::FlushWrite));
+  EXPECT_EQ(Network::FilterStatus::StopIteration, filter().onNewConnection());
 }
 
 // Test happy path.
 TEST_P(WasmNetworkFilterTest, HappyPath) {
-  setupConfig(TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/logging_cpp.wasm")));
+  const std::string code =
+      GetParam() != "null"
+          ? TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+                "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/test_cpp.wasm"))
+          : "NetworkTestCpp";
+  setupConfig(code);
   setupFilter();
 
   EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
-  EXPECT_EQ(Network::FilterStatus::Continue, filter_->onNewConnection());
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onNewConnection());
 
   Buffer::OwnedImpl fake_downstream_data("Fake");
   EXPECT_CALL(filter(), log_(spdlog::level::trace,
                              Eq(absl::string_view("onDownstreamData 2 len=4 end_stream=0\nFake"))));
-  EXPECT_EQ(Network::FilterStatus::Continue, filter_->onData(fake_downstream_data, false));
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onData(fake_downstream_data, false));
+  EXPECT_EQ(fake_downstream_data.toString(), "write");
 
   Buffer::OwnedImpl fake_upstream_data("Done");
   EXPECT_CALL(filter(), log_(spdlog::level::trace,
                              Eq(absl::string_view("onUpstreamData 2 len=4 end_stream=1\nDone"))));
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onUpstreamConnectionClose 2 0"))));
-  EXPECT_EQ(Network::FilterStatus::Continue, filter_->onWrite(fake_upstream_data, true));
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onWrite(fake_upstream_data, true));
 
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));

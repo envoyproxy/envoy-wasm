@@ -53,11 +53,11 @@ DEPENDENCY_REPOSITORIES = dict(
         use_category = ["build"],
     ),
     bazel_toolchains = dict(
-        sha256 = "144290c4166bd67e76a54f96cd504ed86416ca3ca82030282760f0823c10be48",
-        strip_prefix = "bazel-toolchains-3.1.1",
+        sha256 = "db48eed61552e25d36fe051a65d2a329cc0fb08442627e8f13960c5ab087a44e",
+        strip_prefix = "bazel-toolchains-3.2.0",
         urls = [
-            "https://github.com/bazelbuild/bazel-toolchains/releases/download/3.1.1/bazel-toolchains-3.1.1.tar.gz",
-            "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/archive/3.1.1.tar.gz",
+            "https://github.com/bazelbuild/bazel-toolchains/releases/download/3.2.0/bazel-toolchains-3.2.0.tar.gz",
+            "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/archive/3.2.0.tar.gz",
         ],
         use_category = ["build"],
     ),
@@ -67,23 +67,23 @@ DEPENDENCY_REPOSITORIES = dict(
         use_category = ["build"],
     ),
     envoy_build_tools = dict(
-        sha256 = "78e794ae1c1197f59b7ecbf8bd62c053ecb1625daaccdbe287581ee6f12ec0fb",
-        strip_prefix = "envoy-build-tools-b47394aa94c45e15c479d18eab18ffd43ec62d89",
-        # 2020-05-14
-        urls = ["https://github.com/envoyproxy/envoy-build-tools/archive/b47394aa94c45e15c479d18eab18ffd43ec62d89.tar.gz"],
+        sha256 = "c4d27c0a5db918e861b7164d69cdffe920daafbe3f597ffdda5a1d10c1abc992",
+        strip_prefix = "envoy-build-tools-557ee9b44a3d08cf38d9ce6f08adb872c385d6a5",
+        # 2020-06-16
+        urls = ["https://github.com/envoyproxy/envoy-build-tools/archive/557ee9b44a3d08cf38d9ce6f08adb872c385d6a5.tar.gz"],
         use_category = ["build"],
     ),
     boringssl = dict(
-        sha256 = "8ae14b52b7889cf92f3b107610b12afb5011506c77f90c7b3d4a36ed7283905a",
-        strip_prefix = "boringssl-107c03cf6d364939469194396bf7a6b2572d0f9c",
+        sha256 = "07f1524766b9ed1543674b48e7fce7e3569b6e2b6c0c43ec124dedee9b60f641",
+        strip_prefix = "boringssl-a0899df79b3a63e606448c72d63a090d86bdb75b",
         # To update BoringSSL, which tracks Chromium releases:
         # 1. Open https://omahaproxy.appspot.com/ and note <current_version> of linux/stable release.
         # 2. Open https://chromium.googlesource.com/chromium/src/+/refs/tags/<current_version>/DEPS and note <boringssl_revision>.
         # 3. Find a commit in BoringSSL's "master-with-bazel" branch that merges <boringssl_revision>.
         #
-        # chromium-83.0.4103.62
-        # 2020-03-16
-        urls = ["https://github.com/google/boringssl/archive/107c03cf6d364939469194396bf7a6b2572d0f9c.tar.gz"],
+        # chromium-84.0.4147.45(beta)
+        # 2020-05-14
+        urls = ["https://github.com/google/boringssl/archive/a0899df79b3a63e606448c72d63a090d86bdb75b.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
@@ -95,10 +95,10 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "N/A",
     ),
     com_google_absl = dict(
-        sha256 = "cd477bfd0d19f803f85d118c7943b7908930310d261752730afa981118fee230",
-        strip_prefix = "abseil-cpp-ca9856cabc23d771bcce634677650eb6fc4363ae",
-        # 2020-04-30
-        urls = ["https://github.com/abseil/abseil-cpp/archive/ca9856cabc23d771bcce634677650eb6fc4363ae.tar.gz"],
+        sha256 = "ec8ef47335310cc3382bdc0d0cc1097a001e67dc83fcba807845aa5696e7e1e4",
+        strip_prefix = "abseil-cpp-302b250e1d917ede77b5ff00a6fd9f28430f1563",
+        # 2020-07-13
+        urls = ["https://github.com/abseil/abseil-cpp/archive/302b250e1d917ede77b5ff00a6fd9f28430f1563.tar.gz"],
         use_category = ["dataplane", "controlplane"],
         cpe = "N/A",
     ),
@@ -132,10 +132,10 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "N/A",
     ),
     com_github_envoyproxy_sqlparser = dict(
-        sha256 = "b2d3882698cf85b64c87121e208ce0b24d5fe2a00a5d058cf4571f1b25b45403",
-        strip_prefix = "sql-parser-b14d010afd4313f2372a1cc96aa2327e674cc798",
-        # 2020-01-10
-        urls = ["https://github.com/envoyproxy/sql-parser/archive/b14d010afd4313f2372a1cc96aa2327e674cc798.tar.gz"],
+        sha256 = "96c10c8e950a141a32034f19b19cdeb1da48fe859cf96ae5e19f894f36c62c71",
+        strip_prefix = "sql-parser-3b40ba2d106587bdf053a292f7e3bb17e818a57f",
+        # 2020-06-10
+        urls = ["https://github.com/envoyproxy/sql-parser/archive/3b40ba2d106587bdf053a292f7e3bb17e818a57f.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
@@ -154,17 +154,17 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "N/A",
     ),
     com_github_gabime_spdlog = dict(
-        sha256 = "afd18f62d1bc466c60bef088e6b637b0284be88c515cedc59ad4554150af6043",
-        strip_prefix = "spdlog-1.4.0",
-        urls = ["https://github.com/gabime/spdlog/archive/v1.4.0.tar.gz"],
+        sha256 = "378a040d91f787aec96d269b0c39189f58a6b852e4cbf9150ccfacbe85ebbbfc",
+        strip_prefix = "spdlog-1.6.1",
+        urls = ["https://github.com/gabime/spdlog/archive/v1.6.1.tar.gz"],
         use_category = ["observability"],
         cpe = "N/A",
     ),
     com_github_google_libprotobuf_mutator = dict(
-        sha256 = "f6def6cdf63e29a367d46c0ad9e3e31eed89d031e22e0caac126f1e62d8b3fd0",
-        strip_prefix = "libprotobuf-mutator-3521f47a2828da9ace403e4ecc4aece1a84feb36",
-        # 2020-02-04
-        urls = ["https://github.com/google/libprotobuf-mutator/archive/3521f47a2828da9ace403e4ecc4aece1a84feb36.tar.gz"],
+        sha256 = "d51365191580c4bf5e9ff104eebcfe34f7ff5f471006d7a460c15dcb3657501c",
+        strip_prefix = "libprotobuf-mutator-7a2ed51a6b682a83e345ff49fc4cfd7ca47550db",
+        # 2020-06-25
+        urls = ["https://github.com/google/libprotobuf-mutator/archive/7a2ed51a6b682a83e345ff49fc4cfd7ca47550db.tar.gz"],
         use_category = ["test"],
     ),
     com_github_gperftools_gperftools = dict(
@@ -278,10 +278,10 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "N/A",
     ),
     com_github_google_jwt_verify = dict(
-        sha256 = "118f955620509f1634cbd918c63234d2048dce56b1815caf348d78e3c3dc899c",
-        strip_prefix = "jwt_verify_lib-44291b2ee4c19631e5a0a0bf4f965436a9364ca7",
-        # 2020-05-21
-        urls = ["https://github.com/google/jwt_verify_lib/archive/44291b2ee4c19631e5a0a0bf4f965436a9364ca7.tar.gz"],
+        sha256 = "d2e28897c297bd04429e43a1b485f7350acc23cbfee6365b8a3634c17840b2f6",
+        strip_prefix = "jwt_verify_lib-f44cf49d185ad0694b472da78071b4d67313fb86",
+        # 2020-06-03
+        urls = ["https://github.com/google/jwt_verify_lib/archive/f44cf49d185ad0694b472da78071b4d67313fb86.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
@@ -355,8 +355,8 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "N/A",
     ),
     io_bazel_rules_go = dict(
-        sha256 = "e88471aea3a3a4f19ec1310a55ba94772d087e9ce46e41ae38ecebe17935de7b",
-        urls = ["https://github.com/bazelbuild/rules_go/releases/download/v0.20.3/rules_go-v0.20.3.tar.gz"],
+        sha256 = "a8d6b1b354d371a646d2f7927319974e0f9e52f73a2452d2b3877118169eb6bb",
+        urls = ["https://github.com/bazelbuild/rules_go/releases/download/v0.23.3/rules_go-v0.23.3.tar.gz"],
         use_category = ["build"],
     ),
     rules_cc = dict(
@@ -368,10 +368,10 @@ DEPENDENCY_REPOSITORIES = dict(
         use_category = ["build"],
     ),
     rules_foreign_cc = dict(
-        sha256 = "3184c244b32e65637a74213fc448964b687390eeeca42a36286f874c046bba15",
-        strip_prefix = "rules_foreign_cc-7bc4be735b0560289f6b86ab6136ee25d20b65b7",
-        # 2019-09-26
-        urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/7bc4be735b0560289f6b86ab6136ee25d20b65b7.tar.gz"],
+        sha256 = "7ca49ac5b0bc8f5a2c9a7e87b7f86aca604bda197259c9b96f8b7f0a4f38b57b",
+        strip_prefix = "rules_foreign_cc-f54b7ae56dcf1b81bcafed3a08d58fc08ac095a7",
+        # 2020-06-09
+        urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/f54b7ae56dcf1b81bcafed3a08d58fc08ac095a7.tar.gz"],
         use_category = ["build"],
     ),
     rules_python = dict(
@@ -386,20 +386,6 @@ DEPENDENCY_REPOSITORIES = dict(
         sha256 = "d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73",
         urls = ["https://files.pythonhosted.org/packages/dd/bf/4138e7bfb757de47d1f4b6994648ec67a51efe58fa907c1e11e350cddfca/six-1.12.0.tar.gz"],
         use_category = ["other"],
-    ),
-    org_llvm_llvm = dict(
-        sha256 = "44787a6d02f7140f145e2250d56c9f849334e11f9ae379827510ed72f12b75e7",
-        strip_prefix = "llvm-8.0.1.src",
-        urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-8.0.1/llvm-8.0.1.src.tar.xz"],
-        use_category = ["dataplane"],
-        cpe = "N/A",
-    ),
-    com_github_wavm_wavm = dict(
-        sha256 = "48939906ff44a0e26e2c4c63132eebd75cfd768fac989a874395121e139933ec",
-        strip_prefix = "WAVM-1ec06cd202a922015c9041c5ed84f875453c4dc7",
-        urls = ["https://github.com/WAVM/WAVM/archive/1ec06cd202a922015c9041c5ed84f875453c4dc7.tar.gz"],
-        use_category = ["dataplane"],
-        cpe = "N/A",
     ),
     io_opencensus_cpp = dict(
         sha256 = "193ffb4e13bd7886757fd22b61b7f7a400634412ad8e7e1071e73f57bedd7fc6",
@@ -425,24 +411,24 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "N/A",
     ),
     com_googlesource_quiche = dict(
-        # Static snapshot of https://quiche.googlesource.com/quiche/+archive/41c9fdead26b31deefae3c325a2cf1a873688ba3.tar.gz
-        sha256 = "75af53154402e1654cfd32d8aaeed5fab4dbb79d3cab8c9866019d5369c1889e",
-        urls = ["https://storage.googleapis.com/quiche-envoy-integration/41c9fdead26b31deefae3c325a2cf1a873688ba3.tar.gz"],
+        # Static snapshot of https://quiche.googlesource.com/quiche/+archive/d88a2f7a9ff5f9f6be2f50411b15b091affe04d3.tar.gz
+        sha256 = "c1c5dc165f0509097fa3917d81988e4ac5f9f3da4c2361ee435dfa7f8f428016",
+        urls = ["https://storage.googleapis.com/quiche-envoy-integration/d88a2f7a9ff5f9f6be2f50411b15b091affe04d3.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
     com_googlesource_googleurl = dict(
-        # Static snapshot of https://quiche.googlesource.com/quiche/+archive/googleurl_dbf5ad147f60afc125e99db7549402af49a5eae8.tar.gz
-        sha256 = "b40cd22cadba577b7281a76db66f6a66dd744edbad8cc2c861c2c976ef721e4d",
-        urls = ["https://storage.googleapis.com/quiche-envoy-integration/googleurl_dbf5ad147f60afc125e99db7549402af49a5eae8.tar.gz"],
+        # Static snapshot of https://quiche.googlesource.com/quiche/+archive/googleurl_6dafefa72cba2ab2ba4922d17a30618e9617c7cf.tar.gz
+        sha256 = "f1ab73ddd1a7db4e08a9e4db6c2e98e5a0a7bbaca08f5fee0d73adb02c24e44a",
+        urls = ["https://storage.googleapis.com/quiche-envoy-integration/googleurl_6dafefa72cba2ab2ba4922d17a30618e9617c7cf.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
     com_google_cel_cpp = dict(
-        sha256 = "d773ee368053f404eada87b59c9e545b2e21118ebb0577ac3e942a06518f6fd2",
-        strip_prefix = "cel-cpp-0.2.0",
-        # 2020-05-11
-        urls = ["https://github.com/google/cel-cpp/archive/v0.2.0.tar.gz"],
+        sha256 = "1b283f93619b130504880d2f400bd449de9ab6be94ef26ecd2bb96921f48dd6c",
+        strip_prefix = "cel-cpp-50196761917300bbd47b59bd162e84817b67b7ab",
+        # 2020-06-08
+        urls = ["https://github.com/google/cel-cpp/archive/50196761917300bbd47b59bd162e84817b67b7ab.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
@@ -453,10 +439,14 @@ DEPENDENCY_REPOSITORIES = dict(
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
+    # TODO(shikugawa): replace this with release tag after released package which includes
+    # disable pthread when build with emscripten. We use hash temporary to enable our changes to
+    # build envoy-wasm library with emscripten. https://github.com/google/re2/pull/263
     com_googlesource_code_re2 = dict(
-        sha256 = "04ee2aaebaa5038554683329afc494e684c30f82f2a1e47eb62450e59338f84d",
-        strip_prefix = "re2-2020-03-03",
-        urls = ["https://github.com/google/re2/archive/2020-03-03.tar.gz"],
+        sha256 = "2e9489a31ae007c81e90e8ec8a15d62d58a9c18d4fd1603f6441ef248556b41f",
+        strip_prefix = "re2-2020-07-06",
+        # 2020-07-06
+        urls = ["https://github.com/google/re2/archive/2020-07-06.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
@@ -464,10 +454,10 @@ DEPENDENCY_REPOSITORIES = dict(
     # provided as part of the compiler-rt source distribution. We can't use the
     # Clang variant as we are not a Clang-LLVM only shop today.
     org_llvm_releases_compiler_rt = dict(
-        sha256 = "56e4cd96dd1d8c346b07b4d6b255f976570c6f2389697347a6c3dcb9e820d10e",
+        sha256 = "6a7da64d3a0a7320577b68b9ca4933bdcab676e898b759850e827333c3282c75",
         # Only allow peeking at fuzzer related files for now.
-        strip_prefix = "compiler-rt-9.0.0.src/lib",
-        urls = ["http://releases.llvm.org/9.0.0/compiler-rt-9.0.0.src.tar.xz"],
+        strip_prefix = "compiler-rt-10.0.0.src/include",
+        urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/compiler-rt-10.0.0.src.tar.xz"],
         use_category = ["test"],
     ),
     upb = dict(
@@ -498,16 +488,16 @@ DEPENDENCY_REPOSITORIES = dict(
         use_category = ["test"],
     ),
     proxy_wasm_cpp_sdk = dict(
-        sha256 = "0e5b0d3c17c0737e5b48408bda6060a4057f7508a38afa8e0174ad410d370a6f",
-        strip_prefix = "proxy-wasm-cpp-sdk-f750d1f5da6a2f20cc55da75dd9772b7ba1650ca",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/f750d1f5da6a2f20cc55da75dd9772b7ba1650ca.tar.gz"],
+        sha256 = "eba429ae0068508c4c20980803fd20b991c3d5d1604e8ef61ac8cb309e6867ed",
+        strip_prefix = "proxy-wasm-cpp-sdk-4ee6ace4fe529b9fdbffa76f34eb6deffe72c1a2",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/4ee6ace4fe529b9fdbffa76f34eb6deffe72c1a2.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
     proxy_wasm_cpp_host = dict(
-        sha256 = "2bee3e13bf86c2df13f4dadd056d19d4e04fc584b485191d871429cef4613683",
-        strip_prefix = "proxy-wasm-cpp-host-366f64b2a028bea761a5c3da82536c31d45cc63d",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/366f64b2a028bea761a5c3da82536c31d45cc63d.tar.gz"],
+        sha256 = "494d3f81156b92bac640c26000497fbf3a7b1bc35f9789594280450c6e5d8129",
+        strip_prefix = "proxy-wasm-cpp-host-928db4d79ec7b90aea3ad13ea5df36dc60c9c31d",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/928db4d79ec7b90aea3ad13ea5df36dc60c9c31d.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),

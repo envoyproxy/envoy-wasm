@@ -31,6 +31,40 @@ envoy_cc_library(
     ],
 )
 
+envoy_cc_library(
+    name = "start_cpp_plugin",
+    srcs = [
+        "start_cpp.cc",
+        "start_cpp_null_plugin.cc",
+    ],
+    copts = ["-DNULL_PLUGIN=1"],
+    deps = [
+        "//external:abseil_node_hash_map",
+        "//source/common/common:assert_lib",
+        "//source/common/common:c_smart_ptr_lib",
+        "//source/extensions/common/wasm:wasm_hdr",
+        "//source/extensions/common/wasm:wasm_lib",
+        "//source/extensions/common/wasm:well_known_names",
+    ],
+)
+
+envoy_cc_library(
+    name = "stats_cpp_plugin",
+    srcs = [
+        "stats_cpp.cc",
+        "stats_cpp_null_plugin.cc",
+    ],
+    copts = ["-DNULL_PLUGIN=1"],
+    deps = [
+        "//external:abseil_node_hash_map",
+        "//source/common/common:assert_lib",
+        "//source/common/common:c_smart_ptr_lib",
+        "//source/extensions/common/wasm:wasm_hdr",
+        "//source/extensions/common/wasm:wasm_lib",
+        "//source/extensions/common/wasm:well_known_names",
+    ],
+)
+
 wasm_cc_binary(
     name = "asm2wasm_cpp.wasm",
     srcs = ["asm2wasm_cpp.cc"],
