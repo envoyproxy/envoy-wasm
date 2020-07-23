@@ -1057,7 +1057,12 @@ void Context::onGrpcReceiveTrailingMetadataWrapper(uint32_t token, Http::HeaderM
   grpc_receive_trailing_metadata_ = nullptr;
 }
 
-WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
+WasmResult Context::defineMetric(uint32_t metric_type, absl::string_view name,
+                                 uint32_t* metric_id_ptr) {
+  if (metric_type > static_cast<uint32_t>(MetricType::Max)) {
+    return WasmResult::BadArgument;
+  }
+  auto type = static_cast<MetricType>(metric_type);
   // TODO: Consider rethinking the scoping policy as it does not help in this case.
   Stats::StatNameManagedStorage storage(name, wasm()->scope_->symbolTable());
   Stats::StatName stat_name = storage.statName();
