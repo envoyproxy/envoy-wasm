@@ -104,6 +104,7 @@ B(json_serialize)
 B(json_serialize_arena)
 B(json_deserialize)
 B(json_deserialize_arena)
+B(convert_to_filter_state)
 
 } // namespace Wasm
 } // namespace Extensions

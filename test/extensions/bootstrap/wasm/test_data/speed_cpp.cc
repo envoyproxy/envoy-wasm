@@ -22,7 +22,7 @@ google::protobuf::Arena arena;
 google::protobuf::Struct args;
 google::protobuf::Struct* args_arena =
     google::protobuf::Arena::CreateMessage<google::protobuf::Struct>(&arena);
-const std::string configuration = R"EOF(
+std::string configuration = R"EOF(
   {
     "NAME":"test_pod",
     "NAMESPACE":"test_namespace",
@@ -42,6 +42,97 @@ const std::string configuration = R"EOF(
     "MESH_ID":"test-mesh"
   }
   )EOF";
+
+const static char encodeLookup[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const static char padCharacter = '=';
+
+std::string base64Encode(const uint8_t *start, const uint8_t *end) {
+  std::string encodedString;
+  size_t size = end - start;
+  encodedString.reserve(((size / 3) + (size % 3 > 0)) * 4);
+  uint32_t temp;
+  auto cursor = start;
+  for (size_t idx = 0; idx < size / 3; idx++) {
+    temp = (*cursor++) << 16; // Convert to big endian
+    temp += (*cursor++) << 8;
+    temp += (*cursor++);
+    encodedString.append(1, encodeLookup[(temp & 0x00FC0000) >> 18]);
+    encodedString.append(1, encodeLookup[(temp & 0x0003F000) >> 12]);
+    encodedString.append(1, encodeLookup[(temp & 0x00000FC0) >> 6]);
+    encodedString.append(1, encodeLookup[(temp & 0x0000003F)]);
+  }
+  switch (size % 3) {
+  case 1:
+    temp = (*cursor++) << 16; // Convert to big endian
+    encodedString.append(1, encodeLookup[(temp & 0x00FC0000) >> 18]);
+    encodedString.append(1, encodeLookup[(temp & 0x0003F000) >> 12]);
+    encodedString.append(2, padCharacter);
+    break;
+  case 2:
+    temp = (*cursor++) << 16; // Convert to big endian
+    temp += (*cursor++) << 8;
+    encodedString.append(1, encodeLookup[(temp & 0x00FC0000) >> 18]);
+    encodedString.append(1, encodeLookup[(temp & 0x0003F000) >> 12]);
+    encodedString.append(1, encodeLookup[(temp & 0x00000FC0) >> 6]);
+    encodedString.append(1, padCharacter);
+    break;
+  }
+  return encodedString;
+}
+
+bool base64Decode(const std::basic_string<char> &input, std::vector<uint8_t> *output) {
+  if (input.length() % 4)
+    return false;
+  size_t padding = 0;
+  if (input.length()) {
+    if (input[input.length() - 1] == padCharacter)
+      padding++;
+    if (input[input.length() - 2] == padCharacter)
+      padding++;
+  }
+  // Setup a vector to hold the result
+  std::vector<unsigned char> decodedBytes;
+  decodedBytes.reserve(((input.length() / 4) * 3) - padding);
+  uint32_t temp = 0; // Holds decoded quanta
+  std::basic_string<char>::const_iterator cursor = input.begin();
+  while (cursor < input.end()) {
+    for (size_t quantumPosition = 0; quantumPosition < 4; quantumPosition++) {
+      temp <<= 6;
+      if (*cursor >= 0x41 && *cursor <= 0x5A) // This area will need tweaking if
+        temp |= *cursor - 0x41;               // you are using an alternate alphabet
+      else if (*cursor >= 0x61 && *cursor <= 0x7A)
+        temp |= *cursor - 0x47;
+      else if (*cursor >= 0x30 && *cursor <= 0x39)
+        temp |= *cursor + 0x04;
+      else if (*cursor == 0x2B)
+        temp |= 0x3E; // change to 0x2D for URL alphabet
+      else if (*cursor == 0x2F)
+        temp |= 0x3F;                     // change to 0x5F for URL alphabet
+      else if (*cursor == padCharacter) { // pad
+        switch (input.end() - cursor) {
+        case 1: // One pad character
+          decodedBytes.push_back((temp >> 16) & 0x000000FF);
+          decodedBytes.push_back((temp >> 8) & 0x000000FF);
+          goto Ldone;
+        case 2: // Two pad characters
+          decodedBytes.push_back((temp >> 10) & 0x000000FF);
+          goto Ldone;
+        default:
+          return false;
+        }
+      } else
+        return false;
+      cursor++;
+    }
+    decodedBytes.push_back((temp >> 16) & 0x000000FF);
+    decodedBytes.push_back((temp >> 8) & 0x000000FF);
+    decodedBytes.push_back((temp)&0x000000FF);
+  }
+Ldone:
+  *output = std::move(decodedBytes);
+  return true;
+}
 
 void (*test_fn)() = nullptr;
 
@@ -133,6 +224,18 @@ void json_deserialize_arena_test() {
   google::protobuf::util::MessageToJsonString(*args_arena, &json);
 }
 
+void convert_to_filter_state_test() {
+  auto start = reinterpret_cast<uint8_t *>(&*configuration.begin());
+  auto end = start + configuration.size();
+  std::string encoded_config = base64Encode(start, end);
+  std::vector<uint8_t> decoded;
+  base64Decode(encoded_config, &decoded);
+  std::string decoded_config(decoded.begin(), decoded.end());
+  google::protobuf::util::JsonStringToMessage(decoded_config, &args);
+  auto bytes = args.SerializeAsString();
+  setFilterStateStringValue("wasm_request_set_key", bytes);
+}
+
 WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)) {
   const char* configuration_ptr = nullptr;
   size_t size;
@@ -165,6 +268,8 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)
     test_fn = &json_deserialize_test;
   } else if (configuration == "json_deserialize_arena") {
     test_fn = &json_deserialize_arena_test;
+  } else if (configuration == "convert_to_filter_state") {
+    test_fn = &convert_to_filter_state_test;
   } else {
     std::string message = "on_start " + configuration;
     proxy_log(LogLevel::info, message.c_str(), message.size());
