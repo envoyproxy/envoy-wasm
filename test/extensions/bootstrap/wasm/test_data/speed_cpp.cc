@@ -47,7 +47,7 @@ const static char encodeLookup[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const static char padCharacter = '=';
 
-std::string base64Encode(const uint8_t *start, const uint8_t *end) {
+std::string base64Encode(const uint8_t* start, const uint8_t* end) {
   std::string encodedString;
   size_t size = end - start;
   encodedString.reserve(((size / 3) + (size % 3 > 0)) * 4);
@@ -81,7 +81,7 @@ std::string base64Encode(const uint8_t *start, const uint8_t *end) {
   return encodedString;
 }
 
-bool base64Decode(const std::basic_string<char> &input, std::vector<uint8_t> *output) {
+bool base64Decode(const std::basic_string<char>& input, std::vector<uint8_t>* output) {
   if (input.length() % 4)
     return false;
   size_t padding = 0;
@@ -225,7 +225,7 @@ void json_deserialize_arena_test() {
 }
 
 void convert_to_filter_state_test() {
-  auto start = reinterpret_cast<uint8_t *>(&*configuration.begin());
+  auto start = reinterpret_cast<uint8_t*>(&*configuration.begin());
   auto end = start + configuration.size();
   std::string encoded_config = base64Encode(start, end);
   std::vector<uint8_t> decoded;
