@@ -152,7 +152,7 @@ getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm, const PluginSha
                            Event::Dispatcher& dispatcher,
                            CreateContextFn create_root_context_for_testing = nullptr);
 
-void clearCodeCacheForTesting(bool fail_if_not_cached);
+void clearCodeCacheForTesting();
 std::string anyToBytes(const ProtobufWkt::Any& any);
 void setTimeOffsetForCodeCacheForTesting(MonotonicTime::duration d);
 
