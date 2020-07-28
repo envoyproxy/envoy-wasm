@@ -140,7 +140,7 @@ public:
   virtual ServerLifecycleNotifier& lifecycleNotifier() PURE;
 
   /**
-   * @return the flush interval of stats sinks.
+   * @return std::chrono::milliseconds the flush interval of stats sinks.
    */
   virtual std::chrono::milliseconds statsFlushInterval() const PURE;
 };
