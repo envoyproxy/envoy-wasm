@@ -15,6 +15,8 @@
   static_cast<Context*>(proxy_wasm::exports::ContextOrEffectiveContext(                            \
       static_cast<proxy_wasm::ContextBase*>((void)_c, proxy_wasm::current_context_)))
 
+using FailState = proxy_wasm::FailState;
+
 namespace Envoy {
 
 using ScopeWeakPtr = std::weak_ptr<Stats::Scope>;
@@ -23,6 +25,9 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 namespace {
+
+using WasmEvent = EnvoyWasm::WasmEvent;
+
 struct CodeCacheEntry {
   std::string code;
   bool in_progress;
@@ -248,7 +253,7 @@ void clearCodeCacheForTesting() {
     delete code_cache;
     code_cache = nullptr;
   }
-  getWasmExtension()->resetStats();
+  getWasmExtension()->resetStatsForTesting();
 }
 
 // TODO: remove this post #4160: Switch default to SimulatedTimeSystem.
@@ -265,6 +270,31 @@ getCloneFactory(WasmExtension* wasm_extension, Event::Dispatcher& dispatcher,
     return wasm_clone_factory(std::static_pointer_cast<WasmHandle>(base_wasm), dispatcher,
                               create_root_context_for_testing);
   };
+}
+
+static WasmEvent toWasmEvent(const std::shared_ptr<WasmHandleBase>& wasm) {
+  if (!wasm) {
+    return WasmEvent::UnableToCreateVM;
+  }
+  switch (wasm->wasm()->fail_state()) {
+  case FailState::Ok:
+    return WasmEvent::Ok;
+  case FailState::UnableToCreateVM:
+    return WasmEvent::UnableToCreateVM;
+  case FailState::UnableToCloneVM:
+    return WasmEvent::UnableToCloneVM;
+  case FailState::MissingFunction:
+    return WasmEvent::MissingFunction;
+  case FailState::UnableToInitializeCode:
+    return WasmEvent::UnableToInitializeCode;
+  case FailState::StartFailed:
+    return WasmEvent::StartFailed;
+  case FailState::ConfigureFailed:
+    return WasmEvent::ConfigureFailed;
+  case FailState::RuntimeError:
+    return WasmEvent::RuntimeError;
+  }
+  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
 }
 
 static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr& plugin,
@@ -286,7 +316,8 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
     if (!code_cache) {
       code_cache = new std::remove_reference<decltype(*code_cache)>::type;
     }
-    Stats::ScopeSharedPtr create_wasm_stats_scope = wasm_extension->lockOrResetScope(scope, plugin);
+    Stats::ScopeSharedPtr create_wasm_stats_scope =
+        wasm_extension->lockAndCreateStats(scope, plugin);
     // Remove entries older than CODE_CACHE_SECONDS_CACHING_TTL except for our target.
     for (auto it = code_cache->begin(); it != code_cache->end();) {
       if (now - it->second.use_time > std::chrono::seconds(CODE_CACHE_SECONDS_CACHING_TTL) &&
@@ -355,6 +386,9 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         vm_key, code, plugin, proxy_wasm_factory,
         getCloneFactory(wasm_extension, dispatcher, create_root_context_for_testing),
         vm_config.allow_precompiled());
+    Stats::ScopeSharedPtr create_wasm_stats_scope =
+        wasm_extension->lockAndCreateStats(scope, plugin);
+    wasm_extension->onEvent(toWasmEvent(wasm), plugin);
     if (!wasm || wasm->wasm()->isFailed()) {
       ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), trace,
                           "Unable to create Wasm");
@@ -375,7 +409,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         e.in_progress = false;
         e.code = code;
         Stats::ScopeSharedPtr create_wasm_stats_scope =
-            wasm_extension->lockOrResetScope(scope, plugin);
+            wasm_extension->lockAndCreateStats(scope, plugin);
         if (code.empty()) {
           wasm_extension->onEvent(WasmExtension::WasmEvent::RemoteLoadCacheFetchFailure, plugin);
         } else {

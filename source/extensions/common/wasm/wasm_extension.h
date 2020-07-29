@@ -2,7 +2,6 @@
 
 #include <memory>
 
-#include "envoy/extensions/wasm/v3/wasm.pb.validate.h"
 #include "envoy/server/lifecycle_notifier.h"
 #include "envoy/stats/scope.h"
 #include "envoy/stats/stats.h"
@@ -30,7 +29,6 @@ class WasmHandle;
 class EnvoyWasmVmIntegration;
 
 using WasmHandleSharedPtr = std::shared_ptr<WasmHandle>;
-using VmConfig = envoy::extensions::wasm::v3::VmConfig;
 using CreateContextFn =
     std::function<ContextBase*(Wasm* wasm, const std::shared_ptr<Plugin>& plugin)>;
 using WasmHandleExtensionFactory = std::function<WasmHandleBaseSharedPtr(
@@ -59,24 +57,37 @@ public:
   virtual WasmHandleExtensionFactory wasmFactory() = 0;
   virtual WasmHandleExtensionCloneFactory wasmCloneFactory() = 0;
   enum class WasmEvent : int {
+    Ok,
     RemoteLoadCacheHit,
     RemoteLoadCacheNegativeHit,
     RemoteLoadCacheMiss,
     RemoteLoadCacheFetchSuccess,
     RemoteLoadCacheFetchFailure,
+    UnableToCreateVM,
+    UnableToCloneVM,
+    MissingFunction,
+    UnableToInitializeCode,
+    StartFailed,
+    ConfigureFailed,
+    RuntimeError,
   };
   virtual void onEvent(WasmEvent event, const PluginSharedPtr& plugin) = 0;
   virtual void onRemoteCacheEntriesChanged(int remote_cache_entries) = 0;
-  virtual void createStats(const Stats::ScopeSharedPtr& scope, const PluginSharedPtr& plugin) = 0;
-  virtual void resetStats() = 0; // Delete stats pointers
+  virtual void createStats(const Stats::ScopeSharedPtr& scope, const PluginSharedPtr& plugin)
+      EXCLUSIVE_LOCKS_REQUIRED(mutex_) = 0;
+  virtual void resetStats() EXCLUSIVE_LOCKS_REQUIRED(mutex_) = 0; // Delete stats pointers
 
   // NB: the Scope can become invalid if, for example, the owning FilterChain is deleted. When that
   // happens the stats must be recreated. This hook verifies the Scope of any existing stats and if
   // necessary recreates the stats with the newly provided scope.
-  Stats::ScopeSharedPtr lockOrResetScope(const Stats::ScopeSharedPtr& scope,
-                                         const PluginSharedPtr& plugin);
+  // This call takes out the mutex_ and calls createStats and possibly resetStats().
+  Stats::ScopeSharedPtr lockAndCreateStats(const Stats::ScopeSharedPtr& scope,
+                                           const PluginSharedPtr& plugin);
+
+  void resetStatsForTesting();
 
 protected:
+  absl::Mutex mutex_;
   ScopeWeakPtr scope_;
 };
 

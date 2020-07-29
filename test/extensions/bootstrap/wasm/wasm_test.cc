@@ -43,7 +43,7 @@ public:
 
   void createWasm(absl::string_view runtime) {
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        name_, root_id_, vm_id_, plugin_configuration_, false,
+        name_, root_id_, vm_id_, runtime, plugin_configuration_, false,
         envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info_, nullptr);
     wasm_ = std::make_shared<Extensions::Common::Wasm::Wasm>(
         absl::StrCat("envoy.wasm.runtime.", runtime), vm_id_, vm_configuration_, vm_key_, scope_,
