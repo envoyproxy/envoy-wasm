@@ -47,10 +47,6 @@ private:
 };
 
 const std::string INLINE_STRING = "<inline>";
-// NB: xDS currently does not support failing asynchronously, so we fail immediately
-// if remote Wasm code is not cached and do a background fill.
-const bool DEFAULT_FAIL_IF_NOT_CACHED = true;
-bool fail_if_code_not_cached = DEFAULT_FAIL_IF_NOT_CACHED;
 const int CODE_CACHE_SECONDS_NEGATIVE_CACHING = 10;
 const int CODE_CACHE_SECONDS_CACHING_TTL = 24 * 3600; // 24 hours.
 MonotonicTime::duration cache_time_offset_for_testing{};
@@ -246,9 +242,8 @@ void Wasm::log(absl::string_view root_id, const Http::RequestHeaderMap* request_
   context->log(request_headers, response_headers, response_trailers, stream_info);
 }
 
-void clearCodeCacheForTesting(bool fail_if_not_cached) {
+void clearCodeCacheForTesting() {
   std::lock_guard<std::mutex> guard(code_cache_mutex);
-  fail_if_code_not_cached = fail_if_not_cached;
   if (code_cache) {
     delete code_cache;
     code_cache = nullptr;
@@ -388,7 +383,9 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         }
         wasm_extension->onRemoteCacheEntriesChanged(code_cache->size());
       }
-      if (!fail_if_code_not_cached) {
+      // NB: xDS currently does not support failing asynchronously, so we fail immediately
+      // if remote Wasm code is not cached and do a background fill.
+      if (!vm_config.nack_on_code_cache_miss()) {
         if (code.empty()) {
           ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), trace,
                               "Failed to load Wasm code (fetch failed) from {}", source);
@@ -400,7 +397,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
         dispatcher.deferredDelete(Envoy::Event::DeferredDeletablePtr{holder->release()});
       }
     };
-    if (fail_if_code_not_cached) {
+    if (vm_config.nack_on_code_cache_miss()) {
       auto adapter = std::make_unique<RemoteDataFetcherAdapter>(fetch_callback);
       auto fetcher = std::make_unique<Config::DataFetcher::RemoteDataFetcher>(
           cluster_manager, vm_config.code().remote().http_uri(), vm_config.code().remote().sha256(),

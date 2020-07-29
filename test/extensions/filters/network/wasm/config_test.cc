@@ -32,7 +32,7 @@ protected:
     ON_CALL(context_, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
   }
 
-  void SetUp() override { Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(false); }
+  void SetUp() override { Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(); }
 
   void initializeForRemote() {
     retry_timer_ = new Event::MockTimer();
