@@ -166,7 +166,7 @@ void Context::onCloseTCP() {
 void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::ResolutionStatus status,
                            std::list<Envoy::Network::DnsResponse>&& response) {
   proxy_wasm::DeferAfterCallActions actions(this);
-  if (!wasm()->on_resolve_dns_) {
+  if (wasm()->isFailed() || !wasm()->on_resolve_dns_) {
     return;
   }
   if (status != Network::DnsResolver::ResolutionStatus::Success) {
