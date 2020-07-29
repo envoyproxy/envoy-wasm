@@ -61,7 +61,7 @@ public:
 
 class WasmCommonTest : public testing::TestWithParam<std::string> {
 public:
-  void SetUp() { clearCodeCacheForTesting(false); }
+  void SetUp() { clearCodeCacheForTesting(); }
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest, testing::Values("v8", "null"));
