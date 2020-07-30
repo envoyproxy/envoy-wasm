@@ -8,6 +8,7 @@
 #include "envoy/server/filter_config.h"
 
 #include "common/common/logger.h"
+#include "common/common/matchers.h"
 
 #include "absl/strings/string_view.h"
 
@@ -16,10 +17,26 @@ namespace Extensions {
 namespace HttpFilters {
 namespace HeaderToMetadataFilter {
 
-using Rule = envoy::extensions::filters::http::header_to_metadata::v3::Config::Rule;
+using ProtoRule = envoy::extensions::filters::http::header_to_metadata::v3::Config::Rule;
 using ValueType = envoy::extensions::filters::http::header_to_metadata::v3::Config::ValueType;
 using ValueEncode = envoy::extensions::filters::http::header_to_metadata::v3::Config::ValueEncode;
-using HeaderToMetadataRules = std::vector<std::pair<Http::LowerCaseString, Rule>>;
+
+class Rule {
+public:
+  Rule(const std::string& header, const ProtoRule& rule);
+  const ProtoRule& rule() const { return rule_; }
+  const Regex::CompiledMatcherPtr& regexRewrite() const { return regex_rewrite_; }
+  const std::string& regexSubstitution() const { return regex_rewrite_substitution_; }
+  const Http::LowerCaseString& header() const { return header_; }
+
+private:
+  const Http::LowerCaseString header_;
+  const ProtoRule rule_;
+  Regex::CompiledMatcherPtr regex_rewrite_{};
+  std::string regex_rewrite_substitution_{};
+};
+
+using HeaderToMetadataRules = std::vector<Rule>;
 
 // TODO(yangminzhu): Make MAX_HEADER_VALUE_LEN configurable.
 const uint32_t MAX_HEADER_VALUE_LEN = 8 * 1024;
@@ -28,22 +45,19 @@ const uint32_t MAX_HEADER_VALUE_LEN = 8 * 1024;
  *  Encapsulates the filter configuration with STL containers and provides an area for any custom
  *  configuration logic.
  */
-class Config : public Logger::Loggable<Logger::Id::config> {
+class Config : public ::Envoy::Router::RouteSpecificFilterConfig,
+               public Logger::Loggable<Logger::Id::config> {
 public:
-  Config(const envoy::extensions::filters::http::header_to_metadata::v3::Config config);
+  Config(const envoy::extensions::filters::http::header_to_metadata::v3::Config config,
+         bool per_route = false);
 
-  HeaderToMetadataRules requestRules() const { return request_rules_; }
-  HeaderToMetadataRules responseRules() const { return response_rules_; }
+  const HeaderToMetadataRules& requestRules() const { return request_rules_; }
+  const HeaderToMetadataRules& responseRules() const { return response_rules_; }
   bool doResponse() const { return response_set_; }
   bool doRequest() const { return request_set_; }
 
 private:
-  using ProtobufRepeatedRule = Protobuf::RepeatedPtrField<Rule>;
-
-  HeaderToMetadataRules request_rules_;
-  HeaderToMetadataRules response_rules_;
-  bool response_set_;
-  bool request_set_;
+  using ProtobufRepeatedRule = Protobuf::RepeatedPtrField<ProtoRule>;
 
   /**
    *  configToVector is a helper function for converting from configuration (protobuf types) into
@@ -58,6 +72,11 @@ private:
   static bool configToVector(const ProtobufRepeatedRule&, HeaderToMetadataRules&);
 
   const std::string& decideNamespace(const std::string& nspace) const;
+
+  HeaderToMetadataRules request_rules_;
+  HeaderToMetadataRules response_rules_;
+  bool response_set_;
+  bool request_set_;
 };
 
 using ConfigSharedPtr = std::shared_ptr<Config>;
@@ -102,9 +121,12 @@ public:
   void setEncoderFilterCallbacks(Http::StreamEncoderFilterCallbacks& callbacks) override;
 
 private:
+  friend class HeaderToMetadataTest;
+
   using StructMap = std::map<std::string, ProtobufWkt::Struct>;
 
   const ConfigSharedPtr config_;
+  mutable const Config* effective_config_{nullptr};
   Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};
   Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
 
@@ -123,6 +145,7 @@ private:
   bool addMetadata(StructMap&, const std::string&, const std::string&, absl::string_view, ValueType,
                    ValueEncode) const;
   const std::string& decideNamespace(const std::string& nspace) const;
+  const Config* getConfig() const;
 };
 
 } // namespace HeaderToMetadataFilter

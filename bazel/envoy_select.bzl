@@ -31,11 +31,3 @@ def envoy_select_hot_restart(xs, repository = ""):
         repository + "//bazel:disable_hot_restart_or_apple": [],
         "//conditions:default": xs,
     })
-
-# Selects the given values depending on the WASM runtimes enabled in the current build.
-def envoy_select_wasm_wavm(xs):
-    return select({
-        "@envoy//bazel:wasm_all": xs,
-        "@envoy//bazel:wasm_wavm": xs,
-        "//conditions:default": [],
-    })

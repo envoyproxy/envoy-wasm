@@ -25,7 +25,7 @@
 #include "common/common/lock_guard.h"
 #include "common/common/thread_impl.h"
 #include "common/common/utility.h"
-#include "common/config/resources.h"
+#include "common/config/resource_name.h"
 #include "common/filesystem/directory.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/json/json_loader.h"
@@ -34,6 +34,7 @@
 
 #include "test/mocks/stats/mocks.h"
 #include "test/test_common/printers.h"
+#include "test/test_common/resources.h"
 #include "test/test_common/test_time.h"
 
 #include "absl/container/fixed_array.h"
@@ -219,6 +220,31 @@ std::string TestUtility::xdsResourceName(const ProtobufWkt::Any& resource) {
     return TestUtility::anyConvert<envoy::config::route::v3::VirtualHost>(resource).name();
   }
   if (resource.type_url() == Config::TypeUrl::get().Runtime) {
+    return TestUtility::anyConvert<envoy::service::runtime::v3::Runtime>(resource).name();
+  }
+  if (resource.type_url() == Config::getTypeUrl<envoy::config::listener::v3::Listener>(
+                                 envoy::config::core::v3::ApiVersion::V3)) {
+    return TestUtility::anyConvert<envoy::config::listener::v3::Listener>(resource).name();
+  }
+  if (resource.type_url() == Config::getTypeUrl<envoy::config::route::v3::RouteConfiguration>(
+                                 envoy::config::core::v3::ApiVersion::V3)) {
+    return TestUtility::anyConvert<envoy::config::route::v3::RouteConfiguration>(resource).name();
+  }
+  if (resource.type_url() == Config::getTypeUrl<envoy::config::cluster::v3::Cluster>(
+                                 envoy::config::core::v3::ApiVersion::V3)) {
+    return TestUtility::anyConvert<envoy::config::cluster::v3::Cluster>(resource).name();
+  }
+  if (resource.type_url() == Config::getTypeUrl<envoy::config::endpoint::v3::ClusterLoadAssignment>(
+                                 envoy::config::core::v3::ApiVersion::V3)) {
+    return TestUtility::anyConvert<envoy::config::endpoint::v3::ClusterLoadAssignment>(resource)
+        .cluster_name();
+  }
+  if (resource.type_url() == Config::getTypeUrl<envoy::config::route::v3::VirtualHost>(
+                                 envoy::config::core::v3::ApiVersion::V3)) {
+    return TestUtility::anyConvert<envoy::config::route::v3::VirtualHost>(resource).name();
+  }
+  if (resource.type_url() == Config::getTypeUrl<envoy::service::runtime::v3::Runtime>(
+                                 envoy::config::core::v3::ApiVersion::V3)) {
     return TestUtility::anyConvert<envoy::service::runtime::v3::Runtime>(resource).name();
   }
   throw EnvoyException(

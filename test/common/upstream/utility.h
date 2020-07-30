@@ -76,12 +76,12 @@ inline HostSharedPtr makeTestHost(ClusterInfoConstSharedPtr cluster, const std::
 }
 
 inline HostSharedPtr makeTestHost(ClusterInfoConstSharedPtr cluster, const std::string& url,
-                                  uint32_t weight = 1) {
+                                  uint32_t weight = 1, uint32_t priority = 0) {
   return HostSharedPtr{
       new HostImpl(cluster, "", Network::Utility::resolveUrl(url), nullptr, weight,
                    envoy::config::core::v3::Locality(),
-                   envoy::config::endpoint::v3::Endpoint::HealthCheckConfig::default_instance(), 0,
-                   envoy::config::core::v3::UNKNOWN)};
+                   envoy::config::endpoint::v3::Endpoint::HealthCheckConfig::default_instance(),
+                   priority, envoy::config::core::v3::UNKNOWN)};
 }
 
 inline HostSharedPtr makeTestHost(ClusterInfoConstSharedPtr cluster, const std::string& url,
@@ -123,6 +123,14 @@ makeLocalityWeights(std::initializer_list<uint32_t> locality_weights) {
   return std::make_shared<LocalityWeights>(locality_weights);
 }
 
+inline envoy::config::core::v3::HealthCheck
+parseHealthCheckFromV3Yaml(const std::string& yaml_string, bool avoid_boosting = true) {
+  envoy::config::core::v3::HealthCheck health_check;
+  TestUtility::loadFromYamlAndValidate(yaml_string, health_check, false, avoid_boosting);
+  return health_check;
+}
+
+// For DEPRECATED TEST CASES
 inline envoy::config::core::v3::HealthCheck
 parseHealthCheckFromV2Yaml(const std::string& yaml_string) {
   envoy::config::core::v3::HealthCheck health_check;

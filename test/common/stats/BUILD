@@ -1,13 +1,15 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "//bazel:envoy_build_system.bzl",
+    "envoy_benchmark_test",
+    "envoy_cc_benchmark_binary",
     "envoy_cc_fuzz_test",
     "envoy_cc_test",
     "envoy_cc_test_binary",
     "envoy_cc_test_library",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -158,15 +160,27 @@ envoy_cc_fuzz_test(
         ":stat_test_utility_lib",
         "//source/common/buffer:buffer_lib",
         "//source/common/common:assert_lib",
-        "//source/common/decompressor:decompressor_lib",
         "//source/common/stats:symbol_table_lib",
         "//test/fuzz:utility_lib",
     ],
 )
 
+envoy_cc_fuzz_test(
+    name = "utility_fuzz_test",
+    srcs = ["utility_fuzz_test.cc"],
+    corpus = "utility_corpus",
+    deps = [
+        "//source/common/stats:utility_lib",
+    ],
+)
+
 envoy_cc_test_binary(
     name = "symbol_table_speed_test",
-    srcs = ["symbol_table_speed_test.cc"],
+    srcs = [
+        "make_elements_helper.cc",
+        "make_elements_helper.h",
+        "symbol_table_speed_test.cc",
+    ],
     external_deps = [
         "abseil_strings",
         "benchmark",
@@ -174,7 +188,9 @@ envoy_cc_test_binary(
     deps = [
         ":stat_test_utility_lib",
         "//source/common/memory:stats_lib",
+        "//source/common/stats:isolated_store_lib",
         "//source/common/stats:symbol_table_lib",
+        "//source/common/stats:utility_lib",
         "//test/mocks/stats:stats_mocks",
         "//test/test_common:logging_lib",
         "//test/test_common:utility_lib",
@@ -224,7 +240,7 @@ envoy_cc_test(
     ],
 )
 
-envoy_cc_test_binary(
+envoy_cc_benchmark_binary(
     name = "thread_local_store_speed_test",
     srcs = ["thread_local_store_speed_test.cc"],
     external_deps = [
@@ -241,5 +257,19 @@ envoy_cc_test_binary(
         "//test/test_common:test_time_lib",
         "//test/test_common:utility_lib",
         "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",
+    ],
+)
+
+envoy_benchmark_test(
+    name = "thread_local_store_speed_test_benchmark_test",
+    benchmark_binary = "thread_local_store_speed_test",
+)
+
+envoy_cc_test(
+    name = "utility_test",
+    srcs = ["utility_test.cc"],
+    deps = [
+        "//source/common/stats:isolated_store_lib",
+        "//source/common/stats:utility_lib",
     ],
 )

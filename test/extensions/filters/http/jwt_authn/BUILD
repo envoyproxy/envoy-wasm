@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
@@ -10,6 +8,8 @@ load(
     "//test/extensions:extensions_build_system.bzl",
     "envoy_extension_cc_test",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -47,7 +47,6 @@ envoy_extension_cc_test(
     deps = [
         ":mock_lib",
         "//source/extensions/filters/http/jwt_authn:filter_lib",
-        "//test/mocks/server:server_mocks",
         "//test/test_common:utility_lib",
         "@envoy_api//envoy/extensions/filters/http/jwt_authn/v3:pkg_cc_proto",
     ],
@@ -117,6 +116,7 @@ envoy_extension_cc_test(
     name = "filter_integration_test",
     srcs = ["filter_integration_test.cc"],
     extension_name = "envoy.filters.http.jwt_authn",
+    tags = ["fails_on_windows"],
     deps = [
         "//source/common/router:string_accessor_lib",
         "//source/extensions/filters/http/common:pass_through_filter_lib",

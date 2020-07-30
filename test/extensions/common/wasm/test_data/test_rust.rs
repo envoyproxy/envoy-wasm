@@ -35,3 +35,7 @@ extern "C" fn div(a: u32, b: u32) -> u32 {
 extern "C" fn abort() {
     panic!("abort")
 }
+
+// This function is to compile WebAssembly code with `rust_binary` with Bazel.
+// Envoy wasm runtime won't take care of this type of function.
+fn main() {}

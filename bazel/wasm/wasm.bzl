@@ -1,8 +1,9 @@
 load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 def _wasm_cc_transition_impl(settings, attr):
     return {
-        "//command_line_option:cpu": "wasm",
+        "//command_line_option:cpu": "wasm32",
         "//command_line_option:crosstool_top": "@proxy_wasm_cpp_sdk//toolchain:emscripten",
 
         # Overriding copt/cxxopt/linkopt to prevent sanitizers/coverage options leak
@@ -10,6 +11,7 @@ def _wasm_cc_transition_impl(settings, attr):
         "//command_line_option:copt": [],
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
+        "//command_line_option:collect_code_coverage": "false",
     }
 
 def _wasm_rust_transition_impl(settings, attr):
@@ -26,6 +28,7 @@ wasm_cc_transition = transition(
         "//command_line_option:copt",
         "//command_line_option:cxxopt",
         "//command_line_option:linkopt",
+        "//command_line_option:collect_code_coverage",
     ],
 )
 
@@ -71,7 +74,7 @@ def wasm_cc_binary(name, **kwargs):
     kwargs.setdefault("additional_linker_inputs", ["@proxy_wasm_cpp_sdk//:jslib"])
     kwargs.setdefault("linkopts", ["--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js"])
     kwargs.setdefault("visibility", ["//visibility:public"])
-    native.cc_binary(
+    cc_binary(
         name = wasm_name,
         # Adding manual tag it won't be built in non-WASM (e.g. x86_64 config)
         # when an wildcard is specified, but it will be built in WASM configuration
@@ -88,9 +91,8 @@ def wasm_cc_binary(name, **kwargs):
 def wasm_rust_binary(name, **kwargs):
     wasm_name = "_wasm_" + (name if not ".wasm" in name else name.strip(".wasm"))
     kwargs.setdefault("visibility", ["//visibility:public"])
-    kwargs.setdefault("rustc_flags", ["--edition=2018", "-Clto=yes", "-Copt-level=3", "-Cpanic=abort"])
+    kwargs.setdefault("rustc_flags", ["--edition=2018"])
     kwargs.setdefault("out_binary", True)
-    kwargs.setdefault("crate_type", "cdylib")
 
     rust_binary(
         name = wasm_name,
@@ -98,14 +100,14 @@ def wasm_rust_binary(name, **kwargs):
     )
 
     wasm_rust_binary_rule(
-        name = "precompile_" + name,
+        name = name,
         binary = ":" + wasm_name,
     )
 
-    native.genrule(
-        name = name,
-        srcs = [":precompile_" + name],
-        outs = [name],
-        tools = ["//test/tools/wee8_compile:wee8_compile_tool"],
-        cmd = "$(location //test/tools/wee8_compile:wee8_compile_tool) $(SRCS).runfiles $(OUTS).runfiles",
-    )
+    # native.genrule(
+    #     name = name,
+    #     srcs = [":precompile_" + name],
+    #     outs = [name],
+    #     tools = ["//test/tools/wee8_compile:wee8_compile_tool"],
+    #     cmd = "$(location //test/tools/wee8_compile:wee8_compile_tool) $(SRCS).runfiles $(OUTS).runfiles",
+    # )

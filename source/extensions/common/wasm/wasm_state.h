@@ -1,5 +1,5 @@
 /*
- * Wasm State Class available to WASM/Non-WASM modules.
+ * Wasm State Class available to Wasm/Non-Wasm modules.
  */
 
 #pragma once

@@ -15,6 +15,11 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Csrf {
 
+Http::RegisterCustomInlineHeader<Http::CustomInlineHeaderRegistry::Type::RequestHeaders>
+    origin_handle(Http::CustomHeaders::get().Origin);
+Http::RegisterCustomInlineHeader<Http::CustomInlineHeaderRegistry::Type::RequestHeaders>
+    referer_handle(Http::CustomHeaders::get().Referer);
+
 struct RcDetailsValues {
   const std::string OriginMismatch = "csrf_origin_mismatch";
 };
@@ -22,37 +27,36 @@ using RcDetails = ConstSingleton<RcDetailsValues>;
 
 namespace {
 bool isModifyMethod(const Http::RequestHeaderMap& headers) {
-  const Envoy::Http::HeaderEntry* method = headers.Method();
-  if (method == nullptr) {
+  const absl::string_view method_type = headers.getMethodValue();
+  if (method_type.empty()) {
     return false;
   }
-  const absl::string_view method_type = method->value().getStringView();
   const auto& method_values = Http::Headers::get().MethodValues;
   return (method_type == method_values.Post || method_type == method_values.Put ||
           method_type == method_values.Delete || method_type == method_values.Patch);
 }
 
-absl::string_view hostAndPort(const Http::HeaderEntry* header) {
+absl::string_view hostAndPort(const absl::string_view header) {
   Http::Utility::Url absolute_url;
-  if (header != nullptr && !header->value().empty()) {
-    if (absolute_url.initialize(header->value().getStringView())) {
-      return absolute_url.host_and_port();
+  if (!header.empty()) {
+    if (absolute_url.initialize(header, false)) {
+      return absolute_url.hostAndPort();
     }
-    return header->value().getStringView();
+    return header;
   }
   return EMPTY_STRING;
 }
 
 absl::string_view sourceOriginValue(const Http::RequestHeaderMap& headers) {
-  const absl::string_view origin = hostAndPort(headers.Origin());
+  const absl::string_view origin = hostAndPort(headers.getInlineValue(origin_handle.handle()));
   if (origin != EMPTY_STRING) {
     return origin;
   }
-  return hostAndPort(headers.Referer());
+  return hostAndPort(headers.getInlineValue(referer_handle.handle()));
 }
 
 absl::string_view targetOriginValue(const Http::RequestHeaderMap& headers) {
-  return hostAndPort(headers.Host());
+  return hostAndPort(headers.getHostValue());
 }
 
 static CsrfStats generateStats(const std::string& prefix, Stats::Scope& scope) {

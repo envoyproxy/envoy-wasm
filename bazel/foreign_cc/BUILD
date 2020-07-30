@@ -1,7 +1,8 @@
-licenses(["notice"])  # Apache 2
-
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bazel:envoy_build_system.bzl", "envoy_cmake_external", "envoy_package")
 load("@rules_foreign_cc//tools/build_defs:configure.bzl", "configure_make")
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -36,8 +37,6 @@ cc_library(
     ],
 )
 
-# autotools packages are unusable on Windows as-is
-# TODO: Consider our own luajit.BUILD file as we do with many other packages
 configure_make(
     name = "luajit",
     configure_command = "build.py",
@@ -51,9 +50,10 @@ configure_make(
     lib_source = "@com_github_luajit_luajit//:all",
     make_commands = [],
     out_include_dir = "include/luajit-2.1",
-    static_libraries = [
-        "libluajit-5.1.a",
-    ],
+    static_libraries = select({
+        "//bazel:windows_x86_64": ["lua51.lib"],
+        "//conditions:default": ["libluajit-5.1.a"],
+    }),
     tags = ["skip_on_windows"],
 )
 
@@ -70,9 +70,10 @@ configure_make(
     lib_source = "@com_github_moonjit_moonjit//:all",
     make_commands = [],
     out_include_dir = "include/moonjit-2.2",
-    static_libraries = [
-        "libluajit-5.1.a",
-    ],
+    static_libraries = select({
+        "//bazel:windows_x86_64": ["lua51.lib"],
+        "//conditions:default": ["libluajit-5.1.a"],
+    }),
     tags = ["skip_on_windows"],
 )
 
@@ -82,9 +83,18 @@ envoy_cmake_external(
         "CARES_SHARED": "no",
         "CARES_STATIC": "on",
         "CMAKE_CXX_COMPILER_FORCED": "on",
+        "CMAKE_INSTALL_LIBDIR": "lib",
     },
     defines = ["CARES_STATICLIB"],
     lib_source = "@com_github_c_ares_c_ares//:all",
+    linkopts = select({
+        "//bazel:apple": ["-lresolv"],
+        "//conditions:default": [],
+    }),
+    postfix_script = select({
+        "//bazel:windows_x86_64": "cp -L $EXT_BUILD_ROOT/external/com_github_c_ares_c_ares/nameser.h $INSTALLDIR/include/nameser.h",
+        "//conditions:default": "",
+    }),
     static_libraries = select({
         "//bazel:windows_x86_64": ["cares.lib"],
         "//conditions:default": ["libcares.a"],
@@ -103,6 +113,9 @@ envoy_cmake_external(
         "CMAKE_USE_GSSAPI": "off",
         "HTTP_ONLY": "on",
         "CMAKE_INSTALL_LIBDIR": "lib",
+        # Explicitly enable Unix sockets and disable crypto for Windows
+        "USE_UNIX_SOCKETS": "on",
+        "CURL_DISABLE_CRYPTO_AUTH": "on",
         # C-Ares.
         "ENABLE_ARES": "on",
         "CARES_LIBRARY": "$EXT_BUILD_DEPS/ares",
@@ -177,106 +190,6 @@ envoy_cmake_external(
 )
 
 envoy_cmake_external(
-    name = "llvm",
-    cache_entries = {
-        # Disable both: BUILD and INCLUDE, since some of the INCLUDE
-        # targets build code instead of only generating build files.
-        "LLVM_BUILD_DOCS": "off",
-        "LLVM_INCLUDE_DOCS": "off",
-        "LLVM_BUILD_EXAMPLES": "off",
-        "LLVM_INCLUDE_EXAMPLES": "off",
-        "LLVM_BUILD_RUNTIME": "off",
-        "LLVM_BUILD_RUNTIMES": "off",
-        "LLVM_INCLUDE_RUNTIMES": "off",
-        "LLVM_BUILD_TESTS": "off",
-        "LLVM_INCLUDE_TESTS": "off",
-        "LLVM_BUILD_TOOLS": "off",
-        "LLVM_INCLUDE_TOOLS": "off",
-        "LLVM_BUILD_UTILS": "off",
-        "LLVM_INCLUDE_UTILS": "off",
-        "LLVM_ENABLE_LIBEDIT": "off",
-        "LLVM_ENABLE_LIBXML2": "off",
-        "LLVM_ENABLE_TERMINFO": "off",
-        "LLVM_ENABLE_ZLIB": "off",
-        "LLVM_TARGETS_TO_BUILD": "X86",
-        "CMAKE_CXX_COMPILER_FORCED": "on",
-        # Workaround for the issue with statically linked libstdc++
-        # using -l:libstdc++.a.
-        "CMAKE_CXX_FLAGS": "-lstdc++",
-    },
-    env_vars = {
-        # Workaround for the -DDEBUG flag added in fastbuild on macOS,
-        # which conflicts with DEBUG macro used in LLVM.
-        "CFLAGS": "-UDEBUG",
-        "CXXFLAGS": "-UDEBUG",
-        "ASMFLAGS": "-UDEBUG",
-    },
-    lib_source = "@org_llvm_llvm//:all",
-    static_libraries = select({
-        "//conditions:default": [
-            # Order from llvm-config --libnames.
-            "libLLVMLTO.a",
-            "libLLVMPasses.a",
-            "libLLVMObjCARCOpts.a",
-            "libLLVMSymbolize.a",
-            "libLLVMDebugInfoPDB.a",
-            "libLLVMDebugInfoDWARF.a",
-            "libLLVMFuzzMutate.a",
-            "libLLVMTableGen.a",
-            "libLLVMDlltoolDriver.a",
-            "libLLVMLineEditor.a",
-            "libLLVMOrcJIT.a",
-            "libLLVMCoverage.a",
-            "libLLVMMIRParser.a",
-            "libLLVMObjectYAML.a",
-            "libLLVMLibDriver.a",
-            "libLLVMOption.a",
-            "libLLVMWindowsManifest.a",
-            "libLLVMX86Disassembler.a",
-            "libLLVMX86AsmParser.a",
-            "libLLVMX86CodeGen.a",
-            "libLLVMGlobalISel.a",
-            "libLLVMSelectionDAG.a",
-            "libLLVMAsmPrinter.a",
-            "libLLVMDebugInfoCodeView.a",
-            "libLLVMDebugInfoMSF.a",
-            "libLLVMX86Desc.a",
-            "libLLVMMCDisassembler.a",
-            "libLLVMX86Info.a",
-            "libLLVMX86AsmPrinter.a",
-            "libLLVMX86Utils.a",
-            "libLLVMMCJIT.a",
-            "libLLVMInterpreter.a",
-            "libLLVMExecutionEngine.a",
-            "libLLVMRuntimeDyld.a",
-            "libLLVMCodeGen.a",
-            "libLLVMTarget.a",
-            "libLLVMCoroutines.a",
-            "libLLVMipo.a",
-            "libLLVMInstrumentation.a",
-            "libLLVMVectorize.a",
-            "libLLVMScalarOpts.a",
-            "libLLVMLinker.a",
-            "libLLVMIRReader.a",
-            "libLLVMAsmParser.a",
-            "libLLVMInstCombine.a",
-            "libLLVMTransformUtils.a",
-            "libLLVMBitWriter.a",
-            "libLLVMAnalysis.a",
-            "libLLVMProfileData.a",
-            "libLLVMObject.a",
-            "libLLVMMCParser.a",
-            "libLLVMMC.a",
-            "libLLVMBitReader.a",
-            "libLLVMCore.a",
-            "libLLVMBinaryFormat.a",
-            "libLLVMSupport.a",
-            "libLLVMDemangle.a",
-        ],
-    }),
-)
-
-envoy_cmake_external(
     name = "nghttp2",
     cache_entries = {
         "ENABLE_LIB_ONLY": "on",
@@ -290,36 +203,9 @@ envoy_cmake_external(
     defines = ["NGHTTP2_STATICLIB"],
     lib_source = "@com_github_nghttp2_nghttp2//:all",
     static_libraries = select({
-        "//bazel:windows_x86_64": ["nghttp2_static.lib"],
-        "//conditions:default": ["libnghttp2_static.a"],
+        "//bazel:windows_x86_64": ["nghttp2.lib"],
+        "//conditions:default": ["libnghttp2.a"],
     }),
-)
-
-envoy_cmake_external(
-    name = "wavm",
-    cache_entries = {
-        "LLVM_DIR": "$EXT_BUILD_DEPS/copy_llvm/llvm/lib/cmake/llvm",
-        "WAVM_ENABLE_STATIC_LINKING": "on",
-        "WAVM_ENABLE_RELEASE_ASSERTS": "on",
-        # Workaround for the issue with statically linked libstdc++
-        # using -l:libstdc++.a.
-        "CMAKE_CXX_FLAGS": "-lstdc++ -Wno-unused-command-line-argument",
-    },
-    env_vars = {
-        # Workaround for the -DDEBUG flag added in fastbuild on macOS,
-        # which conflicts with DEBUG macro used in LLVM.
-        "CFLAGS": "-UDEBUG",
-        "CXXFLAGS": "-UDEBUG",
-        "ASMFLAGS": "-UDEBUG",
-    },
-    lib_source = "@com_github_wavm_wavm//:all",
-    static_libraries = select({
-        "//conditions:default": [
-            "libWAVM.a",
-            "libWAVMUnwind.a",
-        ],
-    }),
-    deps = [":llvm"],
 )
 
 envoy_cmake_external(
@@ -333,7 +219,7 @@ envoy_cmake_external(
     },
     lib_source = "@com_github_jbeder_yaml_cpp//:all",
     static_libraries = select({
-        "//bazel:windows_x86_64": ["libyaml-cpp.lib"],
+        "//bazel:windows_x86_64": ["yaml-cpp.lib"],
         "//conditions:default": ["libyaml-cpp.a"],
     }),
 )

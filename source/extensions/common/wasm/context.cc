@@ -9,7 +9,7 @@
 #include "envoy/grpc/status.h"
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"
-#include "envoy/server/wasm.h"
+#include "envoy/network/filter.h"
 #include "envoy/thread_local/thread_local.h"
 
 #include "common/buffer/buffer_impl.h"
@@ -50,7 +50,7 @@ namespace {
 using HashPolicy = envoy::config::route::v3::RouteAction::HashPolicy;
 
 Http::RequestTrailerMapPtr buildRequestTrailerMapFromPairs(const Pairs& pairs) {
-  auto map = std::make_unique<Http::RequestTrailerMapImpl>();
+  auto map = Http::RequestTrailerMapImpl::create();
   for (auto& p : pairs) {
     // Note: because of the lack of a string_view interface for addCopy and
     // the lack of an interface to add an entry with an empty value and return
@@ -62,7 +62,7 @@ Http::RequestTrailerMapPtr buildRequestTrailerMapFromPairs(const Pairs& pairs) {
 }
 
 Http::RequestHeaderMapPtr buildRequestHeaderMapFromPairs(const Pairs& pairs) {
-  auto map = std::make_unique<Http::RequestHeaderMapImpl>();
+  auto map = Http::RequestHeaderMapImpl::create();
   for (auto& p : pairs) {
     // Note: because of the lack of a string_view interface for addCopy and
     // the lack of an interface to add an entry with an empty value and return
@@ -80,10 +80,10 @@ template <typename P> static uint32_t headerSize(const P& p) { return p ? p->siz
 // Test support.
 
 size_t Buffer::size() const {
-  if (buffer_instance_) {
-    return buffer_instance_->length();
+  if (const_buffer_instance_) {
+    return const_buffer_instance_->length();
   }
-  return data_.size();
+  return proxy_wasm::BufferBase::size();
 }
 
 WasmResult Buffer::copyTo(WasmBase* wasm, size_t start, size_t length, uint64_t ptr_ptr,
@@ -103,11 +103,7 @@ WasmResult Buffer::copyTo(WasmBase* wasm, size_t start, size_t length, uint64_t 
     }
     return WasmResult::Ok;
   }
-  absl::string_view s = data_.substr(start, length);
-  if (!wasm->copyToPointerSize(s, ptr_ptr, size_ptr)) {
-    return WasmResult::InvalidMemoryAccess;
-  }
-  return WasmResult::Ok;
+  return proxy_wasm::BufferBase::copyTo(wasm, start, length, ptr_ptr, size_ptr);
 }
 
 WasmResult Buffer::copyFrom(size_t start, size_t length, absl::string_view data) {
@@ -133,15 +129,14 @@ WasmResult Buffer::copyFrom(size_t start, size_t length, absl::string_view data)
   if (const_buffer_instance_) { // This buffer is immutable.
     return WasmResult::BadArgument;
   }
-  // Setting a string buffer not supported (no use case).
-  return WasmResult::BadArgument;
+  return proxy_wasm::BufferBase::copyFrom(start, length, data);
 }
 
 Context::Context() = default;
 Context::Context(Wasm* wasm) : ContextBase(wasm) {}
-
-Context::Context(Wasm* wasm, const PluginSharedPtr& plugin) : ContextBase(wasm, plugin) {}
-
+Context::Context(Wasm* wasm, const PluginSharedPtr& plugin) : ContextBase(wasm, plugin) {
+  root_local_info_ = &std::static_pointer_cast<Plugin>(plugin)->local_info_;
+}
 Context::Context(Wasm* wasm, uint32_t root_context_id, const PluginSharedPtr& plugin)
     : ContextBase(wasm, root_context_id, plugin) {}
 
@@ -150,17 +145,7 @@ Plugin* Context::plugin() const { return static_cast<Plugin*>(plugin_.get()); }
 Context* Context::rootContext() const { return static_cast<Context*>(root_context()); }
 Upstream::ClusterManager& Context::clusterManager() const { return wasm()->clusterManager(); }
 
-void Context::error(absl::string_view message) { throw WasmException(std::string(message)); }
-
-void Context::initializeRoot(WasmBase* wasm, std::shared_ptr<PluginBase> plugin) {
-  ContextBase::initializeRoot(wasm, plugin);
-  root_local_info_ = &std::static_pointer_cast<Plugin>(plugin)->local_info_;
-}
-
-WasmResult Context::setTimerPeriod(std::chrono::milliseconds tick_period, uint32_t*) {
-  wasm()->setTimerPeriod(root_context_id_ ? root_context_id_ : id_, tick_period);
-  return WasmResult::Ok;
-}
+void Context::error(absl::string_view message) { ENVOY_LOG(trace, message); }
 
 uint64_t Context::getCurrentTimeNanoseconds() {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -169,13 +154,52 @@ uint64_t Context::getCurrentTimeNanoseconds() {
 }
 
 void Context::onCloseTCP() {
-  if (tcp_connection_closed_) {
+  if (tcp_connection_closed_ || !in_vm_context_created_) {
     return;
   }
   tcp_connection_closed_ = true;
   onDone();
   onLog();
   onDelete();
+}
+
+void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::ResolutionStatus status,
+                           std::list<Envoy::Network::DnsResponse>&& response) {
+  proxy_wasm::DeferAfterCallActions actions(this);
+  if (wasm()->isFailed() || !wasm()->on_resolve_dns_) {
+    return;
+  }
+  if (status != Network::DnsResolver::ResolutionStatus::Success) {
+    buffer_.set("");
+    wasm()->on_resolve_dns_(this, id_, token, 0);
+    return;
+  }
+  // buffer format:
+  //    4 bytes number of entries = N
+  //    N * 4 bytes TTL for each entry
+  //    N * null-terminated addresses
+  uint32_t s = 4; // length
+  for (auto& e : response) {
+    s += 4;                                     // for TTL
+    s += e.address_->asStringView().size() + 1; // null terminated.
+  }
+  auto buffer = std::unique_ptr<char[]>(new char[s]);
+  char* b = buffer.get();
+  uint32_t n = response.size();
+  memcpy(b, &n, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  for (auto& e : response) {
+    uint32_t ttl = e.ttl_.count();
+    memcpy(b, &ttl, sizeof(uint32_t));
+    b += sizeof(uint32_t);
+  };
+  for (auto& e : response) {
+    memcpy(b, e.address_->asStringView().data(), e.address_->asStringView().size());
+    b += e.address_->asStringView().size();
+    *b++ = 0;
+  };
+  buffer_.set(std::move(buffer), s);
+  wasm()->on_resolve_dns_(this, id_, token, s);
 }
 
 // Native serializer carrying over bit representation from CEL value to the extension
@@ -262,7 +286,7 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
   _f(METADATA) _f(REQUEST) _f(RESPONSE) _f(CONNECTION) _f(UPSTREAM) _f(NODE) _f(SOURCE)            \
       _f(DESTINATION) _f(LISTENER_DIRECTION) _f(LISTENER_METADATA) _f(CLUSTER_NAME)                \
           _f(CLUSTER_METADATA) _f(ROUTE_NAME) _f(ROUTE_METADATA) _f(PLUGIN_NAME)                   \
-              _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID)
+              _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID) _f(CONNECTION_ID)
 
 static inline std::string downCase(std::string s) {
   std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -275,7 +299,7 @@ enum class PropertyToken { PROPERTY_TOKENS(_DECLARE) };
 
 #define _PAIR(_t) {downCase(#_t), PropertyToken::_t},
 static absl::flat_hash_map<std::string, PropertyToken> property_tokens = {PROPERTY_TOKENS(_PAIR)};
-#undef _PARI
+#undef _PAIR
 
 absl::optional<google::api::expr::runtime::CelValue>
 Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) const {
@@ -331,6 +355,13 @@ Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) co
           Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(arena, *info));
     }
     break;
+  case PropertyToken::CONNECTION_ID: {
+    auto conn = getConnection();
+    if (conn) {
+      return CelValue::CreateUint64(conn->id());
+    }
+    break;
+  }
   case PropertyToken::UPSTREAM:
     if (info) {
       return CelValue::CreateMap(
@@ -638,6 +669,9 @@ WasmResult Context::getHeaderMapSize(WasmHeaderMapType type, uint32_t* result) {
 
 BufferInterface* Context::getBuffer(WasmBufferType type) {
   switch (type) {
+  case WasmBufferType::CallData:
+    // Set before the call.
+    return &buffer_;
   case WasmBufferType::VmConfiguration:
     return buffer_.set(wasm()->vm_configuration());
   case WasmBufferType::PluginConfiguration:
@@ -950,8 +984,12 @@ WasmResult Context::setProperty(absl::string_view path, absl::string_view value)
 
 WasmResult Context::declareProperty(absl::string_view path,
                                     std::unique_ptr<const WasmStatePrototype> state_prototype) {
-  state_prototypes_[path] = std::move(state_prototype);
-  return WasmResult::Ok;
+  // Do not delete existing schema since it can be referenced by state objects.
+  if (state_prototypes_.find(path) == state_prototypes_.end()) {
+    state_prototypes_[path] = std::move(state_prototype);
+    return WasmResult::Ok;
+  }
+  return WasmResult::BadArgument;
 }
 
 WasmResult Context::log(uint32_t level, absl::string_view message) {
@@ -975,13 +1013,14 @@ WasmResult Context::log(uint32_t level, absl::string_view message) {
     ENVOY_LOG(critical, "wasm log{}: {}", log_prefix(), message);
     return WasmResult::Ok;
   case spdlog::level::off:
+  case spdlog::level::n_levels:
     return WasmResult::Ok;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 }
 
 //
-// Calls into the WASM code.
+// Calls into the Wasm code.
 //
 bool Context::validateConfiguration(absl::string_view configuration,
                                     const std::shared_ptr<PluginBase>& plugin_base) {
@@ -1018,7 +1057,12 @@ void Context::onGrpcReceiveTrailingMetadataWrapper(uint32_t token, Http::HeaderM
   grpc_receive_trailing_metadata_ = nullptr;
 }
 
-WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
+WasmResult Context::defineMetric(uint32_t metric_type, absl::string_view name,
+                                 uint32_t* metric_id_ptr) {
+  if (metric_type > static_cast<uint32_t>(MetricType::Max)) {
+    return WasmResult::BadArgument;
+  }
+  auto type = static_cast<MetricType>(metric_type);
   // TODO: Consider rethinking the scoping policy as it does not help in this case.
   Stats::StatNameManagedStorage storage(name, wasm()->scope_->symbolTable());
   Stats::StatName stat_name = storage.statName();
@@ -1137,7 +1181,7 @@ Network::FilterStatus convertNetworkFilterStatus(proxy_wasm::FilterStatus status
   case proxy_wasm::FilterStatus::StopIteration:
     return Network::FilterStatus::StopIteration;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersStatus status) {
@@ -1153,7 +1197,7 @@ Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersSt
   case proxy_wasm::FilterHeadersStatus::StopAllIterationAndWatermark:
     return Http::FilterHeadersStatus::StopAllIterationAndWatermark;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailersStatus status) {
@@ -1163,7 +1207,7 @@ Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailer
   case proxy_wasm::FilterTrailersStatus::StopIteration:
     return Http::FilterTrailersStatus::StopIteration;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadataStatus status) {
@@ -1171,7 +1215,7 @@ Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadat
   case proxy_wasm::FilterMetadataStatus::Continue:
     return Http::FilterMetadataStatus::Continue;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus status) {
@@ -1185,14 +1229,18 @@ Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus stat
   case proxy_wasm::FilterDataStatus::StopIterationNoBuffer:
     return Http::FilterDataStatus::StopIterationNoBuffer;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Network::FilterStatus Context::onNewConnection() {
+  onCreate();
   return convertNetworkFilterStatus(onNetworkNewConnection());
 };
 
 Network::FilterStatus Context::onData(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!in_vm_context_created_) {
+    return Network::FilterStatus::Continue;
+  }
   network_downstream_data_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertNetworkFilterStatus(onDownstreamData(data.length(), end_stream));
@@ -1203,6 +1251,9 @@ Network::FilterStatus Context::onData(::Envoy::Buffer::Instance& data, bool end_
 }
 
 Network::FilterStatus Context::onWrite(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!in_vm_context_created_) {
+    return Network::FilterStatus::Continue;
+  }
   network_upstream_data_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertNetworkFilterStatus(onUpstreamData(data.length(), end_stream));
@@ -1218,6 +1269,9 @@ Network::FilterStatus Context::onWrite(::Envoy::Buffer::Instance& data, bool end
 }
 
 void Context::onEvent(Network::ConnectionEvent event) {
+  if (!in_vm_context_created_) {
+    return;
+  }
   switch (event) {
   case Network::ConnectionEvent::LocalClose:
     onDownstreamConnectionClose(CloseType::Local);
@@ -1243,6 +1297,9 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
                   const Http::ResponseHeaderMap* response_headers,
                   const Http::ResponseTrailerMap* response_trailers,
                   const StreamInfo::StreamInfo& stream_info) {
+  if (!http_request_started_) {
+    return;
+  }
   access_log_request_headers_ = request_headers;
   // ? request_trailers  ?
   access_log_response_headers_ = response_headers;
@@ -1261,20 +1318,21 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
 }
 
 void Context::onDestroy() {
-  if (destroyed_) {
+  if (destroyed_ || !in_vm_context_created_) {
     return;
   }
   destroyed_ = true;
   onDone();
 }
 
-WasmResult Context::continueStream(StreamType stream_type) {
+WasmResult Context::continueStream(WasmStreamType stream_type) {
   switch (stream_type) {
-  case StreamType::Request:
+  case WasmStreamType::Request:
     if (decoder_callbacks_) {
       decoder_callbacks_->continueDecoding();
     }
-  case StreamType::Response:
+    break;
+  case WasmStreamType::Response:
     if (encoder_callbacks_) {
       encoder_callbacks_->continueEncoding();
     }
@@ -1287,6 +1345,32 @@ WasmResult Context::continueStream(StreamType stream_type) {
   request_trailers_ = nullptr;
   request_metadata_ = nullptr;
   return WasmResult::Ok;
+}
+
+WasmResult Context::closeStream(WasmStreamType stream_type) {
+  switch (stream_type) {
+  case WasmStreamType::Request:
+    if (decoder_callbacks_) {
+      decoder_callbacks_->resetStream();
+    }
+    return WasmResult::Ok;
+  case WasmStreamType::Response:
+    if (encoder_callbacks_) {
+      encoder_callbacks_->resetStream();
+    }
+    return WasmResult::Ok;
+  case WasmStreamType::Downstream:
+    if (network_read_filter_callbacks_) {
+      network_read_filter_callbacks_->connection().close(
+          Envoy::Network::ConnectionCloseType::FlushWrite);
+    }
+    return WasmResult::Ok;
+  case WasmStreamType::Upstream:
+    network_write_filter_callbacks_->connection().close(
+        Envoy::Network::ConnectionCloseType::FlushWrite);
+    return WasmResult::Ok;
+  }
+  return WasmResult::BadArgument;
 }
 
 WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view body_text,
@@ -1307,9 +1391,11 @@ WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view 
 }
 
 Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers, bool end_stream) {
+  onCreate();
+  http_request_started_ = true;
   request_headers_ = &headers;
   end_of_stream_ = end_stream;
-  auto result = convertFilterHeadersStatus(onRequestHeaders(headerSize(&headers)));
+  auto result = convertFilterHeadersStatus(onRequestHeaders(headerSize(&headers), end_stream));
   if (result == Http::FilterHeadersStatus::Continue) {
     request_headers_ = nullptr;
   }
@@ -1317,6 +1403,9 @@ Http::FilterHeadersStatus Context::decodeHeaders(Http::RequestHeaderMap& headers
 }
 
 Http::FilterDataStatus Context::decodeData(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!http_request_started_) {
+    return Http::FilterDataStatus::Continue;
+  }
   request_body_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertFilterDataStatus(onRequestBody(data.length(), end_stream));
@@ -1336,6 +1425,9 @@ Http::FilterDataStatus Context::decodeData(::Envoy::Buffer::Instance& data, bool
 }
 
 Http::FilterTrailersStatus Context::decodeTrailers(Http::RequestTrailerMap& trailers) {
+  if (!http_request_started_) {
+    return Http::FilterTrailersStatus::Continue;
+  }
   request_trailers_ = &trailers;
   auto result = convertFilterTrailersStatus(onRequestTrailers(headerSize(&trailers)));
   if (result == Http::FilterTrailersStatus::Continue) {
@@ -1345,6 +1437,9 @@ Http::FilterTrailersStatus Context::decodeTrailers(Http::RequestTrailerMap& trai
 }
 
 Http::FilterMetadataStatus Context::decodeMetadata(Http::MetadataMap& request_metadata) {
+  if (!http_request_started_) {
+    return Http::FilterMetadataStatus::Continue;
+  }
   request_metadata_ = &request_metadata;
   auto result = convertFilterMetadataStatus(onRequestMetadata(headerSize(&request_metadata)));
   if (result == Http::FilterMetadataStatus::Continue) {
@@ -1363,9 +1458,12 @@ Http::FilterHeadersStatus Context::encode100ContinueHeaders(Http::ResponseHeader
 
 Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& headers,
                                                  bool end_stream) {
+  if (!http_request_started_) {
+    return Http::FilterHeadersStatus::Continue;
+  }
   response_headers_ = &headers;
   end_of_stream_ = end_stream;
-  auto result = convertFilterHeadersStatus(onResponseHeaders(headerSize(&headers)));
+  auto result = convertFilterHeadersStatus(onResponseHeaders(headerSize(&headers), end_stream));
   if (result == Http::FilterHeadersStatus::Continue) {
     response_headers_ = nullptr;
   }
@@ -1373,6 +1471,9 @@ Http::FilterHeadersStatus Context::encodeHeaders(Http::ResponseHeaderMap& header
 }
 
 Http::FilterDataStatus Context::encodeData(::Envoy::Buffer::Instance& data, bool end_stream) {
+  if (!http_request_started_) {
+    return Http::FilterDataStatus::Continue;
+  }
   response_body_buffer_ = &data;
   end_of_stream_ = end_stream;
   auto result = convertFilterDataStatus(onResponseBody(data.length(), end_stream));
@@ -1392,6 +1493,9 @@ Http::FilterDataStatus Context::encodeData(::Envoy::Buffer::Instance& data, bool
 }
 
 Http::FilterTrailersStatus Context::encodeTrailers(Http::ResponseTrailerMap& trailers) {
+  if (!http_request_started_) {
+    return Http::FilterTrailersStatus::Continue;
+  }
   response_trailers_ = &trailers;
   auto result = convertFilterTrailersStatus(onResponseTrailers(headerSize(&trailers)));
   if (result == Http::FilterTrailersStatus::Continue) {
@@ -1401,6 +1505,9 @@ Http::FilterTrailersStatus Context::encodeTrailers(Http::ResponseTrailerMap& tra
 }
 
 Http::FilterMetadataStatus Context::encodeMetadata(Http::MetadataMap& response_metadata) {
+  if (!http_request_started_) {
+    return Http::FilterMetadataStatus::Continue;
+  }
   response_metadata_ = &response_metadata;
   auto result = convertFilterMetadataStatus(onResponseMetadata(headerSize(&response_metadata)));
   if (result == Http::FilterMetadataStatus::Continue) {

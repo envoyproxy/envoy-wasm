@@ -1,10 +1,10 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -51,6 +51,7 @@ envoy_cc_library(
     deps = [
         ":codec_wrappers_lib",
         ":exception_lib",
+        ":status_lib",
         ":utility_lib",
         "//include/envoy/event:deferred_deletable",
         "//include/envoy/http:codec_interface",
@@ -128,20 +129,9 @@ envoy_cc_library(
         "//include/envoy/http:conn_pool_interface",
         "//include/envoy/stats:timespan_interface",
         "//source/common/common:linked_object",
+        "//source/common/conn_pool:conn_pool_base_lib",
         "//source/common/stats:timespan_lib",
         "//source/common/upstream:upstream_lib",
-    ],
-)
-
-envoy_cc_library(
-    name = "conn_pool_base_legacy_lib",
-    srcs = ["conn_pool_base_legacy.cc"],
-    hdrs = ["conn_pool_base_legacy.h"],
-    deps = [
-        "//include/envoy/http:conn_pool_interface",
-        "//include/envoy/stats:timespan_interface",
-        "//source/common/common:linked_object",
-        "//source/common/stats:timespan_lib",
     ],
 )
 
@@ -154,7 +144,9 @@ envoy_cc_library(
         "//include/envoy/http:filter_interface",
         "//include/envoy/http:request_id_extension_interface",
         "//include/envoy/router:rds_interface",
+        "//source/common/local_reply:local_reply_lib",
         "//source/common/network:utility_lib",
+        "//source/common/stats:symbol_table_lib",
         "@envoy_api//envoy/extensions/filters/network/http_connection_manager/v3:pkg_cc_proto",
         "@envoy_api//envoy/type/v3:pkg_cc_proto",
     ],
@@ -178,6 +170,7 @@ envoy_cc_library(
         ":header_utility_lib",
         ":headers_lib",
         ":path_utility_lib",
+        ":status_lib",
         ":user_agent_lib",
         ":utility_lib",
         "//include/envoy/access_log:access_log_interface",
@@ -204,7 +197,6 @@ envoy_cc_library(
         "//include/envoy/stats:stats_macros",
         "//include/envoy/stats:timespan_interface",
         "//include/envoy/upstream:upstream_interface",
-        "//source/common/access_log:access_log_formatter_lib",
         "//source/common/buffer:buffer_lib",
         "//source/common/common:assert_lib",
         "//source/common/common:dump_state_utils",
@@ -259,6 +251,15 @@ envoy_cc_library(
         ":utility_lib",
         "//include/envoy/http:hash_policy_interface",
         "@envoy_api//envoy/config/route/v3:pkg_cc_proto",
+    ],
+)
+
+envoy_cc_library(
+    name = "header_list_view_lib",
+    srcs = ["header_list_view.cc"],
+    hdrs = ["header_list_view.h"],
+    deps = [
+        "//include/envoy/http:header_map_interface",
     ],
 )
 
@@ -327,6 +328,7 @@ envoy_cc_library(
         "//include/envoy/stats:stats_macros",
         "//include/envoy/stats:timespan_interface",
         "//source/common/stats:symbol_table_lib",
+        "//source/common/stats:utility_lib",
     ],
 )
 
@@ -370,6 +372,7 @@ envoy_cc_library(
     ],
     deps = [
         ":header_map_lib",
+        ":utility_lib",
         "//include/envoy/common:regex_interface",
         "//include/envoy/http:header_map_interface",
         "//include/envoy/json:json_object_interface",
@@ -422,5 +425,6 @@ envoy_cc_library(
     ],
     deps = [
         "//include/envoy/http:codes_interface",
+        "//source/common/common:assert_lib",
     ],
 )

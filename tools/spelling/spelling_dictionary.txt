@@ -4,6 +4,7 @@
 # are allowed for any otherwise correctly spelled word.
 ABI
 ACK
+ACL
 AES
 AFAICT
 ALPN
@@ -17,6 +18,7 @@ ASCII
 ASSERTs
 AST
 AWS
+Allowlisted
 BACKTRACE
 BSON
 BPF
@@ -77,8 +79,10 @@ ECMP
 ECONNREFUSED
 EDESTRUCTION
 EDF
+EINPROGRESS
 EINVAL
 ELB
+EMSGSIZE
 ENOTFOUND
 ENOTSUP
 ENV
@@ -118,6 +122,7 @@ GETting
 GLB
 GOAWAY
 GRPC
+GSS
 GTEST
 GURL
 Grabbit
@@ -146,6 +151,7 @@ IPV
 IPs
 IPv
 ITOA
+Injectable
 Isode
 Iters
 JSON
@@ -169,14 +175,17 @@ LHS
 LLVM
 LPT
 LRS
+Loggable
 MB
 MD
 MERCHANTABILITY
 MGET
+MQ
 MSET
 MSVC
 MTLS
 MTU
+MULTIFRAME
 NACK
 NACKed
 NACKs
@@ -222,7 +231,10 @@ PostCBs
 PREBIND
 PRNG
 PROT
+Postgre
+Postgres
 Prereq
+QDCOUNT
 QUIC
 QoS
 RAII
@@ -286,6 +298,7 @@ STL
 STRLEN
 STS
 SVG
+Symbolizer
 TBD
 TCLAP
 TCP
@@ -327,6 +340,7 @@ WASM
 WAVM
 WIP
 WKT
+WRONGPASS
 WRR
 WS
 WSA
@@ -356,6 +370,7 @@ alloc
 alloca
 allocator
 allowlist
+allowlisted
 alls
 alphanumerics
 amongst
@@ -417,6 +432,7 @@ builtins
 bulkstrings
 bursty
 bytecode
+bytestream
 cacheability
 callee
 callsite
@@ -471,6 +487,7 @@ coroutines
 cors
 cout
 coverity
+cplusplus
 cpuset
 creds
 crypto
@@ -496,6 +513,7 @@ dechunked
 decl
 decls
 decompressor
+decompressors
 decrement
 decrypt
 dedup
@@ -553,6 +571,7 @@ epoll
 errno
 etag
 etags
+evaluator
 evbuffer
 evbuffers
 evconnlistener
@@ -630,6 +649,7 @@ hoc
 hostname
 hostnames
 hostset
+hotrestart
 hrefs
 huffman
 hystrix
@@ -647,6 +667,7 @@ inflight
 -ing
 init
 initializer
+initializers
 inlined
 inlining
 inobservability
@@ -754,6 +775,7 @@ mutexes
 mux
 muxed
 mysql
+nameserver
 namespace
 namespaces
 namespacing
@@ -788,6 +810,7 @@ openssl
 opentracing
 optimizations
 optname
+optval
 ostream
 outlier
 outliers
@@ -828,6 +851,8 @@ pos
 posix
 postfix
 postfixes
+postgres
+postgresql
 pre
 preallocate
 preallocating
@@ -844,6 +869,7 @@ preorder
 prepend
 prepended
 prev
+probabilistically
 proc
 profiler
 programmatically
@@ -908,6 +934,7 @@ reimplements
 rele
 releasor
 reloadable
+remoting
 reparse
 repeatability
 reperform
@@ -929,6 +956,8 @@ resync
 retriable
 retriggers
 rmdir
+rocketmq
+rewriter
 rollout
 roundtrip
 rpcs
@@ -947,6 +976,7 @@ sanitizer
 satisfiable
 scalability
 sched
+schedulable
 schemas
 scopekey
 sendmsg
@@ -969,6 +999,7 @@ snapshotted
 sockaddr
 socketpair
 sockfd
+socklen
 sockopt
 sockopts
 somestring
@@ -1077,6 +1108,7 @@ typedef
 typeid
 typesafe
 ucontext
+udpa
 uint
 un-
 unacked
@@ -1128,8 +1160,6 @@ vptr
 wakeup
 wakeups
 websocket
-whitelist
-whitelisted
 whitespace
 whitespaces
 wildcard

@@ -46,6 +46,17 @@ typed_config:
     percentage:
       numerator: 100
 )EOF";
+
+  const std::string abort_grpc_fault_config_ =
+      R"EOF(
+name: fault
+typed_config:
+  "@type": type.googleapis.com/envoy.extensions.filters.http.fault.v3.HTTPFault
+  abort:
+    grpc_status: 5
+    percentage:
+      numerator: 100
+)EOF";
 };
 
 // Fault integration tests that should run with all protocols, useful for testing various
@@ -214,6 +225,83 @@ TEST_P(FaultIntegrationTestAllProtocols, HeaderFaultConfigNoHeaders) {
   EXPECT_EQ(0UL, test_server_->counter("http.config_test.fault.response_rl_injected")->value());
 }
 
+// Request abort with grpc status, controlled via header configuration.
+TEST_P(FaultIntegrationTestAllProtocols, HeaderFaultAbortGrpcConfig) {
+  initializeFilter(header_fault_config_);
+  codec_client_ = makeHttpConnection(makeClientConnection(lookupPort("http")));
+
+  auto response = codec_client_->makeHeaderOnlyRequest(
+      Http::TestRequestHeaderMapImpl{{":method", "GET"},
+                                     {":path", "/test/long/url"},
+                                     {":scheme", "http"},
+                                     {":authority", "host"},
+                                     {"x-envoy-fault-abort-grpc-request", "5"},
+                                     {"content-type", "application/grpc"}});
+  response->waitForEndStream();
+
+  EXPECT_TRUE(response->complete());
+  EXPECT_THAT(response->headers(), Envoy::Http::HttpStatusIs("200"));
+  EXPECT_THAT(response->headers(),
+              HeaderValueOf(Http::Headers::get().ContentType, "application/grpc"));
+  EXPECT_THAT(response->headers(), HeaderValueOf(Http::Headers::get().GrpcStatus, "5"));
+  EXPECT_THAT(response->headers(),
+              HeaderValueOf(Http::Headers::get().GrpcMessage, "fault filter abort"));
+  EXPECT_EQ(nullptr, response->trailers());
+
+  EXPECT_EQ(1UL, test_server_->counter("http.config_test.fault.aborts_injected")->value());
+  EXPECT_EQ(0UL, test_server_->counter("http.config_test.fault.delays_injected")->value());
+  EXPECT_EQ(0UL, test_server_->counter("http.config_test.fault.response_rl_injected")->value());
+}
+
+// Request abort with grpc status, controlled via header configuration.
+TEST_P(FaultIntegrationTestAllProtocols, HeaderFaultAbortGrpcConfig0PercentageHeader) {
+  initializeFilter(header_fault_config_);
+  codec_client_ = makeHttpConnection(makeClientConnection(lookupPort("http")));
+
+  auto response = codec_client_->makeHeaderOnlyRequest(
+      Http::TestRequestHeaderMapImpl{{":method", "GET"},
+                                     {":path", "/test/long/url"},
+                                     {":scheme", "http"},
+                                     {":authority", "host"},
+                                     {"x-envoy-fault-abort-grpc-request", "5"},
+                                     {"x-envoy-fault-abort-request-percentage", "0"},
+                                     {"content-type", "application/grpc"}});
+  waitForNextUpstreamRequest();
+  upstream_request_->encodeHeaders(default_response_headers_, true);
+  response->waitForEndStream();
+
+  EXPECT_EQ(0UL, test_server_->counter("http.config_test.fault.aborts_injected")->value());
+  EXPECT_EQ(0UL, test_server_->counter("http.config_test.fault.delays_injected")->value());
+  EXPECT_EQ(0UL, test_server_->counter("http.config_test.fault.response_rl_injected")->value());
+}
+
+// Request abort with grpc status, controlled via configuration.
+TEST_P(FaultIntegrationTestAllProtocols, FaultAbortGrpcConfig) {
+  initializeFilter(abort_grpc_fault_config_);
+  codec_client_ = makeHttpConnection(makeClientConnection(lookupPort("http")));
+
+  auto response = codec_client_->makeHeaderOnlyRequest(
+      Http::TestRequestHeaderMapImpl{{":method", "GET"},
+                                     {":path", "/test/long/url"},
+                                     {":scheme", "http"},
+                                     {":authority", "host"},
+                                     {"content-type", "application/grpc"}});
+  response->waitForEndStream();
+
+  EXPECT_TRUE(response->complete());
+  EXPECT_THAT(response->headers(), Envoy::Http::HttpStatusIs("200"));
+  EXPECT_THAT(response->headers(),
+              HeaderValueOf(Http::Headers::get().ContentType, "application/grpc"));
+  EXPECT_THAT(response->headers(), HeaderValueOf(Http::Headers::get().GrpcStatus, "5"));
+  EXPECT_THAT(response->headers(),
+              HeaderValueOf(Http::Headers::get().GrpcMessage, "fault filter abort"));
+  EXPECT_EQ(nullptr, response->trailers());
+
+  EXPECT_EQ(1UL, test_server_->counter("http.config_test.fault.aborts_injected")->value());
+  EXPECT_EQ(0UL, test_server_->counter("http.config_test.fault.delays_injected")->value());
+  EXPECT_EQ(0UL, test_server_->counter("http.config_test.fault.response_rl_injected")->value());
+}
+
 // Fault integration tests that run with HTTP/2 only, used for fully testing trailers.
 class FaultIntegrationTestHttp2 : public FaultIntegrationTest {};
 INSTANTIATE_TEST_SUITE_P(Protocols, FaultIntegrationTestHttp2,
@@ -240,7 +328,7 @@ TEST_P(FaultIntegrationTestHttp2, ResponseRateLimitTrailersBodyFlushed) {
   decoder->waitForBodyData(127);
 
   // Send trailers and wait for end stream.
-  Http::TestHeaderMapImpl trailers{{"hello", "world"}};
+  Http::TestResponseTrailerMapImpl trailers{{"hello", "world"}};
   upstream_request_->encodeTrailers(trailers);
   decoder->waitForEndStream();
   EXPECT_NE(nullptr, decoder->trailers());
@@ -260,7 +348,7 @@ TEST_P(FaultIntegrationTestHttp2, ResponseRateLimitTrailersBodyNotFlushed) {
   upstream_request_->encodeHeaders(default_response_headers_, false);
   Buffer::OwnedImpl data(std::string(128, 'a'));
   upstream_request_->encodeData(data, false);
-  Http::TestHeaderMapImpl trailers{{"hello", "world"}};
+  Http::TestResponseTrailerMapImpl trailers{{"hello", "world"}};
   upstream_request_->encodeTrailers(trailers);
 
   // Wait for a tick worth of data.
