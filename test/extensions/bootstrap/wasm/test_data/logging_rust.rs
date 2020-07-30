@@ -44,3 +44,7 @@ pub fn proxy_on_done(_context_id : u32) -> u32 {
 pub fn proxy_on_delete(_context_id : u32) {
     info!("onDelete logging");
 }
+
+// This function is to compile WebAssembly code with `rust_binary` with Bazel.
+// Envoy wasm runtime won't take care of this type of function.
+fn main() {}

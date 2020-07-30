@@ -92,7 +92,6 @@ def wasm_rust_binary(name, **kwargs):
     wasm_name = "_wasm_" + (name if not ".wasm" in name else name.strip(".wasm"))
     kwargs.setdefault("visibility", ["//visibility:public"])
     kwargs.setdefault("rustc_flags", ["--edition=2018"])
-    kwargs.setdefault("out_binary", True)
 
     rust_binary(
         name = wasm_name,
@@ -103,11 +102,3 @@ def wasm_rust_binary(name, **kwargs):
         name = name,
         binary = ":" + wasm_name,
     )
-
-    # native.genrule(
-    #     name = name,
-    #     srcs = [":precompile_" + name],
-    #     outs = [name],
-    #     tools = ["//test/tools/wee8_compile:wee8_compile_tool"],
-    #     cmd = "$(location //test/tools/wee8_compile:wee8_compile_tool) $(SRCS).runfiles $(OUTS).runfiles",
-    # )
