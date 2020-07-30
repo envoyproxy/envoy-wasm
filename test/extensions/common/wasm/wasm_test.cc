@@ -41,7 +41,6 @@ std::string Sha256(absl::string_view data) {
 
 class TestContext : public Extensions::Common::Wasm::Context {
 public:
-  using Extensions::Common::Wasm::Context::log;
   TestContext() : Extensions::Common::Wasm::Context() {}
   TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
   TestContext(Extensions::Common::Wasm::Wasm* wasm,

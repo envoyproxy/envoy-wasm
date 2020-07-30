@@ -12,10 +12,8 @@ envoy_package()
 
 rust_library(
     name = "proxy_wasm",
-    srcs = ["proxy_wasm/lib.rs"],
-    rustc_flags = [
-        "--edition=2018",
-    ],
+    srcs = ["proxy_wasm.rs"],
+    edition = "2018",
     visibility = ["//visibility:public"],
     deps = [
         "@log",

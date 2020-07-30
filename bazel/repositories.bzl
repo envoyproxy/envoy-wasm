@@ -140,7 +140,7 @@ def _rust_deps():
     _repository_impl("io_bazel_rules_rust")
     _repository_impl(
         name = "cfg_if",
-        build_file = "@envoy//bazel/external:cfg_if.BUILD",
+        build_file = "//bazel/external:cfg_if.BUILD",
     )
     _repository_impl(
         name = "log",
