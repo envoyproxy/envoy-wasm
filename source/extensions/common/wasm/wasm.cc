@@ -301,7 +301,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
                                const Stats::ScopeSharedPtr& scope,
                                Upstream::ClusterManager& cluster_manager,
                                Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                               Runtime::RandomGenerator& random, Api::Api& api,
+                               Random::RandomGenerator& random, Api::Api& api,
                                Server::ServerLifecycleNotifier& lifecycle_notifier,
                                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                                CreateWasmCallback&& cb,
@@ -457,7 +457,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
 bool createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                 const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                Runtime::RandomGenerator& random, Api::Api& api,
+                Random::RandomGenerator& random, Api::Api& api,
                 Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb, CreateContextFn create_root_context_for_testing) {

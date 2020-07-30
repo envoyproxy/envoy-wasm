@@ -436,13 +436,6 @@ DEPENDENCY_REPOSITORIES = dict(
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
-    com_github_google_flatbuffers = dict(
-        sha256 = "b8efbc25721e76780752bad775a97c3f77a0250271e2db37fc747b20e8b0f24a",
-        strip_prefix = "flatbuffers-a83caf5910644ba1c421c002ef68e42f21c15f9f",
-        urls = ["https://github.com/google/flatbuffers/archive/a83caf5910644ba1c421c002ef68e42f21c15f9f.tar.gz"],
-        use_category = ["dataplane"],
-        cpe = "N/A",
-    ),
     # TODO(shikugawa): replace this with release tag after released package which includes
     # disable pthread when build with emscripten. We use hash temporary to enable our changes to
     # build envoy-wasm library with emscripten. https://github.com/google/re2/pull/263
@@ -513,13 +506,13 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "N/A",
     ),
     emscripten_toolchain = dict(
-        sha256 = "2bdbee6947e32ad1e03cd075b48fda493ab16157b2b0225b445222cd528e1843",
+        sha256 = "4ac0f1f3de8b3f1373d435cd7e58bd94de4146e751f099732167749a229b443b",
         patch_cmds = [
-            "./emsdk install 1.39.19-upstream",
-            "./emsdk activate --embedded 1.39.19-upstream",
+            "./emsdk install 1.39.6-upstream",
+            "./emsdk activate --embedded 1.39.6-upstream",
         ],
-        strip_prefix = "emsdk-dec8a63594753fe5f4ad3b47850bf64d66c14a4e",
-        urls = ["https://github.com/emscripten-core/emsdk/archive/dec8a63594753fe5f4ad3b47850bf64d66c14a4e.tar.gz"],
+        strip_prefix = "emsdk-1.39.6",
+        urls = ["https://github.com/emscripten-core/emsdk/archive/1.39.6.tar.gz"],
         use_category = ["build"],
     ),
     rules_antlr = dict(

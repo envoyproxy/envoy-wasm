@@ -158,56 +158,32 @@ Stats::TextReadoutSharedPtr TestUtility::findTextReadout(Stats::Store& store,
   return findByName(store.textReadouts(), name);
 }
 
-AssertionResult TestUtility::waitForCounterEq(Stats::Store& store, const std::string& name,
-                                              uint64_t value, Event::TestTimeSystem& time_system,
-                                              std::chrono::milliseconds timeout) {
-  auto end_time = time_system.monotonicTime() + timeout;
+void TestUtility::waitForCounterEq(Stats::Store& store, const std::string& name, uint64_t value,
+                                   Event::TestTimeSystem& time_system) {
   while (findCounter(store, name) == nullptr || findCounter(store, name)->value() != value) {
     time_system.advanceTimeWait(std::chrono::milliseconds(10));
-    if (timeout != std::chrono::milliseconds::zero() && time_system.monotonicTime() >= end_time) {
-      return AssertionFailure() << fmt::format("timed out waiting for {} to be {}", name, value);
-    }
   }
-  return AssertionSuccess();
 }
 
-AssertionResult TestUtility::waitForCounterGe(Stats::Store& store, const std::string& name,
-                                              uint64_t value, Event::TestTimeSystem& time_system,
-                                              std::chrono::milliseconds timeout) {
-  auto end_time = time_system.monotonicTime() + timeout;
+void TestUtility::waitForCounterGe(Stats::Store& store, const std::string& name, uint64_t value,
+                                   Event::TestTimeSystem& time_system) {
   while (findCounter(store, name) == nullptr || findCounter(store, name)->value() < value) {
     time_system.advanceTimeWait(std::chrono::milliseconds(10));
-    if (timeout != std::chrono::milliseconds::zero() && time_system.monotonicTime() >= end_time) {
-      return AssertionFailure() << fmt::format("timed out waiting for {} to be {}", name, value);
-    }
   }
-  return AssertionSuccess();
 }
 
-AssertionResult TestUtility::waitForGaugeGe(Stats::Store& store, const std::string& name,
-                                            uint64_t value, Event::TestTimeSystem& time_system,
-                                            std::chrono::milliseconds timeout) {
-  auto end_time = time_system.monotonicTime() + timeout;
+void TestUtility::waitForGaugeGe(Stats::Store& store, const std::string& name, uint64_t value,
+                                 Event::TestTimeSystem& time_system) {
   while (findGauge(store, name) == nullptr || findGauge(store, name)->value() < value) {
     time_system.advanceTimeWait(std::chrono::milliseconds(10));
-    if (timeout != std::chrono::milliseconds::zero() && time_system.monotonicTime() >= end_time) {
-      return AssertionFailure() << fmt::format("timed out waiting for {} to be {}", name, value);
-    }
   }
-  return AssertionSuccess();
 }
 
-AssertionResult TestUtility::waitForGaugeEq(Stats::Store& store, const std::string& name,
-                                            uint64_t value, Event::TestTimeSystem& time_system,
-                                            std::chrono::milliseconds timeout) {
-  auto end_time = time_system.monotonicTime() + timeout;
+void TestUtility::waitForGaugeEq(Stats::Store& store, const std::string& name, uint64_t value,
+                                 Event::TestTimeSystem& time_system) {
   while (findGauge(store, name) == nullptr || findGauge(store, name)->value() != value) {
     time_system.advanceTimeWait(std::chrono::milliseconds(10));
-    if (timeout != std::chrono::milliseconds::zero() && time_system.monotonicTime() >= end_time) {
-      return AssertionFailure() << fmt::format("timed out waiting for {} to be {}", name, value);
-    }
   }
-  return AssertionSuccess();
 }
 
 std::list<Network::DnsResponse>
