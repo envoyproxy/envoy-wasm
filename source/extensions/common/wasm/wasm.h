@@ -103,7 +103,7 @@ protected:
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
   Event::PostCb server_shutdown_post_cb_;
-  std::unordered_map<uint32_t, Event::TimerPtr> timer_; // per root_id.
+  absl::flat_hash_map<uint32_t, Event::TimerPtr> timer_; // per root_id.
   TimeSource& time_source_;
 
   // Host Stats/Metrics

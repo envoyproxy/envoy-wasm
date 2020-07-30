@@ -58,7 +58,7 @@ MonotonicTime::duration cache_time_offset_for_testing{};
 
 std::atomic<int64_t> active_wasms;
 std::mutex code_cache_mutex;
-std::unordered_map<std::string, CodeCacheEntry>* code_cache = nullptr;
+absl::flat_hash_map<std::string, CodeCacheEntry>* code_cache = nullptr;
 
 // Downcast WasmBase to the actual Wasm.
 inline Wasm* getWasm(WasmHandleSharedPtr& base_wasm_handle) {
@@ -322,7 +322,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
     for (auto it = code_cache->begin(); it != code_cache->end();) {
       if (now - it->second.use_time > std::chrono::seconds(CODE_CACHE_SECONDS_CACHING_TTL) &&
           it->first != vm_config.code().remote().sha256()) {
-        it = code_cache->erase(it);
+        code_cache->erase(it++);
       } else {
         ++it;
       }

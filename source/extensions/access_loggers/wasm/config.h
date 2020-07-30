@@ -24,7 +24,7 @@ public:
   std::string name() const override;
 
 private:
-  std::unordered_map<std::string, std::string> convertJsonFormatToMap(ProtobufWkt::Struct config);
+  absl::flat_hash_map<std::string, std::string> convertJsonFormatToMap(ProtobufWkt::Struct config);
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider_;
 };
 
