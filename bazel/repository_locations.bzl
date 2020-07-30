@@ -521,7 +521,7 @@ DEPENDENCY_REPOSITORIES = dict(
         sha256 = "2ba2ee0201d67f1e0c00bd31276c4570271ffca1701081a8377fb0400075c4b1",
         strip_prefix = "cfg-if-0.1.10",
         urls = ["https://github.com/alexcrichton/cfg-if/archive/0.1.10.zip"],
-        use_category = ["test"]
+        use_category = ["test"],
     ),
     log = dict(
         sha256 = "87bb846f307c1cd82ed385c4e25ae4a3efb2e765d0ac9a077be08caabdbb3392",
