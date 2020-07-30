@@ -145,16 +145,32 @@ void get_current_time_test() {
   }
 }
 
-void string_test() {
+void small_string_test() {
   std::string s = "foo";
   s += "bar";
   xDoNotRemove = s.size();
 }
 
-void string1000_test() {
+void small_string1000_test() {
   for (int x = 0; x < 1000; x++) {
     std::string s = "foo";
     s += "bar";
+    xDoNotRemove += s.size();
+  }
+}
+
+void large_string_test() {
+  std::string s(1024, 'f');
+  std::string d(1024, 'o');
+  s += d;
+  xDoNotRemove += s.size();
+}
+
+void large_string1000_test() {
+  for (int x = 0; x < 1000; x++) {
+    std::string s(1024, 'f');
+    std::string d(1024, 'o');
+    s += d;
     xDoNotRemove += s.size();
   }
 }
@@ -246,10 +262,14 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)
     test_fn = &empty_test;
   } else if (configuration == "get_current_time") {
     test_fn = &get_current_time_test;
-  } else if (configuration == "string") {
-    test_fn = &string_test;
-  } else if (configuration == "string1000") {
-    test_fn = &string1000_test;
+  } else if (configuration == "small_string") {
+    test_fn = &small_string_test;
+  } else if (configuration == "small_string1000") {
+    test_fn = &small_string1000_test;
+  } else if (configuration == "large_string") {
+    test_fn = &large_string_test;
+  } else if (configuration == "large_string1000") {
+    test_fn = &large_string1000_test;
   } else if (configuration == "get_property") {
     test_fn = &get_property_test;
   } else if (configuration == "grpc_service") {

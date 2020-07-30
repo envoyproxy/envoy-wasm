@@ -93,8 +93,10 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
 
 B(empty)
 B(get_current_time)
-B(string)
-B(string1000)
+B(small_string)
+B(small_string1000)
+B(large_string)
+B(large_string1000)
 B(get_property)
 B(grpc_service)
 B(grpc_service1000)
