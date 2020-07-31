@@ -192,6 +192,13 @@ std::string PrometheusStatsFormatter::formattedTags(const std::vector<Stats::Tag
 }
 
 std::string PrometheusStatsFormatter::metricName(const std::string& extracted_name) {
+  // Offer a way to opt out of automatic namespacing.
+  // If metric name starts with "_" it will be trimmed but not namespaced.
+  // It is the responsibility of the metric creator to ensure proper namespacing.
+  if (extracted_name.size() > 1 && extracted_name[0] == '_') {
+    return sanitizeName(extracted_name.substr(1));
+  }
+
   std::string sanitized_name = sanitizeName(extracted_name);
 
   absl::string_view prom_namespace{sanitized_name};
