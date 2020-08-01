@@ -707,10 +707,13 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
   EXPECT_CALL(filter(), log_(spdlog::level::warn,
                              Eq(absl::string_view("onRequestHeaders not found bad_shared_queue"))));
   EXPECT_CALL(root_context(),
-              log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady bad token not found"))));
-  EXPECT_CALL(root_context(), log_(spdlog::level::warn,
-                                   Eq(absl::string_view("onQueueReady extra data not found"))));
-  EXPECT_CALL(root_context(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))));
+              log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady bad token not found"))))
+      .Times(2);
+  EXPECT_CALL(root_context(),
+              log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady extra data not found"))))
+      .Times(2);
+  EXPECT_CALL(root_context(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))))
+      .Times(2);
   EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));

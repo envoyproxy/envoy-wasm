@@ -483,7 +483,7 @@ TEST_P(WasmCommonTest, VmCache) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random;
+  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
@@ -567,7 +567,7 @@ TEST_P(WasmCommonTest, RemoteCode) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random;
+  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;
@@ -664,7 +664,7 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random;
+  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;

@@ -58,7 +58,7 @@ MonotonicTime::duration cache_time_offset_for_testing{};
 
 std::atomic<int64_t> active_wasms;
 std::mutex code_cache_mutex;
-std::unordered_map<std::string, CodeCacheEntry>* code_cache = nullptr;
+absl::flat_hash_map<std::string, CodeCacheEntry>* code_cache = nullptr;
 
 // Downcast WasmBase to the actual Wasm.
 inline Wasm* getWasm(WasmHandleSharedPtr& base_wasm_handle) {
@@ -301,7 +301,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
                                const Stats::ScopeSharedPtr& scope,
                                Upstream::ClusterManager& cluster_manager,
                                Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                               Runtime::RandomGenerator& random, Api::Api& api,
+                               Random::RandomGenerator& random, Api::Api& api,
                                Server::ServerLifecycleNotifier& lifecycle_notifier,
                                Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                                CreateWasmCallback&& cb,
@@ -322,7 +322,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
     for (auto it = code_cache->begin(); it != code_cache->end();) {
       if (now - it->second.use_time > std::chrono::seconds(CODE_CACHE_SECONDS_CACHING_TTL) &&
           it->first != vm_config.code().remote().sha256()) {
-        it = code_cache->erase(it);
+        code_cache->erase(it++);
       } else {
         ++it;
       }
@@ -457,7 +457,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
 bool createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                 const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                Runtime::RandomGenerator& random, Api::Api& api,
+                Random::RandomGenerator& random, Api::Api& api,
                 Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& cb, CreateContextFn create_root_context_for_testing) {

@@ -595,14 +595,10 @@ Pairs headerMapToPairs(const Http::HeaderMap* map) {
   }
   Pairs pairs;
   pairs.reserve(map->size());
-  map->iterate(
-      [](const Http::HeaderEntry& header, void* pairs) -> Http::HeaderMap::Iterate {
-        (static_cast<Pairs*>(pairs))
-            ->push_back(
-                std::make_pair(header.key().getStringView(), header.value().getStringView()));
-        return Http::HeaderMap::Iterate::Continue;
-      },
-      &pairs);
+  map->iterate([&pairs](const Http::HeaderEntry& header) -> Http::HeaderMap::Iterate {
+    pairs.push_back(std::make_pair(header.key().getStringView(), header.value().getStringView()));
+    return Http::HeaderMap::Iterate::Continue;
+  });
   return pairs;
 }
 
@@ -617,13 +613,10 @@ WasmResult Context::setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs
     return WasmResult::BadArgument;
   }
   std::vector<std::string> keys;
-  map->iterate(
-      [](const Http::HeaderEntry& header, void* keys) -> Http::HeaderMap::Iterate {
-        (static_cast<std::vector<std::string>*>(keys))
-            ->push_back(std::string(header.key().getStringView()));
-        return Http::HeaderMap::Iterate::Continue;
-      },
-      &keys);
+  map->iterate([&keys](const Http::HeaderEntry& header) -> Http::HeaderMap::Iterate {
+    keys.push_back(std::string(header.key().getStringView()));
+    return Http::HeaderMap::Iterate::Continue;
+  });
   for (auto& k : keys) {
     const Http::LowerCaseString lower_key{k};
     map->remove(lower_key);
