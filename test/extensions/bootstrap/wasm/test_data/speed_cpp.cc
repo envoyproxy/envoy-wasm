@@ -43,6 +43,9 @@ std::string configuration = R"EOF(
   }
   )EOF";
 
+// google::protobuf::Struct a;
+// google::protobuf::util::JsonStringToMessage(configuration+'hfdjfhkjhdskhjk', a);
+
 const static char encodeLookup[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const static char padCharacter = '=';
@@ -133,6 +136,7 @@ Ldone:
   *output = std::move(decodedBytes);
   return true;
 }
+std::string check_compiler;
 
 void (*test_fn)() = nullptr;
 
@@ -145,10 +149,24 @@ void get_current_time_test() {
   }
 }
 
+void small_string_check_compiler_test() {
+  check_compiler = "foo";
+  check_compiler += "bar";
+  check_compiler = "";
+}
+
 void small_string_test() {
   std::string s = "foo";
   s += "bar";
   xDoNotRemove = s.size();
+}
+
+void small_string_check_compiler1000_test() {
+  for (int x = 0; x < 1000; x++) {
+    check_compiler = "foo";
+    check_compiler += "bar";
+  }
+  check_compiler = "";
 }
 
 void small_string1000_test() {
@@ -233,11 +251,27 @@ void json_serialize_arena_test() {
 void json_deserialize_test() {
   std::string json;
   google::protobuf::util::MessageToJsonString(args, &json);
+  xDoNotRemove += json.size();
 }
 
 void json_deserialize_arena_test() {
   std::string json;
   google::protobuf::util::MessageToJsonString(*args_arena, &json);
+}
+
+void json_deserialize_empty_test() {
+  std::string json;
+  google::protobuf::Struct empty;
+  google::protobuf::util::MessageToJsonString(empty, &json);
+  xDoNotRemove = json.size();
+}
+
+void json_serialize_deserialize_test() {
+  std::string json;
+  google::protobuf::Struct proto;
+  google::protobuf::util::JsonStringToMessage(configuration, &proto);
+  google::protobuf::util::MessageToJsonString(proto, &json);
+  xDoNotRemove = json.size();
 }
 
 void convert_to_filter_state_test() {
@@ -266,6 +300,10 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)
     test_fn = &small_string_test;
   } else if (configuration == "small_string1000") {
     test_fn = &small_string1000_test;
+  } else if (configuration == "small_string_check_compiler") {
+    test_fn = &small_string_check_compiler_test;
+  } else if (configuration == "small_string_check_compiler1000") {
+    test_fn = &small_string_check_compiler1000_test;
   } else if (configuration == "large_string") {
     test_fn = &large_string_test;
   } else if (configuration == "large_string1000") {
@@ -286,8 +324,12 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t, uint32_t configuration_size)
     test_fn = &json_serialize_arena_test;
   } else if (configuration == "json_deserialize") {
     test_fn = &json_deserialize_test;
+  } else if (configuration == "json_deserialize_empty") {
+    test_fn = &json_deserialize_empty_test;
   } else if (configuration == "json_deserialize_arena") {
     test_fn = &json_deserialize_arena_test;
+  } else if (configuration == "json_serialize_deserialize") {
+    test_fn = &json_serialize_deserialize_test;
   } else if (configuration == "convert_to_filter_state") {
     test_fn = &convert_to_filter_state_test;
   } else {
