@@ -18,7 +18,7 @@ OriginalConnPoolImpl::OriginalConnPoolImpl(
     Network::TransportSocketOptionsSharedPtr transport_socket_options)
     : dispatcher_(dispatcher), host_(host), priority_(priority), socket_options_(options),
       transport_socket_options_(transport_socket_options),
-      upstream_ready_timer_(dispatcher_.createTimer([this]() { onUpstreamReady(); })) {}
+      upstream_ready_cb_(dispatcher_.createSchedulableCallback([this]() { onUpstreamReady(); })) {}
 
 OriginalConnPoolImpl::~OriginalConnPoolImpl() {
   while (!ready_conns_.empty()) {
@@ -97,7 +97,7 @@ void OriginalConnPoolImpl::checkForDrained() {
 void OriginalConnPoolImpl::createNewConnection() {
   ENVOY_LOG(debug, "creating a new connection");
   ActiveConnPtr conn(new ActiveConn(*this));
-  conn->moveIntoList(std::move(conn), pending_conns_);
+  LinkedList::moveIntoList(std::move(conn), pending_conns_);
 }
 
 ConnectionPool::Cancellable*
@@ -124,7 +124,7 @@ OriginalConnPoolImpl::newConnection(ConnectionPool::Callbacks& callbacks) {
 
     ENVOY_LOG(debug, "queueing request due to no available connections");
     PendingRequestPtr pending_request(new PendingRequest(*this, callbacks));
-    pending_request->moveIntoList(std::move(pending_request), pending_requests_);
+    LinkedList::moveIntoList(std::move(pending_request), pending_requests_);
     return pending_requests_.front().get();
   } else {
     ENVOY_LOG(debug, "max pending requests overflow");
@@ -310,7 +310,7 @@ void OriginalConnPoolImpl::processIdleConnection(ActiveConn& conn, bool new_conn
 
   if (delay && !pending_requests_.empty() && !upstream_ready_enabled_) {
     upstream_ready_enabled_ = true;
-    upstream_ready_timer_->enableTimer(std::chrono::milliseconds(0));
+    upstream_ready_cb_->scheduleCallbackCurrentIteration();
   }
 
   checkForDrained();

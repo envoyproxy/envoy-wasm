@@ -19,6 +19,8 @@
 #include "common/common/c_smart_ptr.h"
 #include "common/common/empty_string.h"
 #include "common/common/thread.h"
+#include "common/config/decoded_resource_impl.h"
+#include "common/config/opaque_resource_decoder_impl.h"
 #include "common/config/version_converter.h"
 #include "common/http/header_map_impl.h"
 #include "common/protobuf/message_validator_impl.h"
@@ -85,22 +87,6 @@ namespace Envoy {
     ADD_FAILURE() << "Unexpected exception: " << std::string(e.what());                            \
   }
 
-/*
-  Macro to use instead of EXPECT_DEATH when stderr is produced by a logger.
-  It temporarily installs stderr sink and restores the original logger sink after the test
-  completes and stderr_sink object goes of of scope.
-  EXPECT_DEATH(statement, regex) test passes when statement causes crash and produces error message
-  matching regex. Test fails when statement does not crash or it crashes but message does not
-  match regex. If a message produced during crash is redirected away from strerr, the test fails.
-  By installing StderrSinkDelegate, the macro forces EXPECT_DEATH to send any output produced by
-  statement to stderr.
-*/
-#define EXPECT_DEATH_LOG_TO_STDERR(statement, message)                                             \
-  do {                                                                                             \
-    Envoy::Logger::StderrSinkDelegate stderr_sink(Envoy::Logger::Registry::getSink());             \
-    EXPECT_DEATH(statement, message);                                                              \
-  } while (false)
-
 #define VERIFY_ASSERTION(statement)                                                                \
   do {                                                                                             \
     ::testing::AssertionResult status = statement;                                                 \
@@ -157,6 +143,18 @@ public:
   static bool buffersEqual(const Buffer::Instance& lhs, const Buffer::Instance& rhs);
 
   /**
+   * Compare 2 RawSlice pointers.
+   * @param lhs supplies raw slice 1.
+   * @param rhs supplies raw slice 2.
+   * @param num_slices The number of slices to compare. It is assumed lhs and rhs have the same
+   * number.
+   * @return true if for num_slices, all lhs raw slices are equal to the corresponding rhs raw slice
+   *         in length and a byte by byte data comparison. false otherwise
+   */
+  static bool rawSlicesEqual(const Buffer::RawSlice* lhs, const Buffer::RawSlice* rhs,
+                             size_t num_slices);
+
+  /**
    * Feed a buffer with random characters.
    * @param buffer supplies the buffer to be fed.
    * @param n_char number of characters that should be added to the supplied buffer.
@@ -197,14 +195,19 @@ public:
   static Stats::GaugeSharedPtr findGauge(Stats::Store& store, const std::string& name);
 
   /**
-   * Wait till Counter value is equal to the passed ion value.
+   * Wait for a counter to == a given value.
    * @param store supplies the stats store.
    * @param name supplies the name of the counter to wait for.
    * @param value supplies the value of the counter.
    * @param time_system the time system to use for waiting.
+   * @param timeout the maximum time to wait before timing out, or 0 for no timeout.
+   * @return AssertionSuccess() if the counter was == to the value within the timeout, else
+   * AssertionFailure().
    */
-  static void waitForCounterEq(Stats::Store& store, const std::string& name, uint64_t value,
-                               Event::TestTimeSystem& time_system);
+  static AssertionResult
+  waitForCounterEq(Stats::Store& store, const std::string& name, uint64_t value,
+                   Event::TestTimeSystem& time_system,
+                   std::chrono::milliseconds timeout = std::chrono::milliseconds::zero());
 
   /**
    * Wait for a counter to >= a given value.
@@ -212,9 +215,14 @@ public:
    * @param name counter name.
    * @param value target value.
    * @param time_system the time system to use for waiting.
+   * @param timeout the maximum time to wait before timing out, or 0 for no timeout.
+   * @return AssertionSuccess() if the counter was >= to the value within the timeout, else
+   * AssertionFailure().
    */
-  static void waitForCounterGe(Stats::Store& store, const std::string& name, uint64_t value,
-                               Event::TestTimeSystem& time_system);
+  static AssertionResult
+  waitForCounterGe(Stats::Store& store, const std::string& name, uint64_t value,
+                   Event::TestTimeSystem& time_system,
+                   std::chrono::milliseconds timeout = std::chrono::milliseconds::zero());
 
   /**
    * Wait for a gauge to >= a given value.
@@ -222,9 +230,14 @@ public:
    * @param name gauge name.
    * @param value target value.
    * @param time_system the time system to use for waiting.
+   * @param timeout the maximum time to wait before timing out, or 0 for no timeout.
+   * @return AssertionSuccess() if the counter gauge >= to the value within the timeout, else
+   * AssertionFailure().
    */
-  static void waitForGaugeGe(Stats::Store& store, const std::string& name, uint64_t value,
-                             Event::TestTimeSystem& time_system);
+  static AssertionResult
+  waitForGaugeGe(Stats::Store& store, const std::string& name, uint64_t value,
+                 Event::TestTimeSystem& time_system,
+                 std::chrono::milliseconds timeout = std::chrono::milliseconds::zero());
 
   /**
    * Wait for a gauge to == a given value.
@@ -232,9 +245,14 @@ public:
    * @param name gauge name.
    * @param value target value.
    * @param time_system the time system to use for waiting.
+   * @param timeout the maximum time to wait before timing out, or 0 for no timeout.
+   * @return AssertionSuccess() if the gauge was == to the value within the timeout, else
+   * AssertionFailure().
    */
-  static void waitForGaugeEq(Stats::Store& store, const std::string& name, uint64_t value,
-                             Event::TestTimeSystem& time_system);
+  static AssertionResult
+  waitForGaugeEq(Stats::Store& store, const std::string& name, uint64_t value,
+                 Event::TestTimeSystem& time_system,
+                 std::chrono::milliseconds timeout = std::chrono::milliseconds::zero());
 
   /**
    * Find a readout in a stats store.
@@ -297,6 +315,20 @@ public:
     ASSERT(ignored_field != nullptr, "Field name to ignore not found.");
     differencer.IgnoreField(ignored_field);
     return differencer.Compare(lhs, rhs);
+  }
+
+  /**
+   * Compare two decoded resources for equality.
+   *
+   * @param lhs decoded resource on LHS.
+   * @param rhs decoded resource on RHS.
+   * @return bool indicating whether the decoded resources are equal.
+   */
+  static bool decodedResourceEq(const Config::DecodedResource& lhs,
+                                const Config::DecodedResource& rhs) {
+    return lhs.name() == rhs.name() && lhs.aliases() == rhs.aliases() &&
+           lhs.version() == rhs.version() && lhs.hasResource() == rhs.hasResource() &&
+           (!lhs.hasResource() || protoEqual(lhs.resource(), rhs.resource()));
   }
 
   /**
@@ -522,8 +554,9 @@ public:
 
   // Strict variants of Protobuf::MessageUtil
   static void loadFromJson(const std::string& json, Protobuf::Message& message,
-                           bool preserve_original_type = false) {
-    MessageUtil::loadFromJson(json, message, ProtobufMessage::getStrictValidationVisitor());
+                           bool preserve_original_type = false, bool avoid_boosting = false) {
+    MessageUtil::loadFromJson(json, message, ProtobufMessage::getStrictValidationVisitor(),
+                              !avoid_boosting);
     if (!preserve_original_type) {
       Config::VersionConverter::eraseOriginalTypeInformation(message);
     }
@@ -534,8 +567,9 @@ public:
   }
 
   static void loadFromYaml(const std::string& yaml, Protobuf::Message& message,
-                           bool preserve_original_type = false) {
-    MessageUtil::loadFromYaml(yaml, message, ProtobufMessage::getStrictValidationVisitor());
+                           bool preserve_original_type = false, bool avoid_boosting = false) {
+    MessageUtil::loadFromYaml(yaml, message, ProtobufMessage::getStrictValidationVisitor(),
+                              !avoid_boosting);
     if (!preserve_original_type) {
       Config::VersionConverter::eraseOriginalTypeInformation(message);
     }
@@ -556,9 +590,10 @@ public:
 
   template <class MessageType>
   static void loadFromYamlAndValidate(const std::string& yaml, MessageType& message,
-                                      bool preserve_original_type = false) {
-    MessageUtil::loadFromYamlAndValidate(yaml, message,
-                                         ProtobufMessage::getStrictValidationVisitor());
+                                      bool preserve_original_type = false,
+                                      bool avoid_boosting = false) {
+    MessageUtil::loadFromYamlAndValidate(
+        yaml, message, ProtobufMessage::getStrictValidationVisitor(), avoid_boosting);
     if (!preserve_original_type) {
       Config::VersionConverter::eraseOriginalTypeInformation(message);
     }
@@ -599,6 +634,58 @@ public:
     message.SerializeToString(&pb_binary_str);
     return pb_binary_str;
   }
+
+  template <class MessageType>
+  static Config::DecodedResourcesWrapper
+  decodeResources(std::initializer_list<MessageType> resources,
+                  const std::string& name_field = "name") {
+    Config::DecodedResourcesWrapper decoded_resources;
+    for (const auto& resource : resources) {
+      auto owned_resource = std::make_unique<MessageType>(resource);
+      decoded_resources.owned_resources_.emplace_back(new Config::DecodedResourceImpl(
+          std::move(owned_resource), MessageUtil::getStringField(resource, name_field), {}, ""));
+      decoded_resources.refvec_.emplace_back(*decoded_resources.owned_resources_.back());
+    }
+    return decoded_resources;
+  }
+
+  template <class MessageType>
+  static Config::DecodedResourcesWrapper
+  decodeResources(const Protobuf::RepeatedPtrField<ProtobufWkt::Any>& resources,
+                  const std::string& version, const std::string& name_field = "name") {
+    TestOpaqueResourceDecoderImpl<MessageType> resource_decoder(name_field);
+    return Config::DecodedResourcesWrapper(resource_decoder, resources, version);
+  }
+
+  template <class MessageType>
+  static Config::DecodedResourcesWrapper
+  decodeResources(const envoy::service::discovery::v3::DiscoveryResponse& resources,
+                  const std::string& name_field = "name") {
+    return decodeResources<MessageType>(resources.resources(), resources.version_info(),
+                                        name_field);
+  }
+
+  template <class MessageType>
+  static Config::DecodedResourcesWrapper decodeResources(
+      const Protobuf::RepeatedPtrField<envoy::service::discovery::v3::Resource>& resources,
+      const std::string& name_field = "name") {
+    Config::DecodedResourcesWrapper decoded_resources;
+    TestOpaqueResourceDecoderImpl<MessageType> resource_decoder(name_field);
+    for (const auto& resource : resources) {
+      decoded_resources.owned_resources_.emplace_back(
+          new Config::DecodedResourceImpl(resource_decoder, resource));
+      decoded_resources.refvec_.emplace_back(*decoded_resources.owned_resources_.back());
+    }
+    return decoded_resources;
+  }
+
+  template <typename Current>
+  class TestOpaqueResourceDecoderImpl : public Config::OpaqueResourceDecoderImpl<Current> {
+  public:
+    TestOpaqueResourceDecoderImpl(absl::string_view name_field)
+        : Config::OpaqueResourceDecoderImpl<Current>(ProtobufMessage::getStrictValidationVisitor(),
+                                                     name_field) {}
+  };
 
   /**
    * Returns the string representation of a envoy::config::core::v3::ApiVersion.
@@ -757,13 +844,6 @@ public:
     }
     header_map_->verifyByteSizeInternalForTest();
   }
-  TestHeaderMapImplBase(
-      const std::initializer_list<std::pair<Http::LowerCaseString, std::string>>& values) {
-    for (auto& value : values) {
-      header_map_->addCopy(value.first, value.second);
-    }
-    header_map_->verifyByteSizeInternalForTest();
-  }
   TestHeaderMapImplBase(const TestHeaderMapImplBase& rhs)
       : TestHeaderMapImplBase(*rhs.header_map_) {}
   TestHeaderMapImplBase(const HeaderMap& rhs) {
@@ -843,14 +923,9 @@ public:
   const HeaderEntry* get(const LowerCaseString& key) const override {
     return header_map_->get(key);
   }
-  void iterate(HeaderMap::ConstIterateCb cb, void* context) const override {
-    header_map_->iterate(cb, context);
-  }
-  void iterateReverse(HeaderMap::ConstIterateCb cb, void* context) const override {
-    header_map_->iterateReverse(cb, context);
-  }
-  HeaderMap::Lookup lookup(const LowerCaseString& key, const HeaderEntry** entry) const override {
-    return header_map_->lookup(key, entry);
+  void iterate(HeaderMap::ConstIterateCb cb) const override { header_map_->iterate(cb); }
+  void iterateReverse(HeaderMap::ConstIterateCb cb) const override {
+    header_map_->iterateReverse(cb);
   }
   void clear() override {
     header_map_->clear();
@@ -858,6 +933,11 @@ public:
   }
   size_t remove(const LowerCaseString& key) override {
     size_t headers_removed = header_map_->remove(key);
+    header_map_->verifyByteSizeInternalForTest();
+    return headers_removed;
+  }
+  size_t removeIf(const HeaderMap::HeaderMatchPredicate& predicate) override {
+    size_t headers_removed = header_map_->removeIf(predicate);
     header_map_->verifyByteSizeInternalForTest();
     return headers_removed;
   }
@@ -1019,6 +1099,35 @@ MATCHER_P(RepeatedProtoEq, expected, "") {
                      << TestUtility::addLeftAndRightPadding("is not equal to actual repeated:")
                      << "\n"
                      << RepeatedPtrUtil::debugString(arg) << "\n"
+                     << TestUtility::addLeftAndRightPadding("") // line full of padding
+                     << "\n";
+  }
+  return equal;
+}
+
+MATCHER_P(DecodedResourcesEq, expected, "") {
+  const bool equal = std::equal(arg.begin(), arg.end(), expected.begin(), expected.end(),
+                                TestUtility::decodedResourceEq);
+  if (!equal) {
+    const auto format_resources =
+        [](const std::vector<Config::DecodedResourceRef>& resources) -> std::string {
+      std::vector<std::string> resource_strs;
+      std::transform(
+          resources.begin(), resources.end(), std::back_inserter(resource_strs),
+          [](const Config::DecodedResourceRef& resource) -> std::string {
+            return fmt::format(
+                "<name: {}, aliases: {}, version: {}, resource: {}>", resource.get().name(),
+                absl::StrJoin(resource.get().aliases(), ","), resource.get().version(),
+                resource.get().hasResource() ? resource.get().resource().DebugString() : "(none)");
+          });
+      return absl::StrJoin(resource_strs, ", ");
+    };
+    *result_listener << "\n"
+                     << TestUtility::addLeftAndRightPadding("Expected resources:") << "\n"
+                     << format_resources(expected) << "\n"
+                     << TestUtility::addLeftAndRightPadding("are not equal to actual resources:")
+                     << "\n"
+                     << format_resources(arg) << "\n"
                      << TestUtility::addLeftAndRightPadding("") // line full of padding
                      << "\n";
   }

@@ -43,7 +43,7 @@ public:
 
   void createWasm(absl::string_view runtime) {
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        name_, root_id_, vm_id_, plugin_configuration_, false,
+        name_, root_id_, vm_id_, runtime, plugin_configuration_, false,
         envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info_, nullptr);
     wasm_ = std::make_shared<Extensions::Common::Wasm::Wasm>(
         absl::StrCat("envoy.wasm.runtime.", runtime), vm_id_, vm_configuration_, vm_key_, scope_,
@@ -77,13 +77,28 @@ public:
   void createWasm() { WasmTestBase::createWasm(GetParam()); }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
-                         testing::Values("v8"
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing::Values("v8"));
+
+class WasmNullTest : public WasmTestBase, public testing::TestWithParam<std::string> {
+public:
+  void createWasm() {
+    WasmTestBase::createWasm(GetParam());
+    const auto code =
+        GetParam() != "null"
+            ? TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+                  "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/stats_cpp.wasm"))
+            : "WasmStatsCpp";
+    EXPECT_FALSE(code.empty());
+    EXPECT_TRUE(wasm_->initialize(code, false));
+  }
+};
+
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNullTest,
+                         testing::Values("v8",
 #if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
+                                         "wavm",
 #endif
-                                         ));
+                                         "null"));
 
 class WasmTestMatrix : public WasmTestBase,
                        public testing::TestWithParam<std::tuple<std::string, std::string>> {
@@ -113,6 +128,10 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_TRUE(wasm_weak.lock()->initialize(code, false));
   auto context = static_cast<TestContext*>(wasm_weak.lock()->start(plugin_));
 
+  if (std::get<1>(GetParam()) == "cpp") {
+    EXPECT_CALL(*context, log_(spdlog::level::info, Eq("printf stdout test")));
+    EXPECT_CALL(*context, log_(spdlog::level::err, Eq("printf stderr test")));
+  }
   EXPECT_CALL(*context, log_(spdlog::level::warn, Eq("warn configure-test")));
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("test trace logging")));
   EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("test debug logging")));
@@ -207,12 +226,8 @@ TEST_P(WasmTest, Asm2Wasm) {
   EXPECT_TRUE(wasm_->configure(context, plugin_));
 }
 
-TEST_P(WasmTest, Stats) {
+TEST_P(WasmNullTest, Stats) {
   createWasm();
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/stats_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
-  EXPECT_TRUE(wasm_->initialize(code, false));
   auto context = static_cast<TestContext*>(wasm_->start(plugin_));
 
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("get counter = 1")));
@@ -226,12 +241,8 @@ TEST_P(WasmTest, Stats) {
   EXPECT_TRUE(wasm_->configure(context, plugin_));
 }
 
-TEST_P(WasmTest, StatsHigherLevel) {
+TEST_P(WasmNullTest, StatsHigherLevel) {
   createWasm();
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/stats_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
-  EXPECT_TRUE(wasm_->initialize(code, false));
   auto context = static_cast<TestContext*>(wasm_->start(plugin_));
 
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("get counter = 1")));
@@ -248,12 +259,8 @@ TEST_P(WasmTest, StatsHigherLevel) {
   context->onTick(0);
 }
 
-TEST_P(WasmTest, StatsHighLevel) {
+TEST_P(WasmNullTest, StatsHighLevel) {
   createWasm();
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      "{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/stats_cpp.wasm"));
-  EXPECT_FALSE(code.empty());
-  EXPECT_TRUE(wasm_->initialize(code, false));
   auto context = static_cast<TestContext*>(wasm_->start(plugin_));
 
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("get counter = 1")));

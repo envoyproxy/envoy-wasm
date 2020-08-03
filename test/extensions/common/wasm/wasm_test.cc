@@ -61,15 +61,10 @@ public:
 
 class WasmCommonTest : public testing::TestWithParam<std::string> {
 public:
-  void SetUp() { clearCodeCacheForTesting(false); }
+  void SetUp() { clearCodeCacheForTesting(); }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest,
-                         testing::Values("v8",
-#if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
-#endif
-                                         "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest, testing::Values("v8", "null"));
 TEST_P(WasmCommonTest, Logging) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
@@ -83,7 +78,7 @@ TEST_P(WasmCommonTest, Logging) {
   auto vm_configuration = "logging";
   auto plugin_configuration = "configure-test";
   std::string code;
-  if (GetParam() == "v8") {
+  if (GetParam() != "null") {
     code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
         absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
   } else {
@@ -92,7 +87,7 @@ TEST_P(WasmCommonTest, Logging) {
   }
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto vm_key = proxy_wasm::makeVmKey(vm_id, vm_configuration, code);
   auto wasm = std::make_shared<Extensions::Common::Wasm::Wasm>(
@@ -151,7 +146,7 @@ TEST_P(WasmCommonTest, BadSignature) {
       "{{ test_rundir }}/test/extensions/common/wasm/test_data/bad_signature_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto vm_key = proxy_wasm::makeVmKey(vm_id, vm_configuration, code);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
@@ -180,7 +175,7 @@ TEST_P(WasmCommonTest, Segv) {
       "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto vm_key = proxy_wasm::makeVmKey(vm_id, vm_configuration, code);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
@@ -216,7 +211,7 @@ TEST_P(WasmCommonTest, DivByZero) {
       "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto vm_key = proxy_wasm::makeVmKey(vm_id, vm_configuration, code);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
@@ -253,7 +248,7 @@ TEST_P(WasmCommonTest, EmscriptenVersion) {
       "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm"));
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto vm_key = proxy_wasm::makeVmKey(vm_id, vm_configuration, code);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
@@ -294,7 +289,7 @@ TEST_P(WasmCommonTest, IntrinsicGlobals) {
   }
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto vm_key = proxy_wasm::makeVmKey(vm_id, vm_configuration, code);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
@@ -334,7 +329,7 @@ TEST_P(WasmCommonTest, Stats) {
   }
   EXPECT_FALSE(code.empty());
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto vm_key = proxy_wasm::makeVmKey(vm_id, vm_configuration, code);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
@@ -371,7 +366,7 @@ TEST_P(WasmCommonTest, Foreign) {
   auto vm_key = "";
   auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
@@ -411,7 +406,7 @@ TEST_P(WasmCommonTest, OnForeign) {
   auto vm_key = "";
   auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
@@ -458,7 +453,7 @@ TEST_P(WasmCommonTest, WASI) {
   auto vm_key = "";
   auto plugin_configuration = "";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
   auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
@@ -488,7 +483,7 @@ TEST_P(WasmCommonTest, VmCache) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random;
+  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
@@ -501,7 +496,7 @@ TEST_P(WasmCommonTest, VmCache) {
   auto vm_configuration = "vm_cache";
   auto plugin_configuration = "init";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
 
   VmConfig vm_config;
@@ -572,7 +567,7 @@ TEST_P(WasmCommonTest, RemoteCode) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random;
+  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;
@@ -586,7 +581,7 @@ TEST_P(WasmCommonTest, RemoteCode) {
   auto vm_configuration = "vm_cache";
   auto plugin_configuration = "done";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
 
   std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -669,7 +664,7 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random;
+  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;
@@ -683,7 +678,7 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   auto vm_configuration = "vm_cache";
   auto plugin_configuration = "done";
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
-      name, root_id, vm_id, plugin_configuration, false,
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
 
   std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(

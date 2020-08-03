@@ -13,6 +13,9 @@ namespace Filters {
 namespace Common {
 namespace Expr {
 
+Http::RegisterCustomInlineHeader<Http::CustomInlineHeaderRegistry::Type::RequestHeaders>
+    referer_handle(Http::CustomHeaders::get().Referer);
+
 absl::optional<CelValue> convertHeaderEntry(const Http::HeaderEntry* header) {
   if (header == nullptr) {
     return {};
@@ -106,7 +109,7 @@ absl::optional<CelValue> RequestWrapper::operator[](CelValue key) const {
     } else if (value == Method) {
       return convertHeaderEntry(headers_.value_->Method());
     } else if (value == Referer) {
-      return convertHeaderEntry(headers_.value_->Referer());
+      return convertHeaderEntry(headers_.value_->getInline(referer_handle.handle()));
     } else if (value == ID) {
       return convertHeaderEntry(headers_.value_->RequestId());
     } else if (value == UserAgent) {
@@ -187,6 +190,13 @@ absl::optional<CelValue> UpstreamWrapper::operator[](CelValue key) const {
         upstream_host->address()->ip() != nullptr) {
       return CelValue::CreateInt64(upstream_host->address()->ip()->port());
     }
+  } else if (value == UpstreamLocalAddress) {
+    auto upstream_local_address = info_.upstreamLocalAddress();
+    if (upstream_local_address != nullptr) {
+      return CelValue::CreateStringView(upstream_local_address->asStringView());
+    }
+  } else if (value == UpstreamTransportFailureReason) {
+    return CelValue::CreateStringView(info_.upstreamTransportFailureReason());
   }
 
   auto ssl_info = info_.upstreamSslConnection();

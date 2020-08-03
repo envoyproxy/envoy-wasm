@@ -26,6 +26,7 @@ CAS
 CB
 CDS
 CEL
+ceil
 CHACHA
 CHLO
 CHMOD
@@ -79,8 +80,10 @@ ECMP
 ECONNREFUSED
 EDESTRUCTION
 EDF
+EINPROGRESS
 EINVAL
 ELB
+EMSGSIZE
 ENOTFOUND
 ENOTSUP
 ENV
@@ -120,6 +123,8 @@ GETting
 GLB
 GOAWAY
 GRPC
+GRO
+GSO
 GSS
 GTEST
 GURL
@@ -279,6 +284,7 @@ SIGINT
 SIGPIPE
 SIGSEGV
 SIGTERM
+SMTP
 SNI
 SOTW
 SPD
@@ -342,6 +348,7 @@ WRONGPASS
 WRR
 WS
 WSA
+WSS
 Welford's
 Wi
 XDS
@@ -431,6 +438,7 @@ bulkstrings
 bursty
 bytecode
 bytestream
+cacheable
 cacheability
 callee
 callsite
@@ -665,6 +673,7 @@ inflight
 -ing
 init
 initializer
+initializers
 inlined
 inlining
 inobservability
@@ -772,6 +781,7 @@ mutexes
 mux
 muxed
 mysql
+namelen
 nameserver
 namespace
 namespaces
@@ -861,6 +871,8 @@ precompute
 precomputed
 predeclared
 prefetch
+prefetched
+prefetches
 preflight
 preorder
 prepend
@@ -973,6 +985,7 @@ sanitizer
 satisfiable
 scalability
 sched
+schedulable
 schemas
 scopekey
 sendmsg
@@ -1103,7 +1116,9 @@ tuples
 typedef
 typeid
 typesafe
+uber
 ucontext
+udpa
 uint
 un-
 unacked
@@ -1155,8 +1170,6 @@ vptr
 wakeup
 wakeups
 websocket
-whitelist
-whitelisted
 whitespace
 whitespaces
 wildcard

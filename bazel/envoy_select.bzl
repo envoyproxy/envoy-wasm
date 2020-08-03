@@ -32,10 +32,9 @@ def envoy_select_hot_restart(xs, repository = ""):
         "//conditions:default": xs,
     })
 
-# Selects the given values depending on the WASM runtimes enabled in the current build.
-def envoy_select_wasm_wavm(xs):
+# Select the given values if use legacy codecs in test is on in the current build.
+def envoy_select_legacy_codecs_in_integration_tests(xs, repository = ""):
     return select({
-        "@envoy//bazel:wasm_all": xs,
-        "@envoy//bazel:wasm_wavm": xs,
+        repository + "//bazel:enable_legacy_codecs_in_integration_tests": xs,
         "//conditions:default": [],
     })

@@ -18,8 +18,10 @@
 #include "common/common/logger.h"
 #include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
+#include "common/version/version.h"
 
 #include "extensions/common/wasm/context.h"
+#include "extensions/common/wasm/wasm_extension.h"
 #include "extensions/common/wasm/wasm_vm.h"
 #include "extensions/common/wasm/well_known_names.h"
 
@@ -36,10 +38,6 @@ namespace Wasm {
   GAUGE(active, NeverImport)
 
 class WasmHandle;
-
-using VmConfig = envoy::extensions::wasm::v3::VmConfig;
-using CreateContextFn =
-    std::function<ContextBase*(Wasm* wasm, const std::shared_ptr<Plugin>& plugin)>;
 
 struct WasmStats {
   ALL_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
@@ -79,6 +77,7 @@ public:
            const StreamInfo::StreamInfo& stream_info);
 
   void onStat(absl::string_view root_id, Envoy::Stats::MetricSnapshot& snapshot);
+  virtual std::string buildVersion() { return BUILD_VERSION_NUMBER; }
 
   void initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier);
   uint32_t nextDnsToken() {
@@ -94,7 +93,7 @@ public:
     create_root_context_for_testing_ = create_root_context;
   }
 
-private:
+protected:
   friend class Context;
 
   void initializeStats();
@@ -106,7 +105,7 @@ private:
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
   Event::PostCb server_shutdown_post_cb_;
-  std::unordered_map<uint32_t, Event::TimerPtr> timer_; // per root_id.
+  absl::flat_hash_map<uint32_t, Event::TimerPtr> timer_; // per root_id.
   TimeSource& time_source_;
 
   // Host Stats/Metrics
@@ -134,7 +133,6 @@ public:
 private:
   WasmSharedPtr wasm_;
 };
-using WasmHandleSharedPtr = std::shared_ptr<WasmHandle>;
 
 using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 
@@ -145,7 +143,7 @@ using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 bool createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                 const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                Runtime::RandomGenerator& random, Api::Api& api,
+                Random::RandomGenerator& random, Api::Api& api,
                 Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& callback,
@@ -156,7 +154,7 @@ getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm, const PluginSha
                            Event::Dispatcher& dispatcher,
                            CreateContextFn create_root_context_for_testing = nullptr);
 
-void clearCodeCacheForTesting(bool fail_if_not_cached);
+void clearCodeCacheForTesting();
 std::string anyToBytes(const ProtobufWkt::Any& any);
 void setTimeOffsetForCodeCacheForTesting(MonotonicTime::duration d);
 

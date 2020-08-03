@@ -10,6 +10,7 @@
 #include "envoy/config/route/v3/route.pb.h"
 
 #include "test/common/grpc/grpc_client_integration.h"
+#include "test/config/utility.h"
 #include "test/integration/http_integration.h"
 
 namespace Envoy {
@@ -23,10 +24,15 @@ public:
 
   envoy::config::cluster::v3::Cluster buildCluster(const std::string& name);
 
+  envoy::config::cluster::v3::Cluster buildTlsCluster(const std::string& name);
+
   envoy::config::cluster::v3::Cluster buildRedisCluster(const std::string& name);
 
   envoy::config::endpoint::v3::ClusterLoadAssignment
   buildClusterLoadAssignment(const std::string& name);
+
+  envoy::config::endpoint::v3::ClusterLoadAssignment
+  buildTlsClusterLoadAssignment(const std::string& name);
 
   envoy::config::listener::v3::Listener buildListener(const std::string& name,
                                                       const std::string& route_config,

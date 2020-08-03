@@ -168,7 +168,7 @@ void Context::onCloseTCP() {
 void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::ResolutionStatus status,
                            std::list<Envoy::Network::DnsResponse>&& response) {
   proxy_wasm::DeferAfterCallActions actions(this);
-  if (!wasm()->on_resolve_dns_) {
+  if (wasm()->isFailed() || !wasm()->on_resolve_dns_) {
     return;
   }
   if (status != Network::DnsResolver::ResolutionStatus::Success) {
@@ -384,7 +384,7 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
   _f(METADATA) _f(REQUEST) _f(RESPONSE) _f(CONNECTION) _f(UPSTREAM) _f(NODE) _f(SOURCE)            \
       _f(DESTINATION) _f(LISTENER_DIRECTION) _f(LISTENER_METADATA) _f(CLUSTER_NAME)                \
           _f(CLUSTER_METADATA) _f(ROUTE_NAME) _f(ROUTE_METADATA) _f(PLUGIN_NAME)                   \
-              _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID)
+              _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID) _f(CONNECTION_ID)
 
 static inline std::string downCase(std::string s) {
   std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -397,7 +397,7 @@ enum class PropertyToken { PROPERTY_TOKENS(_DECLARE) };
 
 #define _PAIR(_t) {downCase(#_t), PropertyToken::_t},
 static absl::flat_hash_map<std::string, PropertyToken> property_tokens = {PROPERTY_TOKENS(_PAIR)};
-#undef _PARI
+#undef _PAIR
 
 absl::optional<google::api::expr::runtime::CelValue>
 Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) const {
@@ -453,6 +453,13 @@ Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) co
           Protobuf::Arena::Create<Filters::Common::Expr::ConnectionWrapper>(arena, *info));
     }
     break;
+  case PropertyToken::CONNECTION_ID: {
+    auto conn = getConnection();
+    if (conn) {
+      return CelValue::CreateUint64(conn->id());
+    }
+    break;
+  }
   case PropertyToken::UPSTREAM:
     if (info) {
       return CelValue::CreateMap(
@@ -686,14 +693,10 @@ Pairs headerMapToPairs(const Http::HeaderMap* map) {
   }
   Pairs pairs;
   pairs.reserve(map->size());
-  map->iterate(
-      [](const Http::HeaderEntry& header, void* pairs) -> Http::HeaderMap::Iterate {
-        (static_cast<Pairs*>(pairs))
-            ->push_back(
-                std::make_pair(header.key().getStringView(), header.value().getStringView()));
-        return Http::HeaderMap::Iterate::Continue;
-      },
-      &pairs);
+  map->iterate([&pairs](const Http::HeaderEntry& header) -> Http::HeaderMap::Iterate {
+    pairs.push_back(std::make_pair(header.key().getStringView(), header.value().getStringView()));
+    return Http::HeaderMap::Iterate::Continue;
+  });
   return pairs;
 }
 
@@ -708,13 +711,10 @@ WasmResult Context::setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs
     return WasmResult::BadArgument;
   }
   std::vector<std::string> keys;
-  map->iterate(
-      [](const Http::HeaderEntry& header, void* keys) -> Http::HeaderMap::Iterate {
-        (static_cast<std::vector<std::string>*>(keys))
-            ->push_back(std::string(header.key().getStringView()));
-        return Http::HeaderMap::Iterate::Continue;
-      },
-      &keys);
+  map->iterate([&keys](const Http::HeaderEntry& header) -> Http::HeaderMap::Iterate {
+    keys.push_back(std::string(header.key().getStringView()));
+    return Http::HeaderMap::Iterate::Continue;
+  });
   for (auto& k : keys) {
     const Http::LowerCaseString lower_key{k};
     map->remove(lower_key);
@@ -1104,9 +1104,10 @@ WasmResult Context::log(uint32_t level, absl::string_view message) {
     ENVOY_LOG(critical, "wasm log{}: {}", log_prefix(), message);
     return WasmResult::Ok;
   case spdlog::level::off:
+  case spdlog::level::n_levels:
     return WasmResult::Ok;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 }
 
 //
@@ -1147,7 +1148,12 @@ void Context::onGrpcReceiveTrailingMetadataWrapper(uint32_t token, Http::HeaderM
   grpc_receive_trailing_metadata_ = nullptr;
 }
 
-WasmResult Context::defineMetric(MetricType type, absl::string_view name, uint32_t* metric_id_ptr) {
+WasmResult Context::defineMetric(uint32_t metric_type, absl::string_view name,
+                                 uint32_t* metric_id_ptr) {
+  if (metric_type > static_cast<uint32_t>(MetricType::Max)) {
+    return WasmResult::BadArgument;
+  }
+  auto type = static_cast<MetricType>(metric_type);
   // TODO: Consider rethinking the scoping policy as it does not help in this case.
   Stats::StatNameManagedStorage storage(name, wasm()->scope_->symbolTable());
   Stats::StatName stat_name = storage.statName();
@@ -1266,7 +1272,7 @@ Network::FilterStatus convertNetworkFilterStatus(proxy_wasm::FilterStatus status
   case proxy_wasm::FilterStatus::StopIteration:
     return Network::FilterStatus::StopIteration;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersStatus status) {
@@ -1282,7 +1288,7 @@ Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersSt
   case proxy_wasm::FilterHeadersStatus::StopAllIterationAndWatermark:
     return Http::FilterHeadersStatus::StopAllIterationAndWatermark;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailersStatus status) {
@@ -1292,7 +1298,7 @@ Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailer
   case proxy_wasm::FilterTrailersStatus::StopIteration:
     return Http::FilterTrailersStatus::StopIteration;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadataStatus status) {
@@ -1300,7 +1306,7 @@ Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadat
   case proxy_wasm::FilterMetadataStatus::Continue:
     return Http::FilterMetadataStatus::Continue;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus status) {
@@ -1314,7 +1320,7 @@ Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus stat
   case proxy_wasm::FilterDataStatus::StopIterationNoBuffer:
     return Http::FilterDataStatus::StopIterationNoBuffer;
   }
-  NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Network::FilterStatus Context::onNewConnection() {

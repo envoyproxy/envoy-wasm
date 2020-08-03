@@ -3,16 +3,13 @@
 #include "envoy/common/exception.h"
 
 #include "common/api/os_sys_calls_impl.h"
+#include "common/common/utility.h"
 #include "common/network/address_impl.h"
 #include "common/network/io_socket_handle_impl.h"
 #include "common/network/socket_interface_impl.h"
 
 namespace Envoy {
 namespace Network {
-
-SocketImpl::SocketImpl(Socket::Type type, Address::Type addr_type, Address::IpVersion version)
-    : io_handle_(SocketInterfaceSingleton::get().socket(type, addr_type, version)),
-      sock_type_(type), addr_type_(addr_type) {}
 
 SocketImpl::SocketImpl(Socket::Type sock_type, const Address::InstanceConstSharedPtr addr)
     : io_handle_(SocketInterfaceSingleton::get().socket(sock_type, addr)), sock_type_(sock_type),
@@ -62,7 +59,7 @@ Api::SysCallIntResult SocketImpl::bind(Network::Address::InstanceConstSharedPtr 
       if (set_permissions.rc_ != 0) {
         throw EnvoyException(fmt::format("Failed to create socket with mode {}: {}",
                                          std::to_string(pipe->mode()),
-                                         strerror(set_permissions.errno_)));
+                                         errorDetails(set_permissions.errno_)));
       }
     }
     return bind_result;

@@ -5,7 +5,6 @@
 #include <regex>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "envoy/common/platform.h"
@@ -16,6 +15,8 @@
 #include "common/common/macros.h"
 #include "common/common/utility.h"
 #include "common/filesystem/directory.h"
+
+#include "absl/container/node_hash_map.h"
 
 #ifdef ENVOY_HANDLE_SIGNALS
 #include "common/signal/signal_action.h"
@@ -44,13 +45,13 @@ std::string makeTempDir(std::string basename_template) {
   std::string name_template = "c:\\Windows\\TEMP\\" + basename_template;
   char* dirname = ::_mktemp(&name_template[0]);
   RELEASE_ASSERT(dirname != nullptr, fmt::format("failed to create tempdir from template: {} {}",
-                                                 name_template, strerror(errno)));
+                                                 name_template, errorDetails(errno)));
   TestEnvironment::createPath(dirname);
 #else
   std::string name_template = "/tmp/" + basename_template;
   char* dirname = ::mkdtemp(&name_template[0]);
   RELEASE_ASSERT(dirname != nullptr, fmt::format("failed to create tempdir from template: {} {}",
-                                                 name_template, strerror(errno)));
+                                                 name_template, errorDetails(errno)));
 #endif
   return std::string(dirname);
 }
@@ -289,7 +290,7 @@ const std::string TestEnvironment::unixDomainSocketDirectory() {
 
 std::string TestEnvironment::substitute(const std::string& str,
                                         Network::Address::IpVersion version) {
-  const std::unordered_map<std::string, std::string> path_map = {
+  const absl::node_hash_map<std::string, std::string> path_map = {
       {"test_tmpdir", TestEnvironment::temporaryDirectory()},
       {"test_udsdir", TestEnvironment::unixDomainSocketDirectory()},
       {"test_rundir", runfiles_ != nullptr ? TestEnvironment::runfilesDirectory() : "invalid"},

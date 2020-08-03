@@ -40,13 +40,16 @@ namespace Wasm {
 
 template <typename Base = testing::Test> class WasmTestBase : public Base {
 public:
-  void SetUp() override { clearCodeCacheForTesting(false); }
+  void SetUp() override { clearCodeCacheForTesting(); }
 
   void setupBase(const std::string& runtime, const std::string& code, CreateContextFn create_root,
-                 std::string root_id = "") {
+                 std::string root_id = "", std::string vm_configuration = "") {
     envoy::extensions::wasm::v3::VmConfig vm_config;
     vm_config.set_vm_id("vm_id");
     vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", runtime));
+    ProtobufWkt::StringValue vm_configuration_string;
+    vm_configuration_string.set_value(vm_configuration);
+    vm_config.mutable_configuration()->PackFrom(vm_configuration_string);
     vm_config.mutable_code()->mutable_local()->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
@@ -54,7 +57,7 @@ public:
     auto vm_id = "";
     auto plugin_configuration = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        name, root_id, vm_id, plugin_configuration, false,
+        name, root_id, vm_id, runtime, plugin_configuration, false,
         envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     // Passes ownership of root_context_.
     Extensions::Common::Wasm::createWasm(
@@ -78,7 +81,7 @@ public:
   Stats::ScopeSharedPtr scope_;
   NiceMock<ThreadLocal::MockInstance> tls_;
   NiceMock<Event::MockDispatcher> dispatcher_;
-  NiceMock<Runtime::MockRandomGenerator> random_;
+  NiceMock<Random::MockRandomGenerator> random_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
   NiceMock<Init::MockManager> init_manager_;
   WasmHandleSharedPtr wasm_;
