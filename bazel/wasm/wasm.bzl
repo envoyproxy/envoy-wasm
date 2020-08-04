@@ -91,10 +91,12 @@ def wasm_cc_binary(name, **kwargs):
 def wasm_rust_binary(name, **kwargs):
     wasm_name = "_wasm_" + (name if not ".wasm" in name else name.strip(".wasm"))
     kwargs.setdefault("visibility", ["//visibility:public"])
-    kwargs.setdefault("rustc_flags", ["--edition=2018"])
 
     rust_binary(
         name = wasm_name,
+        edition = "2018",
+        crate_type = "cdylib",
+        out_binary = True,
         **kwargs
     )
 

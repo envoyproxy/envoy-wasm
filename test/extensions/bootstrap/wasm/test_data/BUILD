@@ -20,6 +20,8 @@ rust_library(
     ],
 )
 
+# TODO(shikugawa): Rewrite logging_rust with proxy-wasm-rust-sdk without 
+# local proxy-wasm ABI implementation.
 wasm_rust_binary(
     name = "logging_rust.wasm",
     srcs = ["logging_rust.rs"],

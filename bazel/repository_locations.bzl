@@ -512,9 +512,11 @@ DEPENDENCY_REPOSITORIES = dict(
         use_category = ["build"],
     ),
     io_bazel_rules_rust = dict(
-        sha256 = "5ed804fcd10a506a5b8e9e59bc6b3b7f43bc30c87ce4670e6f78df43604894fd",
-        strip_prefix = "rules_rust-fdf9655ba95616e0314b4e0ebab40bb0c5fe005c",
-        urls = ["https://github.com/bazelbuild/rules_rust/archive/fdf9655ba95616e0314b4e0ebab40bb0c5fe005c.tar.gz"],
+        sha256 = "484a2b2b67cd2d1fa1054876de7f8d291c4b203fd256bc8cbea14d749bb864ce",
+        # Last commit where "out_binary = True" works.
+        # See: https://github.com/bazelbuild/rules_rust/issues/386
+        strip_prefix = "rules_rust-fda9a1ce6482973adfda022cadbfa6b300e269c3",
+        urls = ["https://github.com/bazelbuild/rules_rust/archive/fda9a1ce6482973adfda022cadbfa6b300e269c3.tar.gz"],
         use_category = ["test"],
     ),
     cfg_if = dict(

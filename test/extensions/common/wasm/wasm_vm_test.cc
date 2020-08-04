@@ -254,7 +254,7 @@ TEST_P(WasmVmTest, V8Memory) {
   wasm_vm->registerCallback("env", "random", &random, CONVERT_FUNCTION_WORD_TO_UINT32(random));
   wasm_vm->link("test");
 
-  EXPECT_EQ(wasm_vm->getMemorySize(), 1114112 /* stack size requested at the build-time */);
+  EXPECT_EQ(wasm_vm->getMemorySize(), 65536 /* stack size requested at the build-time */);
 
   const uint64_t test_addr = 128;
 
@@ -264,16 +264,16 @@ TEST_P(WasmVmTest, V8Memory) {
   EXPECT_EQ(sizeof("test") - 1, got.size());
   EXPECT_STREQ("test", got.data());
 
-  EXPECT_FALSE(wasm_vm->setMemory(1056 * 1056 /* out of bound */, 1 /* size */, nullptr));
-  EXPECT_FALSE(wasm_vm->getMemory(1056 * 1056 /* out of bound */, 1 /* size */).has_value());
+  EXPECT_FALSE(wasm_vm->setMemory(1024 * 1024 /* out of bound */, 1 /* size */, nullptr));
+  EXPECT_FALSE(wasm_vm->getMemory(1024 * 1024 /* out of bound */, 1 /* size */).has_value());
 
   Word word(0);
   EXPECT_TRUE(wasm_vm->setWord(test_addr, std::numeric_limits<uint32_t>::max()));
   EXPECT_TRUE(wasm_vm->getWord(test_addr, &word));
   EXPECT_EQ(std::numeric_limits<uint32_t>::max(), word.u64_);
 
-  EXPECT_FALSE(wasm_vm->setWord(1056 * 1056 /* out of bound */, 1));
-  EXPECT_FALSE(wasm_vm->getWord(1056 * 1056 /* out of bound */, &word));
+  EXPECT_FALSE(wasm_vm->setWord(1024 * 1024 /* out of bound */, 1));
+  EXPECT_FALSE(wasm_vm->getWord(1024 * 1024 /* out of bound */, &word));
 }
 
 } // namespace
