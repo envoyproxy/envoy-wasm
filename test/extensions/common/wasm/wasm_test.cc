@@ -813,11 +813,11 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   setup(code);
   setupContext();
 
-  EXPECT_CALL(context(), log_(spdlog::level::warn, Eq("TestContext::onResolveDns 7")));
-  EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onResolveDns dns 1 192.168.1.101:1001")));
-  EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onResolveDns dns 2 192.168.1.102:1002")));
+  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 7")));
+  EXPECT_CALL(root_context(), log_(spdlog::level::info,
+                                   Eq("TestRootContext::onResolveDns dns 1 192.168.1.101:1001")));
+  EXPECT_CALL(root_context(), log_(spdlog::level::info,
+                                   Eq("TestRootContext::onResolveDns dns 2 192.168.1.102:1002")));
   EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
 
   uint32_t token = 7;
@@ -828,8 +828,8 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   dns_results.emplace(dns_results.end(),
                       std::make_shared<Network::Address::Ipv4Instance>("192.168.1.102", 1002),
                       std::chrono::seconds(2));
-  context_->onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
-                         std::move(dns_results));
+  root_context().onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
+                              std::move(dns_results));
 }
 
 } // namespace Wasm

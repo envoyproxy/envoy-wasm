@@ -36,9 +36,6 @@ bool EnvoyWasmVmIntegration::getNullVmFunction(absl::string_view function_name, 
           if (auto root = context_base->asRoot()) {
             static_cast<proxy_wasm::null_plugin::EnvoyRootContext*>(root)->onResolveDns(
                 token, result_size);
-          } else {
-            static_cast<proxy_wasm::null_plugin::EnvoyContext*>(context_base->asContext())
-                ->onResolveDns(token, result_size);
           }
         };
     return true;
