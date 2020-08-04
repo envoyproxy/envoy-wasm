@@ -10,7 +10,7 @@ public:
 
 class EnvoyRootContext : public RootContext, public EnvoyContextBase {
 public:
-  EnvoyRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
+  EnvoyRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
   ~EnvoyRootContext() override = default;
 };
 
@@ -25,7 +25,7 @@ struct DnsResult {
   std::string address;
 };
 
-inline std::vector<DnsResult> parseDnsResults(StringView data) {
+inline std::vector<DnsResult> parseDnsResults(std::string_view data) {
   if (data.size() < 4) {
     return {};
   }

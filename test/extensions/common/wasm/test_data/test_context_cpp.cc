@@ -21,7 +21,7 @@ public:
 
 class TestRootContext : public EnvoyRootContext {
 public:
-  explicit TestRootContext(uint32_t id, StringView root_id) : EnvoyRootContext(id, root_id) {}
+  explicit TestRootContext(uint32_t id, std::string_view root_id) : EnvoyRootContext(id, root_id) {}
 
   bool onDone() override;
 };
