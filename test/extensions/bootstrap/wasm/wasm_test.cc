@@ -77,7 +77,13 @@ public:
   void createWasm() { WasmTestBase::createWasm(GetParam()); }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing::Values("v8"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
+                         testing::Values("v8"
+#if defined(ENVOY_WASM_WAVM)
+                                         ,
+                                         "wavm"
+#endif
+                                         ));
 
 class WasmNullTest : public WasmTestBase, public testing::TestWithParam<std::string> {
 public:

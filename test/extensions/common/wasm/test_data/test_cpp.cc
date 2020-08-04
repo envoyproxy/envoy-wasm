@@ -37,6 +37,8 @@ static float gInfinity = INFINITY;
     abort();                                                                                       \
   } while (0)
 
+WASM_EXPORT(void, proxy_abi_version_0_2_0, (void)) {}
+
 WASM_EXPORT(void, proxy_on_context_create, (uint32_t, uint32_t)) {}
 
 WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configuration_size)) {
