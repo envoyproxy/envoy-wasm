@@ -270,7 +270,7 @@ public:
   void onResolveDns(uint32_t token, Envoy::Network::DnsResolver::ResolutionStatus status,
                     std::list<Envoy::Network::DnsResponse>&& response);
 
-  void onStat(Envoy::Stats::MetricSnapshot& snapshot);
+  void onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot);
 
   // CEL evaluation
   std::vector<const google::api::expr::runtime::CelFunction*>

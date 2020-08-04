@@ -204,7 +204,7 @@ void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::Resoluti
   wasm()->on_resolve_dns_(this, id_, token, s);
 }
 
-void Context::onStat(Envoy::Stats::MetricSnapshot& snapshot) {
+void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
   proxy_wasm::DeferAfterCallActions actions(this);
   if (wasm()->isFailed() || !wasm()->on_stats_update_) {
     return;

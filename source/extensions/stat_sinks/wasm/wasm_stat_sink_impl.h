@@ -17,7 +17,7 @@ public:
       : root_id_(root_id), singleton_(std::move(singleton)) {}
 
   void flush(Stats::MetricSnapshot& snapshot) override {
-    singleton_->wasm()->onStat(root_id_, snapshot);
+    singleton_->wasm()->onStatsUpdate(root_id_, snapshot);
   }
 
   void setSingleton(Common::Wasm::WasmHandleSharedPtr singleton) {

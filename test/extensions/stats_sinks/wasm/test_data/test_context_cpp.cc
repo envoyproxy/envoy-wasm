@@ -15,29 +15,28 @@ START_WASM_PLUGIN(CommonWasmTestContextCpp)
 class TestContext : public EnvoyContext {
 public:
   explicit TestContext(uint32_t id, RootContext* root) : EnvoyContext(id, root) {}
-
-  void onStat(uint32_t result_size) override;
 };
 
 class TestRootContext : public EnvoyRootContext {
 public:
   explicit TestRootContext(uint32_t id, std::string_view root_id) : EnvoyRootContext(id, root_id) {}
 
+  void onStatsUpdate(uint32_t result_size) override;
   bool onDone() override;
 };
 
 static RegisterContextFactory register_TestContext(CONTEXT_FACTORY(TestContext),
                                                    ROOT_FACTORY(TestRootContext));
 
-void TestContext::onStat(uint32_t result_size) {
-  logWarn("TestContext::onStat");
+void TestRootContext::onStatsUpdate(uint32_t result_size) {
+  logWarn("TestRootContext::onStat");
   auto stats_buffer = getBufferBytes(WasmBufferType::CallData, 0, result_size);
   auto stats = parseStatResults(stats_buffer->view());
   for (auto& e : stats.counters) {
-    logInfo("TestContext::onStat " + std::string(e.name) + ":" + std::to_string(e.delta));
+    logInfo("TestRootContext::onStat " + std::string(e.name) + ":" + std::to_string(e.delta));
   }
   for (auto& e : stats.gauges) {
-    logInfo("TestContext::onStat " + std::string(e.name) + ":" + std::to_string(e.value));
+    logInfo("TestRootContext::onStat " + std::string(e.name) + ":" + std::to_string(e.value));
   }
 }
 

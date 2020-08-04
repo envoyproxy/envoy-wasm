@@ -248,9 +248,9 @@ void Wasm::log(absl::string_view root_id, const Http::RequestHeaderMap* request_
   context->log(request_headers, response_headers, response_trailers, stream_info);
 }
 
-void Wasm::onStat(absl::string_view root_id, Envoy::Stats::MetricSnapshot& snapshot) {
+void Wasm::onStatsUpdate(absl::string_view root_id, Envoy::Stats::MetricSnapshot& snapshot) {
   auto context = getRootContext(root_id);
-  context->onStat(snapshot);
+  context->onStatsUpdate(snapshot);
 }
 
 void clearCodeCacheForTesting() {
