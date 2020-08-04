@@ -104,9 +104,9 @@ WASM_EXPORT(void, proxy_on_log, (uint32_t /* context_zero */)) {
   stack_g.record(2, "stack_test_tag1", "test_tag2");
   logError(std::string("stack_g = ") + std::to_string(stack_g.get("stack_test_tag1", "test_tag2")));
 
-  StringView int_tag = "int_tag";
+  std::string_view int_tag = "int_tag";
   Histogram<int, std::string, bool> stack_h("test_histogram", int_tag, "string_tag", "bool_tag");
-  StringView stack_test_tag = "stack_test_tag";
+  std::string_view stack_test_tag = "stack_test_tag";
   stack_h.record(3, 7, stack_test_tag, true);
 }
 
