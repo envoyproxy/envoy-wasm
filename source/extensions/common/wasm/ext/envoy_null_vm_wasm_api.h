@@ -4,9 +4,6 @@
 namespace proxy_wasm {
 namespace null_plugin {
 
-template <typename T> using Optional = absl::optional<T>;
-using StringView = absl::string_view;
-
 #include "proxy_wasm_common.h"
 #include "proxy_wasm_enums.h"
 #include "proxy_wasm_externs.h"

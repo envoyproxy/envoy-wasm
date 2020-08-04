@@ -11,7 +11,7 @@ public:
 
 class EnvoyRootContext : public RootContext, public EnvoyContextBase {
 public:
-  EnvoyRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
+  EnvoyRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
   ~EnvoyRootContext() override = default;
 };
 
@@ -28,13 +28,13 @@ struct DnsResult {
 
 struct CounterResult {
   uint64_t delta;
-  StringView name;
+  std::string_view name;
   uint64_t value;
 };
 
 struct GaugeResult {
   uint64_t value;
-  StringView name;
+  std::string_view name;
 };
 
 struct StatResult {
@@ -47,7 +47,7 @@ enum class StatType : uint32_t {
   Gauge = 2,
 };
 
-inline std::vector<DnsResult> parseDnsResults(StringView data) {
+inline std::vector<DnsResult> parseDnsResults(std::string_view data) {
   if (data.size() < 4) {
     return {};
   }
@@ -66,7 +66,7 @@ inline std::vector<DnsResult> parseDnsResults(StringView data) {
   return results;
 }
 
-inline StatResult parseStatResults(StringView data) {
+inline StatResult parseStatResults(std::string_view data) {
   StatResult results;
   uint32_t data_len = 0;
   while (data_len < data.length()) {
