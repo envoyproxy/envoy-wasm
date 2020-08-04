@@ -1377,8 +1377,16 @@ WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view 
     }
   };
   if (decoder_callbacks_) {
-    decoder_callbacks_->sendLocalReply(static_cast<Envoy::Http::Code>(response_code), body_text,
-                                       modify_headers, grpc_status, details);
+    // This is a bit subtle because proxy_on_delete() does call DeferAfterCallActions(),
+    // so in theory it could call this and the Context in the VM would be invalid,
+    // but because it only gets called after the connections have drained, the call to
+    // sendLocalReply() will fail. Net net, this is safe.
+    wasm()->addAfterVmCallAction([this, response_code, body_text = std::string(body_text),
+                                  modify_headers = std::move(modify_headers), grpc_status,
+                                  details = std::string(details)] {
+      decoder_callbacks_->sendLocalReply(static_cast<Envoy::Http::Code>(response_code), body_text,
+                                         modify_headers, grpc_status, details);
+    });
   }
   return WasmResult::Ok;
 }
