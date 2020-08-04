@@ -1110,6 +1110,12 @@ WasmResult Context::log(uint32_t level, absl::string_view message) {
   NOT_REACHED_GCOVR_EXCL_LINE;
 }
 
+uint32_t Context::getLogLevel() {
+  // Like the "log" call above, assume that spdlog level as an int
+  // matches the enum in the SDK
+  return static_cast<uint32_t>(ENVOY_LOGGER().level());
+}
+
 //
 // Calls into the Wasm code.
 //

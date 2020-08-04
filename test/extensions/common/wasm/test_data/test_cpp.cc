@@ -56,6 +56,10 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     proxy_log(LogLevel::warn, warn_message.c_str(), warn_message.size());
     std::string error_message = "test error logging";
     proxy_log(LogLevel::error, error_message.c_str(), error_message.size());
+    LogLevel log_level;
+    CHECK_RESULT(proxy_get_log_level(&log_level));
+    std::string level_message = "log level is " + std::to_string(static_cast<uint32_t>(log_level));
+    proxy_log(LogLevel::info, level_message.c_str(), level_message.size());
   } else if (configuration == "segv") {
     std::string message = "before badptr";
     proxy_log(LogLevel::error, message.c_str(), message.size());

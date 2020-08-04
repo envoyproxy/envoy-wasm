@@ -115,6 +115,7 @@ TEST_P(WasmCommonTest, Logging) {
         EXPECT_CALL(*root_context, log_(spdlog::level::debug, Eq("test debug logging")));
         EXPECT_CALL(*root_context, log_(spdlog::level::warn, Eq("test warn logging")));
         EXPECT_CALL(*root_context, log_(spdlog::level::err, Eq("test error logging")));
+        EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("log level is 4")));
         EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("on_done logging")));
         EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("on_delete logging")));
         return root_context;
