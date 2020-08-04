@@ -19,15 +19,11 @@ envoy_cc_extension(
     deps = [
         ":wasm_stat_sink_lib",
         "//include/envoy/registry",
-        "//include/envoy/server:bootstrap_extension_config_interface",
         "//include/envoy/server:factory_context_interface",
         "//include/envoy/server:instance_interface",
-        "//source/common/network:address_lib",
-        "//source/common/network:resolver_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/stat_sinks:well_known_names",
         "//source/server:configuration_lib",
-        "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",
         "@envoy_api//envoy/extensions/stat_sinks/wasm/v3:pkg_cc_proto",
     ],
 )

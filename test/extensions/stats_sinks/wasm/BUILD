@@ -20,9 +20,8 @@ envoy_extension_cc_test(
     extension_name = "envoy.stat_sinks.wasm",
     deps = [
         "//source/extensions/stat_sinks/wasm:config",
+        "//test/extensions/stats_sinks/wasm/test_data:test_context_cpp_plugin",
         "//test/mocks/server:server_mocks",
-        "//test/test_common:environment_lib",
-        "//test/test_common:utility_lib",
         "@envoy_api//envoy/extensions/stat_sinks/wasm/v3:pkg_cc_proto",
     ],
 )

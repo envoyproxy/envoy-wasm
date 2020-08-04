@@ -22,7 +22,7 @@ class WasmSinkFactory : Logger::Loggable<Logger::Id::config>,
 public:
   // StatsSinkFactory
   Stats::SinkPtr createStatsSink(const Protobuf::Message& config,
-                                 Server::Instance& context) override;
+                                 Server::Configuration::ServerFactoryContext& context) override;
 
   ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
