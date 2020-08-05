@@ -39,10 +39,11 @@ wasm_cc_binary(
     ],
 )
 
-genrule(
-    name = "test_cpp_wavm_compile",
-    srcs = [":test_cpp.wasm"],
-    outs = ["test_cpp.wavm_compiled.wasm"],
-    cmd = "X=( $(locations //bazel/foreign_cc:wavm) ); $${X[1]} compile $(location :test_cpp.wasm) test_cpp.compiled.wasm",
-    tools = ["//bazel/foreign_cc:wavm"],
-)
+# TODO: get precompiled binaries working for WAVM.
+#genrule(
+#    name = "test_cpp_wavm_compile",
+#    srcs = [":test_cpp.wasm"],
+#    outs = ["test_cpp.wavm_compiled.wasm"],
+#    cmd = "X=( $(locations //bazel/foreign_cc:wavm) ); $${X[1]} compile $(location :test_cpp.wasm) test_cpp.compiled.wasm",
+#    tools = ["//bazel/foreign_cc:wavm"],
+#)
