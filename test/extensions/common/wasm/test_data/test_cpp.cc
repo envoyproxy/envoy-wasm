@@ -66,9 +66,11 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
   } else if (configuration == "divbyzero") {
     std::string message = "before div by zero";
     proxy_log(LogLevel::error, message.c_str(), message.size());
-    int zero = context_id / 1000;
     ::free(const_cast<void*>(reinterpret_cast<const void*>(configuration_ptr)));
+#pragma clang optimize off
+    int zero = context_id / 1000;
     message = "divide by zero: " + std::to_string(100 / zero);
+#pragma clang optimize on
     proxy_log(LogLevel::error, message.c_str(), message.size());
   } else if (configuration == "globals") {
     std::string message = "NaN " + std::to_string(gNan);
