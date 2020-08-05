@@ -76,6 +76,7 @@ public:
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info);
 
+  void onStatsUpdate(absl::string_view root_id, Envoy::Stats::MetricSnapshot& snapshot);
   virtual std::string buildVersion() { return BUILD_VERSION_NUMBER; }
 
   void initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier);
@@ -98,6 +99,7 @@ protected:
   void initializeStats();
   // Calls into the VM.
   proxy_wasm::WasmCallVoid<3> on_resolve_dns_;
+  proxy_wasm::WasmCallVoid<2> on_stats_update_;
 
   Stats::ScopeSharedPtr scope_;
   Upstream::ClusterManager& cluster_manager_;
