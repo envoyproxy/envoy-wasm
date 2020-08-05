@@ -12,6 +12,8 @@ class EnvoyRootContext : public RootContext, public EnvoyContextBase {
 public:
   EnvoyRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
   ~EnvoyRootContext() override = default;
+
+  virtual void onStatsUpdate(uint32_t /* result_size */) {}
 };
 
 class EnvoyContext : public Context, public EnvoyContextBase {
@@ -23,6 +25,27 @@ public:
 struct DnsResult {
   uint32_t ttl_seconds;
   std::string address;
+};
+
+struct CounterResult {
+  uint64_t delta;
+  std::string_view name;
+  uint64_t value;
+};
+
+struct GaugeResult {
+  uint64_t value;
+  std::string_view name;
+};
+
+struct StatResult {
+  std::vector<CounterResult> counters;
+  std::vector<GaugeResult> gauges;
+};
+
+enum class StatType : uint32_t {
+  Counter = 1,
+  Gauge = 2,
 };
 
 inline std::vector<DnsResult> parseDnsResults(std::string_view data) {
@@ -41,5 +64,57 @@ inline std::vector<DnsResult> parseDnsResults(std::string_view data) {
     e.address.assign(pa, alen);
     pa += alen + 1;
   }
+  return results;
+}
+
+inline StatResult parseStatResults(std::string_view data) {
+  StatResult results;
+  uint32_t data_len = 0;
+  while (data_len < data.length()) {
+    const uint32_t* n = reinterpret_cast<const uint32_t*>(data.data() + data_len);
+    uint32_t block_size = *n++;
+    uint32_t block_type = *n++;
+    uint32_t num_stats = *n++;
+    if (static_cast<StatType>(block_type) == StatType::Counter) { // counter
+      std::vector<CounterResult> counters(num_stats);
+      uint32_t stat_index = data_len + 3 * sizeof(uint32_t);
+      for (uint32_t i = 0; i < num_stats; i++) {
+        const uint32_t* stat_name = reinterpret_cast<const uint32_t*>(data.data() + stat_index);
+        uint32_t name_len = *stat_name;
+        stat_index += sizeof(uint32_t);
+
+        auto& e = counters[i];
+        e.name = {data.data() + stat_index, name_len};
+        stat_index += name_len + sizeof(uint64_t);
+
+        const uint64_t* stat_vals = reinterpret_cast<const uint64_t*>(data.data() + stat_index);
+        e.value = *stat_vals++;
+        e.delta = *stat_vals++;
+
+        stat_index += 2 * sizeof(uint64_t);
+      }
+      results.counters = counters;
+    } else if (static_cast<StatType>(block_type) == StatType::Gauge) { // gauge
+      std::vector<GaugeResult> gauges(num_stats);
+      uint32_t stat_index = data_len + 3 * sizeof(uint32_t);
+      for (uint32_t i = 0; i < num_stats; i++) {
+        const uint32_t* stat_name = reinterpret_cast<const uint32_t*>(data.data() + stat_index);
+        uint32_t name_len = *stat_name;
+        stat_index += sizeof(uint32_t);
+
+        auto& e = gauges[i];
+        e.name = {data.data() + stat_index, name_len};
+        stat_index += name_len + sizeof(uint64_t);
+
+        const uint64_t* stat_vals = reinterpret_cast<const uint64_t*>(data.data() + stat_index);
+        e.value = *stat_vals++;
+
+        stat_index += sizeof(uint64_t);
+      }
+      results.gauges = gauges;
+    }
+    data_len += block_size;
+  }
+
   return results;
 }

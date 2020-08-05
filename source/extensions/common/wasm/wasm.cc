@@ -217,6 +217,7 @@ void Wasm::getFunctions() {
   WasmBase::getFunctions();
 #define _GET(_fn) wasm_vm_->getFunction("envoy_" #_fn, &_fn##_);
   _GET(on_resolve_dns)
+  _GET(on_stats_update)
 #undef _GET
 }
 
@@ -245,6 +246,11 @@ void Wasm::log(absl::string_view root_id, const Http::RequestHeaderMap* request_
                const StreamInfo::StreamInfo& stream_info) {
   auto context = getRootContext(root_id);
   context->log(request_headers, response_headers, response_trailers, stream_info);
+}
+
+void Wasm::onStatsUpdate(absl::string_view root_id, Envoy::Stats::MetricSnapshot& snapshot) {
+  auto context = getRootContext(root_id);
+  context->onStatsUpdate(snapshot);
 }
 
 void clearCodeCacheForTesting() {
