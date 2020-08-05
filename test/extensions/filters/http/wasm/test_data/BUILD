@@ -43,6 +43,6 @@ genrule(
     name = "test_cpp_wavm_compile",
     srcs = [":test_cpp.wasm"],
     outs = ["test_cpp.wavm_compiled.wasm"],
-    cmd = "$(locations //bazel/foreign_cc:wavm)/copy_wavm/wavm/bin/wavm compile test_cpp.wasm test_cpp.compiled.wasm",
+    cmd = "X=( $(locations //bazel/foreign_cc:wavm) ); $${X[1]} compile $(location :test_cpp.wasm) test_cpp.compiled.wasm",
     tools = ["//bazel/foreign_cc:wavm"],
 )
