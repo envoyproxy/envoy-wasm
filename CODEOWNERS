@@ -111,6 +111,8 @@ extensions/filters/common/original_src @snowp @klarose
 /*/extensions/stat_sinks/dog_statsd @taiki45 @jmarantz
 /*/extensions/stat_sinks/hystrix @trabetti @jmarantz
 /*/extensions/stat_sinks/metrics_service @ramaraochavali @jmarantz
+# webassembly stat-sink extensions
+/*/extensions/stat_sinks/wasm @Aakash2017 @jplevyak @lizan
 /*/extensions/resource_monitors/injected_resource @eziskind @htuch
 /*/extensions/resource_monitors/common @eziskind @htuch
 /*/extensions/resource_monitors/fixed_heap @eziskind @htuch
