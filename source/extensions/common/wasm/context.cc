@@ -1467,8 +1467,6 @@ WasmResult Context::closeStream(WasmStreamType stream_type) {
 WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view body_text,
                                       Pairs additional_headers, uint32_t grpc_status,
                                       absl::string_view details) {
-
-
   // "additional_headers" is a collection of string_views. These will no longer
   // be valid when "modify_headers" is finally called below, so we must
   // make copies of all the headers.
