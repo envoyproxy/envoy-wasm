@@ -9,13 +9,6 @@ licenses(["notice"])  # Apache 2
 
 envoy_package()
 
-# TODO(shikugawa): Rewrite logging_rust with proxy-wasm-rust-sdk without
-# local proxy-wasm ABI implementation.
-wasm_rust_binary(
-    name = "logging_rust.wasm",
-    srcs = ["logging_rust.rs"],
-)
-
 envoy_cc_library(
     name = "speed_cpp_plugin",
     srcs = [
