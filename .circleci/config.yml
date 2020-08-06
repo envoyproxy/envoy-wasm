@@ -13,7 +13,7 @@ jobs:
    release:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6 --define wasm=enabled" # v8 + WAVM (build only)
+       BAZEL_BUILD_EXTRA_OPTIONS: "--define wasm=enabled" # v8 + WAVM (build only)
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
@@ -24,8 +24,6 @@ jobs:
 
    all_tests:
      executor: ubuntu-build
-     environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6 --flaky_test_attempts=5"
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
@@ -42,7 +40,6 @@ jobs:
    asan:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--discard_analysis_cache --local_ram_resources=8192 --local_cpu_resources=6"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/bootstrap/wasm/... //test/extensions/common/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
@@ -55,7 +52,6 @@ jobs:
    tsan:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--discard_analysis_cache --local_ram_resources=8192 --local_cpu_resources=6"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/bootstrap/wasm/... //test/extensions/common/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
@@ -68,7 +64,6 @@ jobs:
    coverage:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/bootstrap/wasm/... //test/extensions/common/wasm/..."
        VALIDATE_COVERAGE: 0
      steps:

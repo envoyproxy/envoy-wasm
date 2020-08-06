@@ -8,26 +8,26 @@ licenses(["notice"])  # Apache 2
 
 envoy_package()
 
-# envoy_cc_test(
-#     name = "wasm_vm_test",
-#     srcs = ["wasm_vm_test.cc"],
-#     data = [
-#         "//test/extensions/common/wasm/test_data:test_rust.wasm",
-#     ],
-#     tags = [
-#         # wasm (wee v8 etc) will not compile on Windows
-#         "skip_on_windows",
-#         # Precompiled WASM code which is required to compile with wee8_compiler
-#         # which is needed to build as position independent code. It is not supported on macos.
-#         "skip_on_macos",
-#     ],
-#     deps = [
-#         "//source/extensions/common/wasm:wasm_lib",
-#         "//test/test_common:environment_lib",
-#         "//test/test_common:registry_lib",
-#         "//test/test_common:utility_lib",
-#     ],
-# )
+envoy_cc_test(
+    name = "wasm_vm_test",
+    srcs = ["wasm_vm_test.cc"],
+    data = [
+        "//test/extensions/common/wasm/test_data:test_rust.wasm",
+    ],
+    tags = [
+        # wasm (wee v8 etc) will not compile on Windows
+        "skip_on_windows",
+        # Precompiled WASM code which is required to compile with wee8_compiler
+        # which is needed to build as position independent code. It is not supported on macos.
+        "skip_on_macos",
+    ],
+    deps = [
+        "//source/extensions/common/wasm:wasm_lib",
+        "//test/test_common:environment_lib",
+        "//test/test_common:registry_lib",
+        "//test/test_common:utility_lib",
+    ],
+)
 
 envoy_cc_test(
     name = "wasm_test",

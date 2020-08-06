@@ -147,6 +147,7 @@ TEST_P(WasmVmTest, V8Code) {
   auto wasm_vm = createWasmVm("envoy.wasm.runtime.v8", scope_);
   ASSERT_TRUE(wasm_vm != nullptr);
   EXPECT_TRUE(wasm_vm->runtime() == "v8");
+
   auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_rust.wasm"));
   EXPECT_TRUE(wasm_vm->load(code, GetParam()));
