@@ -14,8 +14,13 @@ envoy_cc_test(
     data = [
         "//test/extensions/common/wasm/test_data:test_rust.wasm",
     ],
-    # wasm (wee v8 etc) will not compile on Windows
-    tags = ["skip_on_windows"],
+    tags = [
+        # wasm (wee v8 etc) will not compile on Windows
+        "skip_on_windows",
+        # Precompiled WASM code which is required to compile with wee8_compiler
+        # which is needed to build as position independent code. It is not supported on macos.
+        "skip_on_macos"
+    ],
     deps = [
         "//source/extensions/common/wasm:wasm_lib",
         "//test/test_common:environment_lib",
