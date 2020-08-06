@@ -11,6 +11,7 @@
 #include "include/proxy-wasm/null.h"
 #include "include/proxy-wasm/null_plugin.h"
 #include "include/proxy-wasm/v8.h"
+#include "include/proxy-wasm/wavm.h"
 
 using ContextBase = proxy_wasm::ContextBase;
 using Word = proxy_wasm::Word;
@@ -75,6 +76,15 @@ WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& s
     }
     wasm->integration() = getWasmExtension()->createEnvoyWasmVmIntegration(scope, runtime, "null");
     return wasm;
+#if defined(ENVOY_WASM_WAVM)
+  } else if (runtime == WasmRuntimeNames::get().Wavm) {
+    auto wasm = proxy_wasm::createWavmVm();
+    if (!wasm) {
+      return nullptr;
+    }
+    wasm->integration() = getWasmExtension()->createEnvoyWasmVmIntegration(scope, runtime, "null");
+    return wasm;
+#endif
   } else {
     ENVOY_LOG_TO_LOGGER(
         Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,

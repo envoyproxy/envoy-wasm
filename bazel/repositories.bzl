@@ -214,6 +214,9 @@ def envoy_dependencies(skip_targets = []):
     _go_deps(skip_targets)
     _kafka_deps()
 
+    _org_llvm_llvm()
+    _com_github_wavm_wavm()
+
     switched_rules_by_language(
         name = "com_google_googleapis_imports",
         cc = True,
@@ -895,7 +898,7 @@ def _com_github_gperftools_gperftools():
     )
 
 def _org_llvm_llvm():
-    location = REPOSITORY_LOCATIONS["org_llvm_llvm"]
+    location = _get_location("org_llvm_llvm")
     http_archive(
         name = "org_llvm_llvm",
         build_file_content = BUILD_ALL_CONTENT,
@@ -906,6 +909,18 @@ def _org_llvm_llvm():
     native.bind(
         name = "llvm",
         actual = "@envoy//bazel/foreign_cc:llvm",
+    )
+
+def _com_github_wavm_wavm():
+    location = _get_location("com_github_wavm_wavm")
+    http_archive(
+        name = "com_github_wavm_wavm",
+        build_file_content = BUILD_ALL_CONTENT,
+        **location
+    )
+    native.bind(
+        name = "wavm",
+        actual = "@envoy//bazel/foreign_cc:wavm",
     )
 
 def _kafka_deps():

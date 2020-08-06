@@ -55,7 +55,12 @@ public:
   TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest, testing::Values("v8", "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterTest,
+                         testing::Values("v8",
+#if defined(ENVOY_WASM_WAVM)
+                                         "wavm",
+#endif
+                                         "null"));
 
 // Bad code in initial config.
 TEST_P(WasmNetworkFilterTest, BadCode) {
