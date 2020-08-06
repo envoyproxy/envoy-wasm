@@ -2,14 +2,15 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_extension",
     "envoy_cc_library",
+    "envoy_extension_package",
     "envoy_package",
 )
 
 licenses(["notice"])  # Apache 2
 
-# Access log implementation that calls into a WASM VM.
+envoy_extension_package()
 
-envoy_package()
+# Access log implementation that calls into a WASM VM.
 
 envoy_cc_library(
     name = "wasm_access_log_lib",
