@@ -21,8 +21,6 @@ build --enable_platform_specific_config
 
 # Enable position independent code, this option is not supported on Windows and default on on macOS.
 build:linux --copt=-fPIC
-# Apply -fPIC to be wee8_compiler available with Rust WASM build.
-build:linux --host_copt=-fPIC
 build:linux --cxxopt=-std=c++17
 build:linux --conlyopt=-fexceptions
 
