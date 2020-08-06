@@ -106,6 +106,7 @@ public:
   void createWasm() { WasmTestBase::createWasm(std::get<0>(GetParam())); }
 };
 
+// TODO(shikugawa): Add tests for Rust logging with proxy-wasm-rust-sdk.
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
                          testing::Combine(testing::Values("v8"
 #if defined(ENVOY_WASM_WAVM)
@@ -113,7 +114,7 @@ INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
                                                           "wavm"
 #endif
                                                           ),
-                                          testing::Values("cpp", "rust")));
+                                          testing::Values("cpp")));
 
 TEST_P(WasmTestMatrix, Logging) {
   plugin_configuration_ = "configure-test";

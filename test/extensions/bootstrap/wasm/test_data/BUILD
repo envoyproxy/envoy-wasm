@@ -4,31 +4,16 @@ load(
     "envoy_package",
 )
 load("//bazel/wasm:wasm.bzl", "wasm_cc_binary", "wasm_rust_binary")
-load("@io_bazel_rules_rust//rust:rust.bzl", "rust_library")
 
 licenses(["notice"])  # Apache 2
 
 envoy_package()
-
-rust_library(
-    name = "proxy_wasm",
-    srcs = ["proxy_wasm.rs"],
-    edition = "2018",
-    visibility = ["//visibility:public"],
-    deps = [
-        "@log",
-    ],
-)
 
 # TODO(shikugawa): Rewrite logging_rust with proxy-wasm-rust-sdk without
 # local proxy-wasm ABI implementation.
 wasm_rust_binary(
     name = "logging_rust.wasm",
     srcs = ["logging_rust.rs"],
-    deps = [
-        ":proxy_wasm",
-        "@log",
-    ],
 )
 
 envoy_cc_library(

@@ -40,7 +40,7 @@ wasm_rust_transition = transition(
     ],
 )
 
-def _wasm_binary_impl(ctx):
+def _wasm_cc_binary_impl(ctx):
     out = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.run_shell(
         command = 'cp "{}" "{}"'.format(ctx.files.binary[0].path, out.path),
@@ -50,11 +50,21 @@ def _wasm_binary_impl(ctx):
 
     return [DefaultInfo(runfiles = ctx.runfiles([out]))]
 
+def _wasm_rust_binary_impl(ctx):
+    out = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.run_shell(
+        command = 'cp "{}" "{}"'.format(ctx.files.binary[0].path, out.path),
+        outputs = [out],
+        inputs = ctx.files.binary,
+    )
+
+    return [DefaultInfo(files = depset([out]))]
+
 # WASM binary rule implementation.
 # This copies the binary specified in binary attribute in WASM configuration to
 # target configuration, so a binary in non-WASM configuration can depend on them.
 wasm_cc_binary_rule = rule(
-    implementation = _wasm_binary_impl,
+    implementation = _wasm_cc_binary_impl,
     attrs = {
         "binary": attr.label(mandatory = True, cfg = wasm_cc_transition),
         "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
@@ -62,7 +72,7 @@ wasm_cc_binary_rule = rule(
 )
 
 wasm_rust_binary_rule = rule(
-    implementation = _wasm_binary_impl,
+    implementation = _wasm_rust_binary_impl,
     attrs = {
         "binary": attr.label(mandatory = True, cfg = wasm_rust_transition),
         "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
@@ -97,6 +107,7 @@ def wasm_rust_binary(name, **kwargs):
         edition = "2018",
         crate_type = "cdylib",
         out_binary = True,
+        tags = ["manual"],
         **kwargs
     )
 
@@ -110,5 +121,5 @@ def wasm_rust_binary(name, **kwargs):
         srcs = [":precompile_" + name],
         outs = [name],
         tools = ["//test/tools/wee8_compile:wee8_compile_tool"],
-        cmd = "$(location //test/tools/wee8_compile:wee8_compile_tool) $(SRCS).runfiles $(OUTS).runfiles",
+        cmd = "$(execpath //test/tools/wee8_compile:wee8_compile_tool) $(SRCS) $(OUTS)",
     )

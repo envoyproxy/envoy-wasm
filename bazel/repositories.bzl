@@ -138,14 +138,6 @@ def _go_deps(skip_targets):
 
 def _rust_deps():
     _repository_impl("io_bazel_rules_rust")
-    _repository_impl(
-        name = "cfg_if",
-        build_file = "//bazel/external:cfg_if.BUILD",
-    )
-    _repository_impl(
-        name = "log",
-        build_file = "//bazel/external:log.BUILD",
-    )
 
 def envoy_dependencies(skip_targets = []):
     # Setup Envoy developer tools.

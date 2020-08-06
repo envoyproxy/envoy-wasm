@@ -20,7 +20,7 @@ def envoy_dependency_imports(go_version = GO_VERSION):
     rbe_toolchains_config()
     gazelle_dependencies()
     apple_rules_dependencies()
-    rust_repositories()
+    rust_repositories(version = "1.45.2", edition = "2018")
     bazel_version(name = "bazel_version")
     upb_bazel_version_repository(name = "upb_bazel_version")
     antlr_dependencies(471)
