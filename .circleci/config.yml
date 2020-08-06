@@ -42,7 +42,7 @@ jobs:
    asan:
      executor: ubuntu-build
      environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6"
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=4096 --local_cpu_resources=4"
        BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/bootstrap/wasm/... //test/extensions/common/wasm/..."
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
