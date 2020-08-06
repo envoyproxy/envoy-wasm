@@ -18,6 +18,9 @@ load(
     _envoy_select_boringssl = "envoy_select_boringssl",
     _envoy_select_google_grpc = "envoy_select_google_grpc",
     _envoy_select_hot_restart = "envoy_select_hot_restart",
+    _envoy_select_legacy_codecs_in_integration_tests = "envoy_select_legacy_codecs_in_integration_tests",
+    _envoy_select_wasm_wavm = "envoy_select_wasm_wavm",
+    _envoy_select_wasm_wavm_or = "envoy_select_wasm_wavm_or",
 )
 load(
     ":envoy_test.bzl",
@@ -168,6 +171,9 @@ def envoy_google_grpc_external_deps():
 envoy_select_boringssl = _envoy_select_boringssl
 envoy_select_google_grpc = _envoy_select_google_grpc
 envoy_select_hot_restart = _envoy_select_hot_restart
+envoy_select_legacy_codecs_in_integration_tests = _envoy_select_legacy_codecs_in_integration_tests
+envoy_select_wasm_wavm = _envoy_select_wasm_wavm
+envoy_select_wasm_wavm_or = _envoy_select_wasm_wavm_or
 
 # Binary wrappers (from envoy_binary.bzl)
 envoy_cc_binary = _envoy_cc_binary

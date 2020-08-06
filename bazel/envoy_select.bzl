@@ -31,3 +31,21 @@ def envoy_select_hot_restart(xs, repository = ""):
         repository + "//bazel:disable_hot_restart_or_apple": [],
         "//conditions:default": xs,
     })
+
+# Selects the given values depending on the WASM runtimes enabled in the current build.
+def envoy_select_wasm_wavm_or(xs1, xs2):
+    return select({
+        "@envoy//bazel:wasm_all": xs1,
+        "@envoy//bazel:wasm_wavm": xs1,
+        "//conditions:default": xs2,
+    })
+
+def envoy_select_wasm_wavm(xs):
+    return envoy_select_wasm_wavm_or(xs, [])
+
+# Select the given values if use legacy codecs in test is on in the current build.
+def envoy_select_legacy_codecs_in_integration_tests(xs, repository = ""):
+    return select({
+        repository + "//bazel:enable_legacy_codecs_in_integration_tests": xs,
+        "//conditions:default": [],
+    })

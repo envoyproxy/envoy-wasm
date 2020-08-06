@@ -1,7 +1,5 @@
 #include "extensions/access_loggers/wasm/config.h"
 
-#include <unordered_map>
-
 #include "envoy/extensions/access_loggers/wasm/v3/wasm.pb.validate.h"
 #include "envoy/registry/registry.h"
 #include "envoy/server/filter_config.h"

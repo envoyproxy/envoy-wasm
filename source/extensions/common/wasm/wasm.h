@@ -16,9 +16,9 @@
 
 #include "common/common/assert.h"
 #include "common/common/logger.h"
-#include "common/common/version.h"
 #include "common/config/datasource.h"
 #include "common/stats/symbol_table_impl.h"
+#include "common/version/version.h"
 
 #include "extensions/common/wasm/context.h"
 #include "extensions/common/wasm/wasm_extension.h"
@@ -76,6 +76,7 @@ public:
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info);
 
+  void onStatsUpdate(absl::string_view root_id, Envoy::Stats::MetricSnapshot& snapshot);
   virtual std::string buildVersion() { return BUILD_VERSION_NUMBER; }
 
   void initializeLifecycle(Server::ServerLifecycleNotifier& lifecycle_notifier);
@@ -98,12 +99,13 @@ protected:
   void initializeStats();
   // Calls into the VM.
   proxy_wasm::WasmCallVoid<3> on_resolve_dns_;
+  proxy_wasm::WasmCallVoid<2> on_stats_update_;
 
   Stats::ScopeSharedPtr scope_;
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;
   Event::PostCb server_shutdown_post_cb_;
-  std::unordered_map<uint32_t, Event::TimerPtr> timer_; // per root_id.
+  absl::flat_hash_map<uint32_t, Event::TimerPtr> timer_; // per root_id.
   TimeSource& time_source_;
 
   // Host Stats/Metrics
@@ -141,7 +143,7 @@ using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 bool createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                 const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
                 Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                Runtime::RandomGenerator& random, Api::Api& api,
+                Random::RandomGenerator& random, Api::Api& api,
                 Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& callback,

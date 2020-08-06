@@ -90,7 +90,12 @@ public:
   TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest, testing::Values("v8", "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmHttpFilterTest,
+                         testing::Values("v8",
+#if defined(ENVOY_WASM_WAVM)
+                                         "wavm",
+#endif
+                                         "null"));
 
 // Bad code in initial config.
 TEST_P(WasmHttpFilterTest, BadCode) {
@@ -707,10 +712,13 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
   EXPECT_CALL(filter(), log_(spdlog::level::warn,
                              Eq(absl::string_view("onRequestHeaders not found bad_shared_queue"))));
   EXPECT_CALL(root_context(),
-              log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady bad token not found"))));
-  EXPECT_CALL(root_context(), log_(spdlog::level::warn,
-                                   Eq(absl::string_view("onQueueReady extra data not found"))));
-  EXPECT_CALL(root_context(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))));
+              log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady bad token not found"))))
+      .Times(2);
+  EXPECT_CALL(root_context(),
+              log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady extra data not found"))))
+      .Times(2);
+  EXPECT_CALL(root_context(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))))
+      .Times(2);
   EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));

@@ -11,6 +11,7 @@
 #include "include/proxy-wasm/null.h"
 #include "include/proxy-wasm/null_plugin.h"
 #include "include/proxy-wasm/v8.h"
+#include "include/proxy-wasm/wavm.h"
 
 using ContextBase = proxy_wasm::ContextBase;
 using Word = proxy_wasm::Word;
@@ -36,11 +37,21 @@ bool EnvoyWasmVmIntegration::getNullVmFunction(absl::string_view function_name, 
           if (auto root = context_base->asRoot()) {
             static_cast<proxy_wasm::null_plugin::EnvoyRootContext*>(root)->onResolveDns(
                 token, result_size);
-          } else {
-            static_cast<proxy_wasm::null_plugin::EnvoyContext*>(context_base->asContext())
-                ->onResolveDns(token, result_size);
           }
         };
+    return true;
+  } else if (function_name == "envoy_on_stats_update" && returns_word == false &&
+             number_of_arguments == 2) {
+    *reinterpret_cast<proxy_wasm::WasmCallVoid<2>*>(
+        ptr_to_function_return) = [plugin](ContextBase* context, Word context_id,
+                                           Word result_size) {
+      proxy_wasm::SaveRestoreContext saved_context(context);
+      // Need to add a new API header available to both .wasm and null vm targets.
+      auto context_base = plugin->getContextBase(context_id);
+      if (auto root = context_base->asRoot()) {
+        static_cast<proxy_wasm::null_plugin::EnvoyRootContext*>(root)->onStatsUpdate(result_size);
+      }
+    };
     return true;
   }
   return false;
@@ -65,6 +76,15 @@ WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& s
     }
     wasm->integration() = getWasmExtension()->createEnvoyWasmVmIntegration(scope, runtime, "null");
     return wasm;
+#if defined(ENVOY_WASM_WAVM)
+  } else if (runtime == WasmRuntimeNames::get().Wavm) {
+    auto wasm = proxy_wasm::createWavmVm();
+    if (!wasm) {
+      return nullptr;
+    }
+    wasm->integration() = getWasmExtension()->createEnvoyWasmVmIntegration(scope, runtime, "null");
+    return wasm;
+#endif
   } else {
     ENVOY_LOG_TO_LOGGER(
         Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), warn,

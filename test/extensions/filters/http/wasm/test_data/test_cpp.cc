@@ -18,7 +18,7 @@ START_WASM_PLUGIN(HttpWasmTestCpp)
 
 class TestRootContext : public RootContext {
 public:
-  explicit TestRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
+  explicit TestRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
 
   bool onStart(size_t configuration_size) override;
   void onTick() override;
@@ -451,7 +451,7 @@ void TestContext::onLog() {
       static const char data[24] = {0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00,
                                     0x0c, 0x00, 0x04, 0x00, 0x06, 0x00, 0x00, 0x00,
                                     0x39, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-      if (WasmResult::Ok != setFilterState("structured_state", StringView(data, 24))) {
+      if (WasmResult::Ok != setFilterState("structured_state", std::string_view(data, 24))) {
         logWarn("setProperty(structured_state) failed");
       }
       int64_t value = 0;

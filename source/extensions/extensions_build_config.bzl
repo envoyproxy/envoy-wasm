@@ -143,6 +143,7 @@ EXTENSIONS = {
     "envoy.stat_sinks.hystrix":                         "//source/extensions/stat_sinks/hystrix:config",
     "envoy.stat_sinks.metrics_service":                 "//source/extensions/stat_sinks/metrics_service:config",
     "envoy.stat_sinks.statsd":                          "//source/extensions/stat_sinks/statsd:config",
+    "envoy.stat_sinks.wasm":                            "//source/extensions/stat_sinks/wasm:config",
 
     #
     # Thrift filters
@@ -168,6 +169,7 @@ EXTENSIONS = {
     #
 
     "envoy.transport_sockets.alts":                     "//source/extensions/transport_sockets/alts:config",
+    "envoy.transport_sockets.upstream_proxy_protocol":  "//source/extensions/transport_sockets/proxy_protocol:upstream_proxy_protocol",
     "envoy.transport_sockets.raw_buffer":               "//source/extensions/transport_sockets/raw_buffer:config",
     "envoy.transport_sockets.tap":                      "//source/extensions/transport_sockets/tap:config",
     "envoy.transport_sockets.quic":                     "//source/extensions/quic_listeners/quiche:quic_transport_socket_factory_lib",

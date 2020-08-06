@@ -86,19 +86,42 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
   }
 }
 
+#if defined(ENVOY_WASM_WAVM)
+#define B(_t)                                                                                      \
+  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                \
+                    std::string("v8"));                                                            \
+  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),              \
+                    std::string("null"));                                                          \
+  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, WavmSpeedTest_##_t, std::string(#_t),              \
+                    std::string("wavm"));
+#else
 #define B(_t)                                                                                      \
   BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                \
                     std::string("v8"));                                                            \
   BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),              \
                     std::string("null"));
+#endif
 
 B(empty)
 B(get_current_time)
-B(string)
-B(string1000)
+B(small_string)
+B(small_string1000)
+B(small_string_check_compiler)
+B(small_string_check_compiler1000)
+B(large_string)
+B(large_string1000)
 B(get_property)
 B(grpc_service)
 B(grpc_service1000)
+B(modify_metadata)
+B(modify_metadata1000)
+B(json_serialize)
+B(json_serialize_arena)
+B(json_deserialize)
+B(json_deserialize_arena)
+B(json_deserialize_empty)
+B(json_serialize_deserialize)
+B(convert_to_filter_state)
 
 } // namespace Wasm
 } // namespace Extensions

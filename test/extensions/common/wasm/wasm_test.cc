@@ -64,7 +64,12 @@ public:
   void SetUp() { clearCodeCacheForTesting(); }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest, testing::Values("v8", "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest,
+                         testing::Values("v8",
+#if defined(ENVOY_WASM_WAVM)
+                                         "wavm",
+#endif
+                                         "null"));
 TEST_P(WasmCommonTest, Logging) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
@@ -280,7 +285,7 @@ TEST_P(WasmCommonTest, IntrinsicGlobals) {
   auto vm_configuration = "globals";
   auto plugin_configuration = "";
   std::string code;
-  if (GetParam() == "v8") {
+  if (GetParam() != "null") {
     code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
         absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
   } else {
@@ -320,7 +325,7 @@ TEST_P(WasmCommonTest, Stats) {
   auto vm_configuration = "stats";
   auto plugin_configuration = "";
   std::string code;
-  if (GetParam() == "v8") {
+  if (GetParam() != "null") {
     code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
         absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
   } else {
@@ -483,7 +488,7 @@ TEST_P(WasmCommonTest, VmCache) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random;
+  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
@@ -567,7 +572,7 @@ TEST_P(WasmCommonTest, RemoteCode) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random;
+  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;
@@ -664,7 +669,7 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Runtime::MockRandomGenerator> random;
+  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;
@@ -813,11 +818,11 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   setup(code);
   setupContext();
 
-  EXPECT_CALL(context(), log_(spdlog::level::warn, Eq("TestContext::onResolveDns 7")));
-  EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onResolveDns dns 1 192.168.1.101:1001")));
-  EXPECT_CALL(context(),
-              log_(spdlog::level::info, Eq("TestContext::onResolveDns dns 2 192.168.1.102:1002")));
+  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 7")));
+  EXPECT_CALL(root_context(), log_(spdlog::level::info,
+                                   Eq("TestRootContext::onResolveDns dns 1 192.168.1.101:1001")));
+  EXPECT_CALL(root_context(), log_(spdlog::level::info,
+                                   Eq("TestRootContext::onResolveDns dns 2 192.168.1.102:1002")));
   EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
 
   uint32_t token = 7;
@@ -828,8 +833,8 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   dns_results.emplace(dns_results.end(),
                       std::make_shared<Network::Address::Ipv4Instance>("192.168.1.102", 1002),
                       std::chrono::seconds(2));
-  context_->onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
-                         std::move(dns_results));
+  root_context().onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
+                              std::move(dns_results));
 }
 
 } // namespace Wasm

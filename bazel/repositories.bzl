@@ -207,6 +207,7 @@ def envoy_dependencies(skip_targets = []):
     _repository_impl("bazel_compdb")
     _repository_impl("envoy_build_tools")
     _repository_impl("rules_cc")
+    _org_unicode_icuuc()
 
     # Unconditional, since we use this only for compiler-agnostic fuzzing utils.
     _org_llvm_releases_compiler_rt()
@@ -216,6 +217,9 @@ def envoy_dependencies(skip_targets = []):
     _go_deps(skip_targets)
     _rust_deps()
     _kafka_deps()
+
+    _org_llvm_llvm()
+    _com_github_wavm_wavm()
 
     switched_rules_by_language(
         name = "com_google_googleapis_imports",
@@ -246,6 +250,7 @@ def _boringssl_fips():
         sha256 = location["sha256"],
         genrule_cmd_file = "@envoy//bazel/external:boringssl_fips.genrule_cmd",
         build_file = "@envoy//bazel/external:boringssl_fips.BUILD",
+        patches = ["@envoy//bazel/external:boringssl_fips.patch"],
     )
 
 def _com_github_circonus_labs_libcircllhist():
@@ -388,6 +393,24 @@ def _net_zlib():
 
 def _com_google_cel_cpp():
     _repository_impl("com_google_cel_cpp")
+    _repository_impl("rules_antlr")
+    location = _get_location("antlr4_runtimes")
+    http_archive(
+        name = "antlr4_runtimes",
+        build_file_content = """
+package(default_visibility = ["//visibility:public"])
+cc_library(
+    name = "cpp",
+    srcs = glob(["runtime/Cpp/runtime/src/**/*.cpp"]),
+    hdrs = glob(["runtime/Cpp/runtime/src/**/*.h"]),
+    includes = ["runtime/Cpp/runtime/src"],
+)
+""",
+        patch_args = ["-p1"],
+        # Patches ASAN violation of initialization fiasco
+        patches = ["@envoy//bazel:antlr.patch"],
+        **location
+    )
 
     # Parser dependencies
     http_archive(
@@ -737,6 +760,8 @@ def _com_googlesource_quiche():
 def _com_googlesource_googleurl():
     _repository_impl(
         name = "com_googlesource_googleurl",
+        patches = ["@envoy//bazel/external:googleurl.patch"],
+        patch_args = ["-p1"],
     )
     native.bind(
         name = "googleurl",
@@ -868,7 +893,6 @@ def _com_github_gperftools_gperftools():
     http_archive(
         name = "com_github_gperftools_gperftools",
         build_file_content = BUILD_ALL_CONTENT,
-        patch_cmds = ["./autogen.sh"],
         **location
     )
 
@@ -878,7 +902,7 @@ def _com_github_gperftools_gperftools():
     )
 
 def _org_llvm_llvm():
-    location = REPOSITORY_LOCATIONS["org_llvm_llvm"]
+    location = _get_location("org_llvm_llvm")
     http_archive(
         name = "org_llvm_llvm",
         build_file_content = BUILD_ALL_CONTENT,
@@ -889,6 +913,18 @@ def _org_llvm_llvm():
     native.bind(
         name = "llvm",
         actual = "@envoy//bazel/foreign_cc:llvm",
+    )
+
+def _com_github_wavm_wavm():
+    location = _get_location("com_github_wavm_wavm")
+    http_archive(
+        name = "com_github_wavm_wavm",
+        build_file_content = BUILD_ALL_CONTENT,
+        **location
+    )
+    native.bind(
+        name = "wavm",
+        actual = "@envoy//bazel/foreign_cc:wavm",
     )
 
 def _kafka_deps():
@@ -927,6 +963,17 @@ filegroup(
         name = "kafka_python_client",
         build_file_content = BUILD_ALL_CONTENT,
         **_get_location("kafka_python_client")
+    )
+
+def _org_unicode_icuuc():
+    _repository_impl(
+        name = "org_unicode_icuuc",
+        build_file = "@envoy//bazel/external:icuuc.BUILD",
+        # TODO(dio): Consider patching udata when we need to embed some data.
+    )
+    native.bind(
+        name = "icuuc",
+        actual = "@org_unicode_icuuc//:common",
     )
 
 def _foreign_cc_dependencies():

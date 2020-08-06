@@ -362,7 +362,7 @@ void ConnectionHandlerImpl::ActiveTcpListener::onAcceptWorker(
   // Otherwise we let active_socket be destructed when it goes out of scope.
   if (active_socket->iter_ != active_socket->accept_filters_.end()) {
     active_socket->startTimer();
-    active_socket->moveIntoListBack(std::move(active_socket), sockets_);
+    LinkedList::moveIntoListBack(std::move(active_socket), sockets_);
   }
 }
 
@@ -378,7 +378,8 @@ void emitLogs(Network::ListenerConfig& config, StreamInfo::StreamInfo& stream_in
 void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
     Network::ConnectionSocketPtr&& socket,
     const envoy::config::core::v3::Metadata& dynamic_metadata) {
-  auto stream_info = std::make_unique<StreamInfo::StreamInfoImpl>(parent_.dispatcher_.timeSource());
+  auto stream_info = std::make_unique<StreamInfo::StreamInfoImpl>(
+      parent_.dispatcher_.timeSource(), StreamInfo::FilterState::LifeSpan::Connection);
   stream_info->setDownstreamLocalAddress(socket->localAddress());
   stream_info->setDownstreamRemoteAddress(socket->remoteAddress());
   stream_info->setDownstreamDirectRemoteAddress(socket->directRemoteAddress());
@@ -421,7 +422,7 @@ void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
   if (active_connection->connection_->state() != Network::Connection::State::Closed) {
     ENVOY_CONN_LOG(debug, "new connection", *active_connection->connection_);
     active_connection->connection_->addConnectionCallbacks(*active_connection);
-    active_connection->moveIntoList(std::move(active_connection), active_connections.connections_);
+    LinkedList::moveIntoList(std::move(active_connection), active_connections.connections_);
   }
 }
 
@@ -452,7 +453,7 @@ void ConnectionHandlerImpl::ActiveTcpListener::deferredRemoveFilterChains(
       // Since is_deleting_ is on, we need to manually remove the map value and drive the iterator.
       // Defer delete connection container to avoid race condition in destroying connection.
       parent_.dispatcher_.deferredDelete(std::move(iter->second));
-      iter = connections_by_context_.erase(iter);
+      connections_by_context_.erase(iter);
     }
   }
   is_deleting_ = was_deleting;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "envoy/api/api.h"
+#include "envoy/common/random_generator.h"
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/init/manager.h"
@@ -65,7 +66,7 @@ class RemoteAsyncDataProvider : public Event::DeferredDeletable,
 public:
   RemoteAsyncDataProvider(Upstream::ClusterManager& cm, Init::Manager& manager,
                           const envoy::config::core::v3::RemoteDataSource& source,
-                          Event::Dispatcher& dispatcher, Runtime::RandomGenerator& random,
+                          Event::Dispatcher& dispatcher, Random::RandomGenerator& random,
                           bool allow_empty, AsyncDataSourceCb&& callback);
 
   ~RemoteAsyncDataProvider() override {

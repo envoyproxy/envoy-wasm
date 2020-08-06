@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <string>
@@ -10,6 +11,7 @@
 #include "envoy/http/codes.h"
 #include "envoy/local_info/local_info.h"
 #include "envoy/network/filter.h"
+#include "envoy/stats/sink.h"
 #include "envoy/thread_local/thread_local.h"
 
 #include "common/buffer/buffer_impl.h"
@@ -200,6 +202,102 @@ void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::Resoluti
   };
   buffer_.set(std::move(buffer), s);
   wasm()->on_resolve_dns_(this, id_, token, s);
+}
+
+void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
+  proxy_wasm::DeferAfterCallActions actions(this);
+  if (wasm()->isFailed() || !wasm()->on_stats_update_) {
+    return;
+  }
+  // buffer format:
+  //  uint32 size of block of this type
+  //  uint32 type
+  //  uint32 count
+  //    uint32 length of name
+  //    name
+  //    8 byte alignment padding
+  //    8 bytes of absolute value
+  //    8 bytes of delta  (if appropropriate, e.g. for counters)
+  //  uint32 size of block of this type
+
+  const uint64_t padding = 0;
+
+  uint32_t counter_block_size = 3 * sizeof(uint32_t); // type of stat
+  uint32_t num_counters = snapshot.counters().size();
+  uint32_t counter_type = 1;
+
+  uint32_t gauge_block_size = 3 * sizeof(uint32_t); // type of stat
+  uint32_t num_gauges = snapshot.gauges().size();
+  uint32_t gauge_type = 2;
+
+  uint32_t n = 0;
+  uint64_t v = 0;
+
+  for (const auto& counter : snapshot.counters()) {
+    if (counter.counter_.get().used()) {
+      counter_block_size += sizeof(uint32_t) + counter.counter_.get().name().size();
+      counter_block_size += 24;
+    }
+  }
+
+  for (const auto& gauge : snapshot.gauges()) {
+    if (gauge.get().used()) {
+      gauge_block_size += sizeof(uint32_t) + gauge.get().name().size();
+      gauge_block_size += 16;
+    }
+  }
+
+  auto buffer = std::unique_ptr<char[]>(new char[counter_block_size + gauge_block_size]);
+  char* b = buffer.get();
+
+  memcpy(b, &counter_block_size, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  memcpy(b, &counter_type, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  memcpy(b, &num_counters, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+
+  for (const auto& counter : snapshot.counters()) {
+    if (counter.counter_.get().used()) {
+      n = counter.counter_.get().name().size();
+      memcpy(b, &n, sizeof(uint32_t));
+      b += sizeof(uint32_t);
+      memcpy(b, counter.counter_.get().name().data(), counter.counter_.get().name().size());
+      b += counter.counter_.get().name().size();
+      memcpy(b, &padding, sizeof(uint64_t)); // padding
+      b += sizeof(uint64_t);
+      v = counter.counter_.get().value();
+      memcpy(b, &v, sizeof(uint64_t));
+      b += sizeof(uint64_t);
+      v = counter.delta_;
+      memcpy(b, &v, sizeof(uint64_t));
+      b += sizeof(uint64_t);
+    }
+  }
+
+  memcpy(b, &gauge_block_size, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  memcpy(b, &gauge_type, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+  memcpy(b, &num_gauges, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+
+  for (const auto& gauge : snapshot.gauges()) {
+    if (gauge.get().used()) {
+      n = gauge.get().name().size();
+      memcpy(b, &n, sizeof(uint32_t));
+      b += sizeof(uint32_t);
+      memcpy(b, gauge.get().name().data(), gauge.get().name().size());
+      b += gauge.get().name().size();
+      memcpy(b, &padding, sizeof(uint64_t)); // padding
+      b += sizeof(uint64_t);
+      v = gauge.get().value();
+      memcpy(b, &v, sizeof(uint64_t));
+      b += sizeof(uint64_t);
+    }
+  }
+  buffer_.set(std::move(buffer), counter_block_size + gauge_block_size);
+  wasm()->on_stats_update_(this, id_, counter_block_size + gauge_block_size);
 }
 
 // Native serializer carrying over bit representation from CEL value to the extension
@@ -595,14 +693,10 @@ Pairs headerMapToPairs(const Http::HeaderMap* map) {
   }
   Pairs pairs;
   pairs.reserve(map->size());
-  map->iterate(
-      [](const Http::HeaderEntry& header, void* pairs) -> Http::HeaderMap::Iterate {
-        (static_cast<Pairs*>(pairs))
-            ->push_back(
-                std::make_pair(header.key().getStringView(), header.value().getStringView()));
-        return Http::HeaderMap::Iterate::Continue;
-      },
-      &pairs);
+  map->iterate([&pairs](const Http::HeaderEntry& header) -> Http::HeaderMap::Iterate {
+    pairs.push_back(std::make_pair(header.key().getStringView(), header.value().getStringView()));
+    return Http::HeaderMap::Iterate::Continue;
+  });
   return pairs;
 }
 
@@ -617,13 +711,10 @@ WasmResult Context::setHeaderMapPairs(WasmHeaderMapType type, const Pairs& pairs
     return WasmResult::BadArgument;
   }
   std::vector<std::string> keys;
-  map->iterate(
-      [](const Http::HeaderEntry& header, void* keys) -> Http::HeaderMap::Iterate {
-        (static_cast<std::vector<std::string>*>(keys))
-            ->push_back(std::string(header.key().getStringView()));
-        return Http::HeaderMap::Iterate::Continue;
-      },
-      &keys);
+  map->iterate([&keys](const Http::HeaderEntry& header) -> Http::HeaderMap::Iterate {
+    keys.push_back(std::string(header.key().getStringView()));
+    return Http::HeaderMap::Iterate::Continue;
+  });
   for (auto& k : keys) {
     const Http::LowerCaseString lower_key{k};
     map->remove(lower_key);
@@ -1376,16 +1467,32 @@ WasmResult Context::closeStream(WasmStreamType stream_type) {
 WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view body_text,
                                       Pairs additional_headers, uint32_t grpc_status,
                                       absl::string_view details) {
+  // "additional_headers" is a collection of string_views. These will no longer
+  // be valid when "modify_headers" is finally called below, so we must
+  // make copies of all the headers.
+  std::vector<std::pair<Http::LowerCaseString, std::string>> additional_headers_copy;
+  for (auto& p : additional_headers) {
+    const Http::LowerCaseString lower_key{std::string(p.first)};
+    additional_headers_copy.emplace_back(lower_key, std::string(p.second));
+  }
 
-  auto modify_headers = [additional_headers](Http::HeaderMap& headers) {
-    for (auto& p : additional_headers) {
-      const Http::LowerCaseString lower_key{std::string(p.first)};
-      headers.addCopy(lower_key, std::string(p.second));
+  auto modify_headers = [additional_headers_copy](Http::HeaderMap& headers) {
+    for (auto& p : additional_headers_copy) {
+      headers.addCopy(p.first, p.second);
     }
   };
+
   if (decoder_callbacks_) {
-    decoder_callbacks_->sendLocalReply(static_cast<Envoy::Http::Code>(response_code), body_text,
-                                       modify_headers, grpc_status, details);
+    // This is a bit subtle because proxy_on_delete() does call DeferAfterCallActions(),
+    // so in theory it could call this and the Context in the VM would be invalid,
+    // but because it only gets called after the connections have drained, the call to
+    // sendLocalReply() will fail. Net net, this is safe.
+    wasm()->addAfterVmCallAction([this, response_code, body_text = std::string(body_text),
+                                  modify_headers = std::move(modify_headers), grpc_status,
+                                  details = std::string(details)] {
+      decoder_callbacks_->sendLocalReply(static_cast<Envoy::Http::Code>(response_code), body_text,
+                                         modify_headers, grpc_status, details);
+    });
   }
   return WasmResult::Ok;
 }
