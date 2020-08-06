@@ -3,7 +3,7 @@ load(
     "envoy_cc_library",
     "envoy_package",
 )
-load("//bazel/wasm:wasm.bzl", "wasm_cc_binary", "wasm_rust_binary")
+load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
 
 licenses(["notice"])  # Apache 2
 
