@@ -1467,13 +1467,21 @@ WasmResult Context::closeStream(WasmStreamType stream_type) {
 WasmResult Context::sendLocalResponse(uint32_t response_code, absl::string_view body_text,
                                       Pairs additional_headers, uint32_t grpc_status,
                                       absl::string_view details) {
+  // "additional_headers" is a collection of string_views. These will no longer
+  // be valid when "modify_headers" is finally called below, so we must
+  // make copies of all the headers.
+  std::vector<std::pair<Http::LowerCaseString, std::string>> additional_headers_copy;
+  for (auto& p : additional_headers) {
+    const Http::LowerCaseString lower_key{std::string(p.first)};
+    additional_headers_copy.emplace_back(lower_key, std::string(p.second));
+  }
 
-  auto modify_headers = [additional_headers](Http::HeaderMap& headers) {
-    for (auto& p : additional_headers) {
-      const Http::LowerCaseString lower_key{std::string(p.first)};
-      headers.addCopy(lower_key, std::string(p.second));
+  auto modify_headers = [additional_headers_copy](Http::HeaderMap& headers) {
+    for (auto& p : additional_headers_copy) {
+      headers.addCopy(p.first, p.second);
     }
   };
+
   if (decoder_callbacks_) {
     // This is a bit subtle because proxy_on_delete() does call DeferAfterCallActions(),
     // so in theory it could call this and the Context in the VM would be invalid,
