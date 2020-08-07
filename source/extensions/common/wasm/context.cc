@@ -1130,14 +1130,12 @@ bool Context::validateConfiguration(absl::string_view configuration,
   if (!wasm()->validate_configuration_) {
     return true;
   }
-  configuration_ = configuration;
   plugin_ = plugin_base;
   auto result =
       wasm()
           ->validate_configuration_(this, id_, static_cast<uint32_t>(configuration.size()))
           .u64_ != 0;
   plugin_.reset();
-  configuration_ = "";
   return result;
 }
 
