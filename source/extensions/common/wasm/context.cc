@@ -1521,7 +1521,9 @@ Http::FilterDataStatus Context::decodeData(::Envoy::Buffer::Instance& data, bool
   }
   request_body_buffer_ = &data;
   end_of_stream_ = end_stream;
-  auto result = convertFilterDataStatus(onRequestBody(data.length(), end_stream));
+  const auto buffer = getBuffer(WasmBufferType::HttpRequestBody);
+  const auto buffer_size = (buffer == nullptr) ? 0 : buffer->size();
+  auto result = convertFilterDataStatus(onRequestBody(buffer_size, end_stream));
   buffering_request_body_ = false;
   switch (result) {
   case Http::FilterDataStatus::Continue:
@@ -1589,7 +1591,9 @@ Http::FilterDataStatus Context::encodeData(::Envoy::Buffer::Instance& data, bool
   }
   response_body_buffer_ = &data;
   end_of_stream_ = end_stream;
-  auto result = convertFilterDataStatus(onResponseBody(data.length(), end_stream));
+  const auto buffer = getBuffer(WasmBufferType::HttpResponseBody);
+  const auto buffer_size = (buffer == nullptr) ? 0 : buffer->size();
+  auto result = convertFilterDataStatus(onResponseBody(buffer_size, end_stream));
   buffering_response_body_ = false;
   switch (result) {
   case Http::FilterDataStatus::Continue:
