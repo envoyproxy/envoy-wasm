@@ -61,7 +61,10 @@ public:
 
 class WasmCommonTest : public testing::TestWithParam<std::string> {
 public:
-  void SetUp() { clearCodeCacheForTesting(); }
+  void SetUp() {
+    Logger::Registry::getLog(Logger::Id::wasm).set_level(spdlog::level::debug);
+    clearCodeCacheForTesting();
+  }
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest,
@@ -115,6 +118,7 @@ TEST_P(WasmCommonTest, Logging) {
         EXPECT_CALL(*root_context, log_(spdlog::level::debug, Eq("test debug logging")));
         EXPECT_CALL(*root_context, log_(spdlog::level::warn, Eq("test warn logging")));
         EXPECT_CALL(*root_context, log_(spdlog::level::err, Eq("test error logging")));
+        EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("log level is 1")));
         EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("on_done logging")));
         EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("on_delete logging")));
         return root_context;
