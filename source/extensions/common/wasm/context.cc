@@ -681,7 +681,12 @@ WasmResult Context::getHeaderMapValue(WasmHeaderMapType type, absl::string_view 
   const Http::LowerCaseString lower_key{std::string(key)};
   auto entry = map->get(lower_key);
   if (!entry) {
-    return WasmResult::NotFound;
+    if (wasm()->abiVersion() == proxy_wasm::AbiVersion::ProxyWasm_0_1_0) {
+      *value = "";
+      return WasmResult::Ok;
+    } else {
+      return WasmResult::NotFound;
+    }
   }
   *value = entry->value().getStringView();
   return WasmResult::Ok;
@@ -1125,18 +1130,22 @@ bool Context::validateConfiguration(absl::string_view configuration,
   if (!wasm()->validate_configuration_) {
     return true;
   }
-  configuration_ = configuration;
   plugin_ = plugin_base;
   auto result =
       wasm()
           ->validate_configuration_(this, id_, static_cast<uint32_t>(configuration.size()))
           .u64_ != 0;
   plugin_.reset();
-  configuration_ = "";
   return result;
 }
 
-absl::string_view Context::getConfiguration() { return configuration_; }
+absl::string_view Context::getConfiguration() {
+  if (plugin_) {
+    return plugin_->plugin_configuration_;
+  } else {
+    return wasm()->vm_configuration();
+  }
+};
 
 std::pair<uint32_t, absl::string_view> Context::getStatus() {
   return std::make_pair(status_code_, status_message_);

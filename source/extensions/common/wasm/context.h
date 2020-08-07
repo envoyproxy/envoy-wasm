@@ -411,8 +411,7 @@ protected:
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};
   Envoy::Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
 
-  // General state. Only available (non-nullptr) during the calls requiring it (e.g. onConfigure()).
-  absl::string_view configuration_;
+  // Status.
   uint32_t status_code_{0};
   absl::string_view status_message_;
 
