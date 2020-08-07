@@ -115,6 +115,9 @@ def wasm_rust_binary(name, **kwargs):
 
     wasm_rust_binary_rule(
         name = name,
-        precompile = True,
+        precompile = select({
+            "@envoy//bazel:linux_x86_64": True,
+            "//conditions:default": False,
+        }),
         binary = ":" + wasm_name,
     )
