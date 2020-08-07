@@ -32,6 +32,5 @@ clang-tidy-fixes.yaml
 .gdb_history
 clang.bazelrc
 user.bazelrc
-**/Cargo.lock
 CMakeLists.txt
 cmake-build-debug
