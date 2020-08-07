@@ -135,3 +135,7 @@ wasm_cc_binary(
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
 )
+
+# TODO(Shikugawa): Use bazel to build this with rewritten Rust test data from
+# https://github.com/istio/envoy/pull/251
+exports_files(["logging_rust.wasm"])
