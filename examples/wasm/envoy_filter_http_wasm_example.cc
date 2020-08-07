@@ -1,12 +1,13 @@
 // NOLINT(namespace-envoy)
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include "proxy_wasm_intrinsics.h"
 
 class ExampleRootContext : public RootContext {
 public:
-  explicit ExampleRootContext(uint32_t id, StringView root_id) : RootContext(id, root_id) {}
+  explicit ExampleRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
 
   bool onStart(size_t) override;
 };
