@@ -163,6 +163,7 @@ public:
            const Http::ResponseHeaderMap* response_headers,
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override;
+  uint32_t getLogLevel() override;
 
   // Network::ConnectionCallbacks
   void onEvent(Network::ConnectionEvent event) override;
