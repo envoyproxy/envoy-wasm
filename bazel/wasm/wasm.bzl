@@ -40,43 +40,45 @@ wasm_rust_transition = transition(
     ],
 )
 
-def _wasm_cc_binary_impl(ctx):
+def _wasm_binary_impl(ctx):
     out = ctx.actions.declare_file(ctx.label.name)
-    ctx.actions.run_shell(
-        command = 'cp "{}" "{}"'.format(ctx.files.binary[0].path, out.path),
-        outputs = [out],
-        inputs = ctx.files.binary,
-    )
+    if ctx.attr.precompile:
+        ctx.actions.run(
+            executable = ctx.executable._compile_tool,
+            arguments = [ctx.files.binary[0].path, out.path],
+            outputs = [out],
+            inputs = ctx.files.binary,
+        )
+    else:
+        ctx.actions.run(
+            executable = "cp",
+            arguments = [ctx.files.binary[0].path, out.path],
+            outputs = [out],
+            inputs = ctx.files.binary,
+        )
 
-    return [DefaultInfo(runfiles = ctx.runfiles([out]))]
+    return [DefaultInfo(files = depset([out]), runfiles = ctx.runfiles([out]))]
 
-def _wasm_rust_binary_impl(ctx):
-    out = ctx.actions.declare_file(ctx.label.name)
-    ctx.actions.run_shell(
-        command = 'cp "{}" "{}"'.format(ctx.files.binary[0].path, out.path),
-        outputs = [out],
-        inputs = ctx.files.binary,
-    )
-
-    return [DefaultInfo(files = depset([out]))]
+def _wasm_attrs(transition):
+    return {
+        "binary": attr.label(mandatory = True, cfg = transition),
+        "precompile": attr.bool(default = False),
+        # This is deliberately in target configuration to avoid compiling v8 twice.
+        "_compile_tool": attr.label(default = "@envoy//test/tools/wee8_compile:wee8_compile_tool", executable = True, cfg = "target"),
+        "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
+    }
 
 # WASM binary rule implementation.
 # This copies the binary specified in binary attribute in WASM configuration to
 # target configuration, so a binary in non-WASM configuration can depend on them.
 wasm_cc_binary_rule = rule(
-    implementation = _wasm_cc_binary_impl,
-    attrs = {
-        "binary": attr.label(mandatory = True, cfg = wasm_cc_transition),
-        "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
-    },
+    implementation = _wasm_binary_impl,
+    attrs = _wasm_attrs(wasm_cc_transition),
 )
 
 wasm_rust_binary_rule = rule(
-    implementation = _wasm_rust_binary_impl,
-    attrs = {
-        "binary": attr.label(mandatory = True, cfg = wasm_rust_transition),
-        "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
-    },
+    implementation = _wasm_binary_impl,
+    attrs = _wasm_attrs(wasm_rust_transition),
 )
 
 def wasm_cc_binary(name, **kwargs):
@@ -112,14 +114,7 @@ def wasm_rust_binary(name, **kwargs):
     )
 
     wasm_rust_binary_rule(
-        name = "precompile_" + name,
-        binary = ":" + wasm_name,
-    )
-
-    native.genrule(
         name = name,
-        srcs = [":precompile_" + name],
-        outs = [name],
-        tools = ["//test/tools/wee8_compile:wee8_compile_tool"],
-        cmd = "$(execpath //test/tools/wee8_compile:wee8_compile_tool) $(SRCS) $(OUTS)",
+        precompile = True,
+        binary = ":" + wasm_name,
     )
