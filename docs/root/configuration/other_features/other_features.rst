@@ -6,3 +6,4 @@ Other features
 
   rate_limit
   wasm
+  wasm_stat_sink

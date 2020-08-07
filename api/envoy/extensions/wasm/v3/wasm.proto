@@ -18,7 +18,6 @@ option (udpa.annotations.file_status).package_version_status = ACTIVE;
 // [#protodoc-title: Wasm]
 // [#extension: envoy.bootstrap.wasm]
 
-// [[#not-implemented-hide:]
 // Configuration for a Wasm VM.
 // [#next-free-field: 7]
 message VmConfig {
@@ -49,7 +48,6 @@ message VmConfig {
   bool nack_on_code_cache_miss = 6;
 }
 
-// [[#not-implemented-hide:]
 // Base Configuration for Wasm Plugins e.g. filters and services.
 // [#next-free-field: 6]
 message PluginConfig {
