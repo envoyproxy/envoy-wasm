@@ -31,15 +31,13 @@ function setup_clang_toolchain() {
   ENVOY_STDLIB="${ENVOY_STDLIB:-libc++}"
   if [[ -z "${ENVOY_RBE}" ]]; then
     if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
-      # Temporary, prevent to build precompiled WASM test which is required to build rules_rust.
-      # It will be failed to build with libc++.
-      export BAZEL_BUILD_OPTIONS="--config=libc++ --test_tag_filters=-precompile_wasm ${BAZEL_BUILD_OPTIONS}"
+      export BAZEL_BUILD_OPTIONS="--config=libc++ ${BAZEL_BUILD_OPTIONS}"
     else
       export BAZEL_BUILD_OPTIONS="--config=clang ${BAZEL_BUILD_OPTIONS}"
     fi
   else
     if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
-      export BAZEL_BUILD_OPTIONS="--config=remote-clang-libc++ --test_tag_filters=-precompile_wasm ${BAZEL_BUILD_OPTIONS}"
+      export BAZEL_BUILD_OPTIONS="--config=remote-clang-libc++ ${BAZEL_BUILD_OPTIONS}"
     else
       export BAZEL_BUILD_OPTIONS="--config=remote-clang ${BAZEL_BUILD_OPTIONS}"
     fi

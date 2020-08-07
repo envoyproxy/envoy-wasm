@@ -17,7 +17,6 @@ envoy_cc_test(
     tags = [
         # wasm (wee v8 etc) will not compile on Windows
         "skip_on_windows",
-        "precompile_wasm",
     ],
     deps = [
         "//source/extensions/common/wasm:wasm_lib",
