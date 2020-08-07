@@ -1,14 +1,13 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
-
-licenses(["notice"])  # Apache 2
-
-package(default_visibility = ["//visibility:public"])
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_select_wasm_wavm",
     "envoy_select_wasm_wavm_or",
 )
+
+licenses(["notice"])  # Apache 2
+
+package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "include",

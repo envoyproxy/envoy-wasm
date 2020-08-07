@@ -3,12 +3,12 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_proto_library")
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
-    "envoy_package",
+    "envoy_extension_package",
 )
 
 licenses(["notice"])  # Apache 2
 
-envoy_package()
+envoy_extension_package()
 
 envoy_cc_library(
     name = "envoy_null_vm_wasm_api",
