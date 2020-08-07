@@ -16,7 +16,7 @@ envoy_cc_library(
     hdrs = [
         "config.h",
     ],
-    # security_posture = "unknown", docs requires it, bazel fails if it is included.
+    security_posture = "unknown",
     deps = [
         "//include/envoy/registry",
         "//include/envoy/server:bootstrap_extension_config_interface",
