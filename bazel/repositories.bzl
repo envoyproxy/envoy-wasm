@@ -19,6 +19,9 @@ WINDOWS_SKIP_TARGETS = [
 # archives, e.g. cares.
 BUILD_ALL_CONTENT = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
+def _build_all_content(exclude = []):
+    return """filegroup(name = "all", srcs = glob(["**"], exclude={}), visibility = ["//visibility:public"])""".format(repr(exclude))
+
 # Method for verifying content of the DEPENDENCY_REPOSITORIES defined in bazel/repository_locations.bzl
 # Verification is here so that bazel/repository_locations.bzl can be loaded into other tools written in Python,
 # and as such needs to be free of bazel specific constructs.
@@ -211,6 +214,9 @@ def envoy_dependencies(skip_targets = []):
     _go_deps(skip_targets)
     _kafka_deps()
 
+    _org_llvm_llvm()
+    _com_github_wavm_wavm()
+
     switched_rules_by_language(
         name = "com_google_googleapis_imports",
         cc = True,
@@ -400,6 +406,33 @@ cc_library(
         # Patches ASAN violation of initialization fiasco
         patches = ["@envoy//bazel:antlr.patch"],
         **location
+    )
+
+    # Parser dependencies
+    http_archive(
+        name = "rules_antlr",
+        sha256 = "7249d1569293d9b239e23c65f6b4c81a07da921738bde0dfeb231ed98be40429",
+        strip_prefix = "rules_antlr-3cc2f9502a54ceb7b79b37383316b23c4da66f9a",
+        urls = ["https://github.com/marcohu/rules_antlr/archive/3cc2f9502a54ceb7b79b37383316b23c4da66f9a.tar.gz"],
+    )
+
+    http_archive(
+        name = "antlr4_runtimes",
+        build_file_content = """
+package(default_visibility = ["//visibility:public"])
+cc_library(
+    name = "cpp",
+    srcs = glob(["runtime/Cpp/runtime/src/**/*.cpp"]),
+    hdrs = glob(["runtime/Cpp/runtime/src/**/*.h"]),
+    includes = ["runtime/Cpp/runtime/src"],
+)
+""",
+        sha256 = "4d0714f441333a63e50031c9e8e4890c78f3d21e053d46416949803e122a6574",
+        patch_args = ["-p1"],
+        # Patches ASAN violation of initialization fiasco
+        patches = ["@envoy//bazel:antlr.patch"],
+        strip_prefix = "antlr4-4.7.1",
+        urls = ["https://github.com/antlr/antlr4/archive/4.7.1.tar.gz"],
     )
 
 def _com_github_nghttp2_nghttp2():
@@ -804,7 +837,10 @@ def _proxy_wasm_cpp_host():
 def _emscripten_toolchain():
     _repository_impl(
         name = "emscripten_toolchain",
-        build_file_content = BUILD_ALL_CONTENT,
+        build_file_content = _build_all_content(exclude = [
+            "upstream/emscripten/cache/is_vanilla.txt",
+            ".emscripten_sanity",
+        ]),
         patch_cmds = REPOSITORY_LOCATIONS["emscripten_toolchain"]["patch_cmds"],
     )
 
@@ -859,6 +895,32 @@ def _com_github_gperftools_gperftools():
     native.bind(
         name = "gperftools",
         actual = "@envoy//bazel/foreign_cc:gperftools",
+    )
+
+def _org_llvm_llvm():
+    location = _get_location("org_llvm_llvm")
+    http_archive(
+        name = "org_llvm_llvm",
+        build_file_content = BUILD_ALL_CONTENT,
+        patch_args = ["-p1"],
+        patches = ["@envoy//bazel/foreign_cc:llvm.patch"],
+        **location
+    )
+    native.bind(
+        name = "llvm",
+        actual = "@envoy//bazel/foreign_cc:llvm",
+    )
+
+def _com_github_wavm_wavm():
+    location = _get_location("com_github_wavm_wavm")
+    http_archive(
+        name = "com_github_wavm_wavm",
+        build_file_content = BUILD_ALL_CONTENT,
+        **location
+    )
+    native.bind(
+        name = "wavm",
+        actual = "@envoy//bazel/foreign_cc:wavm",
     )
 
 def _kafka_deps():

@@ -18,14 +18,16 @@ import paths
 EXCLUDED_PREFIXES = ("./generated/", "./thirdparty/", "./build", "./.git/", "./bazel-", "./.cache",
                      "./source/extensions/extensions_build_config.bzl",
                      "./bazel/toolchains/configs/", "./tools/testdata/check_format/",
-                     "./tools/pyformat/", "./third_party/")
+                     "./tools/pyformat/", "./third_party/", "./api/wasm/",
+                     "./test/extensions/filters/http/wasm/test_data")
 SUFFIXES = ("BUILD", "WORKSPACE", ".bzl", ".cc", ".h", ".java", ".m", ".md", ".mm", ".proto",
             ".rst")
 DOCS_SUFFIX = (".md", ".rst")
 PROTO_SUFFIX = (".proto")
 
 # Files in these paths can make reference to protobuf stuff directly
-GOOGLE_PROTOBUF_ALLOWLIST = ("ci/prebuilt", "source/common/protobuf", "api/test")
+GOOGLE_PROTOBUF_ALLOWLIST = ("ci/prebuilt", "source/common/protobuf", "api/test",
+                             "test/extensions/bootstrap/wasm/test_data")
 REPOSITORIES_BZL = "bazel/repositories.bzl"
 
 # Files matching these exact names can reference real-world time. These include the class
@@ -59,10 +61,12 @@ SERIALIZE_AS_STRING_ALLOWLIST = (
     "./test/common/grpc/codec_test.cc",
     "./test/common/grpc/codec_fuzz_test.cc",
     "./test/extensions/filters/http/common/fuzz/uber_filter.h",
+    "./test/extensions/bootstrap/wasm/test_data/speed_cpp.cc",
 )
 
 # Files in these paths can use Protobuf::util::JsonStringToMessage
-JSON_STRING_TO_MESSAGE_ALLOWLIST = ("./source/common/protobuf/utility.cc")
+JSON_STRING_TO_MESSAGE_ALLOWLIST = ("./source/common/protobuf/utility.cc",
+                                    "./test/extensions/bootstrap/wasm/test_data/speed_cpp.cc")
 
 # Histogram names which are allowed to be suffixed with the unit symbol, all of the pre-existing
 # ones were grandfathered as part of PR #8484 for backwards compatibility.
@@ -406,6 +410,13 @@ def isWorkspaceFile(file_path):
 
 def isBuildFixerExcludedFile(file_path):
   for excluded_path in build_fixer_check_excluded_paths:
+    if file_path.startswith(excluded_path):
+      return True
+  return False
+
+
+def isBazelToolsCheckExcludedFile(file_path):
+  for excluded_path in bazel_tools_check_excluded_paths:
     if file_path.startswith(excluded_path):
       return True
   return False
@@ -764,8 +775,8 @@ def checkSourceLine(line, file_path, reportError):
 
 
 def checkBuildLine(line, file_path, reportError):
-  if "@bazel_tools" in line and not (isSkylarkFile(file_path) or file_path.startswith("./bazel/") or
-                                     "python/runfiles" in line):
+  if not isBazelToolsCheckExcludedFile(file_path) and "@bazel_tools" in line and not (
+      isSkylarkFile(file_path) or file_path.startswith("./bazel/") or "python/runfiles" in line):
     reportError("unexpected @bazel_tools reference, please indirect via a definition in //bazel")
   if not allowlistedForProtobufDeps(file_path) and '"protobuf"' in line:
     reportError("unexpected direct external dependency on protobuf, use "
@@ -1051,6 +1062,11 @@ if __name__ == "__main__":
                       nargs="+",
                       default=[],
                       help="exclude paths from envoy_build_fixer check.")
+  parser.add_argument("--bazel_tools_check_excluded_paths",
+                      type=str,
+                      nargs="+",
+                      default=[],
+                      help="exclude paths from bazel_tools check.")
   parser.add_argument("--include_dir_order",
                       type=str,
                       default=",".join(common.includeDirOrder()),
@@ -1071,6 +1087,9 @@ if __name__ == "__main__":
       "./bazel/toolchains/",
       "./bazel/BUILD",
       "./tools/clang_tools",
+  ]
+  bazel_tools_check_excluded_paths = args.bazel_tools_check_excluded_paths + [
+      "./test/extensions/common/wasm/test_data/",
   ]
   include_dir_order = args.include_dir_order
   if args.add_excluded_prefixes:

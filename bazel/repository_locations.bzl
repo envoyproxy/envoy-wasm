@@ -386,6 +386,20 @@ DEPENDENCY_REPOSITORIES = dict(
         urls = ["https://files.pythonhosted.org/packages/dd/bf/4138e7bfb757de47d1f4b6994648ec67a51efe58fa907c1e11e350cddfca/six-1.12.0.tar.gz"],
         use_category = ["other"],
     ),
+    org_llvm_llvm = dict(
+        sha256 = "df83a44b3a9a71029049ec101fb0077ecbbdf5fe41e395215025779099a98fdf",
+        strip_prefix = "llvm-10.0.0.src",
+        urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/llvm-10.0.0.src.tar.xz"],
+        use_category = ["dataplane"],
+        cpe = "N/A",
+    ),
+    com_github_wavm_wavm = dict(
+        sha256 = "cc3fcaf05d57010c9cf8eb920234679dede6c780137b55001fd34e4d14806f7c",
+        strip_prefix = "WAVM-e8155f1f3af88b4d08802716a7054950ef18d827",
+        urls = ["https://github.com/WAVM/WAVM/archive/e8155f1f3af88b4d08802716a7054950ef18d827.tar.gz"],
+        use_category = ["dataplane"],
+        cpe = "N/A",
+    ),
     io_opencensus_cpp = dict(
         sha256 = "12ff300fa804f97bd07e2ff071d969e09d5f3d7bbffeac438c725fa52a51a212",
         strip_prefix = "opencensus-cpp-7877337633466358ed680f9b26967da5b310d7aa",
@@ -404,8 +418,8 @@ DEPENDENCY_REPOSITORIES = dict(
     com_googlesource_chromium_v8 = dict(
         # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
         # and contains complete checkout of V8 with all dependencies necessary to build wee8.
-        sha256 = "cc6f5357cd10922bfcf667bd882624ad313e21b009b919ce00f322f390012476",
-        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-8.3.110.9.tar.gz"],
+        sha256 = "b82e7fba251825f836b8aca68545fef46726130afa7bb590478f384f847fee0f",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-8.4.371.19.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
@@ -439,6 +453,9 @@ DEPENDENCY_REPOSITORIES = dict(
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
+    # TODO(shikugawa): replace this with release tag after released package which includes
+    # disable pthread when build with emscripten. We use hash temporary to enable our changes to
+    # build envoy-wasm library with emscripten. https://github.com/google/re2/pull/263
     com_googlesource_code_re2 = dict(
         sha256 = "2e9489a31ae007c81e90e8ec8a15d62d58a9c18d4fd1603f6441ef248556b41f",
         strip_prefix = "re2-2020-07-06",
@@ -492,27 +509,27 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "cpe:2.3:a:icu-project:international_components_for_unicode",
     ),
     proxy_wasm_cpp_sdk = dict(
-        sha256 = "7d9e1f2e299215ed3e5fa8c8149740872b1100cfe3230fc639f967d9dcfd812e",
-        strip_prefix = "proxy-wasm-cpp-sdk-5cec30b448975e1fd3f4117311f0957309df5cb0",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/5cec30b448975e1fd3f4117311f0957309df5cb0.tar.gz"],
+        sha256 = "3276701b049328ce11cfb87d524ec0216b80d73a99787017a75828778301f31b",
+        strip_prefix = "proxy-wasm-cpp-sdk-68920464571265b237e002bfd23f91d0f9328975",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/68920464571265b237e002bfd23f91d0f9328975.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
     proxy_wasm_cpp_host = dict(
-        sha256 = "494d3f81156b92bac640c26000497fbf3a7b1bc35f9789594280450c6e5d8129",
-        strip_prefix = "proxy-wasm-cpp-host-928db4d79ec7b90aea3ad13ea5df36dc60c9c31d",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/928db4d79ec7b90aea3ad13ea5df36dc60c9c31d.tar.gz"],
+        sha256 = "1cc5334ce433507371d7ccb58c87e07ca6bd1582a75a5dafe02a89a54106db98",
+        strip_prefix = "proxy-wasm-cpp-host-4598dc3d0d3b731be1dcccb400732c72bebb1380",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/4598dc3d0d3b731be1dcccb400732c72bebb1380.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
     emscripten_toolchain = dict(
-        sha256 = "2bdbee6947e32ad1e03cd075b48fda493ab16157b2b0225b445222cd528e1843",
+        sha256 = "4ac0f1f3de8b3f1373d435cd7e58bd94de4146e751f099732167749a229b443b",
         patch_cmds = [
-            "./emsdk install 1.39.19-upstream",
-            "./emsdk activate --embedded 1.39.19-upstream",
+            "./emsdk install 1.39.6-upstream",
+            "./emsdk activate --embedded 1.39.6-upstream",
         ],
-        strip_prefix = "emsdk-dec8a63594753fe5f4ad3b47850bf64d66c14a4e",
-        urls = ["https://github.com/emscripten-core/emsdk/archive/dec8a63594753fe5f4ad3b47850bf64d66c14a4e.tar.gz"],
+        strip_prefix = "emsdk-1.39.6",
+        urls = ["https://github.com/emscripten-core/emsdk/archive/1.39.6.tar.gz"],
         use_category = ["build"],
     ),
     rules_antlr = dict(

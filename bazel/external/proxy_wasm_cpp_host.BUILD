@@ -1,4 +1,9 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load(
+    "@envoy//bazel:envoy_build_system.bzl",
+    "envoy_select_wasm_wavm",
+    "envoy_select_wasm_wavm_or",
+)
 
 licenses(["notice"])  # Apache 2
 
@@ -14,14 +19,26 @@ cc_library(
 
 cc_library(
     name = "lib",
-    srcs = glob(
-        [
-            "src/**/*.h",
-            "src/**/*.cc",
-        ],
-        exclude = ["src/**/wavm*"],
+    srcs = envoy_select_wasm_wavm_or(
+        glob(
+            [
+                "src/**/*.h",
+                "src/**/*.cc",
+            ],
+        ),
+        glob(
+            [
+                "src/**/*.h",
+                "src/**/*.cc",
+            ],
+            exclude = ["src/**/wavm*"],
+        ),
     ),
-    copts = ["-std=c++14"],
+    copts = envoy_select_wasm_wavm([
+        '-DWAVM_API=""',
+        "-Wno-non-virtual-dtor",
+        "-Wno-old-style-cast",
+    ]),
     deps = [
         ":include",
         "//external:abseil_flat_hash_map",
@@ -33,5 +50,7 @@ cc_library(
         "//external:zlib",
         "@proxy_wasm_cpp_sdk//:api_lib",
         "@proxy_wasm_cpp_sdk//:common_lib",
-    ],
+    ] + envoy_select_wasm_wavm([
+        "@envoy//bazel/foreign_cc:wavm",
+    ]),
 )

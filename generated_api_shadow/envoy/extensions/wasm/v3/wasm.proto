@@ -34,10 +34,7 @@ message VmConfig {
   // The Wasm code that Envoy will execute.
   config.core.v3.AsyncDataSource code = 3;
 
-  // The Wasm configuration used in initialization of a new VM
-  // (proxy_on_start). `google.protobuf.Struct` is serialized as JSON before
-  // passing it to the plugin. `google.protobuf.BytesValue` and
-  // `google.protobuf.StringValue` are passed directly without the wrapper.
+  // The Wasm configuration used in initialization of a new VM (proxy_on_start).
   google.protobuf.Any configuration = 4;
 
   // Allow the wasm file to include pre-compiled code on VMs which support it.
@@ -66,9 +63,9 @@ message PluginConfig {
   string root_id = 2;
 
   // Configuration for finding or starting VM.
-  oneof vm_config {
-    VmConfig inline_vm_config = 3;
-    // In the future add referential VM configurations.
+  oneof vm {
+    VmConfig vm_config = 3;
+    // TODO: add referential VM configurations.
   }
 
   // Filter/service configuration used to configure or reconfigure a plugin
@@ -86,7 +83,6 @@ message PluginConfig {
   bool fail_open = 5;
 }
 
-// [[#not-implemented-hide:]
 // WasmService is configured as a built-in *envoy.wasm_service* :ref:`WasmService
 // <config_wasm_service>` This opaque configuration will be used to create a Wasm Service.
 message WasmService {
