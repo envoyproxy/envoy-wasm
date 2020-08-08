@@ -1,0 +1,18 @@
+[package]
+description = "Proxy-Wasm shared queue test"
+name = "shared_queue_rust"
+version = "0.0.1"
+authors = ["Piotr Sikora <piotrsikora@google.com>"]
+edition = "2018"
+
+[dependencies]
+proxy-wasm = "0.1"
+log = "0.4"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+opt-level = 3
+panic = "abort"

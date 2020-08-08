@@ -2,14 +2,14 @@ load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_extension",
     "envoy_cc_library",
-    "envoy_package",
+    "envoy_extension_package",
 )
 
 licenses(["notice"])  # Apache 2
 
-# Public docs: docs/root/configuration/http_filters/wasm_filter.rst
+envoy_extension_package()
 
-envoy_package()
+# Public docs: docs/root/configuration/http_filters/wasm_filter.rst
 
 envoy_cc_library(
     name = "wasm_filter_lib",
