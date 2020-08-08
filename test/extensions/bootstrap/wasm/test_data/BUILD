@@ -9,6 +9,11 @@ licenses(["notice"])  # Apache 2
 
 envoy_package()
 
+filegroup(
+    name = "modules",
+    srcs = glob(["*.wasm"]),
+)
+
 envoy_cc_library(
     name = "speed_cpp_plugin",
     srcs = [
@@ -135,7 +140,3 @@ wasm_cc_binary(
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
 )
-
-# TODO(Shikugawa): Use bazel to build this with rewritten Rust test data from
-# https://github.com/istio/envoy/pull/251
-exports_files(["logging_rust.wasm"])
