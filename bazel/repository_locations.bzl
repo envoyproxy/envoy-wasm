@@ -529,6 +529,14 @@ DEPENDENCY_REPOSITORIES = dict(
         urls = ["https://github.com/emscripten-core/emsdk/archive/1.39.6.tar.gz"],
         use_category = ["build"],
     ),
+    io_bazel_rules_rust = dict(
+        sha256 = "484a2b2b67cd2d1fa1054876de7f8d291c4b203fd256bc8cbea14d749bb864ce",
+        # Last commit where "out_binary = True" works.
+        # See: https://github.com/bazelbuild/rules_rust/issues/386
+        strip_prefix = "rules_rust-fda9a1ce6482973adfda022cadbfa6b300e269c3",
+        urls = ["https://github.com/bazelbuild/rules_rust/archive/fda9a1ce6482973adfda022cadbfa6b300e269c3.tar.gz"],
+        use_category = ["test"],
+    ),
     rules_antlr = dict(
         sha256 = "7249d1569293d9b239e23c65f6b4c81a07da921738bde0dfeb231ed98be40429",
         strip_prefix = "rules_antlr-3cc2f9502a54ceb7b79b37383316b23c4da66f9a",
