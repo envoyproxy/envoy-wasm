@@ -65,6 +65,19 @@ jobs:
            path: /build/envoy/generated
            destination: /
 
+   compile_time_options:
+     executor: ubuntu-build
+     environment:
+       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6 --define wasm=enabled" # v8 + WAVM
+       BAZEL_TEST_TARGETS: "//test/extensions/access_loggers/wasm/... //test/extensions/filters/http/wasm/... //test/extensions/filters/network/wasm/... //test/extensions/bootstrap/wasm/... //test/extensions/common/wasm/..."
+     steps:
+       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+       - checkout
+       - run: ci/do_circle_ci.sh bazel.compile_time_options ${BAZEL_TEST_TARGETS}
+       - store_artifacts:
+           path: /build/envoy/generated
+           destination: /
+
    coverage:
      executor: ubuntu-build
      environment:
@@ -124,6 +137,7 @@ workflows:
       - all_tests
       - asan
       - tsan
+      - compile_time_options
       - coverage
       - format
       - macos
