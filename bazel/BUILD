@@ -248,6 +248,7 @@ config_setting(
     values = {"define": "quiche=enabled"},
 )
 
+# TODO: convert WAVM VM support to an extension (https://github.com/envoyproxy/envoy/issues/12574)
 config_setting(
     name = "wasm_all",
     values = {"define": "wasm=enabled"},
