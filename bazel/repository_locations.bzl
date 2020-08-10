@@ -519,6 +519,7 @@ DEPENDENCY_REPOSITORIES = dict(
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
+    # TODO: upgrade to the latest version (1.41 currently fails tests)
     emscripten_toolchain = dict(
         sha256 = "4ac0f1f3de8b3f1373d435cd7e58bd94de4146e751f099732167749a229b443b",
         patch_cmds = [
