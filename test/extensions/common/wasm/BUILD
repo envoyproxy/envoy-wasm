@@ -12,10 +12,12 @@ envoy_cc_test(
     name = "wasm_vm_test",
     srcs = ["wasm_vm_test.cc"],
     data = [
-        "//test/extensions/common/wasm/test_data:modules",
+        "//test/extensions/common/wasm/test_data:test_rust.wasm",
     ],
-    # wasm (wee v8 etc) will not compile on Windows
-    tags = ["skip_on_windows"],
+    tags = [
+        # wasm (wee v8 etc) will not compile on Windows
+        "skip_on_windows",
+    ],
     deps = [
         "//source/extensions/common/wasm:wasm_lib",
         "//test/test_common:environment_lib",

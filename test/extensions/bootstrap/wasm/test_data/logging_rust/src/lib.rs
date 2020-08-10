@@ -1,49 +1,49 @@
-// Include exports from Proxy-WASM at link-time.
-#[allow(unused_imports)]
-use proxy_wasm;
-
-// Required Proxy-Wasm ABI version.
-#[no_mangle]
-pub fn proxy_abi_version_0_1_0() {}
-
 use log::{debug, error, info, trace, warn};
+use proxy_wasm::traits::{Context, RootContext};
+use proxy_wasm::types::LogLevel;
 
-extern "C" {
-    fn proxy_done() -> u32;
+#[no_mangle]
+pub fn _start() {
+    proxy_wasm::set_log_level(LogLevel::Trace);
+    proxy_wasm::set_root_context(|_| -> Box<dyn RootContext> { Box::new(TestRoot) });
 }
 
-#[no_mangle]
-pub fn proxy_on_context_create(_context_id: u32, _parent_context_id_: u32) {}
+struct TestRoot;
 
-#[no_mangle]
-pub fn proxy_on_configure(_context_id: u32, _plugin_configuration_size: u32) -> u32 {
-    trace!("test trace logging");
-    debug!("test debug logging");
-    error!("test error logging");
-    warn!("warn configure-test");
-    1
-}
+impl RootContext for TestRoot {
+    fn on_vm_start(&mut self, _: usize) -> bool {
+        true
+    }
 
-#[no_mangle]
-pub fn proxy_on_vm_start(_context_id: u32, _vm_configuration_size: u32) -> u32 {
-    1
-}
+    fn on_configure(&mut self, _: usize) -> bool {
+        trace!("test trace logging");
+        debug!("test debug logging");
+        error!("test error logging");
+        if let Some(value) = self.get_configuration() {
+            warn!("warn {}", String::from_utf8(value).unwrap());
+        }
+        true
+    }
 
-#[no_mangle]
-pub fn proxy_on_tick(_context_id: u32) {
-    info!("test tick logging");
-    unsafe {
-        proxy_done();
+    fn on_tick(&mut self) {
+        if let Some(value) = self.get_property(vec!["plugin_root_id"]) {
+            info!("test tick logging{}", String::from_utf8(value).unwrap());
+        } else {
+            info!("test tick logging");
+        }
+        self.done();
     }
 }
 
-#[no_mangle]
-pub fn proxy_on_done(_context_id: u32) -> u32 {
-    info!("onDone logging");
-    0
+impl Context for TestRoot {
+    fn on_done(&mut self) -> bool {
+        info!("onDone logging");
+        false
+    }
 }
 
-#[no_mangle]
-pub fn proxy_on_delete(_context_id: u32) {
-    info!("onDelete logging");
+impl Drop for TestRoot {
+    fn drop(&mut self) {
+        info!("onDelete logging");
+    }
 }

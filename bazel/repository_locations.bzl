@@ -513,9 +513,9 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "N/A",
     ),
     proxy_wasm_cpp_host = dict(
-        sha256 = "1cc5334ce433507371d7ccb58c87e07ca6bd1582a75a5dafe02a89a54106db98",
-        strip_prefix = "proxy-wasm-cpp-host-4598dc3d0d3b731be1dcccb400732c72bebb1380",
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/4598dc3d0d3b731be1dcccb400732c72bebb1380.tar.gz"],
+        sha256 = "6ef2118c03a6f73216561ab079aa987f54c9866c124e21e5b3c0d1fe22d5eb3e",
+        strip_prefix = "proxy-wasm-cpp-host-073b92a35de16f920881965685011b795fe540da",
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/073b92a35de16f920881965685011b795fe540da.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
@@ -528,6 +528,14 @@ DEPENDENCY_REPOSITORIES = dict(
         strip_prefix = "emsdk-1.39.6",
         urls = ["https://github.com/emscripten-core/emsdk/archive/1.39.6.tar.gz"],
         use_category = ["build"],
+    ),
+    io_bazel_rules_rust = dict(
+        sha256 = "484a2b2b67cd2d1fa1054876de7f8d291c4b203fd256bc8cbea14d749bb864ce",
+        # Last commit where "out_binary = True" works.
+        # See: https://github.com/bazelbuild/rules_rust/issues/386
+        strip_prefix = "rules_rust-fda9a1ce6482973adfda022cadbfa6b300e269c3",
+        urls = ["https://github.com/bazelbuild/rules_rust/archive/fda9a1ce6482973adfda022cadbfa6b300e269c3.tar.gz"],
+        use_category = ["test"],
     ),
     rules_antlr = dict(
         sha256 = "7249d1569293d9b239e23c65f6b4c81a07da921738bde0dfeb231ed98be40429",

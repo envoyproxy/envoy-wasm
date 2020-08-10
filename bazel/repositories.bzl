@@ -136,6 +136,9 @@ def _go_deps(skip_targets):
         )
         _repository_impl("bazel_gazelle")
 
+def _rust_deps():
+    _repository_impl("io_bazel_rules_rust")
+
 def envoy_dependencies(skip_targets = []):
     # Setup Envoy developer tools.
     envoy_dev_binding()
@@ -212,6 +215,7 @@ def envoy_dependencies(skip_targets = []):
     _python_deps()
     _cc_deps()
     _go_deps(skip_targets)
+    _rust_deps()
     _kafka_deps()
 
     _org_llvm_llvm()
