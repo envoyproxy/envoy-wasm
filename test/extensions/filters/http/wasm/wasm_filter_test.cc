@@ -142,7 +142,7 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
 
 TEST_P(WasmHttpFilterTest, HeadersStopAndContinue) {
   if (std::get<1>(GetParam()) == "rust") {
-    // TODO(PiotrSikora): This handoff is not currently possible in the Rust SDK.
+    // TODO(PiotrSikora): This hand-off is not currently possible in the Rust SDK.
     return;
   }
   setupTest("", "headers");
@@ -163,7 +163,7 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndContinue) {
 
 TEST_P(WasmHttpFilterTest, HeadersStopAndEndStream) {
   if (std::get<1>(GetParam()) == "rust") {
-    // TODO(PiotrSikora): This handoff is not currently possible in the Rust SDK.
+    // TODO(PiotrSikora): This hand-off is not currently possible in the Rust SDK.
     return;
   }
   setupTest("", "headers");
@@ -185,7 +185,7 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndEndStream) {
 
 TEST_P(WasmHttpFilterTest, HeadersStopAndBuffer) {
   if (std::get<1>(GetParam()) == "rust") {
-    // TODO(PiotrSikora): This handoff is not currently possible in the Rust SDK.
+    // TODO(PiotrSikora): This hand-off is not currently possible in the Rust SDK.
     return;
   }
   setupTest("", "headers");
@@ -207,7 +207,7 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndBuffer) {
 
 TEST_P(WasmHttpFilterTest, HeadersStopAndWatermark) {
   if (std::get<1>(GetParam()) == "rust") {
-    // TODO(PiotrSikora): This handoff is not currently possible in the Rust SDK.
+    // TODO(PiotrSikora): This hand-off is not currently possible in the Rust SDK.
     return;
   }
   setupTest("", "headers");
