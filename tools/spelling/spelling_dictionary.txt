@@ -15,6 +15,7 @@ API
 ARN
 ASAN
 ASCII
+ASM
 ASSERTs
 AST
 AWS
@@ -26,6 +27,10 @@ CAS
 CB
 CDS
 CEL
+EMSDK
+FBS
+SEGV
+WASI
 ceil
 CHACHA
 CHLO
@@ -604,6 +609,8 @@ filesystem
 firefox
 fixdate
 fixup
+flatbuffer
+flatc
 fmt
 fmtlib
 fn
@@ -740,6 +747,7 @@ lua
 lyft
 maglev
 malloc
+marshaller
 matchable
 matcher
 matchers
@@ -784,6 +792,7 @@ mysql
 namelen
 nameserver
 namespace
+namespaced
 namespaces
 namespacing
 nan
@@ -878,6 +887,7 @@ preflight
 preorder
 prepend
 prepended
+prepends
 prev
 probabilistically
 proc
@@ -1027,6 +1037,7 @@ stateful
 statsd
 stderr
 stdev
+stdin
 stdout
 stmt
 str
