@@ -37,7 +37,6 @@ envoy_extension_cc_test(
     size = "enormous",  # For WAVM without precompilation. TODO: add precompilation.
     srcs = ["config_test.cc"],
     data = [
-        "//test/extensions/filters/http/wasm/test_data:modules",
         "//test/extensions/filters/http/wasm/test_data:test_cpp.wasm",
     ],
     extension_name = "envoy.filters.http.wasm",
