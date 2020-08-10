@@ -413,6 +413,7 @@ cc_library(
     )
 
     # Parser dependencies
+    # TODO: upgrade this when cel is upgraded to use the latest version
     http_archive(
         name = "rules_antlr",
         sha256 = "7249d1569293d9b239e23c65f6b4c81a07da921738bde0dfeb231ed98be40429",
