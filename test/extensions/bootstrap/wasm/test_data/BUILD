@@ -9,11 +9,6 @@ licenses(["notice"])  # Apache 2
 
 envoy_package()
 
-filegroup(
-    name = "modules",
-    srcs = glob(["*.wasm"]),
-)
-
 envoy_cc_library(
     name = "speed_cpp_plugin",
     srcs = [

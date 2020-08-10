@@ -24,6 +24,9 @@ MATCHER_P(MapEq, rhs, "") {
 
 using BufferFunction = std::function<void(::Envoy::Buffer::Instance&)>;
 
+static const std::string kWasmCppDir = "test/extensions/filters/http/wasm/test_data/";
+static const std::string kWasmRustDir = "test/extensions/wasm/";
+
 namespace Envoy {
 namespace Extensions {
 namespace HttpFilters {
@@ -77,14 +80,18 @@ public:
     setupBase(std::get<0>(GetParam()), code, createContextFn(), root_id, vm_configuration);
   }
   void setupTest(std::string root_id = "", std::string vm_configuration = "") {
-    std::string code =
-        std::get<0>(GetParam()) != "null"
-            ? TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
-                  "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/",
-                  std::get<1>(GetParam()) == "cpp" ? "test_cpp"
-                                                   : absl::StrCat(vm_configuration, "_rust"),
-                  ".wasm")))
-            : "HttpWasmTestCpp";
+    std::string code;
+    if (std::get<0>(GetParam()) == "null") {
+      code = "HttpWasmTestCpp";
+    } else {
+      if (std::get<1>(GetParam()) == "cpp") {
+        code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+            absl::StrCat("{{ test_rundir }}/", kWasmCppDir, "test_cpp.wasm")));
+      } else {
+        code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+            absl::StrCat("{{ test_rundir }}/", kWasmRustDir, vm_configuration + "_rust.wasm")));
+      }
+    }
     setupBase(std::get<0>(GetParam()), code, createContextFn(), root_id, vm_configuration);
   }
   void setupFilter(const std::string root_id = "") { setupFilterBase<TestFilter>(root_id); }
