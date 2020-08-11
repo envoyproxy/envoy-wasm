@@ -188,7 +188,7 @@ build:remote --strategy=Javac=remote,sandboxed,local
 build:remote --strategy=Closure=remote,sandboxed,local
 build:remote --strategy=Genrule=remote,sandboxed,local
 # rules_rust is not remote runnable (yet)
-build:remote --strategy_regexp=_wasm_.*_rust=sandboxed,local
+build:remote --strategy=Rustc=sandboxed,local
 build:remote --remote_timeout=7200
 build:remote --auth_enabled=true
 build:remote --remote_download_toplevel
