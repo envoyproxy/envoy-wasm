@@ -554,7 +554,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
     start = end + 1;
 
     if (first) {
-      // top-level indent
+      // top-level identifier
       first = false;
       auto top_value = findValue(part, &arena, start >= path.size());
       if (!top_value.has_value()) {
