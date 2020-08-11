@@ -681,7 +681,12 @@ WasmResult Context::getHeaderMapValue(WasmHeaderMapType type, absl::string_view 
   const Http::LowerCaseString lower_key{std::string(key)};
   auto entry = map->get(lower_key);
   if (!entry) {
-    return WasmResult::NotFound;
+    if (wasm()->abiVersion() == proxy_wasm::AbiVersion::ProxyWasm_0_1_0) {
+      *value = "";
+      return WasmResult::Ok;
+    } else {
+      return WasmResult::NotFound;
+    }
   }
   *value = entry->value().getStringView();
   return WasmResult::Ok;
@@ -1110,6 +1115,12 @@ WasmResult Context::log(uint32_t level, absl::string_view message) {
   NOT_REACHED_GCOVR_EXCL_LINE;
 }
 
+uint32_t Context::getLogLevel() {
+  // Like the "log" call above, assume that spdlog level as an int
+  // matches the enum in the SDK
+  return static_cast<uint32_t>(ENVOY_LOGGER().level());
+}
+
 //
 // Calls into the Wasm code.
 //
@@ -1119,18 +1130,22 @@ bool Context::validateConfiguration(absl::string_view configuration,
   if (!wasm()->validate_configuration_) {
     return true;
   }
-  configuration_ = configuration;
   plugin_ = plugin_base;
   auto result =
       wasm()
           ->validate_configuration_(this, id_, static_cast<uint32_t>(configuration.size()))
           .u64_ != 0;
   plugin_.reset();
-  configuration_ = "";
   return result;
 }
 
-absl::string_view Context::getConfiguration() { return configuration_; }
+absl::string_view Context::getConfiguration() {
+  if (plugin_) {
+    return plugin_->plugin_configuration_;
+  } else {
+    return wasm()->vm_configuration();
+  }
+};
 
 std::pair<uint32_t, absl::string_view> Context::getStatus() {
   return std::make_pair(status_code_, status_message_);
@@ -1515,7 +1530,9 @@ Http::FilterDataStatus Context::decodeData(::Envoy::Buffer::Instance& data, bool
   }
   request_body_buffer_ = &data;
   end_of_stream_ = end_stream;
-  auto result = convertFilterDataStatus(onRequestBody(data.length(), end_stream));
+  const auto buffer = getBuffer(WasmBufferType::HttpRequestBody);
+  const auto buffer_size = (buffer == nullptr) ? 0 : buffer->size();
+  auto result = convertFilterDataStatus(onRequestBody(buffer_size, end_stream));
   buffering_request_body_ = false;
   switch (result) {
   case Http::FilterDataStatus::Continue:
@@ -1583,7 +1600,9 @@ Http::FilterDataStatus Context::encodeData(::Envoy::Buffer::Instance& data, bool
   }
   response_body_buffer_ = &data;
   end_of_stream_ = end_stream;
-  auto result = convertFilterDataStatus(onResponseBody(data.length(), end_stream));
+  const auto buffer = getBuffer(WasmBufferType::HttpResponseBody);
+  const auto buffer_size = (buffer == nullptr) ? 0 : buffer->size();
+  auto result = convertFilterDataStatus(onResponseBody(buffer_size, end_stream));
   buffering_response_body_ = false;
   switch (result) {
   case Http::FilterDataStatus::Continue:

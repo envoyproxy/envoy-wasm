@@ -163,6 +163,7 @@ public:
            const Http::ResponseHeaderMap* response_headers,
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override;
+  uint32_t getLogLevel() override;
 
   // Network::ConnectionCallbacks
   void onEvent(Network::ConnectionEvent event) override;
@@ -410,8 +411,7 @@ protected:
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_{};
   Envoy::Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
 
-  // General state. Only available (non-nullptr) during the calls requiring it (e.g. onConfigure()).
-  absl::string_view configuration_;
+  // Status.
   uint32_t status_code_{0};
   absl::string_view status_message_;
 

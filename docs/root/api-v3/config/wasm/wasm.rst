@@ -5,4 +5,4 @@ WASM
   :glob:
   :maxdepth: 2
 
-  v3/*
+  ../../extensions/wasm/v3/*
