@@ -1,9 +1,9 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load(
     "@envoy//bazel:envoy_build_system.bzl",
+    "envoy_select_wasm_all_v8_wavm_none",
     "envoy_select_wasm_v8",
     "envoy_select_wasm_wavm",
-    "envoy_select_wasm_all_v8_wavm_none",
 )
 
 licenses(["notice"])  # Apache 2
@@ -47,7 +47,10 @@ cc_library(
                 "src/**/*.h",
                 "src/**/*.cc",
             ],
-            exclude = ["src/wavm/*", "src/v8/*"],
+            exclude = [
+                "src/wavm/*",
+                "src/v8/*",
+            ],
         ),
     ),
     copts = envoy_select_wasm_wavm([

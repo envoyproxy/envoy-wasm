@@ -13,11 +13,11 @@ cc_library(
         "wee8/include/v8-version.h",
         "wee8/third_party/wasm-api/wasm.hh",
     ],
+    defines = ["ENVOY_WASM_V8"],
     includes = [
         "wee8/include",
         "wee8/third_party",
     ],
-    defines = ["ENVOY_WASM_V8"],
     visibility = ["//visibility:public"],
 )
 
