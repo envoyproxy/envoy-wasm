@@ -68,11 +68,14 @@ public:
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest,
-                         testing::Values("v8",
-#if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
+                         testing::Values(
+#if defined(ENVOY_WASM_V8)
+                             "v8",
 #endif
-                                         "null"));
+#if defined(ENVOY_WASM_WAVM)
+                             "wavm",
+#endif
+                             "null"));
 TEST_P(WasmCommonTest, Logging) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
@@ -803,11 +806,14 @@ public:
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonContextTest,
-                         testing::Values("v8",
+                         testing::Values(
 #if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
+                             "v8",
 #endif
-                                         "null"));
+#if defined(ENVOY_WASM_WAVM)
+                             "wavm",
+#endif
+                             "null"));
 
 TEST_P(WasmCommonContextTest, OnDnsResolve) {
   std::string code;

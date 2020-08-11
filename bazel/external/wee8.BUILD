@@ -17,6 +17,7 @@ cc_library(
         "wee8/include",
         "wee8/third_party",
     ],
+    defines = ["ENVOY_WASM_V8"],
     visibility = ["//visibility:public"],
 )
 

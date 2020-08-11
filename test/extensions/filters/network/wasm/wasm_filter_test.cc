@@ -56,13 +56,14 @@ public:
 };
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmNetworkFilterTest,
-                         testing::Values(std::make_tuple("v8", "cpp"),
-                                         std::make_tuple("v8", "rust"),
-#if defined(ENVOY_WASM_WAVM)
-                                         std::make_tuple("wavm", "cpp"),
-                                         std::make_tuple("wavm", "rust"),
+                         testing::Values(
+#if defined(ENVOY_WASM_V8)
+                             std::make_tuple("v8", "cpp"), std::make_tuple("v8", "rust"),
 #endif
-                                         std::make_tuple("null", "cpp")));
+#if defined(ENVOY_WASM_WAVM)
+                             std::make_tuple("wavm", "cpp"), std::make_tuple("wavm", "rust"),
+#endif
+                             std::make_tuple("null", "cpp")));
 
 // Bad code in initial config.
 TEST_P(WasmNetworkFilterTest, BadCode) {

@@ -3,6 +3,10 @@ load(
     "envoy_package",
 )
 load(
+    "//bazel:envoy_select.bzl",
+    "envoy_select_wasm",
+)
+load(
     "//test/extensions:extensions_build_system.bzl",
     "envoy_extension_cc_test",
     "envoy_extension_cc_test_binary",
@@ -15,7 +19,7 @@ envoy_package()
 envoy_extension_cc_test(
     name = "wasm_test",
     srcs = ["wasm_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/bootstrap/wasm/test_data:asm2wasm_cpp.wasm",
         "//test/extensions/bootstrap/wasm/test_data:bad_signature_cpp.wasm",
         "//test/extensions/bootstrap/wasm/test_data:emscripten_cpp.wasm",
@@ -23,7 +27,7 @@ envoy_extension_cc_test(
         "//test/extensions/bootstrap/wasm/test_data:modules",
         "//test/extensions/bootstrap/wasm/test_data:segv_cpp.wasm",
         "//test/extensions/bootstrap/wasm/test_data:stats_cpp.wasm",
-    ],
+    ]),
     extension_name = "envoy.bootstrap.wasm",
     external_deps = ["abseil_optional"],
     deps = [
@@ -43,10 +47,10 @@ envoy_extension_cc_test(
 envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/bootstrap/wasm/test_data:missing_cpp.wasm",
         "//test/extensions/bootstrap/wasm/test_data:start_cpp.wasm",
-    ],
+    ]),
     extension_name = "envoy.bootstrap.wasm",
     deps = [
         "//include/envoy/registry",
@@ -66,9 +70,9 @@ envoy_extension_cc_test(
 envoy_extension_cc_test_binary(
     name = "wasm_speed_test",
     srcs = ["wasm_speed_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/bootstrap/wasm/test_data:speed_cpp.wasm",
-    ],
+    ]),
     extension_name = "envoy.bootstrap.wasm",
     external_deps = [
         "abseil_optional",

@@ -248,7 +248,7 @@ config_setting(
     values = {"define": "quiche=enabled"},
 )
 
-# TODO: convert WAVM VM support to an extension (https://github.com/envoyproxy/envoy/issues/12574)
+# TODO: consider converting WAVM VM support to an extension (https://github.com/envoyproxy/envoy/issues/12574)
 config_setting(
     name = "wasm_all",
     values = {"define": "wasm=enabled"},
@@ -257,6 +257,11 @@ config_setting(
 config_setting(
     name = "wasm_wavm",
     values = {"define": "wasm=wavm"},
+)
+
+config_setting(
+    name = "wasm_v8",
+    values = {"define": "wasm=v8"},
 )
 
 # Alias pointing to the selected version of BoringSSL:

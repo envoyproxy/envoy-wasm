@@ -67,11 +67,14 @@ protected:
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest,
-                         testing::Values("v8",
-#if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
+                         testing::Values(
+#if defined(ENVOY_WASM_V8)
+                             "v8",
 #endif
-                                         "null"));
+#if defined(ENVOY_WASM_WAVM)
+                             "wavm",
+#endif
+                             "null"));
 
 TEST_P(WasmFactoryTest, CreateWasmFromWasm) {
   initializeWithConfig(config_);

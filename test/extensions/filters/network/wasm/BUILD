@@ -3,6 +3,10 @@ load(
     "envoy_package",
 )
 load(
+    "//bazel:envoy_select.bzl",
+    "envoy_select_wasm",
+)
+load(
     "//test/extensions:extensions_build_system.bzl",
     "envoy_extension_cc_test",
 )
@@ -14,10 +18,10 @@ envoy_package()
 envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/filters/network/wasm/test_data:modules",
         "//test/extensions/filters/network/wasm/test_data:test_cpp.wasm",
-    ],
+    ]),
     extension_name = "envoy.filters.network.wasm",
     deps = [
         "//source/common/common:base64_lib",
@@ -36,10 +40,10 @@ envoy_extension_cc_test(
 envoy_extension_cc_test(
     name = "wasm_filter_test",
     srcs = ["wasm_filter_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/filters/network/wasm/test_data:modules",
         "//test/extensions/filters/network/wasm/test_data:test_cpp.wasm",
-    ],
+    ]),
     extension_name = "envoy.filters.network.wasm",
     deps = [
         "//source/extensions/filters/network/wasm:wasm_filter_lib",

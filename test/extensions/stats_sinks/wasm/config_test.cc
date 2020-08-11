@@ -66,7 +66,15 @@ protected:
   Stats::SinkPtr sink_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmStatSinkConfigTest, testing::Values("v8", "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmStatSinkConfigTest,
+                         testing::Values(
+#if defined(ENVOY_WASM_V8)
+                             "v8",
+#endif
+#if defined(ENVOY_WASM_WAVM)
+                             "wavm",
+#endif
+                             "null"));
 
 TEST_P(WasmStatSinkConfigTest, CreateWasmFromEmpty) {
   EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config_empty_),

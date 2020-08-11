@@ -3,6 +3,10 @@ load(
     "envoy_package",
 )
 load(
+    "//bazel:envoy_select.bzl",
+    "envoy_select_wasm",
+)
+load(
     "//test/extensions:extensions_build_system.bzl",
     "envoy_extension_cc_test",
 )
@@ -15,10 +19,10 @@ envoy_extension_cc_test(
     name = "wasm_filter_test",
     size = "enormous",  # For WAVM without precompilation. TODO: add precompilation.
     srcs = ["wasm_filter_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/filters/http/wasm/test_data:modules",
         "//test/extensions/filters/http/wasm/test_data:test_cpp.wasm",
-    ],
+    ]),
     extension_name = "envoy.filters.http.wasm",
     deps = [
         "//source/extensions/filters/http/wasm:wasm_filter_lib",
@@ -31,10 +35,10 @@ envoy_extension_cc_test(
     name = "config_test",
     size = "enormous",  # For WAVM without precompilation. TODO: add precompilation.
     srcs = ["config_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/filters/http/wasm/test_data:modules",
         "//test/extensions/filters/http/wasm/test_data:test_cpp.wasm",
-    ],
+    ]),
     extension_name = "envoy.filters.http.wasm",
     deps = [
         "//source/common/common:base64_lib",

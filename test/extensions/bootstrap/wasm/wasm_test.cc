@@ -77,13 +77,20 @@ public:
   void createWasm() { WasmTestBase::createWasm(GetParam()); }
 };
 
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
-                         testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
+                         testing::Values(
+#if defined(ENVOY_WASM_V8)
+                             "v8"
 #endif
-                                         ));
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                             ,
+#endif
+#if defined(ENVOY_WASM_WAVM)
+                             "wavm"
+#endif
+                             ));
+#endif
 
 class WasmNullTest : public WasmTestBase, public testing::TestWithParam<std::string> {
 public:
@@ -100,11 +107,14 @@ public:
 };
 
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNullTest,
-                         testing::Values("v8",
-#if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
+                         testing::Values(
+#if defined(ENVOY_WASM_V8)
+                             "v8",
 #endif
-                                         "null"));
+#if defined(ENVOY_WASM_WAVM)
+                             "wavm",
+#endif
+                             "null"));
 
 class WasmTestMatrix : public WasmTestBase,
                        public testing::TestWithParam<std::tuple<std::string, std::string>> {
@@ -112,14 +122,21 @@ public:
   void createWasm() { WasmTestBase::createWasm(std::get<0>(GetParam())); }
 };
 
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
-                         testing::Combine(testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                                          ,
-                                                          "wavm"
+                         testing::Combine(testing::Values(
+#if defined(ENVOY_WASM_V8)
+                                              "v8"
 #endif
-                                                          ),
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                                              ,
+#endif
+#if defined(ENVOY_WASM_WAVM)
+                                              "wavm"
+#endif
+                                              ),
                                           testing::Values("cpp", "rust")));
+#endif
 
 TEST_P(WasmTestMatrix, Logging) {
   plugin_configuration_ = "configure-test";

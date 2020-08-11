@@ -100,6 +100,7 @@ public:
   MOCK_METHOD(uint32_t, random, (), (const));
 };
 
+#if defined(ENVOY_WASM_V8)
 MockHostFunctions* g_host_functions;
 
 void pong(void*, Word value) { g_host_functions->pong(convertWordToUint32(value)); }
@@ -311,6 +312,7 @@ TEST_P(WasmVmTest, V8Memory) {
   EXPECT_FALSE(wasm_vm->setWord(1024 * 1024 /* out of bound */, 1));
   EXPECT_FALSE(wasm_vm->getWord(1024 * 1024 /* out of bound */, &word));
 }
+#endif
 
 } // namespace
 } // namespace Wasm

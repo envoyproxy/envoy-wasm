@@ -3,6 +3,10 @@ load(
     "envoy_package",
 )
 load(
+    "//bazel:envoy_select.bzl",
+    "envoy_select_wasm",
+)
+load(
     "//test/extensions:extensions_build_system.bzl",
     "envoy_extension_cc_test",
 )
@@ -29,9 +33,9 @@ envoy_extension_cc_test(
 envoy_extension_cc_test(
     name = "wasm_stat_sink_test",
     srcs = ["wasm_stat_sink_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/stats_sinks/wasm/test_data:test_context_cpp.wasm",
-    ],
+    ]),
     extension_name = "envoy.stat_sinks.wasm",
     external_deps = ["abseil_optional"],
     deps = [

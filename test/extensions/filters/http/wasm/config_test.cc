@@ -60,13 +60,20 @@ protected:
   Event::TimerCb retry_timer_cb_;
 };
 
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest,
-                         testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
+                         testing::Values(
+#if defined(ENVOY_WASM_V8)
+                             "v8"
 #endif
-                                         ));
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                             ,
+#endif
+#if defined(ENVOY_WASM_WAVM)
+                             "wavm"
+#endif
+                             ));
+#endif
 
 TEST_P(WasmFilterConfigTest, JsonLoadFromFileWasm) {
   const std::string json = TestEnvironment::substitute(absl::StrCat(R"EOF(
