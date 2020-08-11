@@ -17,6 +17,7 @@ envoy_cc_extension(
         "config.h",
     ],
     security_posture = "unknown",
+    status = "alpha",
     deps = [
         "//include/envoy/registry",
         "//include/envoy/server:bootstrap_extension_config_interface",

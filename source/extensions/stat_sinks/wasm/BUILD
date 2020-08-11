@@ -16,6 +16,7 @@ envoy_cc_extension(
     srcs = ["config.cc"],
     hdrs = ["config.h"],
     security_posture = "data_plane_agnostic",
+    status = "alpha",
     deps = [
         ":wasm_stat_sink_lib",
         "//include/envoy/registry",
