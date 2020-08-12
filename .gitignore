@@ -1,7 +1,6 @@
 /bazel-*
 BROWSE
 /build
-/build_*
 *.bzlc
 .cache
 .clangd
@@ -35,3 +34,4 @@ user.bazelrc
 **/Cargo.lock
 CMakeLists.txt
 cmake-build-debug
+/linux
