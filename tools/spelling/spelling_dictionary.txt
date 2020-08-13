@@ -15,6 +15,7 @@ API
 ARN
 ASAN
 ASCII
+ASM
 ASSERTs
 AST
 AWS
@@ -620,6 +621,7 @@ firefox
 fixdate
 fixup
 flatbuffer
+flatc
 fmt
 fmtlib
 fn

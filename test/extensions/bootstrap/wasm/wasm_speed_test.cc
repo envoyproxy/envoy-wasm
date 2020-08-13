@@ -2,9 +2,7 @@
  * Simple WASM speed test.
  *
  * Run with:
- * TEST_SRCDIR=`pwd` TEST_WORKSPACE=bazel-$(basename `pwd`) bazel run --define wasm=enabled
- * --config=libc++ -c opt //test/extensions/bootstrap/wasm:wasm_speed_test
- * Note: "--linkopt -fuse-ld=ldd" may be required as well depending on the build environment.
+ * `bazel run --config=libc++ -c opt //test/extensions/bootstrap/wasm:wasm_speed_test`
  */
 #include "common/event/dispatcher_impl.h"
 #include "common/stats/isolated_store_impl.h"
