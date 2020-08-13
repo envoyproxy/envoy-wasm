@@ -35,25 +35,20 @@ def envoy_select_hot_restart(xs, repository = ""):
 # Selects the given values depending on the WASM runtimes enabled in the current build.
 def envoy_select_wasm(xs):
     return select({
-        "@envoy//bazel:wasm_all": xs,
-        "@envoy//bazel:wasm_v8": xs,
-        "@envoy//bazel:wasm_wavm": xs,
-        "//conditions:default": [],
+        "@envoy//bazel:wasm_none": [],
+        "//conditions:default": xs,
     })
 
 def envoy_select_wasm_v8(xs):
     return select({
-        "@envoy//bazel:wasm_all": xs,
-        "@envoy//bazel:wasm_v8": xs,
         "@envoy//bazel:wasm_none": [],
-        "//conditions:default": [],
+        "//conditions:default": xs,
     })
 
 def envoy_select_wasm_wavm(xs):
     return select({
         "@envoy//bazel:wasm_all": xs,
         "@envoy//bazel:wasm_wavm": xs,
-        "@envoy//bazel:wasm_none": [],
         "//conditions:default": [],
     })
 
@@ -62,8 +57,8 @@ def envoy_select_wasm_all_v8_wavm_none(xs1, xs2, xs3, xs4):
         "@envoy//bazel:wasm_all": xs1,
         "@envoy//bazel:wasm_v8": xs2,
         "@envoy//bazel:wasm_wavm": xs3,
-        "@envoy//bazel:wasm_none": [],
-        "//conditions:default": xs4,
+        "@envoy//bazel:wasm_none": xs4,
+        "//conditions:default": xs2,
     })
 
 # Select the given values if use legacy codecs in test is on in the current build.
