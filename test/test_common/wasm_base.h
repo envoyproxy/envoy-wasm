@@ -75,7 +75,7 @@ public:
   }
 
   WasmHandleSharedPtr& wasm() { return wasm_; }
-  Context* root_context() { return root_context_; }
+  Context* rootContext() { return root_context_; }
 
   Stats::IsolatedStoreImpl stats_store_;
   Stats::ScopeSharedPtr scope_;

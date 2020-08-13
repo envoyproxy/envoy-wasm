@@ -10,7 +10,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using testing::_;
 using testing::Eq;
 
 namespace Envoy {
@@ -40,8 +39,8 @@ public:
 class WasmNetworkFilterTest : public Common::Wasm::WasmNetworkFilterTestBase<
                                   testing::TestWithParam<std::tuple<std::string, std::string>>> {
 public:
-  WasmNetworkFilterTest() {}
-  ~WasmNetworkFilterTest() {}
+  WasmNetworkFilterTest() = default;
+  ~WasmNetworkFilterTest() override = default;
 
   void setupConfig(const std::string& code) {
     setupBase(std::get<0>(GetParam()), code,

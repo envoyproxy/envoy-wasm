@@ -26,7 +26,7 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-std::string Sha256(absl::string_view data) {
+std::string sha256(absl::string_view data) {
   std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
   EVP_MD_CTX* ctx(EVP_MD_CTX_new());
   auto rc = EVP_DigestInit(ctx, EVP_sha256());
@@ -41,7 +41,7 @@ std::string Sha256(absl::string_view data) {
 
 class TestContext : public Extensions::Common::Wasm::Context {
 public:
-  TestContext() : Extensions::Common::Wasm::Context() {}
+  TestContext() = default;
   TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
   TestContext(Extensions::Common::Wasm::Wasm* wasm,
               const Extensions::Common::Wasm::PluginSharedPtr& plugin)
@@ -61,7 +61,7 @@ public:
 
 class WasmCommonTest : public testing::TestWithParam<std::string> {
 public:
-  void SetUp() {
+  void SetUp() override {
     Logger::Registry::getLog(Logger::Id::wasm).set_level(spdlog::level::debug);
     clearCodeCacheForTesting();
   }
@@ -604,7 +604,7 @@ TEST_P(WasmCommonTest, RemoteCode) {
   ProtobufWkt::StringValue vm_configuration_string;
   vm_configuration_string.set_value(vm_configuration);
   vm_config.mutable_configuration()->PackFrom(vm_configuration_string);
-  std::string sha256 = Extensions::Common::Wasm::Sha256(code);
+  std::string sha256 = Extensions::Common::Wasm::sha256(code);
   std::string sha256Hex =
       Hex::encode(reinterpret_cast<const uint8_t*>(&*sha256.begin()), sha256.size());
   vm_config.mutable_code()->mutable_remote()->set_sha256(sha256Hex);
@@ -701,7 +701,7 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   ProtobufWkt::StringValue vm_configuration_string;
   vm_configuration_string.set_value(vm_configuration);
   vm_config.mutable_configuration()->PackFrom(vm_configuration_string);
-  std::string sha256 = Extensions::Common::Wasm::Sha256(code);
+  std::string sha256 = Extensions::Common::Wasm::sha256(code);
   std::string sha256Hex =
       Hex::encode(reinterpret_cast<const uint8_t*>(&*sha256.begin()), sha256.size());
   int num_retries = 3;
@@ -799,7 +799,7 @@ public:
     context_->onCreate();
   }
 
-  TestContext& root_context() { return *static_cast<TestContext*>(root_context_); }
+  TestContext& rootContext() { return *static_cast<TestContext*>(root_context_); }
   TestContext& context() { return *context_; }
 
   std::unique_ptr<TestContext> context_;
@@ -828,12 +828,12 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   setup(code);
   setupContext();
 
-  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 7")));
-  EXPECT_CALL(root_context(), log_(spdlog::level::info,
-                                   Eq("TestRootContext::onResolveDns dns 1 192.168.1.101:1001")));
-  EXPECT_CALL(root_context(), log_(spdlog::level::info,
-                                   Eq("TestRootContext::onResolveDns dns 2 192.168.1.102:1002")));
-  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 7")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::info,
+                                  Eq("TestRootContext::onResolveDns dns 1 192.168.1.101:1001")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::info,
+                                  Eq("TestRootContext::onResolveDns dns 2 192.168.1.102:1002")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
 
   uint32_t token = 7;
   std::list<Envoy::Network::DnsResponse> dns_results;
@@ -843,8 +843,8 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   dns_results.emplace(dns_results.end(),
                       std::make_shared<Network::Address::Ipv4Instance>("192.168.1.102", 1002),
                       std::chrono::seconds(2));
-  root_context().onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
-                              std::move(dns_results));
+  rootContext().onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
+                             std::move(dns_results));
 }
 
 } // namespace Wasm

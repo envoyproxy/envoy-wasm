@@ -33,5 +33,7 @@ envoy_cc_library(
     name = "wasm_stat_sink_lib",
     hdrs = ["wasm_stat_sink_impl.h"],
     deps = [
+        "//include/envoy/stats:stats_interface",
+        "//source/extensions/common/wasm:wasm_lib",
     ],
 )

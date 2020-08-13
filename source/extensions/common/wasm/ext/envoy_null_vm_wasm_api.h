@@ -1,6 +1,9 @@
 // NOLINT(namespace-envoy)
 #pragma once
 
+// Note that this file is included in emscripten and NullVM environments and thus depends on
+// the context in which it is included, hence we need to disable clang-tidy warnings.
+
 namespace proxy_wasm {
 namespace null_plugin {
 

@@ -1,16 +1,10 @@
-#include <stdio.h>
-
 #include "extensions/filters/http/wasm/wasm_filter.h"
 
 #include "test/test_common/wasm_base.h"
 
-using testing::_;
-using testing::AtLeast;
 using testing::Eq;
-using testing::InSequence;
 using testing::Invoke;
 using testing::Return;
-using testing::ReturnPointee;
 using testing::ReturnRef;
 
 MATCHER_P(MapEq, rhs, "") {
@@ -29,7 +23,6 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-using envoy::config::core::v3::TrafficDirection;
 using Envoy::Extensions::Common::Wasm::CreateContextFn;
 using Envoy::Extensions::Common::Wasm::Plugin;
 using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
@@ -89,7 +82,7 @@ public:
   }
   void setupFilter(const std::string root_id = "") { setupFilterBase<TestFilter>(root_id); }
 
-  TestRoot& root_context() { return *static_cast<TestRoot*>(root_context_); }
+  TestRoot& rootContext() { return *static_cast<TestRoot*>(root_context_); }
   TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
 };
 
@@ -470,7 +463,7 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
 
   Http::ResponseMessagePtr response_message(new Http::ResponseMessageImpl(
       Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-  response_message->body().reset(new Buffer::OwnedImpl("response"));
+  response_message->body() = std::make_unique<Buffer::OwnedImpl>("response");
 
   EXPECT_NE(callbacks, nullptr);
   if (callbacks) {
@@ -513,7 +506,7 @@ TEST_P(WasmHttpFilterTest, AsyncCallAfterDestroyed) {
 
   Http::ResponseMessagePtr response_message(new Http::ResponseMessageImpl(
       Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-  response_message->body().reset(new Buffer::OwnedImpl("response"));
+  response_message->body() = std::make_unique<Buffer::OwnedImpl>("response");
 
   // (Don't) Make the callback on the destroyed VM.
   EXPECT_EQ(callbacks, nullptr);
@@ -559,7 +552,7 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
       .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
         return std::move(client_factory);
       }));
-  EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq("response")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response")));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter().decodeHeaders(request_headers, false));
@@ -645,7 +638,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   node_val.set_string_value("wasm_node_get_value");
   (*node_data.mutable_metadata()->mutable_fields())["wasm_node_get_key"] = node_val;
   EXPECT_CALL(local_info_, node()).WillRepeatedly(ReturnRef(node_data));
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::debug, Eq(absl::string_view("onTick wasm_node_get_value"))));
 
   EXPECT_CALL(filter(),
@@ -664,7 +657,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
           HttpFilters::HttpFilterNames::get().Wasm,
           MessageUtil::keyValueStruct("wasm_request_get_key", "wasm_request_get_value")));
 
-  root_context().onTick(0);
+  rootContext().onTick(0);
 
   EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
   absl::optional<std::chrono::nanoseconds> dur = std::chrono::nanoseconds(15000000);
@@ -751,15 +744,15 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
               log_(spdlog::level::warn, Eq(absl::string_view("onRequestHeaders enqueue Ok"))));
   EXPECT_CALL(filter(), log_(spdlog::level::warn,
                              Eq(absl::string_view("onRequestHeaders not found bad_shared_queue"))));
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady bad token not found"))))
       .Times(2);
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady extra data not found"))))
       .Times(2);
-  EXPECT_CALL(root_context(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))))
+  EXPECT_CALL(rootContext(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))))
       .Times(2);
-  EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   auto token = proxy_wasm::resolveQueueForTest("vm_id", "my_shared_queue");

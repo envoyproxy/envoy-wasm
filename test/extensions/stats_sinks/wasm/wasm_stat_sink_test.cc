@@ -18,7 +18,7 @@ namespace Wasm {
 
 class TestContext : public Extensions::Common::Wasm::Context {
 public:
-  TestContext() : Extensions::Common::Wasm::Context() {}
+  TestContext() = default;
   TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
   TestContext(Extensions::Common::Wasm::Wasm* wasm,
               const Extensions::Common::Wasm::PluginSharedPtr& plugin)
@@ -54,7 +54,7 @@ public:
     context_->onCreate();
   }
 
-  TestContext& root_context() { return *static_cast<TestContext*>(root_context_); }
+  TestContext& rootContext() { return *static_cast<TestContext*>(root_context_); }
   TestContext& context() { return *context_; }
 
   std::unique_ptr<TestContext> context_;
@@ -84,20 +84,20 @@ TEST_P(WasmCommonContextTest, OnStat) {
   setup(code);
   setupContext();
 
-  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onStat")));
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onStat")));
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::info, Eq("TestRootContext::onStat upstream_rq_2xx:1")));
 
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::info, Eq("TestRootContext::onStat upstream_rq_5xx:2")));
 
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::info, Eq("TestRootContext::onStat membership_total:3")));
 
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::info, Eq("TestRootContext::onStat duration_total:4")));
 
-  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
 
   NiceMock<Stats::MockCounter> success_counter;
   success_counter.name_ = "upstream_rq_2xx";
@@ -124,7 +124,7 @@ TEST_P(WasmCommonContextTest, OnStat) {
   duration_total.used_ = true;
   snapshot_.gauges_.push_back(duration_total);
 
-  root_context().onStatsUpdate(snapshot_);
+  rootContext().onStatsUpdate(snapshot_);
 }
 
 } // namespace Wasm

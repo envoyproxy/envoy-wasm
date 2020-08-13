@@ -11,12 +11,12 @@
 #include "gtest/gtest.h"
 #include "include/proxy-wasm/null_vm_plugin.h"
 
-using proxy_wasm::Cloneable;
-using proxy_wasm::WasmCallVoid;
-using proxy_wasm::WasmCallWord;
-using proxy_wasm::Word;
-using testing::HasSubstr;
-using testing::Return;
+using proxy_wasm::Cloneable;    // NOLINT
+using proxy_wasm::WasmCallVoid; // NOLINT
+using proxy_wasm::WasmCallWord; // NOLINT
+using proxy_wasm::Word;         // NOLINT
+using testing::HasSubstr;       // NOLINT
+using testing::Return;          // NOLINT
 
 namespace Envoy {
 namespace Extensions {

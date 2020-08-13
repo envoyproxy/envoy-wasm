@@ -39,13 +39,12 @@ public:
   WasmStatePrototype(bool readonly, WasmType type, absl::string_view schema,
                      StreamInfo::FilterState::LifeSpan life_span)
       : readonly_(readonly), type_(type), schema_(schema), life_span_(life_span) {}
-  WasmStatePrototype()
-      : readonly_(false), type_(WasmType::Bytes), schema_(""),
-        life_span_(StreamInfo::FilterState::LifeSpan::FilterChain) {}
-  const bool readonly_;
-  const WasmType type_;
-  const std::string schema_;
-  const StreamInfo::FilterState::LifeSpan life_span_;
+  WasmStatePrototype() = default;
+  const bool readonly_{false};
+  const WasmType type_{WasmType::Bytes};
+  const std::string schema_{""};
+  const StreamInfo::FilterState::LifeSpan life_span_{
+      StreamInfo::FilterState::LifeSpan::FilterChain};
 };
 
 using DefaultWasmStatePrototype = ConstSingleton<WasmStatePrototype>;

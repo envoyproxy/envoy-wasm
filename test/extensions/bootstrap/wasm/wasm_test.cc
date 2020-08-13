@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "common/event/dispatcher_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
