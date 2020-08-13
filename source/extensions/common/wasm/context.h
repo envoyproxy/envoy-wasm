@@ -471,6 +471,9 @@ protected:
 
   // Filter state prototype declaration.
   absl::flat_hash_map<std::string, std::unique_ptr<const WasmStatePrototype>> state_prototypes_;
+
+  // Hack to detect premature VM death.
+  bool premature_vm_death_{false};
 };
 using ContextSharedPtr = std::shared_ptr<Context>;
 

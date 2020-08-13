@@ -1278,6 +1278,9 @@ Context::~Context() {
   for (auto& p : grpc_stream_) {
     p.second.stream_->resetStream();
   }
+  if (premature_vm_death_) {
+    parent_context_id_ = 0; // Nasty hack to prevent ~ContextBase from touching dead memory.
+  }
 }
 
 Network::FilterStatus convertNetworkFilterStatus(proxy_wasm::FilterStatus status) {
@@ -1404,6 +1407,9 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
                   const Http::ResponseTrailerMap* response_trailers,
                   const StreamInfo::StreamInfo& stream_info) {
   if (!http_request_started_) {
+    return;
+  }
+  if (premature_vm_death_) {
     return;
   }
   access_log_request_headers_ = request_headers;

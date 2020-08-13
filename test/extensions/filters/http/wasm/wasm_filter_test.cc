@@ -439,6 +439,25 @@ TEST_P(WasmHttpFilterTest, AccessLog) {
   filter().log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
+TEST_P(WasmHttpFilterTest, AccessLogDeadVM) {
+  setupTest("", "headers");
+  setupFilter();
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2 headers"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
+
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
+  Buffer::OwnedImpl data("hello");
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().onDestroy();
+  StreamInfo::MockStreamInfo log_stream_info;
+  wasm_.reset();
+  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
+}
+
 TEST_P(WasmHttpFilterTest, AsyncCall) {
   setupTest("", "async_call");
   setupFilter();

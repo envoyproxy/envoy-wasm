@@ -125,7 +125,7 @@ Wasm::Wasm(WasmHandleSharedPtr base_wasm_handle, Event::Dispatcher& dispatcher)
   ENVOY_LOG(debug, "Thread-Local Wasm created {} now active", active_wasms);
 }
 
-void Wasm::error(absl::string_view message) { ENVOY_LOG(error, "Wasm VM failed {}", message); }
+void Wasm::error(absl::string_view message) { ENVOY_LOG(error, "Wasm VM error {}", message); }
 
 void Wasm::setTimerPeriod(uint32_t context_id, std::chrono::milliseconds new_period) {
   auto& period = timer_period_[context_id];
@@ -169,6 +169,11 @@ Wasm::~Wasm() {
   ENVOY_LOG(debug, "~Wasm {} remaining active", active_wasms);
   if (server_shutdown_post_cb_) {
     dispatcher_.post(server_shutdown_post_cb_);
+  }
+  // Deal with Envoy bug where deferred delete of ActiveStream can result in an
+  // AccessLog::Instance::log() call after the vm has been deleted.
+  for (auto& p : contexts_) {
+    static_cast<Context*>(p.second)->premature_vm_death_ = true;
   }
 }
 
