@@ -145,7 +145,7 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     ::free(compressed);
     ::free(result);
   } else if (configuration == "WASI") {
-    // These checks depend on Emscripten's support for WASI and will only
+    // These checks depend on Emscripten's support for `WASI` and will only
     // work if invoked on a "real" Wasm VM.
     int err = fprintf(stdout, "WASI write to stdout\n");
     if (err < 0) {

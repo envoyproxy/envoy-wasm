@@ -45,6 +45,7 @@ def envoy_select_wasm_v8(xs):
     return select({
         "@envoy//bazel:wasm_all": xs,
         "@envoy//bazel:wasm_v8": xs,
+        "@envoy//bazel:wasm_none": [],
         "//conditions:default": [],
     })
 
@@ -52,6 +53,7 @@ def envoy_select_wasm_wavm(xs):
     return select({
         "@envoy//bazel:wasm_all": xs,
         "@envoy//bazel:wasm_wavm": xs,
+        "@envoy//bazel:wasm_none": [],
         "//conditions:default": [],
     })
 
@@ -60,6 +62,7 @@ def envoy_select_wasm_all_v8_wavm_none(xs1, xs2, xs3, xs4):
         "@envoy//bazel:wasm_all": xs1,
         "@envoy//bazel:wasm_v8": xs2,
         "@envoy//bazel:wasm_wavm": xs3,
+        "@envoy//bazel:wasm_none": [],
         "//conditions:default": xs4,
     })
 

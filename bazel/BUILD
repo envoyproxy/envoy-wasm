@@ -264,6 +264,11 @@ config_setting(
     values = {"define": "wasm=v8"},
 )
 
+config_setting(
+    name = "wasm_none",
+    values = {"define": "wasm=disabled"},
+)
+
 # Alias pointing to the selected version of BoringSSL:
 # - BoringSSL FIPS from @boringssl_fips//:ssl,
 # - non-FIPS BoringSSL from @boringssl//:ssl.

@@ -164,7 +164,7 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_TRUE(wasm_weak.lock()->configure(context, plugin_));
   wasm_handler.reset();
   dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
-  // This will SEGV on nullptr if wasm has been deleted.
+  // This will `SEGV` on nullptr if wasm has been deleted.
   context->onTick(0);
   dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher_->clearDeferredDeleteList();
@@ -230,9 +230,9 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   EXPECT_TRUE(wasm_->configure(context, plugin_));
 }
 
-// The asm2wasm.wasm file uses operations which would require the asm2wasm Emscripten module *if*
-// em++ is invoked with the trap mode "clamp". See
-// https://emscripten.org/docs/compiling/WebAssembly.html This test demonstrates that the asm2wasm
+// The `asm2wasm.wasm` file uses operations which would require the `asm2wasm` Emscripten module
+// *if* em++ is invoked with the trap mode "clamp". See
+// https://emscripten.org/docs/compiling/WebAssembly.html This test demonstrates that the `asm2wasm`
 // module is not required with the trap mode is set to "allow". Note: future Wasm standards will
 // change this behavior by providing non-trapping instructions, but in the mean time we support the
 // default Emscripten behavior.

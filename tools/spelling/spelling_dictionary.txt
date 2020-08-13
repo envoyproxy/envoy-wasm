@@ -271,7 +271,6 @@ RXQ
 Rebalance
 Runn
 SA
-SEGV
 SAN
 SCT
 SDK
@@ -344,7 +343,6 @@ VHDS
 VLOG
 VM
 WAITFORONE
-WASI
 WASM
 WAVM
 WIP
@@ -395,7 +393,6 @@ artisanal
 ary
 asctime
 asm
-asm2wasm
 async
 atoi
 atomicity
@@ -619,7 +616,6 @@ firefox
 fixdate
 fixup
 flatbuffer
-flatc
 fmt
 fmtlib
 fn
