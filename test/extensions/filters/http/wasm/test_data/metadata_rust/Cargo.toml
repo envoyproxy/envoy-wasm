@@ -1,9 +1,9 @@
-[package]	
-description = "Proxy-Wasm logging test"	
-name = "metadata_rust"	
-version = "0.0.1"	
-authors = ["Piotr Sikora <piotrsikora@google.com>"]	
-edition = "2018"	
+[package]
+description = "Proxy-Wasm metadata test"
+name = "metadata_rust"
+version = "0.0.1"
+authors = ["Piotr Sikora <piotrsikora@google.com>"]
+edition = "2018"
 
 [dependencies]
 proxy-wasm = "0.1"

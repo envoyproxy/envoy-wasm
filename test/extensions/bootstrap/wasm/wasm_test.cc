@@ -99,9 +99,6 @@ public:
   }
 };
 
-static const std::string kWasmCppDir = "test/extensions/bootstrap/wasm/test_data/";
-static const std::string kWasmRustDir = "test/extensions/wasm/";
-
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNullTest,
                          testing::Values("v8",
 #if defined(ENVOY_WASM_WAVM)
@@ -117,13 +114,9 @@ public:
   void setWasmCode(std::string vm_configuration) {
     const auto basic_path =
         absl::StrCat("test/extensions/bootstrap/wasm/test_data/", vm_configuration);
-    if (std::get<1>(GetParam()) == "cpp") {
-      code_ = TestEnvironment::readFileToStringForTest(
-          TestEnvironment::runfilesPath(basic_path + "_cpp.wasm"));
-    } else {
-      code_ = TestEnvironment::readFileToStringForTest(
-          TestEnvironment::runfilesPath(basic_path + "_rust.wasm"));
-    }
+    code_ = TestEnvironment::readFileToStringForTest(
+        TestEnvironment::runfilesPath(basic_path + "_" + std::get<1>(GetParam()) ".wasm"));
+
     EXPECT_FALSE(code_.empty());
   }
 
