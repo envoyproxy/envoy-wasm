@@ -115,7 +115,7 @@ public:
     const auto basic_path =
         absl::StrCat("test/extensions/bootstrap/wasm/test_data/", vm_configuration);
     code_ = TestEnvironment::readFileToStringForTest(
-        TestEnvironment::runfilesPath(basic_path + "_" + std::get<1>(GetParam()) ".wasm"));
+        TestEnvironment::runfilesPath(basic_path + "_" + std::get<1>(GetParam()) + ".wasm"));
 
     EXPECT_FALSE(code_.empty());
   }
