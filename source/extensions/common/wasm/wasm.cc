@@ -173,7 +173,10 @@ Wasm::~Wasm() {
   // Deal with Envoy bug where deferred delete of ActiveStream can result in an
   // AccessLog::Instance::log() call after the vm has been deleted.
   for (auto& p : contexts_) {
-    static_cast<Context*>(p.second)->premature_vm_death_ = true;
+    auto c = static_cast<Context*>(p.second);
+    if (c->parent_context_id_) {
+      c->premature_vm_death_ = true;
+    }
   }
 }
 
