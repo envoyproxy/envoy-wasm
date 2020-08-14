@@ -87,12 +87,7 @@ jobs:
      steps:
        - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
        - checkout
-       - run: pip install -r tools/code_format/requirements.txt
-       - run: ci/do_circle_ci.sh check_format
-       - run: ci/do_circle_ci.sh check_repositories
-       - run: ci/do_circle_ci.sh check_spelling
-       # TODO(PiotrSikora): re-enable once fixed.
-       # - run: ci/do_circle_ci.sh check_spelling_pedantic
+       - run: ci/check_and_fix_format.sh
 
    macos:
      macos:

@@ -217,7 +217,7 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
   //    name
   //    8 byte alignment padding
   //    8 bytes of absolute value
-  //    8 bytes of delta  (if appropropriate, e.g. for counters)
+  //    8 bytes of delta  (if appropriate, e.g. for counters)
   //  uint32 size of block of this type
 
   const uint64_t padding = 0;
@@ -554,7 +554,7 @@ WasmResult Context::getProperty(absl::string_view path, std::string* result) {
     start = end + 1;
 
     if (first) {
-      // top-level ident
+      // top-level identifier
       first = false;
       auto top_value = findValue(part, &arena, start >= path.size());
       if (!top_value.has_value()) {
