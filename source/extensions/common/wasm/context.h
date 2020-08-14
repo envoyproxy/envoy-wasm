@@ -153,7 +153,7 @@ public:
   const Network::Connection* getConnection() const;
 
   //
-  // VM level downcalls into the Wasm code on Context(id == 0).
+  // VM level down-calls into the Wasm code on Context(id == 0).
   //
   virtual bool validateConfiguration(absl::string_view configuration,
                                      const std::shared_ptr<PluginBase>& plugin); // deprecated
