@@ -81,6 +81,7 @@ envoy_cc_library(
         "//source/common/buffer:buffer_lib",
         "//source/common/common:enum_to_int",
         "//source/common/config:remote_data_fetcher_lib",
+        "//source/common/config:new_grpc_mux_lib",
         "//source/common/http:message_lib",
         "//source/common/http:utility_lib",
         "//source/common/tracing:http_tracer_lib",
@@ -96,6 +97,7 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/public:value_export_util",
         "@com_google_cel_cpp//parser",
         "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
+        "@envoy_api//envoy/service/discovery/v3:pkg_cc_proto",
         "@proxy_wasm_cpp_host//:lib",
     ],
 )

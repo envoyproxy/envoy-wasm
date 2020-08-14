@@ -23,6 +23,7 @@ public:
 
   bool onDone() override;
   void onResolveDns(uint32_t token, uint32_t results_size) override;
+  void onConfigurationRequests(uint32_t results_size) override;
 };
 
 static RegisterContextFactory register_TestContext(CONTEXT_FACTORY(TestContext),
@@ -35,6 +36,12 @@ void TestRootContext::onResolveDns(uint32_t token, uint32_t result_size) {
   for (auto& e : dns) {
     logInfo("TestRootContext::onResolveDns dns " + std::to_string(e.ttl_seconds) + " " + e.address);
   }
+}
+
+void TestRootContext::onConfigurationRequests(uint32_t result_size) {
+  logWarn("TestRootContext::onConfigurationRequests");
+  auto requests_buffer = getBufferBytes(WasmBufferType::CallData, 0, result_size);
+  auto requests = parseConfigurationRequests(requests_buffer->view());
 }
 
 bool TestRootContext::onDone() {

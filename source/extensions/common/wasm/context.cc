@@ -12,6 +12,7 @@
 #include "envoy/local_info/local_info.h"
 #include "envoy/network/filter.h"
 #include "envoy/stats/sink.h"
+#include "envoy/service/discovery/v3/discovery.pb.h"
 #include "envoy/thread_local/thread_local.h"
 
 #include "common/buffer/buffer_impl.h"
@@ -298,6 +299,190 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
   }
   buffer_.set(std::move(buffer), counter_block_size + gauge_block_size);
   wasm()->on_stats_update_(this, id_, counter_block_size + gauge_block_size);
+}
+void Context::onConfigurationRequests(std::list<uint32_t>&& request_tokens, 
+                                      std::list<envoy::service::discovery::v3::DeltaDiscoveryRequest>&& requests) {
+  proxy_wasm::DeferAfterCallActions actions(this);
+  if (wasm()->isFailed() || !wasm()->on_configuration_requests_) {
+    return;
+  }
+  if (requests.size() != request_tokens.size()) {
+    return;
+  }
+  // uint32_t number of requests
+  //   uint32_t request_token
+  //   uint32_t type_url length
+  //   type_url
+  //   uint32_t number of resource names to be subscribed
+	//      uint32_t size of resource_name
+	//      resource_name
+  //   uint32_t number of resource names to be unsubscribed
+	//      uint32_t size of resource_name
+	//      resource_name
+  //   uint32_t number of resource-version pairs in map
+	//      uint32_t size of resource name
+	//      resource name
+	//      uintint32_t size of version name
+	//      version name
+
+  uint32_t s = sizeof(uint32_t);
+  for (auto request: requests) {
+    s += 5 * sizeof(uint32_t);
+    s += request.type_url().size();
+    for (const auto& name_subscribed : request.resource_names_subscribe()) {
+        s += sizeof(uint32_t);
+        s += name_subscribed.size();
+    }
+    for (const auto& name_unsubscribed : request.resource_names_unsubscribe()) {
+        s += sizeof(uint32_t);
+        s += name_unsubscribed.size();
+    }
+    for (const auto& pair : request.initial_resource_versions()) {
+      s += 2 * sizeof(uint32_t);
+      s += pair.first.size() + pair.second.size();
+    }
+  }
+
+  auto buffer = std::unique_ptr<char[]>(new char[s]);
+  char* b = buffer.get();
+
+  uint32_t n = requests.size();
+  memcpy(b, &n, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+
+  for (auto request: requests) {
+    n = request_tokens.front();
+    request_tokens.pop_front();
+    memcpy(b, &n, sizeof(uint32_t));
+    b += sizeof(uint32_t);
+
+    n = request.type_url().size();
+    memcpy(b, &n, sizeof(uint32_t));
+    b += sizeof(uint32_t);
+    mempcpy(b, request.type_url().data(), request.type_url().size());
+    b += request.type_url().size();
+
+    for (const auto& name_subscribed : request.resource_names_subscribe()) {
+      n = name_subscribed.size();
+      memcpy(b, &n, sizeof(uint32_t));
+      b += sizeof(uint32_t);
+      mempcpy(b, name_subscribed.data(), name_subscribed.size());
+      b += name_subscribed.size();
+    }
+
+    for (const auto& name_unsubscribed : request.resource_names_unsubscribe()) {
+      n = name_unsubscribed.size();
+      memcpy(b, &n, sizeof(uint32_t));
+      b += sizeof(uint32_t);
+      mempcpy(b, name_unsubscribed.data(), name_unsubscribed.size());
+      b += name_unsubscribed.size();
+    }
+
+    for (const auto& pair : request.initial_resource_versions()) {
+      n = pair.first.size();
+      memcpy(b, &n, sizeof(uint32_t));
+      b += sizeof(uint32_t);
+      mempcpy(b, pair.first.data(), pair.first.size());
+      b += pair.first.size();
+
+      n = pair.second.size();
+      memcpy(b, &n, sizeof(uint32_t));
+      b += sizeof(uint32_t);
+      mempcpy(b, pair.second.data(), pair.second.size());
+      b += pair.second.size();
+    }
+  }
+
+  buffer_.set(std::move(buffer), s);
+  wasm()->on_configuration_requests_(this, id_, s);
+}
+
+void Context::onConfigurationResponse(uint32_t response_token, 
+                                      envoy::service::discovery::v3::DeltaDiscoveryResponse& response) {
+  proxy_wasm::DeferAfterCallActions actions(this);
+  if (!wasm()->on_configuration_response_) {
+    return;
+  }
+  // buffer format
+  // uint32_t size of this block
+  // uint32_t number of response resources
+  //   uint32_t size of resource name
+  //   resource name
+  //   uint32_t number of aliases
+  //     uint32_t size of alias name
+  //     alias name
+  //   uint32_t version size
+  //   resource version
+  // uint32_t number of removed resources
+  //   uint32_t size of removed resource name
+  //   removed resource name
+  uint32_t s = 2 * sizeof(uint32_t);
+  for (const auto& resource : response.resources()) {
+    s += 3 * sizeof(uint32_t);
+    s += resource.name().size();
+    for (const auto& alias : resource.aliases()) {
+      s += sizeof(uint32_t);
+      s += alias.size();
+    }
+    s += resource.version().size();
+  }
+
+  auto buffer = std::unique_ptr<char[]>(new char[s]);
+  char* b = buffer.get();
+
+  memcpy(b, &s, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+
+  uint32_t n = response.resources().size();
+  memcpy(b, &n, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+
+  for (const auto& resource : response.resources()) { 
+    n = resource.name().size();
+    memcpy(b, &n, sizeof(uint32_t));
+    b += sizeof(uint32_t);
+
+    memcpy(b, resource.name().data(), resource.name().size());
+    b += sizeof(resource.name().size());
+
+    for (const auto& alias : resource.aliases()) {
+      n = alias.size();
+      memcpy(b, &n, sizeof(uint32_t));
+      b += sizeof(uint32_t);
+
+      memcpy(b, alias.data(), alias.size());
+      b += sizeof(alias.size());
+    }
+
+    n = resource.version().size();
+    memcpy(b, &n, sizeof(uint32_t));
+    b += sizeof(uint32_t);
+
+    memcpy(b, resource.version().data(), resource.version().size());
+    b += sizeof(resource.version().size());
+  }
+
+  n = response.type_url().size();
+  memcpy(b, &n, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+
+  memcpy(b, response.type_url().data(), response.type_url().size());
+  b += sizeof(response.type_url().size());
+
+  n = response.removed_resources().size();
+  memcpy(b, &n, sizeof(uint32_t));
+  b += sizeof(uint32_t);
+
+  for (const auto& removed_resource : response.removed_resources()) {
+    n = removed_resource.size();
+    memcpy(b, &n, sizeof(uint32_t));
+    b += sizeof(uint32_t);
+
+    memcpy(b, removed_resource.data(), n);
+    b += sizeof(n);
+  }
+  buffer_.set(std::move(buffer), s);
+  wasm()->on_configuration_response_(this, id_, response_token, s);
 }
 
 // Native serializer carrying over bit representation from CEL value to the extension

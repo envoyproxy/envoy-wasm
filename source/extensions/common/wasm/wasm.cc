@@ -203,6 +203,22 @@ Word resolve_dns(void* raw_context, Word dns_address_ptr, Word dns_address_size,
   return WasmResult::Ok;
 }
 
+Word send_configurations(void* raw_context, Word configuration_address_ptr, 
+                         Word configuration_address_size, Word request_token_ptr) {
+  // auto context = WASM_CONTEXT(raw_context);
+  // auto root_context = context->isRootContext() ? context : context->rootContext();
+  // auto path = context->wasmVm()->getMemory(configuration_address_ptr, configuration_address_size);
+  // if (!path) {
+  //   return WasmResult::InvalidMemoryAccess;
+  // }
+
+  (void) raw_context;
+  (void) configuration_address_ptr;
+  (void) configuration_address_size;
+  (void) request_token_ptr;
+  return WasmResult::Ok;
+}
+
 void Wasm::registerCallbacks() {
   WasmBase::registerCallbacks();
 #define _REGISTER(_fn)                                                                             \
@@ -218,6 +234,8 @@ void Wasm::getFunctions() {
 #define _GET(_fn) wasm_vm_->getFunction("envoy_" #_fn, &_fn##_);
   _GET(on_resolve_dns)
   _GET(on_stats_update)
+  _GET(on_configuration_requests)
+  _GET(on_configuration_response)
 #undef _GET
 }
 

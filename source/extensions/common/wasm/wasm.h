@@ -101,6 +101,9 @@ protected:
   proxy_wasm::WasmCallVoid<3> on_resolve_dns_;
   proxy_wasm::WasmCallVoid<2> on_stats_update_;
 
+  proxy_wasm::WasmCallVoid<2> on_configuration_requests_;
+  proxy_wasm::WasmCallVoid<3> on_configuration_response_;
+ 
   Stats::ScopeSharedPtr scope_;
   Upstream::ClusterManager& cluster_manager_;
   Event::Dispatcher& dispatcher_;

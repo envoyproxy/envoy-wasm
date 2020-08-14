@@ -279,6 +279,10 @@ public:
 
   void onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot);
 
+  void onConfigurationRequests(std::list<uint32_t>&& request_tokens,
+                               std::list<envoy::service::discovery::v3::DeltaDiscoveryRequest>&& requests);
+
+  void onConfigurationResponse(uint32_t token, envoy::service::discovery::v3::DeltaDiscoveryResponse& response);
   // CEL evaluation
   std::vector<const google::api::expr::runtime::CelFunction*>
   FindFunctionOverloads(absl::string_view) const override {

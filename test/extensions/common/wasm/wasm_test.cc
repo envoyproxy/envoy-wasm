@@ -841,6 +841,24 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
                               std::move(dns_results));
 }
 
+TEST_P(WasmCommonContextTest, OnConfigurationRequests) {
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
+        "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_context_cpp.wasm")));
+  } else {
+    // The name of the Null VM plugin.
+    code = "CommonWasmTestContextCpp";
+  }
+  EXPECT_FALSE(code.empty());
+  setup(code);
+  setupContext();
+  std::list<uint32_t> tokens;
+  std::list<envoy::service::discovery::v3::DeltaDiscoveryRequest> requests;
+
+  root_context().onConfigurationRequests(std::move(tokens), std::move(requests));
+}
+
 } // namespace Wasm
 } // namespace Common
 } // namespace Extensions

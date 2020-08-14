@@ -38,3 +38,13 @@ extern "C" PROXY_WASM_KEEPALIVE void envoy_on_stats_update(uint32_t context_id,
                                                            uint32_t data_size) {
   getEnvoyRootContext(context_id)->onStatsUpdate(data_size);
 }
+
+extern "C" PROXY_WASM_KEEPALIVE void envoy_on_configuration_requests(uint32_t context_id,
+                                                                     uint32_t data_size) {
+  getEnvoyRootContext(context_id)->onConfigurationRequests(data_size);
+}
+
+extern "C" PROXY_WASM_KEEPALIVE void envoy_on_configuration_response(uint32_t context_id, uint32_t token,
+                                                          uint32_t data_size) {
+  getEnvoyRootContext(context_id)->onConfigurationResponse(token, data_size);
+}

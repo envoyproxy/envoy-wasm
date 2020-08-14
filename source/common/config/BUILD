@@ -181,6 +181,24 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "wasm_mux_lib",
+    srcs = ["wasm_mux_impl.cc"],
+    hdrs = ["wasm_mux_impl.h"],
+    deps = [
+        ":delta_subscription_state_lib",
+        ":grpc_stream_lib",
+        ":pausable_ack_queue_lib",
+        ":version_converter_lib",
+        ":watch_map_lib",
+        "//include/envoy/event:dispatcher_interface",
+        "//include/envoy/grpc:async_client_interface",
+        "//source/common/memory:utils_lib",
+        "@envoy_api//envoy/api/v2:pkg_cc_proto",
+        "@envoy_api//envoy/service/discovery/v3:pkg_cc_proto",
+    ],
+)
+
+envoy_cc_library(
     name = "http_subscription_lib",
     srcs = ["http_subscription_impl.cc"],
     hdrs = ["http_subscription_impl.h"],
