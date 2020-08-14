@@ -240,6 +240,8 @@ ContextBase* Wasm::createRootContext(const std::shared_ptr<PluginBase>& plugin) 
   return new Context(this, std::static_pointer_cast<Plugin>(plugin));
 }
 
+ContextBase* Wasm::createVmContext() { return new Context(this); }
+
 void Wasm::log(absl::string_view root_id, const Http::RequestHeaderMap* request_headers,
                const Http::ResponseHeaderMap* response_headers,
                const Http::ResponseTrailerMap* response_trailers,
