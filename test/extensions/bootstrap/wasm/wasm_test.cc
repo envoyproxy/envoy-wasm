@@ -115,12 +115,14 @@ public:
   void createWasm() { WasmTestBase::createWasm(std::get<0>(GetParam())); }
 
   void setWasmCode(std::string vm_configuration) {
+    const auto basic_path =
+        absl::StrCat("test/extensions/bootstrap/wasm/test_data/", vm_configuration);
     if (std::get<1>(GetParam()) == "cpp") {
-      code_ = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-          absl::StrCat("{{ test_rundir }}/", kWasmCppDir, vm_configuration + "_cpp.wasm")));
+      code_ = TestEnvironment::readFileToStringForTest(
+          TestEnvironment::runfilesPath(basic_path + "_cpp.wasm"));
     } else {
-      code_ = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-          absl::StrCat("{{ test_rundir }}/", kWasmRustDir, vm_configuration + "_rust.wasm")));
+      code_ = TestEnvironment::readFileToStringForTest(
+          TestEnvironment::runfilesPath(basic_path + "_rust.wasm"));
     }
     EXPECT_FALSE(code_.empty());
   }

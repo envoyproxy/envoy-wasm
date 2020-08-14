@@ -24,9 +24,6 @@ using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
 using Envoy::Extensions::Common::Wasm::Wasm;
 using proxy_wasm::ContextBase;
 
-static const std::string kWasmCppDir = "test/extensions/filters/network/wasm/test_data/";
-static const std::string kWasmRustDir = "test/extensions/wasm/";
-
 class TestFilter : public Context {
 public:
   TestFilter(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
@@ -68,11 +65,11 @@ private:
       code_ = "NetworkTestCpp";
     } else {
       if (std::get<1>(GetParam()) == "cpp") {
-        code_ = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-            absl::StrCat("{{ test_rundir }}/", kWasmCppDir, "test_cpp.wasm")));
+        code_ = TestEnvironment::readFileToStringForTest(TestEnvironment::runfilesPath(
+            "test/extensions/filters/network/wasm/test_data/test_cpp.wasm"));
       } else {
-        code_ = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-            absl::StrCat("{{ test_rundir }}/", kWasmRustDir, vm_configuration + "_rust.wasm")));
+        code_ = TestEnvironment::readFileToStringForTest(TestEnvironment::runfilesPath(absl::StrCat(
+            "test/extensions/filters/network/wasm/test_data/", vm_configuration + "_rust.wasm")));
       }
     }
     EXPECT_FALSE(code_.empty());
@@ -104,7 +101,7 @@ TEST_P(WasmNetworkFilterTest, BadCode) {
 
 // Test happy path.
 TEST_P(WasmNetworkFilterTest, HappyPath) {
-  setupConfig("", "network_logging");
+  setupConfig("", "logging");
   setupFilter();
 
   EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
