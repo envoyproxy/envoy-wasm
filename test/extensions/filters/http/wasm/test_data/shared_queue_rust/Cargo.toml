@@ -10,6 +10,7 @@ proxy-wasm = "0.1"
 log = "0.4"
 
 [lib]
+crate-type = ["cdylib"]
 path = "src/*.rs"
 
 [profile.release]
