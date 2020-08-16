@@ -1404,7 +1404,7 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
                   const Http::ResponseTrailerMap* response_trailers,
                   const StreamInfo::StreamInfo& stream_info) {
   if (!http_request_started_) {
-    return;
+    onCreate();
   }
   access_log_request_headers_ = request_headers;
   // ? request_trailers  ?
