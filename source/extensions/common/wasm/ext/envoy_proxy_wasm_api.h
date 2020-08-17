@@ -69,6 +69,10 @@ inline std::vector<DnsResult> parseDnsResults(std::string_view data) {
   return results;
 }
 
+template <typename I> inline uint32_t align(uint32_t i) {
+  return (i + sizeof(I) - 1) & ~(sizeof(I) - 1);
+}
+
 inline StatResult parseStatResults(std::string_view data) {
   StatResult results;
   uint32_t data_len = 0;
@@ -87,7 +91,7 @@ inline StatResult parseStatResults(std::string_view data) {
 
         auto& e = counters[i];
         e.name = {data.data() + stat_index, name_len};
-        stat_index += name_len + sizeof(uint64_t);
+        stat_index = align<uint64_t>(stat_index + name_len);
 
         const uint64_t* stat_vals = reinterpret_cast<const uint64_t*>(data.data() + stat_index);
         e.value = *stat_vals++;
@@ -106,7 +110,7 @@ inline StatResult parseStatResults(std::string_view data) {
 
         auto& e = gauges[i];
         e.name = {data.data() + stat_index, name_len};
-        stat_index += name_len + sizeof(uint64_t);
+        stat_index = align<uint64_t>(stat_index + name_len);
 
         const uint64_t* stat_vals = reinterpret_cast<const uint64_t*>(data.data() + stat_index);
         e.value = *stat_vals++;
