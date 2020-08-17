@@ -506,10 +506,10 @@ DEPENDENCY_REPOSITORIES = dict(
         cpe = "cpe:2.3:a:icu-project:international_components_for_unicode",
     ),
     proxy_wasm_cpp_sdk = dict(
-        sha256 = "cb03ee51eb1f047ee38a9b64d568c2528a2745b37966d1aafb54068ae179d3e3",
-        strip_prefix = "proxy-wasm-cpp-sdk-9ccc810a81aa0afa885e57250b1619c3180f268a",
+        sha256 = "6827e0fadacc4e1687a063755c04b3ac8fecc2f4908dd3438851f4c760565d66",
+        strip_prefix = "proxy-wasm-cpp-sdk-b3a4ea9a4700e9e1d9edbd028ad68100289c7900",
         # 2020-08-14
-        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/9ccc810a81aa0afa885e57250b1619c3180f268a.tar.gz"],
+        urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/b3a4ea9a4700e9e1d9edbd028ad68100289c7900.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
