@@ -59,7 +59,8 @@ FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
   return FilterHeadersStatus::Continue;
 }
 
-FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
+FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length,
+                                               bool /* end_of_stream */) {
   auto body = getBufferBytes(WasmBufferType::HttpRequestBody, 0, body_buffer_length);
   LOG_ERROR(std::string("onRequestBody ") + std::string(body->view()));
   return FilterDataStatus::Continue;

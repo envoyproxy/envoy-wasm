@@ -40,6 +40,7 @@ namespace Wasm {
 
 template <typename Base = testing::Test> class WasmTestBase : public Base {
 public:
+  // NOLINTNEXTLINE(readability-identifier-naming)
   void SetUp() override { clearCodeCacheForTesting(); }
 
   void setupBase(const std::string& runtime, const std::string& code, CreateContextFn create_root,
