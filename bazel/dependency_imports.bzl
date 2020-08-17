@@ -24,7 +24,7 @@ def envoy_dependency_imports(go_version = GO_VERSION):
     rust_repositories()
     bazel_version(name = "bazel_version")
     upb_bazel_version_repository(name = "upb_bazel_version")
-    antlr_dependencies(471)
+    antlr_dependencies(472)
 
     custom_exec_properties(
         name = "envoy_large_machine_exec_property",
