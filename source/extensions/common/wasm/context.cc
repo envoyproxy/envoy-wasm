@@ -1406,8 +1406,12 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
                   const Http::ResponseHeaderMap* response_headers,
                   const Http::ResponseTrailerMap* response_trailers,
                   const StreamInfo::StreamInfo& stream_info) {
-  if (!http_request_started_) {
-    return;
+  if (!in_vm_context_created_) {
+    // If the request is invalid then onRequestHeaders() will not be called and neither will
+    // onCreate() in cases like sendLocalReply who short-circuits envoy
+    // lifecycle. This is because Envoy does not have a well defined lifetime for the combined HTTP
+    // + AccessLog filter. Thus, to log these scenarios, we call onCreate() in log function below.
+    onCreate();
   }
   if (premature_vm_death_) {
     return;
