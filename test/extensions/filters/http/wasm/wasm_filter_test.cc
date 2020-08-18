@@ -38,13 +38,6 @@ public:
              Envoy::Extensions::Common::Wasm::PluginSharedPtr plugin)
       : Envoy::Extensions::Common::Wasm::Context(wasm, root_context_id, plugin) {}
 
-  void log(const Http::RequestHeaderMap* request_headers,
-           const Http::ResponseHeaderMap* response_headers,
-           const Http::ResponseTrailerMap* response_trailers,
-           const StreamInfo::StreamInfo& stream_info) override {
-    Envoy::Extensions::Common::Wasm::Context::log(request_headers, response_headers,
-                                                  response_trailers, stream_info);
-  }
   MOCK_CONTEXT_LOG_;
 };
 
@@ -84,6 +77,7 @@ public:
 
   TestRoot& rootContext() { return *static_cast<TestRoot*>(root_context_); }
   TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
+  AccessLog::Instance& access_log() { return *static_cast<AccessLog::Instance*>(context_.get()); }
 };
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmHttpFilterTest,
@@ -430,7 +424,7 @@ TEST_P(WasmHttpFilterTest, AccessLog) {
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
   filter().onDestroy();
   StreamInfo::MockStreamInfo log_stream_info;
-  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
+  access_log().log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
 TEST_P(WasmHttpFilterTest, AsyncCall) {
@@ -674,7 +668,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   filter().onDestroy();
 
   StreamInfo::MockStreamInfo log_stream_info;
-  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
+  access_log().log(&request_headers, nullptr, nullptr, log_stream_info);
 
   const auto& result = request_stream_info_.filterState()->getDataReadOnly<Common::Wasm::WasmState>(
       "wasm.wasm_request_set_key");
@@ -715,7 +709,7 @@ TEST_P(WasmHttpFilterTest, Property) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/test_context"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   StreamInfo::MockStreamInfo log_stream_info;
-  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
+  access_log().log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
 TEST_P(WasmHttpFilterTest, SharedData) {
@@ -734,7 +728,7 @@ TEST_P(WasmHttpFilterTest, SharedData) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   StreamInfo::MockStreamInfo log_stream_info;
-  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
+  access_log().log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
 TEST_P(WasmHttpFilterTest, SharedQueue) {
