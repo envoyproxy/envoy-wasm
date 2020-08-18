@@ -39,17 +39,11 @@ std::string sha256(absl::string_view data) {
   return std::string(reinterpret_cast<const char*>(&digest[0]), digest.size());
 }
 
-class TestContext : public Extensions::Common::Wasm::Context {
+class TestContext : public ::Envoy::Extensions::Common::Wasm::Context {
 public:
-  TestContext() = default;
-  TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
-  TestContext(Extensions::Common::Wasm::Wasm* wasm,
-              const Extensions::Common::Wasm::PluginSharedPtr& plugin)
-      : Extensions::Common::Wasm::Context(wasm, plugin) {}
-  TestContext(Extensions::Common::Wasm::Wasm* wasm, uint32_t root_context_id,
-              const Extensions::Common::Wasm::PluginSharedPtr& plugin)
-      : Extensions::Common::Wasm::Context(wasm, root_context_id, plugin) {}
+  using ::Envoy::Extensions::Common::Wasm::Context::Context;
   ~TestContext() override = default;
+  using ::Envoy::Extensions::Common::Wasm::Context::log;
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     std::cerr << std::string(message) << "\n";
     log_(static_cast<spdlog::level::level_enum>(level), message);

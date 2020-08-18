@@ -24,6 +24,7 @@ public:
               const std::shared_ptr<Extensions::Common::Wasm::Plugin>& plugin)
       : Extensions::Common::Wasm::Context(wasm, plugin) {}
   ~TestContext() override = default;
+  using Extensions::Common::Wasm::Context::log;
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     std::cerr << std::string(message) << "\n";
     log_(static_cast<spdlog::level::level_enum>(level), message);

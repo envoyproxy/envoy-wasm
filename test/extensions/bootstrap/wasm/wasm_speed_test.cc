@@ -32,6 +32,7 @@ public:
            const std::shared_ptr<Extensions::Common::Wasm::Plugin>& plugin)
       : Envoy::Extensions::Common::Wasm::Context(wasm, plugin) {}
 
+  using Envoy::Extensions::Common::Wasm::Context::log;
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     log_(static_cast<spdlog::level::level_enum>(level), message);
     return proxy_wasm::WasmResult::Ok;
