@@ -12,7 +12,6 @@ envoy_package()
 wasm_rust_binary(
     name = "logging_rust.wasm",
     srcs = ["logging_rust/src/lib.rs"],
-    rustc_flags = ["-Clink-arg=-zstack-size=32768"],
     deps = [
         "//bazel/external/cargo:log",
         "//bazel/external/cargo:proxy_wasm",

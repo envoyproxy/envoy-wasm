@@ -12,7 +12,6 @@ envoy_package()
 wasm_rust_binary(
     name = "test_rust.wasm",
     srcs = ["test_rust.rs"],
-    rustc_flags = ["-Clink-arg=-zstack-size=32768"],
 )
 
 envoy_cc_library(
