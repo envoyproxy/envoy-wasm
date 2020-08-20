@@ -58,6 +58,7 @@ public:
 class TestRoot : public Envoy::Extensions::Common::Wasm::Context {
 public:
   TestRoot(Wasm* wasm, const std::shared_ptr<Plugin>& plugin) : Context(wasm, plugin) {}
+  using Context::log;
   MOCK_CONTEXT_LOG_;
 };
 

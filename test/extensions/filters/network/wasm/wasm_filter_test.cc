@@ -29,12 +29,14 @@ public:
   TestFilter(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
       : Context(wasm, root_context_id, plugin) {}
   MOCK_CONTEXT_LOG_;
+  using Context::log;
 };
 
 class TestRoot : public Context {
 public:
   TestRoot(Wasm* wasm, const std::shared_ptr<Plugin>& plugin) : Context(wasm, plugin) {}
   MOCK_CONTEXT_LOG_;
+  using Context::log;
 };
 
 class WasmNetworkFilterTest : public Common::Wasm::WasmNetworkFilterTestBase<

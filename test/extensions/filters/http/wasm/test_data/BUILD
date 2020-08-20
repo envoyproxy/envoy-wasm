@@ -1,11 +1,11 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
 )
 load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -22,7 +22,10 @@ envoy_cc_library(
         "test_cpp.cc",
         "test_cpp_null_plugin.cc",
     ],
-    copts = ["-DNULL_PLUGIN=1"],
+    copts = [
+        "-DNULL_PLUGIN=1",
+        "-Wno-error=return-type",
+    ],
     deps = [
         "//external:abseil_node_hash_map",
         "//source/common/common:assert_lib",

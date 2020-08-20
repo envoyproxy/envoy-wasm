@@ -71,10 +71,14 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     std::string message = "before div by zero";
     proxy_log(LogLevel::error, message.c_str(), message.size());
     ::free(const_cast<void*>(reinterpret_cast<const void*>(configuration_ptr)));
+#ifdef __clang__
 #pragma clang optimize off
+#endif
     int zero = context_id / 1000;
     message = "divide by zero: " + std::to_string(100 / zero);
+#ifdef __clang__
 #pragma clang optimize on
+#endif
     proxy_log(LogLevel::error, message.c_str(), message.size());
   } else if (configuration == "globals") {
     std::string message = "NaN " + std::to_string(gNan);
