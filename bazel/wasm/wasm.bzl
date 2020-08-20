@@ -83,7 +83,7 @@ wasm_rust_binary_rule = rule(
     attrs = _wasm_attrs(wasm_rust_transition),
 )
 
-def wasm_cc_binary(name, **kwargs):
+def wasm_cc_binary(name, tags = [], **kwargs):
     wasm_name = "_wasm_" + name
     kwargs.setdefault("additional_linker_inputs", ["@proxy_wasm_cpp_sdk//:jslib"])
     kwargs.setdefault("linkopts", ["--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js"])
@@ -100,9 +100,10 @@ def wasm_cc_binary(name, **kwargs):
     wasm_cc_binary_rule(
         name = name,
         binary = ":" + wasm_name,
+        tags = tags + ["manual"],
     )
 
-def wasm_rust_binary(name, **kwargs):
+def wasm_rust_binary(name, tags = [], **kwargs):
     wasm_name = "_wasm_" + (name if not ".wasm" in name else name.strip(".wasm"))
     kwargs.setdefault("visibility", ["//visibility:public"])
 
@@ -122,4 +123,5 @@ def wasm_rust_binary(name, **kwargs):
             "//conditions:default": False,
         }),
         binary = ":" + wasm_name,
+        tags = tags + ["manual"],
     )
