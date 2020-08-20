@@ -12,6 +12,7 @@ def _wasm_cc_transition_impl(settings, attr):
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
         "//command_line_option:collect_code_coverage": "false",
+        "//command_line_option:fission": "no",
     }
 
 def _wasm_rust_transition_impl(settings, attr):
@@ -27,6 +28,7 @@ wasm_cc_transition = transition(
         "//command_line_option:crosstool_top",
         "//command_line_option:copt",
         "//command_line_option:cxxopt",
+        "//command_line_option:fission",
         "//command_line_option:linkopt",
         "//command_line_option:collect_code_coverage",
     ],
