@@ -67,6 +67,7 @@ public:
   proxy_wasm::CallOnThreadFunction callOnThreadFunction() override;
   ContextBase* createContext(const std::shared_ptr<PluginBase>& plugin) override;
   ContextBase* createRootContext(const std::shared_ptr<PluginBase>& plugin) override;
+  ContextBase* createVmContext() override;
   void registerCallbacks() override;
   void getFunctions() override;
 

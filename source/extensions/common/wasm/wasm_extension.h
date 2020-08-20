@@ -44,7 +44,7 @@ struct CreateWasmStats {
   CREATE_WASM_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT)
 };
 
-// Extension point for Wasm clients in enbedded Envoy.
+// Extension point for Wasm clients in embedded Envoy.
 class WasmExtension : Logger::Loggable<Logger::Id::wasm> {
 public:
   WasmExtension() = default;

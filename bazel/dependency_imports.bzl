@@ -12,7 +12,7 @@ load("@protodoc_pip3//:requirements.bzl", protodoc_pip_install = "pip_install")
 load("@rules_antlr//antlr:deps.bzl", "antlr_dependencies")
 
 # go version for rules_go
-GO_VERSION = "1.14.4"
+GO_VERSION = "1.14.7"
 
 def envoy_dependency_imports(go_version = GO_VERSION):
     rules_foreign_cc_dependencies()
@@ -24,7 +24,7 @@ def envoy_dependency_imports(go_version = GO_VERSION):
     rust_repositories()
     bazel_version(name = "bazel_version")
     upb_bazel_version_repository(name = "upb_bazel_version")
-    antlr_dependencies(471)
+    antlr_dependencies(472)
 
     custom_exec_properties(
         name = "envoy_large_machine_exec_property",
