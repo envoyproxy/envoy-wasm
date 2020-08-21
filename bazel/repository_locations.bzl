@@ -719,8 +719,7 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         version = "1.39",
         sha256 = "4ac0f1f3de8b3f1373d435cd7e58bd94de4146e751f099732167749a229b443b",
         patch_cmds = [
-            "./emsdk install 1.39.6-upstream",
-            "./emsdk activate --embedded 1.39.6-upstream",
+            "[[ \"$(uname -m)\" == \"x86_64\" ]] && ./emsdk install 1.39.6-upstream && ./emsdk activate --embedded 1.39.6-upstream || true",
         ],
         strip_prefix = "emsdk-{version}.6",
         urls = ["https://github.com/emscripten-core/emsdk/archive/{version}.6.tar.gz"],
