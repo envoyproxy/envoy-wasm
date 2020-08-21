@@ -1,6 +1,7 @@
 // NOLINT(namespace-envoy)
-#include <unistd.h>
-
+#ifndef WIN32
+#include "unistd.h"
+#endif
 #include <cerrno>
 #include <cmath>
 #include <cstdio>
@@ -164,6 +165,7 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     if (pathenv != nullptr) {
       FAIL_NOW("PATH environment variable should not be available");
     }
+#ifndef WIN32
     // Exercise the `WASI` `fd_fdstat_get` a little bit
     int tty = isatty(1);
     if (errno != ENOTTY || tty != 0) {
@@ -177,6 +179,7 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     if (errno != EBADF || tty != 0) {
       FAIL_NOW("isatty errors on bad fds. errno = " + std::to_string(errno));
     }
+#endif
   } else if (configuration == "on_foreign") {
     std::string message = "on_foreign start";
     proxy_log(LogLevel::debug, message.c_str(), message.size());
