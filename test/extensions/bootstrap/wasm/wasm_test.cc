@@ -37,7 +37,8 @@ class WasmTestBase {
 public:
   WasmTestBase()
       : api_(Api::createApiForTest(stats_store_)),
-        dispatcher_(api_->allocateDispatcher("wasm_test")), scope_(stats_store_.createScope("")) {}
+        dispatcher_(api_->allocateDispatcher("wasm_test")),
+        base_scope_(stats_store_.createScope("")), scope_(base_scope_->createScope("")) {}
 
   void createWasm(absl::string_view runtime) {
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
@@ -58,6 +59,7 @@ public:
   Api::ApiPtr api_;
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherPtr dispatcher_;
+  Stats::ScopeSharedPtr base_scope_;
   Stats::ScopeSharedPtr scope_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
   std::string name_;
@@ -280,6 +282,11 @@ TEST_P(WasmNullTest, StatsHigherLevel) {
                                             "histogram_bool_tag.true.test_histogram"))));
 
   context->onTick(0);
+  EXPECT_EQ(scope_->counterFromString("counter_tag.test_tag.test_counter").value(), 5);
+  EXPECT_EQ(
+      scope_->gaugeFromString("gauge_int_tag.9.test_gauge", Stats::Gauge::ImportMode::Accumulate)
+          .value(),
+      2);
 }
 
 TEST_P(WasmNullTest, StatsHighLevel) {
@@ -302,6 +309,14 @@ TEST_P(WasmNullTest, StatsHighLevel) {
   // Get is not supported on histograms.
   // EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_h = 3")));
   context->onLog();
+  EXPECT_EQ(
+      scope_->counterFromString("string_tag.test_tag.int_tag.7.bool_tag.true.test_counter").value(),
+      5);
+  EXPECT_EQ(scope_
+                ->gaugeFromString("string_tag1.test_tag1.string_tag2.test_tag2.test_gauge",
+                                  Stats::Gauge::ImportMode::Accumulate)
+                .value(),
+            2);
 }
 
 } // namespace Wasm
