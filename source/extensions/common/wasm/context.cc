@@ -250,7 +250,7 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
   for (const auto& gauge : snapshot.gauges()) {
     if (gauge.get().used()) {
       gauge_block_size += sizeof(uint32_t) + gauge.get().name().size();
-      gauge_block_size += align<uint64_t>(counter_block_size + sizeof(uint64_t));
+      gauge_block_size += align<uint64_t>(gauge_block_size + sizeof(uint64_t));
     }
   }
 
