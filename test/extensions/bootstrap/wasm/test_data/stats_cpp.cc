@@ -18,7 +18,7 @@ WASM_EXPORT(void, proxy_abi_version_0_1_0, ()) {}
 WASM_EXPORT(uint32_t, proxy_on_configure, (uint32_t, uint32_t)) {
   uint32_t c, g, h;
   CHECK_RESULT(defineMetric(MetricType::Counter, "test_counter", &c));
-  CHECK_RESULT(defineMetric(MetricType::Gauge, "test_gauges", &g));
+  CHECK_RESULT(defineMetric(MetricType::Gauge, "test_gauge", &g));
   CHECK_RESULT(defineMetric(MetricType::Histogram, "test_histogram", &h));
 
   CHECK_RESULT(incrementMetric(c, 1));

@@ -37,8 +37,7 @@ class WasmTestBase {
 public:
   WasmTestBase()
       : api_(Api::createApiForTest(stats_store_)),
-        dispatcher_(api_->allocateDispatcher("wasm_test")),
-        scope_(stats_store_.createScope("wasm.")) {}
+        dispatcher_(api_->allocateDispatcher("wasm_test")), scope_(stats_store_.createScope("")) {}
 
   void createWasm(absl::string_view runtime) {
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
@@ -261,6 +260,8 @@ TEST_P(WasmNullTest, Stats) {
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("get histogram = Unsupported")));
 
   EXPECT_TRUE(wasm_->configure(context, plugin_));
+  EXPECT_EQ(scope_->counterFromString("test_counter").value(), 5);
+  EXPECT_EQ(scope_->gaugeFromString("test_gauge", Stats::Gauge::ImportMode::Accumulate).value(), 2);
 }
 
 TEST_P(WasmNullTest, StatsHigherLevel) {

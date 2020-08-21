@@ -18,9 +18,9 @@ envoy_package()
 envoy_extension_cc_test(
     name = "config_test",
     srcs = ["config_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/stats_sinks/wasm/test_data:test_context_cpp.wasm",
-    ],
+    ]),
     extension_name = "envoy.stat_sinks.wasm",
     deps = [
         "//source/extensions/stat_sinks/wasm:config",
