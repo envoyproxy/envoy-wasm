@@ -1,6 +1,7 @@
 // NOLINT(namespace-envoy)
 #ifndef WIN32
 #include "unistd.h"
+
 #endif
 #include <cerrno>
 #include <cmath>
