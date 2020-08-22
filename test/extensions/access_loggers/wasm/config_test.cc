@@ -39,15 +39,17 @@ private:
 
 class WasmAccessLogConfigTest : public testing::TestWithParam<std::string> {};
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmAccessLogConfigTest,
-                         testing::Values(
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
 #if defined(ENVOY_WASM_V8)
-                             "v8",
+    "v8",
 #endif
 #if defined(ENVOY_WASM_WAVM)
-                             "wavm",
+    "wavm",
 #endif
-                             "null"));
+    "null");
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmAccessLogConfigTest, testing_values);
 
 TEST_P(WasmAccessLogConfigTest, CreateWasmFromEmpty) {
   auto factory =

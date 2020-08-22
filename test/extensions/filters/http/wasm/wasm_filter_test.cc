@@ -79,15 +79,17 @@ public:
   TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
 };
 
-INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmHttpFilterTest,
-                         testing::Values(
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
 #if defined(ENVOY_WASM_V8)
-                             std::make_tuple("v8", "cpp"), std::make_tuple("v8", "rust"),
+    std::make_tuple("v8", "cpp"), std::make_tuple("v8", "rust"),
 #endif
 #if defined(ENVOY_WASM_WAVM)
-                             std::make_tuple("wavm", "cpp"), std::make_tuple("wavm", "rust"),
+    std::make_tuple("wavm", "cpp"), std::make_tuple("wavm", "rust"),
 #endif
-                             std::make_tuple("null", "cpp")));
+    std::make_tuple("null", "cpp"));
+INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmHttpFilterTest, testing_values);
 
 // Bad code in initial config.
 TEST_P(WasmHttpFilterTest, BadCode) {

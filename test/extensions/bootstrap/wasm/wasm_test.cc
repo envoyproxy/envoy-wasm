@@ -78,18 +78,20 @@ public:
 };
 
 #if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
-                         testing::Values(
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
 #if defined(ENVOY_WASM_V8)
-                             "v8"
+    "v8"
 #endif
 #if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
-                             ,
+    ,
 #endif
 #if defined(ENVOY_WASM_WAVM)
-                             "wavm"
+    "wavm"
 #endif
-                             ));
+);
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing_values);
 #endif
 
 class WasmNullTest : public WasmTestBase, public testing::TestWithParam<std::string> {
@@ -106,15 +108,17 @@ public:
   }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNullTest,
-                         testing::Values(
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_null_values = testing::Values(
 #if defined(ENVOY_WASM_V8)
-                             "v8",
+    "v8",
 #endif
 #if defined(ENVOY_WASM_WAVM)
-                             "wavm",
+    "wavm",
 #endif
-                             "null"));
+    "null");
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNullTest, testing_null_values);
 
 class WasmTestMatrix : public WasmTestBase,
                        public testing::TestWithParam<std::tuple<std::string, std::string>> {

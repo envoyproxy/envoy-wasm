@@ -66,15 +66,17 @@ protected:
   Server::BootstrapExtensionPtr extension_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest,
-                         testing::Values(
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
 #if defined(ENVOY_WASM_V8)
-                             "v8",
+    "v8",
 #endif
 #if defined(ENVOY_WASM_WAVM)
-                             "wavm",
+    "wavm",
 #endif
-                             "null"));
+    "null");
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest, testing_values);
 
 TEST_P(WasmFactoryTest, CreateWasmFromWasm) {
   initializeWithConfig(config_);
