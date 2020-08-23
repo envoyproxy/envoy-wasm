@@ -625,6 +625,9 @@ TEST_P(WasmHttpFilterTest, GrpcCallAfterDestroyed) {
   }
 }
 
+// Test metadata access including CEL expressions.
+// TODO: reenable this on Windows if and when the CEL `Antlr` parser compiles on Windows.
+#ifndef WIN32
 TEST_P(WasmHttpFilterTest, Metadata) {
   setupTest("", "metadata");
   setupFilter();
@@ -675,6 +678,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
       "wasm.wasm_request_set_key");
   EXPECT_EQ("wasm_request_set_value", result.value());
 }
+#endif
 
 TEST_P(WasmHttpFilterTest, Property) {
   if (std::get<1>(GetParam()) == "rust") {
