@@ -21,6 +21,7 @@ START_WASM_PLUGIN(CommonWasmTestCpp)
 static int* badptr = nullptr;
 static float gNan = std::nan("1");
 static float gInfinity = INFINITY;
+volatile double zero_unbeknownst_to_the_compiler = 0.0;
 
 #ifndef CHECK_RESULT
 #define CHECK_RESULT(_c)                                                                           \
@@ -81,7 +82,7 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     proxy_log(LogLevel::warn, message.c_str(), message.size());
     message = "inf " + std::to_string(gInfinity);
     proxy_log(LogLevel::warn, message.c_str(), message.size());
-    message = "inf " + std::to_string(1.0 / 0.0);
+    message = "inf " + std::to_string(1.0 / zero_unbeknownst_to_the_compiler);
     proxy_log(LogLevel::warn, message.c_str(), message.size());
     message = std::string("inf ") + (std::isinf(gInfinity) ? "inf" : "nan");
     proxy_log(LogLevel::warn, message.c_str(), message.size());
