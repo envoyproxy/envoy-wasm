@@ -25,6 +25,7 @@ envoy_extension_cc_test(
     ]),
     extension_name = "envoy.filters.http.wasm",
     deps = [
+        "//source/common/http:message_lib",
         "//source/extensions/filters/http/wasm:wasm_filter_lib",
         "//test/extensions/filters/http/wasm/test_data:test_cpp_plugin",
         "//test/test_common:wasm_lib",
@@ -44,6 +45,7 @@ envoy_extension_cc_test(
         "//source/common/common:base64_lib",
         "//source/common/common:hex_lib",
         "//source/common/crypto:utility_lib",
+        "//source/common/http:message_lib",
         "//source/extensions/common/crypto:utility_lib",
         "//source/extensions/common/wasm:wasm_lib",
         "//source/extensions/filters/http/wasm:config",
