@@ -1,5 +1,7 @@
 #include "extensions/filters/http/wasm/wasm_filter.h"
 
+#include "common/http/message_impl.h"
+
 #include "test/test_common/wasm_base.h"
 
 using testing::Eq;

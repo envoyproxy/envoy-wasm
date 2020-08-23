@@ -5,6 +5,7 @@
 #include "common/common/base64.h"
 #include "common/common/hex.h"
 #include "common/crypto/utility.h"
+#include "common/http/message_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
 #include "extensions/common/wasm/wasm.h"
