@@ -626,7 +626,7 @@ TEST_P(WasmHttpFilterTest, GrpcCallAfterDestroyed) {
 }
 
 // Test metadata access including CEL expressions.
-// TODO: reenable this on Windows if and when the CEL `Antlr` parser compiles on Windows.
+// TODO: re-enable this on Windows if and when the CEL `Antlr` parser compiles on Windows.
 #ifndef WIN32
 TEST_P(WasmHttpFilterTest, Metadata) {
   setupTest("", "metadata");
