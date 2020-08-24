@@ -204,6 +204,15 @@ void Context::onResolveDns(uint32_t token, Envoy::Network::DnsResolver::Resoluti
   wasm()->on_resolve_dns_(this, id_, token, s);
 }
 
+template <typename I> inline uint32_t align(uint32_t i) {
+  return (i + sizeof(I) - 1) & ~(sizeof(I) - 1);
+}
+
+template <typename I> inline char* align(char* p) {
+  return reinterpret_cast<char*>((reinterpret_cast<uintptr_t>(p) + sizeof(I) - 1) &
+                                 ~(sizeof(I) - 1));
+}
+
 void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
   proxy_wasm::DeferAfterCallActions actions(this);
   if (wasm()->isFailed() || !wasm()->on_stats_update_) {
@@ -220,8 +229,6 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
   //    8 bytes of delta  (if appropriate, e.g. for counters)
   //  uint32 size of block of this type
 
-  const uint64_t padding = 0;
-
   uint32_t counter_block_size = 3 * sizeof(uint32_t); // type of stat
   uint32_t num_counters = snapshot.counters().size();
   uint32_t counter_type = 1;
@@ -236,14 +243,14 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
   for (const auto& counter : snapshot.counters()) {
     if (counter.counter_.get().used()) {
       counter_block_size += sizeof(uint32_t) + counter.counter_.get().name().size();
-      counter_block_size += 24;
+      counter_block_size = align<uint64_t>(counter_block_size + 2 * sizeof(uint64_t));
     }
   }
 
   for (const auto& gauge : snapshot.gauges()) {
     if (gauge.get().used()) {
       gauge_block_size += sizeof(uint32_t) + gauge.get().name().size();
-      gauge_block_size += 16;
+      gauge_block_size += align<uint64_t>(gauge_block_size + sizeof(uint64_t));
     }
   }
 
@@ -263,9 +270,7 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
       memcpy(b, &n, sizeof(uint32_t));
       b += sizeof(uint32_t);
       memcpy(b, counter.counter_.get().name().data(), counter.counter_.get().name().size());
-      b += counter.counter_.get().name().size();
-      memcpy(b, &padding, sizeof(uint64_t)); // padding
-      b += sizeof(uint64_t);
+      b = align<uint64_t>(b + counter.counter_.get().name().size());
       v = counter.counter_.get().value();
       memcpy(b, &v, sizeof(uint64_t));
       b += sizeof(uint64_t);
@@ -288,9 +293,7 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
       memcpy(b, &n, sizeof(uint32_t));
       b += sizeof(uint32_t);
       memcpy(b, gauge.get().name().data(), gauge.get().name().size());
-      b += gauge.get().name().size();
-      memcpy(b, &padding, sizeof(uint64_t)); // padding
-      b += sizeof(uint64_t);
+      b = align<uint64_t>(b + gauge.get().name().size());
       v = gauge.get().value();
       memcpy(b, &v, sizeof(uint64_t));
       b += sizeof(uint64_t);
