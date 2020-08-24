@@ -802,15 +802,7 @@ public:
   std::unique_ptr<TestContext> context_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonContextTest,
-                         testing::Values(
-#if defined(ENVOY_WASM_WAVM)
-                             "v8",
-#endif
-#if defined(ENVOY_WASM_WAVM)
-                             "wavm",
-#endif
-                             "null"));
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonContextTest, test_values);
 
 TEST_P(WasmCommonContextTest, OnDnsResolve) {
   std::string code;
