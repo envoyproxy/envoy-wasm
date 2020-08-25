@@ -451,6 +451,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), trace,
                           fmt::format("Failed to load Wasm code (fetching) from {}", source));
       cb(nullptr);
+      return false;
     } else {
       remote_data_provider = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
           cluster_manager, init_manager, vm_config.code().remote(), dispatcher, random, true,
