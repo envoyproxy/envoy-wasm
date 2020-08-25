@@ -209,7 +209,7 @@ TEST_P(WasmCommonTest, Segv) {
   wasm->start(plugin);
   EXPECT_TRUE(wasm->isFailed());
 
-  // Subsequent calls should be NOOPs.
+  // Subsequent calls should be NOOP(s).
 
   root_context->onResolveDns(0, Envoy::Network::DnsResolver::ResolutionStatus::Success, {});
   Envoy::Stats::MockMetricSnapshot stats_snapshot;
