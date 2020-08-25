@@ -110,6 +110,18 @@ class WasmTestMatrix : public WasmTestBase,
                        public testing::TestWithParam<std::tuple<std::string, std::string>> {
 public:
   void createWasm() { WasmTestBase::createWasm(std::get<0>(GetParam())); }
+
+  void setWasmCode(std::string vm_configuration) {
+    const auto basic_path =
+        absl::StrCat("test/extensions/bootstrap/wasm/test_data/", vm_configuration);
+    code_ = TestEnvironment::readFileToStringForTest(
+        TestEnvironment::runfilesPath(basic_path + "_" + std::get<1>(GetParam()) + ".wasm"));
+
+    EXPECT_FALSE(code_.empty());
+  }
+
+protected:
+  std::string code_;
 };
 
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
@@ -124,14 +136,12 @@ INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
 TEST_P(WasmTestMatrix, Logging) {
   plugin_configuration_ = "configure-test";
   createWasm();
+  setWasmCode("logging");
 
   auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm_);
   auto wasm_handler = std::make_unique<Extensions::Common::Wasm::WasmHandle>(std::move(wasm_));
-  const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
-      absl::StrCat("{{ test_rundir }}/test/extensions/bootstrap/wasm/test_data/logging_",
-                   std::get<1>(GetParam()), ".wasm")));
-  EXPECT_FALSE(code.empty());
-  EXPECT_TRUE(wasm_weak.lock()->initialize(code, false));
+
+  EXPECT_TRUE(wasm_weak.lock()->initialize(code_, false));
   auto context = static_cast<TestContext*>(wasm_weak.lock()->start(plugin_));
 
   if (std::get<1>(GetParam()) == "cpp") {

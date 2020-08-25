@@ -4,6 +4,7 @@ load(":genrule_repository.bzl", "genrule_repository")
 load("@envoy_api//bazel:envoy_http_archive.bzl", "envoy_http_archive")
 load(":repository_locations.bzl", "DEPENDENCY_ANNOTATIONS", "DEPENDENCY_REPOSITORIES", "USE_CATEGORIES", "USE_CATEGORIES_WITH_CPE_OPTIONAL")
 load("@com_google_googleapis//:repository_rules.bzl", "switched_rules_by_language")
+load(":crates.bzl", "raze_fetch_remote_crates")
 
 PPC_SKIP_TARGETS = ["envoy.filters.http.lua"]
 
@@ -138,6 +139,7 @@ def _go_deps(skip_targets):
 
 def _rust_deps():
     _repository_impl("io_bazel_rules_rust")
+    raze_fetch_remote_crates()
 
 def envoy_dependencies(skip_targets = []):
     # Setup Envoy developer tools.

@@ -16,7 +16,12 @@ envoy_extension_cc_test(
     size = "enormous",  # For WAVM without precompilation. TODO: add precompilation.
     srcs = ["wasm_filter_test.cc"],
     data = [
-        "//test/extensions/filters/http/wasm/test_data:modules",
+        "//test/extensions/filters/http/wasm/test_data:async_call_rust.wasm",
+        "//test/extensions/filters/http/wasm/test_data:body_rust.wasm",
+        "//test/extensions/filters/http/wasm/test_data:headers_rust.wasm",
+        "//test/extensions/filters/http/wasm/test_data:metadata_rust.wasm",
+        "//test/extensions/filters/http/wasm/test_data:shared_data_rust.wasm",
+        "//test/extensions/filters/http/wasm/test_data:shared_queue_rust.wasm",
         "//test/extensions/filters/http/wasm/test_data:test_cpp.wasm",
     ],
     extension_name = "envoy.filters.http.wasm",
@@ -32,7 +37,6 @@ envoy_extension_cc_test(
     size = "enormous",  # For WAVM without precompilation. TODO: add precompilation.
     srcs = ["config_test.cc"],
     data = [
-        "//test/extensions/filters/http/wasm/test_data:modules",
         "//test/extensions/filters/http/wasm/test_data:test_cpp.wasm",
     ],
     extension_name = "envoy.filters.http.wasm",
