@@ -83,8 +83,14 @@ wasm_rust_binary_rule = rule(
 
 def wasm_cc_binary(name, **kwargs):
     wasm_name = "_wasm_" + name
-    kwargs.setdefault("additional_linker_inputs", ["@proxy_wasm_cpp_sdk//:jslib"])
-    kwargs.setdefault("linkopts", ["--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js"])
+    kwargs.setdefault("additional_linker_inputs", [
+        "@proxy_wasm_cpp_sdk//:jslib",
+        "//source/extensions/common/wasm/ext:envoy_jslib",
+    ])
+    kwargs.setdefault("linkopts", [
+        "--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
+        "--js-library source/extensions/common/wasm/ext/envoy_proxy_wasm_intrinsics.js"
+    ])
     kwargs.setdefault("visibility", ["//visibility:public"])
     cc_binary(
         name = wasm_name,

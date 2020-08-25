@@ -59,3 +59,11 @@ cc_proto_library(
     name = "declare_property_cc_proto",
     deps = [":declare_property_proto"],
 )
+
+filegroup(
+    name = "envoy_jslib",
+    srcs = [
+        "envoy_proxy_wasm_intrinsics.js",
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "extensions/filters/http/wasm/wasm_filter.h"
-
+#include "test/mocks/tracing/mocks.h"
 #include "test/test_common/wasm_base.h"
 
 using testing::_;
@@ -88,6 +88,7 @@ public:
     setupBase(std::get<0>(GetParam()), code, createContextFn(), root_id, vm_configuration);
   }
   void setupFilter(const std::string root_id = "") { setupFilterBase<TestFilter>(root_id); }
+  NiceMock<Tracing::MockSpan> active_span_;
 
   TestRoot& root_context() { return *static_cast<TestRoot*>(root_context_); }
   TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
@@ -800,6 +801,21 @@ TEST_P(WasmHttpFilterTest, RootId2) {
   setupFilter("context2");
   EXPECT_CALL(filter(), log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders2 2"))));
   Http::TestRequestHeaderMapImpl request_headers;
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
+}
+
+// Verifies if the tag have been added correctly.
+TEST_P(WasmHttpFilterTest, AddTagToActiveSpans) {
+  if (std::get<1>(GetParam()) == "rust") {
+    // Tracing ABI not added in rust SDK yet.
+    return;
+  }
+  setupTest("", "tracing");
+  setupFilter();
+
+  EXPECT_CALL(decoder_callbacks_, activeSpan).WillRepeatedly(ReturnRef(active_span_));
+  EXPECT_CALL(active_span_, setTag(Eq("tag_1"), Eq("tag_value_1")));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
 }
 

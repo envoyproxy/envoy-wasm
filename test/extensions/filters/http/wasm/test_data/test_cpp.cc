@@ -241,6 +241,11 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     root()->grpcCallHandler(grpc_service_string, "service", "method", initial_metadata, value, 1000,
                             std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler()));
     return FilterHeadersStatus::StopIteration;
+  } else if (test == "tracing") {
+    std::string tag_key = "tag_1";
+    std::string tag_value = "tag_value_1";
+    envoy_set_active_span_tag(tag_key.c_str(), tag_key.size(), tag_value.c_str(), tag_value.size());
+    return FilterHeadersStatus::Continue;
   }
   return FilterHeadersStatus::Continue;
 }

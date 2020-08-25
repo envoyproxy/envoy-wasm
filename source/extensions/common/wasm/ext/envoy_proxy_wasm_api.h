@@ -121,3 +121,7 @@ inline StatResult parseStatResults(std::string_view data) {
 
   return results;
 }
+
+// Tracing
+extern "C" WasmResult envoy_set_active_span_tag(const char* key_ptr, size_t key_size, const char* value_ptr,
+                                         size_t value_size);
