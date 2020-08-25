@@ -7,6 +7,7 @@
 #include "extensions/common/wasm/wasm.h"
 
 #include "test/mocks/server/mocks.h"
+#include "test/mocks/stats/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/utility.h"
@@ -25,6 +26,8 @@ namespace Envoy {
 namespace Extensions {
 namespace Common {
 namespace Wasm {
+
+REGISTER_WASM_EXTENSION(EnvoyWasm);
 
 std::string sha256(absl::string_view data) {
   std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
@@ -72,6 +75,11 @@ auto test_values = testing::Values(
 #endif
     "null");
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest, test_values);
+
+TEST_P(WasmCommonTest, EnvoyWasm) {
+  auto envoy_wasm = std::make_unique<EnvoyWasm>();
+  envoy_wasm->initialize();
+}
 
 TEST_P(WasmCommonTest, Logging) {
   Stats::IsolatedStoreImpl stats_store;
@@ -191,14 +199,21 @@ TEST_P(WasmCommonTest, Segv) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
   EXPECT_TRUE(wasm->initialize(code, false));
+  TestContext* root_context = nullptr;
   wasm->setCreateContextForTesting(
-      nullptr, [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
-        auto root_context = new TestContext(wasm, plugin);
+      nullptr, [&root_context](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
+        root_context = new TestContext(wasm, plugin);
         EXPECT_CALL(*root_context, log_(spdlog::level::err, Eq("before badptr")));
         return root_context;
       });
   wasm->start(plugin);
   EXPECT_TRUE(wasm->isFailed());
+
+  // Subsequent calls should be NOOPs.
+
+  root_context->onResolveDns(0, Envoy::Network::DnsResolver::ResolutionStatus::Success, {});
+  Envoy::Stats::MockMetricSnapshot stats_snapshot;
+  root_context->onStatsUpdate(stats_snapshot);
 }
 
 TEST_P(WasmCommonTest, DivByZero) {
@@ -314,6 +329,71 @@ TEST_P(WasmCommonTest, IntrinsicGlobals) {
         return root_context;
       });
   wasm->start(plugin);
+}
+
+TEST_P(WasmCommonTest, Utilities) {
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
+  auto name = "";
+  auto root_id = "";
+  auto vm_id = "";
+  auto vm_configuration = "utilities";
+  auto plugin_configuration = "";
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
+        absl::StrCat("{{ test_rundir }}/test/extensions/common/wasm/test_data/test_cpp.wasm")));
+  } else {
+    // The name of the Null VM plugin.
+    code = "CommonWasmTestCpp";
+  }
+  EXPECT_FALSE(code.empty());
+  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
+      name, root_id, vm_id, GetParam(), plugin_configuration, false,
+      envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
+  auto vm_key = proxy_wasm::makeVmKey(vm_id, vm_configuration, code);
+  auto wasm = std::make_unique<Extensions::Common::Wasm::Wasm>(
+      absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
+      cluster_manager, *dispatcher);
+  EXPECT_NE(wasm, nullptr);
+  EXPECT_TRUE(wasm->initialize(code, false));
+  wasm->setCreateContextForTesting(
+      nullptr, [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
+        auto root_context = new TestContext(wasm, plugin);
+        EXPECT_CALL(*root_context, log_(spdlog::level::info, Eq("on_vm_start utilities")));
+        return root_context;
+      });
+  wasm->start(plugin);
+
+  // Context
+  auto context = std::make_unique<Context>();
+  context->error("error");
+
+  // Buffer
+  Extensions::Common::Wasm::Buffer buffer;
+  Extensions::Common::Wasm::Buffer const_buffer;
+  Extensions::Common::Wasm::Buffer string_buffer;
+  auto buffer_impl = std::make_unique<Envoy::Buffer::OwnedImpl>("contents");
+  buffer.set(buffer_impl.get());
+  const_buffer.set(static_cast<const ::Envoy::Buffer::Instance*>(buffer_impl.get()));
+  string_buffer.set("contents");
+  std::string data("contents");
+  if (GetParam() != "null") {
+    EXPECT_EQ(WasmResult::InvalidMemoryAccess,
+              buffer.copyTo(wasm.get(), 0, 1 << 30 /* length too long */, 0, 0));
+    EXPECT_EQ(WasmResult::InvalidMemoryAccess,
+              buffer.copyTo(wasm.get(), 0, 1, 1 << 30 /* bad pointer location */, 0));
+    EXPECT_EQ(WasmResult::InvalidMemoryAccess,
+              buffer.copyTo(wasm.get(), 0, 1, 0, 1 << 30 /* bad size location */));
+    EXPECT_EQ(WasmResult::BadArgument, buffer.copyFrom(0, 1, data));
+    EXPECT_EQ(WasmResult::BadArgument, buffer.copyFrom(1, 1, data));
+    EXPECT_EQ(WasmResult::BadArgument, const_buffer.copyFrom(1, 1, data));
+    EXPECT_EQ(WasmResult::BadArgument, string_buffer.copyFrom(1, 1, data));
+  }
 }
 
 TEST_P(WasmCommonTest, Stats) {
@@ -817,7 +897,8 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   setup(code);
   setupContext();
 
-  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 7")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 7")))
+      .Times(2);
   EXPECT_CALL(rootContext(), log_(spdlog::level::info,
                                   Eq("TestRootContext::onResolveDns dns 1 192.168.1.101:1001")));
   EXPECT_CALL(rootContext(), log_(spdlog::level::info,
@@ -834,6 +915,7 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
                       std::chrono::seconds(2));
   rootContext().onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
                              std::move(dns_results));
+  rootContext().onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Failure, {});
 }
 
 } // namespace Wasm

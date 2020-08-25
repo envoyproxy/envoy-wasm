@@ -34,7 +34,9 @@ public:
   explicit TestContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
   FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
+  FilterTrailersStatus onRequestTrailers(uint32_t) override;
   FilterHeadersStatus onResponseHeaders(uint32_t, bool) override;
+  FilterTrailersStatus onResponseTrailers(uint32_t) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
@@ -245,6 +247,31 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
   return FilterHeadersStatus::Continue;
 }
 
+FilterTrailersStatus TestContext::onRequestTrailers(uint32_t) {
+  auto request_trailer = getRequestTrailer("bogus-trailer");
+  if (request_trailer && request_trailer->view() != "") {
+    logWarn("request bogus-trailer found");
+  }
+  CHECK_RESULT(replaceRequestTrailer("new-trailer", "value"));
+  CHECK_RESULT(removeRequestTrailer("x"));
+  // Not available yet.
+  replaceResponseTrailer("new-trailer", "value");
+  auto response_trailer = getResponseTrailer("bogus-trailer");
+  if (response_trailer && response_trailer->view() != "") {
+    logWarn("request bogus-trailer found");
+  }
+  return FilterTrailersStatus::Continue;
+}
+
+FilterTrailersStatus TestContext::onResponseTrailers(uint32_t) {
+  auto value = getResponseTrailer("bogus-trailer");
+  if (value && value->view() != "") {
+    logWarn("response bogus-trailer found");
+  }
+  CHECK_RESULT(replaceResponseTrailer("new-trailer", "value"));
+  return FilterTrailersStatus::Continue;
+}
+
 // Currently unused.
 FilterHeadersStatus TestContext::onRequestHeadersSimple(uint32_t) {
   std::function<void(size_t body_size)> success_callback = [](size_t body_size) {
@@ -284,6 +311,7 @@ FilterHeadersStatus TestContext::onResponseHeaders(uint32_t, bool) {
   auto test = root()->test_;
   if (test == "body") {
     body_op_ = getResponseHeader("x-test-operation")->toString();
+    CHECK_RESULT(replaceRequestHeader("x-test-operation", body_op_));
   }
   return FilterHeadersStatus::Continue;
 }
@@ -412,6 +440,14 @@ void TestContext::onLog() {
   if (test == "headers") {
     auto path = getRequestHeader(":path");
     logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
+    auto response_header = getResponseHeader("bogus-header");
+    if (response_header && response_header->view() != "") {
+      logWarn("response bogus-header found");
+    }
+    auto response_trailer = getResponseTrailer("bogus-trailer");
+    if (response_trailer && response_trailer->view() != "") {
+      logWarn("response bogus-trailer found");
+    }
   } else if (test == "shared_data") {
     WasmDataPtr value0;
     if (getSharedData("shared_data_key_bad", &value0) == WasmResult::NotFound) {

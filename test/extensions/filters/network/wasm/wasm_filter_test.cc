@@ -107,6 +107,8 @@ TEST_P(WasmNetworkFilterTest, HappyPath) {
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
+  // Noop.
+  read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
 }
 
 } // namespace Wasm
