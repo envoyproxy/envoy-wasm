@@ -205,10 +205,10 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     }
 
     {
-      // Create an unparsable CEL expression
+      // Create a syntactically wrong CEL expression
       uint32_t token = 0;
       if (createExpression("/ /", &token) != WasmResult::BadArgument) {
-        logError("expect an error on unparsable expressions");
+        logError("expect an error on a syntactically wrong expressions");
       }
     }
 
