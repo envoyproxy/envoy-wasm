@@ -181,6 +181,7 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     }
 
     {
+      // Validate a valid CEL expression
       const std::string expr = R"(
   envoy.api.v2.core.GrpcService{
     envoy_grpc: envoy.api.v2.core.GrpcService.EnvoyGrpc {
@@ -203,11 +204,76 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
       }
     }
 
-    int64_t dur;
-    if (getValue({"request", "duration"}, &dur)) {
-      logInfo("duration is " + std::to_string(dur));
-    } else {
-      logError("failed to get request duration");
+    {
+      // Create an unparsable CEL expression
+      uint32_t token = 0;
+      if (createExpression("/ /", &token) != WasmResult::BadArgument) {
+        logError("expect an error on unparsable expressions");
+      }
+    }
+
+    {
+      // Create an invalid CEL expression
+      uint32_t token = 0;
+      if (createExpression("_&&_(a, b, c)", &token) != WasmResult::BadArgument) {
+        logError("expect an error on invalid expressions");
+      }
+    }
+
+    {
+      // Evaluate a bad token
+      std::string result;
+      uint64_t token = 0;
+      if (evaluateExpression(token, &result)) {
+        logError("expect an error on invalid token in evaluate");
+      }
+    }
+
+    {
+      // Evaluate a missing token
+      std::string result;
+      uint32_t token = 0xFFFFFFFF;
+      if (evaluateExpression(token, &result)) {
+        logError("expect an error on unknown token in evaluate");
+      }
+      // Delete a missing token
+      if (exprDelete(token) != WasmResult::Ok) {
+        logError("expect no error on unknown token in delete expression");
+      }
+    }
+
+    {
+      // Evaluate two expressions to an error
+      uint32_t token1 = 0;
+      if (createExpression("1/0", &token1) != WasmResult::Ok) {
+        logError("unexpected error on division by zero expression");
+      }
+      uint32_t token2 = 0;
+      if (createExpression("request.duration.size", &token2) != WasmResult::Ok) {
+        logError("unexpected error on integer field access expression");
+      }
+      std::string result;
+      if (evaluateExpression(token1, &result)) {
+        logError("expect an error on division by zero");
+      }
+      if (evaluateExpression(token2, &result)) {
+        logError("expect an error on integer field access expression");
+      }
+      if (exprDelete(token1) != WasmResult::Ok) {
+        logError("failed to delete an expression");
+      }
+      if (exprDelete(token2) != WasmResult::Ok) {
+        logError("failed to delete an expression");
+      }
+    }
+
+    {
+      int64_t dur;
+      if (getValue({"request", "duration"}, &dur)) {
+        logInfo("duration is " + std::to_string(dur));
+      } else {
+        logError("failed to get request duration");
+      }
     }
 
     return FilterHeadersStatus::Continue;
@@ -461,6 +527,66 @@ void TestContext::onLog() {
       if (value != 1337) {
         logWarn("getProperty(structured_state) returned " + std::to_string(value));
       }
+      std::string buffer;
+      if (!getValue({"structured_state"}, &buffer)) {
+        logWarn("getValue for structured_state should not fail");
+      }
+      if (buffer.size() != 24) {
+        logWarn("getValue for structured_state should return the buffer");
+      }
+    }
+    {
+      if (setFilterState("string_state", "unicorns") != WasmResult::Ok) {
+        logWarn("setProperty(string_state) failed");
+      }
+      std::string value;
+      if (!getValue({"string_state"}, &value)) {
+        logWarn("getProperty(string_state) failed");
+      }
+      if (value != "unicorns") {
+        logWarn("getProperty(string_state) returned " + value);
+      }
+    }
+    {
+      // attempt to write twice for a read only wasm state
+      if (setFilterState("string_state", "ponies") == WasmResult::Ok) {
+        logWarn("expected second setProperty(string_state) to fail");
+      }
+      std::string value;
+      if (!getValue({"string_state"}, &value)) {
+        logWarn("getProperty(string_state) failed");
+      }
+      if (value != "unicorns") {
+        logWarn("getProperty(string_state) returned " + value);
+      }
+    }
+    {
+      if (setFilterState("bytes_state", "ponies") != WasmResult::Ok) {
+        logWarn("setProperty(bytes_state) failed");
+      }
+      std::string value;
+      if (!getValue({"bytes_state"}, &value)) {
+        logWarn("getProperty(bytes_state) failed");
+      }
+      if (value != "ponies") {
+        logWarn("getProperty(bytes_state) returned " + value);
+      }
+    }
+    {
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("centaur");
+      std::string in;
+      args.SerializeToString(&in);
+      if (setFilterState("protobuf_state", in) != WasmResult::Ok) {
+        logWarn("setProperty(protobuf_state) failed");
+      }
+      std::string value;
+      if (!getValue({"protobuf_state", "name"}, &value)) {
+        logWarn("getProperty(protobuf_state) failed");
+      }
+      if (value != "centaur") {
+        logWarn("getProperty(protobuf_state) returned " + value);
+      }
     }
   }
 }
@@ -541,7 +667,67 @@ void TestRootContext::onTick() {
       size_t out_size = 0;
       if (WasmResult::Ok != proxy_call_foreign_function(function.data(), function.size(), in.data(),
                                                         in.size(), &out, &out_size)) {
-        logError("declare_property failed");
+        logError("declare_property failed for flatbuffers");
+      }
+      ::free(out);
+    }
+    {
+      std::string function = "declare_property";
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("string_state");
+      args.set_type(envoy::source::extensions::common::wasm::WasmType::String);
+      args.set_span(envoy::source::extensions::common::wasm::LifeSpan::FilterChain);
+      args.set_readonly(true);
+      std::string in;
+      args.SerializeToString(&in);
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::Ok != proxy_call_foreign_function(function.data(), function.size(), in.data(),
+                                                        in.size(), &out, &out_size)) {
+        logError("declare_property failed for strings");
+      }
+      ::free(out);
+    }
+    {
+      std::string function = "declare_property";
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("bytes_state");
+      args.set_type(envoy::source::extensions::common::wasm::WasmType::Bytes);
+      args.set_span(envoy::source::extensions::common::wasm::LifeSpan::DownstreamRequest);
+      std::string in;
+      args.SerializeToString(&in);
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::Ok != proxy_call_foreign_function(function.data(), function.size(), in.data(),
+                                                        in.size(), &out, &out_size)) {
+        logError("declare_property failed for bytes");
+      }
+      ::free(out);
+    }
+    {
+      std::string function = "declare_property";
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("protobuf_state");
+      args.set_type(envoy::source::extensions::common::wasm::WasmType::Protobuf);
+      args.set_span(envoy::source::extensions::common::wasm::LifeSpan::DownstreamRequest);
+      args.set_schema("type.googleapis.com/envoy.source.extensions.common.wasm.DeclarePropertyArguments");
+      std::string in;
+      args.SerializeToString(&in);
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::Ok != proxy_call_foreign_function(function.data(), function.size(), in.data(),
+                                                        in.size(), &out, &out_size)) {
+        logError("declare_property failed for protobuf");
+      }
+      ::free(out);
+    }
+    {
+      std::string function = "declare_property";
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::Ok == proxy_call_foreign_function(function.data(), function.size(), function.data(),
+                                                        function.size(), &out, &out_size)) {
+        logError("expected declare_property to fail");
       }
       ::free(out);
     }
