@@ -89,7 +89,7 @@ def wasm_cc_binary(name, **kwargs):
     ])
     kwargs.setdefault("linkopts", [
         "--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
-        "--js-library source/extensions/common/wasm/ext/envoy_proxy_wasm_intrinsics.js"
+        "--js-library source/extensions/common/wasm/ext/envoy_proxy_wasm_intrinsics.js",
     ])
     kwargs.setdefault("visibility", ["//visibility:public"])
     cc_binary(

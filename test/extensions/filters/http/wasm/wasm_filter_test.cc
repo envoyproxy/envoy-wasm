@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "extensions/filters/http/wasm/wasm_filter.h"
+
 #include "test/mocks/tracing/mocks.h"
 #include "test/test_common/wasm_base.h"
 
