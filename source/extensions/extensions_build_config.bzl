@@ -71,6 +71,7 @@ EXTENSIONS = {
     "envoy.filters.http.ip_tagging":                    "//source/extensions/filters/http/ip_tagging:config",
     "envoy.filters.http.jwt_authn":                     "//source/extensions/filters/http/jwt_authn:config",
     "envoy.filters.http.lua":                           "//source/extensions/filters/http/lua:config",
+    "envoy.filters.http.oauth2":                         "//source/extensions/filters/http/oauth2:config",
     "envoy.filters.http.on_demand":                     "//source/extensions/filters/http/on_demand:config",
     "envoy.filters.http.original_src":                  "//source/extensions/filters/http/original_src:config",
     "envoy.filters.http.ratelimit":                     "//source/extensions/filters/http/ratelimit:config",
@@ -113,10 +114,10 @@ EXTENSIONS = {
     "envoy.filters.network.ratelimit":                  "//source/extensions/filters/network/ratelimit:config",
     "envoy.filters.network.rbac":                       "//source/extensions/filters/network/rbac:config",
     "envoy.filters.network.redis_proxy":                "//source/extensions/filters/network/redis_proxy:config",
-    "envoy.filters.network.sni_cluster":                "//source/extensions/filters/network/sni_cluster:config",
     "envoy.filters.network.rocketmq_proxy":             "//source/extensions/filters/network/rocketmq_proxy:config",
     "envoy.filters.network.tcp_proxy":                  "//source/extensions/filters/network/tcp_proxy:config",
     "envoy.filters.network.thrift_proxy":               "//source/extensions/filters/network/thrift_proxy:config",
+    "envoy.filters.network.sni_cluster":                "//source/extensions/filters/network/sni_cluster:config",
     "envoy.filters.network.sni_dynamic_forward_proxy":  "//source/extensions/filters/network/sni_dynamic_forward_proxy:config",
     "envoy.filters.network.wasm":                       "//source/extensions/filters/network/wasm:config",
     "envoy.filters.network.zookeeper_proxy":            "//source/extensions/filters/network/zookeeper_proxy:config",
@@ -201,10 +202,12 @@ EXTENSIONS = {
     "envoy.internal_redirect_predicates.previous_routes":     "//source/extensions/internal_redirect/previous_routes:config",
     "envoy.internal_redirect_predicates.safe_cross_scheme":   "//source/extensions/internal_redirect/safe_cross_scheme:config",
 
+    #
     # Http Upstreams (excepting envoy.upstreams.http.generic which is hard-coded into the build so not registered here)
-    "envoy.upstreams.http.http":                     "//source/extensions/upstreams/http/http:config",
-    "envoy.upstreams.http.tcp":                     "//source/extensions/upstreams/http/tcp:config",
+    #
 
+    "envoy.upstreams.http.http":                        "//source/extensions/upstreams/http/http:config",
+    "envoy.upstreams.http.tcp":                         "//source/extensions/upstreams/http/tcp:config",
 
 }
 
@@ -212,4 +215,4 @@ EXTENSIONS = {
 # (//:extension_config and //:extension_library in //BUILD)
 # if downstream Envoy builds need to directly reference envoy extensions.
 ADDITIONAL_VISIBILITY = [
-  ]
+]

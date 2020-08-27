@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "common/event/dispatcher_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
@@ -26,6 +24,7 @@ public:
               const std::shared_ptr<Extensions::Common::Wasm::Plugin>& plugin)
       : Extensions::Common::Wasm::Context(wasm, plugin) {}
   ~TestContext() override = default;
+  using Extensions::Common::Wasm::Context::log;
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     std::cerr << std::string(message) << "\n";
     log_(static_cast<spdlog::level::level_enum>(level), message);
@@ -39,7 +38,7 @@ public:
   WasmTestBase()
       : api_(Api::createApiForTest(stats_store_)),
         dispatcher_(api_->allocateDispatcher("wasm_test")),
-        scope_(stats_store_.createScope("wasm.")) {}
+        base_scope_(stats_store_.createScope("")), scope_(base_scope_->createScope("")) {}
 
   void createWasm(absl::string_view runtime) {
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
@@ -60,6 +59,7 @@ public:
   Api::ApiPtr api_;
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherPtr dispatcher_;
+  Stats::ScopeSharedPtr base_scope_;
   Stats::ScopeSharedPtr scope_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
   std::string name_;
@@ -77,13 +77,22 @@ public:
   void createWasm() { WasmTestBase::createWasm(GetParam()); }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest,
-                         testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
+#if defined(ENVOY_WASM_V8)
+    "v8"
 #endif
-                                         ));
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+    ,
+#endif
+#if defined(ENVOY_WASM_WAVM)
+    "wavm"
+#endif
+);
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing_values);
+#endif
 
 class WasmNullTest : public WasmTestBase, public testing::TestWithParam<std::string> {
 public:
@@ -99,12 +108,17 @@ public:
   }
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNullTest,
-                         testing::Values("v8",
-#if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_null_values = testing::Values(
+#if defined(ENVOY_WASM_V8)
+    "v8",
 #endif
-                                         "null"));
+#if defined(ENVOY_WASM_WAVM)
+    "wavm",
+#endif
+    "null");
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNullTest, testing_null_values);
 
 class WasmTestMatrix : public WasmTestBase,
                        public testing::TestWithParam<std::tuple<std::string, std::string>> {
@@ -124,14 +138,21 @@ protected:
   std::string code_;
 };
 
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
-                         testing::Combine(testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                                          ,
-                                                          "wavm"
+                         testing::Combine(testing::Values(
+#if defined(ENVOY_WASM_V8)
+                                              "v8"
 #endif
-                                                          ),
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+                                              ,
+#endif
+#if defined(ENVOY_WASM_WAVM)
+                                              "wavm"
+#endif
+                                              ),
                                           testing::Values("cpp", "rust")));
+#endif
 
 TEST_P(WasmTestMatrix, Logging) {
   plugin_configuration_ = "configure-test";
@@ -159,7 +180,7 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_TRUE(wasm_weak.lock()->configure(context, plugin_));
   wasm_handler.reset();
   dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
-  // This will SEGV on nullptr if wasm has been deleted.
+  // This will `SEGV` on nullptr if wasm has been deleted.
   context->onTick(0);
   dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher_->clearDeferredDeleteList();
@@ -225,9 +246,9 @@ TEST_P(WasmTest, IntrinsicGlobals) {
   EXPECT_TRUE(wasm_->configure(context, plugin_));
 }
 
-// The asm2wasm.wasm file uses operations which would require the asm2wasm Emscripten module *if*
-// em++ is invoked with the trap mode "clamp". See
-// https://emscripten.org/docs/compiling/WebAssembly.html This test demonstrates that the asm2wasm
+// The `asm2wasm.wasm` file uses operations which would require the `asm2wasm` Emscripten module
+// *if* em++ is invoked with the trap mode "clamp". See
+// https://emscripten.org/docs/compiling/WebAssembly.html This test demonstrates that the `asm2wasm`
 // module is not required with the trap mode is set to "allow". Note: future Wasm standards will
 // change this behavior by providing non-trapping instructions, but in the mean time we support the
 // default Emscripten behavior.
@@ -255,6 +276,8 @@ TEST_P(WasmNullTest, Stats) {
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("get histogram = Unsupported")));
 
   EXPECT_TRUE(wasm_->configure(context, plugin_));
+  EXPECT_EQ(scope_->counterFromString("test_counter").value(), 5);
+  EXPECT_EQ(scope_->gaugeFromString("test_gauge", Stats::Gauge::ImportMode::Accumulate).value(), 2);
 }
 
 TEST_P(WasmNullTest, StatsHigherLevel) {
@@ -273,6 +296,11 @@ TEST_P(WasmNullTest, StatsHigherLevel) {
                                             "histogram_bool_tag.true.test_histogram"))));
 
   context->onTick(0);
+  EXPECT_EQ(scope_->counterFromString("counter_tag.test_tag.test_counter").value(), 5);
+  EXPECT_EQ(
+      scope_->gaugeFromString("gauge_int_tag.9.test_gauge", Stats::Gauge::ImportMode::Accumulate)
+          .value(),
+      2);
 }
 
 TEST_P(WasmNullTest, StatsHighLevel) {
@@ -295,6 +323,14 @@ TEST_P(WasmNullTest, StatsHighLevel) {
   // Get is not supported on histograms.
   // EXPECT_CALL(*context, log_(spdlog::level::err, Eq("stack_h = 3")));
   context->onLog();
+  EXPECT_EQ(
+      scope_->counterFromString("string_tag.test_tag.int_tag.7.bool_tag.true.test_counter").value(),
+      5);
+  EXPECT_EQ(scope_
+                ->gaugeFromString("string_tag1.test_tag1.string_tag2.test_tag2.test_gauge",
+                                  Stats::Gauge::ImportMode::Accumulate)
+                .value(),
+            2);
 }
 
 } // namespace Wasm

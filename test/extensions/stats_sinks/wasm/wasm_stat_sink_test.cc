@@ -16,17 +16,11 @@ namespace Extensions {
 namespace Common {
 namespace Wasm {
 
-class TestContext : public Extensions::Common::Wasm::Context {
+class TestContext : public ::Envoy::Extensions::Common::Wasm::Context {
 public:
-  TestContext() : Extensions::Common::Wasm::Context() {}
-  TestContext(Extensions::Common::Wasm::Wasm* wasm) : Extensions::Common::Wasm::Context(wasm) {}
-  TestContext(Extensions::Common::Wasm::Wasm* wasm,
-              const Extensions::Common::Wasm::PluginSharedPtr& plugin)
-      : Extensions::Common::Wasm::Context(wasm, plugin) {}
-  TestContext(Extensions::Common::Wasm::Wasm* wasm, uint32_t root_context_id,
-              const Extensions::Common::Wasm::PluginSharedPtr& plugin)
-      : Extensions::Common::Wasm::Context(wasm, root_context_id, plugin) {}
+  using ::Envoy::Extensions::Common::Wasm::Context::Context;
   ~TestContext() override = default;
+  using ::Envoy::Extensions::Common::Wasm::Context::log;
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     std::cerr << std::string(message) << "\n";
     log_(static_cast<spdlog::level::level_enum>(level), message);
@@ -54,18 +48,23 @@ public:
     context_->onCreate();
   }
 
-  TestContext& root_context() { return *static_cast<TestContext*>(root_context_); }
+  TestContext& rootContext() { return *static_cast<TestContext*>(root_context_); }
   TestContext& context() { return *context_; }
 
   std::unique_ptr<TestContext> context_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonContextTest,
-                         testing::Values("v8",
-#if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
+#if defined(ENVOY_WASM_V8)
+    "v8",
 #endif
-                                         "null"));
+#if defined(ENVOY_WASM_WAVM)
+    "wavm",
+#endif
+    "null");
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonContextTest, testing_values);
 
 TEST_P(WasmCommonContextTest, OnStat) {
   std::string code;
@@ -81,20 +80,20 @@ TEST_P(WasmCommonContextTest, OnStat) {
   setup(code);
   setupContext();
 
-  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onStat")));
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onStat")));
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::info, Eq("TestRootContext::onStat upstream_rq_2xx:1")));
 
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::info, Eq("TestRootContext::onStat upstream_rq_5xx:2")));
 
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::info, Eq("TestRootContext::onStat membership_total:3")));
 
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::info, Eq("TestRootContext::onStat duration_total:4")));
 
-  EXPECT_CALL(root_context(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
 
   NiceMock<Stats::MockCounter> success_counter;
   success_counter.name_ = "upstream_rq_2xx";
@@ -121,7 +120,7 @@ TEST_P(WasmCommonContextTest, OnStat) {
   duration_total.used_ = true;
   snapshot_.gauges_.push_back(duration_total);
 
-  root_context().onStatsUpdate(snapshot_);
+  rootContext().onStatsUpdate(snapshot_);
 }
 
 } // namespace Wasm

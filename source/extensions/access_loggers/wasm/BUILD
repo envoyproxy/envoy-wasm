@@ -17,6 +17,8 @@ envoy_cc_library(
     deps = [
         "//include/envoy/access_log:access_log_interface",
         "//source/common/http:header_map_lib",
+        "//source/extensions/access_loggers:well_known_names",
+        "//source/extensions/common/wasm:wasm_lib",
     ],
 )
 
@@ -25,6 +27,7 @@ envoy_cc_extension(
     srcs = ["config.cc"],
     hdrs = ["config.h"],
     security_posture = "unknown",
+    status = "alpha",
     deps = [
         ":wasm_access_log_lib",
         "//include/envoy/registry",

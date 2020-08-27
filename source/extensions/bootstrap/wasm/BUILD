@@ -1,6 +1,6 @@
 load(
     "//bazel:envoy_build_system.bzl",
-    "envoy_cc_library",
+    "envoy_cc_extension",
     "envoy_extension_package",
 )
 
@@ -10,13 +10,14 @@ envoy_extension_package()
 
 # WASM service.
 
-envoy_cc_library(
+envoy_cc_extension(
     name = "config",
     srcs = ["config.cc"],
     hdrs = [
         "config.h",
     ],
-    # security_posture = "unknown", docs requires it, bazel fails if it is included.
+    security_posture = "unknown",
+    status = "alpha",
     deps = [
         "//include/envoy/registry",
         "//include/envoy/server:bootstrap_extension_config_interface",

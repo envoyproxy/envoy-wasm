@@ -15,6 +15,7 @@ option (udpa.annotations.file_status).package_version_status = ACTIVE;
 
 // [#protodoc-title: Wasm]
 // Wasm :ref:`configuration overview <config_stat_sinks_wasm>`.
+// [#extension: envoy.stat_sinks.wasm]
 
 message Wasm {
   // General Plugin configuration.

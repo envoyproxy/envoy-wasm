@@ -72,6 +72,12 @@ envoy_cc_library(
         "wasm_extension.cc",
         "wasm_vm.cc",
     ],
+    copts = select({
+        "//bazel:windows_x86_64": [],  # TODO: fix the windows ANTLR build
+        "//conditions:default": [
+            "-DWASM_USE_CEL_PARSER",
+        ],
+    }),
     deps = [
         ":wasm_hdr",
         ":wasm_interoperation_lib",
@@ -94,8 +100,14 @@ envoy_cc_library(
         "@com_google_cel_cpp//eval/public:cel_expr_builder_factory",
         "@com_google_cel_cpp//eval/public:cel_value",
         "@com_google_cel_cpp//eval/public:value_export_util",
-        "@com_google_cel_cpp//parser",
         "@envoy_api//envoy/extensions/wasm/v3:pkg_cc_proto",
         "@proxy_wasm_cpp_host//:lib",
-    ],
+    ] + select(
+        {
+            "//bazel:windows_x86_64": [],
+            "//conditions:default": [
+                "@com_google_cel_cpp//parser",
+            ],
+        },
+    ),
 )

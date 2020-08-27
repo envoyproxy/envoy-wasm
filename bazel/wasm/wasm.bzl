@@ -12,6 +12,7 @@ def _wasm_cc_transition_impl(settings, attr):
         "//command_line_option:cxxopt": [],
         "//command_line_option:linkopt": [],
         "//command_line_option:collect_code_coverage": "false",
+        "//command_line_option:fission": "no",
     }
 
 def _wasm_rust_transition_impl(settings, attr):
@@ -27,6 +28,7 @@ wasm_cc_transition = transition(
         "//command_line_option:crosstool_top",
         "//command_line_option:copt",
         "//command_line_option:cxxopt",
+        "//command_line_option:fission",
         "//command_line_option:linkopt",
         "//command_line_option:collect_code_coverage",
     ],
@@ -81,10 +83,13 @@ wasm_rust_binary_rule = rule(
     attrs = _wasm_attrs(wasm_rust_transition),
 )
 
-def wasm_cc_binary(name, **kwargs):
+def wasm_cc_binary(name, tags = [], **kwargs):
     wasm_name = "_wasm_" + name
-    kwargs.setdefault("additional_linker_inputs", ["@proxy_wasm_cpp_sdk//:jslib"])
-    kwargs.setdefault("linkopts", ["--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js"])
+    kwargs.setdefault("additional_linker_inputs", ["@proxy_wasm_cpp_sdk//:jslib", "@envoy//source/extensions/common/wasm/ext:jslib"])
+    kwargs.setdefault("linkopts", [
+        "--js-library external/proxy_wasm_cpp_sdk/proxy_wasm_intrinsics.js",
+        "--js-library source/extensions/common/wasm/ext/envoy_wasm_intrinsics.js",
+    ])
     kwargs.setdefault("visibility", ["//visibility:public"])
     cc_binary(
         name = wasm_name,
@@ -98,9 +103,10 @@ def wasm_cc_binary(name, **kwargs):
     wasm_cc_binary_rule(
         name = name,
         binary = ":" + wasm_name,
+        tags = tags + ["manual"],
     )
 
-def wasm_rust_binary(name, **kwargs):
+def wasm_rust_binary(name, tags = [], **kwargs):
     wasm_name = "_wasm_" + (name if not ".wasm" in name else name.strip(".wasm"))
     kwargs.setdefault("visibility", ["//visibility:public"])
 
@@ -120,4 +126,5 @@ def wasm_rust_binary(name, **kwargs):
             "//conditions:default": False,
         }),
         binary = ":" + wasm_name,
+        tags = tags + ["manual"],
     )
