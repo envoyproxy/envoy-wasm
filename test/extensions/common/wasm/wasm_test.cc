@@ -21,6 +21,7 @@
 #include "openssl/sha.h"
 
 using testing::Eq;
+using testing::Return;
 
 namespace Envoy {
 namespace Extensions {
@@ -110,6 +111,7 @@ TEST_P(WasmCommonTest, Logging) {
       absl::StrCat("envoy.wasm.runtime.", GetParam()), vm_id, vm_configuration, vm_key, scope,
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
+  EXPECT_NE(wasm->buildVersion(), "");
   auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm);
   auto wasm_handle = std::make_shared<Extensions::Common::Wasm::WasmHandle>(std::move(wasm));
   EXPECT_TRUE(wasm_weak.lock()->initialize(code, false));
@@ -863,13 +865,13 @@ class WasmCommonContextTest
 public:
   WasmCommonContextTest() = default;
 
-  void setup(const std::string& code, std::string root_id = "") {
+  void setup(const std::string& code, std::string vm_configuration) {
     setupBase(
         GetParam(), code,
         [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
           return new TestContext(wasm, plugin);
         },
-        root_id);
+        "" /* root_id */, vm_configuration);
   }
   void setupContext() {
     context_ = std::make_unique<TestContext>(wasm_->wasm().get(), root_context_->id(), plugin_);
@@ -894,28 +896,30 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
     code = "CommonWasmTestContextCpp";
   }
   EXPECT_FALSE(code.empty());
-  setup(code);
-  setupContext();
 
-  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 7")))
-      .Times(2);
+  std::shared_ptr<Network::MockDnsResolver> dns_resolver(new Network::MockDnsResolver());
+  EXPECT_CALL(dispatcher_, createDnsResolver(_, _)).WillRepeatedly(Return(dns_resolver));
+  Network::DnsResolver::ResolveCb dns_callback;
+  Network::MockActiveDnsQuery active_dns_query;
+  EXPECT_CALL(*dns_resolver, resolve(_, _, _))
+      .WillRepeatedly(DoAll(testing::SaveArg<2>(&dns_callback), Return(&active_dns_query)));
+
+  setup(code, "dns");
+  setupContext();
+  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 1")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 2")));
   EXPECT_CALL(rootContext(), log_(spdlog::level::info,
-                                  Eq("TestRootContext::onResolveDns dns 1 192.168.1.101:1001")));
+                                  Eq("TestRootContext::onResolveDns dns 1001 192.168.1.101:0")));
   EXPECT_CALL(rootContext(), log_(spdlog::level::info,
-                                  Eq("TestRootContext::onResolveDns dns 2 192.168.1.102:1002")));
+                                  Eq("TestRootContext::onResolveDns dns 1001 192.168.1.102:0")));
   EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onDone 1")));
 
-  uint32_t token = 7;
-  std::list<Envoy::Network::DnsResponse> dns_results;
-  dns_results.emplace(dns_results.end(),
-                      std::make_shared<Network::Address::Ipv4Instance>("192.168.1.101", 1001),
-                      std::chrono::seconds(1));
-  dns_results.emplace(dns_results.end(),
-                      std::make_shared<Network::Address::Ipv4Instance>("192.168.1.102", 1002),
-                      std::chrono::seconds(2));
-  rootContext().onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Success,
-                             std::move(dns_results));
-  rootContext().onResolveDns(token, Envoy::Network::DnsResolver::ResolutionStatus::Failure, {});
+  dns_callback(
+      Network::DnsResolver::ResolutionStatus::Success,
+      TestUtility::makeDnsResponse({"192.168.1.101", "192.168.1.102"}, std::chrono::seconds(1001)));
+
+  rootContext().onResolveDns(1 /* token */, Envoy::Network::DnsResolver::ResolutionStatus::Failure,
+                             {});
 }
 
 } // namespace Wasm
