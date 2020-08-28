@@ -32,32 +32,35 @@ public:
   MOCK_CONTEXT_LOG_;
 };
 
-class WasmAccessLogTest : public WasmTestBase<testing::TestWithParam<std::tuple<std::string, std::string>>> {
+class WasmAccessLogTest
+    : public WasmTestBase<testing::TestWithParam<std::tuple<std::string, std::string>>> {
 public:
-  void setupPlugin(const absl::optional<std::string>& vm_configuration = absl::nullopt, const absl::optional<std::string>& vm_code = absl::nullopt) {
+  void setupPlugin(const absl::optional<std::string>& vm_configuration = absl::nullopt,
+                   const absl::optional<std::string>& vm_code = absl::nullopt) {
     auto code = getTestCode(vm_configuration, vm_code);
     EXPECT_TRUE(!code.empty());
     auto runtime = std::get<0>(GetParam());
-    setupBase(runtime, code,
-              [](Wasm* wasm, const PluginSharedPtr& plugin) -> ContextBase* {
-                return new TestAccessLog(wasm, plugin); // root context
-              });
+    setupBase(runtime, code, [](Wasm* wasm, const PluginSharedPtr& plugin) -> ContextBase* {
+      return new TestAccessLog(wasm, plugin); // root context
+    });
   }
 
   TestAccessLog& access_log() { return *static_cast<TestAccessLog*>(root_context()); }
 
 private:
-  std::string getTestCode(const absl::optional<std::string>& vm_configuration = absl::nullopt, const absl::optional<std::string>& vm_code = absl::nullopt) {
+  std::string getTestCode(const absl::optional<std::string>& vm_configuration = absl::nullopt,
+                          const absl::optional<std::string>& vm_code = absl::nullopt) {
     if (vm_code) {
-        return *vm_code;
+      return *vm_code;
     } else if (std::get<0>(GetParam()) == "null") {
-        return "AccessLoggerTestCpp";
+      return "AccessLoggerTestCpp";
     } else if (std::get<1>(GetParam()) == "cpp") {
-        return TestEnvironment::readFileToStringForTest(TestEnvironment::runfilesPath(
-            "test/extensions/access_loggers/wasm/test_data/test_cpp.wasm"));
+      return TestEnvironment::readFileToStringForTest(TestEnvironment::runfilesPath(
+          "test/extensions/access_loggers/wasm/test_data/test_cpp.wasm"));
     } else if (std::get<1>(GetParam()) == "rust") {
-        return TestEnvironment::readFileToStringForTest(TestEnvironment::runfilesPath(absl::StrCat(
-            "test/extensions/access_loggers/wasm/test_data/", vm_configuration.value_or("") + "_rust.wasm")));
+      return TestEnvironment::readFileToStringForTest(TestEnvironment::runfilesPath(
+          absl::StrCat("test/extensions/access_loggers/wasm/test_data/",
+                       vm_configuration.value_or("") + "_rust.wasm")));
     }
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
@@ -68,9 +71,10 @@ private:
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmAccessLogTest,
                          testing::Values(std::make_tuple("v8", "rust")
 #if defined(ENVOY_WASM_WAVM)
-                                         , std::make_tuple("wavm", "rust")
+                                             ,
+                                         std::make_tuple("wavm", "rust")
 #endif
-));
+                                             ));
 
 // Bad code in initial config.
 TEST_P(WasmAccessLogTest, BadCode) {
@@ -86,10 +90,14 @@ TEST_P(WasmAccessLogTest, HappyPath) {
   {
     NiceMock<StreamInfo::MockStreamInfo> stream_info;
 
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 0 request headers"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 0 response headers"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 0 response trailers"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: stream info"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 0 request headers"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 0 response headers"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 0 response trailers"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: stream info"))));
     access_log().log(nullptr, nullptr, nullptr, stream_info);
   }
 
@@ -110,18 +118,27 @@ TEST_P(WasmAccessLogTest, HappyPath) {
         {"grpc-message", "UNKNOWN"},
     };
 
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 4 request headers"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 4 request headers"))));
     EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view(" :scheme = http"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view(" :authority = example.org"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view(" :authority = example.org"))));
     EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view(" :path = /api"))));
     EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view(" :method = POST"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 1 response headers"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 1 response headers"))));
     EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view(" :status = 200"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 2 response trailers"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view(" grpc-status = 1"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view(" grpc-message = UNKNOWN"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: stream info"))));
-    EXPECT_CALL(access_log(), log_(spdlog::level::trace, Eq(absl::string_view(" upstream.transport_failure_reason = TLS error"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: 2 response trailers"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view(" grpc-status = 1"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view(" grpc-message = UNKNOWN"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace, Eq(absl::string_view("onLog 1: stream info"))));
+    EXPECT_CALL(access_log(),
+                log_(spdlog::level::trace,
+                     Eq(absl::string_view(" upstream.transport_failure_reason = TLS error"))));
     access_log().log(&request_headers, &response_headers, &response_trailers, stream_info);
   }
 }
