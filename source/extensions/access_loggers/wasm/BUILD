@@ -17,6 +17,7 @@ envoy_cc_library(
     deps = [
         "//include/envoy/access_log:access_log_interface",
         "//source/common/http:header_map_lib",
+        "//source/extensions/common/wasm:wasm_lib",
     ],
 )
 

@@ -3,11 +3,20 @@ load(
     "envoy_cc_library",
     "envoy_package",
 )
-load("//bazel/wasm:wasm.bzl", "wasm_cc_binary")
+load("//bazel/wasm:wasm.bzl", "wasm_cc_binary", "wasm_rust_binary")
 
 licenses(["notice"])  # Apache 2
 
 envoy_package()
+
+wasm_rust_binary(
+    name = "basic_rust.wasm",
+    srcs = ["basic_rust/src/lib.rs"],
+    deps = [
+        "//bazel/external/cargo:log",
+        "//bazel/external/cargo:proxy_wasm",
+    ],
+)
 
 envoy_cc_library(
     name = "test_cpp_plugin",

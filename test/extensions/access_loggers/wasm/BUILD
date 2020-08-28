@@ -27,3 +27,17 @@ envoy_extension_cc_test(
         "@envoy_api//envoy/extensions/access_loggers/wasm/v3:pkg_cc_proto",
     ],
 )
+
+envoy_extension_cc_test(
+    name = "wasm_access_log_test",
+    srcs = ["wasm_access_log_test.cc"],
+    data = [
+        "//test/extensions/access_loggers/wasm/test_data:basic_rust.wasm",
+    ],
+    extension_name = "envoy.access_loggers.wasm",
+    deps = [
+        "//source/extensions/access_loggers/wasm:wasm_access_log_lib",
+        "//test/mocks/stream_info:stream_info_mocks",
+        "//test/test_common:wasm_lib",
+    ],
+)

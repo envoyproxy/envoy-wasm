@@ -1428,7 +1428,10 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
   access_log_response_trailers_ = nullptr;
   access_log_stream_info_ = nullptr;
 
-  onDelete();
+  if (!isRootContext()) {
+    // For HTTP stream contexts, log() is last call in the Envoy lifecycle.
+    onDelete();
+  }
 }
 
 void Context::onDestroy() {
