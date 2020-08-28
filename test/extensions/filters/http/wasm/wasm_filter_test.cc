@@ -650,6 +650,60 @@ TEST_P(WasmHttpFilterTest, GrpcCallAfterDestroyed) {
   }
 }
 
+TEST_P(WasmHttpFilterTest, GrpcStream) {
+  if (std::get<1>(GetParam()) == "rust") {
+    // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
+    return;
+  }
+  setupTest("", "grpc_stream");
+  setupFilter();
+  Grpc::MockAsyncRequest request;
+  Grpc::MockAsyncStream stream;
+  Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
+  Grpc::MockAsyncClientManager client_manager;
+  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
+  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
+  EXPECT_CALL(*async_client, startRaw(_, _, _, _))
+      .WillOnce(Invoke([&](absl::string_view service_full_name, absl::string_view method_name,
+                           Grpc::RawAsyncStreamCallbacks& cb,
+                           const Http::AsyncClient::StreamOptions&) -> Grpc::RawAsyncStream* {
+        EXPECT_EQ(service_full_name, "service");
+        EXPECT_EQ(method_name, "method");
+        callbacks = &cb;
+        return &stream;
+      }));
+  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
+    return std::move(async_client);
+  }));
+  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
+      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
+  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
+      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
+        return std::move(client_factory);
+      }));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response")));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter().decodeHeaders(request_headers, false));
+
+  ProtobufWkt::Value value;
+  value.set_string_value("response");
+  std::string response_string;
+  EXPECT_TRUE(value.SerializeToString(&response_string));
+  auto response = std::make_unique<Buffer::OwnedImpl>(response_string);
+  EXPECT_NE(callbacks, nullptr);
+  NiceMock<Tracing::MockSpan> span;
+  if (callbacks) {
+    Http::TestRequestHeaderMapImpl create_initial_metadata{{"test", "create_initial_metadata"}};
+    callbacks->onCreateInitialMetadata(create_initial_metadata);
+    Http::TestRequestHeaderMapImpl receive_initial_metadata{{"test", "receive_initial_metadata"}};
+    callbacks->onCreateInitialMetadata(receive_initial_metadata);
+    callbacks->onReceiveMessageRaw(std::move(response));
+    callbacks->onReceiveTrailingMetadata(std::make_unique<Http::TestResponseTrailerMapImpl>());
+    callbacks->onRemoteClose(Grpc::Status::WellKnownGrpcStatus::Ok, "");
+  }
+}
+
 // Test metadata access including CEL expressions.
 // TODO: re-enable this on Windows if and when the CEL `Antlr` parser compiles on Windows.
 #ifndef WIN32
