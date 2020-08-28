@@ -243,6 +243,15 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     root()->grpcCallHandler(grpc_service_string, "service", "method", initial_metadata, value, 1000,
                             std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler()));
     return FilterHeadersStatus::StopIteration;
+  } else if (test == "grpc_stream") {
+    GrpcService grpc_service;
+    grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
+    std::string grpc_service_string;
+    grpc_service.SerializeToString(&grpc_service_string);
+    HeaderStringPairs initial_metadata;
+    root()->grpcStreamHandler(grpc_service_string, "service", "method", initial_metadata,
+                              std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler()));
+    return FilterHeadersStatus::StopIteration;
   }
   return FilterHeadersStatus::Continue;
 }

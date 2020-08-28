@@ -53,6 +53,7 @@ envoy_cc_library(
     hdrs = [
         "wasm_state.h",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//include/envoy/stream_info:filter_state_interface",
         "//source/common/protobuf",
@@ -78,6 +79,7 @@ envoy_cc_library(
             "-DWASM_USE_CEL_PARSER",
         ],
     }),
+    visibility = ["//visibility:public"],
     deps = [
         ":wasm_hdr",
         ":wasm_interoperation_lib",
