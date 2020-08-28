@@ -65,14 +65,19 @@ public:
     setupBase(std::get<0>(GetParam()), code, createContextFn(), root_id, vm_configuration);
   }
   void setupTest(std::string root_id = "", std::string vm_configuration = "") {
-    std::string code =
-        std::get<0>(GetParam()) != "null"
-            ? TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
-                  "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/",
-                  std::get<1>(GetParam()) == "cpp" ? "test_cpp"
-                                                   : absl::StrCat(vm_configuration, "_rust"),
-                  ".wasm")))
-            : "HttpWasmTestCpp";
+    std::string code;
+    if (std::get<0>(GetParam()) == "null") {
+      code = "HttpWasmTestCpp";
+    } else {
+      if (std::get<1>(GetParam()) == "cpp") {
+        code = TestEnvironment::readFileToStringForTest(TestEnvironment::runfilesPath(
+            "test/extensions/filters/http/wasm/test_data/test_cpp.wasm"));
+      } else {
+        const auto basic_path = TestEnvironment::runfilesPath(
+            absl::StrCat("test/extensions/filters/http/wasm/test_data/", vm_configuration));
+        code = TestEnvironment::readFileToStringForTest(basic_path + "_rust.wasm");
+      }
+    }
     setupBase(std::get<0>(GetParam()), code, createContextFn(), root_id, vm_configuration);
   }
   void setupFilter(const std::string root_id = "") { setupFilterBase<TestFilter>(root_id); }

@@ -14,8 +14,12 @@ google::api::expr::runtime::CelValue WasmState::exprValue(Protobuf::Arena* arena
     case WasmType::String:
       return google::api::expr::runtime::CelValue::CreateString(&value_);
     case WasmType::Bytes:
-    case WasmType::Protobuf:
       return google::api::expr::runtime::CelValue::CreateBytes(&value_);
+    case WasmType::Protobuf: {
+      // Note that this is very expensive since it incurs a de-serialization
+      const auto any = serializeAsProto();
+      return google::api::expr::runtime::CelValue::CreateMessage(any.get(), arena);
+    }
     case WasmType::FlatBuffers:
       return google::api::expr::runtime::CelValue::CreateMap(
           google::api::expr::runtime::CreateFlatBuffersBackedObject(

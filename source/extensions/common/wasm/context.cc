@@ -253,7 +253,7 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
   for (const auto& gauge : snapshot.gauges()) {
     if (gauge.get().used()) {
       gauge_block_size += sizeof(uint32_t) + gauge.get().name().size();
-      gauge_block_size += align<uint64_t>(counter_block_size + sizeof(uint64_t));
+      gauge_block_size += align<uint64_t>(gauge_block_size + sizeof(uint64_t));
     }
   }
 
@@ -1409,9 +1409,14 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
                   const Http::ResponseHeaderMap* response_headers,
                   const Http::ResponseTrailerMap* response_trailers,
                   const StreamInfo::StreamInfo& stream_info) {
-  if (!http_request_started_) {
-    return;
+  if (!in_vm_context_created_) {
+    // If the request is invalid then onRequestHeaders() will not be called and neither will
+    // onCreate() in cases like sendLocalReply who short-circuits envoy
+    // lifecycle. This is because Envoy does not have a well defined lifetime for the combined HTTP
+    // + AccessLog filter. Thus, to log these scenarios, we call onCreate() in log function below.
+    onCreate();
   }
+
   access_log_request_headers_ = request_headers;
   // ? request_trailers  ?
   access_log_response_headers_ = response_headers;
