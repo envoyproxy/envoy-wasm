@@ -123,13 +123,14 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     }
   } else if (configuration == "foreign") {
     std::string function = "compress";
-    std::string argument = "something to compress dup dup dup dup dup";
     char* compressed = nullptr;
     size_t compressed_size = 0;
+    std::string argument = std::string(2000, 'a'); // super compressable.
+    std::string message;
     CHECK_RESULT(proxy_call_foreign_function(function.data(), function.size(), argument.data(),
                                              argument.size(), &compressed, &compressed_size));
-    auto message = std::string("compress ") + std::to_string(argument.size()) + " -> " +
-                   std::to_string(compressed_size);
+    message = std::string("compress ") + std::to_string(argument.size()) + " -> " +
+              std::to_string(compressed_size);
     proxy_log(LogLevel::trace, message.c_str(), message.size());
     function = "uncompress";
     char* result = nullptr;
@@ -143,8 +144,20 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
       message = "compress mismatch ";
       proxy_log(LogLevel::error, message.c_str(), message.size());
     }
-    ::free(compressed);
     ::free(result);
+    result = nullptr;
+    memset(compressed, 0, 4); // damage the compressed version.
+    if (proxy_call_foreign_function(function.data(), function.size(), compressed, compressed_size,
+                                    &result, &result_size) != WasmResult::SerializationFailure) {
+      message = "bad uncompress should be an error";
+      proxy_log(LogLevel::error, message.c_str(), message.size());
+    }
+    if (compressed) {
+      ::free(compressed);
+    }
+    if (result) {
+      ::free(result);
+    }
   } else if (configuration == "WASI") {
     // These checks depend on Emscripten's support for `WASI` and will only
     // work if invoked on a "real" Wasm VM.

@@ -476,8 +476,8 @@ TEST_P(WasmCommonTest, Foreign) {
   wasm->setCreateContextForTesting(
       nullptr, [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
         auto root_context = new TestContext(wasm, plugin);
-        EXPECT_CALL(*root_context, log_(spdlog::level::trace, Eq("compress 41 -> 34")));
-        EXPECT_CALL(*root_context, log_(spdlog::level::debug, Eq("uncompress 34 -> 41")));
+        EXPECT_CALL(*root_context, log_(spdlog::level::trace, Eq("compress 2000 -> 23")));
+        EXPECT_CALL(*root_context, log_(spdlog::level::debug, Eq("uncompress 23 -> 2000")));
         return root_context;
       });
   wasm->start(plugin);

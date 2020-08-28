@@ -65,6 +65,7 @@ public:
   void onSuccess(size_t body_size) override {
     auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
     logDebug(response->proto<google::protobuf::Value>().string_value());
+    cancel();
   }
   void onFailure(GrpcStatus status) override {
     auto p = getStatus();
@@ -78,11 +79,21 @@ class MyGrpcStreamHandler
     : public GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value> {
 public:
   MyGrpcStreamHandler() : GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value>() {}
-  void onReceiveInitialMetadata(uint32_t) override {}
-  void onReceiveTrailingMetadata(uint32_t) override {}
+  void onReceiveInitialMetadata(uint32_t) override {
+    auto h = getHeaderMapValue(WasmHeaderMapType::GrpcReceiveInitialMetadata, "foo");
+    h = getHeaderMapValue(WasmHeaderMapType::HttpCallResponseHeaders, "foo");
+    h = getHeaderMapValue(WasmHeaderMapType::HttpCallResponseTrailers, "foo");
+    addHeaderMapValue(WasmHeaderMapType::GrpcReceiveInitialMetadata, "foo", "bar");
+  }
+  void onReceiveTrailingMetadata(uint32_t) override {
+    auto h = getHeaderMapValue(WasmHeaderMapType::GrpcReceiveTrailingMetadata, "foo");
+    addHeaderMapValue(WasmHeaderMapType::GrpcReceiveTrailingMetadata, "foo", "bar");
+  }
   void onReceive(size_t body_size) override {
     auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
     logDebug(response->proto<google::protobuf::Value>().string_value());
+    google::protobuf::Value message;
+    send(message, false);
   }
   void onRemoteClose(GrpcStatus status) override {
     auto p = getStatus();
@@ -126,6 +137,8 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     body_op_ = getRequestHeader("x-test-operation")->toString();
     return FilterHeadersStatus::Continue;
   } else if (test == "shared_data") {
+    setHeaderMapPairs(WasmHeaderMapType::GrpcReceiveInitialMetadata, {});
+    setRequestHeaderPairs({{"foo", "bar"}});
     WasmDataPtr value0;
     if (getSharedData("shared_data_key_bad", &value0) == WasmResult::NotFound) {
       logDebug("get of bad key not found");
@@ -229,6 +242,20 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
         logWarn(std::string(p.first) + std::string(" -> ") + std::string(p.second));
       }
     };
+    if (root()->httpCall("bogus cluster",
+                         {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}},
+                         "hello world", {{"trail", "cow"}}, 1000, callback) == WasmResult::Ok) {
+      logError("bogus cluster found error");
+    }
+    if (root()->httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}},
+                         "hello world", {{"trail", "cow"}}, 0xFFFFFFFF,
+                         callback) == WasmResult::Ok) {
+      logError("bogus timeout accepted error");
+    }
+    if (root()->httpCall("cluster", {{":method", "POST"}, {":authority", "foo"}}, "hello world",
+                         {{"trail", "cow"}}, 1000, callback) == WasmResult::Ok) {
+      logError("emissing path accepted error");
+    }
     root()->httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}},
                      "hello world", {{"trail", "cow"}}, 1000, callback);
     return FilterHeadersStatus::StopIteration;
@@ -242,6 +269,11 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     HeaderStringPairs initial_metadata;
     root()->grpcCallHandler(grpc_service_string, "service", "method", initial_metadata, value, 1000,
                             std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler()));
+    if (root()->grpcCallHandler(
+            "bogus grpc_service", "service", "method", initial_metadata, value, 1000,
+            std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler())) == WasmResult::Ok) {
+      logError("bogus grpc_service accepted error");
+    }
     return FilterHeadersStatus::StopIteration;
   } else if (test == "grpc_stream") {
     GrpcService grpc_service;
@@ -320,7 +352,7 @@ FilterHeadersStatus TestContext::onResponseHeaders(uint32_t, bool) {
   auto test = root()->test_;
   if (test == "body") {
     body_op_ = getResponseHeader("x-test-operation")->toString();
-    CHECK_RESULT(replaceRequestHeader("x-test-operation", body_op_));
+    CHECK_RESULT(replaceResponseHeader("x-test-operation", body_op_));
   }
   return FilterHeadersStatus::Continue;
 }
@@ -590,6 +622,8 @@ void TestRootContext::onTick() {
       }
       ::free(out);
     }
+  } else if (test_ == "shared_data") {
+    CHECK_RESULT(sendLocalResponse(200, "ok", "body", {{"foo", "bar"}}));
   }
 }
 

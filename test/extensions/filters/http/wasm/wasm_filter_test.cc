@@ -460,7 +460,8 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);
   Http::AsyncClient::Callbacks* callbacks = nullptr;
-  EXPECT_CALL(cluster_manager_, get(Eq("cluster")));
+  EXPECT_CALL(cluster_manager_, get(Eq("cluster"))).Times(testing::AtLeast(1));
+  EXPECT_CALL(cluster_manager_, get(Eq("bogus cluster"))).WillRepeatedly(Return(nullptr));
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster"));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
@@ -498,7 +499,8 @@ TEST_P(WasmHttpFilterTest, AsyncCallAfterDestroyed) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);
   Http::AsyncClient::Callbacks* callbacks = nullptr;
-  EXPECT_CALL(cluster_manager_, get(Eq("cluster")));
+  EXPECT_CALL(cluster_manager_, get(Eq("cluster"))).Times(testing::AtLeast(1));
+  EXPECT_CALL(cluster_manager_, get(Eq("bogus cluster"))).WillRepeatedly(Return(nullptr));
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster"));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
@@ -542,7 +544,7 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
   }
   setupTest("", "grpc_call");
   setupFilter();
-  Grpc::MockAsyncRequest request;
+  NiceMock<Grpc::MockAsyncRequest> request;
   Grpc::RawAsyncRequestCallbacks* callbacks = nullptr;
   Grpc::MockAsyncClientManager client_manager;
   auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
@@ -658,7 +660,7 @@ TEST_P(WasmHttpFilterTest, GrpcStream) {
   setupTest("", "grpc_stream");
   setupFilter();
   Grpc::MockAsyncRequest request;
-  Grpc::MockAsyncStream stream;
+  NiceMock<Grpc::MockAsyncStream> stream;
   Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
   Grpc::MockAsyncClientManager client_manager;
   auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
@@ -744,7 +746,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
     // TODO(PiotrSikora): not yet supported in the Rust SDK.
     EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("grpc service: test"))));
   }
-  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"biz", "baz"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
   Buffer::OwnedImpl data("hello");
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
@@ -813,6 +815,7 @@ TEST_P(WasmHttpFilterTest, SharedData) {
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   StreamInfo::MockStreamInfo log_stream_info;
   filter().log(&request_headers, nullptr, nullptr, log_stream_info);
+  rootContext().onTick(0);
 }
 
 TEST_P(WasmHttpFilterTest, SharedQueue) {

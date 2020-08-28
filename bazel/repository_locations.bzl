@@ -703,8 +703,8 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
     proxy_wasm_cpp_sdk = dict(
         project_name = "WebAssembly for Proxies (C++ SDK)",
         project_url = "https://github.com/proxy-wasm/proxy-wasm-cpp-sdk",
-        version = "91dc6477c8cfc0bd3cea87747a229d531cba0a23",
-        sha256 = "c45eb794a6d5fe335bb1ae97da284f29ca60648f984aa4799f9b86e6c2dad6e0",
+        version = "6cdb4a76563ff2d1b12fcee6059acc1d1a7ebfb5",
+        sha256 = "fb101c4e14f118592f9963ac16302c17217b4eccc6d317a42d1e3e5b51a69c19",
         strip_prefix = "proxy-wasm-cpp-sdk-{version}",
         # 2020-08-14
         urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/{version}.tar.gz"],
