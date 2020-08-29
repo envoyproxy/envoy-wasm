@@ -125,7 +125,7 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     std::string function = "compress";
     char* compressed = nullptr;
     size_t compressed_size = 0;
-    std::string argument = std::string(2000, 'a'); // super compressable.
+    std::string argument = std::string(2000, 'a'); // super compressible.
     std::string message;
     CHECK_RESULT(proxy_call_foreign_function(function.data(), function.size(), argument.data(),
                                              argument.size(), &compressed, &compressed_size));
