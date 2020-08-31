@@ -336,11 +336,7 @@ private:
     TextReadout& textReadoutFromStatNameWithTags(const StatName& name,
                                                  StatNameTagVectorOptConstRef tags) override;
     ScopePtr createScope(const std::string& name) override {
-      if (name.empty()) {
-        return parent_.createScope(symbolTable().toString(prefix_.statName()));
-      } else {
-        return parent_.createScope(symbolTable().toString(prefix_.statName()) + "." + name);
-      }
+      return parent_.createScope(symbolTable().toString(prefix_.statName()) + "." + name);
     }
     const SymbolTable& constSymbolTable() const final { return parent_.constSymbolTable(); }
     SymbolTable& symbolTable() final { return parent_.symbolTable(); }

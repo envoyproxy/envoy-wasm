@@ -32,6 +32,7 @@ namespace Common {
 namespace Wasm {
 
 #define MOCK_CONTEXT_LOG_                                                                          \
+  using Context::log;                                                                              \
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {                 \
     log_(static_cast<spdlog::level::level_enum>(level), message);                                  \
     return proxy_wasm::WasmResult::Ok;                                                             \
@@ -40,6 +41,7 @@ namespace Wasm {
 
 template <typename Base = testing::Test> class WasmTestBase : public Base {
 public:
+  // NOLINTNEXTLINE(readability-identifier-naming)
   void SetUp() override { clearCodeCacheForTesting(); }
 
   void setupBase(const std::string& runtime, const std::string& code, CreateContextFn create_root,
@@ -75,7 +77,7 @@ public:
   }
 
   WasmHandleSharedPtr& wasm() { return wasm_; }
-  Context* root_context() { return root_context_; }
+  Context* rootContext() { return root_context_; }
 
   Stats::IsolatedStoreImpl stats_store_;
   Stats::ScopeSharedPtr scope_;

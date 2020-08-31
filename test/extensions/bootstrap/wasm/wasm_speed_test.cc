@@ -4,8 +4,6 @@
  * Run with:
  * `bazel run --config=libc++ -c opt //test/extensions/bootstrap/wasm:wasm_speed_test`
  */
-#include <stdio.h>
-
 #include "common/event/dispatcher_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
@@ -23,7 +21,6 @@
 #include "tools/cpp/runfiles/runfiles.h"
 
 using bazel::tools::cpp::runfiles::Runfiles;
-using testing::Eq;
 
 namespace Envoy {
 namespace Extensions {
@@ -35,6 +32,7 @@ public:
            const std::shared_ptr<Extensions::Common::Wasm::Plugin>& plugin)
       : Envoy::Extensions::Common::Wasm::Context(wasm, plugin) {}
 
+  using Envoy::Extensions::Common::Wasm::Context::log;
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {
     log_(static_cast<spdlog::level::level_enum>(level), message);
     return proxy_wasm::WasmResult::Ok;
@@ -42,8 +40,8 @@ public:
   MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message));
 };
 
-static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test,
-                                       std::string runtime) {
+static void bmWasmSimpleCallSpeedTest(benchmark::State& state, std::string test,
+                                      std::string runtime) {
   Envoy::Logger::Registry::getLog(Logger::Id::wasm).set_level(spdlog::level::off);
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
@@ -79,24 +77,24 @@ static void BM_WasmSimpleCallSpeedTest(benchmark::State& state, std::string test
           -> proxy_wasm::ContextBase* { return new TestRoot(wasm, plugin); });
 
   auto root_context = wasm->start(plugin);
-  for (auto _ : state) {
+  for (__attribute__((unused)) auto _ : state) {
     root_context->onTick(0);
   }
 }
 
 #if defined(ENVOY_WASM_WAVM)
 #define B(_t)                                                                                      \
-  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                \
+  BENCHMARK_CAPTURE(bmWasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                 \
                     std::string("v8"));                                                            \
-  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),              \
+  BENCHMARK_CAPTURE(bmWasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),               \
                     std::string("null"));                                                          \
-  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, WavmSpeedTest_##_t, std::string(#_t),              \
+  BENCHMARK_CAPTURE(bmWasmSimpleCallSpeedTest, WavmSpeedTest_##_t, std::string(#_t),               \
                     std::string("wavm"));
 #else
 #define B(_t)                                                                                      \
-  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                \
+  BENCHMARK_CAPTURE(bmWasmSimpleCallSpeedTest, V8SpeedTest_##_t, std::string(#_t),                 \
                     std::string("v8"));                                                            \
-  BENCHMARK_CAPTURE(BM_WasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),              \
+  BENCHMARK_CAPTURE(bmWasmSimpleCallSpeedTest, NullSpeedTest_##_t, std::string(#_t),               \
                     std::string("null"));
 #endif
 

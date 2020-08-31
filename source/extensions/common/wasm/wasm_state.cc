@@ -29,6 +29,7 @@ google::api::expr::runtime::CelValue WasmState::exprValue(Protobuf::Arena* arena
   }
   return google::api::expr::runtime::CelValue::CreateNull();
 }
+
 ProtobufTypes::MessagePtr WasmState::serializeAsProto() const {
   auto any = std::make_unique<ProtobufWkt::Any>();
 

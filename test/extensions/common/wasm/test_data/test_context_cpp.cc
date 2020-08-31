@@ -21,12 +21,21 @@ class TestRootContext : public EnvoyRootContext {
 public:
   explicit TestRootContext(uint32_t id, std::string_view root_id) : EnvoyRootContext(id, root_id) {}
 
+  bool onStart(size_t vm_configuration_size) override;
   bool onDone() override;
   void onResolveDns(uint32_t token, uint32_t results_size) override;
+
+private:
+  uint32_t dns_token_;
 };
 
 static RegisterContextFactory register_TestContext(CONTEXT_FACTORY(TestContext),
                                                    ROOT_FACTORY(TestRootContext));
+
+bool TestRootContext::onStart(size_t) {
+  envoy_resolve_dns("example.com", sizeof("example.com") - 1, &dns_token_);
+  return true;
+}
 
 void TestRootContext::onResolveDns(uint32_t token, uint32_t result_size) {
   logWarn("TestRootContext::onResolveDns " + std::to_string(token));

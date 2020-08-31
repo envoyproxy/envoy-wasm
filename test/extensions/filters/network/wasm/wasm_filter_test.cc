@@ -10,7 +10,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using testing::_;
 using testing::Eq;
 
 namespace Envoy {
@@ -40,8 +39,8 @@ public:
 class WasmNetworkFilterTest : public Common::Wasm::WasmNetworkFilterTestBase<
                                   testing::TestWithParam<std::tuple<std::string, std::string>>> {
 public:
-  WasmNetworkFilterTest() {}
-  ~WasmNetworkFilterTest() {}
+  WasmNetworkFilterTest() = default;
+  ~WasmNetworkFilterTest() override = default;
 
   void setupConfig(const std::string& code, std::string vm_configuration) {
     if (code.empty()) {
@@ -79,14 +78,17 @@ protected:
   std::string code_;
 };
 
-INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmNetworkFilterTest,
-                         testing::Values(std::make_tuple("v8", "cpp"),
-                                         std::make_tuple("v8", "rust"),
-#if defined(ENVOY_WASM_WAVM)
-                                         std::make_tuple("wavm", "cpp"),
-                                         std::make_tuple("wavm", "rust"),
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
+#if defined(ENVOY_WASM_V8)
+    std::make_tuple("v8", "cpp"), std::make_tuple("v8", "rust"),
 #endif
-                                         std::make_tuple("null", "cpp")));
+#if defined(ENVOY_WASM_WAVM)
+    std::make_tuple("wavm", "cpp"), std::make_tuple("wavm", "rust"),
+#endif
+    std::make_tuple("null", "cpp"));
+INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmNetworkFilterTest, testing_values);
 
 // Bad code in initial config.
 TEST_P(WasmNetworkFilterTest, BadCode) {
@@ -122,6 +124,8 @@ TEST_P(WasmNetworkFilterTest, HappyPath) {
 
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
+  read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
+  // Noop.
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
 }
 

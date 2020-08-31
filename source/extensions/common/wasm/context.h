@@ -28,7 +28,6 @@ namespace Wasm {
 using proxy_wasm::BufferInterface;
 using proxy_wasm::CloseType;
 using proxy_wasm::ContextBase;
-using proxy_wasm::MetricType;
 using proxy_wasm::Pairs;
 using proxy_wasm::PairsWithStringValues;
 using proxy_wasm::PluginBase;
@@ -40,7 +39,6 @@ using proxy_wasm::WasmHandleBase;
 using proxy_wasm::WasmHeaderMapType;
 using proxy_wasm::WasmResult;
 using proxy_wasm::WasmStreamType;
-using proxy_wasm::Word;
 
 using VmConfig = envoy::extensions::wasm::v3::VmConfig;
 using GrpcService = envoy::config::core::v3::GrpcService;
@@ -163,6 +161,7 @@ public:
            const Http::ResponseHeaderMap* response_headers,
            const Http::ResponseTrailerMap* response_trailers,
            const StreamInfo::StreamInfo& stream_info) override;
+
   uint32_t getLogLevel() override;
 
   // Network::ConnectionCallbacks
@@ -392,8 +391,8 @@ protected:
   void onGrpcCloseWrapper(uint32_t token, const Grpc::Status::GrpcStatus& status,
                           const absl::string_view message);
 
-  bool IsGrpcStreamToken(uint32_t token) { return (token & 1) == 0; }
-  bool IsGrpcCallToken(uint32_t token) { return (token & 1) == 1; }
+  bool isGrpcStreamToken(uint32_t token) { return (token & 1) == 0; }
+  bool isGrpcCallToken(uint32_t token) { return (token & 1) == 1; }
 
   Http::HeaderMap* getMap(WasmHeaderMapType type);
   const Http::HeaderMap* getConstMap(WasmHeaderMapType type);

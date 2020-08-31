@@ -27,10 +27,9 @@ CAS
 CB
 CDS
 CEL
-EMSDK
-FBS
-SEGV
-WASI
+DSR
+LTT
+TIDs
 ceil
 CHACHA
 CHLO
@@ -74,6 +73,7 @@ DRYs
 DS
 DST
 DW
+DWORD
 EADDRINUSE
 EADDRNOTAVAIL
 EAGAIN
@@ -216,6 +216,7 @@ NS
 NUL
 Nilsson
 Nonhashable
+Oauth
 OCSP
 OK
 OOM
@@ -300,6 +301,7 @@ SPIFFE
 SPKI
 SQL
 SR
+SRCDIR
 SRDS
 SRV
 SS
@@ -355,6 +357,8 @@ WRONGPASS
 WRR
 WS
 WSA
+WSABUF
+WSAEINVAL
 WSS
 Welford's
 Wi
@@ -396,6 +400,7 @@ argv
 artisanal
 ary
 asctime
+asm
 async
 atoi
 atomicity
@@ -420,11 +425,13 @@ backtracing
 balancer
 balancers
 barbaz
+basename
 baz
 bazel
 behaviour
 benchmarked
 bidi
+bignum
 bitfield
 bitset
 bitwise
@@ -435,6 +442,7 @@ bool
 boolean
 booleans
 bools
+boringssl
 borks
 broadcasted
 buf
@@ -446,6 +454,7 @@ bulkstrings
 bursty
 bytecode
 bytestream
+bytestring
 cacheable
 cacheability
 callee
@@ -560,7 +569,9 @@ dgst
 dir
 dirname
 djb
+downcalls
 downcasted
+downcased
 downstreams
 drainable
 dtor
@@ -571,6 +582,7 @@ dynamodb
 emplace
 emplaced
 emscripten
+emsdk
 enablement
 encodings
 endian
@@ -602,9 +614,11 @@ failover
 fallbacks
 fastbuild
 favicon
+fbs
 fcntl
 fd
 fds
+fdstat
 filename
 filenames
 fileno
@@ -626,6 +640,7 @@ func
 functor
 functors
 gRPC
+gateway
 gcov
 genrule
 getaddrinfo
@@ -718,6 +733,8 @@ kv
 kvs
 lala
 latencies
+ld
+ldd
 len
 lenenc
 lexically
@@ -819,6 +836,7 @@ nullopt
 nullptr
 num
 numkeys
+oauth
 observability
 ocagent
 offsetof
@@ -934,6 +952,7 @@ realloc
 rebalanced
 rebalancing
 rebuffer
+rebuilder
 reconnection
 recurse
 recv
@@ -964,6 +983,7 @@ repeatability
 reperform
 repicked
 repo
+reproducibility
 requirepass
 reselecting
 reserialize
@@ -979,6 +999,7 @@ restarter
 resync
 retriable
 retriggers
+revalidated
 revalidation
 rmdir
 rocketmq

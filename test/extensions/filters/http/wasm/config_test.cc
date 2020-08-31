@@ -5,6 +5,7 @@
 #include "common/common/base64.h"
 #include "common/common/hex.h"
 #include "common/crypto/utility.h"
+#include "common/http/message_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
 #include "extensions/common/wasm/wasm.h"
@@ -40,7 +41,7 @@ protected:
     ON_CALL(context_, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
   }
 
-  void SetUp() { Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(); }
+  void SetUp() override { Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(); }
 
   void initializeForRemote() {
     retry_timer_ = new Event::MockTimer();
@@ -63,13 +64,22 @@ protected:
   Event::TimerCb retry_timer_cb_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest,
-                         testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
+#if defined(ENVOY_WASM_V8)
+    "v8"
 #endif
-                                         ));
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+    ,
+#endif
+#if defined(ENVOY_WASM_WAVM)
+    "wavm"
+#endif
+);
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest, testing_values);
+#endif
 
 TEST_P(WasmFilterConfigTest, JsonLoadFromFileWasm) {
   const std::string json = TestEnvironment::substitute(absl::StrCat(R"EOF(

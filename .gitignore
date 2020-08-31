@@ -1,6 +1,7 @@
 /bazel-*
 BROWSE
 /build
+/build_*
 *.bzlc
 .cache
 .clangd
@@ -31,7 +32,7 @@ clang-tidy-fixes.yaml
 .gdb_history
 clang.bazelrc
 user.bazelrc
-**/Cargo.lock
 CMakeLists.txt
 cmake-build-debug
 /linux
+bazel.output.txt
