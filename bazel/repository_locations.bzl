@@ -703,10 +703,10 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
     proxy_wasm_cpp_sdk = dict(
         project_name = "WebAssembly for Proxies (C++ SDK)",
         project_url = "https://github.com/proxy-wasm/proxy-wasm-cpp-sdk",
-        version = "6cdb4a76563ff2d1b12fcee6059acc1d1a7ebfb5",
-        sha256 = "fb101c4e14f118592f9963ac16302c17217b4eccc6d317a42d1e3e5b51a69c19",
+        version = "1b5f69ce1535b0c21f88c4af4ebf0ec51d255abe",
+        sha256 = "d177a9a80c22d33a096f03c1bc9e031d392d854f4e1eeb44e6dcc7455bceafc5",
         strip_prefix = "proxy-wasm-cpp-sdk-{version}",
-        # 2020-08-14
+        # 2020-08-31
         urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/{version}.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
@@ -714,9 +714,9 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
     proxy_wasm_cpp_host = dict(
         project_name = "WebAssembly for Proxies (C++ host implementation)",
         project_url = "https://github.com/proxy-wasm/proxy-wasm-cpp-host",
-        # 2020-08-20
-        version = "42c49d8d12b2a75b26eb182360235704fa27ca5d",
-        sha256 = "c7165aaa83809b04d9fa3fd33dafc48ab825509fbbaf1bcbccc2ec1af8d4c7a2",
+        # 2020-08-27
+        version = "a21abb5565d471da7e73ae00becde2e6bc27caf7",
+        sha256 = "07c521a74a3ece1ddc0853b4d066dba5fba2cc7dce392b9c8b9b2d455ee8c469",
         strip_prefix = "proxy-wasm-cpp-host-{version}",
         urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/{version}.tar.gz"],
         use_category = ["dataplane"],
