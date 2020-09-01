@@ -136,23 +136,6 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
   } else if (test == "body") {
     body_op_ = getRequestHeader("x-test-operation")->toString();
     return FilterHeadersStatus::Continue;
-  } else if (test == "shared_data") {
-    setHeaderMapPairs(WasmHeaderMapType::GrpcReceiveInitialMetadata, {});
-    setRequestHeaderPairs({{"foo", "bar"}});
-    WasmDataPtr value0;
-    if (getSharedData("shared_data_key_bad", &value0) == WasmResult::NotFound) {
-      logDebug("get of bad key not found");
-    }
-    CHECK_RESULT(setSharedData("shared_data_key1", "shared_data_value0"));
-    CHECK_RESULT(setSharedData("shared_data_key1", "shared_data_value1"));
-    CHECK_RESULT(setSharedData("shared_data_key2", "shared_data_value2"));
-    uint32_t cas = 0;
-    auto value2 = getSharedDataValue("shared_data_key2", &cas);
-    if (WasmResult::CasMismatch ==
-        setSharedData("shared_data_key2", "shared_data_value3", cas + 1)) { // Bad cas.
-      logInfo("set CasMismatch");
-    }
-    return FilterHeadersStatus::Continue;
   } else if (test == "shared_queue") {
     uint32_t token;
     if (resolveSharedQueue("vm_id", "bad_shared_queue", &token) == WasmResult::NotFound) {
@@ -555,15 +538,6 @@ void TestContext::onLog() {
     if (response_trailer && response_trailer->view() != "") {
       logWarn("response bogus-trailer found");
     }
-  } else if (test == "shared_data") {
-    WasmDataPtr value0;
-    if (getSharedData("shared_data_key_bad", &value0) == WasmResult::NotFound) {
-      logDebug("second get of bad key not found");
-    }
-    auto value1 = getSharedDataValue("shared_data_key1");
-    logDebug("get 1 " + value1->toString());
-    auto value2 = getSharedDataValue("shared_data_key2");
-    logWarn("get 2 " + value2->toString());
   } else if (test == "property") {
     setFilterState("wasm_state", "wasm_value");
     auto path = getRequestHeader(":path");
@@ -787,7 +761,8 @@ void TestRootContext::onTick() {
       args.set_name("protobuf_state");
       args.set_type(envoy::source::extensions::common::wasm::WasmType::Protobuf);
       args.set_span(envoy::source::extensions::common::wasm::LifeSpan::DownstreamRequest);
-      args.set_schema("type.googleapis.com/envoy.source.extensions.common.wasm.DeclarePropertyArguments");
+      args.set_schema(
+          "type.googleapis.com/envoy.source.extensions.common.wasm.DeclarePropertyArguments");
       std::string in;
       args.SerializeToString(&in);
       char* out = nullptr;
@@ -802,14 +777,13 @@ void TestRootContext::onTick() {
       std::string function = "declare_property";
       char* out = nullptr;
       size_t out_size = 0;
-      if (WasmResult::Ok == proxy_call_foreign_function(function.data(), function.size(), function.data(),
-                                                        function.size(), &out, &out_size)) {
+      if (WasmResult::Ok == proxy_call_foreign_function(function.data(), function.size(),
+                                                        function.data(), function.size(), &out,
+                                                        &out_size)) {
         logError("expected declare_property to fail");
       }
       ::free(out);
     }
-  } else if (test_ == "shared_data") {
-    CHECK_RESULT(sendLocalResponse(200, "ok", "body", {{"foo", "bar"}}));
   }
 }
 
@@ -835,6 +809,7 @@ FilterHeadersStatus Context1::onRequestHeaders(uint32_t, bool) {
 
 FilterHeadersStatus Context2::onRequestHeaders(uint32_t, bool) {
   logDebug(std::string("onRequestHeaders2 ") + std::to_string(id()));
+  CHECK_RESULT(sendLocalResponse(200, "ok", "body", {{"foo", "bar"}}));
   return FilterHeadersStatus::Continue;
 }
 
