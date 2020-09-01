@@ -68,6 +68,7 @@ envoy_cc_library(
     srcs = [
         "test_cpp.cc",
         "test_cpp_null_plugin.cc",
+        "test_shared_data_cpp.cc",
     ],
     copts = ["-DNULL_PLUGIN=1"],
     deps = [
@@ -84,7 +85,10 @@ envoy_cc_library(
 
 wasm_cc_binary(
     name = "test_cpp.wasm",
-    srcs = ["test_cpp.cc"],
+    srcs = [
+        "test_cpp.cc",
+        "test_shared_data_cpp.cc",
+    ],
     deps = [
         "//source/extensions/common/wasm/ext:declare_property_cc_proto",
         "//source/extensions/common/wasm/ext:envoy_proxy_wasm_api_lib",

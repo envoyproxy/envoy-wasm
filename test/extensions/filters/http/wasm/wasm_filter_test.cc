@@ -39,7 +39,6 @@ public:
   TestFilter(Wasm* wasm, uint32_t root_context_id,
              Envoy::Extensions::Common::Wasm::PluginSharedPtr plugin)
       : Envoy::Extensions::Common::Wasm::Context(wasm, root_context_id, plugin) {}
-
   MOCK_CONTEXT_LOG_;
 };
 
@@ -73,8 +72,9 @@ public:
         code = TestEnvironment::readFileToStringForTest(TestEnvironment::runfilesPath(
             "test/extensions/filters/http/wasm/test_data/test_cpp.wasm"));
       } else {
+        auto filename = !root_id.empty() ? root_id : vm_configuration;
         const auto basic_path = TestEnvironment::runfilesPath(
-            absl::StrCat("test/extensions/filters/http/wasm/test_data/", vm_configuration));
+            absl::StrCat("test/extensions/filters/http/wasm/test_data/", filename));
         code = TestEnvironment::readFileToStringForTest(basic_path + "_rust.wasm");
       }
     }
@@ -465,7 +465,8 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);
   Http::AsyncClient::Callbacks* callbacks = nullptr;
-  EXPECT_CALL(cluster_manager_, get(Eq("cluster")));
+  EXPECT_CALL(cluster_manager_, get(Eq("cluster"))).Times(testing::AtLeast(1));
+  EXPECT_CALL(cluster_manager_, get(Eq("bogus cluster"))).WillRepeatedly(Return(nullptr));
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster"));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
@@ -503,7 +504,8 @@ TEST_P(WasmHttpFilterTest, AsyncCallAfterDestroyed) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);
   Http::AsyncClient::Callbacks* callbacks = nullptr;
-  EXPECT_CALL(cluster_manager_, get(Eq("cluster")));
+  EXPECT_CALL(cluster_manager_, get(Eq("cluster"))).Times(testing::AtLeast(1));
+  EXPECT_CALL(cluster_manager_, get(Eq("bogus cluster"))).WillRepeatedly(Return(nullptr));
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster"));
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillOnce(
@@ -547,7 +549,7 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
   }
   setupTest("", "grpc_call");
   setupFilter();
-  Grpc::MockAsyncRequest request;
+  NiceMock<Grpc::MockAsyncRequest> request;
   Grpc::RawAsyncRequestCallbacks* callbacks = nullptr;
   Grpc::MockAsyncClientManager client_manager;
   auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
@@ -663,7 +665,7 @@ TEST_P(WasmHttpFilterTest, GrpcStream) {
   setupTest("", "grpc_stream");
   setupFilter();
   Grpc::MockAsyncRequest request;
-  Grpc::MockAsyncStream stream;
+  NiceMock<Grpc::MockAsyncStream> stream;
   Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
   Grpc::MockAsyncClientManager client_manager;
   auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
@@ -749,7 +751,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
     // TODO(PiotrSikora): not yet supported in the Rust SDK.
     EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("grpc service: test"))));
   }
-  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"biz", "baz"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
   Buffer::OwnedImpl data("hello");
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
@@ -802,22 +804,18 @@ TEST_P(WasmHttpFilterTest, Property) {
 }
 
 TEST_P(WasmHttpFilterTest, SharedData) {
-  setupTest("", "shared_data");
-  setupFilter();
-  EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("set CasMismatch"))));
-  EXPECT_CALL(filter(),
+  setupTest("shared_data");
+  EXPECT_CALL(rootContext(), log_(spdlog::level::info, Eq(absl::string_view("set CasMismatch"))));
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::debug, Eq(absl::string_view("get 1 shared_data_value1"))));
-  EXPECT_CALL(filter(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::warn, Eq(absl::string_view("get 2 shared_data_value2"))));
-  EXPECT_CALL(filter(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::debug, Eq(absl::string_view("get of bad key not found"))));
-  EXPECT_CALL(filter(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::debug, Eq(absl::string_view("second get of bad key not found"))));
-
-  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
-  StreamInfo::MockStreamInfo log_stream_info;
-  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
+  rootContext().onTick(0);
+  rootContext().onQueueReady(0);
 }
 
 TEST_P(WasmHttpFilterTest, SharedQueue) {

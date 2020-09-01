@@ -20,10 +20,28 @@
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
 
+using Envoy::Server::ServerLifecycleNotifier;
+using StageCallbackWithCompletion =
+    Envoy::Server::ServerLifecycleNotifier::StageCallbackWithCompletion;
 using testing::Eq;
 using testing::Return;
 
 namespace Envoy {
+
+namespace Server {
+class MockServerLifecycleNotifier2 : public MockServerLifecycleNotifier {
+public:
+  MockServerLifecycleNotifier2() = default;
+  ~MockServerLifecycleNotifier2() override = default;
+  ServerLifecycleNotifier::HandlePtr
+  registerCallback(Stage stage, StageCallbackWithCompletion callback) override {
+    return registerCallback2(stage, callback);
+  }
+
+  MOCK_METHOD2(registerCallback2, HandlePtr(Stage stage, StageCallbackWithCompletion callback));
+};
+} // namespace Server
+
 namespace Extensions {
 namespace Common {
 namespace Wasm {
@@ -476,8 +494,8 @@ TEST_P(WasmCommonTest, Foreign) {
   wasm->setCreateContextForTesting(
       nullptr, [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
         auto root_context = new TestContext(wasm, plugin);
-        EXPECT_CALL(*root_context, log_(spdlog::level::trace, Eq("compress 41 -> 34")));
-        EXPECT_CALL(*root_context, log_(spdlog::level::debug, Eq("uncompress 34 -> 41")));
+        EXPECT_CALL(*root_context, log_(spdlog::level::trace, Eq("compress 2000 -> 23")));
+        EXPECT_CALL(*root_context, log_(spdlog::level::debug, Eq("uncompress 23 -> 2000")));
         return root_context;
       });
   wasm->start(plugin);
@@ -576,7 +594,7 @@ TEST_P(WasmCommonTest, VmCache) {
   NiceMock<Upstream::MockClusterManager> cluster_manager;
   NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
-  NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
+  NiceMock<Server::MockServerLifecycleNotifier2> lifecycle_notifier;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider;
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
@@ -589,6 +607,15 @@ TEST_P(WasmCommonTest, VmCache) {
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
+
+  ServerLifecycleNotifier::StageCallbackWithCompletion lifecycle_callback;
+  EXPECT_CALL(lifecycle_notifier, registerCallback2(_, _))
+      .WillRepeatedly(
+          Invoke([&](ServerLifecycleNotifier::Stage,
+                     StageCallbackWithCompletion callback) -> ServerLifecycleNotifier::HandlePtr {
+            lifecycle_callback = callback;
+            return nullptr;
+          }));
 
   VmConfig vm_config;
   vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));
@@ -647,6 +674,8 @@ TEST_P(WasmCommonTest, VmCache) {
   plugin.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher->clearDeferredDeleteList();
+  Event::PostCb post_cb = [] {};
+  lifecycle_callback(post_cb);
 
   proxy_wasm::clearWasmCachesForTesting();
 }
