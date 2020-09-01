@@ -1431,7 +1431,9 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
   access_log_response_trailers_ = nullptr;
   access_log_stream_info_ = nullptr;
 
-  onDelete();
+  if (!isRootContext()) {
+    onDelete();
+  }
 }
 
 void Context::onDestroy() {
