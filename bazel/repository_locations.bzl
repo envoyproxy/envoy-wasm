@@ -389,30 +389,15 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
     com_github_nodejs_http_parser = dict(
         project_name = "HTTP Parser",
         project_url = "https://github.com/nodejs/http-parser",
-        version = "2.9.3",
-        sha256 = "8fa0ab8770fd8425a9b431fdbf91623c4d7a9cdb842b9339289bd2b0b01b0d3d",
+        # 2020-07-10
+        # This SHA includes fix for https://github.com/nodejs/http-parser/issues/517 which allows (opt-in) to serve
+        # requests with both Content-Legth and Transfer-Encoding: chunked headers set.
+        version = "4f15b7d510dc7c6361a26a7c6d2f7c3a17f8d878",
+        sha256 = "6a12896313ce1ca630cf516a0ee43a79b5f13f5a5d8143f56560ac0b21c98fac",
         strip_prefix = "http-parser-{version}",
-        urls = ["https://github.com/nodejs/http-parser/archive/v{version}.tar.gz"],
+        urls = ["https://github.com/nodejs/http-parser/archive/{version}.tar.gz"],
         use_category = ["dataplane"],
         cpe = "cpe:2.3:a:nodejs:node.js:*",
-    ),
-    com_github_pallets_jinja = dict(
-        project_name = "https://palletsprojects.com/p/jinja",
-        project_url = "Jinja",
-        version = "2.10.3",
-        sha256 = "db49236731373e4f3118af880eb91bb0aa6978bc0cf8b35760f6a026f1a9ffc4",
-        strip_prefix = "jinja-{version}",
-        urls = ["https://github.com/pallets/jinja/archive/{version}.tar.gz"],
-        use_category = ["build"],
-    ),
-    com_github_pallets_markupsafe = dict(
-        project_name = "MarkupSafe",
-        project_url = "https://github.com/pallets/markupsafe",
-        version = "2.0.0a1",
-        sha256 = "2b0c5c2a067d9268813d55523bc513a12181cffb23b2f3d5618eb5d93776bad8",
-        strip_prefix = "markupsafe-{version}/src",
-        urls = ["https://github.com/pallets/markupsafe/archive/{version}.tar.gz"],
-        use_category = ["build"],
     ),
     com_github_tencent_rapidjson = dict(
         project_name = "RapidJSON",
@@ -577,11 +562,11 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
     com_googlesource_chromium_v8 = dict(
         project_name = "V8",
         project_url = "https://v8.dev",
-        version = "8.4",
+        version = "8.5.210.20",
         # This archive was created using https://storage.googleapis.com/envoyproxy-wee8/wee8-archive.sh
         # and contains complete checkout of V8 with all dependencies necessary to build wee8.
-        sha256 = "b82e7fba251825f836b8aca68545fef46726130afa7bb590478f384f847fee0f",
-        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-{version}.371.19.tar.gz"],
+        sha256 = "ef404643d7da6854b76b9fb9950a79a1acbd037b7a26f02c585ac379b0f7dee1",
+        urls = ["https://storage.googleapis.com/envoyproxy-wee8/wee8-{version}.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
@@ -703,10 +688,10 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
     proxy_wasm_cpp_sdk = dict(
         project_name = "WebAssembly for Proxies (C++ SDK)",
         project_url = "https://github.com/proxy-wasm/proxy-wasm-cpp-sdk",
-        version = "6cdb4a76563ff2d1b12fcee6059acc1d1a7ebfb5",
-        sha256 = "fb101c4e14f118592f9963ac16302c17217b4eccc6d317a42d1e3e5b51a69c19",
+        version = "1b5f69ce1535b0c21f88c4af4ebf0ec51d255abe",
+        sha256 = "d177a9a80c22d33a096f03c1bc9e031d392d854f4e1eeb44e6dcc7455bceafc5",
         strip_prefix = "proxy-wasm-cpp-sdk-{version}",
-        # 2020-08-14
+        # 2020-08-31
         urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-sdk/archive/{version}.tar.gz"],
         use_category = ["dataplane"],
         cpe = "N/A",
@@ -714,9 +699,9 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
     proxy_wasm_cpp_host = dict(
         project_name = "WebAssembly for Proxies (C++ host implementation)",
         project_url = "https://github.com/proxy-wasm/proxy-wasm-cpp-host",
-        # 2020-08-20
-        version = "42c49d8d12b2a75b26eb182360235704fa27ca5d",
-        sha256 = "c7165aaa83809b04d9fa3fd33dafc48ab825509fbbaf1bcbccc2ec1af8d4c7a2",
+        # 2020-08-27
+        version = "a21abb5565d471da7e73ae00becde2e6bc27caf7",
+        sha256 = "07c521a74a3ece1ddc0853b4d066dba5fba2cc7dce392b9c8b9b2d455ee8c469",
         strip_prefix = "proxy-wasm-cpp-host-{version}",
         urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/{version}.tar.gz"],
         use_category = ["dataplane"],
