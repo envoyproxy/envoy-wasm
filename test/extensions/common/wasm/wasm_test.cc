@@ -29,16 +29,19 @@ using testing::Return;
 namespace Envoy {
 
 namespace Server {
-class MockServerLifecycleNotifier2 : public MockServerLifecycleNotifier {
+class MockServerLifecycleNotifier2 : public ServerLifecycleNotifier {
 public:
   MockServerLifecycleNotifier2() = default;
   ~MockServerLifecycleNotifier2() override = default;
+
   ServerLifecycleNotifier::HandlePtr
   registerCallback(Stage stage, StageCallbackWithCompletion callback) override {
     return registerCallback2(stage, callback);
   }
 
-  MOCK_METHOD2(registerCallback2, HandlePtr(Stage stage, StageCallbackWithCompletion callback));
+  MOCK_METHOD(ServerLifecycleNotifier::HandlePtr, registerCallback, (Stage, StageCallback));
+  MOCK_METHOD(ServerLifecycleNotifier::HandlePtr, registerCallback2,
+              (Stage stage, StageCallbackWithCompletion callback));
 };
 } // namespace Server
 
