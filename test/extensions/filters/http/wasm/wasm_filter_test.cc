@@ -1,16 +1,12 @@
-#include <stdio.h>
+#include "common/http/message_impl.h"
 
 #include "extensions/filters/http/wasm/wasm_filter.h"
 
 #include "test/test_common/wasm_base.h"
 
-using testing::_;
-using testing::AtLeast;
 using testing::Eq;
-using testing::InSequence;
 using testing::Invoke;
 using testing::Return;
-using testing::ReturnPointee;
 using testing::ReturnRef;
 
 MATCHER_P(MapEq, rhs, "") {
@@ -29,7 +25,6 @@ namespace Extensions {
 namespace HttpFilters {
 namespace Wasm {
 
-using envoy::config::core::v3::TrafficDirection;
 using Envoy::Extensions::Common::Wasm::CreateContextFn;
 using Envoy::Extensions::Common::Wasm::Plugin;
 using Envoy::Extensions::Common::Wasm::PluginSharedPtr;
@@ -45,13 +40,6 @@ public:
              Envoy::Extensions::Common::Wasm::PluginSharedPtr plugin)
       : Envoy::Extensions::Common::Wasm::Context(wasm, root_context_id, plugin) {}
 
-  void log(const Http::RequestHeaderMap* request_headers,
-           const Http::ResponseHeaderMap* response_headers,
-           const Http::ResponseTrailerMap* response_trailers,
-           const StreamInfo::StreamInfo& stream_info) override {
-    Envoy::Extensions::Common::Wasm::Context::log(request_headers, response_headers,
-                                                  response_trailers, stream_info);
-  }
   MOCK_CONTEXT_LOG_;
 };
 
@@ -94,18 +82,21 @@ public:
   }
   void setupFilter(const std::string root_id = "") { setupFilterBase<TestFilter>(root_id); }
 
-  TestRoot& root_context() { return *static_cast<TestRoot*>(root_context_); }
+  TestRoot& rootContext() { return *static_cast<TestRoot*>(root_context_); }
   TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
 };
 
-INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmHttpFilterTest,
-                         testing::Values(std::make_tuple("v8", "cpp"),
-                                         std::make_tuple("v8", "rust"),
-#if defined(ENVOY_WASM_WAVM)
-                                         std::make_tuple("wavm", "cpp"),
-                                         std::make_tuple("wavm", "rust"),
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
+#if defined(ENVOY_WASM_V8)
+    std::make_tuple("v8", "cpp"), std::make_tuple("v8", "rust"),
 #endif
-                                         std::make_tuple("null", "cpp")));
+#if defined(ENVOY_WASM_WAVM)
+    std::make_tuple("wavm", "cpp"), std::make_tuple("wavm", "rust"),
+#endif
+    std::make_tuple("null", "cpp"));
+INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmHttpFilterTest, testing_values);
 
 // Bad code in initial config.
 TEST_P(WasmHttpFilterTest, BadCode) {
@@ -126,6 +117,27 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm"));
+  filter().onDestroy();
+}
+
+TEST_P(WasmHttpFilterTest, AllHeadersAndTrailers) {
+  setupTest("", "headers");
+  setupFilter();
+  EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2 headers"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"server", "envoy"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
+  EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
+  EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm"));
+  Http::TestRequestTrailerMapImpl request_trailers{};
+  EXPECT_EQ(Http::FilterTrailersStatus::Continue, filter().decodeTrailers(request_trailers));
+  Http::TestResponseHeaderMapImpl response_headers{};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().encodeHeaders(response_headers, false));
+  Http::TestResponseTrailerMapImpl response_trailers{};
+  EXPECT_EQ(Http::FilterTrailersStatus::Continue, filter().encodeTrailers(response_trailers));
   filter().onDestroy();
 }
 
@@ -436,12 +448,14 @@ TEST_P(WasmHttpFilterTest, AccessLog) {
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  Http::TestResponseHeaderMapImpl response_headers{};
+  Http::TestResponseTrailerMapImpl response_trailers{};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
   Buffer::OwnedImpl data("hello");
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
   filter().onDestroy();
   StreamInfo::MockStreamInfo log_stream_info;
-  filter().log(&request_headers, nullptr, nullptr, log_stream_info);
+  filter().log(&request_headers, &response_headers, &response_trailers, log_stream_info);
 }
 
 TEST_P(WasmHttpFilterTest, AsyncCall) {
@@ -474,7 +488,7 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
 
   Http::ResponseMessagePtr response_message(new Http::ResponseMessageImpl(
       Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-  response_message->body().reset(new Buffer::OwnedImpl("response"));
+  response_message->body() = std::make_unique<Buffer::OwnedImpl>("response");
 
   EXPECT_NE(callbacks, nullptr);
   if (callbacks) {
@@ -517,7 +531,7 @@ TEST_P(WasmHttpFilterTest, AsyncCallAfterDestroyed) {
 
   Http::ResponseMessagePtr response_message(new Http::ResponseMessageImpl(
       Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-  response_message->body().reset(new Buffer::OwnedImpl("response"));
+  response_message->body() = std::make_unique<Buffer::OwnedImpl>("response");
 
   // (Don't) Make the callback on the destroyed VM.
   EXPECT_EQ(callbacks, nullptr);
@@ -563,7 +577,7 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
       .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
         return std::move(client_factory);
       }));
-  EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq("response")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response")));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter().decodeHeaders(request_headers, false));
@@ -641,6 +655,63 @@ TEST_P(WasmHttpFilterTest, GrpcCallAfterDestroyed) {
   }
 }
 
+TEST_P(WasmHttpFilterTest, GrpcStream) {
+  if (std::get<1>(GetParam()) == "rust") {
+    // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
+    return;
+  }
+  setupTest("", "grpc_stream");
+  setupFilter();
+  Grpc::MockAsyncRequest request;
+  Grpc::MockAsyncStream stream;
+  Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
+  Grpc::MockAsyncClientManager client_manager;
+  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
+  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
+  EXPECT_CALL(*async_client, startRaw(_, _, _, _))
+      .WillOnce(Invoke([&](absl::string_view service_full_name, absl::string_view method_name,
+                           Grpc::RawAsyncStreamCallbacks& cb,
+                           const Http::AsyncClient::StreamOptions&) -> Grpc::RawAsyncStream* {
+        EXPECT_EQ(service_full_name, "service");
+        EXPECT_EQ(method_name, "method");
+        callbacks = &cb;
+        return &stream;
+      }));
+  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
+    return std::move(async_client);
+  }));
+  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
+      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
+  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
+      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
+        return std::move(client_factory);
+      }));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response")));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter().decodeHeaders(request_headers, false));
+
+  ProtobufWkt::Value value;
+  value.set_string_value("response");
+  std::string response_string;
+  EXPECT_TRUE(value.SerializeToString(&response_string));
+  auto response = std::make_unique<Buffer::OwnedImpl>(response_string);
+  EXPECT_NE(callbacks, nullptr);
+  NiceMock<Tracing::MockSpan> span;
+  if (callbacks) {
+    Http::TestRequestHeaderMapImpl create_initial_metadata{{"test", "create_initial_metadata"}};
+    callbacks->onCreateInitialMetadata(create_initial_metadata);
+    Http::TestRequestHeaderMapImpl receive_initial_metadata{{"test", "receive_initial_metadata"}};
+    callbacks->onCreateInitialMetadata(receive_initial_metadata);
+    callbacks->onReceiveMessageRaw(std::move(response));
+    callbacks->onReceiveTrailingMetadata(std::make_unique<Http::TestResponseTrailerMapImpl>());
+    callbacks->onRemoteClose(Grpc::Status::WellKnownGrpcStatus::Ok, "");
+  }
+}
+
+// Test metadata access including CEL expressions.
+// TODO: re-enable this on Windows if and when the CEL `Antlr` parser compiles on Windows.
+#ifndef WIN32
 TEST_P(WasmHttpFilterTest, Metadata) {
   setupTest("", "metadata");
   setupFilter();
@@ -649,7 +720,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   node_val.set_string_value("wasm_node_get_value");
   (*node_data.mutable_metadata()->mutable_fields())["wasm_node_get_key"] = node_val;
   EXPECT_CALL(local_info_, node()).WillRepeatedly(ReturnRef(node_data));
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::debug, Eq(absl::string_view("onTick wasm_node_get_value"))));
 
   EXPECT_CALL(filter(),
@@ -668,7 +739,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
           HttpFilters::HttpFilterNames::get().Wasm,
           MessageUtil::keyValueStruct("wasm_request_get_key", "wasm_request_get_value")));
 
-  root_context().onTick(0);
+  rootContext().onTick(0);
 
   EXPECT_CALL(encoder_callbacks_, streamInfo()).WillRepeatedly(ReturnRef(request_stream_info_));
   absl::optional<std::chrono::nanoseconds> dur = std::chrono::nanoseconds(15000000);
@@ -691,6 +762,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
       "wasm.wasm_request_set_key");
   EXPECT_EQ("wasm_request_set_value", result.value());
 }
+#endif
 
 TEST_P(WasmHttpFilterTest, Property) {
   if (std::get<1>(GetParam()) == "rust") {
@@ -755,15 +827,15 @@ TEST_P(WasmHttpFilterTest, SharedQueue) {
               log_(spdlog::level::warn, Eq(absl::string_view("onRequestHeaders enqueue Ok"))));
   EXPECT_CALL(filter(), log_(spdlog::level::warn,
                              Eq(absl::string_view("onRequestHeaders not found bad_shared_queue"))));
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady bad token not found"))))
       .Times(2);
-  EXPECT_CALL(root_context(),
+  EXPECT_CALL(rootContext(),
               log_(spdlog::level::warn, Eq(absl::string_view("onQueueReady extra data not found"))))
       .Times(2);
-  EXPECT_CALL(root_context(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))))
+  EXPECT_CALL(rootContext(), log_(spdlog::level::info, Eq(absl::string_view("onQueueReady"))))
       .Times(2);
-  EXPECT_CALL(root_context(), log_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq(absl::string_view("data data1 Ok"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   auto token = proxy_wasm::resolveQueueForTest("vm_id", "my_shared_queue");

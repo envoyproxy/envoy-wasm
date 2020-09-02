@@ -3,6 +3,10 @@ load(
     "envoy_cc_test",
     "envoy_package",
 )
+load(
+    "//bazel:envoy_select.bzl",
+    "envoy_select_wasm",
+)
 
 licenses(["notice"])  # Apache 2
 
@@ -11,9 +15,9 @@ envoy_package()
 envoy_cc_test(
     name = "wasm_vm_test",
     srcs = ["wasm_vm_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/common/wasm/test_data:test_rust.wasm",
-    ],
+    ]),
     tags = [
         # wasm (wee v8 etc) will not compile on Windows
         "skip_on_windows",
@@ -29,11 +33,11 @@ envoy_cc_test(
 envoy_cc_test(
     name = "wasm_test",
     srcs = ["wasm_test.cc"],
-    data = [
+    data = envoy_select_wasm([
         "//test/extensions/common/wasm/test_data:bad_signature_cpp.wasm",
         "//test/extensions/common/wasm/test_data:test_context_cpp.wasm",
         "//test/extensions/common/wasm/test_data:test_cpp.wasm",
-    ],
+    ]),
     external_deps = ["abseil_optional"],
     deps = [
         "//source/common/common:hex_lib",

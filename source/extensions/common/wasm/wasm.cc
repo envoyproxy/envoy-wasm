@@ -15,7 +15,8 @@
   static_cast<Context*>(proxy_wasm::exports::ContextOrEffectiveContext(                            \
       static_cast<proxy_wasm::ContextBase*>((void)_c, proxy_wasm::current_context_)))
 
-using FailState = proxy_wasm::FailState;
+using proxy_wasm::FailState;
+using proxy_wasm::Word;
 
 namespace Envoy {
 

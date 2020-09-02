@@ -16,6 +16,7 @@ envoy_cc_extension(
     srcs = ["config.cc"],
     hdrs = ["config.h"],
     security_posture = "data_plane_agnostic",
+    status = "alpha",
     deps = [
         ":wasm_stat_sink_lib",
         "//include/envoy/registry",
@@ -32,5 +33,7 @@ envoy_cc_library(
     name = "wasm_stat_sink_lib",
     hdrs = ["wasm_stat_sink_impl.h"],
     deps = [
+        "//include/envoy/stats:stats_interface",
+        "//source/extensions/common/wasm:wasm_lib",
     ],
 )
