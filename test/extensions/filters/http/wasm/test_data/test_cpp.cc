@@ -105,38 +105,38 @@ bool TestRootContext::onConfigure(size_t) {
   if (test_ == "property") {
     {
       // Many properties are not available in the root context.
-      const std::vector<std::initializer_list<std::string_view>> properties = {
-        {"string_state"},
-        {"metadata"},
-        {"request"},
-        {"response"},
-        {"connection"},
-        {"connection_id"},
-        {"upstream"},
-        {"source"},
-        {"destination"},
-        {"cluster_name"},
-        {"cluster_metadata"},
-        {"route_name"},
-        {"route_metadata"},
+      const std::vector<std::string> properties = {
+        "string_state",
+        "metadata",
+        "request",
+        "response",
+        "connection",
+        "connection_id",
+        "upstream",
+        "source",
+        "destination",
+        "cluster_name",
+        "cluster_metadata",
+        "route_name",
+        "route_metadata",
       };
       for (const auto& property : properties) {
-        if (getProperty(property).has_value()) {
+        if (getProperty({property}).has_value()) {
           logWarn("getProperty should not return a value in the root context");
         }
       }
     }
     {
       // Some properties are defined in the root context.
-      std::vector<std::pair<std::initializer_list<std::string_view>, std::string> > properties = {
-        {{"plugin_name"}, "plugin_name"},
-        {{"plugin_vm_id"}, "vm_id"},
-        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0", 8)}, // INBOUND
-        {{"listener_metadata"}, ""},
+      std::vector<std::pair<std::string, std::string> > properties = {
+        {"plugin_name", "plugin_name"},
+        {"plugin_vm_id", "vm_id"},
+        {"listener_direction", std::string("\x1\0\0\0\0\0\0\0", 8)}, // INBOUND
+        {"listener_metadata", ""},
       };
       for (const auto& property : properties) {
         std::string value;
-        if (!getValue(property.first, &value)) {
+        if (!getValue({property.first}, &value)) {
           logWarn("getValue should provide a value in the root context: " + property.second);
         }
         if (value != property.second) {
@@ -690,14 +690,13 @@ void TestContext::onLog() {
     }
     {
       // Some properties are not available in the stream context.
-      const std::vector<std::initializer_list<std::string_view>> properties = {
-        {"xxx"},
-        {"request", "xxx"},
-        {"route_name", "xxx"},
-        {"node", "metadata", "xxx"},
-      };
+      const std::vector<std::string> properties = {
+        "xxx",
+        "request",
+        "route_name",
+        "node"};
       for (const auto& property : properties) {
-        if (getProperty(property).has_value()) {
+        if (getProperty({property, "xxx"}).has_value()) {
           logWarn("getProperty should not return a value in the root context");
         }
       }
