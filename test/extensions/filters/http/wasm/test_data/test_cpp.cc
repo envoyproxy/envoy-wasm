@@ -709,7 +709,7 @@ void TestContext::onLog() {
         {{"plugin_vm_id"}, "vm_id"},
         {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0", 8)}, // INBOUND
         {{"listener_metadata"}, ""},
-        {{"route_name"}, "route2"},
+        {{"route_name"}, "route12"},
         {{"connection", "requested_server_name"}, "w3.org"},
         {{"source", "address"}, "127.0.0.1:0"},
         {{"destination", "address"}, "127.0.0.2:0"},
