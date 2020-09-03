@@ -141,7 +141,6 @@ TEST_P(WasmNetworkFilterTest, HappyPath) {
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
 }
 
-// SEGV fail open.
 TEST_P(WasmNetworkFilterTest, SegvFailOpen) {
   if (std::get<0>(GetParam()) != "v8" || std::get<1>(GetParam()) != "cpp") {
     return;
