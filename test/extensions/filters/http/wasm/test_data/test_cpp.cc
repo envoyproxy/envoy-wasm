@@ -101,24 +101,58 @@ bool TestRootContext::onStart(size_t configuration_size) {
   return true;
 }
 
+inline std::optional<WasmDataPtr> getProperty2(std::vector<std::string_view> parts) {
+  size_t size = 0;
+  for (auto part : parts) {
+    size += part.size() + 1; // null terminated string value
+  }
+
+  char* buffer = static_cast<char*>(::malloc(size));
+  char* b = buffer;
+
+  for (auto part : parts) {
+    memcpy(b, part.data(), part.size());
+    b += part.size();
+    *b++ = 0;
+  }
+
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  auto result = proxy_get_property(buffer, size, &value_ptr, &value_size);
+  ::free(buffer);
+  if (result != WasmResult::Ok) {
+    return {};
+  }
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+template <typename T> inline bool getValue2(std::vector<std::string_view> parts, T* out) {
+  auto buf = getProperty2(parts);
+  if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
+    return false;
+  }
+  *out = *reinterpret_cast<const T*>(buf.value()->data());
+  return true;
+}
+
+template <>
+inline bool getValue2<std::string>(std::vector<std::string_view> parts, std::string* out) {
+  auto buf = getProperty2(parts);
+  if (!buf.has_value()) {
+    return false;
+  }
+  out->assign(buf.value()->data(), buf.value()->size());
+  return true;
+}
+
 bool TestRootContext::onConfigure(size_t) {
   if (test_ == "property") {
     {
       // Many properties are not available in the root context.
       const std::vector<std::string> properties = {
-        "string_state",
-        "metadata",
-        "request",
-        "response",
-        "connection",
-        "connection_id",
-        "upstream",
-        "source",
-        "destination",
-        "cluster_name",
-        "cluster_metadata",
-        "route_name",
-        "route_metadata",
+          "string_state",     "metadata",   "request",        "response",    "connection",
+          "connection_id",    "upstream",   "source",         "destination", "cluster_name",
+          "cluster_metadata", "route_name", "route_metadata",
       };
       for (const auto& property : properties) {
         if (getProperty({property}).has_value()) {
@@ -128,11 +162,11 @@ bool TestRootContext::onConfigure(size_t) {
     }
     {
       // Some properties are defined in the root context.
-      std::vector<std::pair<std::string, std::string> > properties = {
-        {"plugin_name", "plugin_name"},
-        {"plugin_vm_id", "vm_id"},
-        {"listener_direction", std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
-        {"listener_metadata", ""},
+      std::vector<std::pair<std::string, std::string>> properties = {
+          {"plugin_name", "plugin_name"},
+          {"plugin_vm_id", "vm_id"},
+          {"listener_direction", std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+          {"listener_metadata", ""},
       };
       for (const auto& property : properties) {
         std::string value;
@@ -690,11 +724,7 @@ void TestContext::onLog() {
     }
     {
       // Some properties are not available in the stream context.
-      const std::vector<std::string> properties = {
-        "xxx",
-        "request",
-        "route_name",
-        "node"};
+      const std::vector<std::string> properties = {"xxx", "request", "route_name", "node"};
       for (const auto& property : properties) {
         if (getProperty({property, "xxx"}).has_value()) {
           logWarn("getProperty should not return a value in the root context");
@@ -703,19 +733,19 @@ void TestContext::onLog() {
     }
     {
       // Some properties are defined in the stream context.
-      std::vector<std::pair<std::initializer_list<std::string_view>, std::string> > properties = {
-        {{"plugin_name"}, "plugin_name"},
-        {{"plugin_vm_id"}, "vm_id"},
-        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
-        {{"listener_metadata"}, ""},
-        {{"route_name"}, "route12"},
-        {{"connection", "requested_server_name"}, "w3.org"},
-        {{"source", "address"}, "127.0.0.1:0"},
-        {{"destination", "address"}, "127.0.0.2:0"},
+      std::vector<std::pair<std::vector<std::string_view>, std::string>> properties = {
+          {{"plugin_name"}, "plugin_name"},
+          {{"plugin_vm_id"}, "vm_id"},
+          {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+          {{"listener_metadata"}, ""},
+          {{"route_name"}, "route12"},
+          {{"connection", "requested_server_name"}, "w3.org"},
+          {{"source", "address"}, "127.0.0.1:0"},
+          {{"destination", "address"}, "127.0.0.2:0"},
       };
       for (const auto& property : properties) {
         std::string value;
-        if (!getValue(property.first, &value)) {
+        if (!getValue2(property.first, &value)) {
           logWarn("getValue should provide a value in the root context: " + property.second);
         }
         if (value != property.second) {
@@ -845,8 +875,9 @@ void TestRootContext::onTick() {
       args.SerializeToString(&in);
       char* out = nullptr;
       size_t out_size = 0;
-      if (WasmResult::BadArgument != proxy_call_foreign_function(function.data(), function.size(), in.data(),
-                                                        in.size(), &out, &out_size)) {
+      if (WasmResult::BadArgument != proxy_call_foreign_function(function.data(), function.size(),
+                                                                 in.data(), in.size(), &out,
+                                                                 &out_size)) {
         logError("declare_property must fail for double declaration");
       }
       ::free(out);
@@ -856,7 +887,8 @@ void TestRootContext::onTick() {
       args.set_name("protobuf_state");
       args.set_type(envoy::source::extensions::common::wasm::WasmType::Protobuf);
       args.set_span(envoy::source::extensions::common::wasm::LifeSpan::DownstreamRequest);
-      args.set_schema("type.googleapis.com/envoy.source.extensions.common.wasm.DeclarePropertyArguments");
+      args.set_schema(
+          "type.googleapis.com/envoy.source.extensions.common.wasm.DeclarePropertyArguments");
       std::string in;
       args.SerializeToString(&in);
       char* out = nullptr;
@@ -870,8 +902,9 @@ void TestRootContext::onTick() {
     {
       char* out = nullptr;
       size_t out_size = 0;
-      if (WasmResult::Ok == proxy_call_foreign_function(function.data(), function.size(), function.data(),
-                                                        function.size(), &out, &out_size)) {
+      if (WasmResult::Ok == proxy_call_foreign_function(function.data(), function.size(),
+                                                        function.data(), function.size(), &out,
+                                                        &out_size)) {
         logError("expected declare_property to fail");
       }
       ::free(out);
