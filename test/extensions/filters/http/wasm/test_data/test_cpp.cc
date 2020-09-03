@@ -131,7 +131,7 @@ bool TestRootContext::onConfigure(size_t) {
       std::vector<std::pair<std::string, std::string> > properties = {
         {"plugin_name", "plugin_name"},
         {"plugin_vm_id", "vm_id"},
-        {"listener_direction", std::string("\x1\0\0\0\0\0\0\0", 8)}, // INBOUND
+        {"listener_direction", std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
         {"listener_metadata", ""},
       };
       for (const auto& property : properties) {
@@ -706,7 +706,7 @@ void TestContext::onLog() {
       std::vector<std::pair<std::initializer_list<std::string_view>, std::string> > properties = {
         {{"plugin_name"}, "plugin_name"},
         {{"plugin_vm_id"}, "vm_id"},
-        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0", 8)}, // INBOUND
+        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
         {{"listener_metadata"}, ""},
         {{"route_name"}, "route12"},
         {{"connection", "requested_server_name"}, "w3.org"},
