@@ -101,6 +101,28 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest, test_values);
 TEST_P(WasmCommonTest, EnvoyWasm) {
   auto envoy_wasm = std::make_unique<EnvoyWasm>();
   envoy_wasm->initialize();
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  auto wasm = std::make_shared<WasmHandle>(
+      std::make_unique<Wasm>("", "", "", "", scope, cluster_manager, *dispatcher));
+  auto wasm_base = std::dynamic_pointer_cast<proxy_wasm::WasmHandleBase>(wasm);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::UnableToCreateVM);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::UnableToCreateVM);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::UnableToCloneVM);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::UnableToCloneVM);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::MissingFunction);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::MissingFunction);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::UnableToInitializeCode);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::UnableToInitializeCode);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::StartFailed);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::StartFailed);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::ConfigureFailed);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::ConfigureFailed);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::RuntimeError);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::RuntimeError);
 }
 
 TEST_P(WasmCommonTest, Logging) {
@@ -133,6 +155,11 @@ TEST_P(WasmCommonTest, Logging) {
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   EXPECT_NE(wasm->buildVersion(), "");
+  EXPECT_NE(std::unique_ptr<ContextBase>(wasm->createContext(plugin)), nullptr);
+  wasm->setCreateContextForTesting(
+      [](Wasm*, const std::shared_ptr<Plugin>&) -> ContextBase* { return nullptr; },
+      [](Wasm*, const std::shared_ptr<Plugin>&) -> ContextBase* { return nullptr; });
+  EXPECT_EQ(std::unique_ptr<ContextBase>(wasm->createContext(plugin)), nullptr);
   auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm);
   auto wasm_handle = std::make_shared<Extensions::Common::Wasm::WasmHandle>(std::move(wasm));
   EXPECT_TRUE(wasm_weak.lock()->initialize(code, false));
@@ -640,6 +667,8 @@ TEST_P(WasmCommonTest, VmCache) {
              lifecycle_notifier, remote_data_provider,
              [&wasm_handle](const WasmHandleSharedPtr& w) { wasm_handle = w; });
   EXPECT_NE(wasm_handle, nullptr);
+  Event::PostCb post_cb = [] {};
+  lifecycle_callback(post_cb);
 
   WasmHandleSharedPtr wasm_handle2;
   createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random, *api,
@@ -677,8 +706,6 @@ TEST_P(WasmCommonTest, VmCache) {
   plugin.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher->clearDeferredDeleteList();
-  Event::PostCb post_cb = [] {};
-  lifecycle_callback(post_cb);
 
   proxy_wasm::clearWasmCachesForTesting();
 }
@@ -712,9 +739,9 @@ TEST_P(WasmCommonTest, RemoteCode) {
 
   VmConfig vm_config;
   vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  ProtobufWkt::StringValue vm_configuration_string;
-  vm_configuration_string.set_value(vm_configuration);
-  vm_config.mutable_configuration()->PackFrom(vm_configuration_string);
+  ProtobufWkt::BytesValue vm_configuration_bytes;
+  vm_configuration_bytes.set_value(vm_configuration);
+  vm_config.mutable_configuration()->PackFrom(vm_configuration_bytes);
   std::string sha256 = Extensions::Common::Wasm::sha256(code);
   std::string sha256Hex =
       Hex::encode(reinterpret_cast<const uint8_t*>(&*sha256.begin()), sha256.size());
@@ -952,6 +979,17 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
 
   rootContext().onResolveDns(1 /* token */, Envoy::Network::DnsResolver::ResolutionStatus::Failure,
                              {});
+  if (GetParam() == "null") {
+    rootContext().onTick(0);
+  }
+  if (GetParam() == "v8") {
+    rootContext().onQueueReady(0);
+  }
+  // Destroy the Wasm and the late callback should be do nothing.
+  wasm_.reset();
+  dns_callback(
+      Network::DnsResolver::ResolutionStatus::Success,
+      TestUtility::makeDnsResponse({"192.168.1.101", "192.168.1.102"}, std::chrono::seconds(1001)));
 }
 
 TEST_P(WasmCommonContextTest, EmptyContext) {

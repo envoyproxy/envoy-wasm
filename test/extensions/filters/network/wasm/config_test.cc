@@ -141,6 +141,26 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCode) {
                             "Unable to create Wasm network filter test");
 }
 
+TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCodeFailOpenNackConfig) {
+  const std::string yaml = absl::StrCat(R"EOF(
+  config:
+    name: "test"
+    fail_open: true
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
+                                        GetParam(), R"EOF("
+      code:
+        local: { inline_string: "bad code" }
+  )EOF");
+
+  envoy::extensions::filters::network::wasm::v3::Wasm proto_config;
+  TestUtility::loadFromYaml(yaml, proto_config);
+  WasmFilterConfig factory;
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, context_),
+                            Extensions::Common::Wasm::WasmException,
+                            "Unable to create Wasm network filter test");
+}
+
 } // namespace Wasm
 } // namespace NetworkFilters
 } // namespace Extensions
