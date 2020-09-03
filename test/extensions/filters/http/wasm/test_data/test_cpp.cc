@@ -703,7 +703,7 @@ void TestContext::onLog() {
     }
     {
       // Some properties are defined in the stream context.
-      std::vector<std::pair<std::initializer_list<std::string_view>, std::string> > properties = {
+      std::vector<std::pair<std::vector<std::string>, std::string>> properties = {
         {{"plugin_name"}, "plugin_name"},
         {{"plugin_vm_id"}, "vm_id"},
         {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
@@ -715,8 +715,14 @@ void TestContext::onLog() {
       };
       for (const auto& property : properties) {
         std::string value;
-        if (!getValue(property.first, &value)) {
-          logWarn("getValue should provide a value in the root context: " + property.second);
+        if (property.first.size() == 1) {
+          if (!getValue({property.first[0]}, &value)) {
+            logWarn("getValue should provide a value in the root context: " + property.second);
+          }
+        } else if (property.first.size() == 2) {
+          if (!getValue({property.first[0], property.first[1]}, &value)) {
+            logWarn("getValue should provide a value in the root context: " + property.second);
+          }
         }
         if (value != property.second) {
           logWarn("getValue returned " + value + ", expect " + property.second);
