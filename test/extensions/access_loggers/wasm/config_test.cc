@@ -105,6 +105,11 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
   Http::TestResponseTrailerMapImpl response_trailer;
   StreamInfo::MockStreamInfo log_stream_info;
   instance->log(&request_header, &response_header, &response_trailer, log_stream_info);
+
+  filter = std::make_unique<NiceMock<AccessLog::MockFilter>>();
+  AccessLog::InstanceSharedPtr filter_instance =
+      factory->createAccessLogInstance(config, std::move(filter), context);
+  filter_instance->log(&request_header, &response_header, &response_trailer, log_stream_info);
 }
 
 } // namespace Wasm

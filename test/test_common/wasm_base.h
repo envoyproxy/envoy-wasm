@@ -45,7 +45,8 @@ public:
   void SetUp() override { clearCodeCacheForTesting(); }
 
   void setupBase(const std::string& runtime, const std::string& code, CreateContextFn create_root,
-                 std::string root_id = "", std::string vm_configuration = "") {
+                 std::string root_id = "", std::string vm_configuration = "",
+                 bool fail_open = false) {
     envoy::extensions::wasm::v3::VmConfig vm_config;
     vm_config.set_vm_id("vm_id");
     vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", runtime));
@@ -59,7 +60,7 @@ public:
     auto vm_id = "";
     auto plugin_configuration = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        name, root_id, vm_id, runtime, plugin_configuration, false,
+        name, root_id, vm_id, runtime, plugin_configuration, fail_open,
         envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     // Passes ownership of root_context_.
     Extensions::Common::Wasm::createWasm(

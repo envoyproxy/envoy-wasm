@@ -31,6 +31,8 @@ private:
 
 static RegisterContextFactory register_TestContext(CONTEXT_FACTORY(TestContext),
                                                    ROOT_FACTORY(TestRootContext));
+static RegisterContextFactory register_EmptyTestContext(CONTEXT_FACTORY(EnvoyContext),
+                                                        ROOT_FACTORY(EnvoyRootContext), "empty");
 
 bool TestRootContext::onStart(size_t) {
   envoy_resolve_dns("example.com", sizeof("example.com") - 1, &dns_token_);

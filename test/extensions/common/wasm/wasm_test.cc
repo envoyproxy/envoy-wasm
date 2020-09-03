@@ -897,13 +897,13 @@ class WasmCommonContextTest
 public:
   WasmCommonContextTest() = default;
 
-  void setup(const std::string& code, std::string vm_configuration) {
+  void setup(const std::string& code, std::string vm_configuration, std::string root_id = "") {
     setupBase(
         GetParam(), code,
         [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
           return new TestContext(wasm, plugin);
         },
-        "" /* root_id */, vm_configuration);
+        root_id, vm_configuration);
   }
   void setupContext() {
     context_ = std::make_unique<TestContext>(wasm_->wasm().get(), root_context_->id(), plugin_);
@@ -936,7 +936,7 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   EXPECT_CALL(*dns_resolver, resolve(_, _, _))
       .WillRepeatedly(DoAll(testing::SaveArg<2>(&dns_callback), Return(&active_dns_query)));
 
-  setup(code, "dns");
+  setup(code, "context");
   setupContext();
   EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 1")));
   EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 2")));
@@ -952,6 +952,25 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
 
   rootContext().onResolveDns(1 /* token */, Envoy::Network::DnsResolver::ResolutionStatus::Failure,
                              {});
+}
+
+TEST_P(WasmCommonContextTest, EmptyContext) {
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
+        "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_context_cpp.wasm")));
+  } else {
+    // The name of the Null VM plugin.
+    code = "CommonWasmTestContextCpp";
+  }
+  EXPECT_FALSE(code.empty());
+
+  setup(code, "context", "empty");
+  setupContext();
+
+  root_context_->onResolveDns(0, Envoy::Network::DnsResolver::ResolutionStatus::Success, {});
+  NiceMock<Envoy::Stats::MockMetricSnapshot> stats_snapshot;
+  root_context_->onStatsUpdate(stats_snapshot);
 }
 
 } // namespace Wasm
