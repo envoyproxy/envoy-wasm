@@ -56,7 +56,7 @@ bool TestRootContext::onDone() {
   return true;
 }
 
-// Null VM fails on nuillptr.
+// Null VM fails on nullptr.
 void TestRootContext::onTick() {
   if (envoy_resolve_dns(0, 1, &dns_token_) != WasmResult::InvalidMemoryAccess) {
     logInfo("resolve_dns should report invalid memory access");
