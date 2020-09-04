@@ -101,7 +101,8 @@ bool TestRootContext::onStart(size_t configuration_size) {
   return true;
 }
 
-inline std::optional<WasmDataPtr> getProperty2(std::vector<std::string_view> parts) {
+inline std::optional<WasmDataPtr>
+getProperty2(const std::initializer_list<std::string_view>& parts) {
   size_t size = 0;
   for (auto part : parts) {
     size += part.size() + 1; // null terminated string value
@@ -126,7 +127,58 @@ inline std::optional<WasmDataPtr> getProperty2(std::vector<std::string_view> par
   return std::make_unique<WasmData>(value_ptr, value_size);
 }
 
-template <typename T> inline bool getValue2(std::vector<std::string_view> parts, T* out) {
+// Generic property reader for basic types: int64, uint64, double, bool
+// Durations are represented as int64 nanoseconds.
+// Timestamps are represented as int64 Unix nanoseconds.
+// Strings and bytes are represented as std::string.
+template <typename T>
+inline bool getValue2(const std::initializer_list<std::string_view>& parts, T* out) {
+  auto buf = getProperty2(parts);
+  if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
+    return false;
+  }
+  *out = *reinterpret_cast<const T*>(buf.value()->data());
+  return true;
+}
+
+// Specialization for bytes and string values
+template <>
+inline bool getValue2<std::string>(const std::initializer_list<std::string_view>& parts,
+                                   std::string* out) {
+  auto buf = getProperty2(parts);
+  if (!buf.has_value()) {
+    return false;
+  }
+  out->assign(buf.value()->data(), buf.value()->size());
+  return true;
+}
+
+template <typename S> inline std::optional<WasmDataPtr> getProperty2(const std::vector<S>& parts) {
+  size_t size = 0;
+  for (auto part : parts) {
+    size += part.size() + 1; // null terminated string value
+  }
+
+  char* buffer = static_cast<char*>(::malloc(size));
+  char* b = buffer;
+
+  for (auto part : parts) {
+    memcpy(b, part.data(), part.size());
+    b += part.size();
+    *b++ = 0;
+  }
+
+  const char* value_ptr = nullptr;
+  size_t value_size = 0;
+  auto result = proxy_get_property(buffer, size, &value_ptr, &value_size);
+  ::free(buffer);
+  if (result != WasmResult::Ok) {
+    return {};
+  }
+  return std::make_unique<WasmData>(value_ptr, value_size);
+}
+
+template <typename S, typename T> inline bool getValue2(const std::vector<S>& parts, T* out) {
   auto buf = getProperty2(parts);
   if (!buf.has_value() || buf.value()->size() != sizeof(T)) {
     return false;
@@ -136,7 +188,19 @@ template <typename T> inline bool getValue2(std::vector<std::string_view> parts,
 }
 
 template <>
-inline bool getValue2<std::string>(std::vector<std::string_view> parts, std::string* out) {
+inline bool getValue2<std::string, std::string>(const std::vector<std::string>& parts,
+                                                std::string* out) {
+  auto buf = getProperty2(parts);
+  if (!buf.has_value()) {
+    return false;
+  }
+  out->assign(buf.value()->data(), buf.value()->size());
+  return true;
+}
+
+template <>
+inline bool getValue2<std::string_view, std::string>(const std::vector<std::string_view>& parts,
+                                                     std::string* out) {
   auto buf = getProperty2(parts);
   if (!buf.has_value()) {
     return false;
@@ -155,7 +219,7 @@ bool TestRootContext::onConfigure(size_t) {
           "cluster_metadata", "route_name", "route_metadata",
       };
       for (const auto& property : properties) {
-        if (getProperty({property}).has_value()) {
+        if (getProperty2({property}).has_value()) {
           logWarn("getProperty should not return a value in the root context");
         }
       }
@@ -170,7 +234,7 @@ bool TestRootContext::onConfigure(size_t) {
       };
       for (const auto& property : properties) {
         std::string value;
-        if (!getValue({property.first}, &value)) {
+        if (!getValue2({property.first}, &value)) {
           logWarn("getValue should provide a value in the root context: " + property.second);
         }
         if (value != property.second) {
@@ -234,7 +298,7 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     return FilterHeadersStatus::Continue;
   } else if (test == "metadata") {
     std::string value;
-    if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
+    if (!getValue2({"node", "metadata", "wasm_node_get_key"}, &value)) {
       logDebug("missing node metadata");
     }
     auto r = setFilterStateStringValue("wasm_request_set_key", "wasm_request_set_value");
@@ -353,7 +417,7 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
 
     {
       int64_t dur;
-      if (getValue({"request", "duration"}, &dur)) {
+      if (getValue2({"request", "duration"}, &dur)) {
         logInfo("duration is " + std::to_string(dur));
       } else {
         logError("failed to get request duration");
@@ -482,18 +546,18 @@ FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool end_
     return onBody(WasmBufferType::HttpRequestBody, body_buffer_length, end_of_stream);
   } else if (test == "metadata") {
     std::string value;
-    if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
+    if (!getValue2({"node", "metadata", "wasm_node_get_key"}, &value)) {
       logDebug("missing node metadata");
     }
     logError(std::string("onRequestBody ") + value);
     std::string request_string;
     std::string request_string2;
-    if (!getValue(
+    if (!getValue2(
             {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
             &request_string)) {
       logDebug("missing request metadata");
     }
-    if (!getValue(
+    if (!getValue2(
             {"metadata", "filter_metadata", "envoy.filters.http.wasm", "wasm_request_get_key"},
             &request_string2)) {
       logDebug("missing request metadata");
@@ -618,18 +682,18 @@ void TestContext::onLog() {
     setFilterState("wasm_state", "wasm_value");
     auto path = getRequestHeader(":path");
     if (path->view() == "/test_context") {
-      logWarn("request.path: " + getProperty({"request", "path"}).value()->toString());
+      logWarn("request.path: " + getProperty2({"request", "path"}).value()->toString());
       logWarn("node.metadata: " +
-              getProperty({"node", "metadata", "istio.io/metadata"}).value()->toString());
-      logWarn("metadata: " + getProperty({"metadata", "filter_metadata", "envoy.filters.http.wasm",
-                                          "wasm_request_get_key"})
+              getProperty2({"node", "metadata", "istio.io/metadata"}).value()->toString());
+      logWarn("metadata: " + getProperty2({"metadata", "filter_metadata", "envoy.filters.http.wasm",
+                                           "wasm_request_get_key"})
                                  .value()
                                  ->toString());
       int64_t responseCode;
-      if (getValue({"response", "code"}, &responseCode)) {
+      if (getValue2({"response", "code"}, &responseCode)) {
         logWarn("response.code: " + std::to_string(responseCode));
       }
-      logWarn("state: " + getProperty({"wasm_state"}).value()->toString());
+      logWarn("state: " + getProperty2({"wasm_state"}).value()->toString());
     } else {
       logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
     }
@@ -648,14 +712,14 @@ void TestContext::onLog() {
         logWarn("setProperty(structured_state) failed");
       }
       int64_t value = 0;
-      if (!getValue({"structured_state", "i"}, &value)) {
+      if (!getValue2({"structured_state", "i"}, &value)) {
         logWarn("getProperty(structured_state) failed");
       }
       if (value != 1337) {
         logWarn("getProperty(structured_state) returned " + std::to_string(value));
       }
       std::string buffer;
-      if (!getValue({"structured_state"}, &buffer)) {
+      if (!getValue2({"structured_state"}, &buffer)) {
         logWarn("getValue for structured_state should not fail");
       }
       if (buffer.size() != 24) {
@@ -667,7 +731,7 @@ void TestContext::onLog() {
         logWarn("setProperty(string_state) failed");
       }
       std::string value;
-      if (!getValue({"string_state"}, &value)) {
+      if (!getValue2({"string_state"}, &value)) {
         logWarn("getProperty(string_state) failed");
       }
       if (value != "unicorns") {
@@ -680,7 +744,7 @@ void TestContext::onLog() {
         logWarn("expected second setProperty(string_state) to fail");
       }
       std::string value;
-      if (!getValue({"string_state"}, &value)) {
+      if (!getValue2({"string_state"}, &value)) {
         logWarn("getProperty(string_state) failed");
       }
       if (value != "unicorns") {
@@ -692,7 +756,7 @@ void TestContext::onLog() {
         logWarn("setProperty(bytes_state) failed");
       }
       std::string value;
-      if (!getValue({"bytes_state"}, &value)) {
+      if (!getValue2({"bytes_state"}, &value)) {
         logWarn("getProperty(bytes_state) failed");
       }
       if (value != "ponies") {
@@ -708,14 +772,14 @@ void TestContext::onLog() {
         logWarn("setProperty(protobuf_state) failed");
       }
       std::string value;
-      if (!getValue({"protobuf_state", "name"}, &value)) {
+      if (!getValue2({"protobuf_state", "name"}, &value)) {
         logWarn("getProperty(protobuf_state) failed");
       }
       if (value != "centaur") {
         logWarn("getProperty(protobuf_state) returned " + value);
       }
       std::string buffer;
-      if (!getValue({"protobuf_state"}, &buffer)) {
+      if (!getValue2({"protobuf_state"}, &buffer)) {
         logWarn("getValue for protobuf_state should not fail");
       }
       if (buffer.size() != in.size()) {
@@ -726,7 +790,7 @@ void TestContext::onLog() {
       // Some properties are not available in the stream context.
       const std::vector<std::string> properties = {"xxx", "request", "route_name", "node"};
       for (const auto& property : properties) {
-        if (getProperty({property, "xxx"}).has_value()) {
+        if (getProperty2({property, "xxx"}).has_value()) {
           logWarn("getProperty should not return a value in the root context");
         }
       }
@@ -786,7 +850,7 @@ void TestRootContext::onTick() {
     continueRequest();
   } else if (test_ == "metadata") {
     std::string value;
-    if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
+    if (!getValue2({"node", "metadata", "wasm_node_get_key"}, &value)) {
       logDebug("missing node metadata");
     }
     logDebug(std::string("onTick ") + value);
