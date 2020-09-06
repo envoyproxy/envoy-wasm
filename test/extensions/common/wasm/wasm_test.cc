@@ -985,7 +985,7 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   if (GetParam() == "v8") {
     rootContext().onQueueReady(0);
   }
-  // Wait till the Wasm is destroeyd and then the late callback should be do nothing.
+  // Wait till the Wasm is destroyed and then the late callback should do nothing.
   deferred_runner_.setFunction([dns_callback] {
     dns_callback(Network::DnsResolver::ResolutionStatus::Success,
                  TestUtility::makeDnsResponse({"192.168.1.101", "192.168.1.102"},
