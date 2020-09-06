@@ -39,6 +39,19 @@ namespace Wasm {
   }                                                                                                \
   MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message))
 
+class DeferredRunner {
+public:
+  ~DeferredRunner() {
+    if (f_) {
+      f_();
+    }
+  }
+  void setFunction(std::function<void()> f) { f_ = f; }
+
+private:
+  std::function<void()> f_;
+};
+
 template <typename Base = testing::Test> class WasmTestBase : public Base {
 public:
   // NOLINTNEXTLINE(readability-identifier-naming)
@@ -80,6 +93,7 @@ public:
   WasmHandleSharedPtr& wasm() { return wasm_; }
   Context* rootContext() { return root_context_; }
 
+  DeferredRunner deferred_runner_;
   Stats::IsolatedStoreImpl stats_store_;
   Stats::ScopeSharedPtr scope_;
   NiceMock<ThreadLocal::MockInstance> tls_;

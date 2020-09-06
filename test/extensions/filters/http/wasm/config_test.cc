@@ -355,12 +355,21 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
       .WillRepeatedly(ReturnRef(cluster_manager_.async_client_));
 
-  Http::AsyncClient::Callbacks* async_callbacks;
+  Http::AsyncClient::Callbacks* async_callbacks = nullptr;
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillRepeatedly(
           Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
-            async_callbacks = &callbacks;
+            // Store the callback the first time through for delayed call.
+            if (!async_callbacks) {
+              async_callbacks = &callbacks;
+            } else {
+              // Subsequent send()s happen inline.
+              callbacks.onSuccess(
+                  request,
+                  Http::ResponseMessagePtr{new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                      new Http::TestResponseHeaderMapImpl{{":status", "503"}}})});
+            }
             return &request;
           }));
 

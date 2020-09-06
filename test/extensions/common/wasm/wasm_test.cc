@@ -985,11 +985,12 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   if (GetParam() == "v8") {
     rootContext().onQueueReady(0);
   }
-  // Destroy the Wasm and the late callback should be do nothing.
-  wasm_.reset();
-  dns_callback(
-      Network::DnsResolver::ResolutionStatus::Success,
-      TestUtility::makeDnsResponse({"192.168.1.101", "192.168.1.102"}, std::chrono::seconds(1001)));
+  // Wait till the Wasm is destroeyd and then the late callback should be do nothing.
+  deferred_runner_.setFunction([dns_callback] {
+    dns_callback(Network::DnsResolver::ResolutionStatus::Success,
+                 TestUtility::makeDnsResponse({"192.168.1.101", "192.168.1.102"},
+                                              std::chrono::seconds(1001)));
+  });
 }
 
 TEST_P(WasmCommonContextTest, EmptyContext) {
