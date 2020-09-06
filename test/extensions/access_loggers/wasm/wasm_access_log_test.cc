@@ -45,7 +45,7 @@ public:
     });
   }
 
-  TestAccessLog& access_log() { return *static_cast<TestAccessLog*>(root_context()); }
+  TestAccessLog& access_log() { return *static_cast<TestAccessLog*>(rootContext()); }
 
 private:
   std::string getTestCode(const absl::optional<std::string>& vm_configuration = absl::nullopt,
