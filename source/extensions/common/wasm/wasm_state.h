@@ -56,7 +56,11 @@ public:
       : readonly_(proto.readonly_), type_(proto.type_), schema_(proto.schema_) {}
 
   const std::string& value() const { return value_; }
-  google::api::expr::runtime::CelValue exprValue(Protobuf::Arena* arena) const;
+
+  // Create a value from the state, given an arena. Last argument indicates whether the value
+  // is de-referenced.
+  google::api::expr::runtime::CelValue exprValue(Protobuf::Arena* arena, bool last) const;
+
   bool setValue(absl::string_view value) {
     if (initialized_ && readonly_) {
       return false;

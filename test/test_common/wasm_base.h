@@ -55,7 +55,7 @@ public:
     vm_config.mutable_code()->mutable_local()->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
-    auto name = "";
+    auto name = "plugin_name";
     auto vm_id = "";
     auto plugin_configuration = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
