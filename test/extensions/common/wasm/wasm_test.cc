@@ -33,6 +33,9 @@ class MockServerLifecycleNotifier2 : public MockServerLifecycleNotifier {
 public:
   MockServerLifecycleNotifier2() = default;
   ~MockServerLifecycleNotifier2() override = default;
+
+  using MockServerLifecycleNotifier::registerCallback;
+
   ServerLifecycleNotifier::HandlePtr
   registerCallback(Stage stage, StageCallbackWithCompletion callback) override {
     return registerCallback2(stage, callback);
