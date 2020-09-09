@@ -248,8 +248,8 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndWatermark) {
 
 // Script that reads the body.
 TEST_P(WasmHttpFilterTest, BodyRequestReadBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"x-test-operation", "ReadBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
@@ -260,8 +260,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestReadBody) {
 
 // Script that prepends and appends to the body.
 TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
   EXPECT_CALL(filter(),
               log_(spdlog::level::err, Eq(absl::string_view("onBody prepend.hello.append"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
@@ -274,8 +274,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBody) {
 
 // Script that replaces the body.
 TEST_P(WasmHttpFilterTest, BodyRequestReplaceBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody replace"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "ReplaceBody"}};
@@ -287,8 +287,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestReplaceBody) {
 
 // Script that removes the body.
 TEST_P(WasmHttpFilterTest, BodyRequestRemoveBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody "))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "RemoveBody"}};
@@ -300,8 +300,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestRemoveBody) {
 
 // Script that buffers the body.
 TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "BufferBody"}};
@@ -343,8 +343,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
 
 // Script that prepends and appends to the buffered body.
 TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBufferedBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
   EXPECT_CALL(filter(),
               log_(spdlog::level::err, Eq(absl::string_view("onBody prepend.hello.append"))));
   Http::TestRequestHeaderMapImpl request_headers{
@@ -357,8 +357,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBufferedBody) {
 
 // Script that replaces the buffered body.
 TEST_P(WasmHttpFilterTest, BodyRequestReplaceBufferedBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody replace"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "ReplaceBufferedBody"}};
@@ -370,8 +370,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestReplaceBufferedBody) {
 
 // Script that removes the buffered body.
 TEST_P(WasmHttpFilterTest, BodyRequestRemoveBufferedBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
   EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody "))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "RemoveBufferedBody"}};
@@ -383,8 +383,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestRemoveBufferedBody) {
 
 // Script that buffers the first part of the body and streams the rest
 TEST_P(WasmHttpFilterTest, BodyRequestBufferThenStreamBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
@@ -433,8 +433,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferThenStreamBody) {
 
 // Script that buffers the first part of the body and streams the rest
 TEST_P(WasmHttpFilterTest, BodyResponseBufferThenStreamBody) {
-  setupTest("", "body");
-  setupFilter();
+  setupTest("body");
+  setupFilter("body");
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));

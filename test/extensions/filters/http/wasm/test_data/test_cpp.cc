@@ -34,21 +34,13 @@ public:
 
   FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
   FilterTrailersStatus onRequestTrailers(uint32_t) override;
-  FilterHeadersStatus onResponseHeaders(uint32_t, bool) override;
   FilterTrailersStatus onResponseTrailers(uint32_t) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
-  FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
   void onDone() override;
 
 private:
   TestRootContext* root() { return static_cast<TestRootContext*>(Context::root()); }
-
-  static void logBody(WasmBufferType type);
-  FilterDataStatus onBody(WasmBufferType type, size_t buffer_length, bool end);
-
-  std::string body_op_;
-  int num_chunks_ = 0;
 };
 
 static RegisterContextFactory register_TestContext(CONTEXT_FACTORY(TestContext),
@@ -135,10 +127,6 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     } else {
       return FilterHeadersStatus::Continue;
     }
-  } else if (test == "body") {
-    body_op_ = getRequestHeader("x-test-operation")->toString();
-    setRequestHeaderPairs({{"a", "a"}, {"b", "b"}});
-    return FilterHeadersStatus::Continue;
   } else if (test == "metadata") {
     std::string value;
     if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
@@ -297,22 +285,11 @@ FilterTrailersStatus TestContext::onResponseTrailers(uint32_t) {
   return FilterTrailersStatus::Continue;
 }
 
-FilterHeadersStatus TestContext::onResponseHeaders(uint32_t, bool) {
-  auto test = root()->test_;
-  if (test == "body") {
-    body_op_ = getResponseHeader("x-test-operation")->toString();
-    CHECK_RESULT(replaceResponseHeader("x-test-operation", body_op_));
-  }
-  return FilterHeadersStatus::Continue;
-}
-
-FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
+FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool) {
   auto test = root()->test_;
   if (test == "headers") {
     auto body = getBufferBytes(WasmBufferType::HttpRequestBody, 0, body_buffer_length);
     logError(std::string("onBody ") + std::string(body->view()));
-  } else if (test == "body") {
-    return onBody(WasmBufferType::HttpRequestBody, body_buffer_length, end_of_stream);
   } else if (test == "metadata") {
     std::string value;
     if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
@@ -333,94 +310,6 @@ FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool end_
     }
     logTrace(std::string("Struct ") + request_string + " " + request_string2);
     return FilterDataStatus::Continue;
-  }
-  return FilterDataStatus::Continue;
-}
-
-FilterDataStatus TestContext::onResponseBody(size_t body_buffer_length, bool end_of_stream) {
-  auto test = root()->test_;
-  if (test == "body") {
-    return onBody(WasmBufferType::HttpResponseBody, body_buffer_length, end_of_stream);
-  }
-  return FilterDataStatus::Continue;
-}
-
-void TestContext::logBody(WasmBufferType type) {
-  size_t buffered_size;
-  uint32_t flags;
-  getBufferStatus(type, &buffered_size, &flags);
-  auto body = getBufferBytes(type, 0, buffered_size);
-  logError(std::string("onBody ") + std::string(body->view()));
-}
-
-FilterDataStatus TestContext::onBody(WasmBufferType type, size_t buffer_length,
-                                     bool end_of_stream) {
-  auto test = root()->test_;
-  if (test == "body") {
-    size_t size;
-    uint32_t flags;
-    if (body_op_ == "ReadBody") {
-      auto body = getBufferBytes(type, 0, buffer_length);
-      logError("onBody " + std::string(body->view()));
-
-    } else if (body_op_ == "PrependAndAppendToBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, 0, "prepend.");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      setBuffer(WasmBufferType::HttpRequestBody, size, 0, ".append");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto updated = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logError("onBody " + std::string(updated->view()));
-
-    } else if (body_op_ == "ReplaceBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "replace");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto replaced = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logError("onBody " + std::string(replaced->view()));
-
-    } else if (body_op_ == "RemoveBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto erased = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logError("onBody " + std::string(erased->view()));
-
-    } else if (body_op_ == "BufferBody") {
-      logBody(type);
-      return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
-
-    } else if (body_op_ == "PrependAndAppendToBufferedBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, 0, "prepend.");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      setBuffer(WasmBufferType::HttpRequestBody, size, 0, ".append");
-      logBody(type);
-      return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
-
-    } else if (body_op_ == "ReplaceBufferedBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "replace");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto replaced = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logBody(type);
-      return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
-
-    } else if (body_op_ == "RemoveBufferedBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto erased = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logBody(type);
-      return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
-
-    } else if (body_op_ == "BufferTwoBodies") {
-      logBody(type);
-      num_chunks_++;
-      if (end_of_stream || num_chunks_ > 2) {
-        return FilterDataStatus::Continue;
-      }
-      return FilterDataStatus::StopIterationAndBuffer;
-
-    } else {
-      // This is a test and the test was configured incorrectly.
-      logError("Invalid body test op " + body_op_);
-      abort();
-    }
   }
   return FilterDataStatus::Continue;
 }
