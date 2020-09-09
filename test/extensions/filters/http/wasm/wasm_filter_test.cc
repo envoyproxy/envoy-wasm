@@ -502,8 +502,8 @@ TEST_P(WasmHttpFilterTest, AccessLog) {
 }
 
 TEST_P(WasmHttpFilterTest, AsyncCall) {
-  setupTest("", "async_call");
-  setupFilter();
+  setupTest("async_call");
+  setupFilter("async_call");
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);
@@ -541,8 +541,8 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
 }
 
 TEST_P(WasmHttpFilterTest, AsyncCallAfterDestroyed) {
-  setupTest("", "async_call");
-  setupFilter();
+  setupTest("async_call");
+  setupFilter("async_call");
 
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);

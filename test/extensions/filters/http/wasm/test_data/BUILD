@@ -66,6 +66,7 @@ wasm_rust_binary(
 envoy_cc_library(
     name = "test_cpp_plugin",
     srcs = [
+        "test_async_call_cpp.cc",
         "test_cpp.cc",
         "test_cpp_null_plugin.cc",
         "test_shared_data_cpp.cc",
@@ -87,6 +88,7 @@ envoy_cc_library(
 wasm_cc_binary(
     name = "test_cpp.wasm",
     srcs = [
+        "test_async_call_cpp.cc",
         "test_cpp.cc",
         "test_shared_data_cpp.cc",
         "test_shared_queue_cpp.cc",
