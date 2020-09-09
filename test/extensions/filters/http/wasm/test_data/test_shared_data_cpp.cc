@@ -5,16 +5,11 @@
 
 #ifndef NULL_PLUGIN
 #include "proxy_wasm_intrinsics_lite.h"
-#include "source/extensions/common/wasm/ext/envoy_proxy_wasm_api.h"
-#include "source/extensions/common/wasm/ext/declare_property.pb.h"
 #else
 #include "extensions/common/wasm/ext/envoy_null_plugin.h"
-#include "absl/base/casts.h"
 #endif
 
 START_WASM_PLUGIN(HttpWasmTestCpp)
-
-#include "contrib/proxy_expr.h"
 
 class SharedDataRootContext : public RootContext {
 public:

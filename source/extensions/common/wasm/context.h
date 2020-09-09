@@ -131,7 +131,6 @@ public:
   Plugin* plugin() const;
   Context* rootContext() const;
   Upstream::ClusterManager& clusterManager() const;
-  Buffer& buffer() { return buffer_; }
 
   // proxy_wasm::ContextBase
   void error(absl::string_view message) override;

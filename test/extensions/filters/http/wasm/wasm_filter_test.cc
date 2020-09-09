@@ -174,6 +174,7 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndContinue) {
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter().decodeHeaders(request_headers, true));
   root_context_->onTick(0);
+  filter().clearRouteCache();
   EXPECT_THAT(request_headers.get_("newheader"), Eq("newheadervalue"));
   EXPECT_THAT(request_headers.get_("server"), Eq("envoy-wasm-continue"));
   filter().onDestroy();
@@ -925,8 +926,8 @@ TEST_P(WasmHttpFilterTest, SharedData) {
 }
 
 TEST_P(WasmHttpFilterTest, SharedQueue) {
-  setupTest("", "shared_queue");
-  setupFilter();
+  setupTest("shared_queue");
+  setupFilter("shared_queue");
   EXPECT_CALL(filter(),
               log_(spdlog::level::warn, Eq(absl::string_view("onRequestHeaders enqueue Ok"))));
   EXPECT_CALL(filter(), log_(spdlog::level::warn,

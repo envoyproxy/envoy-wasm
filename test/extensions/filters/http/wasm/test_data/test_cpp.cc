@@ -22,12 +22,10 @@ public:
 
   bool onStart(size_t configuration_size) override;
   void onTick() override;
-  void onQueueReady(uint32_t token) override;
   bool onConfigure(size_t) override;
 
   std::string test_;
   uint32_t stream_context_id_;
-  uint32_t shared_queue_token_;
 };
 
 class TestContext : public Context {
@@ -105,9 +103,6 @@ public:
 
 bool TestRootContext::onStart(size_t configuration_size) {
   test_ = getBufferBytes(WasmBufferType::VmConfiguration, 0, configuration_size)->toString();
-  if (test_ == "shared_queue") {
-    CHECK_RESULT(registerSharedQueue("my_shared_queue", &shared_queue_token_));
-  }
   return true;
 }
 
@@ -116,19 +111,9 @@ bool TestRootContext::onConfigure(size_t) {
     {
       // Many properties are not available in the root context.
       const std::vector<std::string> properties = {
-        "string_state",
-        "metadata",
-        "request",
-        "response",
-        "connection",
-        "connection_id",
-        "upstream",
-        "source",
-        "destination",
-        "cluster_name",
-        "cluster_metadata",
-        "route_name",
-        "route_metadata",
+          "string_state",     "metadata",   "request",        "response",    "connection",
+          "connection_id",    "upstream",   "source",         "destination", "cluster_name",
+          "cluster_metadata", "route_name", "route_metadata",
       };
       for (const auto& property : properties) {
         if (getProperty({property}).has_value()) {
@@ -139,10 +124,10 @@ bool TestRootContext::onConfigure(size_t) {
     {
       // Some properties are defined in the root context.
       std::vector<std::pair<std::vector<std::string>, std::string>> properties = {
-        {{"plugin_name"}, "plugin_name"},
-        {{"plugin_vm_id"}, "vm_id"},
-        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
-        {{"listener_metadata"}, ""},
+          {{"plugin_name"}, "plugin_name"},
+          {{"plugin_vm_id"}, "vm_id"},
+          {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+          {{"listener_metadata"}, ""},
       };
       for (const auto& property : properties) {
         std::string value;
@@ -200,16 +185,6 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
   } else if (test == "body") {
     body_op_ = getRequestHeader("x-test-operation")->toString();
     setRequestHeaderPairs({{"a", "a"}, {"b", "b"}});
-    return FilterHeadersStatus::Continue;
-  } else if (test == "shared_queue") {
-    uint32_t token;
-    if (resolveSharedQueue("vm_id", "bad_shared_queue", &token) == WasmResult::NotFound) {
-      logWarn("onRequestHeaders not found bad_shared_queue");
-    }
-    CHECK_RESULT(resolveSharedQueue("vm_id", "my_shared_queue", &token));
-    if (enqueueSharedQueue(token, "data1") == WasmResult::Ok) {
-      logWarn("onRequestHeaders enqueue Ok");
-    }
     return FilterHeadersStatus::Continue;
   } else if (test == "metadata") {
     std::string value;
@@ -713,11 +688,7 @@ void TestContext::onLog() {
     }
     {
       // Some properties are not available in the stream context.
-      const std::vector<std::string> properties = {
-        "xxx",
-        "request",
-        "route_name",
-        "node"};
+      const std::vector<std::string> properties = {"xxx", "request", "route_name", "node"};
       for (const auto& property : properties) {
         if (getProperty({property, "xxx"}).has_value()) {
           logWarn("getProperty should not return a value in the root context");
@@ -727,14 +698,14 @@ void TestContext::onLog() {
     {
       // Some properties are defined in the stream context.
       std::vector<std::pair<std::vector<std::string>, std::string>> properties = {
-        {{"plugin_name"}, "plugin_name"},
-        {{"plugin_vm_id"}, "vm_id"},
-        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
-        {{"listener_metadata"}, ""},
-        {{"route_name"}, "route12"},
-        {{"connection", "requested_server_name"}, "w3.org"},
-        {{"source", "address"}, "127.0.0.1:0"},
-        {{"destination", "address"}, "127.0.0.2:0"},
+          {{"plugin_name"}, "plugin_name"},
+          {{"plugin_vm_id"}, "vm_id"},
+          {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+          {{"listener_metadata"}, ""},
+          {{"route_name"}, "route12"},
+          {{"connection", "requested_server_name"}, "w3.org"},
+          {{"source", "address"}, "127.0.0.1:0"},
+          {{"destination", "address"}, "127.0.0.2:0"},
       };
       for (const auto& property : properties) {
         std::string value;
@@ -746,22 +717,6 @@ void TestContext::onLog() {
         }
       }
     }
-  }
-}
-
-void TestRootContext::onQueueReady(uint32_t token) {
-  if (token == shared_queue_token_) {
-    logInfo("onQueueReady");
-  }
-  std::unique_ptr<WasmData> data;
-  if (dequeueSharedQueue(9999999 /* bad token */, &data) == WasmResult::NotFound) {
-    logWarn("onQueueReady bad token not found");
-  }
-  if (dequeueSharedQueue(token, &data) == WasmResult::Ok) {
-    logDebug("data " + data->toString() + " Ok");
-  }
-  if (dequeueSharedQueue(token, &data) == WasmResult::Empty) {
-    logWarn("onQueueReady extra data not found");
   }
 }
 
@@ -871,8 +826,9 @@ void TestRootContext::onTick() {
       args.SerializeToString(&in);
       char* out = nullptr;
       size_t out_size = 0;
-      if (WasmResult::BadArgument != proxy_call_foreign_function(function.data(), function.size(), in.data(),
-                                                        in.size(), &out, &out_size)) {
+      if (WasmResult::BadArgument != proxy_call_foreign_function(function.data(), function.size(),
+                                                                 in.data(), in.size(), &out,
+                                                                 &out_size)) {
         logError("declare_property must fail for double declaration");
       }
       ::free(out);
