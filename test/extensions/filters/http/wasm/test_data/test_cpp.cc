@@ -23,6 +23,7 @@ public:
   bool onStart(size_t configuration_size) override;
   void onTick() override;
   void onQueueReady(uint32_t token) override;
+  bool onConfigure(size_t) override;
 
   std::string test_;
   uint32_t stream_context_id_;
@@ -107,6 +108,53 @@ bool TestRootContext::onStart(size_t configuration_size) {
   test_ = getBufferBytes(WasmBufferType::VmConfiguration, 0, configuration_size)->toString();
   if (test_ == "shared_queue") {
     CHECK_RESULT(registerSharedQueue("my_shared_queue", &shared_queue_token_));
+  }
+  return true;
+}
+
+bool TestRootContext::onConfigure(size_t) {
+  if (test_ == "property") {
+    {
+      // Many properties are not available in the root context.
+      const std::vector<std::string> properties = {
+        "string_state",
+        "metadata",
+        "request",
+        "response",
+        "connection",
+        "connection_id",
+        "upstream",
+        "source",
+        "destination",
+        "cluster_name",
+        "cluster_metadata",
+        "route_name",
+        "route_metadata",
+      };
+      for (const auto& property : properties) {
+        if (getProperty({property}).has_value()) {
+          logWarn("getProperty should not return a value in the root context");
+        }
+      }
+    }
+    {
+      // Some properties are defined in the root context.
+      std::vector<std::pair<std::vector<std::string>, std::string>> properties = {
+        {{"plugin_name"}, "plugin_name"},
+        {{"plugin_vm_id"}, "vm_id"},
+        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+        {{"listener_metadata"}, ""},
+      };
+      for (const auto& property : properties) {
+        std::string value;
+        if (!getValue(property.first, &value)) {
+          logWarn("getValue should provide a value in the root context: " + property.second);
+        }
+        if (value != property.second) {
+          logWarn("getValue returned " + value + ", expect " + property.second);
+        }
+      }
+    }
   }
   return true;
 }
@@ -638,6 +686,48 @@ void TestContext::onLog() {
       if (value != "centaur") {
         logWarn("getProperty(protobuf_state) returned " + value);
       }
+      std::string buffer;
+      if (!getValue({"protobuf_state"}, &buffer)) {
+        logWarn("getValue for protobuf_state should not fail");
+      }
+      if (buffer.size() != in.size()) {
+        logWarn("getValue for protobuf_state should return the buffer");
+      }
+    }
+    {
+      // Some properties are not available in the stream context.
+      const std::vector<std::string> properties = {
+        "xxx",
+        "request",
+        "route_name",
+        "node"};
+      for (const auto& property : properties) {
+        if (getProperty({property, "xxx"}).has_value()) {
+          logWarn("getProperty should not return a value in the root context");
+        }
+      }
+    }
+    {
+      // Some properties are defined in the stream context.
+      std::vector<std::pair<std::vector<std::string>, std::string>> properties = {
+        {{"plugin_name"}, "plugin_name"},
+        {{"plugin_vm_id"}, "vm_id"},
+        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+        {{"listener_metadata"}, ""},
+        {{"route_name"}, "route12"},
+        {{"connection", "requested_server_name"}, "w3.org"},
+        {{"source", "address"}, "127.0.0.1:0"},
+        {{"destination", "address"}, "127.0.0.2:0"},
+      };
+      for (const auto& property : properties) {
+        std::string value;
+        if (!getValue(property.first, &value)) {
+          logWarn("getValue should provide a value in the root context: " + property.second);
+        }
+        if (value != property.second) {
+          logWarn("getValue returned " + value + ", expect " + property.second);
+        }
+      }
     }
   }
 }
@@ -681,8 +771,8 @@ void TestRootContext::onTick() {
     if (WasmResult::Ok != proxy_get_current_time_nanoseconds(&t)) {
       logError(std::string("bad proxy_get_current_time_nanoseconds result"));
     }
+    std::string function = "declare_property";
     {
-      std::string function = "declare_property";
       envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
       args.set_name("structured_state");
       args.set_type(envoy::source::extensions::common::wasm::WasmType::FlatBuffers);
@@ -723,7 +813,6 @@ void TestRootContext::onTick() {
       ::free(out);
     }
     {
-      std::string function = "declare_property";
       envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
       args.set_name("string_state");
       args.set_type(envoy::source::extensions::common::wasm::WasmType::String);
@@ -740,7 +829,6 @@ void TestRootContext::onTick() {
       ::free(out);
     }
     {
-      std::string function = "declare_property";
       envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
       args.set_name("bytes_state");
       args.set_type(envoy::source::extensions::common::wasm::WasmType::Bytes);
@@ -756,7 +844,20 @@ void TestRootContext::onTick() {
       ::free(out);
     }
     {
-      std::string function = "declare_property";
+      // double declaration of "bytes_state" should return BAD_ARGUMENT
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("bytes_state");
+      std::string in;
+      args.SerializeToString(&in);
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::BadArgument != proxy_call_foreign_function(function.data(), function.size(), in.data(),
+                                                        in.size(), &out, &out_size)) {
+        logError("declare_property must fail for double declaration");
+      }
+      ::free(out);
+    }
+    {
       envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
       args.set_name("protobuf_state");
       args.set_type(envoy::source::extensions::common::wasm::WasmType::Protobuf);
@@ -774,7 +875,6 @@ void TestRootContext::onTick() {
       ::free(out);
     }
     {
-      std::string function = "declare_property";
       char* out = nullptr;
       size_t out_size = 0;
       if (WasmResult::Ok == proxy_call_foreign_function(function.data(), function.size(),
@@ -783,6 +883,12 @@ void TestRootContext::onTick() {
         logError("expected declare_property to fail");
       }
       ::free(out);
+    }
+    {
+      // setting a filter state in root context returns NOT_FOUND
+      if (setFilterState("string_state", "unicorns") != WasmResult::NotFound) {
+        logWarn("setProperty(string_state) should fail in root context");
+      }
     }
   }
 }

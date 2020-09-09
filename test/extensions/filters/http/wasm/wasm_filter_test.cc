@@ -800,6 +800,8 @@ TEST_P(WasmHttpFilterTest, Property) {
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/test_context"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
   StreamInfo::MockStreamInfo log_stream_info;
+  request_stream_info_.route_name_ = "route12";
+  request_stream_info_.requested_server_name_ = "w3.org";
   filter().log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 
