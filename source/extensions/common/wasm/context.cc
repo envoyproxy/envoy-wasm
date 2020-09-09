@@ -426,10 +426,7 @@ Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) co
       } else {
         return {};
       }
-      if (last) {
-        return CelValue::CreateBytes(&state->value());
-      }
-      return state->exprValue(arena);
+      return state->exprValue(arena, last);
     }
     return {};
   }
