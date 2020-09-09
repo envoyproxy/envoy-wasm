@@ -54,7 +54,7 @@ void SharedDataRootContext::onQueueReady(uint32_t) {
   auto value1 = getSharedDataValue("shared_data_key1");
   logDebug("get 1 " + value1->toString());
   auto value2 = getSharedDataValue("shared_data_key2");
-  logWarn("get 2 " + value2->toString());
+  logCritical("get 2 " + value2->toString());
 }
 
 END_WASM_PLUGIN

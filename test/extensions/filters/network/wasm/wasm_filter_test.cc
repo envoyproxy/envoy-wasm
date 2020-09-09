@@ -28,6 +28,8 @@ public:
   TestFilter(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
       : Context(wasm, root_context_id, plugin) {}
   MOCK_CONTEXT_LOG_;
+
+  void testClose() { onCloseTCP(); }
 };
 
 class TestRoot : public Context {
@@ -139,6 +141,37 @@ TEST_P(WasmNetworkFilterTest, HappyPath) {
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
   // Noop.
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
+  filter().testClose();
+}
+
+TEST_P(WasmNetworkFilterTest, CloseDownstreamFirst) {
+  setupConfig("", "logging");
+  setupFilter();
+
+  EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onNewConnection());
+
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
+  write_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
+  read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
+}
+
+TEST_P(WasmNetworkFilterTest, CloseStream) {
+  setupConfig("", "logging");
+  setupFilter();
+
+  filter().onEvent(Network::ConnectionEvent::RemoteClose); // No Context, does nothing.
+  EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onNewConnection());
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 2"))));
+
+  filter().onEvent(Network::ConnectionEvent::RemoteClose);
+  filter().closeStream(proxy_wasm::WasmStreamType::Downstream);
+  filter().closeStream(proxy_wasm::WasmStreamType::Upstream);
 }
 
 TEST_P(WasmNetworkFilterTest, SegvFailOpen) {

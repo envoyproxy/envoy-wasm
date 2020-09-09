@@ -33,6 +33,14 @@ volatile double zero_unbeknownst_to_the_compiler = 0.0;
   } while (0)
 #endif
 
+#define CHECK_RESULT_NOT_OK(_c)                                                                    \
+  do {                                                                                             \
+    if ((_c) == WasmResult::Ok) {                                                                  \
+      proxy_log(LogLevel::critical, #_c, sizeof(#_c) - 1);                                         \
+      abort();                                                                                     \
+    }                                                                                              \
+  } while (0)
+
 #define FAIL_NOW(_msg)                                                                             \
   do {                                                                                             \
     const std::string __message = _msg;                                                            \
@@ -95,12 +103,31 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     CHECK_RESULT(proxy_define_metric(MetricType::Gauge, name.data(), name.size(), &g));
     name = "test_historam";
     CHECK_RESULT(proxy_define_metric(MetricType::Histogram, name.data(), name.size(), &h));
+    // Bad type.
+    CHECK_RESULT_NOT_OK(
+        proxy_define_metric(static_cast<MetricType>(9999), name.data(), name.size(), &c));
 
     CHECK_RESULT(proxy_increment_metric(c, 1));
+    CHECK_RESULT(proxy_increment_metric(g, 1));
+    CHECK_RESULT_NOT_OK(proxy_increment_metric(h, 1));
     CHECK_RESULT(proxy_record_metric(g, 2));
     CHECK_RESULT(proxy_record_metric(h, 3));
 
     uint64_t value;
+    // Not found
+    CHECK_RESULT_NOT_OK(proxy_get_metric((1 << 10) + 0, &value));
+    CHECK_RESULT_NOT_OK(proxy_get_metric((1 << 10) + 1, &value));
+    CHECK_RESULT_NOT_OK(proxy_get_metric((1 << 10) + 2, &value));
+    CHECK_RESULT_NOT_OK(proxy_get_metric((1 << 10) + 3, &value));
+    CHECK_RESULT_NOT_OK(proxy_record_metric((1 << 10) + 0, 1));
+    CHECK_RESULT_NOT_OK(proxy_record_metric((1 << 10) + 1, 1));
+    CHECK_RESULT_NOT_OK(proxy_record_metric((1 << 10) + 2, 1));
+    CHECK_RESULT_NOT_OK(proxy_record_metric((1 << 10) + 3, 1));
+    CHECK_RESULT_NOT_OK(proxy_increment_metric((1 << 10) + 0, 1));
+    CHECK_RESULT_NOT_OK(proxy_increment_metric((1 << 10) + 1, 1));
+    CHECK_RESULT_NOT_OK(proxy_increment_metric((1 << 10) + 2, 1));
+    CHECK_RESULT_NOT_OK(proxy_increment_metric((1 << 10) + 3, 1));
+    // Found.
     std::string message;
     CHECK_RESULT(proxy_get_metric(c, &value));
     message = std::string("get counter = ") + std::to_string(value);
@@ -158,6 +185,9 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     if (result) {
       ::free(result);
     }
+  } else if (configuration == "configuration") {
+    std::string message = "configuration";
+    proxy_log(LogLevel::error, message.c_str(), message.size());
   } else if (configuration == "WASI") {
     // These checks depend on Emscripten's support for `WASI` and will only
     // work if invoked on a "real" Wasm VM.

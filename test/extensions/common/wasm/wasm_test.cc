@@ -182,8 +182,9 @@ TEST_P(WasmCommonTest, Logging) {
         return root_context;
       });
 
-  auto root_context = wasm_weak.lock()->start(plugin);
+  auto root_context = static_cast<TestContext*>(wasm_weak.lock()->start(plugin));
   wasm_weak.lock()->configure(root_context, plugin);
+  EXPECT_EQ(root_context->getStatus().first, 0);
 
   wasm_handle.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
@@ -1010,6 +1011,7 @@ TEST_P(WasmCommonContextTest, EmptyContext) {
   root_context_->onResolveDns(0, Envoy::Network::DnsResolver::ResolutionStatus::Success, {});
   NiceMock<Envoy::Stats::MockMetricSnapshot> stats_snapshot;
   root_context_->onStatsUpdate(stats_snapshot);
+  root_context_->validateConfiguration("", plugin_);
 }
 
 } // namespace Wasm

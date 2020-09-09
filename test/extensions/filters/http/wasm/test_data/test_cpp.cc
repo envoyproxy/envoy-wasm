@@ -74,7 +74,6 @@ public:
   }
 };
 
-// Currently unused.
 class MyGrpcStreamHandler
     : public GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value> {
 public:
@@ -122,6 +121,23 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     addRequestHeader("newheader", "newheadervalue");
     auto server = getRequestHeader("server");
     replaceRequestHeader("server", "envoy-wasm");
+    auto r = addResponseHeader("bad", "bad");
+    if (r != WasmResult::BadArgument) {
+      logWarn("unexpected success of addResponseHeader");
+    }
+    if (addResponseTrailer("bad", "bad") != WasmResult::BadArgument) {
+      logWarn("unexpected success of addResponseTrailer");
+    }
+    if (removeResponseTrailer("bad") != WasmResult::BadArgument) {
+      logWarn("unexpected success of remoteResponseTrailer");
+    }
+    size_t size;
+    if (getRequestHeaderSize(&size) != WasmResult::Ok) {
+      logWarn("unexpected failure of getRequestHeaderMapSize");
+    }
+    if (getResponseHeaderSize(&size) != WasmResult::BadArgument) {
+      logWarn("unexpected success of getResponseHeaderMapSize");
+    }
     if (server->view() == "envoy-wasm-pause") {
       return FilterHeadersStatus::StopIteration;
     } else if (server->view() == "envoy-wasm-end-stream") {
@@ -135,6 +151,7 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     }
   } else if (test == "body") {
     body_op_ = getRequestHeader("x-test-operation")->toString();
+    setRequestHeaderPairs({{"a", "a"}, {"b", "b"}});
     return FilterHeadersStatus::Continue;
   } else if (test == "shared_queue") {
     uint32_t token;
@@ -410,7 +427,7 @@ FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool end_
   auto test = root()->test_;
   if (test == "headers") {
     auto body = getBufferBytes(WasmBufferType::HttpRequestBody, 0, body_buffer_length);
-    logError(std::string("onRequestBody ") + std::string(body->view()));
+    logError(std::string("onBody ") + std::string(body->view()));
   } else if (test == "body") {
     return onBody(WasmBufferType::HttpRequestBody, body_buffer_length, end_of_stream);
   } else if (test == "metadata") {
@@ -418,7 +435,7 @@ FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool end_
     if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
       logDebug("missing node metadata");
     }
-    logError(std::string("onRequestBody ") + value);
+    logError(std::string("onBody ") + value);
     std::string request_string;
     std::string request_string2;
     if (!getValue(
@@ -450,7 +467,7 @@ void TestContext::logBody(WasmBufferType type) {
   uint32_t flags;
   getBufferStatus(type, &buffered_size, &flags);
   auto body = getBufferBytes(type, 0, buffered_size);
-  logError(std::string("onRequestBody ") + std::string(body->view()));
+  logError(std::string("onBody ") + std::string(body->view()));
 }
 
 FilterDataStatus TestContext::onBody(WasmBufferType type, size_t buffer_length,
@@ -461,7 +478,7 @@ FilterDataStatus TestContext::onBody(WasmBufferType type, size_t buffer_length,
     uint32_t flags;
     if (body_op_ == "ReadBody") {
       auto body = getBufferBytes(type, 0, buffer_length);
-      logError("onRequestBody " + std::string(body->view()));
+      logError("onBody " + std::string(body->view()));
 
     } else if (body_op_ == "PrependAndAppendToBody") {
       setBuffer(WasmBufferType::HttpRequestBody, 0, 0, "prepend.");
@@ -469,19 +486,19 @@ FilterDataStatus TestContext::onBody(WasmBufferType type, size_t buffer_length,
       setBuffer(WasmBufferType::HttpRequestBody, size, 0, ".append");
       getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
       auto updated = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logError("onRequestBody " + std::string(updated->view()));
+      logError("onBody " + std::string(updated->view()));
 
     } else if (body_op_ == "ReplaceBody") {
       setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "replace");
       getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
       auto replaced = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logError("onRequestBody " + std::string(replaced->view()));
+      logError("onBody " + std::string(replaced->view()));
 
     } else if (body_op_ == "RemoveBody") {
       setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "");
       getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
       auto erased = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logError("onRequestBody " + std::string(erased->view()));
+      logError("onBody " + std::string(erased->view()));
 
     } else if (body_op_ == "BufferBody") {
       logBody(type);
@@ -670,6 +687,9 @@ void TestRootContext::onTick() {
     getContext(stream_context_id_)->setEffectiveContext();
     replaceRequestHeader("server", "envoy-wasm-continue");
     continueRequest();
+    if (getBufferBytes(WasmBufferType::PluginConfiguration, 0, 1)->view() != "") {
+      logDebug("unexpectd success of getBufferBytes PluginConfiguration");
+    }
   } else if (test_ == "metadata") {
     std::string value;
     if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {

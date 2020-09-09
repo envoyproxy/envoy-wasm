@@ -631,9 +631,6 @@ const Http::HeaderMap* Context::getConstMap(WasmHeaderMapType type) {
     }
     return request_headers_;
   case WasmHeaderMapType::RequestTrailers:
-    if (access_log_request_trailers_) {
-      return access_log_request_trailers_;
-    }
     return request_trailers_;
   case WasmHeaderMapType::ResponseHeaders:
     if (access_log_response_headers_) {
@@ -664,6 +661,7 @@ const Http::HeaderMap* Context::getConstMap(WasmHeaderMapType type) {
     return nullptr;
   }
   }
+  NOT_REACHED_GCOVR_EXCL_LINE;
   return nullptr;
 }
 
@@ -1116,6 +1114,7 @@ WasmResult Context::log(uint32_t level, absl::string_view message) {
     return WasmResult::Ok;
   case spdlog::level::off:
   case spdlog::level::n_levels:
+    NOT_REACHED_GCOVR_EXCL_LINE;
     return WasmResult::Ok;
   }
   NOT_REACHED_GCOVR_EXCL_LINE;
@@ -1197,6 +1196,7 @@ WasmResult Context::defineMetric(uint32_t metric_type, absl::string_view name,
     *metric_id_ptr = id;
     return WasmResult::Ok;
   }
+  NOT_REACHED_GCOVR_EXCL_LINE;
   return WasmResult::BadArgument;
 }
 
@@ -1457,6 +1457,7 @@ WasmResult Context::continueStream(WasmStreamType stream_type) {
     }
     break;
   default:
+    NOT_REACHED_GCOVR_EXCL_LINE;
     return WasmResult::BadArgument;
   }
   request_headers_ = nullptr;
@@ -1489,6 +1490,7 @@ WasmResult Context::closeStream(WasmStreamType stream_type) {
         Envoy::Network::ConnectionCloseType::FlushWrite);
     return WasmResult::Ok;
   }
+  NOT_REACHED_GCOVR_EXCL_LINE;
   return WasmResult::BadArgument;
 }
 

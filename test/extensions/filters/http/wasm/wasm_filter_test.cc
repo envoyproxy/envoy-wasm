@@ -148,7 +148,7 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersAndBody) {
   EXPECT_CALL(filter(),
               log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2 headers"))));
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello"))));
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
@@ -249,7 +249,7 @@ TEST_P(WasmHttpFilterTest, HeadersStopAndWatermark) {
 TEST_P(WasmHttpFilterTest, BodyRequestReadBody) {
   setupTest("", "body");
   setupFilter();
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}, {"x-test-operation", "ReadBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
   Buffer::OwnedImpl data("hello");
@@ -261,8 +261,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestReadBody) {
 TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBody) {
   setupTest("", "body");
   setupFilter();
-  EXPECT_CALL(filter(), log_(spdlog::level::err,
-                             Eq(absl::string_view("onRequestBody prepend.hello.append"))));
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::err, Eq(absl::string_view("onBody prepend.hello.append"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "PrependAndAppendToBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
@@ -275,7 +275,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBody) {
 TEST_P(WasmHttpFilterTest, BodyRequestReplaceBody) {
   setupTest("", "body");
   setupFilter();
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody replace"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody replace"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "ReplaceBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
@@ -288,7 +288,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestReplaceBody) {
 TEST_P(WasmHttpFilterTest, BodyRequestRemoveBody) {
   setupTest("", "body");
   setupFilter();
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody "))));
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody "))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "RemoveBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
@@ -313,19 +313,16 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
 
   Buffer::OwnedImpl data1("hello");
   bufferedBody.add(data1);
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
-      .Times(1);
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello")))).Times(1);
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().decodeData(data1, false));
 
   Buffer::OwnedImpl data2(" again ");
   bufferedBody.add(data2);
-  EXPECT_CALL(filter(),
-              log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello again "))))
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello again "))))
       .Times(1);
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().decodeData(data2, false));
 
-  EXPECT_CALL(filter(),
-              log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello again hello"))))
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello again hello"))))
       .Times(1);
   Buffer::OwnedImpl data3("hello");
   bufferedBody.add(data3);
@@ -336,8 +333,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
                                                    {"x-test-operation", "ReadBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().encodeHeaders(response_headers, false));
   // Should not buffer this time
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
-      .Times(2);
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello")))).Times(2);
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data1, false));
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data1, true));
 
@@ -348,8 +344,8 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferBody) {
 TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBufferedBody) {
   setupTest("", "body");
   setupFilter();
-  EXPECT_CALL(filter(), log_(spdlog::level::err,
-                             Eq(absl::string_view("onRequestBody prepend.hello.append"))));
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::err, Eq(absl::string_view("onBody prepend.hello.append"))));
   Http::TestRequestHeaderMapImpl request_headers{
       {":path", "/"}, {"x-test-operation", "PrependAndAppendToBufferedBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
@@ -362,7 +358,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBufferedBody) {
 TEST_P(WasmHttpFilterTest, BodyRequestReplaceBufferedBody) {
   setupTest("", "body");
   setupFilter();
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody replace"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody replace"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "ReplaceBufferedBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
@@ -375,7 +371,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestReplaceBufferedBody) {
 TEST_P(WasmHttpFilterTest, BodyRequestRemoveBufferedBody) {
   setupTest("", "body");
   setupFilter();
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody "))));
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody "))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "RemoveBufferedBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
@@ -402,15 +398,13 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferThenStreamBody) {
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().encodeHeaders(response_headers, false));
 
   Buffer::OwnedImpl data1("hello");
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))))
-      .Times(1);
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello")))).Times(1);
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().decodeData(data1, false));
   bufferedBody.add(data1);
 
   Buffer::OwnedImpl data2(", there, ");
   bufferedBody.add(data2);
-  EXPECT_CALL(filter(),
-              log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello, there, "))))
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello, there, "))))
       .Times(1);
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().decodeData(data2, false));
 
@@ -418,21 +412,69 @@ TEST_P(WasmHttpFilterTest, BodyRequestBufferThenStreamBody) {
   Buffer::OwnedImpl data3("world!");
   bufferedBody.add(data3);
   EXPECT_CALL(filter(),
-              log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello, there, world!"))))
+              log_(spdlog::level::err, Eq(absl::string_view("onBody hello, there, world!"))))
       .Times(1);
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data3, false));
 
   // Last callback returned "continue" so we just see individual chunks.
   Buffer::OwnedImpl data4("So it's ");
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody So it's "))))
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody So it's "))))
       .Times(1);
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data4, false));
 
   Buffer::OwnedImpl data5("goodbye, then!");
-  EXPECT_CALL(filter(),
-              log_(spdlog::level::err, Eq(absl::string_view("onRequestBody goodbye, then!"))))
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody goodbye, then!"))))
       .Times(1);
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data5, true));
+
+  filter().onDestroy();
+}
+
+// Script that buffers the first part of the body and streams the rest
+TEST_P(WasmHttpFilterTest, BodyResponseBufferThenStreamBody) {
+  setupTest("", "body");
+  setupFilter();
+
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
+
+  Buffer::OwnedImpl bufferedBody;
+  EXPECT_CALL(encoder_callbacks_, modifyEncodingBuffer(_))
+      .WillRepeatedly(Invoke([&bufferedBody](BufferFunction f) { f(bufferedBody); }));
+
+  Http::TestResponseHeaderMapImpl response_headers{{":status", "200"},
+                                                   {"x-test-operation", "BufferTwoBodies"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().encodeHeaders(response_headers, false));
+
+  Buffer::OwnedImpl data1("hello");
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello")))).Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().encodeData(data1, false));
+  bufferedBody.add(data1);
+
+  Buffer::OwnedImpl data2(", there, ");
+  bufferedBody.add(data2);
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody hello, there, "))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter().encodeData(data2, false));
+
+  // Previous callbacks returned "Buffer" so we have buffered so far
+  Buffer::OwnedImpl data3("world!");
+  bufferedBody.add(data3);
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::err, Eq(absl::string_view("onBody hello, there, world!"))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data3, false));
+
+  // Last callback returned "continue" so we just see individual chunks.
+  Buffer::OwnedImpl data4("So it's ");
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody So it's "))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data4, false));
+
+  Buffer::OwnedImpl data5("goodbye, then!");
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody goodbye, then!"))))
+      .Times(1);
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data5, true));
 
   filter().onDestroy();
 }
@@ -444,7 +486,6 @@ TEST_P(WasmHttpFilterTest, AccessLog) {
   EXPECT_CALL(filter(),
               log_(spdlog::level::debug, Eq(absl::string_view("onRequestHeaders 2 headers"))));
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onRequestBody hello"))));
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onLog 2 /"))));
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
 
@@ -452,8 +493,8 @@ TEST_P(WasmHttpFilterTest, AccessLog) {
   Http::TestResponseHeaderMapImpl response_headers{};
   Http::TestResponseTrailerMapImpl response_trailers{};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
-  Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  filter().continueStream(proxy_wasm::WasmStreamType::Response);
+  filter().closeStream(proxy_wasm::WasmStreamType::Response);
   filter().onDestroy();
   StreamInfo::MockStreamInfo log_stream_info;
   filter().log(&request_headers, &response_headers, &response_trailers, log_stream_info);
@@ -704,12 +745,68 @@ TEST_P(WasmHttpFilterTest, GrpcStream) {
   if (callbacks) {
     Http::TestRequestHeaderMapImpl create_initial_metadata{{"test", "create_initial_metadata"}};
     callbacks->onCreateInitialMetadata(create_initial_metadata);
-    Http::TestRequestHeaderMapImpl receive_initial_metadata{{"test", "receive_initial_metadata"}};
-    callbacks->onCreateInitialMetadata(receive_initial_metadata);
+    callbacks->onReceiveInitialMetadata(std::make_unique<Http::TestResponseHeaderMapImpl>());
     callbacks->onReceiveMessageRaw(std::move(response));
     callbacks->onReceiveTrailingMetadata(std::make_unique<Http::TestResponseTrailerMapImpl>());
     callbacks->onRemoteClose(Grpc::Status::WellKnownGrpcStatus::Ok, "");
   }
+}
+
+TEST_P(WasmHttpFilterTest, GrpcStreamOpenAtShutdown) {
+  if (std::get<1>(GetParam()) == "rust") {
+    // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
+    return;
+  }
+  setupTest("", "grpc_stream");
+  setupFilter();
+  Grpc::MockAsyncRequest request;
+  NiceMock<Grpc::MockAsyncStream> stream;
+  Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
+  Grpc::MockAsyncClientManager client_manager;
+  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
+  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
+  EXPECT_CALL(*async_client, startRaw(_, _, _, _))
+      .WillOnce(Invoke([&](absl::string_view service_full_name, absl::string_view method_name,
+                           Grpc::RawAsyncStreamCallbacks& cb,
+                           const Http::AsyncClient::StreamOptions&) -> Grpc::RawAsyncStream* {
+        EXPECT_EQ(service_full_name, "service");
+        EXPECT_EQ(method_name, "method");
+        callbacks = &cb;
+        return &stream;
+      }));
+  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
+    return std::move(async_client);
+  }));
+  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
+      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
+  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
+      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
+        return std::move(client_factory);
+      }));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response")));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+            filter().decodeHeaders(request_headers, false));
+
+  ProtobufWkt::Value value;
+  value.set_string_value("response");
+  std::string response_string;
+  EXPECT_TRUE(value.SerializeToString(&response_string));
+  auto response = std::make_unique<Buffer::OwnedImpl>(response_string);
+  EXPECT_NE(callbacks, nullptr);
+  NiceMock<Tracing::MockSpan> span;
+  if (callbacks) {
+    Http::TestRequestHeaderMapImpl create_initial_metadata{{"test", "create_initial_metadata"}};
+    callbacks->onCreateInitialMetadata(create_initial_metadata);
+    callbacks->onReceiveInitialMetadata(std::make_unique<Http::TestResponseHeaderMapImpl>());
+    callbacks->onReceiveMessageRaw(std::move(response));
+    callbacks->onReceiveTrailingMetadata(std::make_unique<Http::TestResponseTrailerMapImpl>());
+  }
+
+  // Destroy the Context, Plugin and VM.
+  context_.reset();
+  plugin_.reset();
+  wasm_.reset();
 }
 
 // Test metadata access including CEL expressions.
@@ -727,7 +824,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
               log_(spdlog::level::debug, Eq(absl::string_view("onTick wasm_node_get_value"))));
 
   EXPECT_CALL(filter(),
-              log_(spdlog::level::err, Eq(absl::string_view("onRequestBody wasm_node_get_value"))));
+              log_(spdlog::level::err, Eq(absl::string_view("onBody wasm_node_get_value"))));
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(absl::string_view("header path /"))));
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace,
@@ -757,6 +854,7 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   Buffer::OwnedImpl data("hello");
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
   filter().onDestroy();
+  filter().onDestroy(); // Does nothing.
 
   StreamInfo::MockStreamInfo log_stream_info;
   filter().log(&request_headers, nullptr, nullptr, log_stream_info);
@@ -809,8 +907,13 @@ TEST_P(WasmHttpFilterTest, SharedData) {
   EXPECT_CALL(rootContext(), log_(spdlog::level::info, Eq(absl::string_view("set CasMismatch"))));
   EXPECT_CALL(rootContext(),
               log_(spdlog::level::debug, Eq(absl::string_view("get 1 shared_data_value1"))));
-  EXPECT_CALL(rootContext(),
-              log_(spdlog::level::warn, Eq(absl::string_view("get 2 shared_data_value2"))));
+  if (std::get<1>(GetParam()) == "rust") {
+    EXPECT_CALL(rootContext(),
+                log_(spdlog::level::warn, Eq(absl::string_view("get 2 shared_data_value2"))));
+  } else {
+    EXPECT_CALL(rootContext(),
+                log_(spdlog::level::critical, Eq(absl::string_view("get 2 shared_data_value2"))));
+  }
   EXPECT_CALL(rootContext(),
               log_(spdlog::level::debug, Eq(absl::string_view("get of bad key not found"))));
   EXPECT_CALL(rootContext(),

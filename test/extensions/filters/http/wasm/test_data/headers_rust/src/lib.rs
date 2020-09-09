@@ -31,7 +31,7 @@ impl HttpContext for TestStream {
 
     fn on_http_request_body(&mut self, body_size: usize, _: bool) -> Action {
         if let Some(body) = self.get_http_request_body(0, body_size) {
-            error!("onRequestBody {}", String::from_utf8(body).unwrap());
+            error!("onBody {}", String::from_utf8(body).unwrap());
         }
         Action::Continue
     }

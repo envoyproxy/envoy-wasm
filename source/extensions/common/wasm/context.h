@@ -445,7 +445,6 @@ protected:
   const StreamInfo::StreamInfo* access_log_stream_info_{};
   const Http::RequestHeaderMap* access_log_request_headers_{};
   const Http::ResponseHeaderMap* access_log_response_headers_{};
-  const Http::RequestTrailerMap* access_log_request_trailers_{}; // unused
   const Http::ResponseTrailerMap* access_log_response_trailers_{};
 
   // Temporary state.
