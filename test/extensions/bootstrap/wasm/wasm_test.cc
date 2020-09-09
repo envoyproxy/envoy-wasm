@@ -173,7 +173,8 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("test trace logging")));
   EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("test debug logging")));
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("test error logging")));
-  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("test tick logging")));
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("test tick logging")))
+      .Times(testing::AtLeast(1));
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("onDone logging")));
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("onDelete logging")));
 
