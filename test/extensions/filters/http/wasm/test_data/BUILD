@@ -69,6 +69,8 @@ envoy_cc_library(
         "test_async_call_cpp.cc",
         "test_cpp.cc",
         "test_cpp_null_plugin.cc",
+        "test_grpc_call_cpp.cc",
+        "test_grpc_stream_cpp.cc",
         "test_shared_data_cpp.cc",
         "test_shared_queue_cpp.cc",
     ],
@@ -90,6 +92,8 @@ wasm_cc_binary(
     srcs = [
         "test_async_call_cpp.cc",
         "test_cpp.cc",
+        "test_grpc_call_cpp.cc",
+        "test_grpc_stream_cpp.cc",
         "test_shared_data_cpp.cc",
         "test_shared_queue_cpp.cc",
     ],

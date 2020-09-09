@@ -590,8 +590,8 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
     // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
     return;
   }
-  setupTest("", "grpc_call");
-  setupFilter();
+  setupTest("grpc_call");
+  setupFilter("grpc_call");
   NiceMock<Grpc::MockAsyncRequest> request;
   Grpc::RawAsyncRequestCallbacks* callbacks = nullptr;
   Grpc::MockAsyncClientManager client_manager;
@@ -644,8 +644,8 @@ TEST_P(WasmHttpFilterTest, GrpcCallAfterDestroyed) {
     // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
     return;
   }
-  setupTest("", "grpc_call");
-  setupFilter();
+  setupTest("grpc_call");
+  setupFilter("grpc_call");
   Grpc::MockAsyncRequest request;
   Grpc::RawAsyncRequestCallbacks* callbacks = nullptr;
   Grpc::MockAsyncClientManager client_manager;
@@ -705,8 +705,8 @@ TEST_P(WasmHttpFilterTest, GrpcStream) {
     // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
     return;
   }
-  setupTest("", "grpc_stream");
-  setupFilter();
+  setupTest("grpc_stream");
+  setupFilter("grpc_stream");
   Grpc::MockAsyncRequest request;
   NiceMock<Grpc::MockAsyncStream> stream;
   Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
@@ -758,8 +758,8 @@ TEST_P(WasmHttpFilterTest, GrpcStreamOpenAtShutdown) {
     // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
     return;
   }
-  setupTest("", "grpc_stream");
-  setupFilter();
+  setupTest("grpc_stream");
+  setupFilter("grpc_stream");
   Grpc::MockAsyncRequest request;
   NiceMock<Grpc::MockAsyncStream> stream;
   Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;

@@ -41,10 +41,6 @@ public:
   void onLog() override;
   void onDone() override;
 
-  // Currently unused.
-  FilterHeadersStatus onRequestHeadersSimple(uint32_t);
-  FilterHeadersStatus onRequestHeadersStream(uint32_t);
-
 private:
   TestRootContext* root() { return static_cast<TestRootContext*>(Context::root()); }
 
@@ -57,49 +53,6 @@ private:
 
 static RegisterContextFactory register_TestContext(CONTEXT_FACTORY(TestContext),
                                                    ROOT_FACTORY(TestRootContext));
-
-class MyGrpcCallHandler : public GrpcCallHandler<google::protobuf::Value> {
-public:
-  MyGrpcCallHandler() : GrpcCallHandler<google::protobuf::Value>() {}
-  void onSuccess(size_t body_size) override {
-    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
-    logDebug(response->proto<google::protobuf::Value>().string_value());
-    cancel();
-  }
-  void onFailure(GrpcStatus status) override {
-    auto p = getStatus();
-    logDebug(std::string("failure ") + std::to_string(static_cast<int>(status)) +
-             std::string(p.second->view()));
-  }
-};
-
-class MyGrpcStreamHandler
-    : public GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value> {
-public:
-  MyGrpcStreamHandler() : GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value>() {}
-  void onReceiveInitialMetadata(uint32_t) override {
-    auto h = getHeaderMapValue(WasmHeaderMapType::GrpcReceiveInitialMetadata, "foo");
-    h = getHeaderMapValue(WasmHeaderMapType::HttpCallResponseHeaders, "foo");
-    h = getHeaderMapValue(WasmHeaderMapType::HttpCallResponseTrailers, "foo");
-    addHeaderMapValue(WasmHeaderMapType::GrpcReceiveInitialMetadata, "foo", "bar");
-  }
-  void onReceiveTrailingMetadata(uint32_t) override {
-    auto h = getHeaderMapValue(WasmHeaderMapType::GrpcReceiveTrailingMetadata, "foo");
-    addHeaderMapValue(WasmHeaderMapType::GrpcReceiveTrailingMetadata, "foo", "bar");
-  }
-  void onReceive(size_t body_size) override {
-    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
-    logDebug(response->proto<google::protobuf::Value>().string_value());
-    google::protobuf::Value message;
-    send(message, false);
-  }
-  void onRemoteClose(GrpcStatus status) override {
-    auto p = getStatus();
-    logDebug(std::string("failure ") + std::to_string(static_cast<int>(status)) +
-             std::string(p.second->view()));
-    close();
-  }
-};
 
 bool TestRootContext::onStart(size_t configuration_size) {
   test_ = getBufferBytes(WasmBufferType::VmConfiguration, 0, configuration_size)->toString();
@@ -315,31 +268,6 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     }
 
     return FilterHeadersStatus::Continue;
-  } else if (test == "grpc_call") {
-    GrpcService grpc_service;
-    grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-    std::string grpc_service_string;
-    grpc_service.SerializeToString(&grpc_service_string);
-    google::protobuf::Value value;
-    value.set_string_value("request");
-    HeaderStringPairs initial_metadata;
-    root()->grpcCallHandler(grpc_service_string, "service", "method", initial_metadata, value, 1000,
-                            std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler()));
-    if (root()->grpcCallHandler(
-            "bogus grpc_service", "service", "method", initial_metadata, value, 1000,
-            std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler())) == WasmResult::Ok) {
-      logError("bogus grpc_service accepted error");
-    }
-    return FilterHeadersStatus::StopIteration;
-  } else if (test == "grpc_stream") {
-    GrpcService grpc_service;
-    grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-    std::string grpc_service_string;
-    grpc_service.SerializeToString(&grpc_service_string);
-    HeaderStringPairs initial_metadata;
-    root()->grpcStreamHandler(grpc_service_string, "service", "method", initial_metadata,
-                              std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler()));
-    return FilterHeadersStatus::StopIteration;
   }
   return FilterHeadersStatus::Continue;
 }
@@ -367,41 +295,6 @@ FilterTrailersStatus TestContext::onResponseTrailers(uint32_t) {
   }
   CHECK_RESULT(replaceResponseTrailer("new-trailer", "value"));
   return FilterTrailersStatus::Continue;
-}
-
-// Currently unused.
-FilterHeadersStatus TestContext::onRequestHeadersSimple(uint32_t) {
-  std::function<void(size_t body_size)> success_callback = [](size_t body_size) {
-    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
-    logDebug(response->proto<google::protobuf::Value>().string_value());
-  };
-  std::function<void(GrpcStatus status)> failure_callback = [](GrpcStatus status) {
-    auto p = getStatus();
-    logDebug(std::string("failure ") + std::to_string(static_cast<int>(status)) +
-             std::string(p.second->view()));
-  };
-  GrpcService grpc_service;
-  grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-  std::string grpc_service_string;
-  grpc_service.SerializeToString(&grpc_service_string);
-  google::protobuf::Value value;
-  value.set_string_value("request");
-  HeaderStringPairs initial_metadata;
-  root()->grpcSimpleCall(grpc_service_string, "service", "method", initial_metadata, value, 1000,
-                         success_callback, failure_callback);
-  return FilterHeadersStatus::StopIteration;
-}
-
-// Currently unused.
-FilterHeadersStatus TestContext::onRequestHeadersStream(uint32_t) {
-  GrpcService grpc_service;
-  grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-  std::string grpc_service_string;
-  grpc_service.SerializeToString(&grpc_service_string);
-  HeaderStringPairs initial_metadata;
-  root()->grpcStreamHandler(grpc_service_string, "service", "method", initial_metadata,
-                            std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler()));
-  return FilterHeadersStatus::StopIteration;
 }
 
 FilterHeadersStatus TestContext::onResponseHeaders(uint32_t, bool) {
