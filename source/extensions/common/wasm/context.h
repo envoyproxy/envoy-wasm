@@ -309,9 +309,6 @@ public:
     }
     return dynamic_cast<T*>(it->second.get());
   }
-  bool hasForeignData(absl::string_view data_name) const {
-    return data_storage_.contains(data_name);
-  }
 
 protected:
   friend class Wasm;

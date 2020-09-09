@@ -35,10 +35,9 @@ public:
     logDebug(response->proto<google::protobuf::Value>().string_value());
     cancel();
   }
-  void onFailure(GrpcStatus status) override {
+  void onFailure(GrpcStatus) override {
     auto p = getStatus();
-    logDebug(std::string("failure ") + std::to_string(static_cast<int>(status)) +
-             std::string(p.second->view()));
+    logDebug(std::string("failure ") + std::string(p.second->view()));
   }
 };
 

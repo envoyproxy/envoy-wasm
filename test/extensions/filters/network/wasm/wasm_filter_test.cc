@@ -161,7 +161,14 @@ TEST_P(WasmNetworkFilterTest, CloseStream) {
   setupConfig("", "logging");
   setupFilter();
 
-  filter().onEvent(Network::ConnectionEvent::RemoteClose); // No Context, does nothing.
+  // No Context, does nothing.
+  filter().onEvent(Network::ConnectionEvent::RemoteClose);
+  Buffer::OwnedImpl fake_upstream_data("Done");
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onWrite(fake_upstream_data, true));
+  Buffer::OwnedImpl fake_downstream_data("Fake");
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onData(fake_downstream_data, false));
+
+  // Create context.
   EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter().onNewConnection());
   EXPECT_CALL(filter(),
@@ -169,6 +176,7 @@ TEST_P(WasmNetworkFilterTest, CloseStream) {
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 2"))));
 
+  filter().onEvent(static_cast<Network::ConnectionEvent>(9999)); // Does nothing.
   filter().onEvent(Network::ConnectionEvent::RemoteClose);
   filter().closeStream(proxy_wasm::WasmStreamType::Downstream);
   filter().closeStream(proxy_wasm::WasmStreamType::Upstream);

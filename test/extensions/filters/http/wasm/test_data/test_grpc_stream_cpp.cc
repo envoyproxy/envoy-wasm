@@ -47,10 +47,9 @@ public:
     google::protobuf::Value message;
     send(message, false);
   }
-  void onRemoteClose(GrpcStatus status) override {
+  void onRemoteClose(GrpcStatus) override {
     auto p = getStatus();
-    logDebug(std::string("failure ") + std::to_string(static_cast<int>(status)) +
-             std::string(p.second->view()));
+    logDebug(std::string("failure ") + std::string(p.second->view()));
     close();
   }
 };

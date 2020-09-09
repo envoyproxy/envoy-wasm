@@ -30,6 +30,10 @@ static RegisterContextFactory register_AsyncCallContext(CONTEXT_FACTORY(AsyncCal
 FilterHeadersStatus AsyncCallContext::onRequestHeaders(uint32_t, bool) {
   auto context_id = id();
   auto callback = [context_id](uint32_t, size_t body_size, uint32_t) {
+    if (body_size == 0) {
+      logInfo("async_call failed");
+      return;
+    }
     auto response_headers = getHeaderMapPairs(WasmHeaderMapType::HttpCallResponseHeaders);
     // Switch context after getting headers, but before getting body to exercise both code paths.
     getContext(context_id)->setEffectiveContext();
