@@ -2,6 +2,8 @@
 
 #include "extensions/filters/http/wasm/wasm_filter.h"
 
+#include "test/mocks/network/connection.h"
+#include "test/mocks/router/mocks.h"
 #include "test/test_common/wasm_base.h"
 
 using testing::Eq;
@@ -800,6 +802,11 @@ TEST_P(WasmHttpFilterTest, Property) {
   StreamInfo::MockStreamInfo log_stream_info;
   request_stream_info_.route_name_ = "route12";
   request_stream_info_.requested_server_name_ = "w3.org";
+  NiceMock<Network::MockConnection> connection;
+  EXPECT_CALL(connection, id()).WillRepeatedly(Return(4));
+  EXPECT_CALL(encoder_callbacks_, connection()).WillRepeatedly(Return(&connection));
+  NiceMock<Router::MockRouteEntry> route_entry;
+  EXPECT_CALL(request_stream_info_, routeEntry()).WillRepeatedly(Return(&route_entry));
   filter().log(&request_headers, nullptr, nullptr, log_stream_info);
 }
 

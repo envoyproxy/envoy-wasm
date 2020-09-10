@@ -33,6 +33,8 @@ envoy_extension_cc_test(
         "//source/common/http:message_lib",
         "//source/extensions/filters/http/wasm:wasm_filter_lib",
         "//test/extensions/filters/http/wasm/test_data:test_cpp_plugin",
+        "//test/mocks/network:connection_mocks",
+        "//test/mocks/router:router_mocks",
         "//test/test_common:wasm_lib",
     ],
 )

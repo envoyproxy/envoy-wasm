@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include "test/extensions/filters/http/wasm/test_data/test.pb.h"
 
 #ifndef NULL_PLUGIN
 #include "proxy_wasm_intrinsics_lite.h"
@@ -434,7 +435,7 @@ FilterHeadersStatus TestContext::onResponseHeaders(uint32_t, bool) {
   auto test = root()->test_;
   if (test == "body") {
     body_op_ = getResponseHeader("x-test-operation")->toString();
-    CHECK_RESULT(replaceRequestHeader("x-test-operation", body_op_));
+    CHECK_RESULT(replaceResponseHeader("x-test-operation", body_op_));
   }
   return FilterHeadersStatus::Continue;
 }
@@ -666,20 +667,92 @@ void TestContext::onLog() {
       }
     }
     {
-      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
-      args.set_name("centaur");
+      wasmtest::TestProto test_proto;
+      uint32_t i = 53;
+      test_proto.set_i(i);
+      double j = 13.0;
+      test_proto.set_j(j);
+      bool k = true;
+      test_proto.set_k(k);
+      std::string s = "centaur";
+      test_proto.set_s(s);
+      test_proto.mutable_t()->set_seconds(2);
+      test_proto.mutable_t()->set_nanos(3);
+      test_proto.add_l("abc");
+      test_proto.add_l("xyz");
+      (*test_proto.mutable_m())["a"] = "b";
+
+      // validate setting a filter state
       std::string in;
-      args.SerializeToString(&in);
+      test_proto.SerializeToString(&in);
       if (setFilterState("protobuf_state", in) != WasmResult::Ok) {
         logWarn("setProperty(protobuf_state) failed");
       }
-      std::string value;
-      if (!getValue({"protobuf_state", "name"}, &value)) {
-        logWarn("getProperty(protobuf_state) failed");
+      // validate uint field
+      uint64_t i2;
+      if (!getValue({"protobuf_state", "i"}, &i2) || i2 != i) {
+        logWarn("uint field returned " + std::to_string(i2));
       }
-      if (value != "centaur") {
-        logWarn("getProperty(protobuf_state) returned " + value);
+
+      // validate double field
+      double j2;
+      if (!getValue({"protobuf_state", "j"}, &j2) || j2 != j) {
+        logWarn("double field returned " + std::to_string(j2));
       }
+
+      // validate bool field
+      bool k2;
+      if (!getValue({"protobuf_state", "k"}, &k2) || k2 != k) {
+        logWarn("bool field returned " + std::to_string(k2));
+      }
+
+      // validate string field
+      std::string s2;
+      if (!getValue({"protobuf_state", "s"}, &s2) || s2 != s) {
+        logWarn("string field returned " + s2);
+      }
+
+      // validate timestamp field
+      int64_t t;
+      if (!getValue({"protobuf_state", "t"}, &t) || t != 2000000003ull) {
+        logWarn("timestamp field returned " + std::to_string(t));
+      }
+
+      // validate malformed field
+      std::string a;
+      if (getValue({"protobuf_state", "a"}, &a)) {
+        logWarn("expect serialization error for malformed type_url string, got " + a);
+      }
+
+      // validate null field
+      std::string b;
+      if (!getValue({"protobuf_state", "b"}, &b) || b != "") {
+        logWarn("null field returned " + b);
+      }
+
+      // validate list field
+      auto l = getProperty({"protobuf_state", "l"});
+      if (l.has_value()) {
+        auto pairs = l.value()->pairs();
+        if (pairs.size() != 2 || pairs[0].first != "abc" || pairs[1].first != "xyz") {
+          logWarn("list field did not return the expected value");
+        }
+      } else {
+        logWarn("list field returned none");
+      }
+
+      // validate map field
+      auto m = getProperty({"protobuf_state", "m"});
+      if (m.has_value()) {
+        auto pairs = m.value()->pairs();
+        if (pairs.size() != 1 || pairs[0].first != "a" || pairs[0].second != "b") {
+          logWarn("map field did not return the expected value: " + std::to_string(pairs.size()));
+        }
+      } else {
+        logWarn("map field returned none");
+      }
+
+      // validate entire message
       std::string buffer;
       if (!getValue({"protobuf_state"}, &buffer)) {
         logWarn("getValue for protobuf_state should not fail");
@@ -709,9 +782,14 @@ void TestContext::onLog() {
         {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
         {{"listener_metadata"}, ""},
         {{"route_name"}, "route12"},
+        {{"cluster_name"}, "fake_cluster"},
+        {{"connection_id"}, std::string("\x4\0\0\0\0\0\0\0\0", 8)},
         {{"connection", "requested_server_name"}, "w3.org"},
         {{"source", "address"}, "127.0.0.1:0"},
         {{"destination", "address"}, "127.0.0.2:0"},
+        {{"upstream", "address"}, "10.0.0.1:443"},
+        {{"cluster_metadata"}, ""},
+        {{"route_metadata"}, ""},
       };
       for (const auto& property : properties) {
         std::string value;
@@ -856,7 +934,7 @@ void TestRootContext::onTick() {
       args.set_name("protobuf_state");
       args.set_type(envoy::source::extensions::common::wasm::WasmType::Protobuf);
       args.set_span(envoy::source::extensions::common::wasm::LifeSpan::DownstreamRequest);
-      args.set_schema("type.googleapis.com/envoy.source.extensions.common.wasm.DeclarePropertyArguments");
+      args.set_schema("type.googleapis.com/wasmtest.TestProto");
       std::string in;
       args.SerializeToString(&in);
       char* out = nullptr;
