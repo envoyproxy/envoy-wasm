@@ -11,22 +11,6 @@
 
 START_WASM_PLUGIN(HttpWasmTestCpp)
 
-class GrpcCallContext : public Context {
-public:
-  explicit GrpcCallContext(uint32_t id, RootContext* root) : Context(id, root) {}
-
-  FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
-};
-
-class GrpcCallRootContext : public RootContext {
-public:
-  explicit GrpcCallRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
-};
-
-static RegisterContextFactory register_GrpcCallContext(CONTEXT_FACTORY(GrpcCallContext),
-                                                       ROOT_FACTORY(GrpcCallRootContext),
-                                                       "grpc_call");
-
 class MyGrpcCallHandler : public GrpcCallHandler<google::protobuf::Value> {
 public:
   MyGrpcCallHandler() : GrpcCallHandler<google::protobuf::Value>() {}
@@ -41,6 +25,34 @@ public:
   }
 };
 
+class GrpcCallRootContext : public RootContext {
+public:
+  explicit GrpcCallRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
+
+  void onQueueReady(uint32_t op) override {
+    if (op == 0) {
+      handler_->cancel();
+    } else {
+      grpcClose(handler_->token());
+    }
+  }
+
+  MyGrpcCallHandler* handler_ = nullptr;
+};
+
+class GrpcCallContext : public Context {
+public:
+  explicit GrpcCallContext(uint32_t id, RootContext* root) : Context(id, root) {}
+
+  FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
+
+  GrpcCallRootContext* root() { return static_cast<GrpcCallRootContext*>(Context::root()); }
+};
+
+static RegisterContextFactory register_GrpcCallContext(CONTEXT_FACTORY(GrpcCallContext),
+                                                       ROOT_FACTORY(GrpcCallRootContext),
+                                                       "grpc_call");
+
 FilterHeadersStatus GrpcCallContext::onRequestHeaders(uint32_t, bool) {
   GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
@@ -49,8 +61,9 @@ FilterHeadersStatus GrpcCallContext::onRequestHeaders(uint32_t, bool) {
   google::protobuf::Value value;
   value.set_string_value("request");
   HeaderStringPairs initial_metadata;
+  root()->handler_ = new MyGrpcCallHandler();
   root()->grpcCallHandler(grpc_service_string, "service", "method", initial_metadata, value, 1000,
-                          std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler()));
+                          std::unique_ptr<GrpcCallHandlerBase>(root()->handler_));
   if (root()->grpcCallHandler(
           "bogus grpc_service", "service", "method", initial_metadata, value, 1000,
           std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler())) == WasmResult::Ok) {

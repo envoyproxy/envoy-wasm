@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+#include <ctime>
 #include <limits>
 #include <memory>
 #include <string>
@@ -1726,7 +1727,12 @@ void Context::onGrpcCloseWrapper(uint32_t token, const Grpc::Status::GrpcStatus&
   if (isGrpcCallToken(token)) {
     grpc_call_request_.erase(token);
   } else {
-    grpc_stream_.erase(token);
+    auto it = grpc_stream_.find(token);
+    if (it != grpc_stream_.end()) {
+      if (it->second.local_closed_) {
+        grpc_stream_.erase(token);
+      }
+    }
   }
 }
 
@@ -1738,7 +1744,7 @@ WasmResult Context::grpcSend(uint32_t token, absl::string_view message, bool end
   if (it == grpc_stream_.end()) {
     return WasmResult::NotFound;
   }
-  if (it != grpc_stream_.end() && it->second.stream_) {
+  if (it->second.stream_) {
     it->second.stream_->sendMessageRaw(::Envoy::Buffer::InstancePtr(new ::Envoy::Buffer::OwnedImpl(
                                            message.data(), message.size())),
                                        end_stream);
@@ -1764,7 +1770,11 @@ WasmResult Context::grpcClose(uint32_t token) {
     if (it->second.stream_) {
       it->second.stream_->closeStream();
     }
-    grpc_stream_.erase(token);
+    if (it->second.remote_closed_) {
+      grpc_stream_.erase(token);
+    } else {
+      it->second.local_closed_ = true;
+    }
   }
   return WasmResult::Ok;
 }
@@ -1775,7 +1785,7 @@ WasmResult Context::grpcCancel(uint32_t token) {
     if (it == grpc_call_request_.end()) {
       return WasmResult::NotFound;
     }
-    if (it != grpc_call_request_.end() && it->second.request_) {
+    if (it->second.request_) {
       it->second.request_->cancel();
     }
     grpc_call_request_.erase(token);
@@ -1784,7 +1794,7 @@ WasmResult Context::grpcCancel(uint32_t token) {
     if (it == grpc_stream_.end()) {
       return WasmResult::NotFound;
     }
-    if (it != grpc_stream_.end() && it->second.stream_) {
+    if (it->second.stream_) {
       it->second.stream_->resetStream();
     }
     grpc_stream_.erase(token);

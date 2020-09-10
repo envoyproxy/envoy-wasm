@@ -32,25 +32,39 @@ class MyGrpcStreamHandler
 public:
   MyGrpcStreamHandler() : GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value>() {}
   void onReceiveInitialMetadata(uint32_t) override {
-    auto h = getHeaderMapValue(WasmHeaderMapType::GrpcReceiveInitialMetadata, "foo");
+    auto h = getHeaderMapValue(WasmHeaderMapType::GrpcReceiveInitialMetadata, "test");
+    if (h->view() == "reset") {
+      reset();
+      return;
+    }
+    // Not Found.
     h = getHeaderMapValue(WasmHeaderMapType::HttpCallResponseHeaders, "foo");
     h = getHeaderMapValue(WasmHeaderMapType::HttpCallResponseTrailers, "foo");
     addHeaderMapValue(WasmHeaderMapType::GrpcReceiveInitialMetadata, "foo", "bar");
+  }
+  void onReceive(size_t body_size) override {
+    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
+    auto response_string = response->proto<google::protobuf::Value>().string_value();
+    logDebug(std::string("response ") + response_string);
+    google::protobuf::Value message;
+    if (response_string == "close") {
+      close();
+    } else {
+      send(message, false);
+    }
   }
   void onReceiveTrailingMetadata(uint32_t) override {
     auto h = getHeaderMapValue(WasmHeaderMapType::GrpcReceiveTrailingMetadata, "foo");
     addHeaderMapValue(WasmHeaderMapType::GrpcReceiveTrailingMetadata, "foo", "bar");
   }
-  void onReceive(size_t body_size) override {
-    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
-    logDebug(response->proto<google::protobuf::Value>().string_value());
-    google::protobuf::Value message;
-    send(message, false);
-  }
   void onRemoteClose(GrpcStatus) override {
     auto p = getStatus();
-    logDebug(std::string("failure ") + std::string(p.second->view()));
-    close();
+    logDebug(std::string("close ") + std::string(p.second->view()));
+    if (p.second->view() == "close") {
+      close();
+    } else {
+      reset();
+    }
   }
 };
 

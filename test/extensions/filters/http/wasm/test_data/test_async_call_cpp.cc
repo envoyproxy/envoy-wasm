@@ -62,6 +62,7 @@ FilterHeadersStatus AsyncCallContext::onRequestHeaders(uint32_t, bool) {
   }
   root()->httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}},
                    "hello world", {{"trail", "cow"}}, 1000, callback);
+  logInfo("onRequestHeaders");
   return FilterHeadersStatus::StopIteration;
 }
 

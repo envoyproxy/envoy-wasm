@@ -368,6 +368,7 @@ protected:
       context_->onGrpcReceiveTrailingMetadataWrapper(token_, std::move(metadata));
     }
     void onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) override {
+      remote_closed_ = true;
       context_->onGrpcCloseWrapper(token_, status, message);
     }
 
@@ -375,6 +376,8 @@ protected:
     uint32_t token_;
     Grpc::RawAsyncClientPtr client_;
     Grpc::RawAsyncStream* stream_;
+    bool local_closed_ = false;
+    bool remote_closed_ = false;
   };
 
   void onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&& response);

@@ -21,6 +21,7 @@ impl HttpContext for TestStream {
             Duration::from_secs(5),
         )
         .unwrap();
+        info!("onRequestHeaders");
         Action::Pause
     }
 }
