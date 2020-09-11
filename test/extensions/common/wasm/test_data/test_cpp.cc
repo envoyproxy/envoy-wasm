@@ -148,6 +148,9 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
       message = std::string("get histogram = Unsupported");
       proxy_log(LogLevel::error, message.c_str(), message.size());
     }
+    // Negative.
+    CHECK_RESULT_NOT_OK(proxy_increment_metric(c, -1));
+    CHECK_RESULT(proxy_increment_metric(g, -1));
   } else if (configuration == "foreign") {
     std::string function = "compress";
     char* compressed = nullptr;

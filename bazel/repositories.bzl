@@ -844,11 +844,7 @@ def _upb():
     )
 
 def _proxy_wasm_cpp_sdk():
-    #_repository_impl(name = "proxy_wasm_cpp_sdk")
-    native.local_repository(
-        name = "proxy_wasm_cpp_sdk",
-        path = "/home/jplev_google_com/src/proxy-wasm-cpp-sdk",
-    )
+    _repository_impl(name = "proxy_wasm_cpp_sdk")
 
 def _proxy_wasm_cpp_host():
     _repository_impl(

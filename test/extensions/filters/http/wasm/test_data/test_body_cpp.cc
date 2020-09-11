@@ -59,13 +59,13 @@ FilterDataStatus BodyContext::onBody(WasmBufferType type, size_t buffer_length,
     getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
     auto updated = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
     logError("onBody " + std::string(updated->view()));
-
+    return FilterDataStatus::StopIterationNoBuffer;
   } else if (body_op_ == "ReplaceBody") {
     setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "replace");
     getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
     auto replaced = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
     logError("onBody " + std::string(replaced->view()));
-
+    return FilterDataStatus::StopIterationAndWatermark;
   } else if (body_op_ == "RemoveBody") {
     setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "");
     getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);

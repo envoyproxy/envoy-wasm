@@ -107,7 +107,7 @@ TEST_P(WasmCommonTest, EnvoyWasm) {
   Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
   auto wasm = std::make_shared<WasmHandle>(
-      std::make_unique<Wasm>("", "", "", "", scope, cluster_manager, *dispatcher));
+      std::make_unique<Wasm>("", "", "vm_configuration", "", scope, cluster_manager, *dispatcher));
   auto wasm_base = std::dynamic_pointer_cast<proxy_wasm::WasmHandleBase>(wasm);
   wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::UnableToCreateVM);
   EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::UnableToCreateVM);
@@ -183,6 +183,10 @@ TEST_P(WasmCommonTest, Logging) {
       });
 
   auto root_context = static_cast<TestContext*>(wasm_weak.lock()->start(plugin));
+  EXPECT_EQ(root_context->getConfiguration(), "logging");
+  if (GetParam() != "null") {
+    EXPECT_TRUE(root_context->validateConfiguration("", plugin));
+  }
   wasm_weak.lock()->configure(root_context, plugin);
   EXPECT_EQ(root_context->getStatus().first, 0);
 

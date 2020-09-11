@@ -122,6 +122,9 @@ TEST_P(WasmHttpFilterTest, HeadersOnlyRequestHeadersOnly) {
             proxy_wasm::WasmResult::BadArgument);
   EXPECT_EQ(filter().closeStream(static_cast<proxy_wasm::WasmStreamType>(9999)),
             proxy_wasm::WasmResult::BadArgument);
+  Http::TestResponseHeaderMapImpl response_headers;
+  EXPECT_EQ(filter().encode100ContinueHeaders(response_headers),
+            Http::FilterHeadersStatus::Continue);
   filter().onDestroy();
 }
 
@@ -164,6 +167,9 @@ TEST_P(WasmHttpFilterTest, AllHeadersAndTrailersNotStarted) {
   EXPECT_EQ(Http::FilterTrailersStatus::Continue, filter().encodeTrailers(response_trailers));
   Http::MetadataMap response_metadata{};
   EXPECT_EQ(Http::FilterMetadataStatus::Continue, filter().encodeMetadata(response_metadata));
+  Buffer::OwnedImpl data("data");
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, false));
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data, false));
   filter().onDestroy();
 }
 
@@ -290,11 +296,21 @@ TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBody) {
   setupFilter("body");
   EXPECT_CALL(filter(),
               log_(spdlog::level::err, Eq(absl::string_view("onBody prepend.hello.append"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::err,
+                             Eq(absl::string_view("onBody prepend.prepend.hello.append.append"))));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "PrependAndAppendToBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  if (std::get<1>(GetParam()) == "rust") {
+    EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+    EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data, true));
+  } else {
+    // This status is not availble in the rust SDK.
+    // TODO: update all SDKs to the new revision of the spec and update the tests accordingly.
+    EXPECT_EQ(Http::FilterDataStatus::StopIterationNoBuffer, filter().decodeData(data, true));
+    EXPECT_EQ(Http::FilterDataStatus::StopIterationNoBuffer, filter().encodeData(data, true));
+  }
   filter().onDestroy();
 }
 
@@ -302,12 +318,20 @@ TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBody) {
 TEST_P(WasmHttpFilterTest, BodyRequestReplaceBody) {
   setupTest("body");
   setupFilter("body");
-  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody replace"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::err, Eq(absl::string_view("onBody replace")))).Times(2);
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"},
                                                  {"x-test-operation", "ReplaceBody"}};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
   Buffer::OwnedImpl data("hello");
-  EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+  if (std::get<1>(GetParam()) == "rust") {
+    EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
+    EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data, true));
+  } else {
+    // This status is not availble in the rust SDK.
+    // TODO: update all SDKs to the new revision of the spec and update the tests accordingly.
+    EXPECT_EQ(Http::FilterDataStatus::StopIterationAndWatermark, filter().decodeData(data, true));
+    EXPECT_EQ(Http::FilterDataStatus::StopIterationAndWatermark, filter().encodeData(data, true));
+  }
   filter().onDestroy();
 }
 
@@ -565,21 +589,21 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
 
   EXPECT_CALL(filter(), log_(spdlog::level::debug, Eq("response")));
   EXPECT_CALL(filter(), log_(spdlog::level::info, Eq(":status -> 200")));
-  EXPECT_CALL(filter(), log_(spdlog::level::info, Eq("onRequestHeaders")));
+  EXPECT_CALL(filter(), log_(spdlog::level::info, Eq("onRequestHeaders")))
+      .WillOnce(Invoke([&](uint32_t, absl::string_view) -> proxy_wasm::WasmResult {
+        Http::ResponseMessagePtr response_message(new Http::ResponseMessageImpl(
+            Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
+        response_message->body() = std::make_unique<Buffer::OwnedImpl>("response");
+        NiceMock<Tracing::MockSpan> span;
+        Http::TestResponseHeaderMapImpl response_header{{":status", "200"}};
+        callbacks->onBeforeFinalizeUpstreamSpan(span, &response_header);
+        callbacks->onSuccess(request, std::move(response_message));
+        return proxy_wasm::WasmResult::Ok;
+      }));
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter().decodeHeaders(request_headers, false));
 
-  Http::ResponseMessagePtr response_message(new Http::ResponseMessageImpl(
-      Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-  response_message->body() = std::make_unique<Buffer::OwnedImpl>("response");
-
   EXPECT_NE(callbacks, nullptr);
-  if (callbacks) {
-    NiceMock<Tracing::MockSpan> span;
-    Http::TestResponseHeaderMapImpl response_header{{":status", "200"}};
-    callbacks->onBeforeFinalizeUpstreamSpan(span, &response_header);
-    callbacks->onSuccess(request, std::move(response_message));
-  }
 }
 
 TEST_P(WasmHttpFilterTest, AsyncCallFailure) {
