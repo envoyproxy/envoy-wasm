@@ -306,7 +306,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestPrependAndAppendToBody) {
     EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
     EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data, true));
   } else {
-    // This status is not availble in the rust SDK.
+    // This status is not available in the rust SDK.
     // TODO: update all SDKs to the new revision of the spec and update the tests accordingly.
     EXPECT_EQ(Http::FilterDataStatus::StopIterationNoBuffer, filter().decodeData(data, true));
     EXPECT_EQ(Http::FilterDataStatus::StopIterationNoBuffer, filter().encodeData(data, true));
@@ -327,7 +327,7 @@ TEST_P(WasmHttpFilterTest, BodyRequestReplaceBody) {
     EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
     EXPECT_EQ(Http::FilterDataStatus::Continue, filter().encodeData(data, true));
   } else {
-    // This status is not availble in the rust SDK.
+    // This status is not available in the rust SDK.
     // TODO: update all SDKs to the new revision of the spec and update the tests accordingly.
     EXPECT_EQ(Http::FilterDataStatus::StopIterationAndWatermark, filter().decodeData(data, true));
     EXPECT_EQ(Http::FilterDataStatus::StopIterationAndWatermark, filter().encodeData(data, true));
