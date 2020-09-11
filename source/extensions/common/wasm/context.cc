@@ -371,6 +371,7 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
         return WasmResult::SerializationFailure;
       }
     }
+    fprintf(stderr, "mashalPairs map %lu %p\n", result->size(), result->data());
     result->resize(proxy_wasm::exports::pairsSize(pairs));
     fprintf(stderr, "mashalPairs map %p\n", result->data());
     proxy_wasm::exports::marshalPairs(pairs, result->data());
@@ -384,6 +385,7 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
         return WasmResult::SerializationFailure;
       }
     }
+    fprintf(stderr, "mashalPairs list %lu %p\n", result->size(), result->data());
     result->resize(proxy_wasm::exports::pairsSize(pairs));
     fprintf(stderr, "mashalPairs list %p\n", result->data());
     proxy_wasm::exports::marshalPairs(pairs, result->data());
