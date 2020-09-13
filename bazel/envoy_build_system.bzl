@@ -19,8 +19,10 @@ load(
     _envoy_select_google_grpc = "envoy_select_google_grpc",
     _envoy_select_hot_restart = "envoy_select_hot_restart",
     _envoy_select_new_codecs_in_integration_tests = "envoy_select_new_codecs_in_integration_tests",
+    _envoy_select_wasm = "envoy_select_wasm",
+    _envoy_select_wasm_all_v8_wavm_none = "envoy_select_wasm_all_v8_wavm_none",
+    _envoy_select_wasm_v8 = "envoy_select_wasm_v8",
     _envoy_select_wasm_wavm = "envoy_select_wasm_wavm",
-    _envoy_select_wasm_wavm_or = "envoy_select_wasm_wavm_or",
 )
 load(
     ":envoy_test.bzl",
@@ -34,14 +36,16 @@ load(
     _envoy_py_test_binary = "envoy_py_test_binary",
     _envoy_sh_test = "envoy_sh_test",
 )
+load(
+    "@envoy_build_config//:extensions_build_config.bzl",
+    "EXTENSION_PACKAGE_VISIBILITY",
+)
 
 def envoy_package():
     native.package(default_visibility = ["//visibility:public"])
 
 def envoy_extension_package():
-    # TODO(rgs1): revert this to //:extension_library once
-    # https://github.com/envoyproxy/envoy/issues/12444 is fixed.
-    native.package(default_visibility = ["//visibility:public"])
+    native.package(default_visibility = EXTENSION_PACKAGE_VISIBILITY)
 
 # A genrule variant that can output a directory. This is useful when doing things like
 # generating a fuzz corpus mechanically.
@@ -106,8 +110,8 @@ def envoy_cmake_external(
     cmake_external(
         name = name,
         cache_entries = select({
-            "@envoy//bazel:opt_build": cache_entries,
-            "//conditions:default": cache_entries_debug,
+            "@envoy//bazel:dbg_build": cache_entries_debug,
+            "//conditions:default": cache_entries,
         }),
         cmake_options = cmake_options,
         # TODO(lizan): Make this always true
@@ -176,8 +180,10 @@ def envoy_google_grpc_external_deps():
 envoy_select_boringssl = _envoy_select_boringssl
 envoy_select_google_grpc = _envoy_select_google_grpc
 envoy_select_hot_restart = _envoy_select_hot_restart
+envoy_select_wasm = _envoy_select_wasm
+envoy_select_wasm_all_v8_wavm_none = _envoy_select_wasm_all_v8_wavm_none
 envoy_select_wasm_wavm = _envoy_select_wasm_wavm
-envoy_select_wasm_wavm_or = _envoy_select_wasm_wavm_or
+envoy_select_wasm_v8 = _envoy_select_wasm_v8
 envoy_select_new_codecs_in_integration_tests = _envoy_select_new_codecs_in_integration_tests
 
 # Binary wrappers (from envoy_binary.bzl)

@@ -95,9 +95,10 @@ void EnvoyWasm::onRemoteCacheEntriesChanged(int entries) {
 }
 
 void EnvoyWasm::createStats(const Stats::ScopeSharedPtr& scope, const PluginSharedPtr&) {
-  if (!create_wasm_stats_)
-    create_wasm_stats_.reset(new CreateWasmStats{CREATE_WASM_STATS(
+  if (!create_wasm_stats_) {
+    create_wasm_stats_.reset(new CreateWasmStats{CREATE_WASM_STATS( // NOLINT
         POOL_COUNTER_PREFIX(*scope, "wasm."), POOL_GAUGE_PREFIX(*scope, "wasm."))});
+  }
 }
 
 void EnvoyWasm::resetStats() { create_wasm_stats_.reset(); }

@@ -11,12 +11,12 @@
 #include "gtest/gtest.h"
 #include "include/proxy-wasm/null_vm_plugin.h"
 
-using proxy_wasm::Cloneable;
-using proxy_wasm::WasmCallVoid;
-using proxy_wasm::WasmCallWord;
-using proxy_wasm::Word;
-using testing::HasSubstr;
-using testing::Return;
+using proxy_wasm::Cloneable;    // NOLINT
+using proxy_wasm::WasmCallVoid; // NOLINT
+using proxy_wasm::WasmCallWord; // NOLINT
+using proxy_wasm::Word;         // NOLINT
+using testing::HasSubstr;       // NOLINT
+using testing::Return;          // NOLINT
 
 namespace Envoy {
 namespace Extensions {
@@ -63,6 +63,10 @@ TEST_F(BaseVmTest, NullVmStartup) {
   auto wasm_vm_clone = wasm_vm->clone();
   EXPECT_TRUE(wasm_vm_clone != nullptr);
   EXPECT_TRUE(wasm_vm->getCustomSection("user").empty());
+  EXPECT_EQ(getEnvoyWasmIntegration(*wasm_vm).runtime(), "envoy.wasm.runtime.null");
+  std::function<void()> f;
+  EXPECT_FALSE(
+      getEnvoyWasmIntegration(*wasm_vm).getNullVmFunction("bad_function", false, 0, nullptr, &f));
 }
 
 TEST_F(BaseVmTest, NullVmMemory) {
@@ -100,6 +104,7 @@ public:
   MOCK_METHOD(uint32_t, random, (), (const));
 };
 
+#if defined(ENVOY_WASM_V8)
 MockHostFunctions* g_host_functions;
 
 void pong(void*, Word value) { g_host_functions->pong(convertWordToUint32(value)); }
@@ -311,6 +316,7 @@ TEST_P(WasmVmTest, V8Memory) {
   EXPECT_FALSE(wasm_vm->setWord(1024 * 1024 /* out of bound */, 1));
   EXPECT_FALSE(wasm_vm->getWord(1024 * 1024 /* out of bound */, &word));
 }
+#endif
 
 } // namespace
 } // namespace Wasm

@@ -42,6 +42,9 @@
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
 
+using proxy_wasm::MetricType;
+using proxy_wasm::Word;
+
 namespace Envoy {
 namespace Extensions {
 namespace Common {
@@ -435,10 +438,7 @@ Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) co
       } else {
         return {};
       }
-      if (last) {
-        return CelValue::CreateBytes(&state->value());
-      }
-      return state->exprValue(arena);
+      return state->exprValue(arena, last);
     }
     return {};
   }
@@ -923,7 +923,7 @@ WasmResult Context::grpcCall(absl::string_view grpc_service, absl::string_view s
     return WasmResult::ParseFailure;
   }
   auto token = next_grpc_token_++;
-  if (IsGrpcStreamToken(token)) {
+  if (isGrpcStreamToken(token)) {
     token = next_grpc_token_++;
   }
   // Handle rollover.
@@ -974,7 +974,7 @@ WasmResult Context::grpcStream(absl::string_view grpc_service, absl::string_view
     return WasmResult::ParseFailure;
   }
   auto token = next_grpc_token_++;
-  if (IsGrpcCallToken(token)) {
+  if (isGrpcCallToken(token)) {
     token = next_grpc_token_++;
   }
   // Handle rollover.
@@ -1080,7 +1080,7 @@ WasmResult Context::setProperty(absl::string_view path, absl::string_view value)
     const auto& it = rootContext()->state_prototypes_.find(path);
     const WasmStatePrototype& prototype = it == rootContext()->state_prototypes_.end()
                                               ? DefaultWasmStatePrototype::get()
-                                              : *it->second.get();
+                                              : *it->second.get(); // NOLINT
     auto state_ptr = std::make_unique<WasmState>(prototype);
     state = state_ptr.get();
     stream_info->filterState()->setData(key, std::move(state_ptr),
@@ -1708,7 +1708,7 @@ void Context::onGrpcReceiveWrapper(uint32_t token, ::Envoy::Buffer::InstancePtr 
     ContextBase::onGrpcReceive(token, response_size);
     grpc_receive_buffer_.reset();
   }
-  if (IsGrpcCallToken(token)) {
+  if (isGrpcCallToken(token)) {
     grpc_call_request_.erase(token);
   }
 }
@@ -1728,7 +1728,7 @@ void Context::onGrpcCloseWrapper(uint32_t token, const Grpc::Status::GrpcStatus&
     onGrpcClose(token, status_code_);
     status_message_ = "";
   }
-  if (IsGrpcCallToken(token)) {
+  if (isGrpcCallToken(token)) {
     grpc_call_request_.erase(token);
   } else {
     grpc_stream_.erase(token);
@@ -1736,7 +1736,7 @@ void Context::onGrpcCloseWrapper(uint32_t token, const Grpc::Status::GrpcStatus&
 }
 
 WasmResult Context::grpcSend(uint32_t token, absl::string_view message, bool end_stream) {
-  if (IsGrpcCallToken(token)) {
+  if (isGrpcCallToken(token)) {
     return WasmResult::BadArgument;
   }
   auto it = grpc_stream_.find(token);
@@ -1752,7 +1752,7 @@ WasmResult Context::grpcSend(uint32_t token, absl::string_view message, bool end
 }
 
 WasmResult Context::grpcClose(uint32_t token) {
-  if (IsGrpcCallToken(token)) {
+  if (isGrpcCallToken(token)) {
     auto it = grpc_call_request_.find(token);
     if (it == grpc_call_request_.end()) {
       return WasmResult::NotFound;
@@ -1775,7 +1775,7 @@ WasmResult Context::grpcClose(uint32_t token) {
 }
 
 WasmResult Context::grpcCancel(uint32_t token) {
-  if (IsGrpcCallToken(token)) {
+  if (isGrpcCallToken(token)) {
     auto it = grpc_call_request_.find(token);
     if (it == grpc_call_request_.end()) {
       return WasmResult::NotFound;

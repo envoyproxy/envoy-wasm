@@ -32,6 +32,7 @@ namespace Common {
 namespace Wasm {
 
 #define MOCK_CONTEXT_LOG_                                                                          \
+  using Context::log;                                                                              \
   proxy_wasm::WasmResult log(uint32_t level, absl::string_view message) override {                 \
     log_(static_cast<spdlog::level::level_enum>(level), message);                                  \
     return proxy_wasm::WasmResult::Ok;                                                             \
@@ -40,10 +41,12 @@ namespace Wasm {
 
 template <typename Base = testing::Test> class WasmTestBase : public Base {
 public:
+  // NOLINTNEXTLINE(readability-identifier-naming)
   void SetUp() override { clearCodeCacheForTesting(); }
 
   void setupBase(const std::string& runtime, const std::string& code, CreateContextFn create_root,
-                 std::string root_id = "", std::string vm_configuration = "") {
+                 std::string root_id = "", std::string vm_configuration = "",
+                 std::string plugin_configuration = "") {
     envoy::extensions::wasm::v3::VmConfig vm_config;
     vm_config.set_vm_id("vm_id");
     vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", runtime));
@@ -53,9 +56,8 @@ public:
     vm_config.mutable_code()->mutable_local()->set_inline_bytes(code);
     Api::ApiPtr api = Api::createApiForTest(stats_store_);
     scope_ = Stats::ScopeSharedPtr(stats_store_.createScope("wasm."));
-    auto name = "";
+    auto name = "plugin_name";
     auto vm_id = "";
-    auto plugin_configuration = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
         name, root_id, vm_id, runtime, plugin_configuration, false,
         envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
@@ -75,7 +77,7 @@ public:
   }
 
   WasmHandleSharedPtr& wasm() { return wasm_; }
-  Context* root_context() { return root_context_; }
+  Context* rootContext() { return root_context_; }
 
   Stats::IsolatedStoreImpl stats_store_;
   Stats::ScopeSharedPtr scope_;

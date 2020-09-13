@@ -1,6 +1,12 @@
 // NOLINT(namespace-envoy)
 #pragma once
 
+// Note that this file is included in emscripten and NullVM environments and thus depends on
+// the context in which it is included, hence we need to disable clang-tidy warnings.
+
+extern "C" WasmResult envoy_resolve_dns(const char* dns_address, size_t dns_address_size,
+                                        uint32_t* token);
+
 class EnvoyContextBase {
 public:
   virtual ~EnvoyContextBase() = default;
@@ -125,3 +131,4 @@ inline StatResult parseStatResults(std::string_view data) {
 // Tracing
 extern "C" WasmResult envoy_set_active_span_tag(const char* key_ptr, size_t key_size,
                                                 const char* value_ptr, size_t value_size);
+extern "C" WasmResult envoy_resolve_dns(const char* address, size_t address_size, uint32_t* token);

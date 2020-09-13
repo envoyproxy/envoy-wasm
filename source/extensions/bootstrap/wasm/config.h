@@ -32,7 +32,7 @@ using CreateWasmServiceCallback = std::function<void(WasmServicePtr)>;
 class WasmFactory : public Server::Configuration::BootstrapExtensionFactory,
                     Logger::Loggable<Logger::Id::wasm> {
 public:
-  virtual ~WasmFactory() = default;
+  ~WasmFactory() override = default;
   std::string name() const override { return "envoy.bootstrap.wasm"; }
   void createWasm(const envoy::extensions::wasm::v3::WasmService& config,
                   Server::Configuration::ServerFactoryContext& context,

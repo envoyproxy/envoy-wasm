@@ -1,6 +1,8 @@
 // NOLINT(namespace-envoy)
-#include <unistd.h>
+#ifndef WIN32
+#include "unistd.h"
 
+#endif
 #include <cerrno>
 #include <cmath>
 #include <cstdio>
@@ -19,6 +21,7 @@ START_WASM_PLUGIN(CommonWasmTestCpp)
 static int* badptr = nullptr;
 static float gNan = std::nan("1");
 static float gInfinity = INFINITY;
+volatile double zero_unbeknownst_to_the_compiler = 0.0;
 
 #ifndef CHECK_RESULT
 #define CHECK_RESULT(_c)                                                                           \
@@ -71,17 +74,15 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     std::string message = "before div by zero";
     proxy_log(LogLevel::error, message.c_str(), message.size());
     ::free(const_cast<void*>(reinterpret_cast<const void*>(configuration_ptr)));
-#pragma clang optimize off
-    int zero = context_id / 1000;
+    int zero = context_id & 0x100000;
     message = "divide by zero: " + std::to_string(100 / zero);
-#pragma clang optimize on
     proxy_log(LogLevel::error, message.c_str(), message.size());
   } else if (configuration == "globals") {
     std::string message = "NaN " + std::to_string(gNan);
     proxy_log(LogLevel::warn, message.c_str(), message.size());
     message = "inf " + std::to_string(gInfinity);
     proxy_log(LogLevel::warn, message.c_str(), message.size());
-    message = "inf " + std::to_string(1.0 / 0.0);
+    message = "inf " + std::to_string(1.0 / zero_unbeknownst_to_the_compiler);
     proxy_log(LogLevel::warn, message.c_str(), message.size());
     message = std::string("inf ") + (std::isinf(gInfinity) ? "inf" : "nan");
     proxy_log(LogLevel::warn, message.c_str(), message.size());
@@ -145,7 +146,7 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     ::free(compressed);
     ::free(result);
   } else if (configuration == "WASI") {
-    // These checks depend on Emscripten's support for WASI and will only
+    // These checks depend on Emscripten's support for `WASI` and will only
     // work if invoked on a "real" Wasm VM.
     int err = fprintf(stdout, "WASI write to stdout\n");
     if (err < 0) {
@@ -166,7 +167,8 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     if (pathenv != nullptr) {
       FAIL_NOW("PATH environment variable should not be available");
     }
-    // Exercise the WASI `fd_fdstat_get` a little bit
+#ifndef WIN32
+    // Exercise the `WASI` `fd_fdstat_get` a little bit
     int tty = isatty(1);
     if (errno != ENOTTY || tty != 0) {
       FAIL_NOW("stdout is not a tty");
@@ -179,6 +181,7 @@ WASM_EXPORT(uint32_t, proxy_on_vm_start, (uint32_t context_id, uint32_t configur
     if (errno != EBADF || tty != 0) {
       FAIL_NOW("isatty errors on bad fds. errno = " + std::to_string(errno));
     }
+#endif
   } else if (configuration == "on_foreign") {
     std::string message = "on_foreign start";
     proxy_log(LogLevel::debug, message.c_str(), message.size());

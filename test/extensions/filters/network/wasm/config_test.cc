@@ -55,12 +55,17 @@ protected:
   Event::TimerCb retry_timer_cb_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterConfigTest,
-                         testing::Values("v8",
-#if defined(ENVOY_WASM_WAVM)
-                                         "wavm",
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
+#if defined(ENVOY_WASM_V8)
+    "v8",
 #endif
-                                         "null"));
+#if defined(ENVOY_WASM_WAVM)
+    "wavm",
+#endif
+    "null");
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNetworkFilterConfigTest, testing_values);
 
 TEST_P(WasmNetworkFilterConfigTest, YamlLoadFromFileWasm) {
   if (GetParam() == "null") {

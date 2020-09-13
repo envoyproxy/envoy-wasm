@@ -39,13 +39,12 @@ public:
   WasmStatePrototype(bool readonly, WasmType type, absl::string_view schema,
                      StreamInfo::FilterState::LifeSpan life_span)
       : readonly_(readonly), type_(type), schema_(schema), life_span_(life_span) {}
-  WasmStatePrototype()
-      : readonly_(false), type_(WasmType::Bytes), schema_(""),
-        life_span_(StreamInfo::FilterState::LifeSpan::FilterChain) {}
-  const bool readonly_;
-  const WasmType type_;
-  const std::string schema_;
-  const StreamInfo::FilterState::LifeSpan life_span_;
+  WasmStatePrototype() = default;
+  const bool readonly_{false};
+  const WasmType type_{WasmType::Bytes};
+  const std::string schema_{""};
+  const StreamInfo::FilterState::LifeSpan life_span_{
+      StreamInfo::FilterState::LifeSpan::FilterChain};
 };
 
 using DefaultWasmStatePrototype = ConstSingleton<WasmStatePrototype>;
@@ -57,7 +56,11 @@ public:
       : readonly_(proto.readonly_), type_(proto.type_), schema_(proto.schema_) {}
 
   const std::string& value() const { return value_; }
-  google::api::expr::runtime::CelValue exprValue(Protobuf::Arena* arena) const;
+
+  // Create a value from the state, given an arena. Last argument indicates whether the value
+  // is de-referenced.
+  google::api::expr::runtime::CelValue exprValue(Protobuf::Arena* arena, bool last) const;
+
   bool setValue(absl::string_view value) {
     if (initialized_ && readonly_) {
       return false;

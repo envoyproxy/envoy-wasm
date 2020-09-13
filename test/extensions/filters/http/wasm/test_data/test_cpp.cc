@@ -23,6 +23,7 @@ public:
   bool onStart(size_t configuration_size) override;
   void onTick() override;
   void onQueueReady(uint32_t token) override;
+  bool onConfigure(size_t) override;
 
   std::string test_;
   uint32_t stream_context_id_;
@@ -34,7 +35,9 @@ public:
   explicit TestContext(uint32_t id, RootContext* root) : Context(id, root) {}
 
   FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
+  FilterTrailersStatus onRequestTrailers(uint32_t) override;
   FilterHeadersStatus onResponseHeaders(uint32_t, bool) override;
+  FilterTrailersStatus onResponseTrailers(uint32_t) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
@@ -94,6 +97,53 @@ bool TestRootContext::onStart(size_t configuration_size) {
   test_ = getBufferBytes(WasmBufferType::VmConfiguration, 0, configuration_size)->toString();
   if (test_ == "shared_queue") {
     CHECK_RESULT(registerSharedQueue("my_shared_queue", &shared_queue_token_));
+  }
+  return true;
+}
+
+bool TestRootContext::onConfigure(size_t) {
+  if (test_ == "property") {
+    {
+      // Many properties are not available in the root context.
+      const std::vector<std::string> properties = {
+        "string_state",
+        "metadata",
+        "request",
+        "response",
+        "connection",
+        "connection_id",
+        "upstream",
+        "source",
+        "destination",
+        "cluster_name",
+        "cluster_metadata",
+        "route_name",
+        "route_metadata",
+      };
+      for (const auto& property : properties) {
+        if (getProperty({property}).has_value()) {
+          logWarn("getProperty should not return a value in the root context");
+        }
+      }
+    }
+    {
+      // Some properties are defined in the root context.
+      std::vector<std::pair<std::vector<std::string>, std::string>> properties = {
+        {{"plugin_name"}, "plugin_name"},
+        {{"plugin_vm_id"}, "vm_id"},
+        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+        {{"listener_metadata"}, ""},
+      };
+      for (const auto& property : properties) {
+        std::string value;
+        if (!getValue(property.first, &value)) {
+          logWarn("getValue should provide a value in the root context: " + property.second);
+        }
+        if (value != property.second) {
+          logWarn("getValue returned " + value + ", expect " + property.second);
+        }
+      }
+    }
   }
   return true;
 }
@@ -181,6 +231,7 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     }
 
     {
+      // Validate a valid CEL expression
       const std::string expr = R"(
   envoy.api.v2.core.GrpcService{
     envoy_grpc: envoy.api.v2.core.GrpcService.EnvoyGrpc {
@@ -203,11 +254,76 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
       }
     }
 
-    int64_t dur;
-    if (getValue({"request", "duration"}, &dur)) {
-      logInfo("duration is " + std::to_string(dur));
-    } else {
-      logError("failed to get request duration");
+    {
+      // Create a syntactically wrong CEL expression
+      uint32_t token = 0;
+      if (createExpression("/ /", &token) != WasmResult::BadArgument) {
+        logError("expect an error on a syntactically wrong expressions");
+      }
+    }
+
+    {
+      // Create an invalid CEL expression
+      uint32_t token = 0;
+      if (createExpression("_&&_(a, b, c)", &token) != WasmResult::BadArgument) {
+        logError("expect an error on invalid expressions");
+      }
+    }
+
+    {
+      // Evaluate a bad token
+      std::string result;
+      uint64_t token = 0;
+      if (evaluateExpression(token, &result)) {
+        logError("expect an error on invalid token in evaluate");
+      }
+    }
+
+    {
+      // Evaluate a missing token
+      std::string result;
+      uint32_t token = 0xFFFFFFFF;
+      if (evaluateExpression(token, &result)) {
+        logError("expect an error on unknown token in evaluate");
+      }
+      // Delete a missing token
+      if (exprDelete(token) != WasmResult::Ok) {
+        logError("expect no error on unknown token in delete expression");
+      }
+    }
+
+    {
+      // Evaluate two expressions to an error
+      uint32_t token1 = 0;
+      if (createExpression("1/0", &token1) != WasmResult::Ok) {
+        logError("unexpected error on division by zero expression");
+      }
+      uint32_t token2 = 0;
+      if (createExpression("request.duration.size", &token2) != WasmResult::Ok) {
+        logError("unexpected error on integer field access expression");
+      }
+      std::string result;
+      if (evaluateExpression(token1, &result)) {
+        logError("expect an error on division by zero");
+      }
+      if (evaluateExpression(token2, &result)) {
+        logError("expect an error on integer field access expression");
+      }
+      if (exprDelete(token1) != WasmResult::Ok) {
+        logError("failed to delete an expression");
+      }
+      if (exprDelete(token2) != WasmResult::Ok) {
+        logError("failed to delete an expression");
+      }
+    }
+
+    {
+      int64_t dur;
+      if (getValue({"request", "duration"}, &dur)) {
+        logInfo("duration is " + std::to_string(dur));
+      } else {
+        logError("failed to get request duration");
+      }
     }
 
     return FilterHeadersStatus::Continue;
@@ -246,8 +362,42 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     std::string tag_value = "tag_value_1";
     envoy_set_active_span_tag(tag_key.c_str(), tag_key.size(), tag_value.c_str(), tag_value.size());
     return FilterHeadersStatus::Continue;
+  } else if (test == "grpc_stream") {
+    GrpcService grpc_service;
+    grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
+    std::string grpc_service_string;
+    grpc_service.SerializeToString(&grpc_service_string);
+    HeaderStringPairs initial_metadata;
+    root()->grpcStreamHandler(grpc_service_string, "service", "method", initial_metadata,
+                              std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler()));
+    return FilterHeadersStatus::StopIteration;
   }
   return FilterHeadersStatus::Continue;
+}
+
+FilterTrailersStatus TestContext::onRequestTrailers(uint32_t) {
+  auto request_trailer = getRequestTrailer("bogus-trailer");
+  if (request_trailer && request_trailer->view() != "") {
+    logWarn("request bogus-trailer found");
+  }
+  CHECK_RESULT(replaceRequestTrailer("new-trailer", "value"));
+  CHECK_RESULT(removeRequestTrailer("x"));
+  // Not available yet.
+  replaceResponseTrailer("new-trailer", "value");
+  auto response_trailer = getResponseTrailer("bogus-trailer");
+  if (response_trailer && response_trailer->view() != "") {
+    logWarn("request bogus-trailer found");
+  }
+  return FilterTrailersStatus::Continue;
+}
+
+FilterTrailersStatus TestContext::onResponseTrailers(uint32_t) {
+  auto value = getResponseTrailer("bogus-trailer");
+  if (value && value->view() != "") {
+    logWarn("response bogus-trailer found");
+  }
+  CHECK_RESULT(replaceResponseTrailer("new-trailer", "value"));
+  return FilterTrailersStatus::Continue;
 }
 
 // Currently unused.
@@ -289,6 +439,7 @@ FilterHeadersStatus TestContext::onResponseHeaders(uint32_t, bool) {
   auto test = root()->test_;
   if (test == "body") {
     body_op_ = getResponseHeader("x-test-operation")->toString();
+    CHECK_RESULT(replaceRequestHeader("x-test-operation", body_op_));
   }
   return FilterHeadersStatus::Continue;
 }
@@ -417,6 +568,14 @@ void TestContext::onLog() {
   if (test == "headers") {
     auto path = getRequestHeader(":path");
     logWarn("onLog " + std::to_string(id()) + " " + std::string(path->view()));
+    auto response_header = getResponseHeader("bogus-header");
+    if (response_header && response_header->view() != "") {
+      logWarn("response bogus-header found");
+    }
+    auto response_trailer = getResponseTrailer("bogus-trailer");
+    if (response_trailer && response_trailer->view() != "") {
+      logWarn("response bogus-trailer found");
+    }
   } else if (test == "shared_data") {
     WasmDataPtr value0;
     if (getSharedData("shared_data_key_bad", &value0) == WasmResult::NotFound) {
@@ -466,6 +625,108 @@ void TestContext::onLog() {
       if (value != 1337) {
         logWarn("getProperty(structured_state) returned " + std::to_string(value));
       }
+      std::string buffer;
+      if (!getValue({"structured_state"}, &buffer)) {
+        logWarn("getValue for structured_state should not fail");
+      }
+      if (buffer.size() != 24) {
+        logWarn("getValue for structured_state should return the buffer");
+      }
+    }
+    {
+      if (setFilterState("string_state", "unicorns") != WasmResult::Ok) {
+        logWarn("setProperty(string_state) failed");
+      }
+      std::string value;
+      if (!getValue({"string_state"}, &value)) {
+        logWarn("getProperty(string_state) failed");
+      }
+      if (value != "unicorns") {
+        logWarn("getProperty(string_state) returned " + value);
+      }
+    }
+    {
+      // attempt to write twice for a read only wasm state
+      if (setFilterState("string_state", "ponies") == WasmResult::Ok) {
+        logWarn("expected second setProperty(string_state) to fail");
+      }
+      std::string value;
+      if (!getValue({"string_state"}, &value)) {
+        logWarn("getProperty(string_state) failed");
+      }
+      if (value != "unicorns") {
+        logWarn("getProperty(string_state) returned " + value);
+      }
+    }
+    {
+      if (setFilterState("bytes_state", "ponies") != WasmResult::Ok) {
+        logWarn("setProperty(bytes_state) failed");
+      }
+      std::string value;
+      if (!getValue({"bytes_state"}, &value)) {
+        logWarn("getProperty(bytes_state) failed");
+      }
+      if (value != "ponies") {
+        logWarn("getProperty(bytes_state) returned " + value);
+      }
+    }
+    {
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("centaur");
+      std::string in;
+      args.SerializeToString(&in);
+      if (setFilterState("protobuf_state", in) != WasmResult::Ok) {
+        logWarn("setProperty(protobuf_state) failed");
+      }
+      std::string value;
+      if (!getValue({"protobuf_state", "name"}, &value)) {
+        logWarn("getProperty(protobuf_state) failed");
+      }
+      if (value != "centaur") {
+        logWarn("getProperty(protobuf_state) returned " + value);
+      }
+      std::string buffer;
+      if (!getValue({"protobuf_state"}, &buffer)) {
+        logWarn("getValue for protobuf_state should not fail");
+      }
+      if (buffer.size() != in.size()) {
+        logWarn("getValue for protobuf_state should return the buffer");
+      }
+    }
+    {
+      // Some properties are not available in the stream context.
+      const std::vector<std::string> properties = {
+        "xxx",
+        "request",
+        "route_name",
+        "node"};
+      for (const auto& property : properties) {
+        if (getProperty({property, "xxx"}).has_value()) {
+          logWarn("getProperty should not return a value in the root context");
+        }
+      }
+    }
+    {
+      // Some properties are defined in the stream context.
+      std::vector<std::pair<std::vector<std::string>, std::string>> properties = {
+        {{"plugin_name"}, "plugin_name"},
+        {{"plugin_vm_id"}, "vm_id"},
+        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+        {{"listener_metadata"}, ""},
+        {{"route_name"}, "route12"},
+        {{"connection", "requested_server_name"}, "w3.org"},
+        {{"source", "address"}, "127.0.0.1:0"},
+        {{"destination", "address"}, "127.0.0.2:0"},
+      };
+      for (const auto& property : properties) {
+        std::string value;
+        if (!getValue(property.first, &value)) {
+          logWarn("getValue should provide a value in the root context: " + property.second);
+        }
+        if (value != property.second) {
+          logWarn("getValue returned " + value + ", expect " + property.second);
+        }
+      }
     }
   }
 }
@@ -509,8 +770,8 @@ void TestRootContext::onTick() {
     if (WasmResult::Ok != proxy_get_current_time_nanoseconds(&t)) {
       logError(std::string("bad proxy_get_current_time_nanoseconds result"));
     }
+    std::string function = "declare_property";
     {
-      std::string function = "declare_property";
       envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
       args.set_name("structured_state");
       args.set_type(envoy::source::extensions::common::wasm::WasmType::FlatBuffers);
@@ -546,9 +807,85 @@ void TestRootContext::onTick() {
       size_t out_size = 0;
       if (WasmResult::Ok != proxy_call_foreign_function(function.data(), function.size(), in.data(),
                                                         in.size(), &out, &out_size)) {
-        logError("declare_property failed");
+        logError("declare_property failed for flatbuffers");
       }
       ::free(out);
+    }
+    {
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("string_state");
+      args.set_type(envoy::source::extensions::common::wasm::WasmType::String);
+      args.set_span(envoy::source::extensions::common::wasm::LifeSpan::FilterChain);
+      args.set_readonly(true);
+      std::string in;
+      args.SerializeToString(&in);
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::Ok != proxy_call_foreign_function(function.data(), function.size(), in.data(),
+                                                        in.size(), &out, &out_size)) {
+        logError("declare_property failed for strings");
+      }
+      ::free(out);
+    }
+    {
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("bytes_state");
+      args.set_type(envoy::source::extensions::common::wasm::WasmType::Bytes);
+      args.set_span(envoy::source::extensions::common::wasm::LifeSpan::DownstreamRequest);
+      std::string in;
+      args.SerializeToString(&in);
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::Ok != proxy_call_foreign_function(function.data(), function.size(), in.data(),
+                                                        in.size(), &out, &out_size)) {
+        logError("declare_property failed for bytes");
+      }
+      ::free(out);
+    }
+    {
+      // double declaration of "bytes_state" should return BAD_ARGUMENT
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("bytes_state");
+      std::string in;
+      args.SerializeToString(&in);
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::BadArgument != proxy_call_foreign_function(function.data(), function.size(), in.data(),
+                                                        in.size(), &out, &out_size)) {
+        logError("declare_property must fail for double declaration");
+      }
+      ::free(out);
+    }
+    {
+      envoy::source::extensions::common::wasm::DeclarePropertyArguments args;
+      args.set_name("protobuf_state");
+      args.set_type(envoy::source::extensions::common::wasm::WasmType::Protobuf);
+      args.set_span(envoy::source::extensions::common::wasm::LifeSpan::DownstreamRequest);
+      args.set_schema("type.googleapis.com/envoy.source.extensions.common.wasm.DeclarePropertyArguments");
+      std::string in;
+      args.SerializeToString(&in);
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::Ok != proxy_call_foreign_function(function.data(), function.size(), in.data(),
+                                                        in.size(), &out, &out_size)) {
+        logError("declare_property failed for protobuf");
+      }
+      ::free(out);
+    }
+    {
+      char* out = nullptr;
+      size_t out_size = 0;
+      if (WasmResult::Ok == proxy_call_foreign_function(function.data(), function.size(), function.data(),
+                                                        function.size(), &out, &out_size)) {
+        logError("expected declare_property to fail");
+      }
+      ::free(out);
+    }
+    {
+      // setting a filter state in root context returns NOT_FOUND
+      if (setFilterState("string_state", "unicorns") != WasmResult::NotFound) {
+        logWarn("setProperty(string_state) should fail in root context");
+      }
     }
   }
 }

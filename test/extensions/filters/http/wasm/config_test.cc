@@ -5,6 +5,7 @@
 #include "common/common/base64.h"
 #include "common/common/hex.h"
 #include "common/crypto/utility.h"
+#include "common/http/message_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
 #include "extensions/common/wasm/wasm.h"
@@ -22,6 +23,9 @@ using testing::ReturnRef;
 
 namespace Envoy {
 namespace Extensions {
+
+using Common::Wasm::WasmException;
+
 namespace HttpFilters {
 namespace Wasm {
 
@@ -37,7 +41,7 @@ protected:
     ON_CALL(context_, dispatcher()).WillByDefault(ReturnRef(dispatcher_));
   }
 
-  void SetUp() { Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(); }
+  void SetUp() override { Envoy::Extensions::Common::Wasm::clearCodeCacheForTesting(); }
 
   void initializeForRemote() {
     retry_timer_ = new Event::MockTimer();
@@ -60,13 +64,22 @@ protected:
   Event::TimerCb retry_timer_cb_;
 };
 
-INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest,
-                         testing::Values("v8"
-#if defined(ENVOY_WASM_WAVM)
-                                         ,
-                                         "wavm"
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
+// NB: this is required by VC++ which can not handle the use of macros in the macro definitions
+// used by INSTANTIATE_TEST_SUITE_P.
+auto testing_values = testing::Values(
+#if defined(ENVOY_WASM_V8)
+    "v8"
 #endif
-                                         ));
+#if defined(ENVOY_WASM_V8) && defined(ENVOY_WASM_WAVM)
+    ,
+#endif
+#if defined(ENVOY_WASM_WAVM)
+    "wavm"
+#endif
+);
+INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest, testing_values);
+#endif
 
 TEST_P(WasmFilterConfigTest, JsonLoadFromFileWasm) {
   const std::string json = TestEnvironment::substitute(absl::StrCat(R"EOF(
@@ -168,8 +181,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadInlineBadCode) {
   TestUtility::loadFromYaml(yaml, proto_config);
   WasmFilterConfig factory;
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
-                            Extensions::Common::Wasm::WasmException,
-                            "Unable to create Wasm HTTP filter ");
+                            WasmException, "Unable to create Wasm HTTP filter ");
 }
 
 TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasm) {
@@ -259,7 +271,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailOnUncachedThenSucceed) {
             return &request;
           }));
 
-  factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
+                            WasmException, "Unable to create Wasm HTTP filter ");
 
   EXPECT_CALL(init_watcher_, ready());
   context_.initManager().initialize(init_watcher_);
@@ -270,7 +283,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailOnUncachedThenSucceed) {
 
   EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager2));
 
-  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+  auto cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
 
   EXPECT_CALL(init_watcher2, ready());
   init_manager2.initialize(init_watcher2);
@@ -326,7 +339,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
           }));
 
   // Case 1: fail and fetch in the background, got 503, cache failure.
-  factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
+                            WasmException, "Unable to create Wasm HTTP filter ");
 
   EXPECT_CALL(init_watcher_, ready());
   context_.initManager().initialize(init_watcher_);
@@ -337,7 +351,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
   Init::ExpectableWatcherImpl init_watcher2;
 
   EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager2));
-  factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
+                            WasmException, "Unable to create Wasm HTTP filter ");
 
   EXPECT_CALL(init_watcher2, ready());
   init_manager2.initialize(init_watcher2);
@@ -364,7 +379,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
 
   EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager3));
 
-  factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
+                            WasmException, "Unable to create Wasm HTTP filter ");
 
   EXPECT_CALL(init_watcher3, ready());
   init_manager3.initialize(init_watcher3);
@@ -397,6 +413,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
   const std::string yaml2 = TestEnvironment::substitute(absl::StrCat(R"EOF(
   config:
     vm_config:
+      nack_on_code_cache_miss: true
       runtime: "envoy.wasm.runtime.)EOF",
                                                                      GetParam(), R"EOF("
       code:
@@ -418,7 +435,8 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
 
   EXPECT_CALL(context_, initManager()).WillRepeatedly(ReturnRef(init_manager5));
 
-  factory.createFilterFactoryFromProto(proto_config2, "stats", context_);
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config2, "stats", context_),
+                            WasmException, "Unable to create Wasm HTTP filter ");
 
   EXPECT_CALL(init_watcher_, ready());
   context_.initManager().initialize(init_watcher_);

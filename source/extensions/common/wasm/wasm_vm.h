@@ -68,8 +68,8 @@ protected:
   VmStats stats_;
 }; // namespace Wasm
 
-inline const EnvoyWasmVmIntegration& getEnvoyWasmIntegration(proxy_wasm::WasmVm& wasm_vm) {
-  return *static_cast<const EnvoyWasmVmIntegration*>(wasm_vm.integration().get());
+inline EnvoyWasmVmIntegration& getEnvoyWasmIntegration(proxy_wasm::WasmVm& wasm_vm) {
+  return *static_cast<EnvoyWasmVmIntegration*>(wasm_vm.integration().get());
 }
 
 // Exceptions for issues with the WebAssembly code.

@@ -16,7 +16,8 @@
   static_cast<Context*>(proxy_wasm::exports::ContextOrEffectiveContext(                            \
       static_cast<proxy_wasm::ContextBase*>((void)_c, proxy_wasm::current_context_)))
 
-using FailState = proxy_wasm::FailState;
+using proxy_wasm::FailState;
+using proxy_wasm::Word;
 
 namespace Envoy {
 
@@ -466,6 +467,7 @@ static bool createWasmInternal(const VmConfig& vm_config, const PluginSharedPtr&
       ENVOY_LOG_TO_LOGGER(Envoy::Logger::Registry::getLog(Envoy::Logger::Id::wasm), trace,
                           fmt::format("Failed to load Wasm code (fetching) from {}", source));
       cb(nullptr);
+      return false;
     } else {
       remote_data_provider = std::make_unique<Config::DataSource::RemoteAsyncDataProvider>(
           cluster_manager, init_manager, vm_config.code().remote(), dispatcher, random, true,

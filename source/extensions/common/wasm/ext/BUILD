@@ -61,9 +61,9 @@ cc_proto_library(
 )
 
 filegroup(
-    name = "envoy_jslib",
+    name = "jslib",
     srcs = [
-        "envoy_proxy_wasm_intrinsics.js",
+        "envoy_wasm_intrinsics.js",
     ],
     visibility = ["//visibility:public"],
 )

@@ -4,9 +4,11 @@
 
 #include "extensions/common/wasm/wasm.h"
 
+#if defined(WASM_USE_CEL_PARSER)
 #include "eval/public/builtin_func_registrar.h"
 #include "eval/public/cel_expr_builder_factory.h"
 #include "parser/parser.h"
+#endif
 #include "zlib.h"
 
 using proxy_wasm::RegisterForeignFunction;
@@ -59,6 +61,7 @@ RegisterForeignFunction registerUncompressForeignFunction(
       }
     });
 
+#if defined(WASM_USE_CEL_PARSER)
 class ExpressionFactory : public Logger::Loggable<Logger::Id::wasm> {
 protected:
   struct ExpressionData {
@@ -210,6 +213,7 @@ public:
 RegisterForeignFunction
     registerDeleteExpressionForeignFunction("expr_delete",
                                             createFromClass<DeleteExpressionFactory>());
+#endif
 
 // TODO(kyessenov) The factories should be separated into individual compilation units.
 // TODO(kyessenov) Leverage the host argument marshaller instead of the protobuf argument list.

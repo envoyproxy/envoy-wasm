@@ -30,6 +30,7 @@ envoy_cc_extension(
     srcs = ["config.cc"],
     hdrs = ["config.h"],
     security_posture = "unknown",
+    status = "alpha",
     deps = [
         ":wasm_filter_lib",
         "//include/envoy/registry",
