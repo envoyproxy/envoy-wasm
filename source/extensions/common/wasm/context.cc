@@ -37,7 +37,6 @@
 #include "eval/eval/field_backed_list_impl.h"
 #include "eval/eval/field_backed_map_impl.h"
 #include "eval/public/cel_value.h"
-#include "eval/public/value_export_util.h"
 #include "openssl/bytestring.h"
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
@@ -306,7 +305,8 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
   wasm()->on_stats_update_(this, id_, counter_block_size + gauge_block_size);
 }
 
-// Native serializer carrying over bit representation from CEL value to the extension
+// Native serializer carrying over bit representation from CEL value to the extension.
+// This implementation assumes that the value type is static and known to the consumer.
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
   using Filters::Common::Expr::CelValue;
   switch (value.type()) {
@@ -359,29 +359,46 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     }
     return WasmResult::SerializationFailure;
   }
-  // Slow path using protobuf value conversion
   case CelValue::Type::kMap: {
-    ProtobufWkt::Value out;
-    if (!google::api::expr::runtime::ExportAsProtoValue(value, &out).ok()) {
-      return WasmResult::SerializationFailure;
+    const auto& map = *value.MapOrDie();
+    const auto& keys = *map.ListKeys();
+    std::vector<std::pair<std::string, std::string>> pairs(map.size(), std::make_pair("", ""));
+    for (auto i = 0; i < map.size(); i++) {
+      if (serializeValue(keys[i], &pairs[i].first) != WasmResult::Ok) {
+        return WasmResult::SerializationFailure;
+      }
+      if (serializeValue(map[keys[i]].value(), &pairs[i].second) != WasmResult::Ok) {
+        return WasmResult::SerializationFailure;
+      }
     }
-    if (!out.struct_value().SerializeToString(result)) {
-      return WasmResult::SerializationFailure;
+    auto size = proxy_wasm::exports::pairsSize(pairs);
+    // prevent string inlining which violates byte alignment
+    if (size < 30) {
+      result->reserve(30);
     }
+    result->resize(size);
+    proxy_wasm::exports::marshalPairs(pairs, result->data());
     return WasmResult::Ok;
   }
   case CelValue::Type::kList: {
-    ProtobufWkt::Value out;
-    if (!google::api::expr::runtime::ExportAsProtoValue(value, &out).ok()) {
-      return WasmResult::SerializationFailure;
+    const auto& list = *value.ListOrDie();
+    std::vector<std::pair<std::string, std::string>> pairs(list.size(), std::make_pair("", ""));
+    for (auto i = 0; i < list.size(); i++) {
+      if (serializeValue(list[i], &pairs[i].first) != WasmResult::Ok) {
+        return WasmResult::SerializationFailure;
+      }
     }
-    if (!out.list_value().SerializeToString(result)) {
-      return WasmResult::SerializationFailure;
+    auto size = proxy_wasm::exports::pairsSize(pairs);
+    // prevent string inlining which violates byte alignment
+    if (size < 30) {
+      result->reserve(30);
     }
+    result->resize(size);
+    proxy_wasm::exports::marshalPairs(pairs, result->data());
     return WasmResult::Ok;
   }
   default:
-    return WasmResult::SerializationFailure;
+    break;
   }
   return WasmResult::SerializationFailure;
 }
