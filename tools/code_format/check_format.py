@@ -18,8 +18,15 @@ import paths
 EXCLUDED_PREFIXES = ("./generated/", "./thirdparty/", "./build", "./.git/", "./bazel-", "./.cache",
                      "./source/extensions/extensions_build_config.bzl",
                      "./bazel/toolchains/configs/", "./tools/testdata/check_format/",
-                     "./tools/pyformat/", "./third_party/", "./api/wasm/",
-                     "./test/extensions/filters/http/wasm/test_data")
+                     "./tools/pyformat/", "./third_party/", "./test/extensions/filters/http/wasm/test_data",
+                     "./test/extensions/filters/network/wasm/test_data",
+                     "./test/extensions/stats_sinks/wasm/test_data",
+                     "./test/extensions/bootstrap/wasm/test_data",
+                     "./test/extensions/common/wasm/test_data",
+                     "./test/extensions/access_loggers/wasm/test_data",
+                     "./source/extensions/common/wasm/ext",
+                     "./examples/wasm",
+                     )
 SUFFIXES = ("BUILD", "WORKSPACE", ".bzl", ".cc", ".h", ".java", ".m", ".md", ".mm", ".proto",
             ".rst")
 DOCS_SUFFIX = (".md", ".rst")
