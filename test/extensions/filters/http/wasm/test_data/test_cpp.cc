@@ -282,7 +282,7 @@ FilterTrailersStatus TestContext::onResponseTrailers(uint32_t) {
     logWarn("response bogus-trailer found");
   }
   CHECK_RESULT(replaceResponseTrailer("new-trailer", "value"));
-  return FilterTrailersStatus::Continue;
+  return FilterTrailersStatus::StopIteration;
 }
 
 FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool) {

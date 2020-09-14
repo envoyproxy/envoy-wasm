@@ -82,8 +82,14 @@ public:
   }
   void setupFilter(const std::string root_id = "") { setupFilterBase<TestFilter>(root_id); }
 
+  void setupGrpcStreamTest(Grpc::RawAsyncStreamCallbacks*& callbacks);
+
   TestRoot& rootContext() { return *static_cast<TestRoot*>(root_context_); }
   TestFilter& filter() { return *static_cast<TestFilter*>(context_.get()); }
+
+protected:
+  NiceMock<Grpc::MockAsyncStream> async_stream_;
+  Grpc::MockAsyncClientManager async_client_manager_;
 };
 
 // NB: this is required by VC++ which can not handle the use of macros in the macro definitions
@@ -147,7 +153,7 @@ TEST_P(WasmHttpFilterTest, AllHeadersAndTrailers) {
   Http::TestResponseHeaderMapImpl response_headers{};
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().encodeHeaders(response_headers, false));
   Http::TestResponseTrailerMapImpl response_trailers{};
-  EXPECT_EQ(Http::FilterTrailersStatus::Continue, filter().encodeTrailers(response_trailers));
+  EXPECT_EQ(Http::FilterTrailersStatus::StopIteration, filter().encodeTrailers(response_trailers));
   Http::MetadataMap response_metadata{};
   EXPECT_EQ(Http::FilterMetadataStatus::Continue, filter().encodeMetadata(response_metadata));
   filter().onDestroy();
@@ -959,39 +965,47 @@ TEST_P(WasmHttpFilterTest, GrpcCallAfterDestroyed) {
   }
 }
 
+void WasmHttpFilterTest::setupGrpcStreamTest(Grpc::RawAsyncStreamCallbacks*& callbacks) {
+  setupTest("grpc_stream");
+  setupFilter("grpc_stream");
+
+  EXPECT_CALL(async_client_manager_, factoryForGrpcService(_, _, _))
+      .WillRepeatedly(
+          Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
+            auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
+            EXPECT_CALL(*client_factory, create)
+                .WillRepeatedly(Invoke([&]() -> Grpc::RawAsyncClientPtr {
+                  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
+                  EXPECT_CALL(*async_client, startRaw(_, _, _, _))
+                      .WillRepeatedly(Invoke(
+                          [&](absl::string_view service_full_name, absl::string_view method_name,
+                              Grpc::RawAsyncStreamCallbacks& cb,
+                              const Http::AsyncClient::StreamOptions&) -> Grpc::RawAsyncStream* {
+                            EXPECT_EQ(service_full_name, "service");
+                            if (method_name != "method") {
+                              return nullptr;
+                            }
+                            callbacks = &cb;
+                            return &async_stream_;
+                          }));
+                  return std::move(async_client);
+                }));
+            return std::move(client_factory);
+          }));
+  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
+      .WillRepeatedly(Invoke([&]() -> Grpc::AsyncClientManager& { return async_client_manager_; }));
+}
+
 TEST_P(WasmHttpFilterTest, GrpcStream) {
   if (std::get<1>(GetParam()) == "rust") {
     // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
     return;
   }
-  setupTest("grpc_stream");
-  setupFilter("grpc_stream");
-  Grpc::MockAsyncRequest request;
-  NiceMock<Grpc::MockAsyncStream> stream;
   Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
-  Grpc::MockAsyncClientManager client_manager;
-  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
-  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
-  EXPECT_CALL(*async_client, startRaw(_, _, _, _))
-      .WillOnce(Invoke([&](absl::string_view service_full_name, absl::string_view method_name,
-                           Grpc::RawAsyncStreamCallbacks& cb,
-                           const Http::AsyncClient::StreamOptions&) -> Grpc::RawAsyncStream* {
-        EXPECT_EQ(service_full_name, "service");
-        EXPECT_EQ(method_name, "method");
-        callbacks = &cb;
-        return &stream;
-      }));
-  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
-    return std::move(async_client);
-  }));
-  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
-      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
-  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
-      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
-        return std::move(client_factory);
-      }));
+  setupGrpcStreamTest(callbacks);
+
   EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response response")));
-  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("close ok")));
+  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("close done")));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter().decodeHeaders(request_headers, false));
@@ -1002,54 +1016,26 @@ TEST_P(WasmHttpFilterTest, GrpcStream) {
   EXPECT_TRUE(value.SerializeToString(&response_string));
   auto response = std::make_unique<Buffer::OwnedImpl>(response_string);
   EXPECT_NE(callbacks, nullptr);
-  NiceMock<Tracing::MockSpan> span;
   if (callbacks) {
     Http::TestRequestHeaderMapImpl create_initial_metadata{{"test", "create_initial_metadata"}};
     callbacks->onCreateInitialMetadata(create_initial_metadata);
     callbacks->onReceiveInitialMetadata(std::make_unique<Http::TestResponseHeaderMapImpl>());
     callbacks->onReceiveMessageRaw(std::move(response));
     callbacks->onReceiveTrailingMetadata(std::make_unique<Http::TestResponseTrailerMapImpl>());
-    callbacks->onRemoteClose(Grpc::Status::WellKnownGrpcStatus::Ok, "ok");
+    callbacks->onRemoteClose(Grpc::Status::WellKnownGrpcStatus::Ok, "done");
   }
 }
 
+// Local close followed by remote close.
 TEST_P(WasmHttpFilterTest, GrpcStreamCloseLocal) {
   if (std::get<1>(GetParam()) == "rust") {
     // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
     return;
   }
-  setupTest("grpc_stream");
-  setupFilter("grpc_stream");
-  Grpc::MockAsyncRequest request;
-  NiceMock<Grpc::MockAsyncStream> stream;
   Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
-  Grpc::MockAsyncClientManager client_manager;
-  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
-  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
-  EXPECT_CALL(*async_client, startRaw(_, _, _, _))
-      .WillOnce(Invoke([&](absl::string_view service_full_name, absl::string_view method_name,
-                           Grpc::RawAsyncStreamCallbacks& cb,
-                           const Http::AsyncClient::StreamOptions&) -> Grpc::RawAsyncStream* {
-        EXPECT_EQ(service_full_name, "service");
-        EXPECT_EQ(method_name, "method");
-        callbacks = &cb;
-        return &stream;
-      }));
-  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
-    return std::move(async_client);
-  }));
-  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
-      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
-  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
-      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
-        return std::move(client_factory);
-      }));
-  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response close")))
-      .WillOnce(Invoke([&](uint32_t, absl::string_view) -> proxy_wasm::WasmResult {
-        callbacks->onRemoteClose(Grpc::Status::WellKnownGrpcStatus::Ok, "ok");
-        return proxy_wasm::WasmResult::Ok;
-      }));
+  setupGrpcStreamTest(callbacks);
 
+  EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response close")));
   EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("close ok")));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
@@ -1061,46 +1047,24 @@ TEST_P(WasmHttpFilterTest, GrpcStreamCloseLocal) {
   EXPECT_TRUE(value.SerializeToString(&response_string));
   auto response = std::make_unique<Buffer::OwnedImpl>(response_string);
   EXPECT_NE(callbacks, nullptr);
-  NiceMock<Tracing::MockSpan> span;
   if (callbacks) {
     Http::TestRequestHeaderMapImpl create_initial_metadata{{"test", "create_initial_metadata"}};
     callbacks->onCreateInitialMetadata(create_initial_metadata);
     callbacks->onReceiveInitialMetadata(std::make_unique<Http::TestResponseHeaderMapImpl>());
     callbacks->onReceiveMessageRaw(std::move(response));
+    callbacks->onRemoteClose(Grpc::Status::WellKnownGrpcStatus::Ok, "ok");
   }
 }
 
+// Remote close followed by local close.
 TEST_P(WasmHttpFilterTest, GrpcStreamCloseRemote) {
   if (std::get<1>(GetParam()) == "rust") {
     // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
     return;
   }
-  setupTest("grpc_stream");
-  setupFilter("grpc_stream");
-  Grpc::MockAsyncRequest request;
-  NiceMock<Grpc::MockAsyncStream> stream;
   Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
-  Grpc::MockAsyncClientManager client_manager;
-  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
-  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
-  EXPECT_CALL(*async_client, startRaw(_, _, _, _))
-      .WillOnce(Invoke([&](absl::string_view service_full_name, absl::string_view method_name,
-                           Grpc::RawAsyncStreamCallbacks& cb,
-                           const Http::AsyncClient::StreamOptions&) -> Grpc::RawAsyncStream* {
-        EXPECT_EQ(service_full_name, "service");
-        EXPECT_EQ(method_name, "method");
-        callbacks = &cb;
-        return &stream;
-      }));
-  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
-    return std::move(async_client);
-  }));
-  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
-      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
-  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
-      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
-        return std::move(client_factory);
-      }));
+  setupGrpcStreamTest(callbacks);
+
   EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response response")));
   EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("close close")));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
@@ -1113,7 +1077,6 @@ TEST_P(WasmHttpFilterTest, GrpcStreamCloseRemote) {
   EXPECT_TRUE(value.SerializeToString(&response_string));
   auto response = std::make_unique<Buffer::OwnedImpl>(response_string);
   EXPECT_NE(callbacks, nullptr);
-  NiceMock<Tracing::MockSpan> span;
   if (callbacks) {
     Http::TestRequestHeaderMapImpl create_initial_metadata{{"test", "create_initial_metadata"}};
     callbacks->onCreateInitialMetadata(create_initial_metadata);
@@ -1128,32 +1091,9 @@ TEST_P(WasmHttpFilterTest, GrpcStreamCancel) {
     // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
     return;
   }
-  setupTest("grpc_stream");
-  setupFilter("grpc_stream");
-  Grpc::MockAsyncRequest request;
-  NiceMock<Grpc::MockAsyncStream> stream;
   Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
-  Grpc::MockAsyncClientManager client_manager;
-  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
-  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
-  EXPECT_CALL(*async_client, startRaw(_, _, _, _))
-      .WillOnce(Invoke([&](absl::string_view service_full_name, absl::string_view method_name,
-                           Grpc::RawAsyncStreamCallbacks& cb,
-                           const Http::AsyncClient::StreamOptions&) -> Grpc::RawAsyncStream* {
-        EXPECT_EQ(service_full_name, "service");
-        EXPECT_EQ(method_name, "method");
-        callbacks = &cb;
-        return &stream;
-      }));
-  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
-    return std::move(async_client);
-  }));
-  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
-      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
-  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
-      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
-        return std::move(client_factory);
-      }));
+  setupGrpcStreamTest(callbacks);
+
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
             filter().decodeHeaders(request_headers, false));
@@ -1178,32 +1118,9 @@ TEST_P(WasmHttpFilterTest, GrpcStreamOpenAtShutdown) {
     // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
     return;
   }
-  setupTest("grpc_stream");
-  setupFilter("grpc_stream");
-  Grpc::MockAsyncRequest request;
-  NiceMock<Grpc::MockAsyncStream> stream;
   Grpc::RawAsyncStreamCallbacks* callbacks = nullptr;
-  Grpc::MockAsyncClientManager client_manager;
-  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
-  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
-  EXPECT_CALL(*async_client, startRaw(_, _, _, _))
-      .WillOnce(Invoke([&](absl::string_view service_full_name, absl::string_view method_name,
-                           Grpc::RawAsyncStreamCallbacks& cb,
-                           const Http::AsyncClient::StreamOptions&) -> Grpc::RawAsyncStream* {
-        EXPECT_EQ(service_full_name, "service");
-        EXPECT_EQ(method_name, "method");
-        callbacks = &cb;
-        return &stream;
-      }));
-  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
-    return std::move(async_client);
-  }));
-  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
-      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
-  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
-      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
-        return std::move(client_factory);
-      }));
+  setupGrpcStreamTest(callbacks);
+
   EXPECT_CALL(rootContext(), log_(spdlog::level::debug, Eq("response response")));
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,

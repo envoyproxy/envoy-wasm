@@ -45,13 +45,13 @@ public:
   void onReceive(size_t body_size) override {
     auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
     auto response_string = response->proto<google::protobuf::Value>().string_value();
-    logDebug(std::string("response ") + response_string);
     google::protobuf::Value message;
     if (response_string == "close") {
       close();
     } else {
       send(message, false);
     }
+    logDebug(std::string("response ") + response_string);
   }
   void onReceiveTrailingMetadata(uint32_t) override {
     auto h = getHeaderMapValue(WasmHeaderMapType::GrpcReceiveTrailingMetadata, "foo");
@@ -62,6 +62,8 @@ public:
     logDebug(std::string("close ") + std::string(p.second->view()));
     if (p.second->view() == "close") {
       close();
+    } else if (p.second->view() == "ok") {
+      return;
     } else {
       reset();
     }
@@ -74,6 +76,16 @@ FilterHeadersStatus GrpcStreamContext::onRequestHeaders(uint32_t, bool) {
   std::string grpc_service_string;
   grpc_service.SerializeToString(&grpc_service_string);
   HeaderStringPairs initial_metadata;
+  if (root()->grpcStreamHandler("bogus service string", "service", "method", initial_metadata,
+                                std::unique_ptr<GrpcStreamHandlerBase>(
+                                    new MyGrpcStreamHandler())) != WasmResult::ParseFailure) {
+    logError("unexpected bogus service string OK");
+  }
+  if (root()->grpcStreamHandler(grpc_service_string, "service", "bad method", initial_metadata,
+                                std::unique_ptr<GrpcStreamHandlerBase>(
+                                    new MyGrpcStreamHandler())) != WasmResult::InternalFailure) {
+    logError("unexpected bogus method OK");
+  }
   root()->grpcStreamHandler(grpc_service_string, "service", "method", initial_metadata,
                             std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler()));
   return FilterHeadersStatus::StopIteration;

@@ -36,6 +36,10 @@ impl HttpContext for TestStream {
         Action::Continue
     }
 
+    fn on_http_response_trailers(&mut self, _: usize) -> Action {
+        Action::Pause
+    }
+
     fn on_log(&mut self) {
         if let Some(path) = self.get_http_request_header(":path") {
             warn!("onLog {} {}", self.context_id, path);

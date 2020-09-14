@@ -1113,7 +1113,6 @@ WasmResult Context::log(uint32_t level, absl::string_view message) {
   case spdlog::level::n_levels:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
 }
 
 uint32_t Context::getLogLevel() {
@@ -1179,20 +1178,20 @@ WasmResult Context::defineMetric(uint32_t metric_type, absl::string_view name,
     wasm()->counters_.emplace(id, c);
     *metric_id_ptr = id;
     return WasmResult::Ok;
-  } else if (type == MetricType::Gauge) {
+  }
+  if (type == MetricType::Gauge) {
     auto id = wasm()->nextGaugeMetricId();
     auto g = &wasm()->scope_->gaugeFromStatName(stat_name, Stats::Gauge::ImportMode::Accumulate);
     wasm()->gauges_.emplace(id, g);
     *metric_id_ptr = id;
     return WasmResult::Ok;
-  } else if (type == MetricType::Histogram) {
-    auto id = wasm()->nextHistogramMetricId();
-    auto h = &wasm()->scope_->histogramFromStatName(stat_name, Stats::Histogram::Unit::Unspecified);
-    wasm()->histograms_.emplace(id, h);
-    *metric_id_ptr = id;
-    return WasmResult::Ok;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
+  // (type == MetricType::Histogram) {
+  auto id = wasm()->nextHistogramMetricId();
+  auto h = &wasm()->scope_->histogramFromStatName(stat_name, Stats::Histogram::Unit::Unspecified);
+  wasm()->histograms_.emplace(id, h);
+  *metric_id_ptr = id;
+  return WasmResult::Ok;
 }
 
 WasmResult Context::incrementMetric(uint32_t metric_id, int64_t offset) {
@@ -1288,7 +1287,6 @@ Network::FilterStatus convertNetworkFilterStatus(proxy_wasm::FilterStatus status
   case proxy_wasm::FilterStatus::StopIteration:
     return Network::FilterStatus::StopIteration;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersStatus status) {
@@ -1304,7 +1302,6 @@ Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersSt
   case proxy_wasm::FilterHeadersStatus::StopAllIterationAndWatermark:
     return Http::FilterHeadersStatus::StopAllIterationAndWatermark;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailersStatus status) {
@@ -1314,7 +1311,6 @@ Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailer
   case proxy_wasm::FilterTrailersStatus::StopIteration:
     return Http::FilterTrailersStatus::StopIteration;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadataStatus status) {
@@ -1322,7 +1318,6 @@ Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadat
   case proxy_wasm::FilterMetadataStatus::Continue:
     return Http::FilterMetadataStatus::Continue;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus status) {
@@ -1336,7 +1331,6 @@ Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus stat
   case proxy_wasm::FilterDataStatus::StopIterationNoBuffer:
     return Http::FilterDataStatus::StopIterationNoBuffer;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
 };
 
 Network::FilterStatus Context::onNewConnection() {
