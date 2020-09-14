@@ -831,6 +831,21 @@ void Context::onUpstreamConnectionClose(CloseType close_type) {
   }
 }
 
+uint32_t Context::nextHttpCallToken() {
+  uint32_t token = next_http_call_token_++;
+  // Handle rollover.
+  for (;;) {
+    if (token == 0) {
+      token = next_http_call_token_++;
+    }
+    if (!http_request_.count(token)) {
+      break;
+    }
+    token = next_http_call_token_++;
+  }
+  return token;
+}
+
 // Async call via HTTP
 WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_headers,
                              absl::string_view request_body, const Pairs& request_trailers,
@@ -867,17 +882,7 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
     timeout = std::chrono::milliseconds(timeout_milliseconds);
   }
 
-  auto token = next_http_call_token_++;
-  // Handle rollover.
-  for (;;) {
-    if (token == 0) {
-      token = next_http_call_token_++;
-    }
-    if (!http_request_.count(token)) {
-      break;
-    }
-    token = next_http_call_token_++;
-  }
+  uint32_t token = nextHttpCallToken();
   auto& handler = http_request_[token];
 
   // set default hash policy to be based on :authority to enable consistent hash
@@ -900,6 +905,22 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
   return WasmResult::Ok;
 }
 
+uint32_t Context::nextGrpcCallToken() {
+  uint32_t token = next_grpc_token_++;
+  if (isGrpcStreamToken(token)) {
+    token = next_grpc_token_++;
+  }
+  // Handle rollover. Note: token is always odd.
+  for (;;) {
+    if (!grpc_call_request_.count(token)) {
+      break;
+    }
+    next_grpc_token_++; // Skip stream token.
+    token = next_grpc_token_++;
+  }
+  return token;
+}
+
 WasmResult Context::grpcCall(absl::string_view grpc_service, absl::string_view service_name,
                              absl::string_view method_name, const Pairs& initial_metadata,
                              absl::string_view request, std::chrono::milliseconds timeout,
@@ -908,20 +929,7 @@ WasmResult Context::grpcCall(absl::string_view grpc_service, absl::string_view s
   if (!service_proto.ParseFromArray(grpc_service.data(), grpc_service.size())) {
     return WasmResult::ParseFailure;
   }
-  auto token = next_grpc_token_++;
-  if (isGrpcStreamToken(token)) {
-    token = next_grpc_token_++;
-  }
-  // Handle rollover.
-  for (;;) {
-    if (token == 0) {
-      token = next_grpc_token_ += 2;
-    }
-    if (!grpc_call_request_.count(token)) {
-      break;
-    }
-    token = next_grpc_token_ += 2;
-  }
+  uint32_t token = nextGrpcCallToken();
   auto& handler = grpc_call_request_[token];
   handler.context_ = this;
   handler.token_ = token;
@@ -952,6 +960,26 @@ WasmResult Context::grpcCall(absl::string_view grpc_service, absl::string_view s
   return WasmResult::Ok;
 }
 
+uint32_t Context::nextGrpcStreamToken() {
+  uint32_t token = next_grpc_token_++;
+  if (isGrpcCallToken(token)) {
+    token = next_grpc_token_++;
+  }
+  // Handle rollover. Note: token is always even.
+  for (;;) {
+    if (token == 0) {
+      next_grpc_token_++; // Skip call token.
+      token = next_grpc_token_++;
+    }
+    if (!grpc_stream_.count(token)) {
+      break;
+    }
+    next_grpc_token_++; // Skip call token.
+    token = next_grpc_token_++;
+  }
+  return token;
+}
+
 WasmResult Context::grpcStream(absl::string_view grpc_service, absl::string_view service_name,
                                absl::string_view method_name, const Pairs& initial_metadata,
                                uint32_t* token_ptr) {
@@ -959,20 +987,7 @@ WasmResult Context::grpcStream(absl::string_view grpc_service, absl::string_view
   if (!service_proto.ParseFromArray(grpc_service.data(), grpc_service.size())) {
     return WasmResult::ParseFailure;
   }
-  auto token = next_grpc_token_++;
-  if (isGrpcCallToken(token)) {
-    token = next_grpc_token_++;
-  }
-  // Handle rollover.
-  for (;;) {
-    if (token == 0) {
-      token = next_grpc_token_ += 2;
-    }
-    if (!grpc_stream_.count(token)) {
-      break;
-    }
-    token = next_grpc_token_ += 2;
-  }
+  uint32_t token = nextGrpcStreamToken();
   auto& handler = grpc_stream_[token];
   handler.context_ = this;
   handler.token_ = token;

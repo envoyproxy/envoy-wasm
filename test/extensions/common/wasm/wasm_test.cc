@@ -106,8 +106,13 @@ TEST_P(WasmCommonTest, EnvoyWasm) {
   Upstream::MockClusterManager cluster_manager;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
+  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
+      "", "", "", GetParam(), "", false, envoy::config::core::v3::TrafficDirection::UNSPECIFIED,
+      local_info, nullptr);
   auto wasm = std::make_shared<WasmHandle>(
-      std::make_unique<Wasm>("", "", "vm_configuration", "", scope, cluster_manager, *dispatcher));
+      std::make_unique<Wasm>(absl::StrCat("envoy.wasm.runtime.", GetParam()), "",
+                             "vm_configuration", "", scope, cluster_manager, *dispatcher));
   auto wasm_base = std::dynamic_pointer_cast<proxy_wasm::WasmHandleBase>(wasm);
   wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::UnableToCreateVM);
   EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::UnableToCreateVM);
@@ -123,6 +128,20 @@ TEST_P(WasmCommonTest, EnvoyWasm) {
   EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::ConfigureFailed);
   wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::RuntimeError);
   EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::RuntimeError);
+
+  auto root_context = static_cast<Context*>(wasm->wasm()->createRootContext(plugin));
+  uint32_t grpc_call_token1 = root_context->nextGrpcCallToken();
+  uint32_t grpc_call_token2 = root_context->nextGrpcCallToken();
+  EXPECT_NE(grpc_call_token1, grpc_call_token2);
+  root_context->setNextGrpcTokenForTesting(0); // Rollover.
+  EXPECT_EQ(root_context->nextGrpcCallToken(), 1);
+
+  uint32_t grpc_stream_token1 = root_context->nextGrpcStreamToken();
+  uint32_t grpc_stream_token2 = root_context->nextGrpcStreamToken();
+  EXPECT_NE(grpc_stream_token1, grpc_stream_token2);
+  root_context->setNextGrpcTokenForTesting(0xFFFFFFFF); // Rollover.
+  EXPECT_EQ(root_context->nextGrpcStreamToken(), 2);
+  delete root_context;
 }
 
 TEST_P(WasmCommonTest, Logging) {

@@ -310,6 +310,12 @@ public:
     return dynamic_cast<T*>(it->second.get());
   }
 
+  uint32_t nextGrpcCallToken();
+  uint32_t nextGrpcStreamToken();
+  uint32_t nextHttpCallToken();
+  void setNextGrpcTokenForTesting(uint32_t token) { next_grpc_token_ = token; }
+  void setNextHttpCallTokenForTesting(uint32_t token) { next_http_call_token_ = token; }
+
 protected:
   friend class Wasm;
 
