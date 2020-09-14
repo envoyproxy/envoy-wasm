@@ -309,6 +309,7 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
 // This implementation assumes that the value type is static and known to the consumer.
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
   using Filters::Common::Expr::CelValue;
+  result->clear();
   switch (value.type()) {
   case CelValue::Type::kString:
     result->assign(value.StringOrDie().value().data(), value.StringOrDie().value().size());
