@@ -53,7 +53,7 @@ static RegisterContextFactory register_GrpcCallContext(CONTEXT_FACTORY(GrpcCallC
                                                        ROOT_FACTORY(GrpcCallRootContext),
                                                        "grpc_call");
 
-FilterHeadersStatus GrpcCallContext::onRequestHeaders(uint32_t, bool) {
+FilterHeadersStatus GrpcCallContext::onRequestHeaders(uint32_t, bool end_of_stream) {
   GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
   std::string grpc_service_string;
@@ -62,6 +62,14 @@ FilterHeadersStatus GrpcCallContext::onRequestHeaders(uint32_t, bool) {
   value.set_string_value("request");
   HeaderStringPairs initial_metadata;
   root()->handler_ = new MyGrpcCallHandler();
+  if (end_of_stream) {
+    if (root()->grpcCallHandler(grpc_service_string, "service", "method", initial_metadata, value,
+                                1000, std::unique_ptr<GrpcCallHandlerBase>(root()->handler_)) ==
+        WasmResult::Ok) {
+      logError("expected failure did not occur");
+    }
+    return FilterHeadersStatus::Continue;
+  }
   root()->grpcCallHandler(grpc_service_string, "service", "method", initial_metadata, value, 1000,
                           std::unique_ptr<GrpcCallHandlerBase>(root()->handler_));
   if (root()->grpcCallHandler(

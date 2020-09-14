@@ -27,7 +27,7 @@ static RegisterContextFactory register_AsyncCallContext(CONTEXT_FACTORY(AsyncCal
                                                         ROOT_FACTORY(AsyncCallRootContext),
                                                         "async_call");
 
-FilterHeadersStatus AsyncCallContext::onRequestHeaders(uint32_t, bool) {
+FilterHeadersStatus AsyncCallContext::onRequestHeaders(uint32_t, bool end_of_stream) {
   auto context_id = id();
   auto callback = [context_id](uint32_t, size_t body_size, uint32_t) {
     if (body_size == 0) {
@@ -47,6 +47,13 @@ FilterHeadersStatus AsyncCallContext::onRequestHeaders(uint32_t, bool) {
       logWarn(std::string(p.first) + std::string(" -> ") + std::string(p.second));
     }
   };
+  if (end_of_stream) {
+    if (root()->httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}},
+                         "hello world", {{"trail", "cow"}}, 1000, callback) == WasmResult::Ok) {
+      logError("expected failure did not");
+    }
+    return FilterHeadersStatus::Continue;
+  }
   if (root()->httpCall("bogus cluster",
                        {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}}, "hello world",
                        {{"trail", "cow"}}, 1000, callback) == WasmResult::Ok) {

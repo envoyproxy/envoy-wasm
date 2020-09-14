@@ -612,6 +612,30 @@ TEST_P(WasmHttpFilterTest, AsyncCall) {
   EXPECT_NE(callbacks, nullptr);
 }
 
+TEST_P(WasmHttpFilterTest, AsyncCallBadCall) {
+  if (std::get<1>(GetParam()) == "rust") {
+    // TODO(PiotrSikora): The Rust SDK does not support end_of_stream in on_http_request_headers.
+    return;
+  }
+  setupTest("async_call");
+  setupFilter("async_call");
+
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  Http::MockAsyncClientRequest request(&cluster_manager_.async_client_);
+  EXPECT_CALL(cluster_manager_, get(Eq("cluster"))).Times(testing::AtLeast(1));
+  EXPECT_CALL(cluster_manager_, get(Eq("bogus cluster"))).WillRepeatedly(Return(nullptr));
+  EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster"));
+  // Just fail the send.
+  EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
+      .WillOnce(
+          Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks&,
+                     const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
+            return nullptr;
+          }));
+
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
+}
+
 TEST_P(WasmHttpFilterTest, AsyncCallFailure) {
   setupTest("async_call");
   setupFilter("async_call");
@@ -752,6 +776,35 @@ TEST_P(WasmHttpFilterTest, GrpcCall) {
     callbacks->onCreateInitialMetadata(request_headers);
     callbacks->onSuccessRaw(std::move(response), span);
   }
+}
+
+TEST_P(WasmHttpFilterTest, GrpcCallBadCall) {
+  if (std::get<1>(GetParam()) == "rust") {
+    // TODO(PiotrSikora): gRPC call outs not yet supported in the Rust SDK.
+    return;
+  }
+  setupTest("grpc_call");
+  setupFilter("grpc_call");
+  Grpc::MockAsyncClientManager client_manager;
+  auto client_factory = std::make_unique<Grpc::MockAsyncClientFactory>();
+  auto async_client = std::make_unique<Grpc::MockAsyncClient>();
+  EXPECT_CALL(*async_client, sendRaw(_, _, _, _, _, _))
+      .WillOnce(Invoke([&](absl::string_view, absl::string_view, Buffer::InstancePtr&&,
+                           Grpc::RawAsyncRequestCallbacks&, Tracing::Span&,
+                           const Http::AsyncClient::RequestOptions&) -> Grpc::AsyncRequest* {
+        return nullptr;
+      }));
+  EXPECT_CALL(*client_factory, create).WillOnce(Invoke([&]() -> Grpc::RawAsyncClientPtr {
+    return std::move(async_client);
+  }));
+  EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
+      .WillOnce(Invoke([&]() -> Grpc::AsyncClientManager& { return client_manager; }));
+  EXPECT_CALL(client_manager, factoryForGrpcService(_, _, _))
+      .WillOnce(Invoke([&](const GrpcService&, Stats::Scope&, bool) -> Grpc::AsyncClientFactoryPtr {
+        return std::move(client_factory);
+      }));
+  Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, true));
 }
 
 TEST_P(WasmHttpFilterTest, GrpcCallFailure) {
