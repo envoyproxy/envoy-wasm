@@ -22,7 +22,6 @@ envoy_cc_library(
     hdrs = [
         "context.h",
         "wasm.h",
-        "wasm_callback.h",
         "wasm_extension.h",
         "wasm_state.h",
         "wasm_vm.h",

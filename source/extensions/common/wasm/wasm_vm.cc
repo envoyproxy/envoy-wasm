@@ -5,7 +5,6 @@
 
 #include "extensions/common/wasm/context.h"
 #include "extensions/common/wasm/ext/envoy_null_vm_wasm_api.h"
-#include "extensions/common/wasm/wasm_callback.h"
 #include "extensions/common/wasm/wasm_extension.h"
 #include "extensions/common/wasm/well_known_names.h"
 
@@ -101,20 +100,3 @@ WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& s
 } // namespace Common
 } // namespace Extensions
 } // namespace Envoy
-
-namespace proxy_wasm {
-namespace null_plugin {
-
-#define WS(_x) proxy_wasm::Word(static_cast<uint64_t>(_x))
-#define WR(_x) proxy_wasm::Word(reinterpret_cast<uint64_t>(_x))
-
-proxy_wasm::WasmResult envoy_set_active_span_tag(const char* key_ptr, size_t key_size,
-                                                 const char* value_ptr, size_t value_size) {
-  return wordToWasmResult(
-      Envoy::Extensions::Common::Wasm::set_active_span_tag(
-          proxy_wasm::current_context_, WR(key_ptr), WS(key_size), WR(value_ptr), WS(value_size))
-          .u32());
-}
-
-} // namespace null_plugin
-} // namespace proxy_wasm

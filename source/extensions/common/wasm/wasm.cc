@@ -7,7 +7,6 @@
 
 #include "common/common/logger.h"
 
-#include "extensions/common/wasm/wasm_callback.h"
 #include "extensions/common/wasm/wasm_extension.h"
 
 #include "absl/strings/str_cat.h"

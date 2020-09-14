@@ -128,7 +128,7 @@ inline StatResult parseStatResults(std::string_view data) {
   return results;
 }
 
+extern "C" WasmResult envoy_resolve_dns(const char* address, size_t address_size, uint32_t* token);
 // Tracing
 extern "C" WasmResult envoy_set_active_span_tag(const char* key_ptr, size_t key_size,
                                                 const char* value_ptr, size_t value_size);
-extern "C" WasmResult envoy_resolve_dns(const char* address, size_t address_size, uint32_t* token);
