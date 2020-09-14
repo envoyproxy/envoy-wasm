@@ -309,7 +309,6 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
 // This implementation assumes that the value type is static and known to the consumer.
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
   using Filters::Common::Expr::CelValue;
-  result->clear();
   switch (value.type()) {
   case CelValue::Type::kString:
     result->assign(value.StringOrDie().value().data(), value.StringOrDie().value().size());
@@ -372,9 +371,12 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
         return WasmResult::SerializationFailure;
       }
     }
-    fprintf(stderr, "mashalPairs map %lu %p\n", result->size(), result->data());
-    result->resize(proxy_wasm::exports::pairsSize(pairs));
-    fprintf(stderr, "mashalPairs map %lu %p\n", result->size(), result->data());
+    auto size = proxy_wasm::exports::pairsSize(pairs);
+    // prevent string inlining which violates byte alignment
+    if (size < 30) {
+      result->reserve(30);
+    }
+    result->resize(size);
     proxy_wasm::exports::marshalPairs(pairs, result->data());
     return WasmResult::Ok;
   }
@@ -386,9 +388,12 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
         return WasmResult::SerializationFailure;
       }
     }
-    fprintf(stderr, "mashalPairs list %lu %p\n", result->size(), result->data());
-    result->resize(proxy_wasm::exports::pairsSize(pairs));
-    fprintf(stderr, "mashalPairs list %lu %p\n", result->size(), result->data());
+    auto size = proxy_wasm::exports::pairsSize(pairs);
+    // prevent string inlining which violates byte alignment
+    if (size < 30) {
+      result->reserve(30);
+    }
+    result->resize(size);
     proxy_wasm::exports::marshalPairs(pairs, result->data());
     return WasmResult::Ok;
   }
