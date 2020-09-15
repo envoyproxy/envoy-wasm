@@ -1043,9 +1043,9 @@ void WasmHttpFilterTest::setupGrpcStreamTest(Grpc::RawAsyncStreamCallbacks*& cal
                             callbacks = &cb;
                             return &async_stream_;
                           }));
-                  return std::move(async_client);
+                  return async_client;
                 }));
-            return std::move(client_factory);
+            return client_factory;
           }));
   EXPECT_CALL(cluster_manager_, grpcAsyncClientManager())
       .WillRepeatedly(Invoke([&]() -> Grpc::AsyncClientManager& { return async_client_manager_; }));
