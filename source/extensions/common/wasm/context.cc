@@ -1141,8 +1141,7 @@ WasmResult Context::log(uint32_t level, absl::string_view message) {
   case spdlog::level::critical:
     ENVOY_LOG(critical, "wasm log{}: {}", log_prefix(), message);
     return WasmResult::Ok;
-  case spdlog::level::off:
-  case spdlog::level::n_levels:
+  default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
 }
@@ -1314,6 +1313,7 @@ Context::~Context() {
 
 Network::FilterStatus convertNetworkFilterStatus(proxy_wasm::FilterStatus status) {
   switch (status) {
+  default:
   case proxy_wasm::FilterStatus::Continue:
     return Network::FilterStatus::Continue;
   case proxy_wasm::FilterStatus::StopIteration:
@@ -1323,6 +1323,7 @@ Network::FilterStatus convertNetworkFilterStatus(proxy_wasm::FilterStatus status
 
 Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersStatus status) {
   switch (status) {
+  default:
   case proxy_wasm::FilterHeadersStatus::Continue:
     return Http::FilterHeadersStatus::Continue;
   case proxy_wasm::FilterHeadersStatus::StopIteration:
@@ -1338,6 +1339,7 @@ Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersSt
 
 Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailersStatus status) {
   switch (status) {
+  default:
   case proxy_wasm::FilterTrailersStatus::Continue:
     return Http::FilterTrailersStatus::Continue;
   case proxy_wasm::FilterTrailersStatus::StopIteration:
@@ -1347,6 +1349,7 @@ Http::FilterTrailersStatus convertFilterTrailersStatus(proxy_wasm::FilterTrailer
 
 Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadataStatus status) {
   switch (status) {
+  default:
   case proxy_wasm::FilterMetadataStatus::Continue:
     return Http::FilterMetadataStatus::Continue;
   }
@@ -1354,6 +1357,7 @@ Http::FilterMetadataStatus convertFilterMetadataStatus(proxy_wasm::FilterMetadat
 
 Http::FilterDataStatus convertFilterDataStatus(proxy_wasm::FilterDataStatus status) {
   switch (status) {
+  default:
   case proxy_wasm::FilterDataStatus::Continue:
     return Http::FilterDataStatus::Continue;
   case proxy_wasm::FilterDataStatus::StopIterationAndBuffer:
