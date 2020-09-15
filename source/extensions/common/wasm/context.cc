@@ -310,6 +310,11 @@ void Context::onStatsUpdate(Envoy::Stats::MetricSnapshot& snapshot) {
 // This implementation assumes that the value type is static and known to the consumer.
 WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* result) {
   using Filters::Common::Expr::CelValue;
+  int64_t out_int64;
+  uint64_t out_uint64;
+  double out_double;
+  bool out_bool;
+  const Protobuf::Message* out_message;
   switch (value.type()) {
   case CelValue::Type::kString:
     result->assign(value.StringOrDie().value().data(), value.StringOrDie().value().size());
@@ -317,49 +322,39 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
   case CelValue::Type::kBytes:
     result->assign(value.BytesOrDie().value().data(), value.BytesOrDie().value().size());
     return WasmResult::Ok;
-  case CelValue::Type::kInt64: {
-    auto out = value.Int64OrDie();
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
+  case CelValue::Type::kInt64:
+    out_int64 = value.Int64OrDie();
+    result->assign(reinterpret_cast<const char*>(&out_int64), sizeof(int64_t));
     return WasmResult::Ok;
-  }
-  case CelValue::Type::kUint64: {
-    auto out = value.Uint64OrDie();
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(uint64_t));
+  case CelValue::Type::kUint64:
+    out_uint64 = value.Uint64OrDie();
+    result->assign(reinterpret_cast<const char*>(&out_uint64), sizeof(uint64_t));
     return WasmResult::Ok;
-  }
-  case CelValue::Type::kDouble: {
-    auto out = value.DoubleOrDie();
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(double));
+  case CelValue::Type::kDouble:
+    out_double = value.DoubleOrDie();
+    result->assign(reinterpret_cast<const char*>(&out_double), sizeof(double));
     return WasmResult::Ok;
-  }
-  case CelValue::Type::kBool: {
-    auto out = value.BoolOrDie();
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(bool));
+  case CelValue::Type::kBool:
+    out_bool = value.BoolOrDie();
+    result->assign(reinterpret_cast<const char*>(&out_bool), sizeof(bool));
     return WasmResult::Ok;
-  }
-  case CelValue::Type::kDuration: {
+  case CelValue::Type::kDuration:
     // Warning: loss of precision to nanoseconds
-    int64_t out = absl::ToInt64Nanoseconds(value.DurationOrDie());
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
+    out_int64 = absl::ToInt64Nanoseconds(value.DurationOrDie());
+    result->assign(reinterpret_cast<const char*>(&out_int64), sizeof(int64_t));
     return WasmResult::Ok;
-  }
-  case CelValue::Type::kTimestamp: {
+  case CelValue::Type::kTimestamp:
     // Warning: loss of precision to nanoseconds
-    int64_t out = absl::ToUnixNanos(value.TimestampOrDie());
-    result->assign(reinterpret_cast<const char*>(&out), sizeof(int64_t));
+    out_int64 = absl::ToUnixNanos(value.TimestampOrDie());
+    result->assign(reinterpret_cast<const char*>(&out_int64), sizeof(int64_t));
     return WasmResult::Ok;
-  }
-  case CelValue::Type::kMessage: {
-    auto out = value.MessageOrDie();
-    if (out == nullptr) {
-      result->clear();
-      return WasmResult::Ok;
-    }
-    if (out->SerializeToString(result)) {
+  case CelValue::Type::kMessage:
+    out_message = value.MessageOrDie();
+    result->clear();
+    if (!out_message || out_message->SerializeToString(result)) {
       return WasmResult::Ok;
     }
     return WasmResult::SerializationFailure;
-  }
   case CelValue::Type::kMap: {
     const auto& map = *value.MapOrDie();
     const auto& keys = *map.ListKeys();
@@ -374,11 +369,9 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
     }
     auto size = proxy_wasm::exports::pairsSize(pairs);
     // prevent string inlining which violates byte alignment
-    if (size < 30) {
-      result->reserve(30);
-    }
-    result->resize(size);
+    result->resize(std::max(size, static_cast<size_t>(30)));
     proxy_wasm::exports::marshalPairs(pairs, result->data());
+    result->resize(size);
     return WasmResult::Ok;
   }
   case CelValue::Type::kList: {
@@ -782,6 +775,7 @@ WasmResult Context::getHeaderMapSize(WasmHeaderMapType type, uint32_t* result) {
 // Buffer
 
 BufferInterface* Context::getBuffer(WasmBufferType type) {
+  Envoy::Http::ResponseMessagePtr* response = nullptr;
   switch (type) {
   case WasmBufferType::CallData:
     // Set before the call.
@@ -792,7 +786,7 @@ BufferInterface* Context::getBuffer(WasmBufferType type) {
     if (plugin_) {
       return buffer_.set(plugin_->plugin_configuration_);
     }
-    break;
+    return nullptr;
   case WasmBufferType::HttpRequestBody:
     if (buffering_request_body_) {
       // We need the mutable version, so capture it using a callback.
@@ -816,25 +810,24 @@ BufferInterface* Context::getBuffer(WasmBufferType type) {
     return buffer_.set(network_downstream_data_buffer_);
   case WasmBufferType::NetworkUpstreamData:
     return buffer_.set(network_upstream_data_buffer_);
-  case WasmBufferType::HttpCallResponseBody: {
-    Envoy::Http::ResponseMessagePtr* response = rootContext()->http_call_response_;
+  case WasmBufferType::HttpCallResponseBody:
+    response = rootContext()->http_call_response_;
     if (response) {
       return buffer_.set((*response)->body().get());
     }
-  } break;
+    return nullptr;
   case WasmBufferType::GrpcReceiveBuffer:
     return buffer_.set(rootContext()->grpc_receive_buffer_.get());
   default:
-    break;
+    return nullptr;
   }
-  return nullptr;
 }
 
 void Context::onDownstreamConnectionClose(CloseType close_type) {
   ContextBase::onDownstreamConnectionClose(close_type);
   downstream_closed_ = true;
-  // Call close on TCP connection, if upstream connection closed or there was a failure seen in this
-  // connection.
+  // Call close on TCP connection, if upstream connection closed or there was a failure seen in
+  // this connection.
   if (upstream_closed_ || getRequestStreamInfo()->hasAnyResponseFlag()) {
     onCloseTCP();
   }
@@ -1437,7 +1430,8 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
   if (!in_vm_context_created_) {
     // If the request is invalid then onRequestHeaders() will not be called and neither will
     // onCreate() in cases like sendLocalReply who short-circuits envoy
-    // lifecycle. This is because Envoy does not have a well defined lifetime for the combined HTTP
+    // lifecycle. This is because Envoy does not have a well defined lifetime for the combined
+    // HTTP
     // + AccessLog filter. Thus, to log these scenarios, we call onCreate() in log function below.
     onCreate();
   }

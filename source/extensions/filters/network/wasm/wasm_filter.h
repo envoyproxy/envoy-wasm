@@ -37,6 +37,9 @@ public:
     }
     return std::make_shared<Context>(wasm, root_context_id_, plugin_);
   }
+  Envoy::Extensions::Common::Wasm::Wasm* wasm() {
+    return tls_slot_->getTyped<WasmHandle>().wasm().get();
+  }
 
 private:
   uint32_t root_context_id_{0};

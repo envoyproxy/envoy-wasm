@@ -23,6 +23,7 @@
 using Envoy::Server::ServerLifecycleNotifier;
 using StageCallbackWithCompletion =
     Envoy::Server::ServerLifecycleNotifier::StageCallbackWithCompletion;
+using google::api::expr::runtime::CelValue;
 using testing::Eq;
 using testing::Return;
 
@@ -141,7 +142,26 @@ TEST_P(WasmCommonTest, EnvoyWasm) {
   EXPECT_NE(grpc_stream_token1, grpc_stream_token2);
   root_context->setNextGrpcTokenForTesting(0xFFFFFFFF); // Rollover.
   EXPECT_EQ(root_context->nextGrpcStreamToken(), 2);
+
+  uint32_t http_call_token1 = root_context->nextHttpCallToken();
+  uint32_t http_call_token2 = root_context->nextHttpCallToken();
+  EXPECT_NE(http_call_token1, http_call_token2);
+  root_context->setNextHttpCallTokenForTesting(0); // Rollover.
+  EXPECT_EQ(root_context->nextHttpCallToken(), 1);
+
+  EXPECT_EQ(root_context->getBuffer(WasmBufferType::HttpCallResponseBody), nullptr);
+  EXPECT_EQ(root_context->getBuffer(WasmBufferType::PluginConfiguration), nullptr);
+
   delete root_context;
+
+  WasmStatePrototype wasm_state_prototype(true, WasmType::Bytes, "",
+                                          StreamInfo::FilterState::LifeSpan::FilterChain);
+  auto wasm_state = std::make_unique<WasmState>(wasm_state_prototype);
+  Protobuf::Arena arena;
+  EXPECT_EQ(wasm_state->exprValue(&arena, true).MessageOrDie(), nullptr);
+  wasm_state->setValue("foo");
+  auto any = wasm_state->serializeAsProto();
+  EXPECT_TRUE(static_cast<ProtobufWkt::Any*>(any.get())->Is<ProtobufWkt::BytesValue>());
 }
 
 TEST_P(WasmCommonTest, Logging) {
