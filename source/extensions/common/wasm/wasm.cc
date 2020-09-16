@@ -177,8 +177,8 @@ Wasm::~Wasm() {
 Word resolve_dns(void* raw_context, Word dns_address_ptr, Word dns_address_size, Word token_ptr) {
   auto context = WASM_CONTEXT(raw_context);
   auto root_context = context->isRootContext() ? context : context->rootContext();
-  auto path = context->wasmVm()->getMemory(dns_address_ptr, dns_address_size);
-  if (!path) {
+  auto address = context->wasmVm()->getMemory(dns_address_ptr, dns_address_size);
+  if (!address) {
     return WasmResult::InvalidMemoryAccess;
   }
   // Verify set and verify token_ptr before initiating the async resolve.
@@ -199,8 +199,8 @@ Word resolve_dns(void* raw_context, Word dns_address_ptr, Word dns_address_size,
   if (!context->wasm()->dnsResolver()) {
     context->wasm()->dnsResolver() = context->wasm()->dispatcher().createDnsResolver({}, false);
   }
-  context->wasm()->dnsResolver()->resolve(std::string(path.value()), Network::DnsLookupFamily::Auto,
-                                          callback);
+  context->wasm()->dnsResolver()->resolve(std::string(address.value()),
+                                          Network::DnsLookupFamily::Auto, callback);
   return WasmResult::Ok;
 }
 
@@ -281,7 +281,7 @@ getCloneFactory(WasmExtension* wasm_extension, Event::Dispatcher& dispatcher,
   };
 }
 
-static WasmEvent toWasmEvent(const std::shared_ptr<WasmHandleBase>& wasm) {
+WasmEvent toWasmEvent(const std::shared_ptr<WasmHandleBase>& wasm) {
   if (!wasm) {
     return WasmEvent::UnableToCreateVM;
   }

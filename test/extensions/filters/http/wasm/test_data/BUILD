@@ -66,9 +66,14 @@ wasm_rust_binary(
 envoy_cc_library(
     name = "test_cpp_plugin",
     srcs = [
+        "test_async_call_cpp.cc",
+        "test_body_cpp.cc",
         "test_cpp.cc",
         "test_cpp_null_plugin.cc",
+        "test_grpc_call_cpp.cc",
+        "test_grpc_stream_cpp.cc",
         "test_shared_data_cpp.cc",
+        "test_shared_queue_cpp.cc",
     ],
     copts = ["-DNULL_PLUGIN=1"],
     deps = [
@@ -87,8 +92,13 @@ envoy_cc_library(
 wasm_cc_binary(
     name = "test_cpp.wasm",
     srcs = [
+        "test_async_call_cpp.cc",
+        "test_body_cpp.cc",
         "test_cpp.cc",
+        "test_grpc_call_cpp.cc",
+        "test_grpc_stream_cpp.cc",
         "test_shared_data_cpp.cc",
+        "test_shared_queue_cpp.cc",
     ],
     deps = [
         ":test_cc_proto",

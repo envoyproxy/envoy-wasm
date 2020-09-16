@@ -28,6 +28,8 @@ public:
   TestFilter(Wasm* wasm, uint32_t root_context_id, PluginSharedPtr plugin)
       : Context(wasm, root_context_id, plugin) {}
   MOCK_CONTEXT_LOG_;
+
+  void testClose() { onCloseTCP(); }
 };
 
 class TestRoot : public Context {
@@ -42,16 +44,18 @@ public:
   WasmNetworkFilterTest() = default;
   ~WasmNetworkFilterTest() override = default;
 
-  void setupConfig(const std::string& code, std::string vm_configuration) {
+  void setupConfig(const std::string& code, std::string vm_configuration, bool fail_open = false) {
     if (code.empty()) {
       setupWasmCode(vm_configuration);
     } else {
       code_ = code;
     }
-    setupBase(std::get<0>(GetParam()), code_,
-              [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
-                return new TestRoot(wasm, plugin);
-              });
+    setupBase(
+        std::get<0>(GetParam()), code_,
+        [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
+          return new TestRoot(wasm, plugin);
+        },
+        "" /* root_id */, "" /* vm_configuration */, fail_open);
   }
 
   void setupFilter() { setupFilterBase<TestFilter>(""); }
@@ -101,6 +105,14 @@ TEST_P(WasmNetworkFilterTest, BadCode) {
   EXPECT_EQ(Network::FilterStatus::StopIteration, filter().onNewConnection());
 }
 
+TEST_P(WasmNetworkFilterTest, BadCodeFailOpen) {
+  setupConfig("bad code", "", true);
+  EXPECT_EQ(wasm_, nullptr);
+  setupFilter();
+  filter().isFailed();
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onNewConnection());
+}
+
 // Test happy path.
 TEST_P(WasmNetworkFilterTest, HappyPath) {
   setupConfig("", "logging");
@@ -121,12 +133,73 @@ TEST_P(WasmNetworkFilterTest, HappyPath) {
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onUpstreamConnectionClose 2 0"))));
   EXPECT_EQ(Network::FilterStatus::Continue, filter().onWrite(fake_upstream_data, true));
+  filter().onAboveWriteBufferHighWatermark();
+  filter().onBelowWriteBufferLowWatermark();
 
   EXPECT_CALL(filter(),
               log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
   // Noop.
   read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
+  filter().testClose();
+}
+
+TEST_P(WasmNetworkFilterTest, CloseDownstreamFirst) {
+  setupConfig("", "logging");
+  setupFilter();
+
+  EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onNewConnection());
+
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
+  write_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
+  read_filter_callbacks_.connection_.close(Network::ConnectionCloseType::FlushWrite);
+}
+
+TEST_P(WasmNetworkFilterTest, CloseStream) {
+  setupConfig("", "logging");
+  setupFilter();
+
+  // No Context, does nothing.
+  filter().onEvent(Network::ConnectionEvent::RemoteClose);
+  Buffer::OwnedImpl fake_upstream_data("Done");
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onWrite(fake_upstream_data, true));
+  Buffer::OwnedImpl fake_downstream_data("Fake");
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onData(fake_downstream_data, false));
+
+  // Create context.
+  EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onNewConnection());
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 1"))));
+  EXPECT_CALL(filter(),
+              log_(spdlog::level::trace, Eq(absl::string_view("onDownstreamConnectionClose 2 2"))));
+
+  filter().onEvent(static_cast<Network::ConnectionEvent>(9999)); // Does nothing.
+  filter().onEvent(Network::ConnectionEvent::RemoteClose);
+  filter().closeStream(proxy_wasm::WasmStreamType::Downstream);
+  filter().closeStream(proxy_wasm::WasmStreamType::Upstream);
+}
+
+TEST_P(WasmNetworkFilterTest, SegvFailOpen) {
+  if (std::get<0>(GetParam()) != "v8" || std::get<1>(GetParam()) != "cpp") {
+    return;
+  }
+  setupConfig("", "logging", true);
+  EXPECT_TRUE(plugin_->fail_open_);
+  setupFilter();
+
+  EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("onNewConnection 2"))));
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onNewConnection());
+
+  EXPECT_CALL(filter(), log_(spdlog::level::trace, Eq(absl::string_view("before segv"))));
+  filter().onForeignFunction(0, 0);
+  EXPECT_TRUE(wasm_->wasm()->isFailed());
+
+  Buffer::OwnedImpl fake_downstream_data("Fake");
+  // No logging expected.
+  EXPECT_EQ(Network::FilterStatus::Continue, filter().onData(fake_downstream_data, false));
 }
 
 } // namespace Wasm

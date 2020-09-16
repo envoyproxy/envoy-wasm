@@ -15,11 +15,27 @@ import traceback
 import shutil
 import paths
 
-EXCLUDED_PREFIXES = ("./generated/", "./thirdparty/", "./build", "./.git/", "./bazel-", "./.cache",
-                     "./source/extensions/extensions_build_config.bzl",
-                     "./bazel/toolchains/configs/", "./tools/testdata/check_format/",
-                     "./tools/pyformat/", "./third_party/", "./api/wasm/",
-                     "./test/extensions/filters/http/wasm/test_data")
+EXCLUDED_PREFIXES = (
+    "./generated/",
+    "./thirdparty/",
+    "./build",
+    "./.git/",
+    "./bazel-",
+    "./.cache",
+    "./source/extensions/extensions_build_config.bzl",
+    "./bazel/toolchains/configs/",
+    "./tools/testdata/check_format/",
+    "./tools/pyformat/",
+    "./third_party/",
+    "./test/extensions/filters/http/wasm/test_data",
+    "./test/extensions/filters/network/wasm/test_data",
+    "./test/extensions/stats_sinks/wasm/test_data",
+    "./test/extensions/bootstrap/wasm/test_data",
+    "./test/extensions/common/wasm/test_data",
+    "./test/extensions/access_loggers/wasm/test_data",
+    "./source/extensions/common/wasm/ext",
+    "./examples/wasm",
+)
 SUFFIXES = ("BUILD", "WORKSPACE", ".bzl", ".cc", ".h", ".java", ".m", ".md", ".mm", ".proto",
             ".rst")
 DOCS_SUFFIX = (".md", ".rst")
@@ -39,6 +55,7 @@ REAL_TIME_ALLOWLIST = ("./source/common/common/utility.h",
                        "./source/common/event/real_time_system.h", "./source/exe/main_common.cc",
                        "./source/exe/main_common.h", "./source/server/config_validation/server.cc",
                        "./source/common/common/perf_annotation.h",
+                       "./test/common/common/log_macros_test.cc",
                        "./test/test_common/simulated_time_system.cc",
                        "./test/test_common/simulated_time_system.h",
                        "./test/test_common/test_time.cc", "./test/test_common/test_time.h",
@@ -692,15 +709,27 @@ def checkSourceLine(line, file_path, reportError):
     # The std::atomic_* free functions are functionally equivalent to calling
     # operations on std::atomic<T> objects, so prefer to use that instead.
     reportError("Don't use free std::atomic_* functions, use std::atomic<T> members instead.")
-  # Blocking the use of std::any, std::optional, std::variant for now as iOS 11/macOS 10.13
-  # does not support these functions at runtime.
+  # Block usage of certain std types/functions as iOS 11 and macOS 10.13
+  # do not support these at runtime.
   # See: https://github.com/envoyproxy/envoy/issues/12341
   if tokenInLine("std::any", line):
     reportError("Don't use std::any; use absl::any instead")
+  if tokenInLine("std::get_if", line):
+    reportError("Don't use std::get_if; use absl::get_if instead")
+  if tokenInLine("std::holds_alternative", line):
+    reportError("Don't use std::holds_alternative; use absl::holds_alternative instead")
+  if tokenInLine("std::make_optional", line):
+    reportError("Don't use std::make_optional; use absl::make_optional instead")
+  if tokenInLine("std::monostate", line):
+    reportError("Don't use std::monostate; use absl::monostate instead")
   if tokenInLine("std::optional", line):
     reportError("Don't use std::optional; use absl::optional instead")
+  if tokenInLine("std::string_view", line):
+    reportError("Don't use std::string_view; use absl::string_view instead")
   if tokenInLine("std::variant", line):
     reportError("Don't use std::variant; use absl::variant instead")
+  if tokenInLine("std::visit", line):
+    reportError("Don't use std::visit; use absl::visit instead")
   if "__attribute__((packed))" in line and file_path != "./include/envoy/common/platform.h":
     # __attribute__((packed)) is not supported by MSVC, we have a PACKED_STRUCT macro that
     # can be used instead

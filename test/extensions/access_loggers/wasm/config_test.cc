@@ -100,6 +100,16 @@ TEST_P(WasmAccessLogConfigTest, CreateWasmFromWASM) {
       factory->createAccessLogInstance(config, std::move(filter), context);
   EXPECT_NE(nullptr, instance);
   EXPECT_NE(nullptr, dynamic_cast<WasmAccessLog*>(instance.get()));
+  Http::TestRequestHeaderMapImpl request_header;
+  Http::TestResponseHeaderMapImpl response_header;
+  Http::TestResponseTrailerMapImpl response_trailer;
+  StreamInfo::MockStreamInfo log_stream_info;
+  instance->log(&request_header, &response_header, &response_trailer, log_stream_info);
+
+  filter = std::make_unique<NiceMock<AccessLog::MockFilter>>();
+  AccessLog::InstanceSharedPtr filter_instance =
+      factory->createAccessLogInstance(config, std::move(filter), context);
+  filter_instance->log(&request_header, &response_header, &response_trailer, log_stream_info);
 }
 
 } // namespace Wasm
