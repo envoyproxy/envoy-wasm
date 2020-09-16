@@ -699,9 +699,9 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
     proxy_wasm_cpp_host = dict(
         project_name = "WebAssembly for Proxies (C++ host implementation)",
         project_url = "https://github.com/proxy-wasm/proxy-wasm-cpp-host",
-        # 2020-08-27
-        version = "a21abb5565d471da7e73ae00becde2e6bc27caf7",
-        sha256 = "07c521a74a3ece1ddc0853b4d066dba5fba2cc7dce392b9c8b9b2d455ee8c469",
+        # 2020-09-10
+        version = "49ed20e895b728aae6b811950a2939ecbaf76f7c",
+        sha256 = "fa03293d01450b9164f8f56ef9227301f7d1af4f373f996400f75c93f6ebc822",
         strip_prefix = "proxy-wasm-cpp-host-{version}",
         urls = ["https://github.com/proxy-wasm/proxy-wasm-cpp-host/archive/{version}.tar.gz"],
         use_category = ["dataplane"],
