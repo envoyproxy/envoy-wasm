@@ -144,7 +144,7 @@ Context::Context(Wasm* wasm, const PluginSharedPtr& plugin) : ContextBase(wasm, 
 }
 Context::Context(Wasm* wasm, uint32_t root_context_id, const PluginSharedPtr& plugin)
     : ContextBase(wasm, root_context_id, plugin) {
-    ENVOY_LOG(debug, "wasm log{}: Context::Context(..., root_context_id={}, ...)", log_prefix(), root_context_id);
+    ENVOY_LOG(trace, "wasm log{}: Context::Context(..., root_context_id={}, ...)", log_prefix(), root_context_id);
 }
 
 Wasm* Context::wasm() const { return static_cast<Wasm*>(wasm_); }
@@ -840,13 +840,13 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
                              absl::string_view request_body, const Pairs& request_trailers,
                              int timeout_milliseconds, uint32_t* token_ptr) {
   if (timeout_milliseconds < 0) {
-    ENVOY_LOG(info, "wasm log{}: httpCall() invalid timeout_milliseconds{}",
+    ENVOY_LOG(debug, "wasm log{}: httpCall() invalid timeout_milliseconds{}",
       log_prefix(), timeout_milliseconds);
     return WasmResult::BadArgument;
   }
   auto cluster_string = std::string(cluster);
   if (clusterManager().get(cluster_string) == nullptr) {
-    ENVOY_LOG(info, "wasm log{}: httpCall() cluster required", log_prefix());
+    ENVOY_LOG(debug, "wasm log{}: httpCall() cluster required", log_prefix());
     return WasmResult::BadArgument;
   }
 
@@ -857,13 +857,13 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
   if (message->headers().Path() == nullptr || message->headers().Method() == nullptr ||
       message->headers().Host() == nullptr) {
     if (message->headers().Path() == nullptr) {
-      ENVOY_LOG(info, "wasm log{}: path required", log_prefix());
+      ENVOY_LOG(debug, "wasm log{}: path required", log_prefix());
     }
     if (message->headers().Method() == nullptr) {
-      ENVOY_LOG(info, "wasm log{}: method required", log_prefix());
+      ENVOY_LOG(debug, "wasm log{}: method required", log_prefix());
     }
     if (message->headers().Host() == nullptr) {
-      ENVOY_LOG(info, "wasm log{}: host required {}", log_prefix());
+      ENVOY_LOG(debug, "wasm log{}: host required {}", log_prefix());
     }
     return WasmResult::BadArgument;
   }
@@ -872,7 +872,7 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
     message->body() =
         std::make_unique<::Envoy::Buffer::OwnedImpl>(request_body.data(), request_body.size());
     message->headers().setContentLength(request_body.size());
-    ENVOY_LOG(debug, "wasm log{}: httpCall() request body size {}",
+    ENVOY_LOG(trace, "wasm log{}: httpCall() request body size {}",
       log_prefix(), request_body.size());
   }
 
@@ -896,7 +896,7 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
     }
     token = next_http_call_token_++;
   }
-  ENVOY_LOG(debug, "wasm log{}: httpCall() generated token {}", log_prefix(), token);
+  ENVOY_LOG(trace, "wasm log{}: httpCall() generated token {}", log_prefix(), token);
   auto& handler = http_request_[token];
 
   // set default hash policy to be based on :authority to enable consistent hash
@@ -910,7 +910,7 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
                           .send(std::move(message), handler, options);
   if (!http_request) {
     http_request_.erase(token);
-    ENVOY_LOG(info, "wasm log{}: httpCall() failed, erased token {}", log_prefix(), token);
+    ENVOY_LOG(trace, "wasm log{}: httpCall() failed, erased token {}", log_prefix(), token);
     return WasmResult::InternalFailure;
   }
   handler.context_ = this;
@@ -1679,32 +1679,32 @@ void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&
   // TODO: convert this into a function in proxy-wasm-cpp-host and use here.
   if (proxy_wasm::current_context_ != nullptr) {
     // We are in a reentrant call, so defer.
-    ENVOY_LOG(debug, "wasm log: deferring onHttpCallSuccess for token {}", token);
+    ENVOY_LOG(trace, "wasm log: deferring onHttpCallSuccess for token {}", token);
     wasm()->addAfterVmCallAction([this, token, response = response.release()] {
       ENVOY_LOG(debug, "wasm log: re-attempting deferred onHttpCallSuccess for token {}", token);
       onHttpCallSuccess(token, std::unique_ptr<Envoy::Http::ResponseMessage>(response));
     });
-    ENVOY_LOG(debug, "wasm log: deferred onHttpCallSuccess for token {}", token);
+    ENVOY_LOG(trace, "wasm log: deferred onHttpCallSuccess for token {}", token);
     return;
   }
-  ENVOY_LOG(debug, "wasm log: onHttpCallSuccess for token {}", token);
+  ENVOY_LOG(trace, "wasm log: onHttpCallSuccess for token {}", token);
   http_call_response_ = &response;
   uint32_t body_size = response->body() ? response->body()->length() : 0;
   onHttpCallResponse(token, response->headers().size(), body_size,
                      headerSize(response->trailers()));
   http_call_response_ = nullptr;
   http_request_.erase(token);
-  ENVOY_LOG(debug, "wasm log: onHttpCallSuccess finished; erased token {}", token);
+  ENVOY_LOG(trace, "wasm log: onHttpCallSuccess finished; erased token {}", token);
 }
 
 void Context::onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason) {
   if (proxy_wasm::current_context_ != nullptr) {
     // We are in a reentrant call, so defer.
-    ENVOY_LOG(debug, "wasm log: deferring onHttpCallFailure for token {}: reason {}", token, reason);
+    ENVOY_LOG(trace, "wasm log: deferring onHttpCallFailure for token {}: reason {}", token, reason);
     wasm()->addAfterVmCallAction([this, token, reason] { onHttpCallFailure(token, reason); });
     return;
   }
-  ENVOY_LOG(debug, "wasm log: onHttpCallFailure for token {}: reason {}", token, reason);
+  ENVOY_LOG(trace, "wasm log: onHttpCallFailure for token {}: reason {}", token, reason);
   status_code_ = static_cast<uint32_t>(WasmResult::BrokenConnection);
   // This is the only value currently.
   ASSERT(reason == Http::AsyncClient::FailureReason::Reset);
@@ -1712,7 +1712,7 @@ void Context::onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason
   onHttpCallResponse(token, 0, 0, 0);
   status_message_ = "";
   http_request_.erase(token);
-  ENVOY_LOG(debug, "wasm log: onHttpCallFailure finished; erased token {}", token);
+  ENVOY_LOG(trace, "wasm log: onHttpCallFailure finished; erased token {}", token);
 }
 
 void Context::onGrpcReceiveWrapper(uint32_t token, ::Envoy::Buffer::InstancePtr response) {
