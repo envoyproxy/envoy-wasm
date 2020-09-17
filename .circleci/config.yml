@@ -115,7 +115,7 @@ workflows:
   all:
     jobs:
       - release
-      - all_tests
+        #      - all_tests
       - asan
       - tsan
       - coverage
