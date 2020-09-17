@@ -23,7 +23,6 @@
 using Envoy::Server::ServerLifecycleNotifier;
 using StageCallbackWithCompletion =
     Envoy::Server::ServerLifecycleNotifier::StageCallbackWithCompletion;
-using google::api::expr::runtime::CelValue;
 using testing::Eq;
 using testing::Return;
 
