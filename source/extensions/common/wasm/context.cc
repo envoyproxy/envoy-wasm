@@ -144,7 +144,8 @@ Context::Context(Wasm* wasm, const PluginSharedPtr& plugin) : ContextBase(wasm, 
 }
 Context::Context(Wasm* wasm, uint32_t root_context_id, const PluginSharedPtr& plugin)
     : ContextBase(wasm, root_context_id, plugin) {
-    ENVOY_LOG(trace, "wasm log{}: Context::Context(..., root_context_id={}, ...)", log_prefix(), root_context_id);
+  ENVOY_LOG(trace, "wasm log{}: Context::Context(..., root_context_id={}, ...)", log_prefix(),
+            root_context_id);
 }
 
 Wasm* Context::wasm() const { return static_cast<Wasm*>(wasm_); }
@@ -840,8 +841,8 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
                              absl::string_view request_body, const Pairs& request_trailers,
                              int timeout_milliseconds, uint32_t* token_ptr) {
   if (timeout_milliseconds < 0) {
-    ENVOY_LOG(debug, "wasm log{}: httpCall() invalid timeout_milliseconds{}",
-      log_prefix(), timeout_milliseconds);
+    ENVOY_LOG(debug, "wasm log{}: httpCall() invalid timeout_milliseconds{}", log_prefix(),
+              timeout_milliseconds);
     return WasmResult::BadArgument;
   }
   auto cluster_string = std::string(cluster);
@@ -872,8 +873,8 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
     message->body() =
         std::make_unique<::Envoy::Buffer::OwnedImpl>(request_body.data(), request_body.size());
     message->headers().setContentLength(request_body.size());
-    ENVOY_LOG(trace, "wasm log{}: httpCall() request body size {}",
-      log_prefix(), request_body.size());
+    ENVOY_LOG(trace, "wasm log{}: httpCall() request body size {}", log_prefix(),
+              request_body.size());
   }
 
   if (!request_trailers.empty()) {
@@ -1700,7 +1701,8 @@ void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&
 void Context::onHttpCallFailure(uint32_t token, Http::AsyncClient::FailureReason reason) {
   if (proxy_wasm::current_context_ != nullptr) {
     // We are in a reentrant call, so defer.
-    ENVOY_LOG(trace, "wasm log: deferring onHttpCallFailure for token {}: reason {}", token, reason);
+    ENVOY_LOG(trace, "wasm log: deferring onHttpCallFailure for token {}: reason {}", token,
+              reason);
     wasm()->addAfterVmCallAction([this, token, reason] { onHttpCallFailure(token, reason); });
     return;
   }
