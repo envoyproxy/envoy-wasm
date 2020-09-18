@@ -124,7 +124,9 @@ class WasmVmTest : public testing::TestWithParam<bool> {
 public:
   WasmVmTest() : scope_(Stats::ScopeSharedPtr(stats_store.createScope("wasm."))) {}
 
-  void SetUp() override { g_host_functions = new MockHostFunctions(); }
+  void SetUp() override { // NOLINT(readability-identifier-naming)
+    g_host_functions = new MockHostFunctions();
+  }
   void TearDown() override { delete g_host_functions; }
 
 protected:
