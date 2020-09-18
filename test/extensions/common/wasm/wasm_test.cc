@@ -80,7 +80,7 @@ public:
 
 class WasmCommonTest : public testing::TestWithParam<std::string> {
 public:
-  void SetUp() override {
+  void SetUp() override { // NOLINT(readability-identifier-naming)
     Logger::Registry::getLog(Logger::Id::wasm).set_level(spdlog::level::debug);
     clearCodeCacheForTesting();
   }
