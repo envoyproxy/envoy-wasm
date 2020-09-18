@@ -93,6 +93,7 @@ public:
     create_context_for_testing_ = create_context;
     create_root_context_for_testing_ = create_root_context;
   }
+  void setFailStateForTesting(proxy_wasm::FailState fail_state) { failed_ = fail_state; }
 
 protected:
   friend class Context;
@@ -158,6 +159,7 @@ getOrCreateThreadLocalWasm(const WasmHandleSharedPtr& base_wasm, const PluginSha
 void clearCodeCacheForTesting();
 std::string anyToBytes(const ProtobufWkt::Any& any);
 void setTimeOffsetForCodeCacheForTesting(MonotonicTime::duration d);
+EnvoyWasm::WasmEvent toWasmEvent(const std::shared_ptr<WasmHandleBase>& wasm);
 
 } // namespace Wasm
 } // namespace Common

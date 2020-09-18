@@ -64,26 +64,17 @@ WasmVmPtr createWasmVm(absl::string_view runtime, const Stats::ScopeSharedPtr& s
     return nullptr;
   } else if (runtime == WasmRuntimeNames::get().Null) {
     auto wasm = proxy_wasm::createNullVm();
-    if (!wasm) {
-      return nullptr;
-    }
     wasm->integration() = getWasmExtension()->createEnvoyWasmVmIntegration(scope, runtime, "null");
     return wasm;
 #if defined(ENVOY_WASM_V8)
   } else if (runtime == WasmRuntimeNames::get().V8) {
     auto wasm = proxy_wasm::createV8Vm();
-    if (!wasm) {
-      return nullptr;
-    }
     wasm->integration() = getWasmExtension()->createEnvoyWasmVmIntegration(scope, runtime, "v8");
     return wasm;
 #endif
 #if defined(ENVOY_WASM_WAVM)
   } else if (runtime == WasmRuntimeNames::get().Wavm) {
     auto wasm = proxy_wasm::createWavmVm();
-    if (!wasm) {
-      return nullptr;
-    }
     wasm->integration() = getWasmExtension()->createEnvoyWasmVmIntegration(scope, runtime, "wavm");
     return wasm;
 #endif

@@ -39,6 +39,19 @@ namespace Wasm {
   }                                                                                                \
   MOCK_METHOD2(log_, void(spdlog::level::level_enum level, absl::string_view message))
 
+class DeferredRunner {
+public:
+  ~DeferredRunner() {
+    if (f_) {
+      f_();
+    }
+  }
+  void setFunction(std::function<void()> f) { f_ = f; }
+
+private:
+  std::function<void()> f_;
+};
+
 template <typename Base = testing::Test> class WasmTestBase : public Base {
 public:
   // NOLINTNEXTLINE(readability-identifier-naming)
@@ -46,7 +59,7 @@ public:
 
   void setupBase(const std::string& runtime, const std::string& code, CreateContextFn create_root,
                  std::string root_id = "", std::string vm_configuration = "",
-                 std::string plugin_configuration = "") {
+                 bool fail_open = false, std::string plugin_configuration = "") {
     envoy::extensions::wasm::v3::VmConfig vm_config;
     vm_config.set_vm_id("vm_id");
     vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", runtime));
@@ -59,7 +72,7 @@ public:
     auto name = "plugin_name";
     auto vm_id = "";
     plugin_ = std::make_shared<Extensions::Common::Wasm::Plugin>(
-        name, root_id, vm_id, runtime, plugin_configuration, false,
+        name, root_id, vm_id, runtime, plugin_configuration, fail_open,
         envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     // Passes ownership of root_context_.
     Extensions::Common::Wasm::createWasm(
@@ -79,6 +92,7 @@ public:
   WasmHandleSharedPtr& wasm() { return wasm_; }
   Context* rootContext() { return root_context_; }
 
+  DeferredRunner deferred_runner_;
   Stats::IsolatedStoreImpl stats_store_;
   Stats::ScopeSharedPtr scope_;
   NiceMock<ThreadLocal::MockInstance> tls_;

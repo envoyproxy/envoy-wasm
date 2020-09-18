@@ -5,7 +5,7 @@ executors:
     description: "A regular build executor based on ubuntu image"
     docker:
       # NOTE: Update this from https://github.com/envoyproxy/envoy-build-tools/blob/master/toolchains/rbe_toolchains_config.bzl#L8
-      - image: envoyproxy/envoy-build-ubuntu:923df85a4ba7f30dcd0cb6b0c6d8d604f0e20f48
+      - image: envoyproxy/envoy-build-ubuntu:e7ea4e81bbd5028abb9d3a2f2c0afe063d9b62c0
     resource_class: xlarge
     working_directory: /source
 
@@ -22,22 +22,22 @@ jobs:
            path: /build/envoy/generated
            destination: /
 
-   all_tests:
-     executor: ubuntu-build
-     environment:
-       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6 --flaky_test_attempts=5"
-     steps:
-       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
-       - checkout
-       - restore_cache:
-           keys:
-             - tests-bazel-cache-{{ checksum "WORKSPACE" }}-{{ checksum "bazel/repository_locations.bzl" }}
-       - run: ci/do_circle_ci.sh bazel.dev
-       - save_cache:
-           key: tests-bazel-cache-{{ checksum "WORKSPACE" }}-{{ checksum "bazel/repository_locations.bzl" }}
-           paths:
-             - /home/circleci/.cache/bazel
-           when: always # Save cache even when some tests fail.
+           #   all_tests:
+           #     executor: ubuntu-build
+           #     environment:
+           #       BAZEL_BUILD_EXTRA_OPTIONS: "--local_ram_resources=8192 --local_cpu_resources=6 --flaky_test_attempts=5"
+           #     steps:
+           #       - run: rm -rf /home/circleci/project/.git # CircleCI git caching is likely broken
+           #       - checkout
+           #       - restore_cache:
+           #           keys:
+           #             - tests-bazel-cache-{{ checksum "WORKSPACE" }}-{{ checksum "bazel/repository_locations.bzl" }}
+           #       - run: ci/do_circle_ci.sh bazel.dev
+           #       - save_cache:
+           #           key: tests-bazel-cache-{{ checksum "WORKSPACE" }}-{{ checksum "bazel/repository_locations.bzl" }}
+           #           paths:
+           #             - /home/circleci/.cache/bazel
+           #           when: always # Save cache even when some tests fail.
 
    asan:
      executor: ubuntu-build
@@ -115,7 +115,7 @@ workflows:
   all:
     jobs:
       - release
-      - all_tests
+        #      - all_tests
       - asan
       - tsan
       - coverage

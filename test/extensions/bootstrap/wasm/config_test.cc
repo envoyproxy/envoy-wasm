@@ -52,6 +52,7 @@ protected:
     EXPECT_CALL(context_, lifecycleNotifier())
         .WillRepeatedly(testing::ReturnRef(lifecycle_notifier_));
     extension_ = factory->createBootstrapExtension(config, context_);
+    static_cast<Bootstrap::Wasm::WasmServiceExtension*>(extension_.get())->wasmService();
     EXPECT_CALL(init_watcher_, ready());
     init_manager_.initialize(init_watcher_);
   }
@@ -79,6 +80,9 @@ auto testing_values = testing::Values(
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFactoryTest, testing_values);
 
 TEST_P(WasmFactoryTest, CreateWasmFromWasm) {
+  auto factory = std::make_unique<Bootstrap::Wasm::WasmFactory>();
+  auto empty_config = factory->createEmptyConfigProto();
+
   initializeWithConfig(config_);
 
   EXPECT_NE(extension_, nullptr);
@@ -124,6 +128,17 @@ TEST_P(WasmFactoryTest, StartFailed) {
   plugin_configuration.set_value("bad");
   config_.mutable_config()->mutable_vm_config()->mutable_configuration()->PackFrom(
       plugin_configuration);
+
+  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config_), Extensions::Common::Wasm::WasmException,
+                            "Unable to create Wasm service test");
+}
+
+TEST_P(WasmFactoryTest, StartFailedOpen) {
+  ProtobufWkt::StringValue plugin_configuration;
+  plugin_configuration.set_value("bad");
+  config_.mutable_config()->mutable_vm_config()->mutable_configuration()->PackFrom(
+      plugin_configuration);
+  config_.mutable_config()->set_fail_open(true);
 
   EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config_), Extensions::Common::Wasm::WasmException,
                             "Unable to create Wasm service test");

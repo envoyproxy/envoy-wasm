@@ -25,10 +25,14 @@ BSON
 BPF
 CAS
 CB
+CDN
 CDS
 CEL
 DSR
+HEXDIG
+HEXDIGIT
 LTT
+OWS
 TIDs
 ceil
 CHACHA
@@ -472,6 +476,7 @@ canonicalizing
 cardinality
 casted
 charset
+checkin
 checksum
 chrono
 chroot
@@ -978,6 +983,7 @@ rele
 releasor
 reloadable
 remoting
+renderers
 reparse
 repeatability
 reperform
@@ -1037,6 +1043,7 @@ setsockopt
 sig
 sigaction
 sigactions
+siginfo
 signalstack
 siloed
 sim

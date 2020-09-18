@@ -140,6 +140,34 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromFileWasm) {
   cb(filter_callback);
 }
 
+TEST_P(WasmFilterConfigTest, YamlLoadFromFileWasmFailOpenOk) {
+  const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
+  config:
+    fail_open: true
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
+                                                                    GetParam(), R"EOF("
+      configuration:
+         "@type": "type.googleapis.com/google.protobuf.StringValue"
+         value: "some configuration"
+      code:
+        local:
+          filename: "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/test_cpp.wasm"
+  )EOF"));
+
+  envoy::extensions::filters::http::wasm::v3::Wasm proto_config;
+  TestUtility::loadFromYaml(yaml, proto_config);
+  WasmFilterConfig factory;
+  Http::FilterFactoryCb cb = factory.createFilterFactoryFromProto(proto_config, "stats", context_);
+  EXPECT_CALL(init_watcher_, ready());
+  context_.initManager().initialize(init_watcher_);
+  EXPECT_EQ(context_.initManager().state(), Init::Manager::State::Initialized);
+  Http::MockFilterChainFactoryCallbacks filter_callback;
+  EXPECT_CALL(filter_callback, addStreamFilter(_));
+  EXPECT_CALL(filter_callback, addAccessLogHandler(_));
+  cb(filter_callback);
+}
+
 TEST_P(WasmFilterConfigTest, YamlLoadInlineWasm) {
   const std::string code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
       "{{ test_rundir }}/test/extensions/filters/http/wasm/test_data/test_cpp.wasm"));
@@ -327,20 +355,33 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
   EXPECT_CALL(cluster_manager_, httpAsyncClientForCluster("cluster_1"))
       .WillRepeatedly(ReturnRef(cluster_manager_.async_client_));
 
+  Http::AsyncClient::Callbacks* async_callbacks = nullptr;
   EXPECT_CALL(cluster_manager_.async_client_, send_(_, _, _))
       .WillRepeatedly(
           Invoke([&](Http::RequestMessagePtr&, Http::AsyncClient::Callbacks& callbacks,
                      const Http::AsyncClient::RequestOptions&) -> Http::AsyncClient::Request* {
-            callbacks.onSuccess(
-                request,
-                Http::ResponseMessagePtr{new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
-                    new Http::TestResponseHeaderMapImpl{{":status", "503"}}})});
+            // Store the callback the first time through for delayed call.
+            if (!async_callbacks) {
+              async_callbacks = &callbacks;
+            } else {
+              // Subsequent send()s happen inline.
+              callbacks.onSuccess(
+                  request,
+                  Http::ResponseMessagePtr{new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                      new Http::TestResponseHeaderMapImpl{{":status", "503"}}})});
+            }
             return &request;
           }));
 
   // Case 1: fail and fetch in the background, got 503, cache failure.
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
                             WasmException, "Unable to create Wasm HTTP filter ");
+  // Fail a second time because we are in-progress.
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, "stats", context_),
+                            WasmException, "Unable to create Wasm HTTP filter ");
+  async_callbacks->onSuccess(
+      request, Http::ResponseMessagePtr{new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
+                   new Http::TestResponseHeaderMapImpl{{":status", "503"}}})});
 
   EXPECT_CALL(init_watcher_, ready());
   context_.initManager().initialize(init_watcher_);

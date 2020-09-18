@@ -131,7 +131,6 @@ public:
   Plugin* plugin() const;
   Context* rootContext() const;
   Upstream::ClusterManager& clusterManager() const;
-  Buffer& buffer() { return buffer_; }
 
   // proxy_wasm::ContextBase
   void error(absl::string_view message) override;
@@ -310,9 +309,12 @@ public:
     }
     return dynamic_cast<T*>(it->second.get());
   }
-  bool hasForeignData(absl::string_view data_name) const {
-    return data_storage_.contains(data_name);
-  }
+
+  uint32_t nextGrpcCallToken();
+  uint32_t nextGrpcStreamToken();
+  uint32_t nextHttpCallToken();
+  void setNextGrpcTokenForTesting(uint32_t token) { next_grpc_token_ = token; }
+  void setNextHttpCallTokenForTesting(uint32_t token) { next_http_call_token_ = token; }
 
 protected:
   friend class Wasm;
@@ -372,6 +374,7 @@ protected:
       context_->onGrpcReceiveTrailingMetadataWrapper(token_, std::move(metadata));
     }
     void onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) override {
+      remote_closed_ = true;
       context_->onGrpcCloseWrapper(token_, status, message);
     }
 
@@ -379,6 +382,8 @@ protected:
     uint32_t token_;
     Grpc::RawAsyncClientPtr client_;
     Grpc::RawAsyncStream* stream_;
+    bool local_closed_ = false;
+    bool remote_closed_ = false;
   };
 
   void onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&& response);
@@ -445,7 +450,6 @@ protected:
   const StreamInfo::StreamInfo* access_log_stream_info_{};
   const Http::RequestHeaderMap* access_log_request_headers_{};
   const Http::ResponseHeaderMap* access_log_response_headers_{};
-  const Http::RequestTrailerMap* access_log_request_trailers_{}; // unused
   const Http::ResponseTrailerMap* access_log_response_trailers_{};
 
   // Temporary state.

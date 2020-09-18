@@ -173,7 +173,8 @@ TEST_P(WasmTestMatrix, Logging) {
   EXPECT_CALL(*context, log_(spdlog::level::trace, Eq("test trace logging")));
   EXPECT_CALL(*context, log_(spdlog::level::debug, Eq("test debug logging")));
   EXPECT_CALL(*context, log_(spdlog::level::err, Eq("test error logging")));
-  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("test tick logging")));
+  EXPECT_CALL(*context, log_(spdlog::level::info, Eq("test tick logging")))
+      .Times(testing::AtLeast(1));
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("onDone logging")));
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("onDelete logging")));
 
@@ -295,7 +296,8 @@ TEST_P(WasmNullTest, StatsHigherLevel) {
                                             "histogram_int_tag.7.histogram_string_tag.test_tag."
                                             "histogram_bool_tag.true.test_histogram"))));
 
-  context->onTick(0);
+  wasm_->setTimerPeriod(1, std::chrono::milliseconds(10));
+  wasm_->tickHandler(1);
   EXPECT_EQ(scope_->counterFromString("counter_tag.test_tag.test_counter").value(), 5);
   EXPECT_EQ(
       scope_->gaugeFromString("gauge_int_tag.9.test_gauge", Stats::Gauge::ImportMode::Accumulate)

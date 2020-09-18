@@ -20,10 +20,33 @@
 #include "openssl/hmac.h"
 #include "openssl/sha.h"
 
+using Envoy::Server::ServerLifecycleNotifier;
+using StageCallbackWithCompletion =
+    Envoy::Server::ServerLifecycleNotifier::StageCallbackWithCompletion;
 using testing::Eq;
 using testing::Return;
 
 namespace Envoy {
+
+namespace Server {
+class MockServerLifecycleNotifier2 : public ServerLifecycleNotifier {
+public:
+  MockServerLifecycleNotifier2() = default;
+  ~MockServerLifecycleNotifier2() override = default;
+
+  using ServerLifecycleNotifier::registerCallback;
+
+  ServerLifecycleNotifier::HandlePtr
+  registerCallback(Stage stage, StageCallbackWithCompletion callback) override {
+    return registerCallback2(stage, callback);
+  }
+
+  MOCK_METHOD(ServerLifecycleNotifier::HandlePtr, registerCallback, (Stage, StageCallback));
+  MOCK_METHOD(ServerLifecycleNotifier::HandlePtr, registerCallback2,
+              (Stage stage, StageCallbackWithCompletion callback));
+};
+} // namespace Server
+
 namespace Extensions {
 namespace Common {
 namespace Wasm {
@@ -59,7 +82,7 @@ public:
 
 class WasmCommonTest : public testing::TestWithParam<std::string> {
 public:
-  void SetUp() override {
+  void SetUp() override { // NOLINT(readability-identifier-naming)
     Logger::Registry::getLog(Logger::Id::wasm).set_level(spdlog::level::debug);
     clearCodeCacheForTesting();
   }
@@ -80,6 +103,66 @@ INSTANTIATE_TEST_SUITE_P(Runtimes, WasmCommonTest, test_values);
 TEST_P(WasmCommonTest, EnvoyWasm) {
   auto envoy_wasm = std::make_unique<EnvoyWasm>();
   envoy_wasm->initialize();
+  Stats::IsolatedStoreImpl stats_store;
+  Api::ApiPtr api = Api::createApiForTest(stats_store);
+  Upstream::MockClusterManager cluster_manager;
+  Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
+  auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
+  NiceMock<LocalInfo::MockLocalInfo> local_info;
+  auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
+      "", "", "", GetParam(), "", false, envoy::config::core::v3::TrafficDirection::UNSPECIFIED,
+      local_info, nullptr);
+  auto wasm = std::make_shared<WasmHandle>(
+      std::make_unique<Wasm>(absl::StrCat("envoy.wasm.runtime.", GetParam()), "",
+                             "vm_configuration", "", scope, cluster_manager, *dispatcher));
+  auto wasm_base = std::dynamic_pointer_cast<proxy_wasm::WasmHandleBase>(wasm);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::UnableToCreateVM);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::UnableToCreateVM);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::UnableToCloneVM);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::UnableToCloneVM);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::MissingFunction);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::MissingFunction);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::UnableToInitializeCode);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::UnableToInitializeCode);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::StartFailed);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::StartFailed);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::ConfigureFailed);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::ConfigureFailed);
+  wasm->wasm()->setFailStateForTesting(proxy_wasm::FailState::RuntimeError);
+  EXPECT_EQ(toWasmEvent(wasm_base), EnvoyWasm::WasmEvent::RuntimeError);
+
+  auto root_context = static_cast<Context*>(wasm->wasm()->createRootContext(plugin));
+  uint32_t grpc_call_token1 = root_context->nextGrpcCallToken();
+  uint32_t grpc_call_token2 = root_context->nextGrpcCallToken();
+  EXPECT_NE(grpc_call_token1, grpc_call_token2);
+  root_context->setNextGrpcTokenForTesting(0); // Rollover.
+  EXPECT_EQ(root_context->nextGrpcCallToken(), 1);
+
+  uint32_t grpc_stream_token1 = root_context->nextGrpcStreamToken();
+  uint32_t grpc_stream_token2 = root_context->nextGrpcStreamToken();
+  EXPECT_NE(grpc_stream_token1, grpc_stream_token2);
+  root_context->setNextGrpcTokenForTesting(0xFFFFFFFF); // Rollover.
+  EXPECT_EQ(root_context->nextGrpcStreamToken(), 2);
+
+  uint32_t http_call_token1 = root_context->nextHttpCallToken();
+  uint32_t http_call_token2 = root_context->nextHttpCallToken();
+  EXPECT_NE(http_call_token1, http_call_token2);
+  root_context->setNextHttpCallTokenForTesting(0); // Rollover.
+  EXPECT_EQ(root_context->nextHttpCallToken(), 1);
+
+  EXPECT_EQ(root_context->getBuffer(WasmBufferType::HttpCallResponseBody), nullptr);
+  EXPECT_EQ(root_context->getBuffer(WasmBufferType::PluginConfiguration), nullptr);
+
+  delete root_context;
+
+  WasmStatePrototype wasm_state_prototype(true, WasmType::Bytes, "",
+                                          StreamInfo::FilterState::LifeSpan::FilterChain);
+  auto wasm_state = std::make_unique<WasmState>(wasm_state_prototype);
+  Protobuf::Arena arena;
+  EXPECT_EQ(wasm_state->exprValue(&arena, true).MessageOrDie(), nullptr);
+  wasm_state->setValue("foo");
+  auto any = wasm_state->serializeAsProto();
+  EXPECT_TRUE(static_cast<ProtobufWkt::Any*>(any.get())->Is<ProtobufWkt::BytesValue>());
 }
 
 TEST_P(WasmCommonTest, Logging) {
@@ -112,6 +195,11 @@ TEST_P(WasmCommonTest, Logging) {
       cluster_manager, *dispatcher);
   EXPECT_NE(wasm, nullptr);
   EXPECT_NE(wasm->buildVersion(), "");
+  EXPECT_NE(std::unique_ptr<ContextBase>(wasm->createContext(plugin)), nullptr);
+  wasm->setCreateContextForTesting(
+      [](Wasm*, const std::shared_ptr<Plugin>&) -> ContextBase* { return nullptr; },
+      [](Wasm*, const std::shared_ptr<Plugin>&) -> ContextBase* { return nullptr; });
+  EXPECT_EQ(std::unique_ptr<ContextBase>(wasm->createContext(plugin)), nullptr);
   auto wasm_weak = std::weak_ptr<Extensions::Common::Wasm::Wasm>(wasm);
   auto wasm_handle = std::make_shared<Extensions::Common::Wasm::WasmHandle>(std::move(wasm));
   EXPECT_TRUE(wasm_weak.lock()->initialize(code, false));
@@ -134,8 +222,13 @@ TEST_P(WasmCommonTest, Logging) {
         return root_context;
       });
 
-  auto root_context = wasm_weak.lock()->start(plugin);
+  auto root_context = static_cast<TestContext*>(wasm_weak.lock()->start(plugin));
+  EXPECT_EQ(root_context->getConfiguration(), "logging");
+  if (GetParam() != "null") {
+    EXPECT_TRUE(root_context->validateConfiguration("", plugin));
+  }
   wasm_weak.lock()->configure(root_context, plugin);
+  EXPECT_EQ(root_context->getStatus().first, 0);
 
   wasm_handle.reset();
   dispatcher->run(Event::Dispatcher::RunType::NonBlock);
@@ -476,8 +569,8 @@ TEST_P(WasmCommonTest, Foreign) {
   wasm->setCreateContextForTesting(
       nullptr, [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
         auto root_context = new TestContext(wasm, plugin);
-        EXPECT_CALL(*root_context, log_(spdlog::level::trace, Eq("compress 41 -> 34")));
-        EXPECT_CALL(*root_context, log_(spdlog::level::debug, Eq("uncompress 34 -> 41")));
+        EXPECT_CALL(*root_context, log_(spdlog::level::trace, Eq("compress 2000 -> 23")));
+        EXPECT_CALL(*root_context, log_(spdlog::level::debug, Eq("uncompress 23 -> 2000")));
         return root_context;
       });
   wasm->start(plugin);
@@ -576,7 +669,7 @@ TEST_P(WasmCommonTest, VmCache) {
   NiceMock<Upstream::MockClusterManager> cluster_manager;
   NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
-  NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
+  NiceMock<Server::MockServerLifecycleNotifier2> lifecycle_notifier;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
   Config::DataSource::RemoteAsyncDataProviderPtr remote_data_provider;
   auto scope = Stats::ScopeSharedPtr(stats_store.createScope("wasm."));
@@ -589,6 +682,15 @@ TEST_P(WasmCommonTest, VmCache) {
   auto plugin = std::make_shared<Extensions::Common::Wasm::Plugin>(
       name, root_id, vm_id, GetParam(), plugin_configuration, false,
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, local_info, nullptr);
+
+  ServerLifecycleNotifier::StageCallbackWithCompletion lifecycle_callback;
+  EXPECT_CALL(lifecycle_notifier, registerCallback2(_, _))
+      .WillRepeatedly(
+          Invoke([&](ServerLifecycleNotifier::Stage,
+                     StageCallbackWithCompletion callback) -> ServerLifecycleNotifier::HandlePtr {
+            lifecycle_callback = callback;
+            return nullptr;
+          }));
 
   VmConfig vm_config;
   vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));
@@ -610,6 +712,8 @@ TEST_P(WasmCommonTest, VmCache) {
              lifecycle_notifier, remote_data_provider,
              [&wasm_handle](const WasmHandleSharedPtr& w) { wasm_handle = w; });
   EXPECT_NE(wasm_handle, nullptr);
+  Event::PostCb post_cb = [] {};
+  lifecycle_callback(post_cb);
 
   WasmHandleSharedPtr wasm_handle2;
   createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random, *api,
@@ -680,9 +784,9 @@ TEST_P(WasmCommonTest, RemoteCode) {
 
   VmConfig vm_config;
   vm_config.set_runtime(absl::StrCat("envoy.wasm.runtime.", GetParam()));
-  ProtobufWkt::StringValue vm_configuration_string;
-  vm_configuration_string.set_value(vm_configuration);
-  vm_config.mutable_configuration()->PackFrom(vm_configuration_string);
+  ProtobufWkt::BytesValue vm_configuration_bytes;
+  vm_configuration_bytes.set_value(vm_configuration);
+  vm_config.mutable_configuration()->PackFrom(vm_configuration_bytes);
   std::string sha256 = Extensions::Common::Wasm::sha256(code);
   std::string sha256Hex =
       Hex::encode(reinterpret_cast<const uint8_t*>(&*sha256.begin()), sha256.size());
@@ -865,13 +969,13 @@ class WasmCommonContextTest
 public:
   WasmCommonContextTest() = default;
 
-  void setup(const std::string& code, std::string vm_configuration) {
+  void setup(const std::string& code, std::string vm_configuration, std::string root_id = "") {
     setupBase(
         GetParam(), code,
         [](Wasm* wasm, const std::shared_ptr<Plugin>& plugin) -> ContextBase* {
           return new TestContext(wasm, plugin);
         },
-        "" /* root_id */, vm_configuration);
+        root_id, vm_configuration);
   }
   void setupContext() {
     context_ = std::make_unique<TestContext>(wasm_->wasm().get(), root_context_->id(), plugin_);
@@ -904,7 +1008,7 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
   EXPECT_CALL(*dns_resolver, resolve(_, _, _))
       .WillRepeatedly(DoAll(testing::SaveArg<2>(&dns_callback), Return(&active_dns_query)));
 
-  setup(code, "dns");
+  setup(code, "context");
   setupContext();
   EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 1")));
   EXPECT_CALL(rootContext(), log_(spdlog::level::warn, Eq("TestRootContext::onResolveDns 2")));
@@ -920,6 +1024,38 @@ TEST_P(WasmCommonContextTest, OnDnsResolve) {
 
   rootContext().onResolveDns(1 /* token */, Envoy::Network::DnsResolver::ResolutionStatus::Failure,
                              {});
+  if (GetParam() == "null") {
+    rootContext().onTick(0);
+  }
+  if (GetParam() == "v8") {
+    rootContext().onQueueReady(0);
+  }
+  // Wait till the Wasm is destroyed and then the late callback should do nothing.
+  deferred_runner_.setFunction([dns_callback] {
+    dns_callback(Network::DnsResolver::ResolutionStatus::Success,
+                 TestUtility::makeDnsResponse({"192.168.1.101", "192.168.1.102"},
+                                              std::chrono::seconds(1001)));
+  });
+}
+
+TEST_P(WasmCommonContextTest, EmptyContext) {
+  std::string code;
+  if (GetParam() != "null") {
+    code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(absl::StrCat(
+        "{{ test_rundir }}/test/extensions/common/wasm/test_data/test_context_cpp.wasm")));
+  } else {
+    // The name of the Null VM plugin.
+    code = "CommonWasmTestContextCpp";
+  }
+  EXPECT_FALSE(code.empty());
+
+  setup(code, "context", "empty");
+  setupContext();
+
+  root_context_->onResolveDns(0, Envoy::Network::DnsResolver::ResolutionStatus::Success, {});
+  NiceMock<Envoy::Stats::MockMetricSnapshot> stats_snapshot;
+  root_context_->onStatsUpdate(stats_snapshot);
+  root_context_->validateConfiguration("", plugin_);
 }
 
 } // namespace Wasm

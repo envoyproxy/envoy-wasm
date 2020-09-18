@@ -9,6 +9,8 @@
 
 START_WASM_PLUGIN(NetworkTestCpp)
 
+static int* badptr = nullptr;
+
 class ExampleContext : public Context {
 public:
   explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root) {}
@@ -16,6 +18,7 @@ public:
   FilterStatus onNewConnection() override;
   FilterStatus onDownstreamData(size_t data_length, bool end_stream) override;
   FilterStatus onUpstreamData(size_t data_length, bool end_stream) override;
+  void onForeignFunction(uint32_t, uint32_t) override;
   void onDownstreamConnectionClose(CloseType close_type) override;
   void onUpstreamConnectionClose(CloseType close_type) override;
 };
@@ -39,6 +42,12 @@ FilterStatus ExampleContext::onUpstreamData(size_t data_length, bool end_stream)
   logTrace("onUpstreamData " + std::to_string(id()) + " len=" + std::to_string(data_length) +
            " end_stream=" + std::to_string(end_stream) + "\n" + std::string(data->view()));
   return FilterStatus::Continue;
+}
+
+void ExampleContext::onForeignFunction(uint32_t, uint32_t) {
+  logTrace("before segv");
+  *badptr = 1;
+  logTrace("after segv");
 }
 
 void ExampleContext::onDownstreamConnectionClose(CloseType close_type) {

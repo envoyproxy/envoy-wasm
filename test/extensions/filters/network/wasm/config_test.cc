@@ -6,6 +6,7 @@
 
 #include "extensions/common/wasm/wasm.h"
 #include "extensions/filters/network/wasm/config.h"
+#include "extensions/filters/network/wasm/wasm_filter.h"
 
 #include "test/mocks/server/mocks.h"
 #include "test/test_common/environment.h"
@@ -139,6 +140,48 @@ TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCode) {
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, context_),
                             Extensions::Common::Wasm::WasmException,
                             "Unable to create Wasm network filter test");
+}
+
+TEST_P(WasmNetworkFilterConfigTest, YamlLoadInlineBadCodeFailOpenNackConfig) {
+  const std::string yaml = absl::StrCat(R"EOF(
+  config:
+    name: "test"
+    fail_open: true
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
+                                        GetParam(), R"EOF("
+      code:
+        local: { inline_string: "bad code" }
+  )EOF");
+
+  envoy::extensions::filters::network::wasm::v3::Wasm proto_config;
+  TestUtility::loadFromYaml(yaml, proto_config);
+  WasmFilterConfig factory;
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(proto_config, context_),
+                            Extensions::Common::Wasm::WasmException,
+                            "Unable to create Wasm network filter test");
+}
+
+TEST_P(WasmNetworkFilterConfigTest, FilterConfigFailOpen) {
+  if (GetParam() == "null") {
+    return;
+  }
+  const std::string yaml = TestEnvironment::substitute(absl::StrCat(R"EOF(
+  config:
+    fail_open: true
+    vm_config:
+      runtime: "envoy.wasm.runtime.)EOF",
+                                                                    GetParam(), R"EOF("
+      code:
+        local:
+          filename: "{{ test_rundir }}/test/extensions/filters/network/wasm/test_data/test_cpp.wasm"
+  )EOF"));
+
+  envoy::extensions::filters::network::wasm::v3::Wasm proto_config;
+  TestUtility::loadFromYaml(yaml, proto_config);
+  NetworkFilters::Wasm::FilterConfig filter_config(proto_config, context_);
+  filter_config.wasm()->fail(proxy_wasm::FailState::RuntimeError, "");
+  EXPECT_EQ(filter_config.createFilter(), nullptr);
 }
 
 } // namespace Wasm

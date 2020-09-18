@@ -56,7 +56,6 @@ protected:
   }
 
   envoy::extensions::stat_sinks::wasm::v3::Wasm config_;
-  envoy::extensions::stat_sinks::wasm::v3::Wasm config_empty_;
   testing::NiceMock<Server::Configuration::MockServerFactoryContext> context_;
   testing::NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier_;
   Init::ExpectableWatcherImpl init_watcher_;
@@ -79,8 +78,15 @@ auto testing_values = testing::Values(
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmStatSinkConfigTest, testing_values);
 
 TEST_P(WasmStatSinkConfigTest, CreateWasmFromEmpty) {
-  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config_empty_),
-                            Extensions::Common::Wasm::WasmException,
+  envoy::extensions::stat_sinks::wasm::v3::Wasm config;
+  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
+                            "Unable to create Wasm Stat Sink ");
+}
+
+TEST_P(WasmStatSinkConfigTest, CreateWasmFailOpen) {
+  envoy::extensions::stat_sinks::wasm::v3::Wasm config;
+  config.mutable_config()->set_fail_open(true);
+  EXPECT_THROW_WITH_MESSAGE(initializeWithConfig(config), Extensions::Common::Wasm::WasmException,
                             "Unable to create Wasm Stat Sink ");
 }
 
@@ -88,6 +94,10 @@ TEST_P(WasmStatSinkConfigTest, CreateWasmFromWASM) {
   initializeWithConfig(config_);
 
   EXPECT_NE(sink_, nullptr);
+  NiceMock<Stats::MockMetricSnapshot> snapshot;
+  sink_->flush(snapshot);
+  NiceMock<Stats::MockHistogram> histogram;
+  sink_->onHistogramComplete(histogram, 0);
 }
 
 } // namespace Wasm

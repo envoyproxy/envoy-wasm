@@ -23,12 +23,10 @@ public:
 
   bool onStart(size_t configuration_size) override;
   void onTick() override;
-  void onQueueReady(uint32_t token) override;
   bool onConfigure(size_t) override;
 
   std::string test_;
   uint32_t stream_context_id_;
-  uint32_t shared_queue_token_;
 };
 
 class TestContext : public Context {
@@ -37,68 +35,20 @@ public:
 
   FilterHeadersStatus onRequestHeaders(uint32_t, bool) override;
   FilterTrailersStatus onRequestTrailers(uint32_t) override;
-  FilterHeadersStatus onResponseHeaders(uint32_t, bool) override;
   FilterTrailersStatus onResponseTrailers(uint32_t) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
-  FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
   void onLog() override;
   void onDone() override;
 
-  // Currently unused.
-  FilterHeadersStatus onRequestHeadersSimple(uint32_t);
-  FilterHeadersStatus onRequestHeadersStream(uint32_t);
-
 private:
   TestRootContext* root() { return static_cast<TestRootContext*>(Context::root()); }
-
-  static void logBody(WasmBufferType type);
-  FilterDataStatus onBody(WasmBufferType type, size_t buffer_length, bool end);
-
-  std::string body_op_;
-  int num_chunks_ = 0;
 };
 
 static RegisterContextFactory register_TestContext(CONTEXT_FACTORY(TestContext),
                                                    ROOT_FACTORY(TestRootContext));
 
-class MyGrpcCallHandler : public GrpcCallHandler<google::protobuf::Value> {
-public:
-  MyGrpcCallHandler() : GrpcCallHandler<google::protobuf::Value>() {}
-  void onSuccess(size_t body_size) override {
-    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
-    logDebug(response->proto<google::protobuf::Value>().string_value());
-  }
-  void onFailure(GrpcStatus status) override {
-    auto p = getStatus();
-    logDebug(std::string("failure ") + std::to_string(static_cast<int>(status)) +
-             std::string(p.second->view()));
-  }
-};
-
-// Currently unused.
-class MyGrpcStreamHandler
-    : public GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value> {
-public:
-  MyGrpcStreamHandler() : GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value>() {}
-  void onReceiveInitialMetadata(uint32_t) override {}
-  void onReceiveTrailingMetadata(uint32_t) override {}
-  void onReceive(size_t body_size) override {
-    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
-    logDebug(response->proto<google::protobuf::Value>().string_value());
-  }
-  void onRemoteClose(GrpcStatus status) override {
-    auto p = getStatus();
-    logDebug(std::string("failure ") + std::to_string(static_cast<int>(status)) +
-             std::string(p.second->view()));
-    close();
-  }
-};
-
 bool TestRootContext::onStart(size_t configuration_size) {
   test_ = getBufferBytes(WasmBufferType::VmConfiguration, 0, configuration_size)->toString();
-  if (test_ == "shared_queue") {
-    CHECK_RESULT(registerSharedQueue("my_shared_queue", &shared_queue_token_));
-  }
   return true;
 }
 
@@ -107,19 +57,9 @@ bool TestRootContext::onConfigure(size_t) {
     {
       // Many properties are not available in the root context.
       const std::vector<std::string> properties = {
-        "string_state",
-        "metadata",
-        "request",
-        "response",
-        "connection",
-        "connection_id",
-        "upstream",
-        "source",
-        "destination",
-        "cluster_name",
-        "cluster_metadata",
-        "route_name",
-        "route_metadata",
+          "string_state",     "metadata",   "request",        "response",    "connection",
+          "connection_id",    "upstream",   "source",         "destination", "cluster_name",
+          "cluster_metadata", "route_name", "route_metadata",
       };
       for (const auto& property : properties) {
         if (getProperty({property}).has_value()) {
@@ -130,10 +70,10 @@ bool TestRootContext::onConfigure(size_t) {
     {
       // Some properties are defined in the root context.
       std::vector<std::pair<std::vector<std::string>, std::string>> properties = {
-        {{"plugin_name"}, "plugin_name"},
-        {{"plugin_vm_id"}, "vm_id"},
-        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
-        {{"listener_metadata"}, ""},
+          {{"plugin_name"}, "plugin_name"},
+          {{"plugin_vm_id"}, "vm_id"},
+          {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+          {{"listener_metadata"}, ""},
       };
       for (const auto& property : properties) {
         std::string value;
@@ -160,6 +100,23 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     addRequestHeader("newheader", "newheadervalue");
     auto server = getRequestHeader("server");
     replaceRequestHeader("server", "envoy-wasm");
+    auto r = addResponseHeader("bad", "bad");
+    if (r != WasmResult::BadArgument) {
+      logWarn("unexpected success of addResponseHeader");
+    }
+    if (addResponseTrailer("bad", "bad") != WasmResult::BadArgument) {
+      logWarn("unexpected success of addResponseTrailer");
+    }
+    if (removeResponseTrailer("bad") != WasmResult::BadArgument) {
+      logWarn("unexpected success of remoteResponseTrailer");
+    }
+    size_t size;
+    if (getRequestHeaderSize(&size) != WasmResult::Ok) {
+      logWarn("unexpected failure of getRequestHeaderMapSize");
+    }
+    if (getResponseHeaderSize(&size) != WasmResult::BadArgument) {
+      logWarn("unexpected success of getResponseHeaderMapSize");
+    }
     if (server->view() == "envoy-wasm-pause") {
       return FilterHeadersStatus::StopIteration;
     } else if (server->view() == "envoy-wasm-end-stream") {
@@ -171,34 +128,6 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     } else {
       return FilterHeadersStatus::Continue;
     }
-  } else if (test == "body") {
-    body_op_ = getRequestHeader("x-test-operation")->toString();
-    return FilterHeadersStatus::Continue;
-  } else if (test == "shared_data") {
-    WasmDataPtr value0;
-    if (getSharedData("shared_data_key_bad", &value0) == WasmResult::NotFound) {
-      logDebug("get of bad key not found");
-    }
-    CHECK_RESULT(setSharedData("shared_data_key1", "shared_data_value0"));
-    CHECK_RESULT(setSharedData("shared_data_key1", "shared_data_value1"));
-    CHECK_RESULT(setSharedData("shared_data_key2", "shared_data_value2"));
-    uint32_t cas = 0;
-    auto value2 = getSharedDataValue("shared_data_key2", &cas);
-    if (WasmResult::CasMismatch ==
-        setSharedData("shared_data_key2", "shared_data_value3", cas + 1)) { // Bad cas.
-      logInfo("set CasMismatch");
-    }
-    return FilterHeadersStatus::Continue;
-  } else if (test == "shared_queue") {
-    uint32_t token;
-    if (resolveSharedQueue("vm_id", "bad_shared_queue", &token) == WasmResult::NotFound) {
-      logWarn("onRequestHeaders not found bad_shared_queue");
-    }
-    CHECK_RESULT(resolveSharedQueue("vm_id", "my_shared_queue", &token));
-    if (enqueueSharedQueue(token, "data1") == WasmResult::Ok) {
-      logWarn("onRequestHeaders enqueue Ok");
-    }
-    return FilterHeadersStatus::Continue;
   } else if (test == "metadata") {
     std::string value;
     if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
@@ -328,45 +257,6 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     }
 
     return FilterHeadersStatus::Continue;
-  } else if (test == "async_call") {
-    auto context_id = id();
-    auto callback = [context_id](uint32_t, size_t body_size, uint32_t) {
-      auto response_headers = getHeaderMapPairs(WasmHeaderMapType::HttpCallResponseHeaders);
-      // Switch context after getting headers, but before getting body to exercise both code paths.
-      getContext(context_id)->setEffectiveContext();
-      auto body = getBufferBytes(WasmBufferType::HttpCallResponseBody, 0, body_size);
-      auto response_trailers = getHeaderMapPairs(WasmHeaderMapType::HttpCallResponseTrailers);
-      for (auto& p : response_headers->pairs()) {
-        logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
-      }
-      logDebug(std::string(body->view()));
-      for (auto& p : response_trailers->pairs()) {
-        logWarn(std::string(p.first) + std::string(" -> ") + std::string(p.second));
-      }
-    };
-    root()->httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}},
-                     "hello world", {{"trail", "cow"}}, 1000, callback);
-    return FilterHeadersStatus::StopIteration;
-  } else if (test == "grpc_call") {
-    GrpcService grpc_service;
-    grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-    std::string grpc_service_string;
-    grpc_service.SerializeToString(&grpc_service_string);
-    google::protobuf::Value value;
-    value.set_string_value("request");
-    HeaderStringPairs initial_metadata;
-    root()->grpcCallHandler(grpc_service_string, "service", "method", initial_metadata, value, 1000,
-                            std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler()));
-    return FilterHeadersStatus::StopIteration;
-  } else if (test == "grpc_stream") {
-    GrpcService grpc_service;
-    grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-    std::string grpc_service_string;
-    grpc_service.SerializeToString(&grpc_service_string);
-    HeaderStringPairs initial_metadata;
-    root()->grpcStreamHandler(grpc_service_string, "service", "method", initial_metadata,
-                              std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler()));
-    return FilterHeadersStatus::StopIteration;
   }
   return FilterHeadersStatus::Continue;
 }
@@ -393,66 +283,20 @@ FilterTrailersStatus TestContext::onResponseTrailers(uint32_t) {
     logWarn("response bogus-trailer found");
   }
   CHECK_RESULT(replaceResponseTrailer("new-trailer", "value"));
-  return FilterTrailersStatus::Continue;
+  return FilterTrailersStatus::StopIteration;
 }
 
-// Currently unused.
-FilterHeadersStatus TestContext::onRequestHeadersSimple(uint32_t) {
-  std::function<void(size_t body_size)> success_callback = [](size_t body_size) {
-    auto response = getBufferBytes(WasmBufferType::GrpcReceiveBuffer, 0, body_size);
-    logDebug(response->proto<google::protobuf::Value>().string_value());
-  };
-  std::function<void(GrpcStatus status)> failure_callback = [](GrpcStatus status) {
-    auto p = getStatus();
-    logDebug(std::string("failure ") + std::to_string(static_cast<int>(status)) +
-             std::string(p.second->view()));
-  };
-  GrpcService grpc_service;
-  grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-  std::string grpc_service_string;
-  grpc_service.SerializeToString(&grpc_service_string);
-  google::protobuf::Value value;
-  value.set_string_value("request");
-  HeaderStringPairs initial_metadata;
-  root()->grpcSimpleCall(grpc_service_string, "service", "method", initial_metadata, value, 1000,
-                         success_callback, failure_callback);
-  return FilterHeadersStatus::StopIteration;
-}
-
-// Currently unused.
-FilterHeadersStatus TestContext::onRequestHeadersStream(uint32_t) {
-  GrpcService grpc_service;
-  grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-  std::string grpc_service_string;
-  grpc_service.SerializeToString(&grpc_service_string);
-  HeaderStringPairs initial_metadata;
-  root()->grpcStreamHandler(grpc_service_string, "service", "method", initial_metadata,
-                            std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler()));
-  return FilterHeadersStatus::StopIteration;
-}
-
-FilterHeadersStatus TestContext::onResponseHeaders(uint32_t, bool) {
-  auto test = root()->test_;
-  if (test == "body") {
-    body_op_ = getResponseHeader("x-test-operation")->toString();
-    CHECK_RESULT(replaceResponseHeader("x-test-operation", body_op_));
-  }
-  return FilterHeadersStatus::Continue;
-}
-
-FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool end_of_stream) {
+FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool) {
   auto test = root()->test_;
   if (test == "headers") {
     auto body = getBufferBytes(WasmBufferType::HttpRequestBody, 0, body_buffer_length);
-    logError(std::string("onRequestBody ") + std::string(body->view()));
-  } else if (test == "body") {
-    return onBody(WasmBufferType::HttpRequestBody, body_buffer_length, end_of_stream);
+    logError(std::string("onBody ") + std::string(body->view()));
   } else if (test == "metadata") {
     std::string value;
     if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
       logDebug("missing node metadata");
     }
-    logError(std::string("onRequestBody ") + value);
+    logError(std::string("onBody ") + value);
     std::string request_string;
     std::string request_string2;
     if (!getValue(
@@ -471,94 +315,6 @@ FilterDataStatus TestContext::onRequestBody(size_t body_buffer_length, bool end_
   return FilterDataStatus::Continue;
 }
 
-FilterDataStatus TestContext::onResponseBody(size_t body_buffer_length, bool end_of_stream) {
-  auto test = root()->test_;
-  if (test == "body") {
-    return onBody(WasmBufferType::HttpResponseBody, body_buffer_length, end_of_stream);
-  }
-  return FilterDataStatus::Continue;
-}
-
-void TestContext::logBody(WasmBufferType type) {
-  size_t buffered_size;
-  uint32_t flags;
-  getBufferStatus(type, &buffered_size, &flags);
-  auto body = getBufferBytes(type, 0, buffered_size);
-  logError(std::string("onRequestBody ") + std::string(body->view()));
-}
-
-FilterDataStatus TestContext::onBody(WasmBufferType type, size_t buffer_length,
-                                     bool end_of_stream) {
-  auto test = root()->test_;
-  if (test == "body") {
-    size_t size;
-    uint32_t flags;
-    if (body_op_ == "ReadBody") {
-      auto body = getBufferBytes(type, 0, buffer_length);
-      logError("onRequestBody " + std::string(body->view()));
-
-    } else if (body_op_ == "PrependAndAppendToBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, 0, "prepend.");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      setBuffer(WasmBufferType::HttpRequestBody, size, 0, ".append");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto updated = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logError("onRequestBody " + std::string(updated->view()));
-
-    } else if (body_op_ == "ReplaceBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "replace");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto replaced = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logError("onRequestBody " + std::string(replaced->view()));
-
-    } else if (body_op_ == "RemoveBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto erased = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logError("onRequestBody " + std::string(erased->view()));
-
-    } else if (body_op_ == "BufferBody") {
-      logBody(type);
-      return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
-
-    } else if (body_op_ == "PrependAndAppendToBufferedBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, 0, "prepend.");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      setBuffer(WasmBufferType::HttpRequestBody, size, 0, ".append");
-      logBody(type);
-      return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
-
-    } else if (body_op_ == "ReplaceBufferedBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "replace");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto replaced = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logBody(type);
-      return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
-
-    } else if (body_op_ == "RemoveBufferedBody") {
-      setBuffer(WasmBufferType::HttpRequestBody, 0, buffer_length, "");
-      getBufferStatus(WasmBufferType::HttpRequestBody, &size, &flags);
-      auto erased = getBufferBytes(WasmBufferType::HttpRequestBody, 0, size);
-      logBody(type);
-      return end_of_stream ? FilterDataStatus::Continue : FilterDataStatus::StopIterationAndBuffer;
-
-    } else if (body_op_ == "BufferTwoBodies") {
-      logBody(type);
-      num_chunks_++;
-      if (end_of_stream || num_chunks_ > 2) {
-        return FilterDataStatus::Continue;
-      }
-      return FilterDataStatus::StopIterationAndBuffer;
-
-    } else {
-      // This is a test and the test was configured incorrectly.
-      logError("Invalid body test op " + body_op_);
-      abort();
-    }
-  }
-  return FilterDataStatus::Continue;
-}
-
 void TestContext::onLog() {
   auto test = root()->test_;
   if (test == "headers") {
@@ -572,15 +328,6 @@ void TestContext::onLog() {
     if (response_trailer && response_trailer->view() != "") {
       logWarn("response bogus-trailer found");
     }
-  } else if (test == "shared_data") {
-    WasmDataPtr value0;
-    if (getSharedData("shared_data_key_bad", &value0) == WasmResult::NotFound) {
-      logDebug("second get of bad key not found");
-    }
-    auto value1 = getSharedDataValue("shared_data_key1");
-    logDebug("get 1 " + value1->toString());
-    auto value2 = getSharedDataValue("shared_data_key2");
-    logWarn("get 2 " + value2->toString());
   } else if (test == "property") {
     setFilterState("wasm_state", "wasm_value");
     auto path = getRequestHeader(":path");
@@ -763,11 +510,7 @@ void TestContext::onLog() {
     }
     {
       // Some properties are not available in the stream context.
-      const std::vector<std::string> properties = {
-        "xxx",
-        "request",
-        "route_name",
-        "node"};
+      const std::vector<std::string> properties = {"xxx", "request", "route_name", "node"};
       for (const auto& property : properties) {
         if (getProperty({property, "xxx"}).has_value()) {
           logWarn("getProperty should not return a value in the root context");
@@ -777,19 +520,19 @@ void TestContext::onLog() {
     {
       // Some properties are defined in the stream context.
       std::vector<std::pair<std::vector<std::string>, std::string>> properties = {
-        {{"plugin_name"}, "plugin_name"},
-        {{"plugin_vm_id"}, "vm_id"},
-        {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
-        {{"listener_metadata"}, ""},
-        {{"route_name"}, "route12"},
-        {{"cluster_name"}, "fake_cluster"},
-        {{"connection_id"}, std::string("\x4\0\0\0\0\0\0\0\0", 8)},
-        {{"connection", "requested_server_name"}, "w3.org"},
-        {{"source", "address"}, "127.0.0.1:0"},
-        {{"destination", "address"}, "127.0.0.2:0"},
-        {{"upstream", "address"}, "10.0.0.1:443"},
-        {{"cluster_metadata"}, ""},
-        {{"route_metadata"}, ""},
+          {{"plugin_name"}, "plugin_name"},
+          {{"plugin_vm_id"}, "vm_id"},
+          {{"listener_direction"}, std::string("\x1\0\0\0\0\0\0\0\0", 8)}, // INBOUND
+          {{"listener_metadata"}, ""},
+          {{"route_name"}, "route12"},
+          {{"cluster_name"}, "fake_cluster"},
+          {{"connection_id"}, std::string("\x4\0\0\0\0\0\0\0\0", 8)},
+          {{"connection", "requested_server_name"}, "w3.org"},
+          {{"source", "address"}, "127.0.0.1:0"},
+          {{"destination", "address"}, "127.0.0.2:0"},
+          {{"upstream", "address"}, "10.0.0.1:443"},
+          {{"cluster_metadata"}, ""},
+          {{"route_metadata"}, ""},
       };
       for (const auto& property : properties) {
         std::string value;
@@ -801,22 +544,6 @@ void TestContext::onLog() {
         }
       }
     }
-  }
-}
-
-void TestRootContext::onQueueReady(uint32_t token) {
-  if (token == shared_queue_token_) {
-    logInfo("onQueueReady");
-  }
-  std::unique_ptr<WasmData> data;
-  if (dequeueSharedQueue(9999999 /* bad token */, &data) == WasmResult::NotFound) {
-    logWarn("onQueueReady bad token not found");
-  }
-  if (dequeueSharedQueue(token, &data) == WasmResult::Ok) {
-    logDebug("data " + data->toString() + " Ok");
-  }
-  if (dequeueSharedQueue(token, &data) == WasmResult::Empty) {
-    logWarn("onQueueReady extra data not found");
   }
 }
 
@@ -832,6 +559,9 @@ void TestRootContext::onTick() {
     getContext(stream_context_id_)->setEffectiveContext();
     replaceRequestHeader("server", "envoy-wasm-continue");
     continueRequest();
+    if (getBufferBytes(WasmBufferType::PluginConfiguration, 0, 1)->view() != "") {
+      logDebug("unexpectd success of getBufferBytes PluginConfiguration");
+    }
   } else if (test_ == "metadata") {
     std::string value;
     if (!getValue({"node", "metadata", "wasm_node_get_key"}, &value)) {
@@ -923,8 +653,9 @@ void TestRootContext::onTick() {
       args.SerializeToString(&in);
       char* out = nullptr;
       size_t out_size = 0;
-      if (WasmResult::BadArgument != proxy_call_foreign_function(function.data(), function.size(), in.data(),
-                                                        in.size(), &out, &out_size)) {
+      if (WasmResult::BadArgument != proxy_call_foreign_function(function.data(), function.size(),
+                                                                 in.data(), in.size(), &out,
+                                                                 &out_size)) {
         logError("declare_property must fail for double declaration");
       }
       ::free(out);
@@ -948,8 +679,9 @@ void TestRootContext::onTick() {
     {
       char* out = nullptr;
       size_t out_size = 0;
-      if (WasmResult::Ok == proxy_call_foreign_function(function.data(), function.size(), function.data(),
-                                                        function.size(), &out, &out_size)) {
+      if (WasmResult::Ok == proxy_call_foreign_function(function.data(), function.size(),
+                                                        function.data(), function.size(), &out,
+                                                        &out_size)) {
         logError("expected declare_property to fail");
       }
       ::free(out);
@@ -985,6 +717,7 @@ FilterHeadersStatus Context1::onRequestHeaders(uint32_t, bool) {
 
 FilterHeadersStatus Context2::onRequestHeaders(uint32_t, bool) {
   logDebug(std::string("onRequestHeaders2 ") + std::to_string(id()));
+  CHECK_RESULT(sendLocalResponse(200, "ok", "body", {{"foo", "bar"}}));
   return FilterHeadersStatus::Continue;
 }
 
