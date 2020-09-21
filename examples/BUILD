@@ -36,6 +36,7 @@ filegroup(
         "lua/lib/mylibrary.lua",
         "mysql/envoy.yaml",
         "redis/envoy.yaml",
+        "wasm/envoy.yaml",
         "zipkin-tracing/front-envoy-zipkin.yaml",
         "zipkin-tracing/service1-envoy-zipkin.yaml",
         "zipkin-tracing/service2-envoy-zipkin.yaml",
