@@ -416,6 +416,8 @@ elif [[ "$CI_TARGET" == "verify_examples" ]]; then
   docker images
   sudo apt-get update -y
   sudo apt-get install -y -qq --no-install-recommends redis-tools
+  bazel build ${BAZEL_BUILD_OPTIONS} -c "${COMPILE_TYPE}" //examples/wasm:envoy_filter_http_wasm_example.wasm ${CONFIG_ARGS}
+  cp bazel-bin/examples/wasm/envoy_filter_http_wasm_example.wasm examples/wasm
   export DOCKER_NO_PULL=1
   umask 027
   ci/verify_examples.sh

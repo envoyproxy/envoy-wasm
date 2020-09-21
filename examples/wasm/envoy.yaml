@@ -1,18 +1,3 @@
-bootstrap_extensions:
-  - name: "envoy.bootstrap.wasm"
-    typed_config:
-      "@type": type.googleapis.com/envoy.extensions.wasm.v3.WasmService
-      singleton: true
-      config:
-        name: "my_plugin"
-        root_id: "my_root_id"
-        vm_config:
-          runtime: "envoy.wasm.runtime.v8"
-          vm_id: "my_vm_id"
-          code:
-            local:
-              filename: "/etc/envoy_filter_http_wasm_example.wasm"
-          configuration: {}
 static_resources:
   listeners:
   - address:
@@ -38,9 +23,9 @@ static_resources:
                 route:
                   cluster: web_service
           http_filters:
-          - name: enovy.filters.http.wasm
+          - name: envoy.filters.http.wasm
             typed_config:
-              "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+              "@type": type.googleapis.com/udpa.type.v1.TypedStruct 
               type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
               value:
                 config:
@@ -83,7 +68,7 @@ static_resources:
                 direct_response:
                   status: 200
                   body:
-                    inline_string: "example body\n"
+                    inline_string: "foo\n"
           http_filters:
           - name: envoy.router
             config: {}
