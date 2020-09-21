@@ -93,7 +93,6 @@ protected:
   NiceMock<Grpc::MockAsyncStream> async_stream_;
   Grpc::MockAsyncClientManager async_client_manager_;
 };
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WasmHttpFilterTest);
 
 // NB: this is required by VC++ which can not handle the use of macros in the macro definitions
 // used by INSTANTIATE_TEST_SUITE_P.

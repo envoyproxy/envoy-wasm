@@ -10,6 +10,7 @@
 
 #include "absl/types/optional.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest-param-test.h"
 #include "gtest/gtest.h"
 
 using testing::Eq;
@@ -72,11 +73,11 @@ public:
   std::shared_ptr<Extensions::Common::Wasm::Wasm> wasm_;
 };
 
+#ifndef WIN32
 class WasmTest : public WasmTestBase, public testing::TestWithParam<std::string> {
 public:
   void createWasm() { WasmTestBase::createWasm(GetParam()); }
 };
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WasmTestMatrix);
 
 #if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 // NB: this is required by VC++ which can not handle the use of macros in the macro definitions
@@ -93,6 +94,7 @@ auto testing_values = testing::Values(
 #endif
 );
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing_values);
+#endif
 #endif
 
 class WasmNullTest : public WasmTestBase, public testing::TestWithParam<std::string> {
@@ -138,7 +140,6 @@ public:
 protected:
   std::string code_;
 };
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WasmTestMatrix);
 
 #if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
@@ -189,6 +190,7 @@ TEST_P(WasmTestMatrix, Logging) {
   dispatcher_->clearDeferredDeleteList();
 }
 
+#ifndef WIN32
 TEST_P(WasmTest, BadSignature) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(
@@ -265,6 +267,7 @@ TEST_P(WasmTest, Asm2Wasm) {
   EXPECT_CALL(*context, log_(spdlog::level::info, Eq("out 0 0 0")));
   EXPECT_TRUE(wasm_->configure(context, plugin_));
 }
+#endif
 
 TEST_P(WasmNullTest, Stats) {
   createWasm();

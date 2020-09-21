@@ -29,6 +29,7 @@ using Common::Wasm::WasmException;
 namespace HttpFilters {
 namespace Wasm {
 
+#ifndef WIN32
 class WasmFilterConfigTest : public Event::TestUsingSimulatedTime,
                              public testing::TestWithParam<std::string> {
 protected:
@@ -63,7 +64,6 @@ protected:
   Event::MockTimer* retry_timer_;
   Event::TimerCb retry_timer_cb_;
 };
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WasmFilterConfigTest);
 
 #if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 // NB: this is required by VC++ which can not handle the use of macros in the macro definitions
@@ -823,6 +823,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcodeFailOpen) {
   // The filter is not registered.
   cb(filter_callback);
 }
+#endif
 
 } // namespace Wasm
 } // namespace HttpFilters
