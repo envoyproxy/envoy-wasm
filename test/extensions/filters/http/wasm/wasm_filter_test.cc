@@ -554,21 +554,23 @@ TEST_P(WasmHttpFilterTest, AccessLog) {
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
   filter().continueStream(proxy_wasm::WasmStreamType::Response);
   filter().closeStream(proxy_wasm::WasmStreamType::Response);
-  filter().onDestroy();
   StreamInfo::MockStreamInfo log_stream_info;
   filter().log(&request_headers, &response_headers, &response_trailers, log_stream_info);
+  filter().onDestroy();
 }
 
 TEST_P(WasmHttpFilterTest, AccessLogCreate) {
   setupTest("", "headers");
   setupFilter();
   EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onLog 2 /"))));
+  EXPECT_CALL(filter(), log_(spdlog::level::warn, Eq(absl::string_view("onDone 2"))));
 
   StreamInfo::MockStreamInfo log_stream_info;
   Http::TestRequestHeaderMapImpl request_headers{{":path", "/"}};
   Http::TestResponseHeaderMapImpl response_headers{};
   Http::TestResponseTrailerMapImpl response_trailers{};
   filter().log(&request_headers, &response_headers, &response_trailers, log_stream_info);
+  filter().onDestroy();
 }
 
 TEST_P(WasmHttpFilterTest, AsyncCall) {
@@ -1246,8 +1248,6 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter().decodeHeaders(request_headers, false));
   Buffer::OwnedImpl data("hello");
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter().decodeData(data, true));
-  filter().onDestroy();
-  filter().onDestroy(); // Does nothing.
 
   StreamInfo::MockStreamInfo log_stream_info;
   filter().log(&request_headers, nullptr, nullptr, log_stream_info);
@@ -1255,6 +1255,9 @@ TEST_P(WasmHttpFilterTest, Metadata) {
   const auto& result = request_stream_info_.filterState()->getDataReadOnly<Common::Wasm::WasmState>(
       "wasm.wasm_request_set_key");
   EXPECT_EQ("wasm_request_set_value", result.value());
+
+  filter().onDestroy();
+  filter().onDestroy(); // Does nothing.
 }
 #endif
 
