@@ -1449,10 +1449,6 @@ void Context::log(const Http::RequestHeaderMap* request_headers,
   access_log_response_headers_ = nullptr;
   access_log_response_trailers_ = nullptr;
   access_log_stream_info_ = nullptr;
-
-  if (!isRootContext()) {
-    onDelete();
-  }
 }
 
 void Context::onDestroy() {
@@ -1461,6 +1457,7 @@ void Context::onDestroy() {
   }
   destroyed_ = true;
   onDone();
+  onDelete();
 }
 
 WasmResult Context::continueStream(WasmStreamType stream_type) {
