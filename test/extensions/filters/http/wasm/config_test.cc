@@ -63,6 +63,7 @@ protected:
   Event::MockTimer* retry_timer_;
   Event::TimerCb retry_timer_cb_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WasmFilterConfigTest);
 
 #if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 // NB: this is required by VC++ which can not handle the use of macros in the macro definitions

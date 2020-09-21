@@ -76,6 +76,7 @@ class WasmTest : public WasmTestBase, public testing::TestWithParam<std::string>
 public:
   void createWasm() { WasmTestBase::createWasm(GetParam()); }
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WasmTestMatrix);
 
 #if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 // NB: this is required by VC++ which can not handle the use of macros in the macro definitions
@@ -137,6 +138,7 @@ public:
 protected:
   std::string code_;
 };
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WasmTestMatrix);
 
 #if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
