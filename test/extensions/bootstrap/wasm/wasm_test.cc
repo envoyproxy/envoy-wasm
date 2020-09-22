@@ -73,13 +73,12 @@ public:
   std::shared_ptr<Extensions::Common::Wasm::Wasm> wasm_;
 };
 
-#ifndef WIN32
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 class WasmTest : public WasmTestBase, public testing::TestWithParam<std::string> {
 public:
   void createWasm() { WasmTestBase::createWasm(GetParam()); }
 };
 
-#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 // NB: this is required by VC++ which can not handle the use of macros in the macro definitions
 // used by INSTANTIATE_TEST_SUITE_P.
 auto testing_values = testing::Values(
@@ -94,7 +93,6 @@ auto testing_values = testing::Values(
 #endif
 );
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmTest, testing_values);
-#endif
 #endif
 
 class WasmNullTest : public WasmTestBase, public testing::TestWithParam<std::string> {
@@ -123,6 +121,7 @@ auto testing_null_values = testing::Values(
     "null");
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmNullTest, testing_null_values);
 
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 class WasmTestMatrix : public WasmTestBase,
                        public testing::TestWithParam<std::tuple<std::string, std::string>> {
 public:
@@ -141,7 +140,6 @@ protected:
   std::string code_;
 };
 
-#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
                          testing::Combine(testing::Values(
 #if defined(ENVOY_WASM_V8)
@@ -155,7 +153,6 @@ INSTANTIATE_TEST_SUITE_P(RuntimesAndLanguages, WasmTestMatrix,
 #endif
                                               ),
                                           testing::Values("cpp", "rust")));
-#endif
 
 TEST_P(WasmTestMatrix, Logging) {
   plugin_configuration_ = "configure-test";
@@ -189,8 +186,9 @@ TEST_P(WasmTestMatrix, Logging) {
   dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
   dispatcher_->clearDeferredDeleteList();
 }
+#endif
 
-#ifndef WIN32
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 TEST_P(WasmTest, BadSignature) {
   createWasm();
   const auto code = TestEnvironment::readFileToStringForTest(TestEnvironment::substitute(

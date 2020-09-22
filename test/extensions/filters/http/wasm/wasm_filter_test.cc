@@ -1206,7 +1206,7 @@ TEST_P(WasmHttpFilterTest, GrpcStreamOpenAtShutdown) {
 
 // Test metadata access including CEL expressions.
 // TODO: re-enable this on Windows if and when the CEL `Antlr` parser compiles on Windows.
-#ifndef WIN32
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 TEST_P(WasmHttpFilterTest, Metadata) {
   setupTest("", "metadata");
   setupFilter();

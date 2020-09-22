@@ -29,7 +29,7 @@ using Common::Wasm::WasmException;
 namespace HttpFilters {
 namespace Wasm {
 
-#ifndef WIN32
+#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 class WasmFilterConfigTest : public Event::TestUsingSimulatedTime,
                              public testing::TestWithParam<std::string> {
 protected:
@@ -65,7 +65,6 @@ protected:
   Event::TimerCb retry_timer_cb_;
 };
 
-#if defined(ENVOY_WASM_V8) || defined(ENVOY_WASM_WAVM)
 // NB: this is required by VC++ which can not handle the use of macros in the macro definitions
 // used by INSTANTIATE_TEST_SUITE_P.
 auto testing_values = testing::Values(
@@ -80,7 +79,6 @@ auto testing_values = testing::Values(
 #endif
 );
 INSTANTIATE_TEST_SUITE_P(Runtimes, WasmFilterConfigTest, testing_values);
-#endif
 
 TEST_P(WasmFilterConfigTest, JsonLoadFromFileWasm) {
   const std::string json = TestEnvironment::substitute(absl::StrCat(R"EOF(
