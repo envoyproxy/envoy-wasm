@@ -77,7 +77,7 @@ FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length,
   return FilterDataStatus::Continue;
 }
 
-FilterDataStatus ExampleContext::onResponseBody(size_t body_buffer_length,
+FilterDataStatus ExampleContext::onResponseBody(size_t /* body_buffer_length */,
                                                 bool /* end_of_stream */) {
   setBuffer(WasmBufferType::HttpResponseBody, 0, 3, "foo");
   return FilterDataStatus::Continue;
