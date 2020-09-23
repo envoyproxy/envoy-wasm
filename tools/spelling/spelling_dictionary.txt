@@ -882,6 +882,7 @@ pausable
 pcall
 pcap
 pclose
+performant
 pfctl
 pipelined
 pipelining
@@ -1003,6 +1004,7 @@ resolvers
 responder
 restarter
 resync
+retransmitting
 retriable
 retriggers
 revalidated
