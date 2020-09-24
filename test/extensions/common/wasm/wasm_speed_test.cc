@@ -1,7 +1,7 @@
-#include "extensions/common/wasm/wasm.h"
-
 #include "common/common/thread.h"
 #include "common/common/thread_synchronizer.h"
+
+#include "extensions/common/wasm/wasm.h"
 
 #include "test/mocks/server/mocks.h"
 #include "test/mocks/upstream/mocks.h"
@@ -17,6 +17,8 @@
 #include "tools/cpp/runfiles/runfiles.h"
 
 using bazel::tools::cpp::runfiles::Runfiles;
+
+namespace Envoy {
 
 void bmWasmSpeedTest(benchmark::State& state) {
   Envoy::Thread::MutexBasicLockable lock;
@@ -56,6 +58,8 @@ void bmWasmSpeedTest(benchmark::State& state) {
 }
 
 BENCHMARK(bmWasmSpeedTest);
+
+} // namespace Envoy
 
 int main(int argc, char** argv) {
   ::benchmark::Initialize(&argc, argv);
