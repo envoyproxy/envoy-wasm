@@ -18,6 +18,8 @@
 
 using bazel::tools::cpp::runfiles::Runfiles;
 
+namespace Envoy {
+
 void bmWasmSpeedTest(benchmark::State& state) {
   Envoy::Thread::MutexBasicLockable lock;
   Envoy::Logger::Context logging_state(spdlog::level::warn,
@@ -56,6 +58,8 @@ void bmWasmSpeedTest(benchmark::State& state) {
 }
 
 BENCHMARK(bmWasmSpeedTest);
+
+} // namespace Envoy
 
 int main(int argc, char** argv) {
   ::benchmark::Initialize(&argc, argv);
