@@ -1,7 +1,7 @@
-#include "extensions/common/wasm/wasm.h"
-
 #include "common/common/thread.h"
 #include "common/common/thread_synchronizer.h"
+
+#include "extensions/common/wasm/wasm.h"
 
 #include "test/mocks/server/mocks.h"
 #include "test/mocks/upstream/mocks.h"
