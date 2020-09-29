@@ -257,50 +257,11 @@ FilterHeadersStatus TestContext::onRequestHeaders(uint32_t, bool) {
     }
 
     return FilterHeadersStatus::Continue;
-  } else if (test == "async_call") {
-    auto context_id = id();
-    auto callback = [context_id](uint32_t, size_t body_size, uint32_t) {
-      auto response_headers = getHeaderMapPairs(WasmHeaderMapType::HttpCallResponseHeaders);
-      // Switch context after getting headers, but before getting body to exercise both code paths.
-      getContext(context_id)->setEffectiveContext();
-      auto body = getBufferBytes(WasmBufferType::HttpCallResponseBody, 0, body_size);
-      auto response_trailers = getHeaderMapPairs(WasmHeaderMapType::HttpCallResponseTrailers);
-      for (auto& p : response_headers->pairs()) {
-        logInfo(std::string(p.first) + std::string(" -> ") + std::string(p.second));
-      }
-      logDebug(std::string(body->view()));
-      for (auto& p : response_trailers->pairs()) {
-        logWarn(std::string(p.first) + std::string(" -> ") + std::string(p.second));
-      }
-    };
-    root()->httpCall("cluster", {{":method", "POST"}, {":path", "/"}, {":authority", "foo"}},
-                     "hello world", {{"trail", "cow"}}, 1000, callback);
-    return FilterHeadersStatus::StopIteration;
-  } else if (test == "grpc_call") {
-    GrpcService grpc_service;
-    grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-    std::string grpc_service_string;
-    grpc_service.SerializeToString(&grpc_service_string);
-    google::protobuf::Value value;
-    value.set_string_value("request");
-    HeaderStringPairs initial_metadata;
-    root()->grpcCallHandler(grpc_service_string, "service", "method", initial_metadata, value, 1000,
-                            std::unique_ptr<GrpcCallHandlerBase>(new MyGrpcCallHandler()));
-    return FilterHeadersStatus::StopIteration;
-  } else if (test == "tracing") {
+  }  else if (test == "tracing") {
     std::string tag_key = "tag_1";
     std::string tag_value = "tag_value_1";
     envoy_set_active_span_tag(tag_key.c_str(), tag_key.size(), tag_value.c_str(), tag_value.size());
     return FilterHeadersStatus::Continue;
-  } else if (test == "grpc_stream") {
-    GrpcService grpc_service;
-    grpc_service.mutable_envoy_grpc()->set_cluster_name("cluster");
-    std::string grpc_service_string;
-    grpc_service.SerializeToString(&grpc_service_string);
-    HeaderStringPairs initial_metadata;
-    root()->grpcStreamHandler(grpc_service_string, "service", "method", initial_metadata,
-                              std::unique_ptr<GrpcStreamHandlerBase>(new MyGrpcStreamHandler()));
-    return FilterHeadersStatus::StopIteration;
   }
   return FilterHeadersStatus::Continue;
 }
