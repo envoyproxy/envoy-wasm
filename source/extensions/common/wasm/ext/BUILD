@@ -46,6 +46,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":declare_property_cc_proto",
+        ":node_subset_cc_proto",
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
     ],
     alwayslink = 1,
@@ -63,6 +64,26 @@ cc_proto_library(
     name = "declare_property_cc_proto",
     visibility = ["//visibility:public"],
     deps = [":declare_property_proto"],
+)
+
+# NB: this target is compiled both to native code and to Wasm. Hence the generic rule.
+proto_library(
+    name = "node_subset_proto",
+    srcs = ["node_subset.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_protobuf//:struct_proto",
+    ],
+)
+
+# NB: this target is compiled both to native code and to Wasm. Hence the generic rule.
+cc_proto_library(
+    name = "node_subset_cc_proto",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":node_subset_proto",
+        # "//external:protobuf_clib",
+    ],
 )
 
 filegroup(
