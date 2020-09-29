@@ -129,9 +129,22 @@ protected:
         Network::Test::getCanonicalLoopbackAddress(GetParam()), nullptr, true);
     listener_ =
         dispatcher_->createListener(socket_, listener_callbacks_, true, ENVOY_TCP_BACKLOG_SIZE);
+#if 0
     client_connection_ = std::make_unique<Network::TestClientConnectionImpl>(
         *dispatcher_, socket_->localAddress(), source_address_,
         Network::Test::createRawBufferSocket(), socket_options_);
+#else
+    // NB: there is a bug in clang such that the above code reports:
+    // runtime error: constructor call on address 0x6190000b4a80 with insufficient space for
+    // an object of type 'Envoy::Network::(anonymous namespace)::TestClientConnectionImpl'
+    // 0x6190000b4a80: note: pointer points here
+    //  05 01 80 39  be be be be be be be be  be be be be be be be be  be be be be be be be be  be
+    //  be be be
+    auto x = malloc(sizeof(TestClientConnectionImpl) + 1000);
+    new (x) TestClientConnectionImpl(*dispatcher_, socket_->localAddress(), source_address_,
+                                     Network::Test::createRawBufferSocket(), socket_options_);
+    client_connection_.reset(reinterpret_cast<TestClientConnectionImpl*>(x));
+#endif
     client_connection_->addConnectionCallbacks(client_callbacks_);
     EXPECT_EQ(nullptr, client_connection_->ssl());
     const Network::ClientConnection& const_connection = *client_connection_;
