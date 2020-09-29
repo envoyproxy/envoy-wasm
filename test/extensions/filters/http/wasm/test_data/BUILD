@@ -3,7 +3,7 @@ load(
     "envoy_cc_library",
     "envoy_package",
 )
-load("//bazel/wasm:wasm.bzl", "wasm_cc_binary", "wasm_rust_binary")
+load("//bazel/wasm:wasm.bzl", "envoy_wasm_cc_binary", "wasm_rust_binary")
 
 licenses(["notice"])  # Apache 2
 
@@ -89,7 +89,7 @@ envoy_cc_library(
     ],
 )
 
-wasm_cc_binary(
+envoy_wasm_cc_binary(
     name = "test_cpp.wasm",
     srcs = [
         "test_async_call_cpp.cc",
@@ -114,8 +114,8 @@ proto_library(
     name = "test_proto",
     srcs = ["test.proto"],
     deps = [
-      "@com_google_protobuf//:any_proto",
-      "@com_google_protobuf//:timestamp_proto",
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 
