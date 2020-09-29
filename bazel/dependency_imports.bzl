@@ -8,7 +8,11 @@ load("@upb//bazel:repository_defs.bzl", upb_bazel_version_repository = "bazel_ve
 load("@io_bazel_rules_rust//rust:repositories.bzl", "rust_repositories")
 load("@io_bazel_rules_rust//:workspace.bzl", "bazel_version")
 load("@config_validation_pip3//:requirements.bzl", config_validation_pip_install = "pip_install")
+load("@configs_pip3//:requirements.bzl", configs_pip_install = "pip_install")
+load("@headersplit_pip3//:requirements.bzl", headersplit_pip_install = "pip_install")
+load("@kafka_pip3//:requirements.bzl", kafka_pip_install = "pip_install")
 load("@protodoc_pip3//:requirements.bzl", protodoc_pip_install = "pip_install")
+load("@thrift_pip3//:requirements.bzl", thrift_pip_install = "pip_install")
 load("@rules_antlr//antlr:deps.bzl", "antlr_dependencies")
 
 # go version for rules_go
@@ -56,4 +60,8 @@ def envoy_dependency_imports(go_version = GO_VERSION):
     )
 
     config_validation_pip_install()
+    configs_pip_install()
+    headersplit_pip_install()
+    kafka_pip_install()
     protodoc_pip_install()
+    thrift_pip_install()

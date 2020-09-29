@@ -21,12 +21,17 @@ impl HttpContext for TestStream {
             Duration::from_secs(5),
         )
         .unwrap();
+        info!("onRequestHeaders");
         Action::Pause
     }
 }
 
 impl Context for TestStream {
     fn on_http_call_response(&mut self, _: u32, _: usize, body_size: usize, _: usize) {
+        if body_size == 0 {
+            info!("async_call failed");
+            return;
+        }
         for (name, value) in &self.get_http_call_response_headers() {
             info!("{} -> {}", name, value);
         }

@@ -25,17 +25,20 @@ public:
                Server::Configuration::FactoryContext& context);
 
   std::shared_ptr<Context> createFilter() {
-    if (plugin_->fail_open_) {
-      return nullptr;
-    }
     Wasm* wasm = nullptr;
     if (tls_slot_->get()) {
       wasm = tls_slot_->getTyped<WasmHandle>().wasm().get();
+    }
+    if (plugin_->fail_open_ && (!wasm || wasm->isFailed())) {
+      return nullptr;
     }
     if (wasm && !root_context_id_) {
       root_context_id_ = wasm->getRootContext(plugin_->root_id_)->id();
     }
     return std::make_shared<Context>(wasm, root_context_id_, plugin_);
+  }
+  Envoy::Extensions::Common::Wasm::Wasm* wasm() {
+    return tls_slot_->getTyped<WasmHandle>().wasm().get();
   }
 
 private:

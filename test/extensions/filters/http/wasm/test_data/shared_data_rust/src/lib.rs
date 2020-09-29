@@ -1,19 +1,19 @@
 use log::{debug, info, warn};
-use proxy_wasm::traits::{Context, HttpContext};
+use proxy_wasm::traits::{Context, RootContext};
 use proxy_wasm::types::*;
 
 #[no_mangle]
 pub fn _start() {
     proxy_wasm::set_log_level(LogLevel::Trace);
-    proxy_wasm::set_http_context(|_, _| -> Box<dyn HttpContext> { Box::new(TestStream) });
+    proxy_wasm::set_root_context(|_| -> Box<dyn RootContext> { Box::new(TestRoot) });
 }
 
-struct TestStream;
+struct TestRoot;
 
-impl Context for TestStream {}
+impl Context for TestRoot {}
 
-impl HttpContext for TestStream {
-    fn on_http_request_headers(&mut self, _: usize) -> Action {
+impl RootContext for TestRoot {
+    fn on_tick(&mut self) {
         if self.get_shared_data("shared_data_key_bad") == (None, None) {
             debug!("get of bad key not found");
         }
@@ -33,10 +33,9 @@ impl HttpContext for TestStream {
                 _ => panic!(),
             };
         }
-        Action::Continue
     }
 
-    fn on_log(&mut self) {
+    fn on_queue_ready(&mut self, _: u32) {
         if self.get_shared_data("shared_data_key_bad") == (None, None) {
             debug!("second get of bad key not found");
         }

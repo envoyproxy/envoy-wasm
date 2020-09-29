@@ -66,11 +66,18 @@ wasm_rust_binary(
 envoy_cc_library(
     name = "test_cpp_plugin",
     srcs = [
+        "test_async_call_cpp.cc",
+        "test_body_cpp.cc",
         "test_cpp.cc",
         "test_cpp_null_plugin.cc",
+        "test_grpc_call_cpp.cc",
+        "test_grpc_stream_cpp.cc",
+        "test_shared_data_cpp.cc",
+        "test_shared_queue_cpp.cc",
     ],
     copts = ["-DNULL_PLUGIN=1"],
     deps = [
+        ":test_cc_proto",
         "//external:abseil_node_hash_map",
         "//source/common/common:assert_lib",
         "//source/common/common:c_smart_ptr_lib",
@@ -84,13 +91,38 @@ envoy_cc_library(
 
 wasm_cc_binary(
     name = "test_cpp.wasm",
-    srcs = ["test_cpp.cc"],
+    srcs = [
+        "test_async_call_cpp.cc",
+        "test_body_cpp.cc",
+        "test_cpp.cc",
+        "test_grpc_call_cpp.cc",
+        "test_grpc_stream_cpp.cc",
+        "test_shared_data_cpp.cc",
+        "test_shared_queue_cpp.cc",
+    ],
     deps = [
+        ":test_cc_proto",
         "//source/extensions/common/wasm/ext:declare_property_cc_proto",
         "//source/extensions/common/wasm/ext:envoy_proxy_wasm_api_lib",
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_lite",
         "@proxy_wasm_cpp_sdk//contrib:contrib_lib",
     ],
+)
+
+# NB: this target is compiled both to native code and to Wasm. Hence the generic rule.
+proto_library(
+    name = "test_proto",
+    srcs = ["test.proto"],
+    deps = [
+      "@com_google_protobuf//:any_proto",
+      "@com_google_protobuf//:timestamp_proto",
+    ],
+)
+
+# NB: this target is compiled both to native code and to Wasm. Hence the generic rule.
+cc_proto_library(
+    name = "test_cc_proto",
+    deps = [":test_proto"],
 )
 
 # TODO: FIXME

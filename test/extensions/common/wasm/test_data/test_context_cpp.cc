@@ -1,4 +1,5 @@
 // NOLINT(namespace-envoy)
+#include <climits>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -23,6 +24,8 @@ public:
 
   bool onStart(size_t vm_configuration_size) override;
   bool onDone() override;
+  void onTick() override;
+  void onQueueReady(uint32_t) override;
   void onResolveDns(uint32_t token, uint32_t results_size) override;
 
 private:
@@ -31,6 +34,8 @@ private:
 
 static RegisterContextFactory register_TestContext(CONTEXT_FACTORY(TestContext),
                                                    ROOT_FACTORY(TestRootContext));
+static RegisterContextFactory register_EmptyTestContext(CONTEXT_FACTORY(EnvoyContext),
+                                                        ROOT_FACTORY(EnvoyRootContext), "empty");
 
 bool TestRootContext::onStart(size_t) {
   envoy_resolve_dns("example.com", sizeof("example.com") - 1, &dns_token_);
@@ -49,6 +54,29 @@ void TestRootContext::onResolveDns(uint32_t token, uint32_t result_size) {
 bool TestRootContext::onDone() {
   logWarn("TestRootContext::onDone " + std::to_string(id()));
   return true;
+}
+
+// Null VM fails on nullptr.
+void TestRootContext::onTick() {
+  if (envoy_resolve_dns(0, 1, &dns_token_) != WasmResult::InvalidMemoryAccess) {
+    logInfo("resolve_dns should report invalid memory access");
+  }
+  if (envoy_resolve_dns("example.com", sizeof("example.com") - 1, nullptr) !=
+      WasmResult::InvalidMemoryAccess) {
+    logInfo("resolve_dns should report invalid memory access");
+  }
+}
+
+// V8 fails on pointer too large.
+void TestRootContext::onQueueReady(uint32_t) {
+  if (envoy_resolve_dns(reinterpret_cast<char*>(INT_MAX), 0, &dns_token_) !=
+      WasmResult::InvalidMemoryAccess) {
+    logInfo("resolve_dns should report invalid memory access");
+  }
+  if (envoy_resolve_dns("example.com", sizeof("example.com") - 1,
+                        reinterpret_cast<uint32_t*>(INT_MAX)) != WasmResult::InvalidMemoryAccess) {
+    logInfo("resolve_dns should report invalid memory access");
+  }
 }
 
 END_WASM_PLUGIN

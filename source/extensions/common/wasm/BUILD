@@ -26,6 +26,7 @@ envoy_cc_library(
         "wasm_state.h",
         "wasm_vm.h",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         ":well_known_names",
         "//include/envoy/http:codes_interface",

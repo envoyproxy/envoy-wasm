@@ -27,7 +27,7 @@ WasmSinkFactory::createStatsSink(const Protobuf::Message& proto_config,
   auto plugin = std::make_shared<Common::Wasm::Plugin>(
       config.config().name(), config.config().root_id(), config.config().vm_config().vm_id(),
       config.config().vm_config().runtime(),
-      Common::Wasm::anyToBytes(config.config().configuration()), false,
+      Common::Wasm::anyToBytes(config.config().configuration()), config.config().fail_open(),
       envoy::config::core::v3::TrafficDirection::UNSPECIFIED, context.localInfo(), nullptr);
 
   auto callback = [&wasm_sink, &context, plugin](Common::Wasm::WasmHandleSharedPtr base_wasm) {

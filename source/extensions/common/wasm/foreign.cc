@@ -54,7 +54,7 @@ RegisterForeignFunction registerUncompressForeignFunction(
           memcpy(result, b.get(), dest_len);
           return WasmResult::Ok;
         }
-        if (r != Z_MEM_ERROR) {
+        if (r != Z_BUF_ERROR) {
           return WasmResult::SerializationFailure;
         }
         dest_len = dest_len * 2;
