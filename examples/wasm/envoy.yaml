@@ -38,7 +38,7 @@ static_resources:
                 route:
                   cluster: web_service
           http_filters:
-          - name: enovy.filters.http.wasm
+          - name: envoy.filters.http.wasm
             typed_config:
               "@type": type.googleapis.com/udpa.type.v1.TypedStruct
               type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
