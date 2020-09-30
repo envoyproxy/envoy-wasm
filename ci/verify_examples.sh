@@ -1,9 +1,11 @@
 #!/bin/bash -E
 
-TESTFILTER="${1:-*}"
+TESTCOMMAND="${1:-}"
+TESTFILTER="${2:-*}"
 FAILED=()
 SRCDIR="${SRCDIR:-$(pwd)}"
-EXCLUDED_BUILD_CONFIGS=${EXCLUDED_BUILD_CONFIGS:-"^./cache/responses.yaml|^./jaeger-native-tracing|docker-compose"}
+EXCLUDED_BUILD_CONFIGS=${EXCLUDED_BUILD_CONFIGS:-"^./wasm/envoy.yaml|^./cache/responses.yaml|^./jaeger-native-tracing|docker-compose"}
+EXCLUDE_EXAMPLES=${EXCLUDED_EXAMPLES:-"wasm"}
 
 
 trap_errors () {
@@ -30,7 +32,7 @@ trap exit 1 INT
 run_examples () {
     local examples example
     cd "${SRCDIR}/examples" || exit 1
-    examples=$(find . -mindepth 1 -maxdepth 1 -type d -name "$TESTFILTER" | sort)
+    examples=$(find . -mindepth 1 -maxdepth 1 -type d -name "$TESTFILTER" | grep -vE "${EXCLUDE_EXAMPLES}" | sort)
     for example in $examples; do
         pushd "$example" > /dev/null || return 1
         ./verify.sh
@@ -54,9 +56,23 @@ verify_build_configs () {
     fi
 }
 
-verify_build_configs
-run_examples
-
+case "$TESTCOMMAND" in
+    build_config)
+	echo "Running build_configs test"
+	verify_build_configs
+	;;
+    sandbox)
+	echo "Running sandbox test"
+	run_examples
+	;;
+    ""|all)
+	echo "Running all tests"
+	verify_build_configs
+	run_examples
+	;;
+    *)
+	echo "Usage: ./ci/verify_examples.sh [build_config|sandbox|all] [<test_filter>]"
+esac
 
 if [[ "${#FAILED[@]}" -ne "0" ]]; then
     echo "TESTS FAILED:"
