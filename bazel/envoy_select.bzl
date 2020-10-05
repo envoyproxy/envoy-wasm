@@ -41,6 +41,7 @@ def envoy_select_wasm(xs):
 
 def envoy_select_wasm_v8(xs):
     return select({
+        "@envoy//bazel:wasm_wavm": [],
         "@envoy//bazel:wasm_none": [],
         "//conditions:default": xs,
     })
