@@ -10,8 +10,13 @@
 
 #include "include/proxy-wasm/null.h"
 #include "include/proxy-wasm/null_plugin.h"
+
+#if defined(ENVOY_WASM_V8)
 #include "include/proxy-wasm/v8.h"
+#endif
+#if defined(ENVOY_WASM_WAVM)
 #include "include/proxy-wasm/wavm.h"
+#endif
 
 using ContextBase = proxy_wasm::ContextBase;
 using Word = proxy_wasm::Word;
