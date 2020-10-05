@@ -22,6 +22,7 @@ public:
   FilterHeadersStatus onRequestHeaders(uint32_t headers, bool end_of_stream) override;
   FilterDataStatus onRequestBody(size_t body_buffer_length, bool end_of_stream) override;
   FilterHeadersStatus onResponseHeaders(uint32_t headers, bool end_of_stream) override;
+  FilterDataStatus onResponseBody(size_t body_buffer_length, bool end_of_stream) override;
   void onDone() override;
   void onLog() override;
   void onDelete() override;
@@ -73,6 +74,12 @@ FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length,
                                                bool /* end_of_stream */) {
   auto body = getBufferBytes(WasmBufferType::HttpRequestBody, 0, body_buffer_length);
   LOG_ERROR(std::string("onRequestBody ") + std::string(body->view()));
+  return FilterDataStatus::Continue;
+}
+
+FilterDataStatus ExampleContext::onResponseBody(size_t /* body_buffer_length */,
+                                                bool /* end_of_stream */) {
+  setBuffer(WasmBufferType::HttpResponseBody, 0, 3, "foo");
   return FilterDataStatus::Continue;
 }
 

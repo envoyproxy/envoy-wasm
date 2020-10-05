@@ -78,9 +78,8 @@ jobs:
           CI_TARGET: "bazel.gcc"
         clang_tidy:
           CI_TARGET: "bazel.clang_tidy"
-          # Fails because of relocation offset, we depend on the circle CI version which passes.
-          #        asan:
-          #          CI_TARGET: "bazel.asan"
+        asan:
+          CI_TARGET: "bazel.asan"
         tsan:
           CI_TARGET: "bazel.tsan"
         compile_time_options:
@@ -161,24 +160,23 @@ jobs:
           artifactName: docker
         condition: always()
 
-        # TODO: zipkin tracing fails in envoy-wasm
-        #- job: examples
-        #  dependsOn: ["docker"]
-        #    displayName: "Verify examples run as documented"
-        #    pool:
-        #      vmImage: "ubuntu-18.04"
-        #    steps:
-        #      - task: DownloadBuildArtifacts@0
-        #        inputs:
-        #          buildType: current
-        #          artifactName: "docker"
-        #          itemPattern: "docker/envoy-docker-images.tar.xz"
-        #          downloadType: single
-        #          targetPath: $(Build.StagingDirectory)
-        #      - bash: ./ci/do_ci.sh verify_examples
-        #        env:
-        #          ENVOY_DOCKER_BUILD_DIR: $(Build.StagingDirectory)
-        #          NO_BUILD_SETUP: 1
+  - job: examples
+    dependsOn: ["docker"]
+    displayName: "Verify examples run as documented"
+    pool:
+      vmImage: "ubuntu-18.04"
+    steps:
+      - task: DownloadBuildArtifacts@0
+        inputs:
+          buildType: current
+          artifactName: "docker"
+          itemPattern: "docker/envoy-docker-images.tar.xz"
+          downloadType: single
+          targetPath: $(Build.StagingDirectory)
+      - bash: ./ci/do_ci.sh verify_examples
+        env:
+          ENVOY_DOCKER_BUILD_DIR: $(Build.StagingDirectory)
+          NO_BUILD_SETUP: 1
 
   - job: macOS
     dependsOn: ["format"]
@@ -218,11 +216,17 @@ jobs:
     pool:
       vmImage: "windows-latest"
     steps:
-      - bash: ci/run_envoy_docker_windows.sh ci/windows_ci_steps.sh
+      - bash: ci/run_envoy_docker.sh ci/windows_ci_steps.sh
         displayName: "Run Windows CI"
         env:
+          ENVOY_DOCKER_BUILD_DIR: "$(Build.StagingDirectory)"
           ENVOY_RBE: "true"
           BAZEL_BUILD_EXTRA_OPTIONS: "--config=remote-ci --config=remote-msvc-cl --jobs=$(RbeJobs)"
           BAZEL_REMOTE_CACHE: grpcs://remotebuildexecution.googleapis.com
           BAZEL_REMOTE_INSTANCE: projects/envoy-ci/instances/default_instance
           GCP_SERVICE_ACCOUNT_KEY: $(GcpServiceAccountKey)
+      - task: PublishBuildArtifacts@1
+        inputs:
+          pathtoPublish: "$(Build.StagingDirectory)/envoy"
+          artifactName: windows.release
+        condition: always()
