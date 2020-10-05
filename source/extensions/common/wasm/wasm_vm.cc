@@ -10,6 +10,7 @@
 
 #include "include/proxy-wasm/null.h"
 #include "include/proxy-wasm/null_plugin.h"
+
 #if defined(ENVOY_WASM_V8)
 #include "include/proxy-wasm/v8.h"
 #endif
