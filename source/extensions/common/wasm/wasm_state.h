@@ -71,6 +71,7 @@ public:
   }
 
   ProtobufTypes::MessagePtr serializeAsProto() const override;
+  absl::optional<std::string> serializeAsString() const override { return value_; }
 
 private:
   const bool readonly_;

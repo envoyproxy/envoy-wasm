@@ -401,7 +401,7 @@ WasmResult serializeValue(Filters::Common::Expr::CelValue value, std::string* re
   _f(METADATA) _f(REQUEST) _f(RESPONSE) _f(CONNECTION) _f(UPSTREAM) _f(NODE) _f(SOURCE)            \
       _f(DESTINATION) _f(LISTENER_DIRECTION) _f(LISTENER_METADATA) _f(CLUSTER_NAME)                \
           _f(CLUSTER_METADATA) _f(ROUTE_NAME) _f(ROUTE_METADATA) _f(PLUGIN_NAME)                   \
-              _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID) _f(CONNECTION_ID)
+              _f(PLUGIN_ROOT_ID) _f(PLUGIN_VM_ID) _f(CONNECTION_ID) _f(FILTER_STATE)
 
 static inline std::string downCase(std::string s) {
   std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -543,6 +543,10 @@ Context::findValue(absl::string_view name, Protobuf::Arena* arena, bool last) co
     return CelValue::CreateStringView(root_id());
   case PropertyToken::PLUGIN_VM_ID:
     return CelValue::CreateStringView(wasm()->vm_id());
+  case PropertyToken::FILTER_STATE:
+    return Protobuf::Arena::Create<Filters::Common::Expr::FilterStateWrapper>(arena,
+                                                                              info->filterState())
+        ->Produce(arena);
   }
   return {};
 }
