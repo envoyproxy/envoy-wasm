@@ -389,6 +389,16 @@ void TestContext::onLog() {
       }
     }
     {
+      // access via "filter_state" property
+      std::string value;
+      if (!getValue({"filter_state", "wasm.string_state"}, &value)) {
+        logWarn("accessing via filter_state failed");
+      }
+      if (value != "unicorns") {
+        logWarn("unexpected value: " + value);
+      }
+    }
+    {
       // attempt to write twice for a read only wasm state
       if (setFilterState("string_state", "ponies") == WasmResult::Ok) {
         logWarn("expected second setProperty(string_state) to fail");
