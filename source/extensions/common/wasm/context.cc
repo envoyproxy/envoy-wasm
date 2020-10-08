@@ -80,6 +80,8 @@ Http::RequestHeaderMapPtr buildRequestHeaderMapFromPairs(const Pairs& pairs) {
 
 template <typename P> static uint32_t headerSize(const P& p) { return p ? p->size() : 0; }
 
+constexpr absl::string_view FailStreamResponseDetails = "wasm_fail_stream";
+
 } // namespace
 
 // Test support.
@@ -1490,11 +1492,17 @@ WasmResult Context::closeStream(WasmStreamType stream_type) {
   switch (stream_type) {
   case WasmStreamType::Request:
     if (decoder_callbacks_) {
+      if (!decoder_callbacks_->streamInfo().responseCodeDetails().has_value()) {
+        decoder_callbacks_->streamInfo().setResponseCodeDetails(FailStreamResponseDetails);
+      }
       decoder_callbacks_->resetStream();
     }
     return WasmResult::Ok;
   case WasmStreamType::Response:
     if (encoder_callbacks_) {
+      if (!encoder_callbacks_->streamInfo().responseCodeDetails().has_value()) {
+        encoder_callbacks_->streamInfo().setResponseCodeDetails(FailStreamResponseDetails);
+      }
       encoder_callbacks_->resetStream();
     }
     return WasmResult::Ok;
