@@ -741,8 +741,13 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         urls = ["https://github.com/google/cel-cpp/archive/{version}.tar.gz"],
         use_category = ["dataplane_ext"],
         extensions = [
+            "envoy.access_loggers.wasm",
+            "envoy.bootstrap.wasm",
             "envoy.filters.http.rbac",
+            "envoy.filters.http.wasm",
             "envoy.filters.network.rbac",
+            "envoy.filters.network.wasm",
+            "envoy.stat_sinks.wasm",
         ],
         last_updated = "2020-07-14",
         cpe = "N/A",
