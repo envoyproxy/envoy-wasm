@@ -624,7 +624,7 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         strip_prefix = "llvm-{version}.0.src",
         urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{version}.0/llvm-{version}.0.src.tar.xz"],
         last_updated = "2020-03-24",
-        use_category = ["dataplane"],
+        use_category = ["dataplane_ext"],
         cpe = "N/A",
     ),
     com_github_wavm_wavm = dict(
@@ -636,7 +636,7 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         strip_prefix = "WAVM-{version}",
         urls = ["https://github.com/WAVM/WAVM/archive/{version}.tar.gz"],
         last_updated = "2020-07-06",
-        use_category = ["dataplane"],
+        use_category = ["dataplane_ext"],
         cpe = "N/A",
     ),
     io_opencensus_cpp = dict(
