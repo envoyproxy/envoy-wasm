@@ -76,7 +76,7 @@ public:
         envoy::config::core::v3::TrafficDirection::INBOUND, local_info_, &listener_metadata_);
     // Passes ownership of root_context_.
     Extensions::Common::Wasm::createWasm(
-        vm_config, plugin_, scope_, cluster_manager_, init_manager_, dispatcher_, random_, *api,
+        vm_config, plugin_, scope_, cluster_manager_, init_manager_, dispatcher_, *api,
         lifecycle_notifier_, remote_data_provider_,
         [this](WasmHandleSharedPtr wasm) { wasm_ = wasm; }, create_root);
     if (wasm_) {
@@ -97,7 +97,6 @@ public:
   Stats::ScopeSharedPtr scope_;
   NiceMock<ThreadLocal::MockInstance> tls_;
   NiceMock<Event::MockDispatcher> dispatcher_;
-  NiceMock<Random::MockRandomGenerator> random_;
   NiceMock<Upstream::MockClusterManager> cluster_manager_;
   NiceMock<Init::MockManager> init_manager_;
   WasmHandleSharedPtr wasm_;

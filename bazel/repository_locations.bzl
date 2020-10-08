@@ -624,7 +624,14 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         strip_prefix = "llvm-{version}.0.src",
         urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{version}.0/llvm-{version}.0.src.tar.xz"],
         last_updated = "2020-03-24",
-        use_category = ["dataplane"],
+        use_category = ["dataplane_ext"],
+        extensions = [
+            "envoy.access_loggers.wasm",
+            "envoy.bootstrap.wasm",
+            "envoy.filters.http.wasm",
+            "envoy.filters.network.wasm",
+            "envoy.stat_sinks.wasm",
+        ],
         cpe = "N/A",
     ),
     com_github_wavm_wavm = dict(
@@ -636,7 +643,14 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         strip_prefix = "WAVM-{version}",
         urls = ["https://github.com/WAVM/WAVM/archive/{version}.tar.gz"],
         last_updated = "2020-07-06",
-        use_category = ["dataplane"],
+        use_category = ["dataplane_ext"],
+        extensions = [
+            "envoy.access_loggers.wasm",
+            "envoy.bootstrap.wasm",
+            "envoy.filters.http.wasm",
+            "envoy.filters.network.wasm",
+            "envoy.stat_sinks.wasm",
+        ],
         cpe = "N/A",
     ),
     io_opencensus_cpp = dict(
@@ -891,7 +905,7 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         # See: https://github.com/bazelbuild/rules_rust/issues/386
         strip_prefix = "rules_rust-{version}",
         urls = ["https://github.com/bazelbuild/rules_rust/archive/{version}.tar.gz"],
-        use_category = ["test"],
+        use_category = ["build"],
         last_updated = "2020-07-29",
     ),
     rules_antlr = dict(

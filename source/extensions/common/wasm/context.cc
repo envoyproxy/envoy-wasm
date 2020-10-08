@@ -819,7 +819,9 @@ BufferInterface* Context::getBuffer(WasmBufferType type) {
   case WasmBufferType::HttpCallResponseBody:
     response = rootContext()->http_call_response_;
     if (response) {
-      return buffer_.set((*response)->body().get());
+      auto& body = (*response)->body();
+      return buffer_.set(absl::string_view(static_cast<const char*>(body.linearize(body.length())),
+                                           body.length()));
     }
     return nullptr;
   case WasmBufferType::GrpcReceiveBuffer:
@@ -884,8 +886,7 @@ WasmResult Context::httpCall(absl::string_view cluster, const Pairs& request_hea
   }
 
   if (!request_body.empty()) {
-    message->body() =
-        std::make_unique<::Envoy::Buffer::OwnedImpl>(request_body.data(), request_body.size());
+    message->body().add(request_body);
     message->headers().setContentLength(request_body.size());
   }
 
@@ -1327,8 +1328,6 @@ Http::FilterHeadersStatus convertFilterHeadersStatus(proxy_wasm::FilterHeadersSt
     return Http::FilterHeadersStatus::Continue;
   case proxy_wasm::FilterHeadersStatus::StopIteration:
     return Http::FilterHeadersStatus::StopIteration;
-  case proxy_wasm::FilterHeadersStatus::ContinueAndEndStream:
-    return Http::FilterHeadersStatus::ContinueAndEndStream;
   case proxy_wasm::FilterHeadersStatus::StopAllIterationAndBuffer:
     return Http::FilterHeadersStatus::StopAllIterationAndBuffer;
   case proxy_wasm::FilterHeadersStatus::StopAllIterationAndWatermark:
@@ -1699,7 +1698,7 @@ void Context::onHttpCallSuccess(uint32_t token, Envoy::Http::ResponseMessagePtr&
     return;
   }
   http_call_response_ = &response;
-  uint32_t body_size = response->body() ? response->body()->length() : 0;
+  uint32_t body_size = response->body().length();
   onHttpCallResponse(token, response->headers().size(), body_size,
                      headerSize(response->trailers()));
   http_call_response_ = nullptr;

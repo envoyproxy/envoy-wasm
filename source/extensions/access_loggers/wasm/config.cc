@@ -59,8 +59,8 @@ WasmAccessLogFactory::createAccessLogInstance(const Protobuf::Message& proto_con
 
   if (!Common::Wasm::createWasm(
           config.config().vm_config(), plugin, context.scope().createScope(""),
-          context.clusterManager(), context.initManager(), context.dispatcher(), context.random(),
-          context.api(), context.lifecycleNotifier(), remote_data_provider_, std::move(callback))) {
+          context.clusterManager(), context.initManager(), context.dispatcher(), context.api(),
+          context.lifecycleNotifier(), remote_data_provider_, std::move(callback))) {
     throw Common::Wasm::WasmException(
         fmt::format("Unable to create Wasm access log {}", plugin->name_));
   }
