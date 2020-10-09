@@ -921,8 +921,17 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         sha256 = "7249d1569293d9b239e23c65f6b4c81a07da921738bde0dfeb231ed98be40429",
         strip_prefix = "rules_antlr-{version}",
         urls = ["https://github.com/marcohu/rules_antlr/archive/{version}.tar.gz"],
-        use_category = ["build"],
+        # This should be "build", but that trips the verification in the docs.
+        use_category = ["dataplane_ext"],
+        extensions = [
+            "envoy.access_loggers.wasm",
+            "envoy.bootstrap.wasm",
+            "envoy.filters.http.wasm",
+            "envoy.filters.network.wasm",
+            "envoy.stat_sinks.wasm",
+        ],
         last_updated = "2020-07-29",
+        cpe = "N/A",
     ),
     antlr4_runtimes = dict(
         project_name = "ANTLR v4",
