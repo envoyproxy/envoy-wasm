@@ -144,8 +144,7 @@ using CreateWasmCallback = std::function<void(WasmHandleSharedPtr)>;
 // because that is the mechanism for reporting configuration errors.
 bool createWasm(const VmConfig& vm_config, const PluginSharedPtr& plugin,
                 const Stats::ScopeSharedPtr& scope, Upstream::ClusterManager& cluster_manager,
-                Init::Manager& init_manager, Event::Dispatcher& dispatcher,
-                Random::RandomGenerator& random, Api::Api& api,
+                Init::Manager& init_manager, Event::Dispatcher& dispatcher, Api::Api& api,
                 Envoy::Server::ServerLifecycleNotifier& lifecycle_notifier,
                 Config::DataSource::RemoteAsyncDataProviderPtr& remote_data_provider,
                 CreateWasmCallback&& callback,

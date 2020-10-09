@@ -667,7 +667,6 @@ TEST_P(WasmCommonTest, VmCache) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier2> lifecycle_notifier;
   Event::DispatcherPtr dispatcher(api->allocateDispatcher("wasm_test"));
@@ -708,7 +707,7 @@ TEST_P(WasmCommonTest, VmCache) {
   EXPECT_FALSE(code.empty());
   vm_config.mutable_code()->mutable_local()->set_inline_bytes(code);
   WasmHandleSharedPtr wasm_handle;
-  createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random, *api,
+  createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, *api,
              lifecycle_notifier, remote_data_provider,
              [&wasm_handle](const WasmHandleSharedPtr& w) { wasm_handle = w; });
   EXPECT_NE(wasm_handle, nullptr);
@@ -716,7 +715,7 @@ TEST_P(WasmCommonTest, VmCache) {
   lifecycle_callback(post_cb);
 
   WasmHandleSharedPtr wasm_handle2;
-  createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random, *api,
+  createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, *api,
              lifecycle_notifier, remote_data_provider,
              [&wasm_handle2](const WasmHandleSharedPtr& w) { wasm_handle2 = w; });
   EXPECT_NE(wasm_handle2, nullptr);
@@ -762,7 +761,6 @@ TEST_P(WasmCommonTest, RemoteCode) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;
@@ -808,7 +806,7 @@ TEST_P(WasmCommonTest, RemoteCode) {
             Http::ResponseMessagePtr response(
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-            response->body() = std::make_unique<::Envoy::Buffer::OwnedImpl>(code);
+            response->body().add(code);
             callbacks.onSuccess(request, std::move(response));
             return nullptr;
           }));
@@ -817,7 +815,7 @@ TEST_P(WasmCommonTest, RemoteCode) {
   EXPECT_CALL(init_manager, add(_)).WillOnce(Invoke([&](const Init::Target& target) {
     init_target_handle = target.createHandle("test");
   }));
-  createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random, *api,
+  createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, *api,
              lifecycle_notifier, remote_data_provider,
              [&wasm_handle](const WasmHandleSharedPtr& w) { wasm_handle = w; });
 
@@ -859,7 +857,6 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   Stats::IsolatedStoreImpl stats_store;
   Api::ApiPtr api = Api::createApiForTest(stats_store);
   NiceMock<Upstream::MockClusterManager> cluster_manager;
-  NiceMock<Random::MockRandomGenerator> random;
   NiceMock<Init::MockManager> init_manager;
   NiceMock<Server::MockServerLifecycleNotifier> lifecycle_notifier;
   Init::ExpectableWatcherImpl init_watcher;
@@ -917,7 +914,7 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
         } else {
           Http::ResponseMessagePtr response(new Http::ResponseMessageImpl(
               Http::ResponseHeaderMapPtr{new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-          response->body() = std::make_unique<::Envoy::Buffer::OwnedImpl>(code);
+          response->body().add(code);
           callbacks.onSuccess(request, std::move(response));
           return nullptr;
         }
@@ -927,7 +924,7 @@ TEST_P(WasmCommonTest, RemoteCodeMultipleRetry) {
   EXPECT_CALL(init_manager, add(_)).WillOnce(Invoke([&](const Init::Target& target) {
     init_target_handle = target.createHandle("test");
   }));
-  createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, random, *api,
+  createWasm(vm_config, plugin, scope, cluster_manager, init_manager, *dispatcher, *api,
              lifecycle_notifier, remote_data_provider,
              [&wasm_handle](const WasmHandleSharedPtr& w) { wasm_handle = w; });
 

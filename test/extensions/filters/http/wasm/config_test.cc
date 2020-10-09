@@ -244,7 +244,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasm) {
             Http::ResponseMessagePtr response(
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            response->body().add(code);
             callbacks.onSuccess(request, std::move(response));
             return &request;
           }));
@@ -293,7 +293,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailOnUncachedThenSucceed) {
             Http::ResponseMessagePtr response(
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            response->body().add(code);
             callbacks.onSuccess(request, std::move(response));
             return &request;
           }));
@@ -408,7 +408,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteWasmFailCachedThenSucceed) {
             Http::ResponseMessagePtr response(
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            response->body().add(code);
             callbacks.onSuccess(request, std::move(response));
             return &request;
           }));
@@ -634,7 +634,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessIncorrectSha256) {
             Http::ResponseMessagePtr response(
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            response->body().add(code);
             callbacks.onSuccess(request, std::move(response));
             return &request;
           }));
@@ -681,7 +681,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteMultipleRetries) {
             Http::ResponseMessagePtr response(
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "503"}}}));
-            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            response->body().add(code);
             callbacks.onSuccess(request, std::move(response));
             return &request;
           }));
@@ -696,7 +696,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteMultipleRetries) {
                     Http::ResponseMessagePtr response(
                         new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                             new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-                    response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+                    response->body().add(code);
                     callbacks.onSuccess(request, std::move(response));
                     return &request;
                   }));
@@ -748,7 +748,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
             Http::ResponseMessagePtr response(
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            response->body().add(code);
             callbacks.onSuccess(request, std::move(response));
             return nullptr;
           }));
@@ -813,7 +813,7 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcodeFailOpen) {
             Http::ResponseMessagePtr response(
                 new Http::ResponseMessageImpl(Http::ResponseHeaderMapPtr{
                     new Http::TestResponseHeaderMapImpl{{":status", "200"}}}));
-            response->body() = std::make_unique<Buffer::OwnedImpl>(code);
+            response->body().add(code);
             callbacks.onSuccess(request, std::move(response));
             return nullptr;
           }));

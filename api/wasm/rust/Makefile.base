@@ -1,6 +1,0 @@
-%.wasm %.wat: %/src/lib.rs %/Cargo.toml
-	cd $* && RUSTFLAGS="-C link-args=-S -D warnings" cargo build --target=wasm32-unknown-unknown --release
-	mv $*/target/wasm32-unknown-unknown/release/$*.wasm .
-	rm -rf $*/target
-	wasm-gc $*.wasm
-	wasm-opt -O4 --output $*.wasm $*.wasm
