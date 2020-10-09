@@ -770,7 +770,11 @@ TEST_P(WasmFilterConfigTest, YamlLoadFromRemoteSuccessBadcode) {
   EXPECT_TRUE(context->isFailed());
 
   Http::MockStreamDecoderFilterCallbacks decoder_callbacks;
+  NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
+
   context->setDecoderFilterCallbacks(decoder_callbacks);
+  EXPECT_CALL(decoder_callbacks, streamInfo()).WillRepeatedly(ReturnRef(stream_info));
+  EXPECT_CALL(stream_info, setResponseCodeDetails("wasm_fail_stream"));
   EXPECT_CALL(decoder_callbacks, resetStream());
 
   EXPECT_EQ(context->onRequestHeaders(10, false), proxy_wasm::FilterHeadersStatus::StopIteration);
